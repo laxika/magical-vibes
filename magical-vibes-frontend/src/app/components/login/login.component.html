@@ -1,0 +1,67 @@
+<div class="login-container">
+  <div class="login-card">
+    <h1>Magical Vibes</h1>
+    <h2>Login</h2>
+
+    <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          [(ngModel)]="username"
+          [disabled]="loading()"
+          required
+          autocomplete="username"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          [(ngModel)]="password"
+          [disabled]="loading()"
+          required
+          autocomplete="current-password"
+        />
+      </div>
+
+      @if (errorMessage()) {
+        <div class="alert alert-error">
+          {{ errorMessage() }}
+        </div>
+      }
+
+      @if (successMessage()) {
+        <div class="alert alert-success">
+          {{ successMessage() }}
+        </div>
+      }
+
+      <button
+        type="submit"
+        [disabled]="loading() || !loginForm.form.valid"
+        class="btn-primary"
+      >
+        @if (loading()) {
+          <span class="spinner"></span>
+          Logging in...
+        } @else {
+          Login
+        }
+      </button>
+    </form>
+
+    <div class="test-credentials">
+      <p>Test credentials:</p>
+      <ul>
+        <li>admin / admin123</li>
+        <li>testuser / testpass</li>
+      </ul>
+    </div>
+  </div>
+</div>

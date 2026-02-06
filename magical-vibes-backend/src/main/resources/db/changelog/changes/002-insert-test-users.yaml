@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-insert-test-users
+      author: magical-vibes
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: admin
+              - column:
+                  name: password
+                  value: admin123
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: testuser
+              - column:
+                  name: password
+                  value: testpass
