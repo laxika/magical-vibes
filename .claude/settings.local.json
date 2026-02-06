@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(gradle wrapper:*)"
+      "Bash(gradle wrapper:*)",
+      "Bash(test:*)"
     ]
   }
 }

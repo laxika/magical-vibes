@@ -23,6 +23,9 @@ dependencyManagement {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-websocket")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    runtimeOnly("org.xerial:sqlite-jdbc:3.47.1.0")
+    runtimeOnly("org.hibernate.orm:hibernate-community-dialects:6.6.4.Final")
 }
 
 group = "com.magicalvibes"

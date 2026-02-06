@@ -3,3 +3,7 @@
 magic-ruleset.txt
 
 **/build
+
+# Database
+magical-vibes.db
+magical-vibes.db-journal
