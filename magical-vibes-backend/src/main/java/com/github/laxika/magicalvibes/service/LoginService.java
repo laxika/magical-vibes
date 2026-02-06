@@ -17,6 +17,7 @@ import java.util.Optional;
 public class LoginService {
 
     private final UserRepository userRepository;
+    private final GameService gameService;
 
     // TODO: Implement password hashing with BCrypt for production use
     @Transactional(readOnly = true)
@@ -31,7 +32,11 @@ public class LoginService {
         if (userOptional.isPresent()) {
             User user = userOptional.get();
             log.info("Authentication successful for user: {}", user.getUsername());
-            return LoginResponse.success(user.getId(), user.getUsername());
+
+            // Fetch available games
+            var games = gameService.listRunningGames();
+
+            return LoginResponse.success(user.getId(), user.getUsername(), games);
         } else {
             log.warn("Authentication failed for username: {}", loginRequest.getUsername());
             return LoginResponse.failure("Invalid username or password");

@@ -10,6 +10,4 @@ import java.util.Optional;
 public interface GamePlayerRepository extends JpaRepository<GamePlayer, Long> {
 
     boolean existsByGameIdAndUserId(Long gameId, Long userId);
-
-    Optional<GamePlayer> findByGameIdAndUserId(Long gameId, Long userId);
 }

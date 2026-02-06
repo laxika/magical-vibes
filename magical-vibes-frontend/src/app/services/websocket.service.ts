@@ -1,11 +1,34 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+
+export interface Game {
+  id: number;
+  gameName: string;
+  createdByUsername: string;
+  status: string;
+  createdAt: string;
+  playerCount: number;
+}
 
 export interface LoginResponse {
   type: string;
   message: string;
   userId?: number;
   username?: string;
+  games?: Game[];
+}
+
+export interface GameNotification {
+  type: 'NEW_GAME' | 'GAME_UPDATED' | 'ERROR';
+  message?: string;
+  game?: Game;
+}
+
+export type WebSocketMessage = LoginResponse | GameNotification;
+
+export interface User {
+  userId: number;
+  username: string;
 }
 
 @Injectable({
@@ -14,52 +37,108 @@ export interface LoginResponse {
 export class WebsocketService {
 
   private readonly WS_URL = 'ws://localhost:8080/ws/login';
+  private ws: WebSocket | null = null;
+  private messages = new Subject<WebSocketMessage>();
+  private disconnected = new Subject<void>();
+  private authenticated = false;
 
-  constructor() { }
+  currentUser: User | null = null;
+  initialGames: Game[] = [];
 
   login(username: string, password: string): Observable<LoginResponse> {
     return new Observable(observer => {
-      const ws = new WebSocket(this.WS_URL);
+      this.authenticated = false;
+      this.currentUser = null;
+      this.initialGames = [];
 
-      ws.onopen = () => {
-        console.log('WebSocket connection established');
-        const loginRequest = {
+      this.ws = new WebSocket(this.WS_URL);
+
+      this.ws.onopen = () => {
+        this.ws!.send(JSON.stringify({
           type: 'LOGIN',
           username: username,
           password: password
-        };
-        ws.send(JSON.stringify(loginRequest));
+        }));
       };
 
-      ws.onmessage = (event) => {
-        console.log('Received message:', event.data);
+      this.ws.onmessage = (event) => {
         try {
-          const response: LoginResponse = JSON.parse(event.data);
-          observer.next(response);
-          observer.complete();
+          const message: WebSocketMessage = JSON.parse(event.data);
+
+          // Before authenticated, only handle login responses
+          if (!this.authenticated) {
+            const response = message as LoginResponse;
+            if (response.type === 'LOGIN_SUCCESS') {
+              this.authenticated = true;
+              this.currentUser = { userId: response.userId!, username: response.username! };
+              this.initialGames = response.games ?? [];
+            }
+            observer.next(response);
+            observer.complete();
+            return;
+          }
+
+          // After authenticated, forward everything to the messages stream
+          this.messages.next(message);
         } catch (error) {
           observer.error('Failed to parse response');
         }
       };
 
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        observer.error('WebSocket connection error');
-      };
-
-      ws.onclose = (event) => {
-        console.log('WebSocket connection closed:', event.code, event.reason);
-        if (!observer.closed) {
-          observer.complete();
+      this.ws.onerror = () => {
+        if (this.authenticated) {
+          this.cleanup();
+          this.disconnected.next();
+        } else {
+          observer.error('WebSocket connection error');
+          this.cleanup();
         }
       };
 
-      // Cleanup on unsubscribe
-      return () => {
-        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-          ws.close();
+      this.ws.onclose = () => {
+        if (this.authenticated) {
+          this.cleanup();
+          this.disconnected.next();
+        } else if (!observer.closed) {
+          observer.complete();
+          this.cleanup();
         }
       };
     });
+  }
+
+  send(message: object): void {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(message));
+    }
+  }
+
+  getMessages(): Observable<WebSocketMessage> {
+    return this.messages.asObservable();
+  }
+
+  onDisconnected(): Observable<void> {
+    return this.disconnected.asObservable();
+  }
+
+  disconnect(): void {
+    this.authenticated = false;
+    if (this.ws) {
+      // Remove onclose handler to avoid triggering redirect on intentional disconnect
+      this.ws.onclose = null;
+      this.ws.close();
+    }
+    this.cleanup();
+  }
+
+  isConnected(): boolean {
+    return this.authenticated && this.ws !== null && this.ws.readyState === WebSocket.OPEN;
+  }
+
+  private cleanup(): void {
+    this.ws = null;
+    this.currentUser = null;
+    this.initialGames = [];
+    this.authenticated = false;
   }
 }

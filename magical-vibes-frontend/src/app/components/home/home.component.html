@@ -8,12 +8,6 @@
       </div>
     </header>
 
-    @if (successMessage()) {
-      <div class="alert alert-success">
-        {{ successMessage() }}
-      </div>
-    }
-
     @if (errorMessage()) {
       <div class="alert alert-error">
         {{ errorMessage() }}
@@ -28,9 +22,6 @@
           Create New Game
         }
       </button>
-      <button class="btn-secondary" (click)="loadGames()">
-        Refresh Games
-      </button>
     </div>
 
     @if (showCreateForm()) {
@@ -43,10 +34,9 @@
             id="gameName"
             [(ngModel)]="newGameName"
             placeholder="Enter game name"
-            [disabled]="loading()"
           />
         </div>
-        <button class="btn-primary" (click)="createGame()" [disabled]="loading()">
+        <button class="btn-primary" (click)="createGame()">
           Create Game
         </button>
       </div>
@@ -55,12 +45,7 @@
     <div class="games-section">
       <h2>Available Games</h2>
 
-      @if (loading()) {
-        <div class="loading">
-          <span class="spinner"></span>
-          Loading games...
-        </div>
-      } @else if (games().length === 0) {
+      @if (games().length === 0) {
         <div class="no-games">
           <p>No games available. Create one to get started!</p>
         </div>
@@ -74,7 +59,7 @@
                 <p><strong>Players:</strong> {{ game.playerCount }}</p>
                 <p><strong>Status:</strong> {{ game.status }}</p>
               </div>
-              <button class="btn-join" (click)="joinGame(game.id)" [disabled]="loading()">
+              <button class="btn-join" (click)="joinGame(game.id)">
                 Join Game
               </button>
             </div>

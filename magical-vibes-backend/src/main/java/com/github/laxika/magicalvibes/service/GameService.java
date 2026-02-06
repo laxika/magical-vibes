@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.dto.CreateGameRequest;
 import com.github.laxika.magicalvibes.dto.GameResponse;
 import com.github.laxika.magicalvibes.entity.Game;
 import com.github.laxika.magicalvibes.entity.GamePlayer;
@@ -23,15 +22,13 @@ public class GameService {
     private final GamePlayerRepository gamePlayerRepository;
 
     @Transactional
-    public GameResponse createGame(CreateGameRequest request) {
-        log.info("Creating game '{}' for user ID: {}", request.getGameName(), request.getUserId());
+    public GameResponse createGame(String gameName, Long userId) {
+        log.info("Creating game '{}' for user ID: {}", gameName, userId);
 
-        // Create the game
-        Game game = new Game(request.getGameName(), request.getUserId(), "WAITING");
+        Game game = new Game(gameName, userId, "WAITING");
         game = gameRepository.save(game);
 
-        // Add the creator as the first player
-        GamePlayer gamePlayer = new GamePlayer(game.getId(), request.getUserId());
+        GamePlayer gamePlayer = new GamePlayer(game.getId(), userId);
         gamePlayerRepository.save(gamePlayer);
 
         log.info("Game created with ID: {}", game.getId());
@@ -51,23 +48,17 @@ public class GameService {
     public GameResponse joinGame(Long gameId, Long userId) {
         log.info("User {} attempting to join game {}", userId, gameId);
 
-        // Check if game exists
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new IllegalArgumentException("Game not found"));
 
-        // Check if user is already in the game
         if (gamePlayerRepository.existsByGameIdAndUserId(gameId, userId)) {
-            log.warn("User {} is already in game {}", userId, gameId);
             throw new IllegalStateException("You are already in this game");
         }
 
-        // Check if game is still accepting players
         if (!"WAITING".equals(game.getStatus())) {
-            log.warn("Game {} is not accepting players (status: {})", gameId, game.getStatus());
             throw new IllegalStateException("Game is not accepting players");
         }
 
-        // Add player to game
         GamePlayer gamePlayer = new GamePlayer(gameId, userId);
         gamePlayerRepository.save(gamePlayer);
 

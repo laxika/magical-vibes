@@ -1,9 +1,9 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { GameService, Game } from '../../services/game.service';
-import { UserService } from '../../services/user.service';
+import { WebsocketService, Game, GameNotification } from '../../services/websocket.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-home',
@@ -12,116 +12,100 @@ import { UserService } from '../../services/user.service';
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   games = signal<Game[]>([]);
   newGameName = signal('');
-  loading = signal(false);
   errorMessage = signal('');
-  successMessage = signal('');
   showCreateForm = signal(false);
+  private subscriptions: Subscription[] = [];
 
   constructor(
     private router: Router,
-    private gameService: GameService,
-    private userService: UserService
+    private websocketService: WebsocketService
   ) {}
 
   ngOnInit() {
-    // Redirect to login if not authenticated
-    if (!this.userService.isLoggedIn()) {
+    // No active connection means no session - go back to login
+    if (!this.websocketService.isConnected()) {
       this.router.navigate(['/']);
       return;
     }
 
-    this.loadGames();
+    // Load initial games received with login response
+    this.games.set(this.websocketService.initialGames);
+
+    // Listen for game notifications
+    this.subscriptions.push(
+      this.websocketService.getMessages().subscribe((message) => {
+        const notification = message as GameNotification;
+
+        if (notification.type === 'NEW_GAME' && notification.game) {
+          const currentGames = this.games();
+          if (!currentGames.some(g => g.id === notification.game!.id)) {
+            this.games.set([...currentGames, notification.game]);
+          }
+        } else if (notification.type === 'GAME_UPDATED' && notification.game) {
+          const currentGames = this.games();
+          const index = currentGames.findIndex(g => g.id === notification.game!.id);
+          if (index !== -1) {
+            const updatedGames = [...currentGames];
+            updatedGames[index] = notification.game;
+            this.games.set(updatedGames);
+          }
+        } else if (notification.type === 'ERROR' && notification.message) {
+          this.errorMessage.set(notification.message);
+        }
+      })
+    );
+
+    // If WebSocket drops, redirect to login
+    this.subscriptions.push(
+      this.websocketService.onDisconnected().subscribe(() => {
+        this.router.navigate(['/']);
+      })
+    );
   }
 
-  loadGames() {
-    this.loading.set(true);
-    this.gameService.listGames().subscribe({
-      next: (games) => {
-        this.games.set(games);
-        this.loading.set(false);
-      },
-      error: (error) => {
-        console.error('Error loading games:', error);
-        this.errorMessage.set('Failed to load games');
-        this.loading.set(false);
-      }
-    });
+  ngOnDestroy() {
+    this.subscriptions.forEach(s => s.unsubscribe());
   }
 
   toggleCreateForm() {
     this.showCreateForm.set(!this.showCreateForm());
     this.newGameName.set('');
     this.errorMessage.set('');
-    this.successMessage.set('');
   }
 
   createGame() {
-    const user = this.userService.getUser();
-    if (!user) {
-      this.errorMessage.set('You must be logged in to create a game');
-      return;
-    }
-
     if (!this.newGameName().trim()) {
       this.errorMessage.set('Please enter a game name');
       return;
     }
 
-    this.loading.set(true);
     this.errorMessage.set('');
-
-    this.gameService.createGame({
-      gameName: this.newGameName(),
-      userId: user.userId
-    }).subscribe({
-      next: (game) => {
-        this.successMessage.set(`Game "${game.gameName}" created successfully!`);
-        this.newGameName.set('');
-        this.showCreateForm.set(false);
-        this.loadGames();
-        setTimeout(() => this.successMessage.set(''), 3000);
-      },
-      error: (error) => {
-        console.error('Error creating game:', error);
-        this.errorMessage.set('Failed to create game');
-        this.loading.set(false);
-      }
+    this.websocketService.send({
+      type: 'CREATE_GAME',
+      gameName: this.newGameName()
     });
+
+    this.newGameName.set('');
+    this.showCreateForm.set(false);
   }
 
   joinGame(gameId: number) {
-    const user = this.userService.getUser();
-    if (!user) {
-      this.errorMessage.set('You must be logged in to join a game');
-      return;
-    }
-
-    this.loading.set(true);
     this.errorMessage.set('');
-
-    this.gameService.joinGame(gameId, { userId: user.userId }).subscribe({
-      next: (game) => {
-        this.successMessage.set(`Successfully joined "${game.gameName}"!`);
-        this.loadGames();
-        setTimeout(() => this.successMessage.set(''), 3000);
-      },
-      error: (error) => {
-        console.error('Error joining game:', error);
-        this.errorMessage.set('Failed to join game. You may already be in this game.');
-        this.loading.set(false);
-      }
+    this.websocketService.send({
+      type: 'JOIN_GAME',
+      gameId: gameId
     });
   }
 
   logout() {
-    this.userService.clearUser();
+    this.websocketService.disconnect();
     this.router.navigate(['/']);
   }
 
   get currentUser() {
-    return this.userService.getUser();
+    return this.websocketService.currentUser;
   }
 }
