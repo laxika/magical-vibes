@@ -11,33 +11,33 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class WebSocketSessionManager {
 
-    // Maps session ID to user ID
-    private final Map<String, Long> sessionToUser = new ConcurrentHashMap<>();
-
-    // Maps session ID to WebSocketSession
+    private final Map<String, Long> sessionToUserId = new ConcurrentHashMap<>();
+    private final Map<String, String> sessionToUsername = new ConcurrentHashMap<>();
     private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
-    public void registerSession(WebSocketSession session, Long userId) {
-        sessionToUser.put(session.getId(), userId);
+    public void registerSession(WebSocketSession session, Long userId, String username) {
+        sessionToUserId.put(session.getId(), userId);
+        sessionToUsername.put(session.getId(), username);
         sessions.put(session.getId(), session);
-        log.info("Registered session {} for user {}", session.getId(), userId);
+        log.info("Registered session {} for user {} ({})", session.getId(), userId, username);
     }
 
     public void unregisterSession(String sessionId) {
-        Long userId = sessionToUser.remove(sessionId);
+        Long userId = sessionToUserId.remove(sessionId);
+        sessionToUsername.remove(sessionId);
         sessions.remove(sessionId);
         log.info("Unregistered session {} for user {}", sessionId, userId);
     }
 
     public Long getUserId(String sessionId) {
-        return sessionToUser.get(sessionId);
+        return sessionToUserId.get(sessionId);
+    }
+
+    public String getUsername(String sessionId) {
+        return sessionToUsername.get(sessionId);
     }
 
     public Map<String, WebSocketSession> getAllSessions() {
         return new ConcurrentHashMap<>(sessions);
-    }
-
-    public int getActiveSessionCount() {
-        return sessions.size();
     }
 }

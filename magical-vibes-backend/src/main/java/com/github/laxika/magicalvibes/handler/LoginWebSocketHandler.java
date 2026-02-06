@@ -101,8 +101,8 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         log.info("Sent login response to session {}: {}", session.getId(), response.getType());
 
         if ("LOGIN_SUCCESS".equals(response.getType())) {
-            sessionManager.registerSession(session, response.getUserId());
-            log.info("Session {} registered for user {} - connection staying open", session.getId(), response.getUserId());
+            sessionManager.registerSession(session, response.getUserId(), response.getUsername());
+            log.info("Session {} registered for user {} ({}) - connection staying open", session.getId(), response.getUserId(), response.getUsername());
         } else {
             session.close(CloseStatus.NORMAL);
         }
@@ -116,7 +116,8 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         }
 
         String gameName = jsonNode.get("gameName").asText();
-        GameResponse gameResponse = gameService.createGame(gameName, userId);
+        String username = sessionManager.getUsername(session.getId());
+        GameResponse gameResponse = gameService.createGame(gameName, userId, username);
 
         // Broadcast NEW_GAME to all connected users
         broadcastToAll("NEW_GAME", gameResponse);
