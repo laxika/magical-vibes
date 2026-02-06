@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(gradle wrapper:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(ls:*)"
     ]
   }
 }
