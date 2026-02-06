@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-create-game-players-table
+      author: magical-vibes
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE game_players (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                game_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                joined_at TIMESTAMP NOT NULL,
+                UNIQUE(game_id, user_id),
+                FOREIGN KEY (game_id) REFERENCES games(id),
+                FOREIGN KEY (user_id) REFERENCES users(id)
+              )

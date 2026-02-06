@@ -1,10 +1,86 @@
 <div class="home-container">
-  <div class="home-card">
-    <h1>Welcome to Magical Vibes!</h1>
-    <p>You have successfully logged in.</p>
+  <div class="home-content">
+    <header>
+      <h1>Magical Vibes</h1>
+      <div class="user-info">
+        <span>Welcome, {{ currentUser?.username }}!</span>
+        <button class="btn-logout" (click)="logout()">Logout</button>
+      </div>
+    </header>
 
-    <button class="btn-primary" (click)="logout()">
-      Logout
-    </button>
+    @if (successMessage()) {
+      <div class="alert alert-success">
+        {{ successMessage() }}
+      </div>
+    }
+
+    @if (errorMessage()) {
+      <div class="alert alert-error">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <div class="actions">
+      <button class="btn-primary" (click)="toggleCreateForm()">
+        @if (showCreateForm()) {
+          Cancel
+        } @else {
+          Create New Game
+        }
+      </button>
+      <button class="btn-secondary" (click)="loadGames()">
+        Refresh Games
+      </button>
+    </div>
+
+    @if (showCreateForm()) {
+      <div class="create-game-form">
+        <h2>Create New Game</h2>
+        <div class="form-group">
+          <label for="gameName">Game Name</label>
+          <input
+            type="text"
+            id="gameName"
+            [(ngModel)]="newGameName"
+            placeholder="Enter game name"
+            [disabled]="loading()"
+          />
+        </div>
+        <button class="btn-primary" (click)="createGame()" [disabled]="loading()">
+          Create Game
+        </button>
+      </div>
+    }
+
+    <div class="games-section">
+      <h2>Available Games</h2>
+
+      @if (loading()) {
+        <div class="loading">
+          <span class="spinner"></span>
+          Loading games...
+        </div>
+      } @else if (games().length === 0) {
+        <div class="no-games">
+          <p>No games available. Create one to get started!</p>
+        </div>
+      } @else {
+        <div class="games-grid">
+          @for (game of games(); track game.id) {
+            <div class="game-card">
+              <h3>{{ game.gameName }}</h3>
+              <div class="game-info">
+                <p><strong>Created by:</strong> {{ game.createdByUsername }}</p>
+                <p><strong>Players:</strong> {{ game.playerCount }}</p>
+                <p><strong>Status:</strong> {{ game.status }}</p>
+              </div>
+              <button class="btn-join" (click)="joinGame(game.id)" [disabled]="loading()">
+                Join Game
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
   </div>
 </div>

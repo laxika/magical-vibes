@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { WebsocketService } from '../../services/websocket.service';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-login',
@@ -20,6 +21,7 @@ export class LoginComponent {
 
   constructor(
     private websocketService: WebsocketService,
+    private userService: UserService,
     private router: Router
   ) {}
 
@@ -45,6 +47,12 @@ export class LoginComponent {
         if (response.type === 'LOGIN_SUCCESS') {
           this.successMessage.set(response.message);
           console.log('Login successful:', response);
+
+          // Store user info
+          this.userService.setUser({
+            userId: response.userId!,
+            username: response.username!
+          });
 
           // Navigate to home after 1 second
           setTimeout(() => {
