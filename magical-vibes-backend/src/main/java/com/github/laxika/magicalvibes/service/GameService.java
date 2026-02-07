@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.dto.GameLogEntryMessage;
-import com.github.laxika.magicalvibes.dto.GameResponse;
+import com.github.laxika.magicalvibes.dto.JoinGame;
+import com.github.laxika.magicalvibes.dto.LobbyGame;
 import com.github.laxika.magicalvibes.dto.PriorityUpdatedMessage;
 import com.github.laxika.magicalvibes.dto.StepAdvancedMessage;
 import com.github.laxika.magicalvibes.dto.TurnChangedMessage;
@@ -25,6 +26,8 @@ import java.util.stream.IntStream;
 @Slf4j
 public class GameService {
 
+    public record GameResult(JoinGame joinGame, LobbyGame lobbyGame) {}
+
     private final AtomicLong idCounter = new AtomicLong(1);
     private final Map<Long, GameData> games = new ConcurrentHashMap<>();
     private final Random random = new Random();
@@ -36,7 +39,7 @@ public class GameService {
         this.objectMapper = new ObjectMapper();
     }
 
-    public GameResponse createGame(String gameName, Player player) {
+    public GameResult createGame(String gameName, Player player) {
         long gameId = idCounter.getAndIncrement();
 
         GameData gameData = new GameData(gameId, gameName, player.getId(), player.getUsername());
@@ -47,17 +50,17 @@ public class GameService {
         games.put(gameId, gameData);
 
         log.info("Game created: id={}, name='{}', creator={}", gameId, gameName, player.getUsername());
-        return toResponse(gameData);
+        return new GameResult(toJoinGame(gameData), toLobbyGame(gameData));
     }
 
-    public List<GameResponse> listRunningGames() {
+    public List<LobbyGame> listRunningGames() {
         return games.values().stream()
                 .filter(g -> g.status != GameStatus.FINISHED)
-                .map(this::toResponse)
+                .map(this::toLobbyGame)
                 .toList();
     }
 
-    public GameResponse joinGame(Long gameId, Player player) {
+    public GameResult joinGame(Long gameId, Player player) {
         GameData gameData = games.get(gameId);
         if (gameData == null) {
             throw new IllegalArgumentException("Game not found");
@@ -82,7 +85,7 @@ public class GameService {
         }
 
         log.info("User {} joined game {}, status={}", player.getUsername(), gameId, gameData.status);
-        return toResponse(gameData);
+        return new GameResult(toJoinGame(gameData), toLobbyGame(gameData));
     }
 
     public Long getCreatorUserId(Long gameId) {
@@ -224,22 +227,28 @@ public class GameService {
         return null;
     }
 
-    private GameResponse toResponse(GameData data) {
-        return new GameResponse(
+    private JoinGame toJoinGame(GameData data) {
+        return new JoinGame(
                 data.id,
                 data.gameName,
-                data.createdByUsername,
                 data.status,
-                data.createdAt,
-                data.playerIds.size(),
                 new ArrayList<>(data.playerNames),
                 new ArrayList<>(data.orderedPlayerIds),
                 new ArrayList<>(data.gameLog),
-                data.startingPlayerId,
                 data.currentStep,
                 data.activePlayerId,
                 data.turnNumber,
                 getPriorityPlayerId(data)
+        );
+    }
+
+    private LobbyGame toLobbyGame(GameData data) {
+        return new LobbyGame(
+                data.id,
+                data.gameName,
+                data.createdByUsername,
+                data.playerIds.size(),
+                data.status
         );
     }
 

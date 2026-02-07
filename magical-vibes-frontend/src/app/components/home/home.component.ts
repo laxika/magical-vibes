@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameStatus, MessageType } from '../../services/websocket.service';
+import { WebsocketService, GameNotification, LobbyGame, LobbyGameNotification, GameStatus, MessageType } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -13,7 +13,7 @@ import { Subscription } from 'rxjs';
   styleUrl: './home.component.css'
 })
 export class HomeComponent implements OnInit, OnDestroy {
-  games = signal<Game[]>([]);
+  games = signal<LobbyGame[]>([]);
   newGameName = signal('');
   errorMessage = signal('');
   showCreateForm = signal(false);
@@ -37,26 +37,36 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Listen for game notifications
     this.subscriptions.push(
       this.websocketService.getMessages().subscribe((message) => {
-        const notification = message as GameNotification;
-
-        if (notification.type === MessageType.GAME_JOINED && notification.game) {
-          this.websocketService.currentGame = notification.game;
-          this.router.navigate(['/game']);
-        } else if (notification.type === MessageType.NEW_GAME && notification.game) {
-          const currentGames = this.games();
-          if (!currentGames.some(g => g.id === notification.game!.id)) {
-            this.games.set([...currentGames, notification.game]);
+        if (message.type === MessageType.GAME_JOINED) {
+          const notification = message as GameNotification;
+          if (notification.game) {
+            this.websocketService.currentGame = notification.game;
+            this.router.navigate(['/game']);
           }
-        } else if (notification.type === MessageType.GAME_UPDATED && notification.game) {
-          const currentGames = this.games();
-          const index = currentGames.findIndex(g => g.id === notification.game!.id);
-          if (index !== -1) {
-            const updatedGames = [...currentGames];
-            updatedGames[index] = notification.game;
-            this.games.set(updatedGames);
+        } else if (message.type === MessageType.NEW_GAME) {
+          const notification = message as LobbyGameNotification;
+          if (notification.game) {
+            const currentGames = this.games();
+            if (!currentGames.some(g => g.id === notification.game!.id)) {
+              this.games.set([...currentGames, notification.game]);
+            }
           }
-        } else if (notification.type === MessageType.ERROR && notification.message) {
-          this.errorMessage.set(notification.message);
+        } else if (message.type === MessageType.GAME_UPDATED) {
+          const notification = message as LobbyGameNotification;
+          if (notification.game) {
+            const currentGames = this.games();
+            const index = currentGames.findIndex(g => g.id === notification.game!.id);
+            if (index !== -1) {
+              const updatedGames = [...currentGames];
+              updatedGames[index] = notification.game;
+              this.games.set(updatedGames);
+            }
+          }
+        } else if (message.type === MessageType.ERROR) {
+          const notification = message as GameNotification;
+          if (notification.message) {
+            this.errorMessage.set(notification.message);
+          }
         }
       })
     );

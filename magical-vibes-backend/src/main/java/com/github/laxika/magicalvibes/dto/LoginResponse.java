@@ -14,12 +14,12 @@ public class LoginResponse {
     private String message;
     private Long userId;
     private String username;
-    private List<GameResponse> games;
+    private List<LobbyGame> games;
 
     public LoginResponse() {
     }
 
-    public LoginResponse(MessageType type, String message, Long userId, String username, List<GameResponse> games) {
+    public LoginResponse(MessageType type, String message, Long userId, String username, List<LobbyGame> games) {
         this.type = type;
         this.message = message;
         this.userId = userId;
@@ -27,7 +27,7 @@ public class LoginResponse {
         this.games = games;
     }
 
-    public static LoginResponse success(Long userId, String username, List<GameResponse> games) {
+    public static LoginResponse success(Long userId, String username, List<LobbyGame> games) {
         return new LoginResponse(MessageType.LOGIN_SUCCESS, "Login successful", userId, username, games);
     }
 

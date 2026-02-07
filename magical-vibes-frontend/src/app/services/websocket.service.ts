@@ -80,18 +80,22 @@ export const PHASE_GROUPS: PhaseGroup[] = TURN_STEPS.reduce<PhaseGroup[]>((group
 export interface Game {
   id: number;
   gameName: string;
-  createdByUsername: string;
   status: GameStatus;
-  createdAt: string;
-  playerCount: number;
   playerNames: string[];
   playerIds: number[];
   gameLog: string[];
-  startingPlayerId: number | null;
   currentStep: TurnStep | null;
   activePlayerId: number | null;
   turnNumber: number;
   priorityPlayerId: number | null;
+}
+
+export interface LobbyGame {
+  id: number;
+  gameName: string;
+  createdByUsername: string;
+  playerCount: number;
+  status: GameStatus;
 }
 
 export interface LoginResponse {
@@ -99,13 +103,18 @@ export interface LoginResponse {
   message: string;
   userId?: number;
   username?: string;
-  games?: Game[];
+  games?: LobbyGame[];
 }
 
 export interface GameNotification {
   type: MessageType;
   message?: string;
   game?: Game;
+}
+
+export interface LobbyGameNotification {
+  type: MessageType;
+  game?: LobbyGame;
 }
 
 export interface GameUpdate {
@@ -116,7 +125,7 @@ export interface GameUpdate {
   turnNumber?: number;
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | GameUpdate;
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate;
 
 export interface User {
   userId: number;
@@ -136,7 +145,7 @@ export class WebsocketService {
 
   currentUser: User | null = null;
   currentGame: Game | null = null;
-  initialGames: Game[] = [];
+  initialGames: LobbyGame[] = [];
 
   login(username: string, password: string): Observable<LoginResponse> {
     return new Observable(observer => {

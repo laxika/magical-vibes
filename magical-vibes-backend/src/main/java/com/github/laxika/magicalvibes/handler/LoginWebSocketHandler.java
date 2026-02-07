@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.handler;
 
 import com.github.laxika.magicalvibes.dto.ErrorMessage;
-import com.github.laxika.magicalvibes.dto.GameMessage;
-import com.github.laxika.magicalvibes.dto.GameResponse;
+import com.github.laxika.magicalvibes.dto.JoinGame;
+import com.github.laxika.magicalvibes.dto.JoinGameMessage;
+import com.github.laxika.magicalvibes.dto.LobbyGame;
+import com.github.laxika.magicalvibes.dto.LobbyGameMessage;
 import com.github.laxika.magicalvibes.dto.LoginRequest;
 import com.github.laxika.magicalvibes.dto.LoginResponse;
 import com.github.laxika.magicalvibes.model.MessageType;
@@ -47,7 +49,7 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+    public void afterConnectionEstablished(WebSocketSession session) {
         log.info("WebSocket connection established: {}", session.getId());
 
         ScheduledFuture<?> timeoutTask = scheduler.schedule(() -> {
@@ -119,16 +121,16 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         }
 
         String gameName = jsonNode.get("gameName").asText();
-        GameResponse gameResponse = gameService.createGame(gameName, player);
+        GameService.GameResult result = gameService.createGame(gameName, player);
 
         // Mark creator as in-game
         sessionManager.setInGame(session.getId());
 
         // Send GAME_JOINED to the creator
-        sendGameMessage(session, MessageType.GAME_JOINED, gameResponse);
+        sendJoinMessage(session, MessageType.GAME_JOINED, result.joinGame());
 
         // Broadcast NEW_GAME to lobby users only
-        broadcastToLobby(MessageType.NEW_GAME, gameResponse);
+        broadcastToLobby(MessageType.NEW_GAME, result.lobbyGame());
     }
 
     private void handleJoinGame(WebSocketSession session, JsonNode jsonNode) throws IOException {
@@ -141,25 +143,25 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         Long gameId = jsonNode.get("gameId").asLong();
 
         try {
-            GameResponse gameResponse = gameService.joinGame(gameId, player);
+            GameService.GameResult result = gameService.joinGame(gameId, player);
 
             // Mark joiner as in-game
             sessionManager.setInGame(session.getId());
 
             // Send GAME_JOINED to the joiner
-            sendGameMessage(session, MessageType.GAME_JOINED, gameResponse);
+            sendJoinMessage(session, MessageType.GAME_JOINED, result.joinGame());
 
             // Send OPPONENT_JOINED to the creator
             Long creatorUserId = gameService.getCreatorUserId(gameId);
             if (creatorUserId != null) {
                 Player creator = sessionManager.getPlayerByUserId(creatorUserId);
                 if (creator != null && creator.getSession().isOpen()) {
-                    sendGameMessage(creator.getSession(), MessageType.OPPONENT_JOINED, gameResponse);
+                    sendJoinMessage(creator.getSession(), MessageType.OPPONENT_JOINED, result.joinGame());
                 }
             }
 
             // Broadcast GAME_UPDATED to lobby users
-            broadcastToLobby(MessageType.GAME_UPDATED, gameResponse);
+            broadcastToLobby(MessageType.GAME_UPDATED, result.lobbyGame());
         } catch (IllegalArgumentException | IllegalStateException e) {
             sendError(session, e.getMessage());
         }
@@ -181,13 +183,13 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    private void sendGameMessage(WebSocketSession session, MessageType type, GameResponse game) throws IOException {
-        GameMessage message = new GameMessage(type, game);
+    private void sendJoinMessage(WebSocketSession session, MessageType type, JoinGame game) throws IOException {
+        JoinGameMessage message = new JoinGameMessage(type, game);
         session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
     }
 
-    private void broadcastToLobby(MessageType type, GameResponse game) {
-        GameMessage notification = new GameMessage(type, game);
+    private void broadcastToLobby(MessageType type, LobbyGame game) {
+        LobbyGameMessage notification = new LobbyGameMessage(type, game);
 
         int sentCount = 0;
 

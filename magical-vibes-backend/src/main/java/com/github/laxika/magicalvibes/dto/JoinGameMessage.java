@@ -2,5 +2,5 @@ package com.github.laxika.magicalvibes.dto;
 
 import com.github.laxika.magicalvibes.model.MessageType;
 
-public record GameMessage(MessageType type, GameResponse game) {
+public record JoinGameMessage(MessageType type, JoinGame game) {
 }
