@@ -25,5 +25,7 @@ public enum MessageType {
     BOTTOM_CARDS,
     DECK_SIZES_UPDATED,
     PLAYABLE_CARDS_UPDATED,
+    PLAY_CARD,
+    BATTLEFIELD_UPDATED,
     ERROR
 }

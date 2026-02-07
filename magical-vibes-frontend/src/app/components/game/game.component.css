@@ -349,6 +349,7 @@ h1 {
 .card.playable {
   border: 2px solid #f6c343;
   box-shadow: 0 0 12px rgba(246, 195, 67, 0.5);
+  cursor: pointer;
 }
 
 .card:hover {
@@ -494,4 +495,50 @@ h1 {
   font-weight: 600;
   color: white;
   opacity: 0.9;
+}
+
+.battlefield-area {
+  background: white;
+  padding: 16px 20px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  min-height: 160px;
+}
+
+.battlefield-row {
+  margin-bottom: 8px;
+}
+
+.battlefield-row:last-child {
+  margin-bottom: 0;
+}
+
+.battlefield-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.battlefield-cards {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-height: 40px;
+  align-items: center;
+}
+
+.battlefield-divider {
+  height: 1px;
+  background: #e0e0e0;
+  margin: 12px 0;
+}
+
+.battlefield-empty {
+  font-size: 13px;
+  font-style: italic;
+  color: #bbb;
 }

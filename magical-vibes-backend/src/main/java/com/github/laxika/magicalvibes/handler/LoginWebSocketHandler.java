@@ -94,6 +94,7 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
                 case KEEP_HAND -> handleKeepHand(session, jsonNode);
                 case TAKE_MULLIGAN -> handleMulligan(session, jsonNode);
                 case BOTTOM_CARDS -> handleBottomCards(session, jsonNode);
+                case PLAY_CARD -> handlePlayCard(session, jsonNode);
                 default -> sendError(session, "Unknown message type: " + type);
             }
         } catch (Exception e) {
@@ -240,6 +241,23 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
 
         try {
             gameService.bottomCards(gameId, player, cardIndices);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            sendError(session, e.getMessage());
+        }
+    }
+
+    private void handlePlayCard(WebSocketSession session, JsonNode jsonNode) throws IOException {
+        Player player = sessionManager.getPlayer(session.getId());
+        if (player == null) {
+            sendError(session, "Not authenticated");
+            return;
+        }
+
+        Long gameId = jsonNode.get("gameId").asLong();
+        int cardIndex = jsonNode.get("cardIndex").asInt();
+
+        try {
+            gameService.playCard(gameId, player, cardIndex);
         } catch (IllegalArgumentException | IllegalStateException e) {
             sendError(session, e.getMessage());
         }

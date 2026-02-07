@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -71,6 +71,11 @@ export class GameComponent implements OnInit, OnDestroy {
         if (message.type === MessageType.PLAYABLE_CARDS_UPDATED) {
           const playableMsg = message as PlayableCardsNotification;
           this.playableCardIndices = new Set(playableMsg.playableCardIndices);
+        }
+
+        if (message.type === MessageType.BATTLEFIELD_UPDATED) {
+          const bfMsg = message as BattlefieldUpdatedNotification;
+          this.updateBattlefields(bfMsg.battlefields);
         }
 
         const update = message as GameUpdate;
@@ -232,6 +237,39 @@ export class GameComponent implements OnInit, OnDestroy {
     const updated = { ...g, deckSizes };
     this.game.set(updated);
     this.websocketService.currentGame = updated;
+  }
+
+  private updateBattlefields(battlefields: Card[][]): void {
+    const g = this.game();
+    if (!g) return;
+    const updated = { ...g, battlefields };
+    this.game.set(updated);
+    this.websocketService.currentGame = updated;
+  }
+
+  get myPlayerIndex(): number {
+    const g = this.game();
+    if (!g) return 0;
+    return g.playerIds.indexOf(this.websocketService.currentUser?.userId ?? -1);
+  }
+
+  get opponentPlayerIndex(): number {
+    return this.myPlayerIndex === 0 ? 1 : 0;
+  }
+
+  get myBattlefield(): Card[] {
+    return this.game()?.battlefields?.[this.myPlayerIndex] ?? [];
+  }
+
+  get opponentBattlefield(): Card[] {
+    return this.game()?.battlefields?.[this.opponentPlayerIndex] ?? [];
+  }
+
+  playCard(index: number): void {
+    const g = this.game();
+    if (g && this.isCardPlayable(index)) {
+      this.websocketService.send({ type: MessageType.PLAY_CARD, gameId: g.id, cardIndex: index });
+    }
   }
 
   get player1DeckSize(): number {

@@ -126,11 +126,43 @@
       <button class="btn-pass" (click)="passPriority()" [disabled]="!hasPriority">Pass Priority</button>
     </div>
 
+    <div class="battlefield-area">
+      <div class="battlefield-row">
+        <div class="battlefield-label">{{ game()?.playerNames?.[opponentPlayerIndex] }}'s Battlefield</div>
+        <div class="battlefield-cards">
+          @for (card of opponentBattlefield; track $index) {
+            <div class="card">
+              <div class="card-name">{{ card.name }}</div>
+              <div class="card-type">{{ card.type }}</div>
+            </div>
+          }
+          @if (opponentBattlefield.length === 0) {
+            <div class="battlefield-empty">No permanents</div>
+          }
+        </div>
+      </div>
+      <div class="battlefield-divider"></div>
+      <div class="battlefield-row">
+        <div class="battlefield-label">Your Battlefield</div>
+        <div class="battlefield-cards">
+          @for (card of myBattlefield; track $index) {
+            <div class="card">
+              <div class="card-name">{{ card.name }}</div>
+              <div class="card-type">{{ card.type }}</div>
+            </div>
+          }
+          @if (myBattlefield.length === 0) {
+            <div class="battlefield-empty">No permanents</div>
+          }
+        </div>
+      </div>
+    </div>
+
     <div class="hand-area">
       <div class="hand-label">Your Hand ({{ hand.length }} cards)</div>
       <div class="hand-cards">
         @for (card of hand; track $index) {
-          <div class="card" [class.playable]="isCardPlayable($index)">
+          <div class="card" [class.playable]="isCardPlayable($index)" (click)="playCard($index)">
             <div class="card-name">{{ card.name }}</div>
             <div class="card-type">{{ card.type }}</div>
           </div>

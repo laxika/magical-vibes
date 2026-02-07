@@ -9,5 +9,6 @@ import java.util.List;
 public record JoinGame(long id, String gameName, GameStatus status,
                        List<String> playerNames, List<Long> playerIds, List<String> gameLog,
                        TurnStep currentStep, Long activePlayerId, int turnNumber, Long priorityPlayerId,
-                       List<Card> hand, int mulliganCount, List<Integer> deckSizes) {
+                       List<Card> hand, int mulliganCount, List<Integer> deckSizes,
+                       List<List<Card>> battlefields) {
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.dto.BattlefieldUpdatedMessage;
 import com.github.laxika.magicalvibes.dto.DeckSizesUpdatedMessage;
 import com.github.laxika.magicalvibes.dto.GameLogEntryMessage;
 import com.github.laxika.magicalvibes.dto.GameStartedMessage;
@@ -108,6 +109,7 @@ public class GameService {
             Collections.shuffle(deck, random);
             gameData.playerDecks.put(playerId, deck);
             gameData.mulliganCounts.put(playerId, 0);
+            gameData.playerBattlefields.put(playerId, new ArrayList<>());
 
             List<Card> hand = new ArrayList<>(deck.subList(0, 7));
             deck.subList(0, 7).clear();
@@ -455,7 +457,8 @@ public class GameService {
                 getPriorityPlayerId(data),
                 hand,
                 mulliganCount,
-                getDeckSizes(data)
+                getDeckSizes(data),
+                getBattlefields(data)
         );
     }
 
@@ -470,6 +473,53 @@ public class GameService {
 
     private void broadcastDeckSizes(GameData data) {
         broadcastToGame(data, new DeckSizesUpdatedMessage(getDeckSizes(data)));
+    }
+
+    private List<List<Card>> getBattlefields(GameData data) {
+        List<List<Card>> battlefields = new ArrayList<>();
+        for (Long pid : data.orderedPlayerIds) {
+            List<Card> bf = data.playerBattlefields.get(pid);
+            battlefields.add(bf != null ? new ArrayList<>(bf) : new ArrayList<>());
+        }
+        return battlefields;
+    }
+
+    private void broadcastBattlefields(GameData data) {
+        broadcastToGame(data, new BattlefieldUpdatedMessage(getBattlefields(data)));
+    }
+
+    public void playCard(Long gameId, Player player, int cardIndex) {
+        GameData gameData = games.get(gameId);
+        if (gameData == null) {
+            throw new IllegalArgumentException("Game not found");
+        }
+        if (gameData.status != GameStatus.RUNNING) {
+            throw new IllegalStateException("Game is not running");
+        }
+
+        synchronized (gameData) {
+            Long playerId = player.getId();
+            List<Integer> playable = getPlayableCardIndices(gameData, playerId);
+            if (!playable.contains(cardIndex)) {
+                throw new IllegalStateException("Card is not playable");
+            }
+
+            List<Card> hand = gameData.playerHands.get(playerId);
+            Card card = hand.remove(cardIndex);
+            gameData.playerBattlefields.get(playerId).add(card);
+            gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
+
+            sendToPlayer(playerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+            broadcastBattlefields(gameData);
+
+            String logEntry = player.getUsername() + " plays " + card.getName() + ".";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+
+            log.info("Game {} - {} plays {}", gameId, player.getUsername(), card.getName());
+
+            resolveAutoPass(gameData);
+        }
     }
 
     private List<Integer> getPlayableCardIndices(GameData gameData, Long playerId) {
@@ -579,6 +629,7 @@ public class GameService {
         int turnNumber;
         final Set<Long> priorityPassedBy = ConcurrentHashMap.newKeySet();
         final Map<Long, Integer> landsPlayedThisTurn = new ConcurrentHashMap<>();
+        final Map<Long, List<Card>> playerBattlefields = new ConcurrentHashMap<>();
 
         GameData(long id, String gameName, long createdByUserId, String createdByUsername) {
             this.id = id;

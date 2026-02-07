@@ -26,6 +26,8 @@ export enum MessageType {
   BOTTOM_CARDS = 'BOTTOM_CARDS',
   DECK_SIZES_UPDATED = 'DECK_SIZES_UPDATED',
   PLAYABLE_CARDS_UPDATED = 'PLAYABLE_CARDS_UPDATED',
+  PLAY_CARD = 'PLAY_CARD',
+  BATTLEFIELD_UPDATED = 'BATTLEFIELD_UPDATED',
   ERROR = 'ERROR'
 }
 
@@ -108,6 +110,7 @@ export interface Game {
   hand: Card[];
   mulliganCount: number;
   deckSizes: number[];
+  battlefields: Card[][];
 }
 
 export interface LobbyGame {
@@ -181,7 +184,12 @@ export interface PlayableCardsNotification {
   playableCardIndices: number[];
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification;
+export interface BattlefieldUpdatedNotification {
+  type: MessageType;
+  battlefields: Card[][];
+}
+
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification;
 
 export interface User {
   userId: number;
