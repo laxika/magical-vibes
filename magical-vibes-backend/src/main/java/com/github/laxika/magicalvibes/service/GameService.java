@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.dto.HandDrawnMessage;
 import com.github.laxika.magicalvibes.dto.JoinGame;
 import com.github.laxika.magicalvibes.dto.LobbyGame;
 import com.github.laxika.magicalvibes.dto.MulliganResolvedMessage;
+import com.github.laxika.magicalvibes.dto.PlayableCardsMessage;
 import com.github.laxika.magicalvibes.dto.PriorityUpdatedMessage;
 import com.github.laxika.magicalvibes.dto.SelectCardsToBottomMessage;
 import com.github.laxika.magicalvibes.dto.StepAdvancedMessage;
@@ -147,6 +148,7 @@ public class GameService {
                 advanceStep(gameData);
             } else {
                 broadcastToGame(gameData, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+                broadcastPlayableCards(gameData);
             }
         }
     }
@@ -163,6 +165,7 @@ public class GameService {
 
             broadcastLogEntry(gameData, logEntry);
             broadcastToGame(gameData, new StepAdvancedMessage(getPriorityPlayerId(gameData), next));
+            broadcastPlayableCards(gameData);
         } else {
             advanceTurn(gameData);
         }
@@ -178,6 +181,7 @@ public class GameService {
         gameData.turnNumber++;
         gameData.currentStep = TurnStep.first();
         gameData.priorityPassedBy.clear();
+        gameData.landsPlayedThisTurn.clear();
 
         String logEntry = "Turn " + gameData.turnNumber + " begins. " + nextActiveName + "'s turn.";
         gameData.gameLog.add(logEntry);
@@ -187,6 +191,7 @@ public class GameService {
         broadcastToGame(gameData, new TurnChangedMessage(
                 getPriorityPlayerId(gameData), TurnStep.first(), nextActive, gameData.turnNumber
         ));
+        broadcastPlayableCards(gameData);
     }
 
     public Long getGameIdForPlayer(Long userId) {
@@ -407,6 +412,7 @@ public class GameService {
         broadcastToGame(gameData, new GameStartedMessage(
                 gameData.activePlayerId, gameData.turnNumber, gameData.currentStep, getPriorityPlayerId(gameData)
         ));
+        broadcastPlayableCards(gameData);
 
         log.info("Game {} - Game started! Turn 1 begins. Active player: {}", gameData.id, gameData.playerIdToName.get(gameData.activePlayerId));
     }
@@ -466,6 +472,44 @@ public class GameService {
         broadcastToGame(data, new DeckSizesUpdatedMessage(getDeckSizes(data)));
     }
 
+    private List<Integer> getPlayableCardIndices(GameData gameData, Long playerId) {
+        List<Integer> playable = new ArrayList<>();
+        if (gameData.status != GameStatus.RUNNING) {
+            return playable;
+        }
+
+        Long priorityHolder = getPriorityPlayerId(gameData);
+        if (!playerId.equals(priorityHolder)) {
+            return playable;
+        }
+
+        List<Card> hand = gameData.playerHands.get(playerId);
+        if (hand == null) {
+            return playable;
+        }
+
+        boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
+        boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
+        int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
+
+        for (int i = 0; i < hand.size(); i++) {
+            Card card = hand.get(i);
+            if ("Basic Land".equals(card.getType()) && isActivePlayer && isMainPhase && landsPlayed < 1) {
+                playable.add(i);
+            }
+        }
+
+        return playable;
+    }
+
+    private void broadcastPlayableCards(GameData gameData) {
+        for (Long playerId : gameData.orderedPlayerIds) {
+            List<Integer> playable = getPlayableCardIndices(gameData, playerId);
+            sendToPlayer(playerId, new PlayableCardsMessage(playable));
+        }
+    }
+
     private LobbyGame toLobbyGame(GameData data) {
         return new LobbyGame(
                 data.id,
@@ -498,6 +542,7 @@ public class GameService {
         Long activePlayerId;
         int turnNumber;
         final Set<Long> priorityPassedBy = ConcurrentHashMap.newKeySet();
+        final Map<Long, Integer> landsPlayedThisTurn = new ConcurrentHashMap<>();
 
         GameData(long id, String gameName, long createdByUserId, String createdByUsername) {
             this.id = id;

@@ -24,5 +24,6 @@ public enum MessageType {
     SELECT_CARDS_TO_BOTTOM,
     BOTTOM_CARDS,
     DECK_SIZES_UPDATED,
+    PLAYABLE_CARDS_UPDATED,
     ERROR
 }

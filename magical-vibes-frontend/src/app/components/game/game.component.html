@@ -130,7 +130,7 @@
       <div class="hand-label">Your Hand ({{ hand.length }} cards)</div>
       <div class="hand-cards">
         @for (card of hand; track $index) {
-          <div class="card">
+          <div class="card" [class.playable]="isCardPlayable($index)">
             <div class="card-name">{{ card.name }}</div>
             <div class="card-type">{{ card.type }}</div>
           </div>

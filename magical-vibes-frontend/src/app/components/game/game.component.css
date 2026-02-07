@@ -346,6 +346,11 @@ h1 {
   transition: transform 0.15s;
 }
 
+.card.playable {
+  border: 2px solid #f6c343;
+  box-shadow: 0 0 12px rgba(246, 195, 67, 0.5);
+}
+
 .card:hover {
   transform: translateY(-4px);
 }

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -66,6 +66,11 @@ export class GameComponent implements OnInit, OnDestroy {
         if (message.type === MessageType.DECK_SIZES_UPDATED) {
           const deckMsg = message as DeckSizesUpdatedNotification;
           this.updateDeckSizes(deckMsg.deckSizes);
+        }
+
+        if (message.type === MessageType.PLAYABLE_CARDS_UPDATED) {
+          const playableMsg = message as PlayableCardsNotification;
+          this.playableCardIndices = new Set(playableMsg.playableCardIndices);
         }
 
         const update = message as GameUpdate;
@@ -294,6 +299,11 @@ export class GameComponent implements OnInit, OnDestroy {
   selectingBottomCards = false;
   bottomCardCount = 0;
   selectedCardIndices = new Set<number>();
+  playableCardIndices = new Set<number>();
+
+  isCardPlayable(index: number): boolean {
+    return this.playableCardIndices.has(index);
+  }
 
   readonly GameStatus = GameStatus;
   readonly TurnStep = TurnStep;
