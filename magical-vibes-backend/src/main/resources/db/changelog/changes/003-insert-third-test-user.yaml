@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-insert-third-test-user
+      author: magical-vibes
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: player3
+              - column:
+                  name: password
+                  value: player3pass
