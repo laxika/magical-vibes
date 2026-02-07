@@ -22,6 +22,8 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.*;
 
 @Component
@@ -82,7 +84,7 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
 
         try {
             JsonNode jsonNode = objectMapper.readTree(message.getPayload());
-            MessageType type = MessageType.valueOf(jsonNode.get("type").asText());
+            MessageType type = MessageType.valueOf(jsonNode.get("type").asString());
 
             switch (type) {
                 case LOGIN -> handleLogin(session, jsonNode);
@@ -91,6 +93,7 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
                 case PASS_PRIORITY -> handlePassPriority(session, jsonNode);
                 case KEEP_HAND -> handleKeepHand(session, jsonNode);
                 case TAKE_MULLIGAN -> handleMulligan(session, jsonNode);
+                case BOTTOM_CARDS -> handleBottomCards(session, jsonNode);
                 default -> sendError(session, "Unknown message type: " + type);
             }
         } catch (Exception e) {
@@ -122,7 +125,7 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
-        String gameName = jsonNode.get("gameName").asText();
+        String gameName = jsonNode.get("gameName").asString();
         GameService.GameResult result = gameService.createGame(gameName, player);
 
         // Mark creator as in-game
@@ -214,6 +217,29 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
 
         try {
             gameService.mulligan(gameId, player);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            sendError(session, e.getMessage());
+        }
+    }
+
+    private void handleBottomCards(WebSocketSession session, JsonNode jsonNode) throws IOException {
+        Player player = sessionManager.getPlayer(session.getId());
+        if (player == null) {
+            sendError(session, "Not authenticated");
+            return;
+        }
+
+        Long gameId = jsonNode.get("gameId").asLong();
+        List<Integer> cardIndices = new ArrayList<>();
+        JsonNode indicesNode = jsonNode.get("cardIndices");
+        if (indicesNode != null && indicesNode.isArray()) {
+            for (JsonNode idx : indicesNode) {
+                cardIndices.add(idx.asInt());
+            }
+        }
+
+        try {
+            gameService.bottomCards(gameId, player, cardIndices);
         } catch (IllegalArgumentException | IllegalStateException e) {
             sendError(session, e.getMessage());
         }

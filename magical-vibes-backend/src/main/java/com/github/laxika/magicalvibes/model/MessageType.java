@@ -21,5 +21,7 @@ public enum MessageType {
     HAND_DRAWN,
     MULLIGAN_RESOLVED,
     GAME_STARTED,
+    SELECT_CARDS_TO_BOTTOM,
+    BOTTOM_CARDS,
     ERROR
 }

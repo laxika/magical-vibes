@@ -1,0 +1,9 @@
+package com.github.laxika.magicalvibes.dto;
+
+import com.github.laxika.magicalvibes.model.MessageType;
+
+public record SelectCardsToBottomMessage(MessageType type, int count) {
+    public SelectCardsToBottomMessage(int count) {
+        this(MessageType.SELECT_CARDS_TO_BOTTOM, count);
+    }
+}

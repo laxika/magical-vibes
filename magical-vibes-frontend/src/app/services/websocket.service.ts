@@ -22,6 +22,8 @@ export enum MessageType {
   HAND_DRAWN = 'HAND_DRAWN',
   MULLIGAN_RESOLVED = 'MULLIGAN_RESOLVED',
   GAME_STARTED = 'GAME_STARTED',
+  SELECT_CARDS_TO_BOTTOM = 'SELECT_CARDS_TO_BOTTOM',
+  BOTTOM_CARDS = 'BOTTOM_CARDS',
   ERROR = 'ERROR'
 }
 
@@ -161,7 +163,12 @@ export interface GameStartedNotification {
   priorityPlayerId: number;
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification;
+export interface SelectCardsToBottomNotification {
+  type: MessageType;
+  count: number;
+}
+
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification;
 
 export interface User {
   userId: number;

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.dto.JoinGame;
 import com.github.laxika.magicalvibes.dto.LobbyGame;
 import com.github.laxika.magicalvibes.dto.MulliganResolvedMessage;
 import com.github.laxika.magicalvibes.dto.PriorityUpdatedMessage;
+import com.github.laxika.magicalvibes.dto.SelectCardsToBottomMessage;
 import com.github.laxika.magicalvibes.dto.StepAdvancedMessage;
 import com.github.laxika.magicalvibes.dto.TurnChangedMessage;
 import com.github.laxika.magicalvibes.model.Card;
@@ -247,39 +248,102 @@ public class GameService {
         if (gameData == null) {
             throw new IllegalArgumentException("Game not found");
         }
-        if (gameData.status != GameStatus.MULLIGAN) {
-            throw new IllegalStateException("Game is not in mulligan phase");
-        }
-        if (gameData.playerKeptHand.contains(player.getId())) {
-            throw new IllegalStateException("You have already kept your hand");
-        }
 
         synchronized (gameData) {
+            if (gameData.status != GameStatus.MULLIGAN) {
+                throw new IllegalStateException("Game is not in mulligan phase");
+            }
+            if (gameData.playerKeptHand.contains(player.getId())) {
+                throw new IllegalStateException("You have already kept your hand");
+            }
+
             gameData.playerKeptHand.add(player.getId());
             int mulliganCount = gameData.mulliganCounts.getOrDefault(player.getId(), 0);
             List<Card> hand = gameData.playerHands.get(player.getId());
-            List<Card> deck = gameData.playerDecks.get(player.getId());
+
+            broadcastToGame(gameData, new MulliganResolvedMessage(player.getUsername(), true, mulliganCount));
 
             if (mulliganCount > 0 && !hand.isEmpty()) {
                 int cardsToBottom = Math.min(mulliganCount, hand.size());
-                List<Card> bottomCards = new ArrayList<>(hand.subList(hand.size() - cardsToBottom, hand.size()));
-                hand.subList(hand.size() - cardsToBottom, hand.size()).clear();
-                deck.addAll(bottomCards);
+                gameData.playerNeedsToBottom.put(player.getId(), cardsToBottom);
+                sendToPlayer(player.getId(), new SelectCardsToBottomMessage(cardsToBottom));
+
+                String logEntry = player.getUsername() + " keeps their hand and must put " + cardsToBottom +
+                        " card" + (cardsToBottom > 1 ? "s" : "") + " on the bottom of their library.";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+
+                log.info("Game {} - {} kept hand, needs to bottom {} cards (mulligan count: {})", gameId, player.getUsername(), cardsToBottom, mulliganCount);
+            } else {
+                String logEntry = player.getUsername() + " keeps their hand.";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+
+                log.info("Game {} - {} kept hand (no mulligans)", gameId, player.getUsername());
+
+                checkStartGame(gameData);
+            }
+        }
+    }
+
+    public void bottomCards(Long gameId, Player player, List<Integer> cardIndices) {
+        GameData gameData = games.get(gameId);
+        if (gameData == null) {
+            throw new IllegalArgumentException("Game not found");
+        }
+
+        synchronized (gameData) {
+            if (gameData.status != GameStatus.MULLIGAN) {
+                throw new IllegalStateException("Game is not in mulligan phase");
+            }
+            Integer neededCount = gameData.playerNeedsToBottom.get(player.getId());
+            if (neededCount == null) {
+                throw new IllegalStateException("You don't need to put cards on the bottom");
+            }
+            if (cardIndices.size() != neededCount) {
+                throw new IllegalStateException("You must select exactly " + neededCount + " card(s) to put on the bottom");
             }
 
-            sendToPlayer(player.getId(), new HandDrawnMessage(new ArrayList<>(hand), mulliganCount));
-            broadcastToGame(gameData, new MulliganResolvedMessage(player.getUsername(), true, mulliganCount));
+            List<Card> hand = gameData.playerHands.get(player.getId());
+            List<Card> deck = gameData.playerDecks.get(player.getId());
 
-            String logEntry = player.getUsername() + " keeps their hand" +
-                    (mulliganCount > 0 ? " (mulliganed " + mulliganCount + " time" + (mulliganCount > 1 ? "s" : "") + ", keeping " + hand.size() + " cards)." : ".");
+            Set<Integer> uniqueIndices = new HashSet<>(cardIndices);
+            if (uniqueIndices.size() != cardIndices.size()) {
+                throw new IllegalStateException("Duplicate card indices are not allowed");
+            }
+            for (int idx : cardIndices) {
+                if (idx < 0 || idx >= hand.size()) {
+                    throw new IllegalStateException("Invalid card index: " + idx);
+                }
+            }
+
+            // Sort indices descending so removal doesn't shift earlier indices
+            List<Integer> sorted = new ArrayList<>(cardIndices);
+            sorted.sort(Collections.reverseOrder());
+            List<Card> bottomCards = new ArrayList<>();
+            for (int idx : sorted) {
+                bottomCards.add(hand.remove(idx));
+            }
+            deck.addAll(bottomCards);
+
+            gameData.playerNeedsToBottom.remove(player.getId());
+
+            sendToPlayer(player.getId(), new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(player.getId(), 0)));
+
+            String logEntry = player.getUsername() + " puts " + bottomCards.size() +
+                    " card" + (bottomCards.size() > 1 ? "s" : "") + " on the bottom of their library (keeping " + hand.size() + " cards).";
             gameData.gameLog.add(logEntry);
             broadcastLogEntry(gameData, logEntry);
 
-            log.info("Game {} - {} kept hand (mulligan count: {}, hand size: {})", gameId, player.getUsername(), mulliganCount, hand.size());
+            log.info("Game {} - {} bottomed {} cards, hand size now {}", gameId, player.getUsername(), bottomCards.size(), hand.size());
 
-            if (gameData.playerKeptHand.size() >= 2) {
-                startGame(gameData);
-            }
+            checkStartGame(gameData);
+        }
+    }
+
+    private void checkStartGame(GameData gameData) {
+        if (gameData.playerKeptHand.size() >= 2 && gameData.playerNeedsToBottom.isEmpty()) {
+            startGame(gameData);
         }
     }
 
@@ -288,18 +352,18 @@ public class GameService {
         if (gameData == null) {
             throw new IllegalArgumentException("Game not found");
         }
-        if (gameData.status != GameStatus.MULLIGAN) {
-            throw new IllegalStateException("Game is not in mulligan phase");
-        }
-        if (gameData.playerKeptHand.contains(player.getId())) {
-            throw new IllegalStateException("You have already kept your hand");
-        }
-        int currentMulliganCount = gameData.mulliganCounts.getOrDefault(player.getId(), 0);
-        if (currentMulliganCount >= 7) {
-            throw new IllegalStateException("Maximum mulligans reached");
-        }
 
         synchronized (gameData) {
+            if (gameData.status != GameStatus.MULLIGAN) {
+                throw new IllegalStateException("Game is not in mulligan phase");
+            }
+            if (gameData.playerKeptHand.contains(player.getId())) {
+                throw new IllegalStateException("You have already kept your hand");
+            }
+            int currentMulliganCount = gameData.mulliganCounts.getOrDefault(player.getId(), 0);
+            if (currentMulliganCount >= 7) {
+                throw new IllegalStateException("Maximum mulligans reached");
+            }
             List<Card> hand = gameData.playerHands.get(player.getId());
             List<Card> deck = gameData.playerDecks.get(player.getId());
 
@@ -411,6 +475,7 @@ public class GameService {
         final Map<Long, List<Card>> playerHands = new ConcurrentHashMap<>();
         final Map<Long, Integer> mulliganCounts = new ConcurrentHashMap<>();
         final Set<Long> playerKeptHand = ConcurrentHashMap.newKeySet();
+        final Map<Long, Integer> playerNeedsToBottom = new ConcurrentHashMap<>();
         final List<String> gameLog = Collections.synchronizedList(new ArrayList<>());
         Long startingPlayerId;
         TurnStep currentStep;

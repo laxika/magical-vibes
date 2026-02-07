@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -56,6 +56,11 @@ export class GameComponent implements OnInit, OnDestroy {
         if (message.type === MessageType.GAME_STARTED) {
           const started = message as GameStartedNotification;
           this.handleGameStarted(started);
+        }
+
+        if (message.type === MessageType.SELECT_CARDS_TO_BOTTOM) {
+          const selectMsg = message as SelectCardsToBottomNotification;
+          this.handleSelectCardsToBottom(selectMsg);
         }
 
         const update = message as GameUpdate;
@@ -173,8 +178,12 @@ export class GameComponent implements OnInit, OnDestroy {
     const g = this.game();
     if (!g) return;
 
-    const opponentName = g.playerNames.find(n => n !== this.websocketService.currentUser?.username);
-    if (resolved.playerName === opponentName) {
+    const myName = this.websocketService.currentUser?.username;
+    if (resolved.playerName === myName) {
+      if (resolved.kept) {
+        this.selfKept = true;
+      }
+    } else {
       if (resolved.kept) {
         this.opponentKept = true;
       } else {
@@ -197,19 +206,58 @@ export class GameComponent implements OnInit, OnDestroy {
     this.game.set(updated);
     this.websocketService.currentGame = updated;
     this.opponentKept = false;
+    this.selfKept = false;
+    this.selectingBottomCards = false;
+    this.bottomCardCount = 0;
+    this.selectedCardIndices.clear();
+  }
+
+  private handleSelectCardsToBottom(msg: SelectCardsToBottomNotification): void {
+    this.selectingBottomCards = true;
+    this.bottomCardCount = msg.count;
+    this.selectedCardIndices.clear();
   }
 
   keepHand(): void {
     const g = this.game();
-    if (g) {
+    if (g && !this.selfKept) {
       this.websocketService.send({ type: MessageType.KEEP_HAND, gameId: g.id });
     }
   }
 
   takeMulligan(): void {
     const g = this.game();
-    if (g) {
+    if (g && !this.selfKept) {
       this.websocketService.send({ type: MessageType.TAKE_MULLIGAN, gameId: g.id });
+    }
+  }
+
+  toggleCardSelection(index: number): void {
+    if (this.selectedCardIndices.has(index)) {
+      this.selectedCardIndices.delete(index);
+    } else if (this.selectedCardIndices.size < this.bottomCardCount) {
+      this.selectedCardIndices.add(index);
+    }
+  }
+
+  isCardSelected(index: number): boolean {
+    return this.selectedCardIndices.has(index);
+  }
+
+  get canConfirmBottom(): boolean {
+    return this.selectedCardIndices.size === this.bottomCardCount;
+  }
+
+  confirmBottomCards(): void {
+    const g = this.game();
+    if (g && this.canConfirmBottom) {
+      this.websocketService.send({
+        type: MessageType.BOTTOM_CARDS,
+        gameId: g.id,
+        cardIndices: Array.from(this.selectedCardIndices)
+      });
+      this.selectingBottomCards = false;
+      this.selectedCardIndices.clear();
     }
   }
 
@@ -221,6 +269,10 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   opponentKept = false;
+  selfKept = false;
+  selectingBottomCards = false;
+  bottomCardCount = 0;
+  selectedCardIndices = new Set<number>();
 
   readonly GameStatus = GameStatus;
   readonly TurnStep = TurnStep;

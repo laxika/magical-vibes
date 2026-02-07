@@ -23,28 +23,55 @@
         </div>
       </div>
 
-      <div class="hand-area">
-        <div class="hand-label">Your Hand ({{ hand.length }} cards)</div>
-        <div class="hand-cards">
-          @for (card of hand; track $index) {
-            <div class="card">
-              <div class="card-name">{{ card.name }}</div>
-              <div class="card-type">{{ card.type }}</div>
-            </div>
+      @if (selectingBottomCards) {
+        <div class="hand-area bottom-selection">
+          <div class="hand-label">Select {{ bottomCardCount }} card{{ bottomCardCount > 1 ? 's' : '' }} to put on the bottom of your library</div>
+          <div class="selection-count">Selected: {{ selectedCardIndices.size }} / {{ bottomCardCount }}</div>
+          <div class="hand-cards">
+            @for (card of hand; track $index) {
+              <div class="card selectable" [class.selected]="isCardSelected($index)" (click)="toggleCardSelection($index)">
+                <div class="card-name">{{ card.name }}</div>
+                <div class="card-type">{{ card.type }}</div>
+                @if (isCardSelected($index)) {
+                  <div class="card-selected-badge">Bottom</div>
+                }
+              </div>
+            }
+          </div>
+          <div class="mulligan-actions">
+            <button class="btn-keep" (click)="confirmBottomCards()" [disabled]="!canConfirmBottom">Confirm Selection</button>
+          </div>
+        </div>
+      } @else {
+        <div class="hand-area">
+          <div class="hand-label">Your Hand ({{ hand.length }} cards)</div>
+          <div class="hand-cards">
+            @for (card of hand; track $index) {
+              <div class="card">
+                <div class="card-name">{{ card.name }}</div>
+                <div class="card-type">{{ card.type }}</div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="mulligan-info">
+          @if ((game()?.mulliganCount ?? 0) > 0) {
+            <span class="mulligan-count">Mulligan count: {{ game()?.mulliganCount }}</span>
           }
         </div>
-      </div>
 
-      <div class="mulligan-info">
-        @if ((game()?.mulliganCount ?? 0) > 0) {
-          <span class="mulligan-count">Mulligan count: {{ game()?.mulliganCount }}</span>
+        @if (!selfKept) {
+          <div class="mulligan-actions">
+            <button class="btn-keep" (click)="keepHand()">Keep Hand</button>
+            <button class="btn-mulligan" (click)="takeMulligan()" [disabled]="!canMulligan">Mulligan</button>
+          </div>
+        } @else {
+          <div class="mulligan-actions">
+            <span class="kept-label">You kept your hand.</span>
+          </div>
         }
-      </div>
-
-      <div class="mulligan-actions">
-        <button class="btn-keep" (click)="keepHand()">Keep Hand</button>
-        <button class="btn-mulligan" (click)="takeMulligan()" [disabled]="!canMulligan">Mulligan</button>
-      </div>
+      }
 
       <div class="opponent-mulligan-status">
         @if (opponentKept) {
