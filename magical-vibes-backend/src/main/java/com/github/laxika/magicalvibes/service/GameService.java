@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.dto.DeckSizesUpdatedMessage;
 import com.github.laxika.magicalvibes.dto.GameLogEntryMessage;
 import com.github.laxika.magicalvibes.dto.GameStartedMessage;
 import com.github.laxika.magicalvibes.dto.HandDrawnMessage;
@@ -337,6 +338,7 @@ public class GameService {
 
             log.info("Game {} - {} bottomed {} cards, hand size now {}", gameId, player.getUsername(), bottomCards.size(), hand.size());
 
+            broadcastDeckSizes(gameData);
             checkStartGame(gameData);
         }
     }
@@ -446,8 +448,22 @@ public class GameService {
                 data.turnNumber,
                 getPriorityPlayerId(data),
                 hand,
-                mulliganCount
+                mulliganCount,
+                getDeckSizes(data)
         );
+    }
+
+    private List<Integer> getDeckSizes(GameData data) {
+        List<Integer> sizes = new ArrayList<>();
+        for (Long pid : data.orderedPlayerIds) {
+            List<Card> deck = data.playerDecks.get(pid);
+            sizes.add(deck != null ? deck.size() : 0);
+        }
+        return sizes;
+    }
+
+    private void broadcastDeckSizes(GameData data) {
+        broadcastToGame(data, new DeckSizesUpdatedMessage(getDeckSizes(data)));
     }
 
     private LobbyGame toLobbyGame(GameData data) {

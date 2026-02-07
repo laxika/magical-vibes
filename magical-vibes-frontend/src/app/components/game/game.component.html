@@ -13,6 +13,7 @@
       <div class="turn-info">
         <div class="player-badge active">
           {{ player1Name }}
+          <span class="deck-size">Deck: {{ player1DeckSize }}</span>
         </div>
         <div class="turn-center">
           <span class="turn-number">Mulligan Phase</span>
@@ -20,6 +21,7 @@
         </div>
         <div class="player-badge active">
           {{ player2Name }}
+          <span class="deck-size">Deck: {{ player2DeckSize }}</span>
         </div>
       </div>
 
@@ -87,6 +89,7 @@
     <div class="turn-info">
       <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)">
         {{ player1Name }}
+        <span class="deck-size">Deck: {{ player1DeckSize }}</span>
         @if (holdsPriority(0)) {
           <span class="priority-indicator">Priority</span>
         }
@@ -97,6 +100,7 @@
       </div>
       <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)">
         {{ player2Name }}
+        <span class="deck-size">Deck: {{ player2DeckSize }}</span>
         @if (holdsPriority(1)) {
           <span class="priority-indicator">Priority</span>
         }

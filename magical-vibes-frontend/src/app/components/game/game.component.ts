@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -61,6 +61,11 @@ export class GameComponent implements OnInit, OnDestroy {
         if (message.type === MessageType.SELECT_CARDS_TO_BOTTOM) {
           const selectMsg = message as SelectCardsToBottomNotification;
           this.handleSelectCardsToBottom(selectMsg);
+        }
+
+        if (message.type === MessageType.DECK_SIZES_UPDATED) {
+          const deckMsg = message as DeckSizesUpdatedNotification;
+          this.updateDeckSizes(deckMsg.deckSizes);
         }
 
         const update = message as GameUpdate;
@@ -210,6 +215,22 @@ export class GameComponent implements OnInit, OnDestroy {
     this.selectingBottomCards = false;
     this.bottomCardCount = 0;
     this.selectedCardIndices.clear();
+  }
+
+  private updateDeckSizes(deckSizes: number[]): void {
+    const g = this.game();
+    if (!g) return;
+    const updated = { ...g, deckSizes };
+    this.game.set(updated);
+    this.websocketService.currentGame = updated;
+  }
+
+  get player1DeckSize(): number {
+    return this.game()?.deckSizes?.[0] ?? 0;
+  }
+
+  get player2DeckSize(): number {
+    return this.game()?.deckSizes?.[1] ?? 0;
   }
 
   private handleSelectCardsToBottom(msg: SelectCardsToBottomNotification): void {
