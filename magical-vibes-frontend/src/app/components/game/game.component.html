@@ -10,10 +10,16 @@
 
   @if (game()?.status === GameStatus.RUNNING) {
     <div class="turn-info">
-      <span class="turn-number">Turn {{ game()?.turnNumber }}</span>
-      <span class="active-player" [class.my-turn]="isMyTurn">
-        {{ game()?.activePlayerName }}'s turn
-      </span>
+      <div class="player-badge" [class.active]="isActivePlayer(player1Name)" [class.inactive]="!isActivePlayer(player1Name)">
+        {{ player1Name }}
+      </div>
+      <div class="turn-center">
+        <span class="turn-number">Turn {{ game()?.turnNumber }}</span>
+        <span class="vs-label">VS</span>
+      </div>
+      <div class="player-badge" [class.active]="isActivePlayer(player2Name)" [class.inactive]="!isActivePlayer(player2Name)">
+        {{ player2Name }}
+      </div>
     </div>
 
     <div class="phase-tracker">
@@ -38,23 +44,25 @@
 
   <div class="game-layout">
     <div class="game-area">
-      <div class="players-area">
-        <div class="player-card">
-          <div class="player-label">Player 1</div>
-          <div class="player-name">{{ player1Name }}</div>
-        </div>
+      @if (game()?.status !== GameStatus.RUNNING) {
+        <div class="players-area">
+          <div class="player-card">
+            <div class="player-label">Player 1</div>
+            <div class="player-name">{{ player1Name }}</div>
+          </div>
 
-        <div class="vs-divider">VS</div>
+          <div class="vs-divider">VS</div>
 
-        <div class="player-card">
-          <div class="player-label">Player 2</div>
-          @if (isWaitingForOpponent) {
-            <div class="player-name waiting">Waiting for an opponent</div>
-          } @else {
-            <div class="player-name">{{ player2Name }}</div>
-          }
+          <div class="player-card">
+            <div class="player-label">Player 2</div>
+            @if (isWaitingForOpponent) {
+              <div class="player-name waiting">Waiting for an opponent</div>
+            } @else {
+              <div class="player-name">{{ player2Name }}</div>
+            }
+          </div>
         </div>
-      </div>
+      }
     </div>
 
     <div class="log-panel">

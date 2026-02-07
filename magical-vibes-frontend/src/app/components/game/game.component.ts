@@ -74,6 +74,10 @@ export class GameComponent implements OnInit, OnDestroy {
     return g !== null && g.activePlayerName === this.websocketService.currentUser?.username;
   }
 
+  isActivePlayer(name: string): boolean {
+    return this.game()?.activePlayerName === name;
+  }
+
   passPriority(): void {
     const g = this.game();
     if (g) {
