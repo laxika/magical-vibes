@@ -21,9 +21,11 @@ public class GameResponse {
     private LocalDateTime createdAt;
     private int playerCount;
     private List<String> playerNames;
+    private List<Long> playerIds;
     private List<String> gameLog;
-    private String startingPlayerName;
+    private Long startingPlayerId;
     private TurnStep currentStep;
-    private String activePlayerName;
+    private Long activePlayerId;
     private int turnNumber;
+    private Long priorityPlayerId;
 }

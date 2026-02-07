@@ -28,7 +28,9 @@ public class GameService {
 
         GameData gameData = new GameData(gameId, gameName, player.getId(), player.getUsername());
         gameData.playerIds.add(player.getId());
+        gameData.orderedPlayerIds.add(player.getId());
         gameData.playerNames.add(player.getUsername());
+        gameData.playerIdToName.put(player.getId(), player.getUsername());
         games.put(gameId, gameData);
 
         log.info("Game created: id={}, name='{}', creator={}", gameId, gameName, player.getUsername());
@@ -57,7 +59,9 @@ public class GameService {
         }
 
         gameData.playerIds.add(player.getId());
+        gameData.orderedPlayerIds.add(player.getId());
         gameData.playerNames.add(player.getUsername());
+        gameData.playerIdToName.put(player.getId(), player.getUsername());
 
         if (gameData.playerIds.size() >= 2) {
             gameData.status = GameStatus.RUNNING;
@@ -86,17 +90,18 @@ public class GameService {
         gameData.gameLog.add("Game started!");
         gameData.gameLog.add("Each player receives a deck of 60 Forests.");
 
-        List<String> names = new ArrayList<>(gameData.playerNames);
-        String startingPlayer = names.get(random.nextInt(names.size()));
-        gameData.startingPlayerName = startingPlayer;
+        List<Long> ids = new ArrayList<>(gameData.orderedPlayerIds);
+        Long startingPlayerId = ids.get(random.nextInt(ids.size()));
+        String startingPlayerName = gameData.playerIdToName.get(startingPlayerId);
+        gameData.startingPlayerId = startingPlayerId;
 
-        gameData.gameLog.add(startingPlayer + " wins the coin toss and goes first!");
+        gameData.gameLog.add(startingPlayerName + " wins the coin toss and goes first!");
 
-        gameData.activePlayerName = startingPlayer;
+        gameData.activePlayerId = startingPlayerId;
         gameData.turnNumber = 1;
         gameData.currentStep = TurnStep.first();
 
-        log.info("Game {} - Turn 1 begins. Active player: {}, Step: {}", gameData.id, startingPlayer, gameData.currentStep);
+        log.info("Game {} - Turn 1 begins. Active player: {}, Step: {}", gameData.id, startingPlayerName, gameData.currentStep);
     }
 
     public GameResponse passPriority(Long gameId, Player player) {
@@ -109,7 +114,7 @@ public class GameService {
         }
 
         synchronized (gameData) {
-            gameData.priorityPassedBy.add(player.getUsername());
+            gameData.priorityPassedBy.add(player.getId());
             log.info("Game {} - {} passed priority on step {} (passed: {}/2)",
                     gameId, player.getUsername(), gameData.currentStep, gameData.priorityPassedBy.size());
 
@@ -135,17 +140,18 @@ public class GameService {
     }
 
     private void advanceTurn(GameData gameData) {
-        List<String> names = new ArrayList<>(gameData.playerNames);
-        String currentActive = gameData.activePlayerName;
-        String nextActive = names.get(0).equals(currentActive) ? names.get(1) : names.get(0);
+        List<Long> ids = new ArrayList<>(gameData.orderedPlayerIds);
+        Long currentActive = gameData.activePlayerId;
+        Long nextActive = ids.get(0).equals(currentActive) ? ids.get(1) : ids.get(0);
+        String nextActiveName = gameData.playerIdToName.get(nextActive);
 
-        gameData.activePlayerName = nextActive;
+        gameData.activePlayerId = nextActive;
         gameData.turnNumber++;
         gameData.currentStep = TurnStep.first();
         gameData.priorityPassedBy.clear();
 
-        gameData.gameLog.add("Turn " + gameData.turnNumber + " begins. " + nextActive + "'s turn.");
-        log.info("Game {} - Turn {} begins. Active player: {}", gameData.id, gameData.turnNumber, nextActive);
+        gameData.gameLog.add("Turn " + gameData.turnNumber + " begins. " + nextActiveName + "'s turn.");
+        log.info("Game {} - Turn {} begins. Active player: {}", gameData.id, gameData.turnNumber, nextActiveName);
     }
 
     public Long getGameIdForPlayer(Long userId) {
@@ -161,6 +167,21 @@ public class GameService {
         return gameData != null ? new HashSet<>(gameData.playerIds) : Set.of();
     }
 
+    private Long getPriorityPlayerId(GameData data) {
+        if (data.activePlayerId == null) {
+            return null;
+        }
+        if (!data.priorityPassedBy.contains(data.activePlayerId)) {
+            return data.activePlayerId;
+        }
+        List<Long> ids = new ArrayList<>(data.orderedPlayerIds);
+        Long nonActive = ids.get(0).equals(data.activePlayerId) ? ids.get(1) : ids.get(0);
+        if (!data.priorityPassedBy.contains(nonActive)) {
+            return nonActive;
+        }
+        return null;
+    }
+
     private GameResponse toResponse(GameData data) {
         return new GameResponse(
                 data.id,
@@ -170,11 +191,13 @@ public class GameService {
                 data.createdAt,
                 data.playerIds.size(),
                 new ArrayList<>(data.playerNames),
+                new ArrayList<>(data.orderedPlayerIds),
                 new ArrayList<>(data.gameLog),
-                data.startingPlayerName,
+                data.startingPlayerId,
                 data.currentStep,
-                data.activePlayerName,
-                data.turnNumber
+                data.activePlayerId,
+                data.turnNumber,
+                getPriorityPlayerId(data)
         );
     }
 
@@ -186,14 +209,16 @@ public class GameService {
         final LocalDateTime createdAt;
         GameStatus status;
         final Set<Long> playerIds = ConcurrentHashMap.newKeySet();
+        final List<Long> orderedPlayerIds = Collections.synchronizedList(new ArrayList<>());
         final List<String> playerNames = Collections.synchronizedList(new ArrayList<>());
+        final Map<Long, String> playerIdToName = new ConcurrentHashMap<>();
         final Map<Long, List<Card>> playerDecks = new ConcurrentHashMap<>();
         final List<String> gameLog = Collections.synchronizedList(new ArrayList<>());
-        String startingPlayerName;
+        Long startingPlayerId;
         TurnStep currentStep;
-        String activePlayerName;
+        Long activePlayerId;
         int turnNumber;
-        final Set<String> priorityPassedBy = ConcurrentHashMap.newKeySet();
+        final Set<Long> priorityPassedBy = ConcurrentHashMap.newKeySet();
 
         GameData(long id, String gameName, long createdByUserId, String createdByUsername) {
             this.id = id;

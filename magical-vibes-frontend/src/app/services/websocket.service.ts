@@ -82,11 +82,13 @@ export interface Game {
   createdAt: string;
   playerCount: number;
   playerNames: string[];
+  playerIds: number[];
   gameLog: string[];
-  startingPlayerName: string;
+  startingPlayerId: number | null;
   currentStep: TurnStep | null;
-  activePlayerName: string | null;
+  activePlayerId: number | null;
   turnNumber: number;
+  priorityPlayerId: number | null;
 }
 
 export interface LoginResponse {

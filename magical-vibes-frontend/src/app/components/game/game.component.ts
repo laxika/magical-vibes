@@ -71,11 +71,22 @@ export class GameComponent implements OnInit, OnDestroy {
 
   get isMyTurn(): boolean {
     const g = this.game();
-    return g !== null && g.activePlayerName === this.websocketService.currentUser?.username;
+    return g !== null && g.activePlayerId === this.websocketService.currentUser?.userId;
   }
 
-  isActivePlayer(name: string): boolean {
-    return this.game()?.activePlayerName === name;
+  isActivePlayer(playerIndex: number): boolean {
+    const g = this.game();
+    return g !== null && g.playerIds?.[playerIndex] === g.activePlayerId;
+  }
+
+  holdsPriority(playerIndex: number): boolean {
+    const g = this.game();
+    return g !== null && g.playerIds?.[playerIndex] === g.priorityPlayerId;
+  }
+
+  get hasPriority(): boolean {
+    const g = this.game();
+    return g !== null && g.priorityPlayerId === this.websocketService.currentUser?.userId;
   }
 
   passPriority(): void {

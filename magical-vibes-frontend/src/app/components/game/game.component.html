@@ -10,15 +10,21 @@
 
   @if (game()?.status === GameStatus.RUNNING) {
     <div class="turn-info">
-      <div class="player-badge" [class.active]="isActivePlayer(player1Name)" [class.inactive]="!isActivePlayer(player1Name)">
+      <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)">
         {{ player1Name }}
+        @if (holdsPriority(0)) {
+          <span class="priority-indicator">Priority</span>
+        }
       </div>
       <div class="turn-center">
         <span class="turn-number">Turn {{ game()?.turnNumber }}</span>
         <span class="vs-label">VS</span>
       </div>
-      <div class="player-badge" [class.active]="isActivePlayer(player2Name)" [class.inactive]="!isActivePlayer(player2Name)">
+      <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)">
         {{ player2Name }}
+        @if (holdsPriority(1)) {
+          <span class="priority-indicator">Priority</span>
+        }
       </div>
     </div>
 
@@ -38,7 +44,7 @@
     </div>
 
     <div class="action-bar">
-      <button class="btn-pass" (click)="passPriority()">Pass Priority</button>
+      <button class="btn-pass" (click)="passPriority()" [disabled]="!hasPriority">Pass Priority</button>
     </div>
   }
 

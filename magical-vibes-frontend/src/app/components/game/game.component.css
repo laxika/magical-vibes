@@ -188,6 +188,25 @@ h1 {
   color: #bbb;
 }
 
+.player-badge.has-priority {
+  outline: 2px solid #f6c343;
+  outline-offset: 2px;
+}
+
+.priority-indicator {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 4px;
+  color: #f6c343;
+}
+
+.player-badge.inactive .priority-indicator {
+  color: #d4a828;
+}
+
 .phase-tracker {
   display: flex;
   gap: 8px;
@@ -259,12 +278,19 @@ h1 {
   transition: transform 0.15s, box-shadow 0.15s;
 }
 
-.btn-pass:hover {
+.btn-pass:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
 }
 
-.btn-pass:active {
+.btn-pass:active:not(:disabled) {
   transform: translateY(0);
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+}
+
+.btn-pass:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
 }
