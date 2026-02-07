@@ -3,7 +3,7 @@
     <header>
       <h1>{{ game()?.gameName }}</h1>
       <div class="game-status">
-        <span class="status-badge" [class.waiting]="game()?.status === 'WAITING'" [class.running]="game()?.status === 'RUNNING'">
+        <span class="status-badge" [class.waiting]="game()?.status === GameStatus.WAITING" [class.running]="game()?.status === GameStatus.RUNNING">
           {{ game()?.status }}
         </span>
       </div>

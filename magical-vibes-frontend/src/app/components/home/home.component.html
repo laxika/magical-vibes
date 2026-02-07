@@ -59,8 +59,8 @@
                 <p><strong>Players:</strong> {{ game.playerCount }}</p>
                 <p><strong>Status:</strong> {{ game.status }}</p>
               </div>
-              <button class="btn-join" (click)="joinGame(game.id)" [disabled]="game.status !== 'WAITING'">
-                @if (game.status === 'WAITING') {
+              <button class="btn-join" (click)="joinGame(game.id)" [disabled]="game.status !== GameStatus.WAITING">
+                @if (game.status === GameStatus.WAITING) {
                   Join Game
                 } @else {
                   In Progress

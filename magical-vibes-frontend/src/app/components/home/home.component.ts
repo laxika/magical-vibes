@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameStatus } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -111,4 +111,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   get currentUser() {
     return this.websocketService.currentUser;
   }
+
+  readonly GameStatus = GameStatus;
 }

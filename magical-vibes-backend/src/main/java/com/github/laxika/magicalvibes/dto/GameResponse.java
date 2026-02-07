@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.dto;
 
+import com.github.laxika.magicalvibes.model.GameStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,7 +16,7 @@ public class GameResponse {
     private Long id;
     private String gameName;
     private String createdByUsername;
-    private String status;
+    private GameStatus status;
     private LocalDateTime createdAt;
     private int playerCount;
     private List<String> playerNames;

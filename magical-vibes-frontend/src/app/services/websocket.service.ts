@@ -1,11 +1,17 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 
+export enum GameStatus {
+  WAITING = 'WAITING',
+  RUNNING = 'RUNNING',
+  FINISHED = 'FINISHED'
+}
+
 export interface Game {
   id: number;
   gameName: string;
   createdByUsername: string;
-  status: string;
+  status: GameStatus;
   createdAt: string;
   playerCount: number;
   playerNames: string[];

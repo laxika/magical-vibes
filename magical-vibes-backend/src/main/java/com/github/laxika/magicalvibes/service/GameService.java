@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.dto.GameResponse;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Player;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,7 +32,7 @@ public class GameService {
 
     public List<GameResponse> listRunningGames() {
         return games.values().stream()
-                .filter(g -> !"FINISHED".equals(g.status))
+                .filter(g -> g.status != GameStatus.FINISHED)
                 .map(this::toResponse)
                 .toList();
     }
@@ -42,7 +43,7 @@ public class GameService {
             throw new IllegalArgumentException("Game not found");
         }
 
-        if (!"WAITING".equals(gameData.status)) {
+        if (gameData.status != GameStatus.WAITING) {
             throw new IllegalStateException("Game is not accepting players");
         }
 
@@ -54,7 +55,7 @@ public class GameService {
         gameData.playerNames.add(player.getUsername());
 
         if (gameData.playerIds.size() >= 2) {
-            gameData.status = "RUNNING";
+            gameData.status = GameStatus.RUNNING;
         }
 
         log.info("User {} joined game {}, status={}", player.getUsername(), gameId, gameData.status);
@@ -84,7 +85,7 @@ public class GameService {
         final long createdByUserId;
         final String createdByUsername;
         final LocalDateTime createdAt;
-        String status;
+        GameStatus status;
         final Set<Long> playerIds = ConcurrentHashMap.newKeySet();
         final List<String> playerNames = Collections.synchronizedList(new ArrayList<>());
 
@@ -94,7 +95,7 @@ public class GameService {
             this.createdByUserId = createdByUserId;
             this.createdByUsername = createdByUsername;
             this.createdAt = LocalDateTime.now();
-            this.status = "WAITING";
+            this.status = GameStatus.WAITING;
         }
     }
 }
