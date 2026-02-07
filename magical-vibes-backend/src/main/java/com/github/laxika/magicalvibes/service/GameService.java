@@ -260,7 +260,7 @@ public class GameService {
             List<Card> hand = gameData.playerHands.get(player.getId());
             List<Card> deck = gameData.playerDecks.get(player.getId());
 
-            if (mulliganCount > 0 && hand.size() > 0) {
+            if (mulliganCount > 0 && !hand.isEmpty()) {
                 int cardsToBottom = Math.min(mulliganCount, hand.size());
                 List<Card> bottomCards = new ArrayList<>(hand.subList(hand.size() - cardsToBottom, hand.size()));
                 hand.subList(hand.size() - cardsToBottom, hand.size()).clear();

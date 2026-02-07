@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, PhaseGroup, Card, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -31,6 +31,8 @@ export class GameComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.websocketService.getMessages().subscribe((message) => {
         const notification = message as GameNotification;
+
+        console.log(notification);
 
         if (notification.type === MessageType.OPPONENT_JOINED && notification.game) {
           this.game.set(notification.game);
