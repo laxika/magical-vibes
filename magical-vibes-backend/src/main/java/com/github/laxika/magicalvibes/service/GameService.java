@@ -168,9 +168,47 @@ public class GameService {
 
             broadcastLogEntry(gameData, logEntry);
             broadcastToGame(gameData, new StepAdvancedMessage(getPriorityPlayerId(gameData), next));
+
+            if (next == TurnStep.DRAW) {
+                handleDrawStep(gameData);
+            }
         } else {
             advanceTurn(gameData);
         }
+    }
+
+    private void handleDrawStep(GameData gameData) {
+        Long activeId = gameData.activePlayerId;
+
+        // The starting player skips their draw on turn 1
+        if (gameData.turnNumber == 1 && activeId.equals(gameData.startingPlayerId)) {
+            String logEntry = gameData.playerIdToName.get(activeId) + " skips the draw (first turn).";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            log.info("Game {} - {} skips draw on turn 1", gameData.id, gameData.playerIdToName.get(activeId));
+            return;
+        }
+
+        List<Card> deck = gameData.playerDecks.get(activeId);
+        List<Card> hand = gameData.playerHands.get(activeId);
+
+        if (deck == null || deck.isEmpty()) {
+            log.warn("Game {} - {} has no cards to draw", gameData.id, gameData.playerIdToName.get(activeId));
+            return;
+        }
+
+        Card drawn = deck.remove(0);
+        hand.add(drawn);
+
+        sendToPlayer(activeId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(activeId, 0)));
+        broadcastDeckSizes(gameData);
+
+        String playerName = gameData.playerIdToName.get(activeId);
+        String logEntry = playerName + " draws a card.";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+
+        log.info("Game {} - {} draws a card (hand: {}, deck: {})", gameData.id, playerName, hand.size(), deck.size());
     }
 
     private void advanceTurn(GameData gameData) {
