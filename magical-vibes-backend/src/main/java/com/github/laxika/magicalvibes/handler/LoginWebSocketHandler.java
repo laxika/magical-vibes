@@ -86,6 +86,7 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
                 case LOGIN -> handleLogin(session, jsonNode);
                 case CREATE_GAME -> handleCreateGame(session, jsonNode);
                 case JOIN_GAME -> handleJoinGame(session, jsonNode);
+                case PASS_PRIORITY -> handlePassPriority(session, jsonNode);
                 default -> sendError(session, "Unknown message type: " + type);
             }
         } catch (Exception e) {
@@ -159,6 +160,30 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
 
             // Broadcast GAME_UPDATED to lobby users
             broadcastToLobby(MessageType.GAME_UPDATED, gameResponse);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            sendError(session, e.getMessage());
+        }
+    }
+
+    private void handlePassPriority(WebSocketSession session, JsonNode jsonNode) throws IOException {
+        Player player = sessionManager.getPlayer(session.getId());
+        if (player == null) {
+            sendError(session, "Not authenticated");
+            return;
+        }
+
+        Long gameId = jsonNode.get("gameId").asLong();
+
+        try {
+            GameResponse gameResponse = gameService.passPriority(gameId, player);
+
+            // Broadcast GAME_STATE_UPDATED to all players in the game
+            for (Long playerId : gameService.getPlayerIds(gameId)) {
+                Player gamePlayer = sessionManager.getPlayerByUserId(playerId);
+                if (gamePlayer != null && gamePlayer.getSession().isOpen()) {
+                    sendGameMessage(gamePlayer.getSession(), MessageType.GAME_STATE_UPDATED, gameResponse);
+                }
+            }
         } catch (IllegalArgumentException | IllegalStateException e) {
             sendError(session, e.getMessage());
         }

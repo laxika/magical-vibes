@@ -12,6 +12,8 @@ export enum MessageType {
   OPPONENT_JOINED = 'OPPONENT_JOINED',
   NEW_GAME = 'NEW_GAME',
   GAME_UPDATED = 'GAME_UPDATED',
+  PASS_PRIORITY = 'PASS_PRIORITY',
+  GAME_STATE_UPDATED = 'GAME_STATE_UPDATED',
   ERROR = 'ERROR'
 }
 
@@ -20,6 +22,57 @@ export enum GameStatus {
   RUNNING = 'RUNNING',
   FINISHED = 'FINISHED'
 }
+
+export enum TurnStep {
+  UNTAP = 'UNTAP',
+  UPKEEP = 'UPKEEP',
+  DRAW = 'DRAW',
+  PRECOMBAT_MAIN = 'PRECOMBAT_MAIN',
+  BEGINNING_OF_COMBAT = 'BEGINNING_OF_COMBAT',
+  DECLARE_ATTACKERS = 'DECLARE_ATTACKERS',
+  DECLARE_BLOCKERS = 'DECLARE_BLOCKERS',
+  COMBAT_DAMAGE = 'COMBAT_DAMAGE',
+  END_OF_COMBAT = 'END_OF_COMBAT',
+  POSTCOMBAT_MAIN = 'POSTCOMBAT_MAIN',
+  END_STEP = 'END_STEP',
+  CLEANUP = 'CLEANUP'
+}
+
+export interface TurnStepInfo {
+  step: TurnStep;
+  displayName: string;
+  phaseName: string;
+}
+
+export const TURN_STEPS: TurnStepInfo[] = [
+  { step: TurnStep.UNTAP, displayName: 'Untap', phaseName: 'Beginning Phase' },
+  { step: TurnStep.UPKEEP, displayName: 'Upkeep', phaseName: 'Beginning Phase' },
+  { step: TurnStep.DRAW, displayName: 'Draw', phaseName: 'Beginning Phase' },
+  { step: TurnStep.PRECOMBAT_MAIN, displayName: 'Precombat Main', phaseName: 'Precombat Main Phase' },
+  { step: TurnStep.BEGINNING_OF_COMBAT, displayName: 'Beginning of Combat', phaseName: 'Combat Phase' },
+  { step: TurnStep.DECLARE_ATTACKERS, displayName: 'Declare Attackers', phaseName: 'Combat Phase' },
+  { step: TurnStep.DECLARE_BLOCKERS, displayName: 'Declare Blockers', phaseName: 'Combat Phase' },
+  { step: TurnStep.COMBAT_DAMAGE, displayName: 'Combat Damage', phaseName: 'Combat Phase' },
+  { step: TurnStep.END_OF_COMBAT, displayName: 'End of Combat', phaseName: 'Combat Phase' },
+  { step: TurnStep.POSTCOMBAT_MAIN, displayName: 'Postcombat Main', phaseName: 'Postcombat Main Phase' },
+  { step: TurnStep.END_STEP, displayName: 'End Step', phaseName: 'Ending Phase' },
+  { step: TurnStep.CLEANUP, displayName: 'Cleanup', phaseName: 'Ending Phase' },
+];
+
+export interface PhaseGroup {
+  phaseName: string;
+  steps: TurnStepInfo[];
+}
+
+export const PHASE_GROUPS: PhaseGroup[] = TURN_STEPS.reduce<PhaseGroup[]>((groups, stepInfo) => {
+  const existing = groups.find(g => g.phaseName === stepInfo.phaseName);
+  if (existing) {
+    existing.steps.push(stepInfo);
+  } else {
+    groups.push({ phaseName: stepInfo.phaseName, steps: [stepInfo] });
+  }
+  return groups;
+}, []);
 
 export interface Game {
   id: number;
@@ -31,6 +84,9 @@ export interface Game {
   playerNames: string[];
   gameLog: string[];
   startingPlayerName: string;
+  currentStep: TurnStep | null;
+  activePlayerName: string | null;
+  turnNumber: number;
 }
 
 export interface LoginResponse {

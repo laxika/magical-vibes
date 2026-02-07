@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.dto;
 
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,4 +23,7 @@ public class GameResponse {
     private List<String> playerNames;
     private List<String> gameLog;
     private String startingPlayerName;
+    private TurnStep currentStep;
+    private String activePlayerName;
+    private int turnNumber;
 }

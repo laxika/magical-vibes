@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameStatus, MessageType } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, PhaseGroup } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -32,7 +32,7 @@ export class GameComponent implements OnInit, OnDestroy {
       this.websocketService.getMessages().subscribe((message) => {
         const notification = message as GameNotification;
 
-        if (notification.type === MessageType.OPPONENT_JOINED && notification.game) {
+        if ((notification.type === MessageType.OPPONENT_JOINED || notification.type === MessageType.GAME_STATE_UPDATED) && notification.game) {
           this.game.set(notification.game);
           this.websocketService.currentGame = notification.game;
         }
@@ -69,5 +69,19 @@ export class GameComponent implements OnInit, OnDestroy {
     return g !== null && g.playerNames.length < 2;
   }
 
+  get isMyTurn(): boolean {
+    const g = this.game();
+    return g !== null && g.activePlayerName === this.websocketService.currentUser?.username;
+  }
+
+  passPriority(): void {
+    const g = this.game();
+    if (g) {
+      this.websocketService.send({ type: MessageType.PASS_PRIORITY, gameId: g.id });
+    }
+  }
+
   readonly GameStatus = GameStatus;
+  readonly TurnStep = TurnStep;
+  readonly phaseGroups = PHASE_GROUPS;
 }

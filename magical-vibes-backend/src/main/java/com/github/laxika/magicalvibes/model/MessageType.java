@@ -11,5 +11,7 @@ public enum MessageType {
     OPPONENT_JOINED,
     NEW_GAME,
     GAME_UPDATED,
+    PASS_PRIORITY,
+    GAME_STATE_UPDATED,
     ERROR
 }

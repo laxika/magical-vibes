@@ -8,6 +8,34 @@
     </div>
   </header>
 
+  @if (game()?.status === GameStatus.RUNNING) {
+    <div class="turn-info">
+      <span class="turn-number">Turn {{ game()?.turnNumber }}</span>
+      <span class="active-player" [class.my-turn]="isMyTurn">
+        {{ game()?.activePlayerName }}'s turn
+      </span>
+    </div>
+
+    <div class="phase-tracker">
+      @for (group of phaseGroups; track group.phaseName) {
+        <div class="phase-group">
+          <div class="phase-label">{{ group.phaseName }}</div>
+          <div class="phase-steps">
+            @for (stepInfo of group.steps; track stepInfo.step) {
+              <div class="step-pip" [class.active]="game()?.currentStep === stepInfo.step" [title]="stepInfo.displayName">
+                {{ stepInfo.displayName }}
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="action-bar">
+      <button class="btn-pass" (click)="passPriority()">Pass Priority</button>
+    </div>
+  }
+
   <div class="game-layout">
     <div class="game-area">
       <div class="players-area">
