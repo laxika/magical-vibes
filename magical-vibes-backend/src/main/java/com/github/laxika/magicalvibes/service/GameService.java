@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.dto.GameResponse;
+import com.github.laxika.magicalvibes.dto.GameUpdate;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.MessageType;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import lombok.extern.slf4j.Slf4j;
@@ -104,7 +106,7 @@ public class GameService {
         log.info("Game {} - Turn 1 begins. Active player: {}, Step: {}", gameData.id, startingPlayerName, gameData.currentStep);
     }
 
-    public GameResponse passPriority(Long gameId, Player player) {
+    public GameUpdate passPriority(Long gameId, Player player) {
         GameData gameData = games.get(gameId);
         if (gameData == null) {
             throw new IllegalArgumentException("Game not found");
@@ -119,27 +121,38 @@ public class GameService {
                     gameId, player.getUsername(), gameData.currentStep, gameData.priorityPassedBy.size());
 
             if (gameData.priorityPassedBy.size() >= 2) {
-                advanceStep(gameData);
+                return advanceStep(gameData);
             }
-        }
 
-        return toResponse(gameData);
+            return new GameUpdate(
+                    MessageType.PRIORITY_UPDATED,
+                    getPriorityPlayerId(gameData),
+                    null, null, null, null
+            );
+        }
     }
 
-    private void advanceStep(GameData gameData) {
+    private GameUpdate advanceStep(GameData gameData) {
         gameData.priorityPassedBy.clear();
         TurnStep next = gameData.currentStep.next();
 
         if (next != null) {
             gameData.currentStep = next;
-            gameData.gameLog.add("Step: " + next.getDisplayName());
+            String logEntry = "Step: " + next.getDisplayName();
+            gameData.gameLog.add(logEntry);
             log.info("Game {} - Step advanced to {}", gameData.id, next);
+
+            return new GameUpdate(
+                    MessageType.STEP_ADVANCED,
+                    getPriorityPlayerId(gameData),
+                    next, null, null, logEntry
+            );
         } else {
-            advanceTurn(gameData);
+            return advanceTurn(gameData);
         }
     }
 
-    private void advanceTurn(GameData gameData) {
+    private GameUpdate advanceTurn(GameData gameData) {
         List<Long> ids = new ArrayList<>(gameData.orderedPlayerIds);
         Long currentActive = gameData.activePlayerId;
         Long nextActive = ids.get(0).equals(currentActive) ? ids.get(1) : ids.get(0);
@@ -150,8 +163,18 @@ public class GameService {
         gameData.currentStep = TurnStep.first();
         gameData.priorityPassedBy.clear();
 
-        gameData.gameLog.add("Turn " + gameData.turnNumber + " begins. " + nextActiveName + "'s turn.");
+        String logEntry = "Turn " + gameData.turnNumber + " begins. " + nextActiveName + "'s turn.";
+        gameData.gameLog.add(logEntry);
         log.info("Game {} - Turn {} begins. Active player: {}", gameData.id, gameData.turnNumber, nextActiveName);
+
+        return new GameUpdate(
+                MessageType.TURN_CHANGED,
+                getPriorityPlayerId(gameData),
+                TurnStep.first(),
+                nextActive,
+                gameData.turnNumber,
+                logEntry
+        );
     }
 
     public Long getGameIdForPlayer(Long userId) {

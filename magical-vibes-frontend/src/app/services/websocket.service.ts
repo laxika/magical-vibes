@@ -13,7 +13,10 @@ export enum MessageType {
   NEW_GAME = 'NEW_GAME',
   GAME_UPDATED = 'GAME_UPDATED',
   PASS_PRIORITY = 'PASS_PRIORITY',
-  GAME_STATE_UPDATED = 'GAME_STATE_UPDATED',
+  PRIORITY_UPDATED = 'PRIORITY_UPDATED',
+  STEP_ADVANCED = 'STEP_ADVANCED',
+  TURN_CHANGED = 'TURN_CHANGED',
+  GAME_LOG_ENTRY = 'GAME_LOG_ENTRY',
   ERROR = 'ERROR'
 }
 
@@ -105,7 +108,15 @@ export interface GameNotification {
   game?: Game;
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification;
+export interface GameUpdate {
+  type: MessageType;
+  priorityPlayerId?: number;
+  currentStep?: TurnStep;
+  activePlayerId?: number;
+  turnNumber?: number;
+}
+
+export type WebSocketMessage = LoginResponse | GameNotification | GameUpdate;
 
 export interface User {
   userId: number;

@@ -12,6 +12,9 @@ public enum MessageType {
     NEW_GAME,
     GAME_UPDATED,
     PASS_PRIORITY,
-    GAME_STATE_UPDATED,
+    PRIORITY_UPDATED,
+    STEP_ADVANCED,
+    TURN_CHANGED,
+    GAME_LOG_ENTRY,
     ERROR
 }

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, PhaseGroup } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, PhaseGroup } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -32,9 +32,20 @@ export class GameComponent implements OnInit, OnDestroy {
       this.websocketService.getMessages().subscribe((message) => {
         const notification = message as GameNotification;
 
-        if ((notification.type === MessageType.OPPONENT_JOINED || notification.type === MessageType.GAME_STATE_UPDATED) && notification.game) {
+        if (notification.type === MessageType.OPPONENT_JOINED && notification.game) {
           this.game.set(notification.game);
           this.websocketService.currentGame = notification.game;
+        }
+
+        if (message.type === MessageType.GAME_LOG_ENTRY) {
+          this.appendLogEntry((message as GameNotification).message!);
+        }
+
+        const update = message as GameUpdate;
+        if (update.type === MessageType.PRIORITY_UPDATED ||
+            update.type === MessageType.STEP_ADVANCED ||
+            update.type === MessageType.TURN_CHANGED) {
+          this.applyGameUpdate(update);
         }
       })
     );
@@ -87,6 +98,36 @@ export class GameComponent implements OnInit, OnDestroy {
   get hasPriority(): boolean {
     const g = this.game();
     return g !== null && g.priorityPlayerId === this.websocketService.currentUser?.userId;
+  }
+
+  private applyGameUpdate(update: GameUpdate): void {
+    const g = this.game();
+    if (!g) return;
+
+    const updated = { ...g };
+    if (update.priorityPlayerId !== undefined) {
+      updated.priorityPlayerId = update.priorityPlayerId ?? null;
+    }
+    if (update.currentStep !== undefined) {
+      updated.currentStep = update.currentStep;
+    }
+    if (update.activePlayerId !== undefined) {
+      updated.activePlayerId = update.activePlayerId;
+    }
+    if (update.turnNumber !== undefined) {
+      updated.turnNumber = update.turnNumber;
+    }
+    this.game.set(updated);
+    this.websocketService.currentGame = updated;
+  }
+
+  private appendLogEntry(entry: string): void {
+    const g = this.game();
+    if (!g) return;
+
+    const updated = { ...g, gameLog: [...g.gameLog, entry] };
+    this.game.set(updated);
+    this.websocketService.currentGame = updated;
   }
 
   passPriority(): void {
