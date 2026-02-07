@@ -148,8 +148,9 @@ public class GameService {
                 advanceStep(gameData);
             } else {
                 broadcastToGame(gameData, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
-                broadcastPlayableCards(gameData);
             }
+
+            resolveAutoPass(gameData);
         }
     }
 
@@ -165,7 +166,6 @@ public class GameService {
 
             broadcastLogEntry(gameData, logEntry);
             broadcastToGame(gameData, new StepAdvancedMessage(getPriorityPlayerId(gameData), next));
-            broadcastPlayableCards(gameData);
         } else {
             advanceTurn(gameData);
         }
@@ -191,7 +191,6 @@ public class GameService {
         broadcastToGame(gameData, new TurnChangedMessage(
                 getPriorityPlayerId(gameData), TurnStep.first(), nextActive, gameData.turnNumber
         ));
-        broadcastPlayableCards(gameData);
     }
 
     public Long getGameIdForPlayer(Long userId) {
@@ -412,9 +411,10 @@ public class GameService {
         broadcastToGame(gameData, new GameStartedMessage(
                 gameData.activePlayerId, gameData.turnNumber, gameData.currentStep, getPriorityPlayerId(gameData)
         ));
-        broadcastPlayableCards(gameData);
 
         log.info("Game {} - Game started! Turn 1 begins. Active player: {}", gameData.id, gameData.playerIdToName.get(gameData.activePlayerId));
+
+        resolveAutoPass(gameData);
     }
 
     private void sendToPlayer(Long playerId, Object message) {
@@ -508,6 +508,42 @@ public class GameService {
             List<Integer> playable = getPlayableCardIndices(gameData, playerId);
             sendToPlayer(playerId, new PlayableCardsMessage(playable));
         }
+    }
+
+    private void resolveAutoPass(GameData gameData) {
+        for (int safety = 0; safety < 100; safety++) {
+            Long priorityHolder = getPriorityPlayerId(gameData);
+
+            // If no one holds priority (both already passed), advance the step
+            if (priorityHolder == null) {
+                advanceStep(gameData);
+                continue;
+            }
+
+            List<Integer> playable = getPlayableCardIndices(gameData, priorityHolder);
+            if (!playable.isEmpty()) {
+                // Priority holder can act — stop and let them decide
+                broadcastPlayableCards(gameData);
+                return;
+            }
+
+            // Priority holder has nothing to play — auto-pass for them
+            String playerName = gameData.playerIdToName.get(priorityHolder);
+            log.info("Game {} - Auto-passing priority for {} on step {} (no playable cards)",
+                    gameData.id, playerName, gameData.currentStep);
+
+            gameData.priorityPassedBy.add(priorityHolder);
+
+            if (gameData.priorityPassedBy.size() >= 2) {
+                advanceStep(gameData);
+            } else {
+                broadcastToGame(gameData, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+            }
+        }
+
+        // Safety: if we somehow looped 100 times, broadcast current state and stop
+        log.warn("Game {} - resolveAutoPass hit safety limit", gameData.id);
+        broadcastPlayableCards(gameData);
     }
 
     private LobbyGame toLobbyGame(GameData data) {
