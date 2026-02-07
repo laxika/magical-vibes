@@ -2,7 +2,7 @@ import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService } from '../../services/websocket.service';
+import { WebsocketService, MessageType } from '../../services/websocket.service';
 
 @Component({
   selector: 'app-login',
@@ -38,12 +38,12 @@ export class LoginComponent {
       next: (response) => {
         this.loading.set(false);
 
-        if (response.type === 'LOGIN_SUCCESS') {
+        if (response.type === MessageType.LOGIN_SUCCESS) {
           this.successMessage.set(response.message);
           setTimeout(() => this.router.navigate(['/home']), 1000);
-        } else if (response.type === 'LOGIN_FAILURE') {
+        } else if (response.type === MessageType.LOGIN_FAILURE) {
           this.errorMessage.set(response.message);
-        } else if (response.type === 'TIMEOUT') {
+        } else if (response.type === MessageType.TIMEOUT) {
           this.errorMessage.set(response.message);
         } else {
           this.errorMessage.set('Unexpected response from server');

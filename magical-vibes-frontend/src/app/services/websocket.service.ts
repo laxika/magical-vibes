@@ -1,6 +1,20 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 
+export enum MessageType {
+  LOGIN = 'LOGIN',
+  CREATE_GAME = 'CREATE_GAME',
+  JOIN_GAME = 'JOIN_GAME',
+  LOGIN_SUCCESS = 'LOGIN_SUCCESS',
+  LOGIN_FAILURE = 'LOGIN_FAILURE',
+  TIMEOUT = 'TIMEOUT',
+  GAME_JOINED = 'GAME_JOINED',
+  OPPONENT_JOINED = 'OPPONENT_JOINED',
+  NEW_GAME = 'NEW_GAME',
+  GAME_UPDATED = 'GAME_UPDATED',
+  ERROR = 'ERROR'
+}
+
 export enum GameStatus {
   WAITING = 'WAITING',
   RUNNING = 'RUNNING',
@@ -18,7 +32,7 @@ export interface Game {
 }
 
 export interface LoginResponse {
-  type: string;
+  type: MessageType;
   message: string;
   userId?: number;
   username?: string;
@@ -26,7 +40,7 @@ export interface LoginResponse {
 }
 
 export interface GameNotification {
-  type: 'NEW_GAME' | 'GAME_UPDATED' | 'GAME_JOINED' | 'OPPONENT_JOINED' | 'ERROR';
+  type: MessageType;
   message?: string;
   game?: Game;
 }
@@ -64,7 +78,7 @@ export class WebsocketService {
 
       this.ws.onopen = () => {
         this.ws!.send(JSON.stringify({
-          type: 'LOGIN',
+          type: MessageType.LOGIN,
           username: username,
           password: password
         }));
@@ -77,7 +91,7 @@ export class WebsocketService {
           // Before authenticated, only handle login responses
           if (!this.authenticated) {
             const response = message as LoginResponse;
-            if (response.type === 'LOGIN_SUCCESS') {
+            if (response.type === MessageType.LOGIN_SUCCESS) {
               this.authenticated = true;
               this.currentUser = { userId: response.userId!, username: response.username! };
               this.initialGames = response.games ?? [];

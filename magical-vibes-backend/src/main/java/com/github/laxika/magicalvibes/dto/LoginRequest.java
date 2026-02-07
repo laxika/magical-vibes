@@ -1,25 +1,27 @@
 package com.github.laxika.magicalvibes.dto;
 
+import com.github.laxika.magicalvibes.model.MessageType;
+
 public class LoginRequest {
 
-    private String type;
+    private MessageType type;
     private String username;
     private String password;
 
     public LoginRequest() {
     }
 
-    public LoginRequest(String type, String username, String password) {
+    public LoginRequest(MessageType type, String username, String password) {
         this.type = type;
         this.username = username;
         this.password = password;
     }
 
-    public String getType() {
+    public MessageType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(MessageType type) {
         this.type = type;
     }
 

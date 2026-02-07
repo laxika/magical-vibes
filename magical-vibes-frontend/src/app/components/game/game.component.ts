@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameStatus } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameStatus, MessageType } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -32,7 +32,7 @@ export class GameComponent implements OnInit, OnDestroy {
       this.websocketService.getMessages().subscribe((message) => {
         const notification = message as GameNotification;
 
-        if (notification.type === 'OPPONENT_JOINED' && notification.game) {
+        if (notification.type === MessageType.OPPONENT_JOINED && notification.game) {
           this.game.set(notification.game);
           this.websocketService.currentGame = notification.game;
         }

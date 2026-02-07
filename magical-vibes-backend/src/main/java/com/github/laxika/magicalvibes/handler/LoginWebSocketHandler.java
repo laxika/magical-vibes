@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.handler;
 import com.github.laxika.magicalvibes.dto.GameResponse;
 import com.github.laxika.magicalvibes.dto.LoginRequest;
 import com.github.laxika.magicalvibes.dto.LoginResponse;
+import com.github.laxika.magicalvibes.model.MessageType;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.LoginService;
@@ -79,12 +80,12 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
 
         try {
             JsonNode jsonNode = objectMapper.readTree(message.getPayload());
-            String type = jsonNode.get("type").asText();
+            MessageType type = MessageType.valueOf(jsonNode.get("type").asText());
 
             switch (type) {
-                case "LOGIN" -> handleLogin(session, jsonNode);
-                case "CREATE_GAME" -> handleCreateGame(session, jsonNode);
-                case "JOIN_GAME" -> handleJoinGame(session, jsonNode);
+                case LOGIN -> handleLogin(session, jsonNode);
+                case CREATE_GAME -> handleCreateGame(session, jsonNode);
+                case JOIN_GAME -> handleJoinGame(session, jsonNode);
                 default -> sendError(session, "Unknown message type: " + type);
             }
         } catch (Exception e) {
@@ -101,7 +102,7 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         session.sendMessage(new TextMessage(jsonResponse));
         log.info("Sent login response to session {}: {}", session.getId(), response.getType());
 
-        if ("LOGIN_SUCCESS".equals(response.getType())) {
+        if (response.getType() == MessageType.LOGIN_SUCCESS) {
             sessionManager.registerPlayer(session, response.getUserId(), response.getUsername());
             log.info("Session {} registered for user {} ({}) - connection staying open", session.getId(), response.getUserId(), response.getUsername());
         } else {
@@ -123,10 +124,10 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         sessionManager.setInGame(session.getId());
 
         // Send GAME_JOINED to the creator
-        sendGameMessage(session, "GAME_JOINED", gameResponse);
+        sendGameMessage(session, MessageType.GAME_JOINED, gameResponse);
 
         // Broadcast NEW_GAME to lobby users only
-        broadcastToLobby("NEW_GAME", gameResponse);
+        broadcastToLobby(MessageType.NEW_GAME, gameResponse);
     }
 
     private void handleJoinGame(WebSocketSession session, JsonNode jsonNode) throws IOException {
@@ -145,32 +146,32 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
             sessionManager.setInGame(session.getId());
 
             // Send GAME_JOINED to the joiner
-            sendGameMessage(session, "GAME_JOINED", gameResponse);
+            sendGameMessage(session, MessageType.GAME_JOINED, gameResponse);
 
             // Send OPPONENT_JOINED to the creator
             Long creatorUserId = gameService.getCreatorUserId(gameId);
             if (creatorUserId != null) {
                 Player creator = sessionManager.getPlayerByUserId(creatorUserId);
                 if (creator != null && creator.getSession().isOpen()) {
-                    sendGameMessage(creator.getSession(), "OPPONENT_JOINED", gameResponse);
+                    sendGameMessage(creator.getSession(), MessageType.OPPONENT_JOINED, gameResponse);
                 }
             }
 
             // Broadcast GAME_UPDATED to lobby users
-            broadcastToLobby("GAME_UPDATED", gameResponse);
+            broadcastToLobby(MessageType.GAME_UPDATED, gameResponse);
         } catch (IllegalArgumentException | IllegalStateException e) {
             sendError(session, e.getMessage());
         }
     }
 
-    private void sendGameMessage(WebSocketSession session, String type, GameResponse game) throws IOException {
+    private void sendGameMessage(WebSocketSession session, MessageType type, GameResponse game) throws IOException {
         Map<String, Object> message = new HashMap<>();
         message.put("type", type);
         message.put("game", game);
         session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
     }
 
-    private void broadcastToLobby(String type, GameResponse game) {
+    private void broadcastToLobby(MessageType type, GameResponse game) {
         Map<String, Object> notification = new HashMap<>();
         notification.put("type", type);
         notification.put("game", game);
@@ -193,7 +194,7 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void sendError(WebSocketSession session, String message) throws IOException {
-        Map<String, String> error = Map.of("type", "ERROR", "message", message);
+        Map<String, Object> error = Map.of("type", MessageType.ERROR, "message", message);
         session.sendMessage(new TextMessage(objectMapper.writeValueAsString(error)));
     }
 

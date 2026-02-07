@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.dto;
 
+import com.github.laxika.magicalvibes.model.MessageType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,7 +10,7 @@ import java.util.List;
 @Setter
 public class LoginResponse {
 
-    private String type;
+    private MessageType type;
     private String message;
     private Long userId;
     private String username;
@@ -18,7 +19,7 @@ public class LoginResponse {
     public LoginResponse() {
     }
 
-    public LoginResponse(String type, String message, Long userId, String username, List<GameResponse> games) {
+    public LoginResponse(MessageType type, String message, Long userId, String username, List<GameResponse> games) {
         this.type = type;
         this.message = message;
         this.userId = userId;
@@ -27,15 +28,15 @@ public class LoginResponse {
     }
 
     public static LoginResponse success(Long userId, String username, List<GameResponse> games) {
-        return new LoginResponse("LOGIN_SUCCESS", "Login successful", userId, username, games);
+        return new LoginResponse(MessageType.LOGIN_SUCCESS, "Login successful", userId, username, games);
     }
 
     public static LoginResponse failure(String message) {
-        return new LoginResponse("LOGIN_FAILURE", message, null, null, null);
+        return new LoginResponse(MessageType.LOGIN_FAILURE, message, null, null, null);
     }
 
     public static LoginResponse timeout() {
-        return new LoginResponse("TIMEOUT", "Connection timeout - no login message received", null, null, null);
+        return new LoginResponse(MessageType.TIMEOUT, "Connection timeout - no login message received", null, null, null);
     }
 
 }
