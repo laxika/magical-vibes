@@ -39,7 +39,10 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.websocketService.getMessages().subscribe((message) => {
         const notification = message as GameNotification;
 
-        if (notification.type === 'NEW_GAME' && notification.game) {
+        if (notification.type === 'GAME_JOINED' && notification.game) {
+          this.websocketService.currentGame = notification.game;
+          this.router.navigate(['/game']);
+        } else if (notification.type === 'NEW_GAME' && notification.game) {
           const currentGames = this.games();
           if (!currentGames.some(g => g.id === notification.game!.id)) {
             this.games.set([...currentGames, notification.game]);

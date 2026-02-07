@@ -8,6 +8,7 @@ export interface Game {
   status: string;
   createdAt: string;
   playerCount: number;
+  playerNames: string[];
 }
 
 export interface LoginResponse {
@@ -19,7 +20,7 @@ export interface LoginResponse {
 }
 
 export interface GameNotification {
-  type: 'NEW_GAME' | 'GAME_UPDATED' | 'ERROR';
+  type: 'NEW_GAME' | 'GAME_UPDATED' | 'GAME_JOINED' | 'OPPONENT_JOINED' | 'ERROR';
   message?: string;
   game?: Game;
 }
@@ -43,12 +44,14 @@ export class WebsocketService {
   private authenticated = false;
 
   currentUser: User | null = null;
+  currentGame: Game | null = null;
   initialGames: Game[] = [];
 
   login(username: string, password: string): Observable<LoginResponse> {
     return new Observable(observer => {
       this.authenticated = false;
       this.currentUser = null;
+      this.currentGame = null;
       this.initialGames = [];
 
       this.ws = new WebSocket(this.WS_URL);
@@ -138,6 +141,7 @@ export class WebsocketService {
   private cleanup(): void {
     this.ws = null;
     this.currentUser = null;
+    this.currentGame = null;
     this.initialGames = [];
     this.authenticated = false;
   }

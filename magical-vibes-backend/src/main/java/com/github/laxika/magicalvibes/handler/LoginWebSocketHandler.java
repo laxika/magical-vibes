@@ -119,8 +119,14 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         String username = sessionManager.getUsername(session.getId());
         GameResponse gameResponse = gameService.createGame(gameName, userId, username);
 
-        // Broadcast NEW_GAME to all connected users
-        broadcastToAll("NEW_GAME", gameResponse);
+        // Mark creator as in-game
+        sessionManager.setInGame(session.getId(), gameResponse.getId());
+
+        // Send GAME_JOINED to the creator
+        sendGameMessage(session, "GAME_JOINED", gameResponse);
+
+        // Broadcast NEW_GAME to lobby users only
+        broadcastToLobby("NEW_GAME", gameResponse);
     }
 
     private void handleJoinGame(WebSocketSession session, JsonNode jsonNode) throws IOException {
@@ -131,24 +137,49 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         }
 
         Long gameId = jsonNode.get("gameId").asLong();
+        String username = sessionManager.getUsername(session.getId());
 
         try {
-            GameResponse gameResponse = gameService.joinGame(gameId, userId);
-            broadcastToAll("GAME_UPDATED", gameResponse);
+            GameResponse gameResponse = gameService.joinGame(gameId, userId, username);
+
+            // Mark joiner as in-game
+            sessionManager.setInGame(session.getId(), gameId);
+
+            // Send GAME_JOINED to the joiner
+            sendGameMessage(session, "GAME_JOINED", gameResponse);
+
+            // Send OPPONENT_JOINED to the creator
+            Long creatorUserId = gameService.getCreatorUserId(gameId);
+            if (creatorUserId != null) {
+                WebSocketSession creatorSession = sessionManager.getSessionByUserId(creatorUserId);
+                if (creatorSession != null && creatorSession.isOpen()) {
+                    sendGameMessage(creatorSession, "OPPONENT_JOINED", gameResponse);
+                }
+            }
+
+            // Broadcast GAME_UPDATED to lobby users
+            broadcastToLobby("GAME_UPDATED", gameResponse);
         } catch (IllegalArgumentException | IllegalStateException e) {
             sendError(session, e.getMessage());
         }
     }
 
-    private void broadcastToAll(String type, GameResponse game) {
+    private void sendGameMessage(WebSocketSession session, String type, GameResponse game) throws IOException {
+        Map<String, Object> message = new HashMap<>();
+        message.put("type", type);
+        message.put("game", game);
+        session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
+    }
+
+    private void broadcastToLobby(String type, GameResponse game) {
         Map<String, Object> notification = new HashMap<>();
         notification.put("type", type);
         notification.put("game", game);
 
-        Map<String, WebSocketSession> sessions = sessionManager.getAllSessions();
+        Map<String, WebSocketSession> lobbySessions = sessionManager.getLobbySessions();
         int sentCount = 0;
 
-        for (Map.Entry<String, WebSocketSession> entry : sessions.entrySet()) {
+        for (Map.Entry<String, WebSocketSession> entry : lobbySessions.entrySet()) {
             try {
                 WebSocketSession s = entry.getValue();
                 if (s.isOpen()) {
@@ -161,7 +192,7 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
             }
         }
 
-        log.info("Broadcasted {} to {} users", type, sentCount);
+        log.info("Broadcasted {} to {} lobby users", type, sentCount);
     }
 
     private void sendError(WebSocketSession session, String message) throws IOException {

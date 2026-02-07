@@ -21,6 +21,7 @@ public class GameService {
 
         GameData gameData = new GameData(gameId, gameName, userId, username);
         gameData.playerIds.add(userId);
+        gameData.playerNames.add(username);
         games.put(gameId, gameData);
 
         log.info("Game created: id={}, name='{}', creator={}", gameId, gameName, username);
@@ -29,12 +30,12 @@ public class GameService {
 
     public List<GameResponse> listRunningGames() {
         return games.values().stream()
-                .filter(g -> "WAITING".equals(g.status))
+                .filter(g -> !"FINISHED".equals(g.status))
                 .map(this::toResponse)
                 .toList();
     }
 
-    public GameResponse joinGame(Long gameId, Long userId) {
+    public GameResponse joinGame(Long gameId, Long userId, String username) {
         GameData gameData = games.get(gameId);
         if (gameData == null) {
             throw new IllegalArgumentException("Game not found");
@@ -49,8 +50,19 @@ public class GameService {
         }
 
         gameData.playerIds.add(userId);
-        log.info("User {} joined game {}", userId, gameId);
+        gameData.playerNames.add(username);
+
+        if (gameData.playerIds.size() >= 2) {
+            gameData.status = "RUNNING";
+        }
+
+        log.info("User {} joined game {}, status={}", username, gameId, gameData.status);
         return toResponse(gameData);
+    }
+
+    public Long getCreatorUserId(Long gameId) {
+        GameData gameData = games.get(gameId);
+        return gameData != null ? gameData.createdByUserId : null;
     }
 
     private GameResponse toResponse(GameData data) {
@@ -60,7 +72,8 @@ public class GameService {
                 data.createdByUsername,
                 data.status,
                 data.createdAt,
-                data.playerIds.size()
+                data.playerIds.size(),
+                new ArrayList<>(data.playerNames)
         );
     }
 
@@ -72,6 +85,7 @@ public class GameService {
         final LocalDateTime createdAt;
         String status;
         final Set<Long> playerIds = ConcurrentHashMap.newKeySet();
+        final List<String> playerNames = Collections.synchronizedList(new ArrayList<>());
 
         GameData(long id, String gameName, long createdByUserId, String createdByUsername) {
             this.id = id;
