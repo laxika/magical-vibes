@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.handler;
 
 import com.github.laxika.magicalvibes.dto.GameResponse;
-import com.github.laxika.magicalvibes.dto.GameUpdate;
 import com.github.laxika.magicalvibes.dto.LoginRequest;
 import com.github.laxika.magicalvibes.dto.LoginResponse;
 import com.github.laxika.magicalvibes.model.MessageType;
@@ -176,17 +175,7 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         Long gameId = jsonNode.get("gameId").asLong();
 
         try {
-            GameUpdate update = gameService.passPriority(gameId, player);
-
-            for (Long playerId : gameService.getPlayerIds(gameId)) {
-                Player gamePlayer = sessionManager.getPlayerByUserId(playerId);
-                if (gamePlayer != null && gamePlayer.getSession().isOpen()) {
-                    if (update.getLogEntry() != null) {
-                        sendLogEntry(gamePlayer.getSession(), update.getLogEntry());
-                    }
-                    sendGameUpdate(gamePlayer.getSession(), update);
-                }
-            }
+            gameService.passPriority(gameId, player);
         } catch (IllegalArgumentException | IllegalStateException e) {
             sendError(session, e.getMessage());
         }
@@ -196,30 +185,6 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         Map<String, Object> message = new HashMap<>();
         message.put("type", type);
         message.put("game", game);
-        session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
-    }
-
-    private void sendGameUpdate(WebSocketSession session, GameUpdate update) throws IOException {
-        Map<String, Object> message = new HashMap<>();
-        message.put("type", update.getType());
-        message.put("priorityPlayerId", update.getPriorityPlayerId());
-        if (update.getCurrentStep() != null) {
-            message.put("currentStep", update.getCurrentStep());
-        }
-        if (update.getActivePlayerId() != null) {
-            message.put("activePlayerId", update.getActivePlayerId());
-        }
-        if (update.getTurnNumber() != null) {
-            message.put("turnNumber", update.getTurnNumber());
-        }
-        session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
-    }
-
-    private void sendLogEntry(WebSocketSession session, String logEntry) throws IOException {
-        Map<String, Object> message = Map.of(
-                "type", MessageType.GAME_LOG_ENTRY,
-                "message", logEntry
-        );
         session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
     }
 
