@@ -136,6 +136,10 @@ export class GameComponent implements OnInit, OnDestroy {
     const g = this.game();
     if (!g) return;
 
+    // Clear playable highlights immediately on any state change;
+    // the server's PLAYABLE_CARDS_UPDATED message will re-set them if appropriate
+    this.playableCardIndices = new Set<number>();
+
     const updated = { ...g };
     if (update.priorityPlayerId !== undefined) {
       updated.priorityPlayerId = update.priorityPlayerId ?? null;
