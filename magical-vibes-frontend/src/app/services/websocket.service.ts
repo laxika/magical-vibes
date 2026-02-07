@@ -17,11 +17,17 @@ export enum MessageType {
   STEP_ADVANCED = 'STEP_ADVANCED',
   TURN_CHANGED = 'TURN_CHANGED',
   GAME_LOG_ENTRY = 'GAME_LOG_ENTRY',
+  KEEP_HAND = 'KEEP_HAND',
+  TAKE_MULLIGAN = 'TAKE_MULLIGAN',
+  HAND_DRAWN = 'HAND_DRAWN',
+  MULLIGAN_RESOLVED = 'MULLIGAN_RESOLVED',
+  GAME_STARTED = 'GAME_STARTED',
   ERROR = 'ERROR'
 }
 
 export enum GameStatus {
   WAITING = 'WAITING',
+  MULLIGAN = 'MULLIGAN',
   RUNNING = 'RUNNING',
   FINISHED = 'FINISHED'
 }
@@ -77,6 +83,13 @@ export const PHASE_GROUPS: PhaseGroup[] = TURN_STEPS.reduce<PhaseGroup[]>((group
   return groups;
 }, []);
 
+export interface Card {
+  name: string;
+  type: string;
+  subtype: string;
+  manaProduced: string;
+}
+
 export interface Game {
   id: number;
   gameName: string;
@@ -88,6 +101,8 @@ export interface Game {
   activePlayerId: number | null;
   turnNumber: number;
   priorityPlayerId: number | null;
+  hand: Card[];
+  mulliganCount: number;
 }
 
 export interface LobbyGame {
@@ -125,7 +140,28 @@ export interface GameUpdate {
   turnNumber?: number;
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate;
+export interface HandDrawnNotification {
+  type: MessageType;
+  hand: Card[];
+  mulliganCount: number;
+}
+
+export interface MulliganResolvedNotification {
+  type: MessageType;
+  playerName: string;
+  kept: boolean;
+  mulliganCount: number;
+}
+
+export interface GameStartedNotification {
+  type: MessageType;
+  activePlayerId: number;
+  turnNumber: number;
+  currentStep: TurnStep;
+  priorityPlayerId: number;
+}
+
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification;
 
 export interface User {
   userId: number;

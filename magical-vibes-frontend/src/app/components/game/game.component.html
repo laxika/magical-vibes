@@ -2,11 +2,59 @@
   <header>
     <h1>{{ game()?.gameName }}</h1>
     <div class="game-status">
-      <span class="status-badge" [class.waiting]="game()?.status === GameStatus.WAITING" [class.running]="game()?.status === GameStatus.RUNNING">
+      <span class="status-badge" [class.waiting]="game()?.status === GameStatus.WAITING" [class.mulligan]="game()?.status === GameStatus.MULLIGAN" [class.running]="game()?.status === GameStatus.RUNNING">
         {{ game()?.status }}
       </span>
     </div>
   </header>
+
+  @if (game()?.status === GameStatus.MULLIGAN) {
+    <div class="mulligan-section">
+      <div class="turn-info">
+        <div class="player-badge active">
+          {{ player1Name }}
+        </div>
+        <div class="turn-center">
+          <span class="turn-number">Mulligan Phase</span>
+          <span class="vs-label">VS</span>
+        </div>
+        <div class="player-badge active">
+          {{ player2Name }}
+        </div>
+      </div>
+
+      <div class="hand-area">
+        <div class="hand-label">Your Hand ({{ hand.length }} cards)</div>
+        <div class="hand-cards">
+          @for (card of hand; track $index) {
+            <div class="card">
+              <div class="card-name">{{ card.name }}</div>
+              <div class="card-type">{{ card.type }}</div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="mulligan-info">
+        @if ((game()?.mulliganCount ?? 0) > 0) {
+          <span class="mulligan-count">Mulligan count: {{ game()?.mulliganCount }}</span>
+        }
+      </div>
+
+      <div class="mulligan-actions">
+        <button class="btn-keep" (click)="keepHand()">Keep Hand</button>
+        <button class="btn-mulligan" (click)="takeMulligan()" [disabled]="!canMulligan">Mulligan</button>
+      </div>
+
+      <div class="opponent-mulligan-status">
+        @if (opponentKept) {
+          <span>Opponent kept their hand.</span>
+        } @else {
+          <span>Opponent is deciding...</span>
+        }
+      </div>
+    </div>
+  }
 
   @if (game()?.status === GameStatus.RUNNING) {
     <div class="turn-info">
@@ -46,11 +94,23 @@
     <div class="action-bar">
       <button class="btn-pass" (click)="passPriority()" [disabled]="!hasPriority">Pass Priority</button>
     </div>
+
+    <div class="hand-area">
+      <div class="hand-label">Your Hand ({{ hand.length }} cards)</div>
+      <div class="hand-cards">
+        @for (card of hand; track $index) {
+          <div class="card">
+            <div class="card-name">{{ card.name }}</div>
+            <div class="card-type">{{ card.type }}</div>
+          </div>
+        }
+      </div>
+    </div>
   }
 
   <div class="game-layout">
     <div class="game-area">
-      @if (game()?.status !== GameStatus.RUNNING) {
+      @if (game()?.status === GameStatus.WAITING) {
         <div class="players-area">
           <div class="player-card">
             <div class="player-label">Player 1</div>

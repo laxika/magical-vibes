@@ -16,5 +16,10 @@ public enum MessageType {
     STEP_ADVANCED,
     TURN_CHANGED,
     GAME_LOG_ENTRY,
+    KEEP_HAND,
+    TAKE_MULLIGAN,
+    HAND_DRAWN,
+    MULLIGAN_RESOLVED,
+    GAME_STARTED,
     ERROR
 }

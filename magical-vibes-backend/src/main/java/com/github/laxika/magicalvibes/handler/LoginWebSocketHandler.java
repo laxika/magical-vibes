@@ -89,6 +89,8 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
                 case CREATE_GAME -> handleCreateGame(session, jsonNode);
                 case JOIN_GAME -> handleJoinGame(session, jsonNode);
                 case PASS_PRIORITY -> handlePassPriority(session, jsonNode);
+                case KEEP_HAND -> handleKeepHand(session, jsonNode);
+                case TAKE_MULLIGAN -> handleMulligan(session, jsonNode);
                 default -> sendError(session, "Unknown message type: " + type);
             }
         } catch (Exception e) {
@@ -143,25 +145,27 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         Long gameId = jsonNode.get("gameId").asLong();
 
         try {
-            GameService.GameResult result = gameService.joinGame(gameId, player);
+            LobbyGame lobbyGame = gameService.joinGame(gameId, player);
 
             // Mark joiner as in-game
             sessionManager.setInGame(session.getId());
 
-            // Send GAME_JOINED to the joiner
-            sendJoinMessage(session, MessageType.GAME_JOINED, result.joinGame());
+            // Send GAME_JOINED to the joiner (with their own hand)
+            JoinGame joinerGame = gameService.getJoinGame(gameId, player.getId());
+            sendJoinMessage(session, MessageType.GAME_JOINED, joinerGame);
 
-            // Send OPPONENT_JOINED to the creator
+            // Send OPPONENT_JOINED to the creator (with their own hand)
             Long creatorUserId = gameService.getCreatorUserId(gameId);
             if (creatorUserId != null) {
                 Player creator = sessionManager.getPlayerByUserId(creatorUserId);
                 if (creator != null && creator.getSession().isOpen()) {
-                    sendJoinMessage(creator.getSession(), MessageType.OPPONENT_JOINED, result.joinGame());
+                    JoinGame creatorGame = gameService.getJoinGame(gameId, creatorUserId);
+                    sendJoinMessage(creator.getSession(), MessageType.OPPONENT_JOINED, creatorGame);
                 }
             }
 
             // Broadcast GAME_UPDATED to lobby users
-            broadcastToLobby(MessageType.GAME_UPDATED, result.lobbyGame());
+            broadcastToLobby(MessageType.GAME_UPDATED, lobbyGame);
         } catch (IllegalArgumentException | IllegalStateException e) {
             sendError(session, e.getMessage());
         }
@@ -178,6 +182,38 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
 
         try {
             gameService.passPriority(gameId, player);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            sendError(session, e.getMessage());
+        }
+    }
+
+    private void handleKeepHand(WebSocketSession session, JsonNode jsonNode) throws IOException {
+        Player player = sessionManager.getPlayer(session.getId());
+        if (player == null) {
+            sendError(session, "Not authenticated");
+            return;
+        }
+
+        Long gameId = jsonNode.get("gameId").asLong();
+
+        try {
+            gameService.keepHand(gameId, player);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            sendError(session, e.getMessage());
+        }
+    }
+
+    private void handleMulligan(WebSocketSession session, JsonNode jsonNode) throws IOException {
+        Player player = sessionManager.getPlayer(session.getId());
+        if (player == null) {
+            sendError(session, "Not authenticated");
+            return;
+        }
+
+        Long gameId = jsonNode.get("gameId").asLong();
+
+        try {
+            gameService.mulligan(gameId, player);
         } catch (IllegalArgumentException | IllegalStateException e) {
             sendError(session, e.getMessage());
         }

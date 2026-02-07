@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, PhaseGroup } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, PhaseGroup, Card, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -39,6 +39,21 @@ export class GameComponent implements OnInit, OnDestroy {
 
         if (message.type === MessageType.GAME_LOG_ENTRY) {
           this.appendLogEntry((message as GameNotification).message!);
+        }
+
+        if (message.type === MessageType.HAND_DRAWN) {
+          const handDrawn = message as HandDrawnNotification;
+          this.updateHand(handDrawn.hand, handDrawn.mulliganCount);
+        }
+
+        if (message.type === MessageType.MULLIGAN_RESOLVED) {
+          const resolved = message as MulliganResolvedNotification;
+          this.handleMulliganResolved(resolved);
+        }
+
+        if (message.type === MessageType.GAME_STARTED) {
+          const started = message as GameStartedNotification;
+          this.handleGameStarted(started);
         }
 
         const update = message as GameUpdate;
@@ -130,12 +145,80 @@ export class GameComponent implements OnInit, OnDestroy {
     this.websocketService.currentGame = updated;
   }
 
+  get isMulliganPhase(): boolean {
+    const g = this.game();
+    return g !== null && g.status === GameStatus.MULLIGAN;
+  }
+
+  get canMulligan(): boolean {
+    const g = this.game();
+    return g !== null && g.mulliganCount < 7;
+  }
+
+  get hand(): Card[] {
+    return this.game()?.hand ?? [];
+  }
+
+  private updateHand(hand: Card[], mulliganCount: number): void {
+    const g = this.game();
+    if (!g) return;
+    const updated = { ...g, hand, mulliganCount };
+    this.game.set(updated);
+    this.websocketService.currentGame = updated;
+  }
+
+  private handleMulliganResolved(resolved: MulliganResolvedNotification): void {
+    const g = this.game();
+    if (!g) return;
+
+    const opponentName = g.playerNames.find(n => n !== this.websocketService.currentUser?.username);
+    if (resolved.playerName === opponentName) {
+      if (resolved.kept) {
+        this.opponentKept = true;
+      } else {
+        this.opponentKept = false;
+      }
+    }
+  }
+
+  private handleGameStarted(started: GameStartedNotification): void {
+    const g = this.game();
+    if (!g) return;
+    const updated = {
+      ...g,
+      status: GameStatus.RUNNING,
+      activePlayerId: started.activePlayerId,
+      turnNumber: started.turnNumber,
+      currentStep: started.currentStep,
+      priorityPlayerId: started.priorityPlayerId
+    };
+    this.game.set(updated);
+    this.websocketService.currentGame = updated;
+    this.opponentKept = false;
+  }
+
+  keepHand(): void {
+    const g = this.game();
+    if (g) {
+      this.websocketService.send({ type: MessageType.KEEP_HAND, gameId: g.id });
+    }
+  }
+
+  takeMulligan(): void {
+    const g = this.game();
+    if (g) {
+      this.websocketService.send({ type: MessageType.TAKE_MULLIGAN, gameId: g.id });
+    }
+  }
+
   passPriority(): void {
     const g = this.game();
     if (g) {
       this.websocketService.send({ type: MessageType.PASS_PRIORITY, gameId: g.id });
     }
   }
+
+  opponentKept = false;
 
   readonly GameStatus = GameStatus;
   readonly TurnStep = TurnStep;

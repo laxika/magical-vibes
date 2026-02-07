@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.dto.GameLogEntryMessage;
+import com.github.laxika.magicalvibes.dto.GameStartedMessage;
+import com.github.laxika.magicalvibes.dto.HandDrawnMessage;
 import com.github.laxika.magicalvibes.dto.JoinGame;
 import com.github.laxika.magicalvibes.dto.LobbyGame;
+import com.github.laxika.magicalvibes.dto.MulliganResolvedMessage;
 import com.github.laxika.magicalvibes.dto.PriorityUpdatedMessage;
 import com.github.laxika.magicalvibes.dto.StepAdvancedMessage;
 import com.github.laxika.magicalvibes.dto.TurnChangedMessage;
@@ -60,7 +63,7 @@ public class GameService {
                 .toList();
     }
 
-    public GameResult joinGame(Long gameId, Player player) {
+    public LobbyGame joinGame(Long gameId, Player player) {
         GameData gameData = games.get(gameId);
         if (gameData == null) {
             throw new IllegalArgumentException("Game not found");
@@ -80,12 +83,11 @@ public class GameService {
         gameData.playerIdToName.put(player.getId(), player.getUsername());
 
         if (gameData.playerIds.size() >= 2) {
-            gameData.status = GameStatus.RUNNING;
             initializeGame(gameData);
         }
 
         log.info("User {} joined game {}, status={}", player.getUsername(), gameId, gameData.status);
-        return new GameResult(toJoinGame(gameData), toLobbyGame(gameData));
+        return toLobbyGame(gameData);
     }
 
     public Long getCreatorUserId(Long gameId) {
@@ -100,8 +102,16 @@ public class GameService {
             List<Card> deck = IntStream.range(0, 60)
                     .mapToObj(i -> forest)
                     .collect(Collectors.toList());
+            Collections.shuffle(deck, random);
             gameData.playerDecks.put(playerId, deck);
+            gameData.mulliganCounts.put(playerId, 0);
+
+            List<Card> hand = new ArrayList<>(deck.subList(0, 7));
+            deck.subList(0, 7).clear();
+            gameData.playerHands.put(playerId, hand);
         }
+
+        gameData.status = GameStatus.MULLIGAN;
 
         gameData.gameLog.add("Game started!");
         gameData.gameLog.add("Each player receives a deck of 60 Forests.");
@@ -112,12 +122,9 @@ public class GameService {
         gameData.startingPlayerId = startingPlayerId;
 
         gameData.gameLog.add(startingPlayerName + " wins the coin toss and goes first!");
+        gameData.gameLog.add("Mulligan phase — decide to keep or mulligan.");
 
-        gameData.activePlayerId = startingPlayerId;
-        gameData.turnNumber = 1;
-        gameData.currentStep = TurnStep.first();
-
-        log.info("Game {} - Turn 1 begins. Active player: {}, Step: {}", gameData.id, startingPlayerName, gameData.currentStep);
+        log.info("Game {} - Mulligan phase begins. Starting player: {}", gameData.id, startingPlayerName);
     }
 
     public void passPriority(Long gameId, Player player) {
@@ -227,7 +234,142 @@ public class GameService {
         return null;
     }
 
+    public JoinGame getJoinGame(Long gameId, Long playerId) {
+        GameData data = games.get(gameId);
+        if (data == null) {
+            throw new IllegalArgumentException("Game not found");
+        }
+        return toJoinGame(data, playerId);
+    }
+
+    public void keepHand(Long gameId, Player player) {
+        GameData gameData = games.get(gameId);
+        if (gameData == null) {
+            throw new IllegalArgumentException("Game not found");
+        }
+        if (gameData.status != GameStatus.MULLIGAN) {
+            throw new IllegalStateException("Game is not in mulligan phase");
+        }
+        if (gameData.playerKeptHand.contains(player.getId())) {
+            throw new IllegalStateException("You have already kept your hand");
+        }
+
+        synchronized (gameData) {
+            gameData.playerKeptHand.add(player.getId());
+            int mulliganCount = gameData.mulliganCounts.getOrDefault(player.getId(), 0);
+            List<Card> hand = gameData.playerHands.get(player.getId());
+            List<Card> deck = gameData.playerDecks.get(player.getId());
+
+            if (mulliganCount > 0 && hand.size() > 0) {
+                int cardsToBottom = Math.min(mulliganCount, hand.size());
+                List<Card> bottomCards = new ArrayList<>(hand.subList(hand.size() - cardsToBottom, hand.size()));
+                hand.subList(hand.size() - cardsToBottom, hand.size()).clear();
+                deck.addAll(bottomCards);
+            }
+
+            sendToPlayer(player.getId(), new HandDrawnMessage(new ArrayList<>(hand), mulliganCount));
+            broadcastToGame(gameData, new MulliganResolvedMessage(player.getUsername(), true, mulliganCount));
+
+            String logEntry = player.getUsername() + " keeps their hand" +
+                    (mulliganCount > 0 ? " (mulliganed " + mulliganCount + " time" + (mulliganCount > 1 ? "s" : "") + ", keeping " + hand.size() + " cards)." : ".");
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+
+            log.info("Game {} - {} kept hand (mulligan count: {}, hand size: {})", gameId, player.getUsername(), mulliganCount, hand.size());
+
+            if (gameData.playerKeptHand.size() >= 2) {
+                startGame(gameData);
+            }
+        }
+    }
+
+    public void mulligan(Long gameId, Player player) {
+        GameData gameData = games.get(gameId);
+        if (gameData == null) {
+            throw new IllegalArgumentException("Game not found");
+        }
+        if (gameData.status != GameStatus.MULLIGAN) {
+            throw new IllegalStateException("Game is not in mulligan phase");
+        }
+        if (gameData.playerKeptHand.contains(player.getId())) {
+            throw new IllegalStateException("You have already kept your hand");
+        }
+        int currentMulliganCount = gameData.mulliganCounts.getOrDefault(player.getId(), 0);
+        if (currentMulliganCount >= 7) {
+            throw new IllegalStateException("Maximum mulligans reached");
+        }
+
+        synchronized (gameData) {
+            List<Card> hand = gameData.playerHands.get(player.getId());
+            List<Card> deck = gameData.playerDecks.get(player.getId());
+
+            deck.addAll(hand);
+            hand.clear();
+            Collections.shuffle(deck, random);
+
+            List<Card> newHand = new ArrayList<>(deck.subList(0, 7));
+            deck.subList(0, 7).clear();
+            gameData.playerHands.put(player.getId(), newHand);
+
+            int newMulliganCount = currentMulliganCount + 1;
+            gameData.mulliganCounts.put(player.getId(), newMulliganCount);
+
+            sendToPlayer(player.getId(), new HandDrawnMessage(new ArrayList<>(newHand), newMulliganCount));
+            broadcastToGame(gameData, new MulliganResolvedMessage(player.getUsername(), false, newMulliganCount));
+
+            String logEntry = player.getUsername() + " takes a mulligan (mulligan #" + newMulliganCount + ").";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+
+            log.info("Game {} - {} mulliganed (count: {})", gameId, player.getUsername(), newMulliganCount);
+        }
+    }
+
+    private void startGame(GameData gameData) {
+        gameData.status = GameStatus.RUNNING;
+        gameData.activePlayerId = gameData.startingPlayerId;
+        gameData.turnNumber = 1;
+        gameData.currentStep = TurnStep.first();
+
+        String logEntry1 = "Mulligan phase complete!";
+        String logEntry2 = "Turn 1 begins. " + gameData.playerIdToName.get(gameData.activePlayerId) + "'s turn.";
+        gameData.gameLog.add(logEntry1);
+        gameData.gameLog.add(logEntry2);
+        broadcastLogEntry(gameData, logEntry1);
+        broadcastLogEntry(gameData, logEntry2);
+
+        broadcastToGame(gameData, new GameStartedMessage(
+                gameData.activePlayerId, gameData.turnNumber, gameData.currentStep, getPriorityPlayerId(gameData)
+        ));
+
+        log.info("Game {} - Game started! Turn 1 begins. Active player: {}", gameData.id, gameData.playerIdToName.get(gameData.activePlayerId));
+    }
+
+    private void sendToPlayer(Long playerId, Object message) {
+        String json;
+        try {
+            json = objectMapper.writeValueAsString(message);
+        } catch (Exception e) {
+            log.error("Error serializing message", e);
+            return;
+        }
+        Player player = sessionManager.getPlayerByUserId(playerId);
+        if (player != null && player.getSession().isOpen()) {
+            try {
+                player.getSession().sendMessage(new TextMessage(json));
+            } catch (Exception e) {
+                log.error("Error sending message to player {}", playerId, e);
+            }
+        }
+    }
+
     private JoinGame toJoinGame(GameData data) {
+        return toJoinGame(data, null);
+    }
+
+    private JoinGame toJoinGame(GameData data, Long playerId) {
+        List<Card> hand = playerId != null ? new ArrayList<>(data.playerHands.getOrDefault(playerId, List.of())) : List.of();
+        int mulliganCount = playerId != null ? data.mulliganCounts.getOrDefault(playerId, 0) : 0;
         return new JoinGame(
                 data.id,
                 data.gameName,
@@ -238,7 +380,9 @@ public class GameService {
                 data.currentStep,
                 data.activePlayerId,
                 data.turnNumber,
-                getPriorityPlayerId(data)
+                getPriorityPlayerId(data),
+                hand,
+                mulliganCount
         );
     }
 
@@ -264,6 +408,9 @@ public class GameService {
         final List<String> playerNames = Collections.synchronizedList(new ArrayList<>());
         final Map<Long, String> playerIdToName = new ConcurrentHashMap<>();
         final Map<Long, List<Card>> playerDecks = new ConcurrentHashMap<>();
+        final Map<Long, List<Card>> playerHands = new ConcurrentHashMap<>();
+        final Map<Long, Integer> mulliganCounts = new ConcurrentHashMap<>();
+        final Set<Long> playerKeptHand = ConcurrentHashMap.newKeySet();
         final List<String> gameLog = Collections.synchronizedList(new ArrayList<>());
         Long startingPlayerId;
         TurnStep currentStep;
