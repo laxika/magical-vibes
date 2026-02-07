@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.handler;
 
+import com.github.laxika.magicalvibes.dto.ErrorMessage;
+import com.github.laxika.magicalvibes.dto.GameMessage;
 import com.github.laxika.magicalvibes.dto.GameResponse;
 import com.github.laxika.magicalvibes.dto.LoginRequest;
 import com.github.laxika.magicalvibes.dto.LoginResponse;
@@ -18,8 +20,6 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.*;
 
 @Component
@@ -182,16 +182,12 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void sendGameMessage(WebSocketSession session, MessageType type, GameResponse game) throws IOException {
-        Map<String, Object> message = new HashMap<>();
-        message.put("type", type);
-        message.put("game", game);
+        GameMessage message = new GameMessage(type, game);
         session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
     }
 
     private void broadcastToLobby(MessageType type, GameResponse game) {
-        Map<String, Object> notification = new HashMap<>();
-        notification.put("type", type);
-        notification.put("game", game);
+        GameMessage notification = new GameMessage(type, game);
 
         int sentCount = 0;
 
@@ -211,7 +207,7 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void sendError(WebSocketSession session, String message) throws IOException {
-        Map<String, Object> error = Map.of("type", MessageType.ERROR, "message", message);
+        ErrorMessage error = new ErrorMessage(message);
         session.sendMessage(new TextMessage(objectMapper.writeValueAsString(error)));
     }
 

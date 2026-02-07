@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.dto.GameLogEntryMessage;
 import com.github.laxika.magicalvibes.dto.GameResponse;
+import com.github.laxika.magicalvibes.dto.PriorityUpdatedMessage;
+import com.github.laxika.magicalvibes.dto.StepAdvancedMessage;
+import com.github.laxika.magicalvibes.dto.TurnChangedMessage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.MessageType;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import lombok.extern.slf4j.Slf4j;
@@ -131,10 +134,7 @@ public class GameService {
             if (gameData.priorityPassedBy.size() >= 2) {
                 advanceStep(gameData);
             } else {
-                Map<String, Object> message = new HashMap<>();
-                message.put("type", MessageType.PRIORITY_UPDATED);
-                message.put("priorityPlayerId", getPriorityPlayerId(gameData));
-                broadcastToGame(gameData, message);
+                broadcastToGame(gameData, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
             }
         }
     }
@@ -150,12 +150,7 @@ public class GameService {
             log.info("Game {} - Step advanced to {}", gameData.id, next);
 
             broadcastLogEntry(gameData, logEntry);
-
-            Map<String, Object> message = new HashMap<>();
-            message.put("type", MessageType.STEP_ADVANCED);
-            message.put("priorityPlayerId", getPriorityPlayerId(gameData));
-            message.put("currentStep", next);
-            broadcastToGame(gameData, message);
+            broadcastToGame(gameData, new StepAdvancedMessage(getPriorityPlayerId(gameData), next));
         } else {
             advanceTurn(gameData);
         }
@@ -177,14 +172,9 @@ public class GameService {
         log.info("Game {} - Turn {} begins. Active player: {}", gameData.id, gameData.turnNumber, nextActiveName);
 
         broadcastLogEntry(gameData, logEntry);
-
-        Map<String, Object> message = new HashMap<>();
-        message.put("type", MessageType.TURN_CHANGED);
-        message.put("priorityPlayerId", getPriorityPlayerId(gameData));
-        message.put("currentStep", TurnStep.first());
-        message.put("activePlayerId", nextActive);
-        message.put("turnNumber", gameData.turnNumber);
-        broadcastToGame(gameData, message);
+        broadcastToGame(gameData, new TurnChangedMessage(
+                getPriorityPlayerId(gameData), TurnStep.first(), nextActive, gameData.turnNumber
+        ));
     }
 
     public Long getGameIdForPlayer(Long userId) {
@@ -195,7 +185,7 @@ public class GameService {
                 .orElse(null);
     }
 
-    private void broadcastToGame(GameData gameData, Map<String, Object> message) {
+    private void broadcastToGame(GameData gameData, Object message) {
         String json;
         try {
             json = objectMapper.writeValueAsString(message);
@@ -216,10 +206,7 @@ public class GameService {
     }
 
     private void broadcastLogEntry(GameData gameData, String logEntry) {
-        broadcastToGame(gameData, Map.of(
-                "type", MessageType.GAME_LOG_ENTRY,
-                "message", logEntry
-        ));
+        broadcastToGame(gameData, new GameLogEntryMessage(logEntry));
     }
 
     private Long getPriorityPlayerId(GameData data) {
