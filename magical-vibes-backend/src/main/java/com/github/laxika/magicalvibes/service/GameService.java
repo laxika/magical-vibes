@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.dto.GameResponse;
+import com.github.laxika.magicalvibes.model.Player;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -16,15 +17,15 @@ public class GameService {
     private final AtomicLong idCounter = new AtomicLong(1);
     private final Map<Long, GameData> games = new ConcurrentHashMap<>();
 
-    public GameResponse createGame(String gameName, Long userId, String username) {
+    public GameResponse createGame(String gameName, Player player) {
         long gameId = idCounter.getAndIncrement();
 
-        GameData gameData = new GameData(gameId, gameName, userId, username);
-        gameData.playerIds.add(userId);
-        gameData.playerNames.add(username);
+        GameData gameData = new GameData(gameId, gameName, player.getId(), player.getUsername());
+        gameData.playerIds.add(player.getId());
+        gameData.playerNames.add(player.getUsername());
         games.put(gameId, gameData);
 
-        log.info("Game created: id={}, name='{}', creator={}", gameId, gameName, username);
+        log.info("Game created: id={}, name='{}', creator={}", gameId, gameName, player.getUsername());
         return toResponse(gameData);
     }
 
@@ -35,7 +36,7 @@ public class GameService {
                 .toList();
     }
 
-    public GameResponse joinGame(Long gameId, Long userId, String username) {
+    public GameResponse joinGame(Long gameId, Player player) {
         GameData gameData = games.get(gameId);
         if (gameData == null) {
             throw new IllegalArgumentException("Game not found");
@@ -45,18 +46,18 @@ public class GameService {
             throw new IllegalStateException("Game is not accepting players");
         }
 
-        if (gameData.playerIds.contains(userId)) {
+        if (gameData.playerIds.contains(player.getId())) {
             throw new IllegalStateException("You are already in this game");
         }
 
-        gameData.playerIds.add(userId);
-        gameData.playerNames.add(username);
+        gameData.playerIds.add(player.getId());
+        gameData.playerNames.add(player.getUsername());
 
         if (gameData.playerIds.size() >= 2) {
             gameData.status = "RUNNING";
         }
 
-        log.info("User {} joined game {}, status={}", username, gameId, gameData.status);
+        log.info("User {} joined game {}, status={}", player.getUsername(), gameId, gameData.status);
         return toResponse(gameData);
     }
 

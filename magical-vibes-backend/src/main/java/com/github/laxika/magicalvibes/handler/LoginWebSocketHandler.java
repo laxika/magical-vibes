@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.handler;
 import com.github.laxika.magicalvibes.dto.GameResponse;
 import com.github.laxika.magicalvibes.dto.LoginRequest;
 import com.github.laxika.magicalvibes.dto.LoginResponse;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.LoginService;
 import com.github.laxika.magicalvibes.service.WebSocketSessionManager;
@@ -101,7 +102,7 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         log.info("Sent login response to session {}: {}", session.getId(), response.getType());
 
         if ("LOGIN_SUCCESS".equals(response.getType())) {
-            sessionManager.registerSession(session, response.getUserId(), response.getUsername());
+            sessionManager.registerPlayer(session, response.getUserId(), response.getUsername());
             log.info("Session {} registered for user {} ({}) - connection staying open", session.getId(), response.getUserId(), response.getUsername());
         } else {
             session.close(CloseStatus.NORMAL);
@@ -109,18 +110,17 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void handleCreateGame(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        Long userId = sessionManager.getUserId(session.getId());
-        if (userId == null) {
+        Player player = sessionManager.getPlayer(session.getId());
+        if (player == null) {
             sendError(session, "Not authenticated");
             return;
         }
 
         String gameName = jsonNode.get("gameName").asText();
-        String username = sessionManager.getUsername(session.getId());
-        GameResponse gameResponse = gameService.createGame(gameName, userId, username);
+        GameResponse gameResponse = gameService.createGame(gameName, player);
 
         // Mark creator as in-game
-        sessionManager.setInGame(session.getId(), gameResponse.getId());
+        sessionManager.setInGame(session.getId());
 
         // Send GAME_JOINED to the creator
         sendGameMessage(session, "GAME_JOINED", gameResponse);
@@ -130,20 +130,19 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void handleJoinGame(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        Long userId = sessionManager.getUserId(session.getId());
-        if (userId == null) {
+        Player player = sessionManager.getPlayer(session.getId());
+        if (player == null) {
             sendError(session, "Not authenticated");
             return;
         }
 
         Long gameId = jsonNode.get("gameId").asLong();
-        String username = sessionManager.getUsername(session.getId());
 
         try {
-            GameResponse gameResponse = gameService.joinGame(gameId, userId, username);
+            GameResponse gameResponse = gameService.joinGame(gameId, player);
 
             // Mark joiner as in-game
-            sessionManager.setInGame(session.getId(), gameId);
+            sessionManager.setInGame(session.getId());
 
             // Send GAME_JOINED to the joiner
             sendGameMessage(session, "GAME_JOINED", gameResponse);
@@ -151,9 +150,9 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
             // Send OPPONENT_JOINED to the creator
             Long creatorUserId = gameService.getCreatorUserId(gameId);
             if (creatorUserId != null) {
-                WebSocketSession creatorSession = sessionManager.getSessionByUserId(creatorUserId);
-                if (creatorSession != null && creatorSession.isOpen()) {
-                    sendGameMessage(creatorSession, "OPPONENT_JOINED", gameResponse);
+                Player creator = sessionManager.getPlayerByUserId(creatorUserId);
+                if (creator != null && creator.getSession().isOpen()) {
+                    sendGameMessage(creator.getSession(), "OPPONENT_JOINED", gameResponse);
                 }
             }
 
@@ -176,19 +175,17 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         notification.put("type", type);
         notification.put("game", game);
 
-        Map<String, WebSocketSession> lobbySessions = sessionManager.getLobbySessions();
         int sentCount = 0;
 
-        for (Map.Entry<String, WebSocketSession> entry : lobbySessions.entrySet()) {
+        for (Player player : sessionManager.getLobbyPlayers()) {
             try {
-                WebSocketSession s = entry.getValue();
-                if (s.isOpen()) {
+                if (player.getSession().isOpen()) {
                     String msg = objectMapper.writeValueAsString(notification);
-                    s.sendMessage(new TextMessage(msg));
+                    player.getSession().sendMessage(new TextMessage(msg));
                     sentCount++;
                 }
             } catch (Exception e) {
-                log.error("Error sending notification to session: {}", entry.getKey(), e);
+                log.error("Error sending notification to player: {}", player.getUsername(), e);
             }
         }
 
