@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.dto.GameResponse;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Player;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +11,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @Slf4j
@@ -17,6 +20,7 @@ public class GameService {
 
     private final AtomicLong idCounter = new AtomicLong(1);
     private final Map<Long, GameData> games = new ConcurrentHashMap<>();
+    private final Random random = new Random();
 
     public GameResponse createGame(String gameName, Player player) {
         long gameId = idCounter.getAndIncrement();
@@ -56,6 +60,7 @@ public class GameService {
 
         if (gameData.playerIds.size() >= 2) {
             gameData.status = GameStatus.RUNNING;
+            initializeGame(gameData);
         }
 
         log.info("User {} joined game {}, status={}", player.getUsername(), gameId, gameData.status);
@@ -67,6 +72,26 @@ public class GameService {
         return gameData != null ? gameData.createdByUserId : null;
     }
 
+    private void initializeGame(GameData gameData) {
+        Card forest = new Card("Forest", "Basic Land", "Forest", "G");
+
+        for (Long playerId : gameData.playerIds) {
+            List<Card> deck = IntStream.range(0, 60)
+                    .mapToObj(i -> forest)
+                    .collect(Collectors.toList());
+            gameData.playerDecks.put(playerId, deck);
+        }
+
+        gameData.gameLog.add("Game started!");
+        gameData.gameLog.add("Each player receives a deck of 60 Forests.");
+
+        List<String> names = new ArrayList<>(gameData.playerNames);
+        String startingPlayer = names.get(random.nextInt(names.size()));
+        gameData.startingPlayerName = startingPlayer;
+
+        gameData.gameLog.add(startingPlayer + " wins the coin toss and goes first!");
+    }
+
     private GameResponse toResponse(GameData data) {
         return new GameResponse(
                 data.id,
@@ -75,7 +100,9 @@ public class GameService {
                 data.status,
                 data.createdAt,
                 data.playerIds.size(),
-                new ArrayList<>(data.playerNames)
+                new ArrayList<>(data.playerNames),
+                new ArrayList<>(data.gameLog),
+                data.startingPlayerName
         );
     }
 
@@ -88,6 +115,9 @@ public class GameService {
         GameStatus status;
         final Set<Long> playerIds = ConcurrentHashMap.newKeySet();
         final List<String> playerNames = Collections.synchronizedList(new ArrayList<>());
+        final Map<Long, List<Card>> playerDecks = new ConcurrentHashMap<>();
+        final List<String> gameLog = Collections.synchronizedList(new ArrayList<>());
+        String startingPlayerName;
 
         GameData(long id, String gameName, long createdByUserId, String createdByUsername) {
             this.id = id;

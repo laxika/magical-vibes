@@ -60,6 +60,10 @@ export class GameComponent implements OnInit, OnDestroy {
     return g && g.playerNames.length > 1 ? g.playerNames[1] : '';
   }
 
+  get gameLog(): string[] {
+    return this.game()?.gameLog ?? [];
+  }
+
   get isWaitingForOpponent(): boolean {
     const g = this.game();
     return g !== null && g.playerNames.length < 2;

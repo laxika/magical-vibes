@@ -1,28 +1,43 @@
 <div class="game-container">
-  <div class="game-content">
-    <header>
-      <h1>{{ game()?.gameName }}</h1>
-      <div class="game-status">
-        <span class="status-badge" [class.waiting]="game()?.status === GameStatus.WAITING" [class.running]="game()?.status === GameStatus.RUNNING">
-          {{ game()?.status }}
-        </span>
+  <header>
+    <h1>{{ game()?.gameName }}</h1>
+    <div class="game-status">
+      <span class="status-badge" [class.waiting]="game()?.status === GameStatus.WAITING" [class.running]="game()?.status === GameStatus.RUNNING">
+        {{ game()?.status }}
+      </span>
+    </div>
+  </header>
+
+  <div class="game-layout">
+    <div class="game-area">
+      <div class="players-area">
+        <div class="player-card">
+          <div class="player-label">Player 1</div>
+          <div class="player-name">{{ player1Name }}</div>
+        </div>
+
+        <div class="vs-divider">VS</div>
+
+        <div class="player-card">
+          <div class="player-label">Player 2</div>
+          @if (isWaitingForOpponent) {
+            <div class="player-name waiting">Waiting for an opponent</div>
+          } @else {
+            <div class="player-name">{{ player2Name }}</div>
+          }
+        </div>
       </div>
-    </header>
+    </div>
 
-    <div class="players-area">
-      <div class="player-card">
-        <div class="player-label">Player 1</div>
-        <div class="player-name">{{ player1Name }}</div>
-      </div>
-
-      <div class="vs-divider">VS</div>
-
-      <div class="player-card">
-        <div class="player-label">Player 2</div>
-        @if (isWaitingForOpponent) {
-          <div class="player-name waiting">Waiting for an opponent</div>
+    <div class="log-panel">
+      <div class="log-header">Game Log</div>
+      <div class="log-entries">
+        @if (gameLog.length === 0) {
+          <div class="log-entry empty">Waiting for game to start...</div>
         } @else {
-          <div class="player-name">{{ player2Name }}</div>
+          @for (entry of gameLog; track $index) {
+            <div class="log-entry">{{ entry }}</div>
+          }
         }
       </div>
     </div>

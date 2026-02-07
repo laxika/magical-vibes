@@ -29,6 +29,8 @@ export interface Game {
   createdAt: string;
   playerCount: number;
   playerNames: string[];
+  gameLog: string[];
+  startingPlayerName: string;
 }
 
 export interface LoginResponse {

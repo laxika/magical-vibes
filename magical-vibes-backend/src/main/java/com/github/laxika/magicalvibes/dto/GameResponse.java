@@ -20,4 +20,6 @@ public class GameResponse {
     private LocalDateTime createdAt;
     private int playerCount;
     private List<String> playerNames;
+    private List<String> gameLog;
+    private String startingPlayerName;
 }
