@@ -99,6 +99,8 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
                 case PLAY_CARD -> handlePlayCard(session, jsonNode);
                 case TAP_PERMANENT -> handleTapPermanent(session, jsonNode);
                 case SET_AUTO_STOPS -> handleSetAutoStops(session, jsonNode);
+                case DECLARE_ATTACKERS -> handleDeclareAttackers(session, jsonNode);
+                case DECLARE_BLOCKERS -> handleDeclareBlockers(session, jsonNode);
                 default -> sendError(session, "Unknown message type: " + type);
             }
         } catch (Exception e) {
@@ -302,6 +304,54 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
 
         try {
             gameService.setAutoStops(gameId, player, stops);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            sendError(session, e.getMessage());
+        }
+    }
+
+    private void handleDeclareAttackers(WebSocketSession session, JsonNode jsonNode) throws IOException {
+        Player player = sessionManager.getPlayer(session.getId());
+        if (player == null) {
+            sendError(session, "Not authenticated");
+            return;
+        }
+
+        Long gameId = jsonNode.get("gameId").asLong();
+        List<Integer> attackerIndices = new ArrayList<>();
+        JsonNode indicesNode = jsonNode.get("attackerIndices");
+        if (indicesNode != null && indicesNode.isArray()) {
+            for (JsonNode idx : indicesNode) {
+                attackerIndices.add(idx.asInt());
+            }
+        }
+
+        try {
+            gameService.declareAttackers(gameId, player, attackerIndices);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            sendError(session, e.getMessage());
+        }
+    }
+
+    private void handleDeclareBlockers(WebSocketSession session, JsonNode jsonNode) throws IOException {
+        Player player = sessionManager.getPlayer(session.getId());
+        if (player == null) {
+            sendError(session, "Not authenticated");
+            return;
+        }
+
+        Long gameId = jsonNode.get("gameId").asLong();
+        List<int[]> blockerAssignments = new ArrayList<>();
+        JsonNode assignmentsNode = jsonNode.get("blockerAssignments");
+        if (assignmentsNode != null && assignmentsNode.isArray()) {
+            for (JsonNode assignment : assignmentsNode) {
+                int blockerIndex = assignment.get("blockerIndex").asInt();
+                int attackerIndex = assignment.get("attackerIndex").asInt();
+                blockerAssignments.add(new int[]{blockerIndex, attackerIndex});
+            }
+        }
+
+        try {
+            gameService.declareBlockers(gameId, player, blockerAssignments);
         } catch (IllegalArgumentException | IllegalStateException e) {
             sendError(session, e.getMessage());
         }

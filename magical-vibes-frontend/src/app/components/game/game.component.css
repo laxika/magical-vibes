@@ -39,6 +39,11 @@ h1 {
   color: #155724;
 }
 
+.status-badge.finished {
+  background: #f8d7da;
+  color: #721c24;
+}
+
 .game-layout {
   display: flex;
   gap: 20px;
@@ -191,6 +196,18 @@ h1 {
 .player-badge.has-priority {
   outline: 2px solid #f6c343;
   outline-offset: 2px;
+}
+
+.life-total {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 4px;
+  color: #e74c3c;
+}
+
+.player-badge.active .life-total {
+  color: #ff6b6b;
 }
 
 .deck-size {
@@ -367,6 +384,7 @@ h1 {
   text-align: center;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
   transition: transform 0.15s;
+  position: relative;
 }
 
 .card.playable {
@@ -485,7 +503,6 @@ h1 {
 
 .card.selectable {
   cursor: pointer;
-  position: relative;
   border: 2px solid transparent;
   transition: transform 0.15s, border-color 0.2s;
 }
@@ -568,7 +585,6 @@ h1 {
 
 .card.tapped {
   opacity: 0.5;
-  position: relative;
 }
 
 .card.tappable {
@@ -657,4 +673,147 @@ h1 {
   border-radius: 4px;
   margin-top: 6px;
   display: inline-block;
+}
+
+/* Combat styles */
+
+.combat-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+}
+
+.attackers-banner {
+  background: linear-gradient(135deg, #e67e22, #d35400);
+  box-shadow: 0 4px 12px rgba(230, 126, 34, 0.4);
+}
+
+.blockers-banner {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+}
+
+.combat-banner-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-confirm-combat {
+  padding: 8px 20px;
+  border: 2px solid white;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-confirm-combat:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.card.attacking {
+  border: 2px solid #e67e22;
+  box-shadow: 0 0 12px rgba(230, 126, 34, 0.6);
+}
+
+.card.blocking {
+  border: 2px solid #3498db;
+  box-shadow: 0 0 12px rgba(52, 152, 219, 0.6);
+}
+
+.card.can-attack {
+  border: 2px dashed #27ae60;
+  cursor: pointer;
+}
+
+.card.selected-attacker {
+  border: 2px solid #f6c343;
+  box-shadow: 0 0 16px rgba(246, 195, 67, 0.7);
+  cursor: pointer;
+}
+
+.card.can-block {
+  border: 2px dashed #3498db;
+  cursor: pointer;
+}
+
+.card.selected-blocker {
+  border: 2px solid #9b59b6;
+  box-shadow: 0 0 16px rgba(155, 89, 182, 0.7);
+  cursor: pointer;
+}
+
+.card.assigned-blocker {
+  border: 2px solid #3498db;
+  box-shadow: 0 0 12px rgba(52, 152, 219, 0.5);
+}
+
+.card.summoning-sick {
+  opacity: 0.7;
+}
+
+.card-combat-badge {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 8px;
+  text-transform: uppercase;
+}
+
+.attacking-badge {
+  background: #e67e22;
+  color: white;
+}
+
+.blocking-badge {
+  background: #3498db;
+  color: white;
+}
+
+/* Game over overlay */
+
+.game-over-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.game-over-card {
+  background: white;
+  padding: 48px 64px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.game-over-card h2 {
+  margin: 0 0 16px;
+  font-size: 32px;
+  color: #667eea;
+}
+
+.winner-text {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 32px;
 }

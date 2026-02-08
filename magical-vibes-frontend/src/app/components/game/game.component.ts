@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -91,6 +91,26 @@ export class GameComponent implements OnInit, OnDestroy {
         if (message.type === MessageType.AUTO_STOPS_UPDATED) {
           const stopsMsg = message as AutoStopsUpdatedNotification;
           this.autoStopSteps.set(new Set(stopsMsg.autoStopSteps));
+        }
+
+        if (message.type === MessageType.AVAILABLE_ATTACKERS) {
+          const atkMsg = message as AvailableAttackersNotification;
+          this.handleAvailableAttackers(atkMsg);
+        }
+
+        if (message.type === MessageType.AVAILABLE_BLOCKERS) {
+          const blkMsg = message as AvailableBlockersNotification;
+          this.handleAvailableBlockers(blkMsg);
+        }
+
+        if (message.type === MessageType.LIFE_UPDATED) {
+          const lifeMsg = message as LifeUpdatedNotification;
+          this.updateLifeTotals(lifeMsg.lifeTotals);
+        }
+
+        if (message.type === MessageType.GAME_OVER) {
+          const goMsg = message as GameOverNotification;
+          this.handleGameOver(goMsg);
         }
 
         const update = message as GameUpdate;
@@ -270,6 +290,38 @@ export class GameComponent implements OnInit, OnDestroy {
     this.websocketService.currentGame = updated;
   }
 
+  private updateLifeTotals(lifeTotals: number[]): void {
+    const g = this.game();
+    if (!g) return;
+    const updated = { ...g, lifeTotals };
+    this.game.set(updated);
+    this.websocketService.currentGame = updated;
+  }
+
+  private handleAvailableAttackers(msg: AvailableAttackersNotification): void {
+    this.declaringAttackers = true;
+    this.availableAttackerIndices.set(new Set(msg.attackerIndices));
+    this.selectedAttackerIndices.clear();
+  }
+
+  private handleAvailableBlockers(msg: AvailableBlockersNotification): void {
+    this.declaringBlockers = true;
+    this.availableBlockerIndices.set(new Set(msg.blockerIndices));
+    this.opponentAttackerIndices = msg.attackerIndices;
+    this.blockerAssignments.clear();
+    this.selectedBlockerIndex = null;
+  }
+
+  private handleGameOver(msg: GameOverNotification): void {
+    this.gameOverWinner = msg.winnerName;
+    this.gameOverWinnerId = msg.winnerId;
+    const g = this.game();
+    if (!g) return;
+    const updated = { ...g, status: GameStatus.FINISHED };
+    this.game.set(updated);
+    this.websocketService.currentGame = updated;
+  }
+
   get myPlayerIndex(): number {
     const g = this.game();
     if (!g) return 0;
@@ -394,6 +446,18 @@ export class GameComponent implements OnInit, OnDestroy {
   playableCardIndices = signal(new Set<number>());
   autoStopSteps = signal(new Set<string>());
 
+  // Combat state
+  declaringAttackers = false;
+  declaringBlockers = false;
+  availableAttackerIndices = signal(new Set<number>());
+  availableBlockerIndices = signal(new Set<number>());
+  selectedAttackerIndices = new Set<number>();
+  opponentAttackerIndices: number[] = [];
+  blockerAssignments: Map<number, number> = new Map();
+  selectedBlockerIndex: number | null = null;
+  gameOverWinner: string | null = null;
+  gameOverWinnerId: number | null = null;
+
   isCardPlayable(index: number): boolean {
     return this.playableCardIndices().has(index);
   }
@@ -425,6 +489,116 @@ export class GameComponent implements OnInit, OnDestroy {
 
   isForceStop(step: string): boolean {
     return step === TurnStep.PRECOMBAT_MAIN || step === TurnStep.POSTCOMBAT_MAIN;
+  }
+
+  // Combat action methods
+
+  canAttack(index: number): boolean {
+    return this.declaringAttackers && this.availableAttackerIndices().has(index);
+  }
+
+  isSelectedAttacker(index: number): boolean {
+    return this.selectedAttackerIndices.has(index);
+  }
+
+  toggleAttacker(index: number): void {
+    if (!this.canAttack(index)) return;
+    if (this.selectedAttackerIndices.has(index)) {
+      this.selectedAttackerIndices.delete(index);
+    } else {
+      this.selectedAttackerIndices.add(index);
+    }
+  }
+
+  confirmAttackers(): void {
+    const g = this.game();
+    if (!g) return;
+    this.websocketService.send({
+      type: MessageType.DECLARE_ATTACKERS,
+      gameId: g.id,
+      attackerIndices: Array.from(this.selectedAttackerIndices)
+    });
+    this.declaringAttackers = false;
+    this.selectedAttackerIndices.clear();
+    this.availableAttackerIndices.set(new Set());
+  }
+
+  canBlock(index: number): boolean {
+    return this.declaringBlockers && this.availableBlockerIndices().has(index);
+  }
+
+  isAssignedBlocker(index: number): boolean {
+    return this.blockerAssignments.has(index);
+  }
+
+  selectBlocker(index: number): void {
+    if (!this.canBlock(index)) return;
+    if (this.blockerAssignments.has(index)) {
+      this.blockerAssignments.delete(index);
+      return;
+    }
+    this.selectedBlockerIndex = index;
+  }
+
+  assignBlock(attackerIndex: number): void {
+    if (this.selectedBlockerIndex === null || !this.declaringBlockers) return;
+    this.blockerAssignments.set(this.selectedBlockerIndex, attackerIndex);
+    this.selectedBlockerIndex = null;
+  }
+
+  confirmBlockers(): void {
+    const g = this.game();
+    if (!g) return;
+    const assignments = Array.from(this.blockerAssignments.entries()).map(([blockerIndex, attackerIndex]) => ({
+      blockerIndex,
+      attackerIndex
+    }));
+    this.websocketService.send({
+      type: MessageType.DECLARE_BLOCKERS,
+      gameId: g.id,
+      blockerAssignments: assignments
+    });
+    this.declaringBlockers = false;
+    this.blockerAssignments.clear();
+    this.selectedBlockerIndex = null;
+    this.availableBlockerIndices.set(new Set());
+    this.opponentAttackerIndices = [];
+  }
+
+  cancelBlockerSelection(): void {
+    this.selectedBlockerIndex = null;
+  }
+
+  get myLifeTotal(): number {
+    return this.game()?.lifeTotals?.[this.myPlayerIndex] ?? 20;
+  }
+
+  get opponentLifeTotal(): number {
+    return this.game()?.lifeTotals?.[this.opponentPlayerIndex] ?? 20;
+  }
+
+  getLifeTotal(playerIndex: number): number {
+    return this.game()?.lifeTotals?.[playerIndex] ?? 20;
+  }
+
+  onMyBattlefieldCardClick(index: number): void {
+    if (this.declaringAttackers) {
+      this.toggleAttacker(index);
+    } else if (this.declaringBlockers) {
+      this.selectBlocker(index);
+    } else {
+      this.tapPermanent(index);
+    }
+  }
+
+  onOpponentBattlefieldCardClick(index: number): void {
+    if (this.declaringBlockers) {
+      this.assignBlock(index);
+    }
+  }
+
+  backToLobby(): void {
+    this.router.navigate(['/home']);
   }
 
   readonly GameStatus = GameStatus;

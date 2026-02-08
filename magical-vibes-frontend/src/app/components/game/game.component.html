@@ -2,7 +2,7 @@
   <header>
     <h1>{{ game()?.gameName }}</h1>
     <div class="game-status">
-      <span class="status-badge" [class.waiting]="game()?.status === GameStatus.WAITING" [class.mulligan]="game()?.status === GameStatus.MULLIGAN" [class.running]="game()?.status === GameStatus.RUNNING">
+      <span class="status-badge" [class.waiting]="game()?.status === GameStatus.WAITING" [class.mulligan]="game()?.status === GameStatus.MULLIGAN" [class.running]="game()?.status === GameStatus.RUNNING" [class.finished]="game()?.status === GameStatus.FINISHED">
         {{ game()?.status }}
       </span>
     </div>
@@ -97,10 +97,11 @@
     </div>
   }
 
-  @if (game()?.status === GameStatus.RUNNING) {
+  @if (game()?.status === GameStatus.RUNNING || game()?.status === GameStatus.FINISHED) {
     <div class="turn-info">
       <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)">
         {{ player1Name }}
+        <span class="life-total">Life: {{ getLifeTotal(0) }}</span>
         <span class="deck-size">Deck: {{ player1DeckSize }}</span>
         @if (holdsPriority(0)) {
           <span class="priority-indicator">Priority</span>
@@ -112,6 +113,7 @@
       </div>
       <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)">
         {{ player2Name }}
+        <span class="life-total">Life: {{ getLifeTotal(1) }}</span>
         <span class="deck-size">Deck: {{ player2DeckSize }}</span>
         @if (holdsPriority(1)) {
           <span class="priority-indicator">Priority</span>
@@ -140,7 +142,7 @@
     </div>
 
     <div class="action-bar">
-      <button class="btn-pass" (click)="passPriority()" [disabled]="!hasPriority">Pass Priority</button>
+      <button class="btn-pass" (click)="passPriority()" [disabled]="!hasPriority || declaringAttackers || declaringBlockers">Pass Priority</button>
       @if (totalMana > 0) {
         <div class="mana-pool">
           @for (entry of manaEntries; track entry.color) {
@@ -152,12 +154,37 @@
       }
     </div>
 
+    @if (declaringAttackers) {
+      <div class="combat-banner attackers-banner">
+        <span>Declare Attackers — select creatures to attack, then confirm</span>
+        <button class="btn-confirm-combat" (click)="confirmAttackers()">Confirm Attackers</button>
+      </div>
+    }
+
+    @if (declaringBlockers) {
+      <div class="combat-banner blockers-banner">
+        <span>Assign Blockers — click your creature, then click an attacking creature to block it</span>
+        <div class="combat-banner-actions">
+          @if (selectedBlockerIndex !== null) {
+            <button class="btn-confirm-combat" (click)="cancelBlockerSelection()">Cancel Selection</button>
+          }
+          <button class="btn-confirm-combat" (click)="confirmBlockers()">Confirm Blockers</button>
+        </div>
+      </div>
+    }
+
     <div class="battlefield-area">
       <div class="battlefield-row">
         <div class="battlefield-label">{{ game()?.playerNames?.[opponentPlayerIndex] }}'s Battlefield</div>
         <div class="battlefield-cards">
           @for (perm of opponentBattlefield; track $index) {
-            <div class="card" [class.tapped]="perm.tapped" [attr.data-card-type]="perm.card.type">
+            <div class="card"
+                 [class.tapped]="perm.tapped"
+                 [class.attacking]="perm.attacking"
+                 [class.blocking]="perm.blocking"
+                 [class.summoning-sick]="perm.summoningSick && perm.card.type === 'Creature'"
+                 [attr.data-card-type]="perm.card.type"
+                 (click)="onOpponentBattlefieldCardClick($index)">
               @if (perm.card.manaCost) {
                 <div class="card-mana-cost">{{ perm.card.manaCost }}</div>
               }
@@ -168,6 +195,12 @@
               }
               @if (perm.tapped) {
                 <div class="card-tapped-badge">Tapped</div>
+              }
+              @if (perm.attacking) {
+                <div class="card-combat-badge attacking-badge">Attacking</div>
+              }
+              @if (perm.blocking) {
+                <div class="card-combat-badge blocking-badge">Blocking</div>
               }
             </div>
           }
@@ -181,7 +214,19 @@
         <div class="battlefield-label">Your Battlefield</div>
         <div class="battlefield-cards">
           @for (perm of myBattlefield; track $index) {
-            <div class="card" [class.tapped]="perm.tapped" [class.tappable]="canTapPermanent($index)" [attr.data-card-type]="perm.card.type" (click)="tapPermanent($index)">
+            <div class="card"
+                 [class.tapped]="perm.tapped"
+                 [class.tappable]="canTapPermanent($index) && !declaringAttackers && !declaringBlockers"
+                 [class.attacking]="perm.attacking"
+                 [class.blocking]="perm.blocking"
+                 [class.summoning-sick]="perm.summoningSick && perm.card.type === 'Creature'"
+                 [class.can-attack]="canAttack($index) && !isSelectedAttacker($index)"
+                 [class.selected-attacker]="isSelectedAttacker($index)"
+                 [class.can-block]="canBlock($index) && !isAssignedBlocker($index) && selectedBlockerIndex !== $index"
+                 [class.selected-blocker]="selectedBlockerIndex === $index"
+                 [class.assigned-blocker]="isAssignedBlocker($index)"
+                 [attr.data-card-type]="perm.card.type"
+                 (click)="onMyBattlefieldCardClick($index)">
               @if (perm.card.manaCost) {
                 <div class="card-mana-cost">{{ perm.card.manaCost }}</div>
               }
@@ -192,6 +237,12 @@
               }
               @if (perm.tapped) {
                 <div class="card-tapped-badge">Tapped</div>
+              }
+              @if (perm.attacking) {
+                <div class="card-combat-badge attacking-badge">Attacking</div>
+              }
+              @if (perm.blocking) {
+                <div class="card-combat-badge blocking-badge">Blocking</div>
               }
             </div>
           }
@@ -217,6 +268,16 @@
             }
           </div>
         }
+      </div>
+    </div>
+  }
+
+  @if (gameOverWinner) {
+    <div class="game-over-overlay">
+      <div class="game-over-card">
+        <h2>Game Over</h2>
+        <p class="winner-text">{{ gameOverWinner }} wins!</p>
+        <button class="btn-keep" (click)="backToLobby()">Back to Lobby</button>
       </div>
     </div>
   }

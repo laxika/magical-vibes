@@ -32,6 +32,12 @@ export enum MessageType {
   MANA_UPDATED = 'MANA_UPDATED',
   SET_AUTO_STOPS = 'SET_AUTO_STOPS',
   AUTO_STOPS_UPDATED = 'AUTO_STOPS_UPDATED',
+  DECLARE_ATTACKERS = 'DECLARE_ATTACKERS',
+  DECLARE_BLOCKERS = 'DECLARE_BLOCKERS',
+  AVAILABLE_ATTACKERS = 'AVAILABLE_ATTACKERS',
+  AVAILABLE_BLOCKERS = 'AVAILABLE_BLOCKERS',
+  LIFE_UPDATED = 'LIFE_UPDATED',
+  GAME_OVER = 'GAME_OVER',
   ERROR = 'ERROR'
 }
 
@@ -107,6 +113,10 @@ export interface Card {
 export interface Permanent {
   card: Card;
   tapped: boolean;
+  attacking: boolean;
+  blocking: boolean;
+  blockingTarget: number;
+  summoningSick: boolean;
 }
 
 export interface Game {
@@ -126,6 +136,7 @@ export interface Game {
   battlefields: Permanent[][];
   manaPool: Record<string, number>;
   autoStopSteps: string[];
+  lifeTotals: number[];
 }
 
 export interface LobbyGame {
@@ -214,7 +225,29 @@ export interface AutoStopsUpdatedNotification {
   autoStopSteps: string[];
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification;
+export interface AvailableAttackersNotification {
+  type: MessageType;
+  attackerIndices: number[];
+}
+
+export interface AvailableBlockersNotification {
+  type: MessageType;
+  blockerIndices: number[];
+  attackerIndices: number[];
+}
+
+export interface LifeUpdatedNotification {
+  type: MessageType;
+  lifeTotals: number[];
+}
+
+export interface GameOverNotification {
+  type: MessageType;
+  winnerId: number;
+  winnerName: string;
+}
+
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification;
 
 export interface User {
   userId: number;
