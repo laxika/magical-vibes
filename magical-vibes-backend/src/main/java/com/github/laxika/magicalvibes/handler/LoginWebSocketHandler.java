@@ -21,6 +21,8 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
+import com.github.laxika.magicalvibes.model.TurnStep;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -96,6 +98,7 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
                 case BOTTOM_CARDS -> handleBottomCards(session, jsonNode);
                 case PLAY_CARD -> handlePlayCard(session, jsonNode);
                 case TAP_PERMANENT -> handleTapPermanent(session, jsonNode);
+                case SET_AUTO_STOPS -> handleSetAutoStops(session, jsonNode);
                 default -> sendError(session, "Unknown message type: " + type);
             }
         } catch (Exception e) {
@@ -276,6 +279,29 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
 
         try {
             gameService.tapPermanent(gameId, player, permanentIndex);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            sendError(session, e.getMessage());
+        }
+    }
+
+    private void handleSetAutoStops(WebSocketSession session, JsonNode jsonNode) throws IOException {
+        Player player = sessionManager.getPlayer(session.getId());
+        if (player == null) {
+            sendError(session, "Not authenticated");
+            return;
+        }
+
+        Long gameId = jsonNode.get("gameId").asLong();
+        List<TurnStep> stops = new ArrayList<>();
+        JsonNode stopsNode = jsonNode.get("stops");
+        if (stopsNode != null && stopsNode.isArray()) {
+            for (JsonNode stopNode : stopsNode) {
+                stops.add(TurnStep.valueOf(stopNode.asString()));
+            }
+        }
+
+        try {
+            gameService.setAutoStops(gameId, player, stops);
         } catch (IllegalArgumentException | IllegalStateException e) {
             sendError(session, e.getMessage());
         }

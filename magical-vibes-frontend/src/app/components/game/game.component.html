@@ -125,7 +125,12 @@
           <div class="phase-label">{{ group.phaseName }}</div>
           <div class="phase-steps">
             @for (stepInfo of group.steps; track stepInfo.step) {
-              <div class="step-pip" [class.active]="game()?.currentStep === stepInfo.step" [title]="stepInfo.displayName">
+              <div class="step-pip"
+                   [class.active]="game()?.currentStep === stepInfo.step"
+                   [class.auto-stop]="isAutoStop(stepInfo.step)"
+                   [class.force-stop]="isForceStop(stepInfo.step)"
+                   [title]="stepInfo.displayName"
+                   (click)="toggleAutoStop(stepInfo.step)">
                 {{ stepInfo.displayName }}
               </div>
             }

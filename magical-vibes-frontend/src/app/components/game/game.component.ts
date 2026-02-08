@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -27,6 +27,11 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     this.game.set(this.websocketService.currentGame);
+
+    const initialStops = this.websocketService.currentGame?.autoStopSteps;
+    if (initialStops) {
+      this.autoStopSteps.set(new Set(initialStops));
+    }
 
     this.subscriptions.push(
       this.websocketService.getMessages().subscribe((message) => {
@@ -81,6 +86,11 @@ export class GameComponent implements OnInit, OnDestroy {
         if (message.type === MessageType.MANA_UPDATED) {
           const manaMsg = message as ManaUpdatedNotification;
           this.updateManaPool(manaMsg.manaPool);
+        }
+
+        if (message.type === MessageType.AUTO_STOPS_UPDATED) {
+          const stopsMsg = message as AutoStopsUpdatedNotification;
+          this.autoStopSteps.set(new Set(stopsMsg.autoStopSteps));
         }
 
         const update = message as GameUpdate;
@@ -382,9 +392,39 @@ export class GameComponent implements OnInit, OnDestroy {
   bottomCardCount = 0;
   selectedCardIndices = new Set<number>();
   playableCardIndices = signal(new Set<number>());
+  autoStopSteps = signal(new Set<string>());
 
   isCardPlayable(index: number): boolean {
     return this.playableCardIndices().has(index);
+  }
+
+  toggleAutoStop(step: string): void {
+    if (this.isForceStop(step)) return;
+
+    const g = this.game();
+    if (!g) return;
+
+    const current = new Set(this.autoStopSteps());
+    if (current.has(step)) {
+      current.delete(step);
+    } else {
+      current.add(step);
+    }
+    this.autoStopSteps.set(current);
+
+    this.websocketService.send({
+      type: MessageType.SET_AUTO_STOPS,
+      gameId: g.id,
+      stops: Array.from(current)
+    });
+  }
+
+  isAutoStop(step: string): boolean {
+    return this.autoStopSteps().has(step);
+  }
+
+  isForceStop(step: string): boolean {
+    return step === TurnStep.PRECOMBAT_MAIN || step === TurnStep.POSTCOMBAT_MAIN;
   }
 
   readonly GameStatus = GameStatus;

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.dto.AutoStopsUpdatedMessage;
 import com.github.laxika.magicalvibes.dto.BattlefieldUpdatedMessage;
 import com.github.laxika.magicalvibes.dto.DeckSizesUpdatedMessage;
 import com.github.laxika.magicalvibes.dto.GameLogEntryMessage;
@@ -126,6 +127,11 @@ public class GameService {
             List<Card> hand = new ArrayList<>(deck.subList(0, 7));
             deck.subList(0, 7).clear();
             gameData.playerHands.put(playerId, hand);
+
+            Set<TurnStep> defaultStops = ConcurrentHashMap.newKeySet();
+            defaultStops.add(TurnStep.PRECOMBAT_MAIN);
+            defaultStops.add(TurnStep.POSTCOMBAT_MAIN);
+            gameData.playerAutoStopSteps.put(playerId, defaultStops);
         }
 
         gameData.status = GameStatus.MULLIGAN;
@@ -511,6 +517,9 @@ public class GameService {
         List<Card> hand = playerId != null ? new ArrayList<>(data.playerHands.getOrDefault(playerId, List.of())) : List.of();
         int mulliganCount = playerId != null ? data.mulliganCounts.getOrDefault(playerId, 0) : 0;
         Map<String, Integer> manaPool = getManaPool(data, playerId);
+        List<TurnStep> autoStopSteps = playerId != null && data.playerAutoStopSteps.containsKey(playerId)
+                ? new ArrayList<>(data.playerAutoStopSteps.get(playerId))
+                : List.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN);
         return new JoinGame(
                 data.id,
                 data.gameName,
@@ -526,7 +535,8 @@ public class GameService {
                 mulliganCount,
                 getDeckSizes(data),
                 getBattlefields(data),
-                manaPool
+                manaPool,
+                autoStopSteps
         );
     }
 
@@ -644,6 +654,25 @@ public class GameService {
         }
     }
 
+    public void setAutoStops(Long gameId, Player player, List<TurnStep> stops) {
+        GameData gameData = games.get(gameId);
+        if (gameData == null) {
+            throw new IllegalArgumentException("Game not found");
+        }
+        if (gameData.status != GameStatus.RUNNING) {
+            throw new IllegalStateException("Game is not running");
+        }
+
+        synchronized (gameData) {
+            Set<TurnStep> stopSet = ConcurrentHashMap.newKeySet();
+            stopSet.addAll(stops);
+            stopSet.add(TurnStep.PRECOMBAT_MAIN);
+            stopSet.add(TurnStep.POSTCOMBAT_MAIN);
+            gameData.playerAutoStopSteps.put(player.getId(), stopSet);
+            sendToPlayer(player.getId(), new AutoStopsUpdatedMessage(new ArrayList<>(stopSet)));
+        }
+    }
+
     private void drainManaPools(GameData gameData) {
         for (Long playerId : gameData.orderedPlayerIds) {
             ManaPool manaPool = gameData.playerManaPools.get(playerId);
@@ -724,6 +753,13 @@ public class GameService {
                 return;
             }
 
+            // Check if current step is in the priority holder's auto-stop set
+            Set<TurnStep> stopSteps = gameData.playerAutoStopSteps.get(priorityHolder);
+            if (stopSteps != null && stopSteps.contains(gameData.currentStep)) {
+                broadcastPlayableCards(gameData);
+                return;
+            }
+
             // Priority holder has nothing to play — auto-pass for them
             String playerName = gameData.playerIdToName.get(priorityHolder);
             log.info("Game {} - Auto-passing priority for {} on step {} (no playable cards)",
@@ -778,6 +814,7 @@ public class GameService {
         final Map<Long, Integer> landsPlayedThisTurn = new ConcurrentHashMap<>();
         final Map<Long, List<Permanent>> playerBattlefields = new ConcurrentHashMap<>();
         final Map<Long, ManaPool> playerManaPools = new ConcurrentHashMap<>();
+        final Map<Long, Set<TurnStep>> playerAutoStopSteps = new ConcurrentHashMap<>();
 
         GameData(long id, String gameName, long createdByUserId, String createdByUsername) {
             this.id = id;

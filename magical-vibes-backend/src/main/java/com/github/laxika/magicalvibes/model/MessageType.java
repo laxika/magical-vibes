@@ -29,5 +29,7 @@ public enum MessageType {
     BATTLEFIELD_UPDATED,
     TAP_PERMANENT,
     MANA_UPDATED,
+    SET_AUTO_STOPS,
+    AUTO_STOPS_UPDATED,
     ERROR
 }

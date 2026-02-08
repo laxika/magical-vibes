@@ -30,6 +30,8 @@ export enum MessageType {
   BATTLEFIELD_UPDATED = 'BATTLEFIELD_UPDATED',
   TAP_PERMANENT = 'TAP_PERMANENT',
   MANA_UPDATED = 'MANA_UPDATED',
+  SET_AUTO_STOPS = 'SET_AUTO_STOPS',
+  AUTO_STOPS_UPDATED = 'AUTO_STOPS_UPDATED',
   ERROR = 'ERROR'
 }
 
@@ -123,6 +125,7 @@ export interface Game {
   deckSizes: number[];
   battlefields: Permanent[][];
   manaPool: Record<string, number>;
+  autoStopSteps: string[];
 }
 
 export interface LobbyGame {
@@ -206,7 +209,12 @@ export interface ManaUpdatedNotification {
   manaPool: Record<string, number>;
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification;
+export interface AutoStopsUpdatedNotification {
+  type: MessageType;
+  autoStopSteps: string[];
+}
+
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification;
 
 export interface User {
   userId: number;

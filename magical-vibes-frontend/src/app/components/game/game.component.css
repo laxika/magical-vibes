@@ -259,12 +259,34 @@ h1 {
   color: #999;
   background: #f0f0f0;
   white-space: nowrap;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+}
+
+.step-pip:hover {
+  opacity: 0.8;
+}
+
+.step-pip.auto-stop {
+  border-bottom-color: #e67e22;
+}
+
+.step-pip.force-stop {
+  border-bottom-color: #e74c3c;
 }
 
 .step-pip.active {
   background: #667eea;
   color: white;
+}
+
+.step-pip.active.auto-stop {
+  border-bottom-color: #e67e22;
+}
+
+.step-pip.active.force-stop {
+  border-bottom-color: #e74c3c;
 }
 
 .action-bar {
