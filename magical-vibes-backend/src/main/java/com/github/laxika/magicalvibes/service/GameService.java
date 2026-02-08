@@ -112,14 +112,18 @@ public class GameService {
 
     private void initializeGame(GameData gameData) {
         Card forest = new Card("Forest", "Basic Land", "Forest", "G", List.of(new AwardManaEffect("G")), null, null, null);
+        Card llanowarElves = new Card("Llanowar Elves", "Creature", "Elf Druid", "G", List.of(new AwardManaEffect("G")), "{G}", 1, 1);
         Card grizzlyBears = new Card("Grizzly Bears", "Creature", "Bear", null, List.of(), "{1}{G}", 2, 2);
 
         for (Long playerId : gameData.playerIds) {
             List<Card> deck = new ArrayList<>();
-            for (int i = 0; i < 36; i++) {
+            for (int i = 0; i < 24; i++) {
                 deck.add(forest);
             }
-            for (int i = 0; i < 24; i++) {
+            for (int i = 0; i < 4; i++) {
+                deck.add(llanowarElves);
+            }
+            for (int i = 0; i < 32; i++) {
                 deck.add(grizzlyBears);
             }
             Collections.shuffle(deck, random);
@@ -142,7 +146,7 @@ public class GameService {
         gameData.status = GameStatus.MULLIGAN;
 
         gameData.gameLog.add("Game started!");
-        gameData.gameLog.add("Each player receives a deck of 36 Forests and 24 Grizzly Bears.");
+        gameData.gameLog.add("Each player receives a deck of 24 Forests, 4 Llanowar Elves, and 32 Grizzly Bears.");
 
         List<Long> ids = new ArrayList<>(gameData.orderedPlayerIds);
         Long startingPlayerId = ids.get(random.nextInt(ids.size()));
@@ -652,6 +656,9 @@ public class GameService {
             }
             if (permanent.getCard().getOnTapEffects() == null || permanent.getCard().getOnTapEffects().isEmpty()) {
                 throw new IllegalStateException("Permanent has no tap effects");
+            }
+            if (permanent.isSummoningSick() && "Creature".equals(permanent.getCard().getType())) {
+                throw new IllegalStateException("Creature has summoning sickness");
             }
 
             permanent.tap();

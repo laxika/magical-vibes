@@ -5,7 +5,8 @@
       "Bash(test:*)",
       "Bash(dir:*)",
       "Bash(findstr:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "WebFetch(domain:api.magicthegathering.io)"
     ]
   }
 }
