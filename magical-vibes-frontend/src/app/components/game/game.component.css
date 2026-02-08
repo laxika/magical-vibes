@@ -823,3 +823,78 @@ h1 {
   color: #333;
   margin: 0 0 32px;
 }
+
+/* MTGO-style battlefield layout */
+
+.battlefield-sub-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-height: 30px;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.lands-row {
+  opacity: 0.85;
+}
+
+.lands-row .card {
+  transform: scale(0.9);
+}
+
+.creatures-row {
+  min-height: 40px;
+}
+
+/* Combat zone (red zone) */
+
+.combat-zone {
+  background: rgba(231, 76, 60, 0.06);
+  border: 1px dashed rgba(231, 76, 60, 0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 8px 0;
+  min-height: 60px;
+}
+
+.combat-zone-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #e74c3c;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.combat-groups {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.combat-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.combat-attacker-slot {
+  /* Attacker card container */
+}
+
+.combat-blocker-slots {
+  display: flex;
+  gap: 6px;
+}
+
+/* Override tapped opacity in combat zone — attacking creatures are tapped but should appear at full opacity */
+.combat-zone .card.tapped {
+  opacity: 1;
+}
+
+.combat-zone .card {
+  cursor: pointer;
+}

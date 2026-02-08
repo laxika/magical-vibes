@@ -176,81 +176,150 @@
     <div class="battlefield-area">
       <div class="battlefield-row">
         <div class="battlefield-label">{{ game()?.playerNames?.[opponentPlayerIndex] }}'s Battlefield</div>
-        <div class="battlefield-cards">
-          @for (perm of opponentBattlefield; track $index) {
+        <div class="battlefield-sub-row lands-row">
+          @for (ip of opponentLands; track ip.originalIndex) {
             <div class="card"
-                 [class.tapped]="perm.tapped"
-                 [class.attacking]="perm.attacking"
-                 [class.blocking]="perm.blocking"
-                 [class.block-target]="isBlockTarget($index)"
-                 [class.summoning-sick]="perm.summoningSick && perm.card.type === 'Creature'"
-                 [attr.data-card-type]="perm.card.type"
-                 (click)="onOpponentBattlefieldCardClick($index)">
-              @if (perm.card.manaCost) {
-                <div class="card-mana-cost">{{ perm.card.manaCost }}</div>
+                 [class.tapped]="ip.perm.tapped"
+                 [attr.data-card-type]="ip.perm.card.type"
+                 (click)="onOpponentBattlefieldCardClick(ip.originalIndex)">
+              @if (ip.perm.card.manaCost) {
+                <div class="card-mana-cost">{{ ip.perm.card.manaCost }}</div>
               }
-              <div class="card-name">{{ perm.card.name }}</div>
-              <div class="card-type">{{ perm.card.type }}</div>
-              @if (perm.card.power != null && perm.card.toughness != null) {
-                <div class="card-pt">{{ perm.card.power }}/{{ perm.card.toughness }}</div>
-              }
-              @if (perm.tapped) {
+              <div class="card-name">{{ ip.perm.card.name }}</div>
+              <div class="card-type">{{ ip.perm.card.type }}</div>
+              @if (ip.perm.tapped) {
                 <div class="card-tapped-badge">Tapped</div>
-              }
-              @if (perm.attacking) {
-                <div class="card-combat-badge attacking-badge">Attacking</div>
-              }
-              @if (perm.blocking) {
-                <div class="card-combat-badge blocking-badge">Blocking</div>
               }
             </div>
           }
-          @if (opponentBattlefield.length === 0) {
-            <div class="battlefield-empty">No permanents</div>
+        </div>
+        <div class="battlefield-sub-row creatures-row">
+          @for (ip of opponentCreaturesNotInCombat; track ip.originalIndex) {
+            <div class="card"
+                 [class.tapped]="ip.perm.tapped"
+                 [class.summoning-sick]="ip.perm.summoningSick"
+                 [class.block-target]="isBlockTarget(ip.originalIndex)"
+                 [attr.data-card-type]="ip.perm.card.type"
+                 (click)="onOpponentBattlefieldCardClick(ip.originalIndex)">
+              @if (ip.perm.card.manaCost) {
+                <div class="card-mana-cost">{{ ip.perm.card.manaCost }}</div>
+              }
+              <div class="card-name">{{ ip.perm.card.name }}</div>
+              <div class="card-type">{{ ip.perm.card.type }}</div>
+              @if (ip.perm.card.power != null && ip.perm.card.toughness != null) {
+                <div class="card-pt">{{ ip.perm.card.power }}/{{ ip.perm.card.toughness }}</div>
+              }
+              @if (ip.perm.tapped) {
+                <div class="card-tapped-badge">Tapped</div>
+              }
+            </div>
           }
         </div>
+        @if (opponentBattlefield.length === 0) {
+          <div class="battlefield-empty">No permanents</div>
+        }
       </div>
-      <div class="battlefield-divider"></div>
+
+      @if (showCombatZone) {
+        <div class="combat-zone">
+          <div class="combat-zone-label">Combat</div>
+          <div class="combat-groups">
+            @for (group of combatPairings; track group.attackerIndex) {
+              <div class="combat-group">
+                <div class="combat-attacker-slot">
+                  <div class="card"
+                       [class.attacking]="group.attacker.attacking"
+                       [class.selected-attacker]="declaringAttackers && isSelectedAttacker(group.attackerIndex)"
+                       [class.block-target]="declaringBlockers && selectedBlockerIndex !== null && !group.attackerIsMine"
+                       [attr.data-card-type]="group.attacker.card.type"
+                       (click)="onCombatAttackerClick(group)">
+                    @if (group.attacker.card.manaCost) {
+                      <div class="card-mana-cost">{{ group.attacker.card.manaCost }}</div>
+                    }
+                    <div class="card-name">{{ group.attacker.card.name }}</div>
+                    <div class="card-type">{{ group.attacker.card.type }}</div>
+                    @if (group.attacker.card.power != null && group.attacker.card.toughness != null) {
+                      <div class="card-pt">{{ group.attacker.card.power }}/{{ group.attacker.card.toughness }}</div>
+                    }
+                    <div class="card-combat-badge attacking-badge">Attacking</div>
+                  </div>
+                </div>
+                @if (group.blockers.length > 0) {
+                  <div class="combat-blocker-slots">
+                    @for (blocker of group.blockers; track blocker.index) {
+                      <div class="card blocking"
+                           [attr.data-card-type]="blocker.perm.card.type"
+                           (click)="onCombatBlockerClick(blocker)">
+                        @if (blocker.perm.card.manaCost) {
+                          <div class="card-mana-cost">{{ blocker.perm.card.manaCost }}</div>
+                        }
+                        <div class="card-name">{{ blocker.perm.card.name }}</div>
+                        <div class="card-type">{{ blocker.perm.card.type }}</div>
+                        @if (blocker.perm.card.power != null && blocker.perm.card.toughness != null) {
+                          <div class="card-pt">{{ blocker.perm.card.power }}/{{ blocker.perm.card.toughness }}</div>
+                        }
+                        <div class="card-combat-badge blocking-badge">Blocking</div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="battlefield-divider"></div>
+      }
+
       <div class="battlefield-row">
         <div class="battlefield-label">Your Battlefield</div>
-        <div class="battlefield-cards">
-          @for (perm of myBattlefield; track $index) {
+        <div class="battlefield-sub-row creatures-row">
+          @for (ip of myCreaturesNotInCombat; track ip.originalIndex) {
             <div class="card"
-                 [class.tapped]="perm.tapped"
-                 [class.tappable]="canTapPermanent($index) && !declaringAttackers && !declaringBlockers"
-                 [class.attacking]="perm.attacking"
-                 [class.blocking]="perm.blocking"
-                 [class.summoning-sick]="perm.summoningSick && perm.card.type === 'Creature'"
-                 [class.can-attack]="canAttack($index) && !isSelectedAttacker($index)"
-                 [class.selected-attacker]="isSelectedAttacker($index)"
-                 [class.can-block]="canBlock($index) && !isAssignedBlocker($index) && selectedBlockerIndex !== $index"
-                 [class.selected-blocker]="selectedBlockerIndex === $index"
-                 [class.assigned-blocker]="isAssignedBlocker($index)"
-                 [attr.data-card-type]="perm.card.type"
-                 (click)="onMyBattlefieldCardClick($index)">
-              @if (perm.card.manaCost) {
-                <div class="card-mana-cost">{{ perm.card.manaCost }}</div>
+                 [class.tapped]="ip.perm.tapped"
+                 [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
+                 [class.summoning-sick]="ip.perm.summoningSick"
+                 [class.can-attack]="canAttack(ip.originalIndex) && !isSelectedAttacker(ip.originalIndex)"
+                 [class.can-block]="canBlock(ip.originalIndex) && !isAssignedBlocker(ip.originalIndex) && selectedBlockerIndex !== ip.originalIndex"
+                 [class.selected-blocker]="selectedBlockerIndex === ip.originalIndex"
+                 [class.assigned-blocker]="isAssignedBlocker(ip.originalIndex)"
+                 [attr.data-card-type]="ip.perm.card.type"
+                 (click)="onMyBattlefieldCardClick(ip.originalIndex)">
+              @if (ip.perm.card.manaCost) {
+                <div class="card-mana-cost">{{ ip.perm.card.manaCost }}</div>
               }
-              <div class="card-name">{{ perm.card.name }}</div>
-              <div class="card-type">{{ perm.card.type }}</div>
-              @if (perm.card.power != null && perm.card.toughness != null) {
-                <div class="card-pt">{{ perm.card.power }}/{{ perm.card.toughness }}</div>
+              <div class="card-name">{{ ip.perm.card.name }}</div>
+              <div class="card-type">{{ ip.perm.card.type }}</div>
+              @if (ip.perm.card.power != null && ip.perm.card.toughness != null) {
+                <div class="card-pt">{{ ip.perm.card.power }}/{{ ip.perm.card.toughness }}</div>
               }
-              @if (perm.tapped) {
+              @if (ip.perm.tapped) {
                 <div class="card-tapped-badge">Tapped</div>
-              }
-              @if (perm.attacking) {
-                <div class="card-combat-badge attacking-badge">Attacking</div>
-              }
-              @if (perm.blocking) {
-                <div class="card-combat-badge blocking-badge">Blocking</div>
               }
             </div>
           }
-          @if (myBattlefield.length === 0) {
-            <div class="battlefield-empty">No permanents</div>
+        </div>
+        <div class="battlefield-sub-row lands-row">
+          @for (ip of myLands; track ip.originalIndex) {
+            <div class="card"
+                 [class.tapped]="ip.perm.tapped"
+                 [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
+                 [attr.data-card-type]="ip.perm.card.type"
+                 (click)="onMyBattlefieldCardClick(ip.originalIndex)">
+              @if (ip.perm.card.manaCost) {
+                <div class="card-mana-cost">{{ ip.perm.card.manaCost }}</div>
+              }
+              <div class="card-name">{{ ip.perm.card.name }}</div>
+              <div class="card-type">{{ ip.perm.card.type }}</div>
+              @if (ip.perm.tapped) {
+                <div class="card-tapped-badge">Tapped</div>
+              }
+            </div>
           }
         </div>
+        @if (myBattlefield.length === 0) {
+          <div class="battlefield-empty">No permanents</div>
+        }
       </div>
     </div>
 

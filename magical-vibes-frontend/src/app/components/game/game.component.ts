@@ -4,6 +4,24 @@ import { Router } from '@angular/router';
 import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
+export interface IndexedPermanent {
+  perm: Permanent;
+  originalIndex: number;
+}
+
+export interface CombatBlocker {
+  index: number;
+  perm: Permanent;
+  isMine: boolean;
+}
+
+export interface CombatGroup {
+  attackerIndex: number;
+  attacker: Permanent;
+  attackerIsMine: boolean;
+  blockers: CombatBlocker[];
+}
+
 @Component({
   selector: 'app-game',
   standalone: true,
@@ -606,6 +624,146 @@ export class GameComponent implements OnInit, OnDestroy {
 
   backToLobby(): void {
     this.router.navigate(['/home']);
+  }
+
+  // Battlefield splitting: lands (back row) vs creatures (front row)
+
+  private splitBattlefield(battlefield: Permanent[]): { lands: IndexedPermanent[], creatures: IndexedPermanent[] } {
+    const lands: IndexedPermanent[] = [];
+    const creatures: IndexedPermanent[] = [];
+    battlefield.forEach((perm, idx) => {
+      const entry: IndexedPermanent = { perm, originalIndex: idx };
+      if (perm.card.type === 'Creature') {
+        creatures.push(entry);
+      } else {
+        lands.push(entry);
+      }
+    });
+    return { lands, creatures };
+  }
+
+  get myLands(): IndexedPermanent[] {
+    return this.splitBattlefield(this.myBattlefield).lands;
+  }
+
+  get opponentLands(): IndexedPermanent[] {
+    return this.splitBattlefield(this.opponentBattlefield).lands;
+  }
+
+  get myCreaturesNotInCombat(): IndexedPermanent[] {
+    const inCombat = this.myIndicesInCombat;
+    return this.splitBattlefield(this.myBattlefield).creatures.filter(c => !inCombat.has(c.originalIndex));
+  }
+
+  get opponentCreaturesNotInCombat(): IndexedPermanent[] {
+    const inCombat = this.opponentIndicesInCombat;
+    return this.splitBattlefield(this.opponentBattlefield).creatures.filter(c => !inCombat.has(c.originalIndex));
+  }
+
+  // Combat zone: groups of attacker + blockers
+
+  get showCombatZone(): boolean {
+    return this.combatPairings.length > 0;
+  }
+
+  get combatPairings(): CombatGroup[] {
+    const groups: CombatGroup[] = [];
+
+    // During declaring attackers: selected attackers (always mine) move to combat zone
+    if (this.declaringAttackers) {
+      for (const idx of this.selectedAttackerIndices) {
+        groups.push({
+          attackerIndex: idx,
+          attacker: this.myBattlefield[idx],
+          attackerIsMine: true,
+          blockers: []
+        });
+      }
+      return groups;
+    }
+
+    // Server-confirmed attacking creatures
+    const myBf = this.myBattlefield;
+    const oppBf = this.opponentBattlefield;
+    const myAttacking = myBf.some(p => p.attacking);
+    const oppAttacking = oppBf.some(p => p.attacking);
+
+    if (myAttacking) {
+      // I'm the attacker
+      myBf.forEach((perm, idx) => {
+        if (!perm.attacking) return;
+        const group: CombatGroup = { attackerIndex: idx, attacker: perm, attackerIsMine: true, blockers: [] };
+        // Opponent's blockers targeting this attacker
+        oppBf.forEach((defPerm, defIdx) => {
+          if (defPerm.blocking && defPerm.blockingTarget === idx) {
+            group.blockers.push({ index: defIdx, perm: defPerm, isMine: false });
+          }
+        });
+        groups.push(group);
+      });
+    } else if (oppAttacking) {
+      // Opponent is the attacker
+      oppBf.forEach((perm, idx) => {
+        if (!perm.attacking) return;
+        const group: CombatGroup = { attackerIndex: idx, attacker: perm, attackerIsMine: false, blockers: [] };
+        // My server-confirmed blockers
+        myBf.forEach((defPerm, defIdx) => {
+          if (defPerm.blocking && defPerm.blockingTarget === idx) {
+            group.blockers.push({ index: defIdx, perm: defPerm, isMine: true });
+          }
+        });
+        // My locally assigned blockers (during declaration, before server confirms)
+        if (this.declaringBlockers) {
+          for (const [blockerIdx, atkIdx] of this.blockerAssignments) {
+            if (atkIdx === idx) {
+              const alreadyIncluded = group.blockers.some(b => b.index === blockerIdx && b.isMine);
+              if (!alreadyIncluded) {
+                group.blockers.push({ index: blockerIdx, perm: myBf[blockerIdx], isMine: true });
+              }
+            }
+          }
+        }
+        groups.push(group);
+      });
+    }
+
+    return groups;
+  }
+
+  private get myIndicesInCombat(): Set<number> {
+    const set = new Set<number>();
+    for (const group of this.combatPairings) {
+      if (group.attackerIsMine) set.add(group.attackerIndex);
+      for (const b of group.blockers) {
+        if (b.isMine) set.add(b.index);
+      }
+    }
+    return set;
+  }
+
+  private get opponentIndicesInCombat(): Set<number> {
+    const set = new Set<number>();
+    for (const group of this.combatPairings) {
+      if (!group.attackerIsMine) set.add(group.attackerIndex);
+      for (const b of group.blockers) {
+        if (!b.isMine) set.add(b.index);
+      }
+    }
+    return set;
+  }
+
+  onCombatAttackerClick(group: CombatGroup): void {
+    if (this.declaringAttackers && group.attackerIsMine) {
+      this.toggleAttacker(group.attackerIndex);
+    } else if (this.declaringBlockers && !group.attackerIsMine) {
+      this.assignBlock(group.attackerIndex);
+    }
+  }
+
+  onCombatBlockerClick(blocker: CombatBlocker): void {
+    if (this.declaringBlockers && blocker.isMine) {
+      this.selectBlocker(blocker.index);
+    }
   }
 
   readonly GameStatus = GameStatus;
