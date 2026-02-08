@@ -43,11 +43,12 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
 
     public LoginWebSocketHandler(LoginService loginService,
                                  GameService gameService,
-                                 WebSocketSessionManager sessionManager) {
+                                 WebSocketSessionManager sessionManager,
+                                 ObjectMapper objectMapper) {
         this.loginService = loginService;
         this.gameService = gameService;
         this.sessionManager = sessionManager;
-        this.objectMapper = new ObjectMapper();
+        this.objectMapper = objectMapper;
         this.scheduler = Executors.newScheduledThreadPool(10);
         this.timeoutTasks = new ConcurrentHashMap<>();
     }

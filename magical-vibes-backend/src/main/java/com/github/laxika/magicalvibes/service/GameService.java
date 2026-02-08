@@ -54,9 +54,9 @@ public class GameService {
     private final WebSocketSessionManager sessionManager;
     private final ObjectMapper objectMapper;
 
-    public GameService(WebSocketSessionManager sessionManager) {
+    public GameService(WebSocketSessionManager sessionManager, ObjectMapper objectMapper) {
         this.sessionManager = sessionManager;
-        this.objectMapper = new ObjectMapper();
+        this.objectMapper = objectMapper;
     }
 
     public GameResult createGame(String gameName, Player player) {

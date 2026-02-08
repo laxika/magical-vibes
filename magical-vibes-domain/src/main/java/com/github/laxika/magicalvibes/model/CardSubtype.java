@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.model;
 
-import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -12,7 +11,6 @@ public enum CardSubtype {
     ELF("Elf"),
     DRUID("Druid");
 
-    @JsonValue
     @Getter
     private final String displayName;
 }
