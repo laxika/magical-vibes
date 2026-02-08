@@ -102,7 +102,7 @@ export const PHASE_GROUPS: PhaseGroup[] = TURN_STEPS.reduce<PhaseGroup[]>((group
 export interface Card {
   name: string;
   type: string;
-  subtype: string;
+  subtypes: string[];
   manaProduced: string;
   onTapEffects: any[] | null;
   manaCost: string | null;

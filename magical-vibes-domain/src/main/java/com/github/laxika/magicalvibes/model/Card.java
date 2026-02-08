@@ -11,8 +11,8 @@ import java.util.List;
 public class Card {
 
     private final String name;
-    private final String type;
-    private final String subtype;
+    private final CardType type;
+    private final List<CardSubtype> subtypes;
     private final String manaProduced;
     private final List<CardEffect> onTapEffects;
     private final String manaCost;

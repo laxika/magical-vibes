@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.dto.SelectCardsToBottomMessage;
 import com.github.laxika.magicalvibes.dto.StepAdvancedMessage;
 import com.github.laxika.magicalvibes.dto.TurnChangedMessage;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -613,7 +614,7 @@ public class GameService {
             Card card = hand.remove(cardIndex);
             gameData.playerBattlefields.get(playerId).add(new Permanent(card));
 
-            if ("Basic Land".equals(card.getType())) {
+            if (card.getType() == CardType.BASIC_LAND) {
                 gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
             } else if (card.getManaCost() != null) {
                 ManaCost cost = new ManaCost(card.getManaCost());
@@ -658,7 +659,7 @@ public class GameService {
             if (permanent.getCard().getOnTapEffects() == null || permanent.getCard().getOnTapEffects().isEmpty()) {
                 throw new IllegalStateException("Permanent has no tap effects");
             }
-            if (permanent.isSummoningSick() && "Creature".equals(permanent.getCard().getType())) {
+            if (permanent.isSummoningSick() && permanent.getCard().getType() == CardType.CREATURE) {
                 throw new IllegalStateException("Creature has summoning sickness");
             }
 
@@ -711,7 +712,7 @@ public class GameService {
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent p = battlefield.get(i);
-            if ("Creature".equals(p.getCard().getType()) && !p.isTapped() && !p.isSummoningSick()) {
+            if (p.getCard().getType() == CardType.CREATURE && !p.isTapped() && !p.isSummoningSick()) {
                 indices.add(i);
             }
         }
@@ -724,7 +725,7 @@ public class GameService {
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent p = battlefield.get(i);
-            if ("Creature".equals(p.getCard().getType()) && !p.isTapped()) {
+            if (p.getCard().getType() == CardType.CREATURE && !p.isTapped()) {
                 indices.add(i);
             }
         }
@@ -1101,10 +1102,10 @@ public class GameService {
 
         for (int i = 0; i < hand.size(); i++) {
             Card card = hand.get(i);
-            if ("Basic Land".equals(card.getType()) && isActivePlayer && isMainPhase && landsPlayed < 1) {
+            if (card.getType() == CardType.BASIC_LAND && isActivePlayer && isMainPhase && landsPlayed < 1) {
                 playable.add(i);
             }
-            if ("Creature".equals(card.getType()) && isActivePlayer && isMainPhase && card.getManaCost() != null) {
+            if (card.getType() == CardType.CREATURE && isActivePlayer && isMainPhase && card.getManaCost() != null) {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 if (cost.canPay(pool)) {
