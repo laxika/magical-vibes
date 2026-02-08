@@ -15,4 +15,7 @@ public class Card {
     private final String subtype;
     private final String manaProduced;
     private final List<CardEffect> onTapEffects;
+    private final String manaCost;
+    private final Integer power;
+    private final Integer toughness;
 }

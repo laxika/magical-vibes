@@ -96,6 +96,10 @@ export interface Card {
   type: string;
   subtype: string;
   manaProduced: string;
+  onTapEffects: any[] | null;
+  manaCost: string | null;
+  power: number | null;
+  toughness: number | null;
 }
 
 export interface Permanent {

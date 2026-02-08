@@ -358,7 +358,8 @@ export class GameComponent implements OnInit, OnDestroy {
 
   canTapPermanent(index: number): boolean {
     const perm = this.myBattlefield[index];
-    return perm != null && !perm.tapped && this.hasPriority;
+    return perm != null && !perm.tapped && this.hasPriority
+      && perm.card.onTapEffects != null && perm.card.onTapEffects.length > 0;
   }
 
   get manaPool(): Record<string, number> {

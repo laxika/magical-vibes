@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.dto.StepAdvancedMessage;
 import com.github.laxika.magicalvibes.dto.TurnChangedMessage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -105,12 +106,17 @@ public class GameService {
     }
 
     private void initializeGame(GameData gameData) {
-        Card forest = new Card("Forest", "Basic Land", "Forest", "G", List.of(new AwardManaEffect("G")));
+        Card forest = new Card("Forest", "Basic Land", "Forest", "G", List.of(new AwardManaEffect("G")), null, null, null);
+        Card grizzlyBears = new Card("Grizzly Bears", "Creature", "Bear", null, List.of(), "{1}{G}", 2, 2);
 
         for (Long playerId : gameData.playerIds) {
-            List<Card> deck = IntStream.range(0, 60)
-                    .mapToObj(i -> forest)
-                    .collect(Collectors.toList());
+            List<Card> deck = new ArrayList<>();
+            for (int i = 0; i < 36; i++) {
+                deck.add(forest);
+            }
+            for (int i = 0; i < 24; i++) {
+                deck.add(grizzlyBears);
+            }
             Collections.shuffle(deck, random);
             gameData.playerDecks.put(playerId, deck);
             gameData.mulliganCounts.put(playerId, 0);
@@ -125,7 +131,7 @@ public class GameService {
         gameData.status = GameStatus.MULLIGAN;
 
         gameData.gameLog.add("Game started!");
-        gameData.gameLog.add("Each player receives a deck of 60 Forests.");
+        gameData.gameLog.add("Each player receives a deck of 36 Forests and 24 Grizzly Bears.");
 
         List<Long> ids = new ArrayList<>(gameData.orderedPlayerIds);
         Long startingPlayerId = ids.get(random.nextInt(ids.size()));
@@ -569,7 +575,15 @@ public class GameService {
             List<Card> hand = gameData.playerHands.get(playerId);
             Card card = hand.remove(cardIndex);
             gameData.playerBattlefields.get(playerId).add(new Permanent(card));
-            gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
+
+            if ("Basic Land".equals(card.getType())) {
+                gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
+            } else if (card.getManaCost() != null) {
+                ManaCost cost = new ManaCost(card.getManaCost());
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                cost.pay(pool);
+                sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
+            }
 
             sendToPlayer(playerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(playerId, 0)));
             broadcastBattlefields(gameData);
@@ -625,6 +639,8 @@ public class GameService {
             broadcastLogEntry(gameData, logEntry);
 
             log.info("Game {} - {} taps {}", gameId, player.getUsername(), permanent.getCard().getName());
+
+            broadcastPlayableCards(gameData);
         }
     }
 
@@ -671,6 +687,13 @@ public class GameService {
             Card card = hand.get(i);
             if ("Basic Land".equals(card.getType()) && isActivePlayer && isMainPhase && landsPlayed < 1) {
                 playable.add(i);
+            }
+            if ("Creature".equals(card.getType()) && isActivePlayer && isMainPhase && card.getManaCost() != null) {
+                ManaCost cost = new ManaCost(card.getManaCost());
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                if (cost.canPay(pool)) {
+                    playable.add(i);
+                }
             }
         }
 

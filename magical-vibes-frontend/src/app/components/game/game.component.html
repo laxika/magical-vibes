@@ -31,9 +31,15 @@
           <div class="selection-count">Selected: {{ selectedCardIndices.size }} / {{ bottomCardCount }}</div>
           <div class="hand-cards">
             @for (card of hand; track $index) {
-              <div class="card selectable" [class.selected]="isCardSelected($index)" (click)="toggleCardSelection($index)">
+              <div class="card selectable" [class.selected]="isCardSelected($index)" [attr.data-card-type]="card.type" (click)="toggleCardSelection($index)">
+                @if (card.manaCost) {
+                  <div class="card-mana-cost">{{ card.manaCost }}</div>
+                }
                 <div class="card-name">{{ card.name }}</div>
                 <div class="card-type">{{ card.type }}</div>
+                @if (card.power != null && card.toughness != null) {
+                  <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
+                }
                 @if (isCardSelected($index)) {
                   <div class="card-selected-badge">Bottom</div>
                 }
@@ -49,9 +55,15 @@
           <div class="hand-label">Your Hand ({{ hand.length }} cards)</div>
           <div class="hand-cards">
             @for (card of hand; track $index) {
-              <div class="card">
+              <div class="card" [attr.data-card-type]="card.type">
+                @if (card.manaCost) {
+                  <div class="card-mana-cost">{{ card.manaCost }}</div>
+                }
                 <div class="card-name">{{ card.name }}</div>
                 <div class="card-type">{{ card.type }}</div>
+                @if (card.power != null && card.toughness != null) {
+                  <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
+                }
               </div>
             }
           </div>
@@ -140,9 +152,15 @@
         <div class="battlefield-label">{{ game()?.playerNames?.[opponentPlayerIndex] }}'s Battlefield</div>
         <div class="battlefield-cards">
           @for (perm of opponentBattlefield; track $index) {
-            <div class="card" [class.tapped]="perm.tapped">
+            <div class="card" [class.tapped]="perm.tapped" [attr.data-card-type]="perm.card.type">
+              @if (perm.card.manaCost) {
+                <div class="card-mana-cost">{{ perm.card.manaCost }}</div>
+              }
               <div class="card-name">{{ perm.card.name }}</div>
               <div class="card-type">{{ perm.card.type }}</div>
+              @if (perm.card.power != null && perm.card.toughness != null) {
+                <div class="card-pt">{{ perm.card.power }}/{{ perm.card.toughness }}</div>
+              }
               @if (perm.tapped) {
                 <div class="card-tapped-badge">Tapped</div>
               }
@@ -158,9 +176,15 @@
         <div class="battlefield-label">Your Battlefield</div>
         <div class="battlefield-cards">
           @for (perm of myBattlefield; track $index) {
-            <div class="card" [class.tapped]="perm.tapped" [class.tappable]="canTapPermanent($index)" (click)="tapPermanent($index)">
+            <div class="card" [class.tapped]="perm.tapped" [class.tappable]="canTapPermanent($index)" [attr.data-card-type]="perm.card.type" (click)="tapPermanent($index)">
+              @if (perm.card.manaCost) {
+                <div class="card-mana-cost">{{ perm.card.manaCost }}</div>
+              }
               <div class="card-name">{{ perm.card.name }}</div>
               <div class="card-type">{{ perm.card.type }}</div>
+              @if (perm.card.power != null && perm.card.toughness != null) {
+                <div class="card-pt">{{ perm.card.power }}/{{ perm.card.toughness }}</div>
+              }
               @if (perm.tapped) {
                 <div class="card-tapped-badge">Tapped</div>
               }
@@ -177,9 +201,15 @@
       <div class="hand-label">Your Hand ({{ hand.length }} cards)</div>
       <div class="hand-cards">
         @for (card of hand; track $index) {
-          <div class="card" [class.playable]="isCardPlayable($index)" (click)="playCard($index)">
+          <div class="card" [class.playable]="isCardPlayable($index)" [attr.data-card-type]="card.type" (click)="playCard($index)">
+            @if (card.manaCost) {
+              <div class="card-mana-cost">{{ card.manaCost }}</div>
+            }
             <div class="card-name">{{ card.name }}</div>
             <div class="card-type">{{ card.type }}</div>
+            @if (card.power != null && card.toughness != null) {
+              <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
+            }
           </div>
         }
       </div>

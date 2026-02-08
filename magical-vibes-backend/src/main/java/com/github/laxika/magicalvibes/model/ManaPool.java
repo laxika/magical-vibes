@@ -29,6 +29,31 @@ public class ManaPool {
         green = 0;
     }
 
+    public int get(String color) {
+        return switch (color) {
+            case "W" -> white;
+            case "U" -> blue;
+            case "B" -> black;
+            case "R" -> red;
+            case "G" -> green;
+            default -> 0;
+        };
+    }
+
+    public int getTotal() {
+        return white + blue + black + red + green;
+    }
+
+    public void remove(String color) {
+        switch (color) {
+            case "W" -> white--;
+            case "U" -> blue--;
+            case "B" -> black--;
+            case "R" -> red--;
+            case "G" -> green--;
+        }
+    }
+
     public Map<String, Integer> toMap() {
         Map<String, Integer> map = new LinkedHashMap<>();
         map.put("W", white);
