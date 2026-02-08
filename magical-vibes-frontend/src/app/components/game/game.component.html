@@ -182,6 +182,7 @@
                  [class.tapped]="perm.tapped"
                  [class.attacking]="perm.attacking"
                  [class.blocking]="perm.blocking"
+                 [class.block-target]="isBlockTarget($index)"
                  [class.summoning-sick]="perm.summoningSick && perm.card.type === 'Creature'"
                  [attr.data-card-type]="perm.card.type"
                  (click)="onOpponentBattlefieldCardClick($index)">

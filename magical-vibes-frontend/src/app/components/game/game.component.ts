@@ -540,8 +540,15 @@ export class GameComponent implements OnInit, OnDestroy {
     this.selectedBlockerIndex = index;
   }
 
+  isBlockTarget(index: number): boolean {
+    return this.declaringBlockers && this.selectedBlockerIndex !== null
+      && this.opponentBattlefield[index]?.attacking === true;
+  }
+
   assignBlock(attackerIndex: number): void {
     if (this.selectedBlockerIndex === null || !this.declaringBlockers) return;
+    const perm = this.opponentBattlefield[attackerIndex];
+    if (!perm || !perm.attacking) return;
     this.blockerAssignments.set(this.selectedBlockerIndex, attackerIndex);
     this.selectedBlockerIndex = null;
   }

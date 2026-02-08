@@ -757,6 +757,12 @@ h1 {
   box-shadow: 0 0 12px rgba(52, 152, 219, 0.5);
 }
 
+.card.block-target {
+  border: 2px dashed #e74c3c;
+  box-shadow: 0 0 16px rgba(231, 76, 60, 0.6);
+  cursor: pointer;
+}
+
 .card.summoning-sick {
   opacity: 0.7;
 }
