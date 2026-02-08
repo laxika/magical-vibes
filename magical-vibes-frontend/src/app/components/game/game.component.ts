@@ -70,7 +70,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
         if (message.type === MessageType.PLAYABLE_CARDS_UPDATED) {
           const playableMsg = message as PlayableCardsNotification;
-          this.playableCardIndices = new Set(playableMsg.playableCardIndices);
+          this.playableCardIndices.set(new Set(playableMsg.playableCardIndices));
         }
 
         if (message.type === MessageType.BATTLEFIELD_UPDATED) {
@@ -148,7 +148,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
     // Clear playable highlights immediately on any state change;
     // the server's PLAYABLE_CARDS_UPDATED message will re-set them if appropriate
-    this.playableCardIndices = new Set<number>();
+    this.playableCardIndices.set(new Set<number>());
 
     const updated = { ...g };
     if (update.priorityPlayerId !== undefined) {
@@ -381,10 +381,10 @@ export class GameComponent implements OnInit, OnDestroy {
   selectingBottomCards = false;
   bottomCardCount = 0;
   selectedCardIndices = new Set<number>();
-  playableCardIndices = new Set<number>();
+  playableCardIndices = signal(new Set<number>());
 
   isCardPlayable(index: number): boolean {
-    return this.playableCardIndices.has(index);
+    return this.playableCardIndices().has(index);
   }
 
   readonly GameStatus = GameStatus;
