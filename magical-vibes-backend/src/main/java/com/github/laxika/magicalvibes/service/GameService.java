@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.dto.AutoStopsUpdatedMessage;
 import com.github.laxika.magicalvibes.dto.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.dto.AvailableBlockersMessage;
@@ -109,9 +112,9 @@ public class GameService {
     }
 
     private void initializeGame(GameData gameData) {
-        Card forest = new Card("Forest", "Basic Land", "Forest", "G", List.of(new AwardManaEffect("G")), null, null, null);
-        Card llanowarElves = new Card("Llanowar Elves", "Creature", "Elf Druid", "G", List.of(new AwardManaEffect("G")), "{G}", 1, 1);
-        Card grizzlyBears = new Card("Grizzly Bears", "Creature", "Bear", null, List.of(), "{1}{G}", 2, 2);
+        Card forest = new Forest();
+        Card llanowarElves = new LlanowarElves();
+        Card grizzlyBears = new GrizzlyBears();
 
         for (Long playerId : gameData.playerIds) {
             List<Card> deck = new ArrayList<>();
