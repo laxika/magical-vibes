@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCreatureFromHandNotification } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 export interface IndexedPermanent {
@@ -129,6 +129,11 @@ export class GameComponent implements OnInit, OnDestroy {
         if (message.type === MessageType.GAME_OVER) {
           const goMsg = message as GameOverNotification;
           this.handleGameOver(goMsg);
+        }
+
+        if (message.type === MessageType.CHOOSE_CREATURE_FROM_HAND) {
+          const chooseMsg = message as ChooseCreatureFromHandNotification;
+          this.handleChooseCreatureFromHand(chooseMsg);
         }
 
         const update = message as GameUpdate;
@@ -340,6 +345,40 @@ export class GameComponent implements OnInit, OnDestroy {
     this.websocketService.currentGame = updated;
   }
 
+  private handleChooseCreatureFromHand(msg: ChooseCreatureFromHandNotification): void {
+    this.choosingCreatureFromHand = true;
+    this.choosableCreatureIndices.set(new Set(msg.creatureIndices));
+  }
+
+  chooseCreatureFromHand(index: number): void {
+    const g = this.game();
+    if (!g || !this.choosingCreatureFromHand) return;
+    if (!this.choosableCreatureIndices().has(index)) return;
+    this.websocketService.send({
+      type: MessageType.CREATURE_CHOSEN,
+      gameId: g.id,
+      creatureIndex: index
+    });
+    this.choosingCreatureFromHand = false;
+    this.choosableCreatureIndices.set(new Set());
+  }
+
+  declineCreatureChoice(): void {
+    const g = this.game();
+    if (!g || !this.choosingCreatureFromHand) return;
+    this.websocketService.send({
+      type: MessageType.CREATURE_CHOSEN,
+      gameId: g.id,
+      creatureIndex: -1
+    });
+    this.choosingCreatureFromHand = false;
+    this.choosableCreatureIndices.set(new Set());
+  }
+
+  isChoosableCreature(index: number): boolean {
+    return this.choosableCreatureIndices().has(index);
+  }
+
   get myPlayerIndex(): number {
     const g = this.game();
     if (!g) return 0;
@@ -477,6 +516,8 @@ export class GameComponent implements OnInit, OnDestroy {
   selectedBlockerIndex: number | null = null;
   gameOverWinner: string | null = null;
   gameOverWinnerId: number | null = null;
+  choosingCreatureFromHand = false;
+  choosableCreatureIndices = signal(new Set<number>());
 
   isCardPlayable(index: number): boolean {
     return this.playableCardIndices().has(index);

@@ -11,6 +11,6 @@ import java.util.Set;
 public class GiantSpider extends Card {
 
     public GiantSpider() {
-        super("Giant Spider", CardType.CREATURE, List.of(CardSubtype.SPIDER), null, List.of(), "{3}{G}", 2, 4, Set.of(Keyword.REACH));
+        super("Giant Spider", CardType.CREATURE, List.of(CardSubtype.SPIDER), null, List.of(), "{3}{G}", 2, 4, Set.of(Keyword.REACH), List.of());
     }
 }

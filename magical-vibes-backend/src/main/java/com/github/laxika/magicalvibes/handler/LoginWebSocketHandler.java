@@ -102,6 +102,7 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
                 case SET_AUTO_STOPS -> handleSetAutoStops(session, jsonNode);
                 case DECLARE_ATTACKERS -> handleDeclareAttackers(session, jsonNode);
                 case DECLARE_BLOCKERS -> handleDeclareBlockers(session, jsonNode);
+                case CREATURE_CHOSEN -> handleCreatureChosen(session, jsonNode);
                 default -> sendError(session, "Unknown message type: " + type);
             }
         } catch (Exception e) {
@@ -353,6 +354,23 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
 
         try {
             gameService.declareBlockers(gameId, player, blockerAssignments);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            sendError(session, e.getMessage());
+        }
+    }
+
+    private void handleCreatureChosen(WebSocketSession session, JsonNode jsonNode) throws IOException {
+        Player player = sessionManager.getPlayer(session.getId());
+        if (player == null) {
+            sendError(session, "Not authenticated");
+            return;
+        }
+
+        Long gameId = jsonNode.get("gameId").asLong();
+        int creatureIndex = jsonNode.get("creatureIndex").asInt();
+
+        try {
+            gameService.handleCreatureChosen(gameId, player, creatureIndex);
         } catch (IllegalArgumentException | IllegalStateException e) {
             sendError(session, e.getMessage());
         }

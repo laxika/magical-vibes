@@ -37,5 +37,7 @@ public enum MessageType {
     AVAILABLE_BLOCKERS,
     LIFE_UPDATED,
     GAME_OVER,
+    CHOOSE_CREATURE_FROM_HAND,
+    CREATURE_CHOSEN,
     ERROR
 }

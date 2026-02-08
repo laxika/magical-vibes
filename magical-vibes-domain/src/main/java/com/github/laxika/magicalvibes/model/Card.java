@@ -20,4 +20,5 @@ public class Card {
     private final Integer power;
     private final Integer toughness;
     private final Set<Keyword> keywords;
+    private final List<CardEffect> onEnterBattlefieldEffects;
 }

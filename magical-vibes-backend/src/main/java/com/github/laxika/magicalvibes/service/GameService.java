@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.dto.AutoStopsUpdatedMessage;
 import com.github.laxika.magicalvibes.dto.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.dto.AvailableBlockersMessage;
+import com.github.laxika.magicalvibes.dto.ChooseCreatureFromHandMessage;
 import com.github.laxika.magicalvibes.dto.BattlefieldUpdatedMessage;
 import com.github.laxika.magicalvibes.dto.DeckSizesUpdatedMessage;
 import com.github.laxika.magicalvibes.dto.GameLogEntryMessage;
@@ -34,6 +36,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
@@ -119,6 +122,7 @@ public class GameService {
         Card llanowarElves = new LlanowarElves();
         Card grizzlyBears = new GrizzlyBears();
         Card giantSpider = new GiantSpider();
+        Card huntedWumpus = new HuntedWumpus();
 
         for (Long playerId : gameData.playerIds) {
             List<Card> deck = new ArrayList<>();
@@ -131,7 +135,10 @@ public class GameService {
             for (int i = 0; i < 4; i++) {
                 deck.add(giantSpider);
             }
-            for (int i = 0; i < 28; i++) {
+            for (int i = 0; i < 4; i++) {
+                deck.add(huntedWumpus);
+            }
+            for (int i = 0; i < 24; i++) {
                 deck.add(grizzlyBears);
             }
             Collections.shuffle(deck, random);
@@ -154,7 +161,7 @@ public class GameService {
         gameData.status = GameStatus.MULLIGAN;
 
         gameData.gameLog.add("Game started!");
-        gameData.gameLog.add("Each player receives a deck of 24 Forests, 4 Llanowar Elves, 4 Giant Spiders, and 28 Grizzly Bears.");
+        gameData.gameLog.add("Each player receives a deck of 24 Forests, 4 Llanowar Elves, 4 Giant Spiders, 4 Hunted Wumpuses, and 24 Grizzly Bears.");
 
         List<Long> ids = new ArrayList<>(gameData.orderedPlayerIds);
         Long startingPlayerId = ids.get(random.nextInt(ids.size()));
@@ -638,6 +645,18 @@ public class GameService {
 
             log.info("Game {} - {} plays {}", gameId, player.getUsername(), card.getName());
 
+            // Resolve enter-the-battlefield effects
+            if (card.getOnEnterBattlefieldEffects() != null && !card.getOnEnterBattlefieldEffects().isEmpty()) {
+                for (CardEffect effect : card.getOnEnterBattlefieldEffects()) {
+                    if (effect instanceof OpponentMayPlayCreatureEffect) {
+                        resolveOpponentMayPlayCreature(gameData, playerId);
+                        if (gameData.awaitingOpponentCreatureChoice) {
+                            return;
+                        }
+                    }
+                }
+            }
+
             resolveAutoPass(gameData);
         }
     }
@@ -707,6 +726,88 @@ public class GameService {
             stopSet.add(TurnStep.POSTCOMBAT_MAIN);
             gameData.playerAutoStopSteps.put(player.getId(), stopSet);
             sendToPlayer(player.getId(), new AutoStopsUpdatedMessage(new ArrayList<>(stopSet)));
+        }
+    }
+
+    // ===== ETB effect methods =====
+
+    private void resolveOpponentMayPlayCreature(GameData gameData, Long controllerId) {
+        Long opponentId = getOpponentId(gameData, controllerId);
+        List<Card> opponentHand = gameData.playerHands.get(opponentId);
+
+        List<Integer> creatureIndices = new ArrayList<>();
+        if (opponentHand != null) {
+            for (int i = 0; i < opponentHand.size(); i++) {
+                if (opponentHand.get(i).getType() == CardType.CREATURE) {
+                    creatureIndices.add(i);
+                }
+            }
+        }
+
+        if (creatureIndices.isEmpty()) {
+            String opponentName = gameData.playerIdToName.get(opponentId);
+            String logEntry = opponentName + " has no creature cards in hand.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            log.info("Game {} - {} has no creatures in hand for Hunted Wumpus ETB", gameData.id, opponentName);
+            return;
+        }
+
+        gameData.awaitingOpponentCreatureChoice = true;
+        gameData.awaitingOpponentCreatureChoicePlayerId = opponentId;
+        sendToPlayer(opponentId, new ChooseCreatureFromHandMessage(creatureIndices));
+
+        String opponentName = gameData.playerIdToName.get(opponentId);
+        log.info("Game {} - Awaiting {} to choose a creature to put onto the battlefield", gameData.id, opponentName);
+    }
+
+    public void handleCreatureChosen(Long gameId, Player player, int creatureIndex) {
+        GameData gameData = games.get(gameId);
+        if (gameData == null) {
+            throw new IllegalArgumentException("Game not found");
+        }
+
+        synchronized (gameData) {
+            if (!gameData.awaitingOpponentCreatureChoice) {
+                throw new IllegalStateException("Not awaiting creature choice");
+            }
+            if (!player.getId().equals(gameData.awaitingOpponentCreatureChoicePlayerId)) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+
+            Long playerId = player.getId();
+            gameData.awaitingOpponentCreatureChoice = false;
+            gameData.awaitingOpponentCreatureChoicePlayerId = null;
+
+            if (creatureIndex == -1) {
+                // Player declined
+                String logEntry = player.getUsername() + " chooses not to put a creature onto the battlefield.";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+                log.info("Game {} - {} declines to put a creature onto the battlefield", gameId, player.getUsername());
+            } else {
+                List<Card> hand = gameData.playerHands.get(playerId);
+                if (hand == null || creatureIndex < 0 || creatureIndex >= hand.size()) {
+                    throw new IllegalStateException("Invalid card index");
+                }
+                Card card = hand.get(creatureIndex);
+                if (card.getType() != CardType.CREATURE) {
+                    throw new IllegalStateException("Selected card is not a creature");
+                }
+
+                hand.remove(creatureIndex);
+                gameData.playerBattlefields.get(playerId).add(new Permanent(card));
+
+                sendToPlayer(playerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+                broadcastBattlefields(gameData);
+
+                String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield.";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+                log.info("Game {} - {} puts {} onto the battlefield", gameId, player.getUsername(), card.getName());
+            }
+
+            resolveAutoPass(gameData);
         }
     }
 
@@ -1140,7 +1241,7 @@ public class GameService {
 
     private void resolveAutoPass(GameData gameData) {
         for (int safety = 0; safety < 100; safety++) {
-            if (gameData.awaitingAttackerDeclaration || gameData.awaitingBlockerDeclaration) {
+            if (gameData.awaitingAttackerDeclaration || gameData.awaitingBlockerDeclaration || gameData.awaitingOpponentCreatureChoice) {
                 broadcastPlayableCards(gameData);
                 return;
             }
@@ -1226,6 +1327,8 @@ public class GameService {
         final Map<Long, Integer> playerLifeTotals = new ConcurrentHashMap<>();
         boolean awaitingAttackerDeclaration;
         boolean awaitingBlockerDeclaration;
+        boolean awaitingOpponentCreatureChoice;
+        Long awaitingOpponentCreatureChoicePlayerId;
 
         GameData(long id, String gameName, long createdByUserId, String createdByUsername) {
             this.id = id;

@@ -11,6 +11,6 @@ import java.util.Set;
 public class Forest extends Card {
 
     public Forest() {
-        super("Forest", CardType.BASIC_LAND, List.of(CardSubtype.FOREST), "G", List.of(new AwardManaEffect("G")), null, null, null, Set.of());
+        super("Forest", CardType.BASIC_LAND, List.of(CardSubtype.FOREST), "G", List.of(new AwardManaEffect("G")), null, null, null, Set.of(), List.of());
     }
 }

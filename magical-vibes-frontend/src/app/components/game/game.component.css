@@ -898,6 +898,19 @@ h1 {
   gap: 6px;
 }
 
+/* Creature choice (Hunted Wumpus ETB) */
+
+.creature-choice-banner {
+  background: linear-gradient(135deg, #8e44ad, #6c3483);
+  box-shadow: 0 4px 12px rgba(142, 68, 173, 0.4);
+}
+
+.card.choosable-creature {
+  border: 2px solid #8e44ad;
+  box-shadow: 0 0 12px rgba(142, 68, 173, 0.6);
+  cursor: pointer;
+}
+
 /* Override tapped opacity in combat zone — attacking creatures are tapped but should appear at full opacity */
 .combat-zone .card.tapped {
   opacity: 1;

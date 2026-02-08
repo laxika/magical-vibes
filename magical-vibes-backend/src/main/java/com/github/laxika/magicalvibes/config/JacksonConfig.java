@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import tools.jackson.databind.ObjectMapper;
@@ -36,7 +37,8 @@ public class JacksonConfig {
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "effectType")
     @JsonSubTypes({
-            @JsonSubTypes.Type(value = AwardManaEffect.class, name = "AWARD_MANA")
+            @JsonSubTypes.Type(value = AwardManaEffect.class, name = "AWARD_MANA"),
+            @JsonSubTypes.Type(value = OpponentMayPlayCreatureEffect.class, name = "OPPONENT_MAY_PLAY_CREATURE")
     })
     static abstract class CardEffectMixin {
     }

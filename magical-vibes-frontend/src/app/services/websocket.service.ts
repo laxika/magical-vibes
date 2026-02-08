@@ -38,6 +38,8 @@ export enum MessageType {
   AVAILABLE_BLOCKERS = 'AVAILABLE_BLOCKERS',
   LIFE_UPDATED = 'LIFE_UPDATED',
   GAME_OVER = 'GAME_OVER',
+  CHOOSE_CREATURE_FROM_HAND = 'CHOOSE_CREATURE_FROM_HAND',
+  CREATURE_CHOSEN = 'CREATURE_CHOSEN',
   ERROR = 'ERROR'
 }
 
@@ -109,6 +111,7 @@ export interface Card {
   power: number | null;
   toughness: number | null;
   keywords: string[];
+  onEnterBattlefieldEffects: any[] | null;
 }
 
 export interface Permanent {
@@ -248,7 +251,12 @@ export interface GameOverNotification {
   winnerName: string;
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification;
+export interface ChooseCreatureFromHandNotification {
+  type: MessageType;
+  creatureIndices: number[];
+}
+
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCreatureFromHandNotification;
 
 export interface User {
   userId: number;

@@ -10,7 +10,8 @@ public enum CardSubtype {
     BEAR("Bear"),
     ELF("Elf"),
     DRUID("Druid"),
-    SPIDER("Spider");
+    SPIDER("Spider"),
+    BEAST("Beast");
 
     @Getter
     private final String displayName;
