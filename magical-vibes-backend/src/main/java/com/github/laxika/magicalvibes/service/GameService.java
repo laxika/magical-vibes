@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.dto.GameStartedMessage;
 import com.github.laxika.magicalvibes.dto.HandDrawnMessage;
 import com.github.laxika.magicalvibes.dto.JoinGame;
 import com.github.laxika.magicalvibes.dto.LobbyGame;
+import com.github.laxika.magicalvibes.dto.ManaUpdatedMessage;
 import com.github.laxika.magicalvibes.dto.MulliganResolvedMessage;
 import com.github.laxika.magicalvibes.dto.PlayableCardsMessage;
 import com.github.laxika.magicalvibes.dto.PriorityUpdatedMessage;
@@ -15,8 +16,12 @@ import com.github.laxika.magicalvibes.dto.StepAdvancedMessage;
 import com.github.laxika.magicalvibes.dto.TurnChangedMessage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
@@ -100,7 +105,7 @@ public class GameService {
     }
 
     private void initializeGame(GameData gameData) {
-        Card forest = new Card("Forest", "Basic Land", "Forest", "G");
+        Card forest = new Card("Forest", "Basic Land", "Forest", "G", List.of(new AwardManaEffect("G")));
 
         for (Long playerId : gameData.playerIds) {
             List<Card> deck = IntStream.range(0, 60)
@@ -110,6 +115,7 @@ public class GameService {
             gameData.playerDecks.put(playerId, deck);
             gameData.mulliganCounts.put(playerId, 0);
             gameData.playerBattlefields.put(playerId, new ArrayList<>());
+            gameData.playerManaPools.put(playerId, new ManaPool());
 
             List<Card> hand = new ArrayList<>(deck.subList(0, 7));
             deck.subList(0, 7).clear();
@@ -159,6 +165,8 @@ public class GameService {
     private void advanceStep(GameData gameData) {
         gameData.priorityPassedBy.clear();
         TurnStep next = gameData.currentStep.next();
+
+        drainManaPools(gameData);
 
         if (next != null) {
             gameData.currentStep = next;
@@ -222,6 +230,20 @@ public class GameService {
         gameData.currentStep = TurnStep.first();
         gameData.priorityPassedBy.clear();
         gameData.landsPlayedThisTurn.clear();
+
+        drainManaPools(gameData);
+
+        // Untap all permanents for the new active player
+        List<Permanent> battlefield = gameData.playerBattlefields.get(nextActive);
+        if (battlefield != null) {
+            battlefield.forEach(Permanent::untap);
+        }
+        broadcastBattlefields(gameData);
+
+        String untapLog = nextActiveName + " untaps their permanents.";
+        gameData.gameLog.add(untapLog);
+        broadcastLogEntry(gameData, untapLog);
+        log.info("Game {} - {} untaps their permanents", gameData.id, nextActiveName);
 
         String logEntry = "Turn " + gameData.turnNumber + " begins. " + nextActiveName + "'s turn.";
         gameData.gameLog.add(logEntry);
@@ -482,6 +504,7 @@ public class GameService {
     private JoinGame toJoinGame(GameData data, Long playerId) {
         List<Card> hand = playerId != null ? new ArrayList<>(data.playerHands.getOrDefault(playerId, List.of())) : List.of();
         int mulliganCount = playerId != null ? data.mulliganCounts.getOrDefault(playerId, 0) : 0;
+        Map<String, Integer> manaPool = getManaPool(data, playerId);
         return new JoinGame(
                 data.id,
                 data.gameName,
@@ -496,7 +519,8 @@ public class GameService {
                 hand,
                 mulliganCount,
                 getDeckSizes(data),
-                getBattlefields(data)
+                getBattlefields(data),
+                manaPool
         );
     }
 
@@ -513,10 +537,10 @@ public class GameService {
         broadcastToGame(data, new DeckSizesUpdatedMessage(getDeckSizes(data)));
     }
 
-    private List<List<Card>> getBattlefields(GameData data) {
-        List<List<Card>> battlefields = new ArrayList<>();
+    private List<List<Permanent>> getBattlefields(GameData data) {
+        List<List<Permanent>> battlefields = new ArrayList<>();
         for (Long pid : data.orderedPlayerIds) {
-            List<Card> bf = data.playerBattlefields.get(pid);
+            List<Permanent> bf = data.playerBattlefields.get(pid);
             battlefields.add(bf != null ? new ArrayList<>(bf) : new ArrayList<>());
         }
         return battlefields;
@@ -544,7 +568,7 @@ public class GameService {
 
             List<Card> hand = gameData.playerHands.get(playerId);
             Card card = hand.remove(cardIndex);
-            gameData.playerBattlefields.get(playerId).add(card);
+            gameData.playerBattlefields.get(playerId).add(new Permanent(card));
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
 
             sendToPlayer(playerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(playerId, 0)));
@@ -558,6 +582,68 @@ public class GameService {
 
             resolveAutoPass(gameData);
         }
+    }
+
+    public void tapPermanent(Long gameId, Player player, int permanentIndex) {
+        GameData gameData = games.get(gameId);
+        if (gameData == null) {
+            throw new IllegalArgumentException("Game not found");
+        }
+        if (gameData.status != GameStatus.RUNNING) {
+            throw new IllegalStateException("Game is not running");
+        }
+
+        synchronized (gameData) {
+            Long playerId = player.getId();
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null || permanentIndex < 0 || permanentIndex >= battlefield.size()) {
+                throw new IllegalStateException("Invalid permanent index");
+            }
+
+            Permanent permanent = battlefield.get(permanentIndex);
+            if (permanent.isTapped()) {
+                throw new IllegalStateException("Permanent is already tapped");
+            }
+            if (permanent.getCard().getOnTapEffects() == null || permanent.getCard().getOnTapEffects().isEmpty()) {
+                throw new IllegalStateException("Permanent has no tap effects");
+            }
+
+            permanent.tap();
+
+            ManaPool manaPool = gameData.playerManaPools.get(playerId);
+            for (CardEffect effect : permanent.getCard().getOnTapEffects()) {
+                if (effect instanceof AwardManaEffect awardMana) {
+                    manaPool.add(awardMana.color());
+                }
+            }
+
+            broadcastBattlefields(gameData);
+            sendToPlayer(playerId, new ManaUpdatedMessage(manaPool.toMap()));
+
+            String logEntry = player.getUsername() + " taps " + permanent.getCard().getName() + ".";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+
+            log.info("Game {} - {} taps {}", gameId, player.getUsername(), permanent.getCard().getName());
+        }
+    }
+
+    private void drainManaPools(GameData gameData) {
+        for (Long playerId : gameData.orderedPlayerIds) {
+            ManaPool manaPool = gameData.playerManaPools.get(playerId);
+            if (manaPool != null) {
+                manaPool.clear();
+                sendToPlayer(playerId, new ManaUpdatedMessage(manaPool.toMap()));
+            }
+        }
+    }
+
+    private Map<String, Integer> getManaPool(GameData data, Long playerId) {
+        if (playerId == null) {
+            return Map.of("W", 0, "U", 0, "B", 0, "R", 0, "G", 0);
+        }
+        ManaPool pool = data.playerManaPools.get(playerId);
+        return pool != null ? pool.toMap() : Map.of("W", 0, "U", 0, "B", 0, "R", 0, "G", 0);
     }
 
     private List<Integer> getPlayableCardIndices(GameData gameData, Long playerId) {
@@ -667,7 +753,8 @@ public class GameService {
         int turnNumber;
         final Set<Long> priorityPassedBy = ConcurrentHashMap.newKeySet();
         final Map<Long, Integer> landsPlayedThisTurn = new ConcurrentHashMap<>();
-        final Map<Long, List<Card>> playerBattlefields = new ConcurrentHashMap<>();
+        final Map<Long, List<Permanent>> playerBattlefields = new ConcurrentHashMap<>();
+        final Map<Long, ManaPool> playerManaPools = new ConcurrentHashMap<>();
 
         GameData(long id, String gameName, long createdByUserId, String createdByUsername) {
             this.id = id;

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -76,6 +76,11 @@ export class GameComponent implements OnInit, OnDestroy {
         if (message.type === MessageType.BATTLEFIELD_UPDATED) {
           const bfMsg = message as BattlefieldUpdatedNotification;
           this.updateBattlefields(bfMsg.battlefields);
+        }
+
+        if (message.type === MessageType.MANA_UPDATED) {
+          const manaMsg = message as ManaUpdatedNotification;
+          this.updateManaPool(manaMsg.manaPool);
         }
 
         const update = message as GameUpdate;
@@ -239,10 +244,18 @@ export class GameComponent implements OnInit, OnDestroy {
     this.websocketService.currentGame = updated;
   }
 
-  private updateBattlefields(battlefields: Card[][]): void {
+  private updateBattlefields(battlefields: Permanent[][]): void {
     const g = this.game();
     if (!g) return;
     const updated = { ...g, battlefields };
+    this.game.set(updated);
+    this.websocketService.currentGame = updated;
+  }
+
+  private updateManaPool(manaPool: Record<string, number>): void {
+    const g = this.game();
+    if (!g) return;
+    const updated = { ...g, manaPool };
     this.game.set(updated);
     this.websocketService.currentGame = updated;
   }
@@ -257,11 +270,11 @@ export class GameComponent implements OnInit, OnDestroy {
     return this.myPlayerIndex === 0 ? 1 : 0;
   }
 
-  get myBattlefield(): Card[] {
+  get myBattlefield(): Permanent[] {
     return this.game()?.battlefields?.[this.myPlayerIndex] ?? [];
   }
 
-  get opponentBattlefield(): Card[] {
+  get opponentBattlefield(): Permanent[] {
     return this.game()?.battlefields?.[this.opponentPlayerIndex] ?? [];
   }
 
@@ -334,6 +347,32 @@ export class GameComponent implements OnInit, OnDestroy {
     if (g) {
       this.websocketService.send({ type: MessageType.PASS_PRIORITY, gameId: g.id });
     }
+  }
+
+  tapPermanent(index: number): void {
+    const g = this.game();
+    if (g && this.canTapPermanent(index)) {
+      this.websocketService.send({ type: MessageType.TAP_PERMANENT, gameId: g.id, permanentIndex: index });
+    }
+  }
+
+  canTapPermanent(index: number): boolean {
+    const perm = this.myBattlefield[index];
+    return perm != null && !perm.tapped && this.hasPriority;
+  }
+
+  get manaPool(): Record<string, number> {
+    return this.game()?.manaPool ?? {};
+  }
+
+  get totalMana(): number {
+    return Object.values(this.manaPool).reduce((sum, v) => sum + v, 0);
+  }
+
+  get manaEntries(): { color: string; count: number }[] {
+    return Object.entries(this.manaPool)
+      .filter(([, count]) => count > 0)
+      .map(([color, count]) => ({ color, count }));
   }
 
   opponentKept = false;

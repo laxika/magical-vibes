@@ -27,5 +27,7 @@ public enum MessageType {
     PLAYABLE_CARDS_UPDATED,
     PLAY_CARD,
     BATTLEFIELD_UPDATED,
+    TAP_PERMANENT,
+    MANA_UPDATED,
     ERROR
 }

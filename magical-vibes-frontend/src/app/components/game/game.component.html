@@ -124,16 +124,28 @@
 
     <div class="action-bar">
       <button class="btn-pass" (click)="passPriority()" [disabled]="!hasPriority">Pass Priority</button>
+      @if (totalMana > 0) {
+        <div class="mana-pool">
+          @for (entry of manaEntries; track entry.color) {
+            <div class="mana-pip" [attr.data-color]="entry.color">
+              <span class="mana-count">{{ entry.count }}</span>
+            </div>
+          }
+        </div>
+      }
     </div>
 
     <div class="battlefield-area">
       <div class="battlefield-row">
         <div class="battlefield-label">{{ game()?.playerNames?.[opponentPlayerIndex] }}'s Battlefield</div>
         <div class="battlefield-cards">
-          @for (card of opponentBattlefield; track $index) {
-            <div class="card">
-              <div class="card-name">{{ card.name }}</div>
-              <div class="card-type">{{ card.type }}</div>
+          @for (perm of opponentBattlefield; track $index) {
+            <div class="card" [class.tapped]="perm.tapped">
+              <div class="card-name">{{ perm.card.name }}</div>
+              <div class="card-type">{{ perm.card.type }}</div>
+              @if (perm.tapped) {
+                <div class="card-tapped-badge">Tapped</div>
+              }
             </div>
           }
           @if (opponentBattlefield.length === 0) {
@@ -145,10 +157,13 @@
       <div class="battlefield-row">
         <div class="battlefield-label">Your Battlefield</div>
         <div class="battlefield-cards">
-          @for (card of myBattlefield; track $index) {
-            <div class="card">
-              <div class="card-name">{{ card.name }}</div>
-              <div class="card-type">{{ card.type }}</div>
+          @for (perm of myBattlefield; track $index) {
+            <div class="card" [class.tapped]="perm.tapped" [class.tappable]="canTapPermanent($index)" (click)="tapPermanent($index)">
+              <div class="card-name">{{ perm.card.name }}</div>
+              <div class="card-type">{{ perm.card.type }}</div>
+              @if (perm.tapped) {
+                <div class="card-tapped-badge">Tapped</div>
+              }
             </div>
           }
           @if (myBattlefield.length === 0) {

@@ -28,6 +28,8 @@ export enum MessageType {
   PLAYABLE_CARDS_UPDATED = 'PLAYABLE_CARDS_UPDATED',
   PLAY_CARD = 'PLAY_CARD',
   BATTLEFIELD_UPDATED = 'BATTLEFIELD_UPDATED',
+  TAP_PERMANENT = 'TAP_PERMANENT',
+  MANA_UPDATED = 'MANA_UPDATED',
   ERROR = 'ERROR'
 }
 
@@ -96,6 +98,11 @@ export interface Card {
   manaProduced: string;
 }
 
+export interface Permanent {
+  card: Card;
+  tapped: boolean;
+}
+
 export interface Game {
   id: number;
   gameName: string;
@@ -110,7 +117,8 @@ export interface Game {
   hand: Card[];
   mulliganCount: number;
   deckSizes: number[];
-  battlefields: Card[][];
+  battlefields: Permanent[][];
+  manaPool: Record<string, number>;
 }
 
 export interface LobbyGame {
@@ -186,10 +194,15 @@ export interface PlayableCardsNotification {
 
 export interface BattlefieldUpdatedNotification {
   type: MessageType;
-  battlefields: Card[][];
+  battlefields: Permanent[][];
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification;
+export interface ManaUpdatedNotification {
+  type: MessageType;
+  manaPool: Record<string, number>;
+}
+
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification;
 
 export interface User {
   userId: number;
