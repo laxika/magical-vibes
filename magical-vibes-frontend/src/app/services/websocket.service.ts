@@ -108,6 +108,7 @@ export interface Card {
   manaCost: string | null;
   power: number | null;
   toughness: number | null;
+  keywords: string[];
 }
 
 export interface Permanent {

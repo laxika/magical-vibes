@@ -768,6 +768,10 @@ export class GameComponent implements OnInit, OnDestroy {
     }
   }
 
+  formatKeywords(keywords: string[]): string {
+    return keywords.map(k => k.charAt(0) + k.slice(1).toLowerCase()).join(', ');
+  }
+
   readonly GameStatus = GameStatus;
   readonly TurnStep = TurnStep;
   readonly phaseGroups = PHASE_GROUPS;

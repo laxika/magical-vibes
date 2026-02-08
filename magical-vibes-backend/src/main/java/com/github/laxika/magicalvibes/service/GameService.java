@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.dto.TurnChangedMessage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -897,6 +898,14 @@ public class GameService {
                 }
                 if (attackerIdx < 0 || attackerIdx >= attackerBattlefield.size() || !attackerBattlefield.get(attackerIdx).isAttacking()) {
                     throw new IllegalStateException("Invalid attacker index: " + attackerIdx);
+                }
+
+                Permanent attacker = attackerBattlefield.get(attackerIdx);
+                Permanent blocker = defenderBattlefield.get(blockerIdx);
+                if (attacker.getCard().getKeywords().contains(Keyword.FLYING)
+                        && !blocker.getCard().getKeywords().contains(Keyword.FLYING)
+                        && !blocker.getCard().getKeywords().contains(Keyword.REACH)) {
+                    throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (flying)");
                 }
             }
 

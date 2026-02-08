@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @RequiredArgsConstructor
@@ -18,4 +19,5 @@ public class Card {
     private final String manaCost;
     private final Integer power;
     private final Integer toughness;
+    private final Set<Keyword> keywords;
 }
