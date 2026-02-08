@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.dto.AutoStopsUpdatedMessage;
@@ -117,6 +118,7 @@ public class GameService {
         Card forest = new Forest();
         Card llanowarElves = new LlanowarElves();
         Card grizzlyBears = new GrizzlyBears();
+        Card giantSpider = new GiantSpider();
 
         for (Long playerId : gameData.playerIds) {
             List<Card> deck = new ArrayList<>();
@@ -126,7 +128,10 @@ public class GameService {
             for (int i = 0; i < 4; i++) {
                 deck.add(llanowarElves);
             }
-            for (int i = 0; i < 32; i++) {
+            for (int i = 0; i < 4; i++) {
+                deck.add(giantSpider);
+            }
+            for (int i = 0; i < 28; i++) {
                 deck.add(grizzlyBears);
             }
             Collections.shuffle(deck, random);
@@ -149,7 +154,7 @@ public class GameService {
         gameData.status = GameStatus.MULLIGAN;
 
         gameData.gameLog.add("Game started!");
-        gameData.gameLog.add("Each player receives a deck of 24 Forests, 4 Llanowar Elves, and 32 Grizzly Bears.");
+        gameData.gameLog.add("Each player receives a deck of 24 Forests, 4 Llanowar Elves, 4 Giant Spiders, and 28 Grizzly Bears.");
 
         List<Long> ids = new ArrayList<>(gameData.orderedPlayerIds);
         Long startingPlayerId = ids.get(random.nextInt(ids.size()));
