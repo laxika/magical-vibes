@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, StackEntry, StackUpdatedNotification } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 export interface IndexedPermanent {
@@ -134,6 +134,11 @@ export class GameComponent implements OnInit, OnDestroy {
         if (message.type === MessageType.CHOOSE_CARD_FROM_HAND) {
           const chooseMsg = message as ChooseCardFromHandNotification;
           this.handleChooseCardFromHand(chooseMsg);
+        }
+
+        if (message.type === MessageType.STACK_UPDATED) {
+          const stackMsg = message as StackUpdatedNotification;
+          this.updateStack(stackMsg.stack);
         }
 
         const update = message as GameUpdate;
@@ -317,6 +322,14 @@ export class GameComponent implements OnInit, OnDestroy {
     const g = this.game();
     if (!g) return;
     const updated = { ...g, lifeTotals };
+    this.game.set(updated);
+    this.websocketService.currentGame = updated;
+  }
+
+  private updateStack(stack: StackEntry[]): void {
+    const g = this.game();
+    if (!g) return;
+    const updated = { ...g, stack };
     this.game.set(updated);
     this.websocketService.currentGame = updated;
   }
@@ -641,6 +654,21 @@ export class GameComponent implements OnInit, OnDestroy {
 
   get opponentLifeTotal(): number {
     return this.game()?.lifeTotals?.[this.opponentPlayerIndex] ?? 20;
+  }
+
+  get stackEntries(): StackEntry[] {
+    return [...(this.game()?.stack ?? [])].reverse();
+  }
+
+  get isStackEmpty(): boolean {
+    return (this.game()?.stack ?? []).length === 0;
+  }
+
+  getPlayerName(playerId: number): string {
+    const g = this.game();
+    if (!g) return '';
+    const idx = g.playerIds.indexOf(playerId);
+    return idx >= 0 ? g.playerNames[idx] : '';
   }
 
   getLifeTotal(playerIndex: number): number {

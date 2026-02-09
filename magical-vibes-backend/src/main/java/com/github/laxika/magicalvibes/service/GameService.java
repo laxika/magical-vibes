@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.networking.message.MulliganResolvedMessage
 import com.github.laxika.magicalvibes.networking.message.PlayableCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.PriorityUpdatedMessage;
 import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMessage;
+import com.github.laxika.magicalvibes.networking.message.StackUpdatedMessage;
 import com.github.laxika.magicalvibes.networking.message.StepAdvancedMessage;
 import com.github.laxika.magicalvibes.networking.message.TurnChangedMessage;
 import com.github.laxika.magicalvibes.model.Card;
@@ -35,6 +36,8 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -175,7 +178,11 @@ public class GameService {
                     gameData.id, player.getUsername(), gameData.currentStep, gameData.priorityPassedBy.size());
 
             if (gameData.priorityPassedBy.size() >= 2) {
-                advanceStep(gameData);
+                if (!gameData.stack.isEmpty()) {
+                    resolveTopOfStack(gameData);
+                } else {
+                    advanceStep(gameData);
+                }
             } else {
                 broadcastToGame(gameData, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
             }
@@ -313,6 +320,61 @@ public class GameService {
 
     private void broadcastLogEntry(GameData gameData, String logEntry) {
         broadcastToGame(gameData, new GameLogEntryMessage(logEntry));
+    }
+
+    private void broadcastStackUpdate(GameData gameData) {
+        broadcastToGame(gameData, new StackUpdatedMessage(new ArrayList<>(gameData.stack)));
+    }
+
+    private void resolveTopOfStack(GameData gameData) {
+        if (gameData.stack.isEmpty()) return;
+
+        StackEntry entry = gameData.stack.remove(gameData.stack.size() - 1);
+        gameData.priorityPassedBy.clear();
+
+        if (entry.getEntryType() == StackEntryType.CREATURE_SPELL) {
+            Card card = entry.getCard();
+            Long controllerId = entry.getControllerId();
+
+            gameData.playerBattlefields.get(controllerId).add(new Permanent(card));
+            broadcastBattlefields(gameData);
+
+            String playerName = gameData.playerIdToName.get(controllerId);
+            String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+
+            log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
+
+            // Check for ETB effects and push triggered abilities onto the stack
+            if (card.getOnEnterBattlefieldEffects() != null && !card.getOnEnterBattlefieldEffects().isEmpty()) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        controllerId,
+                        card.getName() + "'s ETB ability",
+                        new ArrayList<>(card.getOnEnterBattlefieldEffects())
+                ));
+                String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
+                gameData.gameLog.add(etbLog);
+                broadcastLogEntry(gameData, etbLog);
+                log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
+            }
+        } else if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+            String logEntry = entry.getDescription() + " resolves.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            log.info("Game {} - {} resolves", gameData.id, entry.getDescription());
+
+            for (CardEffect effect : entry.getEffectsToResolve()) {
+                if (effect instanceof OpponentMayPlayCreatureEffect) {
+                    resolveOpponentMayPlayCreature(gameData, entry.getControllerId());
+                }
+            }
+        }
+
+        broadcastStackUpdate(gameData);
+        broadcastToGame(gameData, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
     }
 
     private Long getPriorityPlayerId(GameData data) {
@@ -536,7 +598,8 @@ public class GameService {
                 getBattlefields(data),
                 manaPool,
                 autoStopSteps,
-                getLifeTotals(data)
+                getLifeTotals(data),
+                new ArrayList<>(data.stack)
         );
     }
 
@@ -580,39 +643,46 @@ public class GameService {
 
             List<Card> hand = gameData.playerHands.get(playerId);
             Card card = hand.remove(cardIndex);
-            gameData.playerBattlefields.get(playerId).add(new Permanent(card));
 
             if (card.getType() == CardType.BASIC_LAND) {
+                // Lands bypass the stack — go directly onto battlefield
+                gameData.playerBattlefields.get(playerId).add(new Permanent(card));
                 gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
-            } else if (card.getManaCost() != null) {
-                ManaCost cost = new ManaCost(card.getManaCost());
-                ManaPool pool = gameData.playerManaPools.get(playerId);
-                cost.pay(pool);
-                sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
-            }
 
-            sendToPlayer(playerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(playerId, 0)));
-            broadcastBattlefields(gameData);
+                sendToPlayer(playerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+                broadcastBattlefields(gameData);
 
-            String logEntry = player.getUsername() + " plays " + card.getName() + ".";
-            gameData.gameLog.add(logEntry);
-            broadcastLogEntry(gameData, logEntry);
+                String logEntry = player.getUsername() + " plays " + card.getName() + ".";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
 
-            log.info("Game {} - {} plays {}", gameData.id, player.getUsername(), card.getName());
+                log.info("Game {} - {} plays {}", gameData.id, player.getUsername(), card.getName());
 
-            // Resolve enter-the-battlefield effects
-            if (card.getOnEnterBattlefieldEffects() != null && !card.getOnEnterBattlefieldEffects().isEmpty()) {
-                for (CardEffect effect : card.getOnEnterBattlefieldEffects()) {
-                    if (effect instanceof OpponentMayPlayCreatureEffect) {
-                        resolveOpponentMayPlayCreature(gameData, playerId);
-                        if (gameData.awaitingCardChoice) {
-                            return;
-                        }
-                    }
+                resolveAutoPass(gameData);
+            } else if (card.getType() == CardType.CREATURE) {
+                // Creatures go on the stack
+                if (card.getManaCost() != null) {
+                    ManaCost cost = new ManaCost(card.getManaCost());
+                    ManaPool pool = gameData.playerManaPools.get(playerId);
+                    cost.pay(pool);
+                    sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
                 }
-            }
 
-            resolveAutoPass(gameData);
+                gameData.stack.add(new StackEntry(card, playerId));
+                gameData.priorityPassedBy.clear();
+
+                sendToPlayer(playerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+                broadcastStackUpdate(gameData);
+                broadcastToGame(gameData, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+
+                String logEntry = player.getUsername() + " casts " + card.getName() + ".";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+
+                log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), card.getName());
+
+                resolveAutoPass(gameData);
+            }
         }
     }
 
@@ -752,6 +822,22 @@ public class GameService {
                 gameData.gameLog.add(logEntry);
                 broadcastLogEntry(gameData, logEntry);
                 log.info("Game {} - {} puts {} onto the battlefield", gameData.id, player.getUsername(), card.getName());
+
+                // Check if the creature entering via ETB has its own ETB effects
+                if (card.getOnEnterBattlefieldEffects() != null && !card.getOnEnterBattlefieldEffects().isEmpty()) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            playerId,
+                            card.getName() + "'s ETB ability",
+                            new ArrayList<>(card.getOnEnterBattlefieldEffects())
+                    ));
+                    String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
+                    gameData.gameLog.add(etbLog);
+                    broadcastLogEntry(gameData, etbLog);
+                    broadcastStackUpdate(gameData);
+                    log.info("Game {} - {} ETB ability pushed onto stack (via Wumpus)", gameData.id, card.getName());
+                }
             }
 
             resolveAutoPass(gameData);
@@ -1152,12 +1238,14 @@ public class GameService {
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
 
+        boolean stackEmpty = gameData.stack.isEmpty();
+
         for (int i = 0; i < hand.size(); i++) {
             Card card = hand.get(i);
-            if (card.getType() == CardType.BASIC_LAND && isActivePlayer && isMainPhase && landsPlayed < 1) {
+            if (card.getType() == CardType.BASIC_LAND && isActivePlayer && isMainPhase && landsPlayed < 1 && stackEmpty) {
                 playable.add(i);
             }
-            if (card.getType() == CardType.CREATURE && isActivePlayer && isMainPhase && card.getManaCost() != null) {
+            if (card.getType() == CardType.CREATURE && isActivePlayer && isMainPhase && stackEmpty && card.getManaCost() != null) {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 if (cost.canPay(pool)) {
@@ -1183,6 +1271,12 @@ public class GameService {
                 return;
             }
             if (gameData.status == GameStatus.FINISHED) return;
+
+            // When stack is non-empty, never auto-pass — players must explicitly pass
+            if (!gameData.stack.isEmpty()) {
+                broadcastPlayableCards(gameData);
+                return;
+            }
 
             Long priorityHolder = getPriorityPlayerId(gameData);
 

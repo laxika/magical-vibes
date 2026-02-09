@@ -41,6 +41,7 @@ public class GameData {
     public boolean awaitingCardChoice;
     public Long awaitingCardChoicePlayerId;
     public Set<Integer> awaitingCardChoiceValidIndices;
+    public final List<StackEntry> stack = Collections.synchronizedList(new ArrayList<>());
 
     public GameData(long id, String gameName, long createdByUserId, String createdByUsername) {
         this.id = id;

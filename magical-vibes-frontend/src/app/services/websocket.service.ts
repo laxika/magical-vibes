@@ -40,6 +40,7 @@ export enum MessageType {
   GAME_OVER = 'GAME_OVER',
   CHOOSE_CARD_FROM_HAND = 'CHOOSE_CARD_FROM_HAND',
   CARD_CHOSEN = 'CARD_CHOSEN',
+  STACK_UPDATED = 'STACK_UPDATED',
   ERROR = 'ERROR'
 }
 
@@ -123,6 +124,14 @@ export interface Permanent {
   summoningSick: boolean;
 }
 
+export interface StackEntry {
+  entryType: string;
+  card: Card;
+  controllerId: number;
+  description: string;
+  effectsToResolve: any[];
+}
+
 export interface Game {
   id: number;
   gameName: string;
@@ -141,6 +150,7 @@ export interface Game {
   manaPool: Record<string, number>;
   autoStopSteps: string[];
   lifeTotals: number[];
+  stack: StackEntry[];
 }
 
 export interface LobbyGame {
@@ -257,7 +267,12 @@ export interface ChooseCardFromHandNotification {
   prompt: string;
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCardFromHandNotification;
+export interface StackUpdatedNotification {
+  type: MessageType;
+  stack: StackEntry[];
+}
+
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCardFromHandNotification | StackUpdatedNotification;
 
 export interface User {
   userId: number;

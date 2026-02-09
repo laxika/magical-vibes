@@ -39,5 +39,6 @@ public enum MessageType {
     GAME_OVER,
     CHOOSE_CARD_FROM_HAND,
     CARD_CHOSEN,
+    STACK_UPDATED,
     ERROR
 }
