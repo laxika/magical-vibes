@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.handler;
 
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
+import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.LoginService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
@@ -36,15 +38,18 @@ public class GameMessageHandler implements MessageHandler {
 
     private final LoginService loginService;
     private final GameService gameService;
+    private final GameRegistry gameRegistry;
     private final WebSocketSessionManager sessionManager;
     private final ObjectMapper objectMapper;
 
     public GameMessageHandler(LoginService loginService,
             GameService gameService,
+            GameRegistry gameRegistry,
             WebSocketSessionManager sessionManager,
             ObjectMapper objectMapper) {
         this.loginService = loginService;
         this.gameService = gameService;
+        this.gameRegistry = gameRegistry;
         this.sessionManager = sessionManager;
         this.objectMapper = objectMapper;
     }
@@ -105,24 +110,27 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
+        GameData gameData = gameRegistry.get(request.gameId());
+        if (gameData == null) {
+            handleError(connection, "Game not found");
+            return;
+        }
+
         try {
-            LobbyGame lobbyGame = gameService.joinGame(request.gameId(), player);
+            LobbyGame lobbyGame = gameService.joinGame(gameData, player);
 
             // Mark joiner as in-game
             sessionManager.setInGame(connection.getId());
 
             // Send GAME_JOINED to the joiner (with their own hand)
-            JoinGame joinerGame = gameService.getJoinGame(request.gameId(), player.getId());
+            JoinGame joinerGame = gameService.getJoinGame(gameData, player.getId());
             sendJoinMessage(connection, MessageType.GAME_JOINED, joinerGame);
 
             // Send OPPONENT_JOINED to the creator (with their own hand)
-            Long creatorUserId = gameService.getCreatorUserId(request.gameId());
-            if (creatorUserId != null) {
-                Connection creatorConnection = sessionManager.getConnectionByUserId(creatorUserId);
-                if (creatorConnection != null && creatorConnection.isOpen()) {
-                    JoinGame creatorGame = gameService.getJoinGame(request.gameId(), creatorUserId);
-                    sendJoinMessage(creatorConnection, MessageType.OPPONENT_JOINED, creatorGame);
-                }
+            Connection creatorConnection = sessionManager.getConnectionByUserId(gameData.createdByUserId);
+            if (creatorConnection != null && creatorConnection.isOpen()) {
+                JoinGame creatorGame = gameService.getJoinGame(gameData, gameData.createdByUserId);
+                sendJoinMessage(creatorConnection, MessageType.OPPONENT_JOINED, creatorGame);
             }
 
             // Broadcast GAME_UPDATED to lobby users
@@ -140,14 +148,14 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
-        Long gameId = gameService.getGameIdForPlayer(player.getId());
-        if (gameId == null) {
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
             handleError(connection, "Not in a game");
             return;
         }
 
         try {
-            gameService.passPriority(gameId, player);
+            gameService.passPriority(gameData, player);
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -161,14 +169,14 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
-        Long gameId = gameService.getGameIdForPlayer(player.getId());
-        if (gameId == null) {
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
             handleError(connection, "Not in a game");
             return;
         }
 
         try {
-            gameService.keepHand(gameId, player);
+            gameService.keepHand(gameData, player);
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -182,14 +190,14 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
-        Long gameId = gameService.getGameIdForPlayer(player.getId());
-        if (gameId == null) {
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
             handleError(connection, "Not in a game");
             return;
         }
 
         try {
-            gameService.mulligan(gameId, player);
+            gameService.mulligan(gameData, player);
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -203,14 +211,14 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
-        Long gameId = gameService.getGameIdForPlayer(player.getId());
-        if (gameId == null) {
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
             handleError(connection, "Not in a game");
             return;
         }
 
         try {
-            gameService.bottomCards(gameId, player, request.cardIndices());
+            gameService.bottomCards(gameData, player, request.cardIndices());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -224,14 +232,14 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
-        Long gameId = gameService.getGameIdForPlayer(player.getId());
-        if (gameId == null) {
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
             handleError(connection, "Not in a game");
             return;
         }
 
         try {
-            gameService.playCard(gameId, player, request.cardIndex());
+            gameService.playCard(gameData, player, request.cardIndex());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -245,14 +253,14 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
-        Long gameId = gameService.getGameIdForPlayer(player.getId());
-        if (gameId == null) {
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
             handleError(connection, "Not in a game");
             return;
         }
 
         try {
-            gameService.tapPermanent(gameId, player, request.permanentIndex());
+            gameService.tapPermanent(gameData, player, request.permanentIndex());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -266,14 +274,14 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
-        Long gameId = gameService.getGameIdForPlayer(player.getId());
-        if (gameId == null) {
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
             handleError(connection, "Not in a game");
             return;
         }
 
         try {
-            gameService.setAutoStops(gameId, player, request.stops());
+            gameService.setAutoStops(gameData, player, request.stops());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -287,14 +295,14 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
-        Long gameId = gameService.getGameIdForPlayer(player.getId());
-        if (gameId == null) {
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
             handleError(connection, "Not in a game");
             return;
         }
 
         try {
-            gameService.declareAttackers(gameId, player, request.attackerIndices());
+            gameService.declareAttackers(gameData, player, request.attackerIndices());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -308,14 +316,14 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
-        Long gameId = gameService.getGameIdForPlayer(player.getId());
-        if (gameId == null) {
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
             handleError(connection, "Not in a game");
             return;
         }
 
         try {
-            gameService.declareBlockers(gameId, player, request.blockerAssignments());
+            gameService.declareBlockers(gameData, player, request.blockerAssignments());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -329,14 +337,14 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
-        Long gameId = gameService.getGameIdForPlayer(player.getId());
-        if (gameId == null) {
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
             handleError(connection, "Not in a game");
             return;
         }
 
         try {
-            gameService.handleCardChosen(gameId, player, request.cardIndex());
+            gameService.handleCardChosen(gameData, player, request.cardIndex());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

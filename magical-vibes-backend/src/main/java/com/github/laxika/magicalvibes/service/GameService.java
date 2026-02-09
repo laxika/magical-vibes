@@ -47,7 +47,6 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 @Slf4j
@@ -55,44 +54,38 @@ public class GameService {
 
     public record GameResult(JoinGame joinGame, LobbyGame lobbyGame) {}
 
-    private final AtomicLong idCounter = new AtomicLong(1);
-    private final Map<Long, GameData> games = new ConcurrentHashMap<>();
     private final Random random = new Random();
+    private final GameRegistry gameRegistry;
     private final WebSocketSessionManager sessionManager;
     private final ObjectMapper objectMapper;
 
-    public GameService(WebSocketSessionManager sessionManager, ObjectMapper objectMapper) {
+    public GameService(GameRegistry gameRegistry, WebSocketSessionManager sessionManager, ObjectMapper objectMapper) {
+        this.gameRegistry = gameRegistry;
         this.sessionManager = sessionManager;
         this.objectMapper = objectMapper;
     }
 
     public GameResult createGame(String gameName, Player player) {
-        long gameId = idCounter.getAndIncrement();
+        long gameId = gameRegistry.nextId();
 
         GameData gameData = new GameData(gameId, gameName, player.getId(), player.getUsername());
         gameData.playerIds.add(player.getId());
         gameData.orderedPlayerIds.add(player.getId());
         gameData.playerNames.add(player.getUsername());
         gameData.playerIdToName.put(player.getId(), player.getUsername());
-        games.put(gameId, gameData);
+        gameRegistry.register(gameData);
 
         log.info("Game created: id={}, name='{}', creator={}", gameId, gameName, player.getUsername());
         return new GameResult(toJoinGame(gameData), toLobbyGame(gameData));
     }
 
     public List<LobbyGame> listRunningGames() {
-        return games.values().stream()
-                .filter(g -> g.status != GameStatus.FINISHED)
+        return gameRegistry.getRunningGames().stream()
                 .map(this::toLobbyGame)
                 .toList();
     }
 
-    public LobbyGame joinGame(Long gameId, Player player) {
-        GameData gameData = games.get(gameId);
-        if (gameData == null) {
-            throw new IllegalArgumentException("Game not found");
-        }
-
+    public LobbyGame joinGame(GameData gameData, Player player) {
         if (gameData.status != GameStatus.WAITING) {
             throw new IllegalStateException("Game is not accepting players");
         }
@@ -110,13 +103,8 @@ public class GameService {
             initializeGame(gameData);
         }
 
-        log.info("User {} joined game {}, status={}", player.getUsername(), gameId, gameData.status);
+        log.info("User {} joined game {}, status={}", player.getUsername(), gameData.id, gameData.status);
         return toLobbyGame(gameData);
-    }
-
-    public Long getCreatorUserId(Long gameId) {
-        GameData gameData = games.get(gameId);
-        return gameData != null ? gameData.createdByUserId : null;
     }
 
     private void initializeGame(GameData gameData) {
@@ -176,11 +164,7 @@ public class GameService {
         log.info("Game {} - Mulligan phase begins. Starting player: {}", gameData.id, startingPlayerName);
     }
 
-    public void passPriority(Long gameId, Player player) {
-        GameData gameData = games.get(gameId);
-        if (gameData == null) {
-            throw new IllegalArgumentException("Game not found");
-        }
+    public void passPriority(GameData gameData, Player player) {
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
         }
@@ -188,7 +172,7 @@ public class GameService {
         synchronized (gameData) {
             gameData.priorityPassedBy.add(player.getId());
             log.info("Game {} - {} passed priority on step {} (passed: {}/2)",
-                    gameId, player.getUsername(), gameData.currentStep, gameData.priorityPassedBy.size());
+                    gameData.id, player.getUsername(), gameData.currentStep, gameData.priorityPassedBy.size());
 
             if (gameData.priorityPassedBy.size() >= 2) {
                 advanceStep(gameData);
@@ -307,14 +291,6 @@ public class GameService {
         ));
     }
 
-    public Long getGameIdForPlayer(Long userId) {
-        return games.entrySet().stream()
-                .filter(e -> e.getValue().playerIds.contains(userId))
-                .map(Map.Entry::getKey)
-                .findFirst()
-                .orElse(null);
-    }
-
     private void broadcastToGame(GameData gameData, Object message) {
         String json;
         try {
@@ -354,20 +330,11 @@ public class GameService {
         return null;
     }
 
-    public JoinGame getJoinGame(Long gameId, Long playerId) {
-        GameData data = games.get(gameId);
-        if (data == null) {
-            throw new IllegalArgumentException("Game not found");
-        }
+    public JoinGame getJoinGame(GameData data, Long playerId) {
         return toJoinGame(data, playerId);
     }
 
-    public void keepHand(Long gameId, Player player) {
-        GameData gameData = games.get(gameId);
-        if (gameData == null) {
-            throw new IllegalArgumentException("Game not found");
-        }
-
+    public void keepHand(GameData gameData, Player player) {
         synchronized (gameData) {
             if (gameData.status != GameStatus.MULLIGAN) {
                 throw new IllegalStateException("Game is not in mulligan phase");
@@ -392,25 +359,20 @@ public class GameService {
                 gameData.gameLog.add(logEntry);
                 broadcastLogEntry(gameData, logEntry);
 
-                log.info("Game {} - {} kept hand, needs to bottom {} cards (mulligan count: {})", gameId, player.getUsername(), cardsToBottom, mulliganCount);
+                log.info("Game {} - {} kept hand, needs to bottom {} cards (mulligan count: {})", gameData.id, player.getUsername(), cardsToBottom, mulliganCount);
             } else {
                 String logEntry = player.getUsername() + " keeps their hand.";
                 gameData.gameLog.add(logEntry);
                 broadcastLogEntry(gameData, logEntry);
 
-                log.info("Game {} - {} kept hand (no mulligans)", gameId, player.getUsername());
+                log.info("Game {} - {} kept hand (no mulligans)", gameData.id, player.getUsername());
 
                 checkStartGame(gameData);
             }
         }
     }
 
-    public void bottomCards(Long gameId, Player player, List<Integer> cardIndices) {
-        GameData gameData = games.get(gameId);
-        if (gameData == null) {
-            throw new IllegalArgumentException("Game not found");
-        }
-
+    public void bottomCards(GameData gameData, Player player, List<Integer> cardIndices) {
         synchronized (gameData) {
             if (gameData.status != GameStatus.MULLIGAN) {
                 throw new IllegalStateException("Game is not in mulligan phase");
@@ -454,7 +416,7 @@ public class GameService {
             gameData.gameLog.add(logEntry);
             broadcastLogEntry(gameData, logEntry);
 
-            log.info("Game {} - {} bottomed {} cards, hand size now {}", gameId, player.getUsername(), bottomCards.size(), hand.size());
+            log.info("Game {} - {} bottomed {} cards, hand size now {}", gameData.id, player.getUsername(), bottomCards.size(), hand.size());
 
             broadcastDeckSizes(gameData);
             checkStartGame(gameData);
@@ -467,12 +429,7 @@ public class GameService {
         }
     }
 
-    public void mulligan(Long gameId, Player player) {
-        GameData gameData = games.get(gameId);
-        if (gameData == null) {
-            throw new IllegalArgumentException("Game not found");
-        }
-
+    public void mulligan(GameData gameData, Player player) {
         synchronized (gameData) {
             if (gameData.status != GameStatus.MULLIGAN) {
                 throw new IllegalStateException("Game is not in mulligan phase");
@@ -505,7 +462,7 @@ public class GameService {
             gameData.gameLog.add(logEntry);
             broadcastLogEntry(gameData, logEntry);
 
-            log.info("Game {} - {} mulliganed (count: {})", gameId, player.getUsername(), newMulliganCount);
+            log.info("Game {} - {} mulliganed (count: {})", gameData.id, player.getUsername(), newMulliganCount);
         }
     }
 
@@ -609,11 +566,7 @@ public class GameService {
         broadcastToGame(data, new BattlefieldUpdatedMessage(getBattlefields(data)));
     }
 
-    public void playCard(Long gameId, Player player, int cardIndex) {
-        GameData gameData = games.get(gameId);
-        if (gameData == null) {
-            throw new IllegalArgumentException("Game not found");
-        }
+    public void playCard(GameData gameData, Player player, int cardIndex) {
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
         }
@@ -645,7 +598,7 @@ public class GameService {
             gameData.gameLog.add(logEntry);
             broadcastLogEntry(gameData, logEntry);
 
-            log.info("Game {} - {} plays {}", gameId, player.getUsername(), card.getName());
+            log.info("Game {} - {} plays {}", gameData.id, player.getUsername(), card.getName());
 
             // Resolve enter-the-battlefield effects
             if (card.getOnEnterBattlefieldEffects() != null && !card.getOnEnterBattlefieldEffects().isEmpty()) {
@@ -663,11 +616,7 @@ public class GameService {
         }
     }
 
-    public void tapPermanent(Long gameId, Player player, int permanentIndex) {
-        GameData gameData = games.get(gameId);
-        if (gameData == null) {
-            throw new IllegalArgumentException("Game not found");
-        }
+    public void tapPermanent(GameData gameData, Player player, int permanentIndex) {
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
         }
@@ -706,17 +655,13 @@ public class GameService {
             gameData.gameLog.add(logEntry);
             broadcastLogEntry(gameData, logEntry);
 
-            log.info("Game {} - {} taps {}", gameId, player.getUsername(), permanent.getCard().getName());
+            log.info("Game {} - {} taps {}", gameData.id, player.getUsername(), permanent.getCard().getName());
 
             broadcastPlayableCards(gameData);
         }
     }
 
-    public void setAutoStops(Long gameId, Player player, List<TurnStep> stops) {
-        GameData gameData = games.get(gameId);
-        if (gameData == null) {
-            throw new IllegalArgumentException("Game not found");
-        }
+    public void setAutoStops(GameData gameData, Player player, List<TurnStep> stops) {
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
         }
@@ -769,12 +714,7 @@ public class GameService {
         log.info("Game {} - Awaiting {} to choose a card from hand", gameData.id, playerName);
     }
 
-    public void handleCardChosen(Long gameId, Player player, int cardIndex) {
-        GameData gameData = games.get(gameId);
-        if (gameData == null) {
-            throw new IllegalArgumentException("Game not found");
-        }
-
+    public void handleCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
             if (!gameData.awaitingCardChoice) {
                 throw new IllegalStateException("Not awaiting card choice");
@@ -795,7 +735,7 @@ public class GameService {
                 String logEntry = player.getUsername() + " chooses not to put a card onto the battlefield.";
                 gameData.gameLog.add(logEntry);
                 broadcastLogEntry(gameData, logEntry);
-                log.info("Game {} - {} declines to put a card onto the battlefield", gameId, player.getUsername());
+                log.info("Game {} - {} declines to put a card onto the battlefield", gameData.id, player.getUsername());
             } else {
                 if (!validIndices.contains(cardIndex)) {
                     throw new IllegalStateException("Invalid card index: " + cardIndex);
@@ -811,7 +751,7 @@ public class GameService {
                 String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield.";
                 gameData.gameLog.add(logEntry);
                 broadcastLogEntry(gameData, logEntry);
-                log.info("Game {} - {} puts {} onto the battlefield", gameId, player.getUsername(), card.getName());
+                log.info("Game {} - {} puts {} onto the battlefield", gameData.id, player.getUsername(), card.getName());
             }
 
             resolveAutoPass(gameData);
@@ -900,12 +840,7 @@ public class GameService {
         broadcastToGame(gameData, new StepAdvancedMessage(getPriorityPlayerId(gameData), TurnStep.END_OF_COMBAT));
     }
 
-    public void declareAttackers(Long gameId, Player player, List<Integer> attackerIndices) {
-        GameData gameData = games.get(gameId);
-        if (gameData == null) {
-            throw new IllegalArgumentException("Game not found");
-        }
-
+    public void declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices) {
         synchronized (gameData) {
             if (!gameData.awaitingAttackerDeclaration) {
                 throw new IllegalStateException("Not awaiting attacker declaration");
@@ -975,12 +910,7 @@ public class GameService {
         sendToPlayer(defenderId, new AvailableBlockersMessage(blockable, attackerIndices));
     }
 
-    public void declareBlockers(Long gameId, Player player, List<BlockerAssignment> blockerAssignments) {
-        GameData gameData = games.get(gameId);
-        if (gameData == null) {
-            throw new IllegalArgumentException("Game not found");
-        }
-
+    public void declareBlockers(GameData gameData, Player player, List<BlockerAssignment> blockerAssignments) {
         synchronized (gameData) {
             if (!gameData.awaitingBlockerDeclaration) {
                 throw new IllegalStateException("Not awaiting blocker declaration");
