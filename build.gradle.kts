@@ -32,6 +32,13 @@ subprojects {
         dependencies {
             "compileOnly"("org.projectlombok:lombok")
             "annotationProcessor"("org.projectlombok:lombok")
+            "testImplementation"("org.junit.jupiter:junit-jupiter")
+            "testImplementation"("org.assertj:assertj-core")
+            "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
+        }
+
+        tasks.withType<Test> {
+            useJUnitPlatform()
         }
     }
 }
