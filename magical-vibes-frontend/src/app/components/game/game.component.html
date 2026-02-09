@@ -206,7 +206,7 @@
               }
               <div class="card-name">{{ ip.perm.card.name }}</div>
               <div class="card-type">{{ ip.perm.card.type }}</div>
-              @if (ip.perm.card.keywords?.length > 0) {
+              @if (ip.perm.card.keywords.length > 0) {
                 <div class="card-keywords">{{ formatKeywords(ip.perm.card.keywords) }}</div>
               }
               @if (ip.perm.card.power != null && ip.perm.card.toughness != null) {
@@ -241,7 +241,7 @@
                     }
                     <div class="card-name">{{ group.attacker.card.name }}</div>
                     <div class="card-type">{{ group.attacker.card.type }}</div>
-                    @if (group.attacker.card.keywords?.length > 0) {
+                    @if (group.attacker.card.keywords.length > 0) {
                       <div class="card-keywords">{{ formatKeywords(group.attacker.card.keywords) }}</div>
                     }
                     @if (group.attacker.card.power != null && group.attacker.card.toughness != null) {
@@ -261,7 +261,7 @@
                         }
                         <div class="card-name">{{ blocker.perm.card.name }}</div>
                         <div class="card-type">{{ blocker.perm.card.type }}</div>
-                        @if (blocker.perm.card.keywords?.length > 0) {
+                        @if (blocker.perm.card.keywords.length > 0) {
                           <div class="card-keywords">{{ formatKeywords(blocker.perm.card.keywords) }}</div>
                         }
                         @if (blocker.perm.card.power != null && blocker.perm.card.toughness != null) {
@@ -299,7 +299,7 @@
               }
               <div class="card-name">{{ ip.perm.card.name }}</div>
               <div class="card-type">{{ ip.perm.card.type }}</div>
-              @if (ip.perm.card.keywords?.length > 0) {
+              @if (ip.perm.card.keywords.length > 0) {
                 <div class="card-keywords">{{ formatKeywords(ip.perm.card.keywords) }}</div>
               }
               @if (ip.perm.card.power != null && ip.perm.card.toughness != null) {
@@ -356,7 +356,7 @@
             }
             <div class="card-name">{{ card.name }}</div>
             <div class="card-type">{{ card.type }}</div>
-            @if (card.keywords?.length > 0) {
+            @if (card.keywords.length > 0) {
               <div class="card-keywords">{{ formatKeywords(card.keywords) }}</div>
             }
             @if (card.power != null && card.toughness != null) {
