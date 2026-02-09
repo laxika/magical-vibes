@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.config;
+package com.github.laxika.magicalvibes.websocket.configuration;
 
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.websocket.WebSocketHandler;
@@ -11,13 +11,13 @@ import tools.jackson.databind.ObjectMapper;
 
 @Configuration
 @EnableWebSocket
-public class WebSocketConfig implements WebSocketConfigurer {
+public class WebSocketConfiguration implements WebSocketConfigurer {
 
     private final MessageHandler messageHandler;
     private final ObjectMapper objectMapper;
     private final WebSocketSessionManager sessionManager;
 
-    public WebSocketConfig(MessageHandler messageHandler, ObjectMapper objectMapper, WebSocketSessionManager sessionManager) {
+    public WebSocketConfiguration(MessageHandler messageHandler, ObjectMapper objectMapper, WebSocketSessionManager sessionManager) {
         this.messageHandler = messageHandler;
         this.objectMapper = objectMapper;
         this.sessionManager = sessionManager;
