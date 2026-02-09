@@ -1,9 +1,7 @@
-package com.github.laxika.magicalvibes.cards;
+package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -55,7 +53,7 @@ class HuntedWumpusTest {
 
         // Wumpus is on the stack as a creature spell
         assertThat(gd.stack).hasSize(1);
-        StackEntry entry = gd.stack.get(0);
+        StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Hunted Wumpus");
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
@@ -82,7 +80,7 @@ class HuntedWumpusTest {
 
         // Creature spell resolved → stack should have the ETB triggered ability
         assertThat(gd.stack).hasSize(1);
-        StackEntry etbEntry = gd.stack.get(0);
+        StackEntry etbEntry = gd.stack.getFirst();
         assertThat(etbEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(etbEntry.getCard().getName()).isEqualTo("Hunted Wumpus");
 
@@ -205,7 +203,7 @@ class HuntedWumpusTest {
 
         // The second Wumpus's ETB is now on the stack
         assertThat(gd.stack).hasSize(1);
-        StackEntry recursiveEtb = gd.stack.get(0);
+        StackEntry recursiveEtb = gd.stack.getFirst();
         assertThat(recursiveEtb.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(recursiveEtb.getCard().getName()).isEqualTo("Hunted Wumpus");
 
@@ -214,6 +212,56 @@ class HuntedWumpusTest {
                 .anyMatch(p -> p.getCard().getName().equals("Hunted Wumpus"));
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Hunted Wumpus"));
+    }
+
+    @Test
+    void wumpusEtbDoubleRecursiveChain() {
+        setupAndCastWumpus();
+        harness.passBothPriorities(); // resolve creature spell → ETB on stack
+
+        // Give opponent a Hunted Wumpus
+        harness.setHand(player2, List.of(new HuntedWumpus()));
+
+        harness.passBothPriorities(); // resolve ETB → awaiting card choice for player2
+
+        // Player2 puts their Wumpus
+        harness.handleCardChosen(player2, 0);
+
+        GameData gd = harness.getGameData();
+
+        // Second Wumpus's ETB is on the stack (controllerId = player2)
+        assertThat(gd.stack).hasSize(1);
+        StackEntry secondEtb = gd.stack.getFirst();
+        assertThat(secondEtb.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(secondEtb.getControllerId()).isEqualTo(player2.getId());
+
+        // Give player1 a Grizzly Bears so they can use the second Wumpus's ETB
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        // Resolve second ETB → player1 (opponent of controller player2) is asked to choose
+        harness.passBothPriorities();
+
+        assertThat(gd.awaitingCardChoice).isTrue();
+        assertThat(gd.awaitingCardChoicePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.awaitingCardChoiceValidIndices).containsExactly(0);
+
+        // Player1 puts their Grizzly Bears
+        harness.handleCardChosen(player1, 0);
+
+        // Grizzly Bears is on player1's battlefield (alongside the first Wumpus)
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Hunted Wumpus"))
+                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+
+        // Player2 has their Wumpus on the battlefield
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Hunted Wumpus"));
+
+        // Player1's hand is now empty (they put the Grizzly Bears)
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        // Stack is empty (Grizzly Bears has no ETB, chain is done)
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
