@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -43,6 +44,7 @@ class HuntedWumpusTest {
     }
 
     @Test
+    @DisplayName("Casting Hunted Wumpus puts it on the stack as a creature spell")
     void castingWumpusPutsItOnStack() {
         harness.setHand(player1, List.of(new HuntedWumpus()));
         harness.addMana(player1, "G", 4);
@@ -70,6 +72,7 @@ class HuntedWumpusTest {
     }
 
     @Test
+    @DisplayName("Hunted Wumpus resolves onto the battlefield with ETB triggered ability on stack")
     void wumpusResolvesOntoBattlefield() {
         setupAndCastWumpus();
 
@@ -96,6 +99,7 @@ class HuntedWumpusTest {
     }
 
     @Test
+    @DisplayName("ETB ability resolves and prompts opponent to choose a creature from hand")
     void wumpusEtbTriggersOpponentChoice() {
         setupAndCastWumpus();
         // Resolve creature spell → ETB goes on stack
@@ -114,6 +118,7 @@ class HuntedWumpusTest {
     }
 
     @Test
+    @DisplayName("Opponent puts a creature onto the battlefield via ETB ability")
     void opponentPutsCreatureViaWumpusEtb() {
         setupAndCastWumpus();
         harness.passBothPriorities(); // resolve creature spell
@@ -145,6 +150,7 @@ class HuntedWumpusTest {
     }
 
     @Test
+    @DisplayName("Opponent declines to put a creature and hand remains unchanged")
     void opponentDeclinesWumpusEtb() {
         setupAndCastWumpus();
         harness.passBothPriorities(); // resolve creature spell
@@ -170,6 +176,7 @@ class HuntedWumpusTest {
     }
 
     @Test
+    @DisplayName("ETB is skipped when opponent has no creatures in hand")
     void wumpusEtbWithNoCreaturesInOpponentHand() {
         setupAndCastWumpus();
         harness.passBothPriorities(); // resolve creature spell
@@ -186,6 +193,7 @@ class HuntedWumpusTest {
     }
 
     @Test
+    @DisplayName("Opponent putting a Hunted Wumpus via ETB triggers a second ETB on the stack")
     void wumpusEtbRecursiveOpponentPutsWumpus() {
         setupAndCastWumpus();
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
@@ -215,6 +223,7 @@ class HuntedWumpusTest {
     }
 
     @Test
+    @DisplayName("Double recursive ETB chain: Wumpus -> opponent's Wumpus -> original player puts a creature")
     void wumpusEtbDoubleRecursiveChain() {
         setupAndCastWumpus();
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
@@ -265,6 +274,7 @@ class HuntedWumpusTest {
     }
 
     @Test
+    @DisplayName("Cannot cast a creature while the stack is non-empty")
     void cannotCastCreatureWhileStackNonEmpty() {
         setupAndCastWumpus();
 
