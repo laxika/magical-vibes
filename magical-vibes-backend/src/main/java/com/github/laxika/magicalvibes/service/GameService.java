@@ -42,12 +42,10 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
-import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -63,7 +61,6 @@ public class GameService {
 
     private final GameRegistry gameRegistry;
     private final SessionManager sessionManager;
-    private final ObjectMapper objectMapper;
 
     public GameResult createGame(String gameName, Player player) {
         long gameId = gameRegistry.nextId();
@@ -181,7 +178,7 @@ public class GameService {
                     advanceStep(gameData);
                 }
             } else {
-                broadcastToGame(gameData, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+                sessionManager.sendToPlayers(gameData.orderedPlayerIds,new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
             }
 
             resolveAutoPass(gameData);
@@ -201,7 +198,7 @@ public class GameService {
             log.info("Game {} - Step advanced to {}", gameData.id, next);
 
             broadcastLogEntry(gameData, logEntry);
-            broadcastToGame(gameData, new StepAdvancedMessage(getPriorityPlayerId(gameData), next));
+            sessionManager.sendToPlayers(gameData.orderedPlayerIds,new StepAdvancedMessage(getPriorityPlayerId(gameData), next));
 
             if (gameData.status == GameStatus.FINISHED) return;
 
@@ -209,13 +206,10 @@ public class GameService {
                 handleDrawStep(gameData);
             } else if (next == TurnStep.DECLARE_ATTACKERS) {
                 handleDeclareAttackersStep(gameData);
-                return;
             } else if (next == TurnStep.DECLARE_BLOCKERS) {
                 handleDeclareBlockersStep(gameData);
-                return;
             } else if (next == TurnStep.COMBAT_DAMAGE) {
                 resolveCombatDamage(gameData);
-                return;
             } else if (next == TurnStep.END_OF_COMBAT) {
                 clearCombatState(gameData);
             }
@@ -225,32 +219,32 @@ public class GameService {
     }
 
     private void handleDrawStep(GameData gameData) {
-        Long activeId = gameData.activePlayerId;
+        Long activePlayerId = gameData.activePlayerId;
 
         // The starting player skips their draw on turn 1
-        if (gameData.turnNumber == 1 && activeId.equals(gameData.startingPlayerId)) {
-            String logEntry = gameData.playerIdToName.get(activeId) + " skips the draw (first turn).";
+        if (gameData.turnNumber == 1 && activePlayerId.equals(gameData.startingPlayerId)) {
+            String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips the draw (first turn).";
             gameData.gameLog.add(logEntry);
             broadcastLogEntry(gameData, logEntry);
-            log.info("Game {} - {} skips draw on turn 1", gameData.id, gameData.playerIdToName.get(activeId));
+            log.info("Game {} - {} skips draw on turn 1", gameData.id, gameData.playerIdToName.get(activePlayerId));
             return;
         }
 
-        List<Card> deck = gameData.playerDecks.get(activeId);
-        List<Card> hand = gameData.playerHands.get(activeId);
+        List<Card> deck = gameData.playerDecks.get(activePlayerId);
+        List<Card> hand = gameData.playerHands.get(activePlayerId);
 
         if (deck == null || deck.isEmpty()) {
-            log.warn("Game {} - {} has no cards to draw", gameData.id, gameData.playerIdToName.get(activeId));
+            log.warn("Game {} - {} has no cards to draw", gameData.id, gameData.playerIdToName.get(activePlayerId));
             return;
         }
 
-        Card drawn = deck.remove(0);
+        Card drawn = deck.removeFirst();
         hand.add(drawn);
 
-        sendToPlayer(activeId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(activeId, 0)));
+        sessionManager.sendToPlayer(activePlayerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(activePlayerId, 0)));
         broadcastDeckSizes(gameData);
 
-        String playerName = gameData.playerIdToName.get(activeId);
+        String playerName = gameData.playerIdToName.get(activePlayerId);
         String logEntry = playerName + " draws a card.";
         gameData.gameLog.add(logEntry);
         broadcastLogEntry(gameData, logEntry);
@@ -290,37 +284,17 @@ public class GameService {
         log.info("Game {} - Turn {} begins. Active player: {}", gameData.id, gameData.turnNumber, nextActiveName);
 
         broadcastLogEntry(gameData, logEntry);
-        broadcastToGame(gameData, new TurnChangedMessage(
+        sessionManager.sendToPlayers(gameData.orderedPlayerIds,new TurnChangedMessage(
                 getPriorityPlayerId(gameData), TurnStep.first(), nextActive, gameData.turnNumber
         ));
     }
 
-    private void broadcastToGame(GameData gameData, Object message) {
-        String json;
-        try {
-            json = objectMapper.writeValueAsString(message);
-        } catch (Exception e) {
-            log.error("Error serializing message", e);
-            return;
-        }
-        for (Long playerId : gameData.orderedPlayerIds) {
-            Connection connection = sessionManager.getConnectionByUserId(playerId);
-            if (connection != null && connection.isOpen()) {
-                try {
-                    connection.sendMessage(json);
-                } catch (Exception e) {
-                    log.error("Error sending message to player {}", playerId, e);
-                }
-            }
-        }
-    }
-
     private void broadcastLogEntry(GameData gameData, String logEntry) {
-        broadcastToGame(gameData, new GameLogEntryMessage(logEntry));
+        sessionManager.sendToPlayers(gameData.orderedPlayerIds,new GameLogEntryMessage(logEntry));
     }
 
     private void broadcastStackUpdate(GameData gameData) {
-        broadcastToGame(gameData, new StackUpdatedMessage(new ArrayList<>(gameData.stack)));
+        sessionManager.sendToPlayers(gameData.orderedPlayerIds,new StackUpdatedMessage(new ArrayList<>(gameData.stack)));
     }
 
     private void resolveTopOfStack(GameData gameData) {
@@ -371,7 +345,7 @@ public class GameService {
         }
 
         broadcastStackUpdate(gameData);
-        broadcastToGame(gameData, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+        sessionManager.sendToPlayers(gameData.orderedPlayerIds,new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
     }
 
     private Long getPriorityPlayerId(GameData data) {
@@ -406,12 +380,12 @@ public class GameService {
             int mulliganCount = gameData.mulliganCounts.getOrDefault(player.getId(), 0);
             List<Card> hand = gameData.playerHands.get(player.getId());
 
-            broadcastToGame(gameData, new MulliganResolvedMessage(player.getUsername(), true, mulliganCount));
+            sessionManager.sendToPlayers(gameData.orderedPlayerIds,new MulliganResolvedMessage(player.getUsername(), true, mulliganCount));
 
             if (mulliganCount > 0 && !hand.isEmpty()) {
                 int cardsToBottom = Math.min(mulliganCount, hand.size());
                 gameData.playerNeedsToBottom.put(player.getId(), cardsToBottom);
-                sendToPlayer(player.getId(), new SelectCardsToBottomMessage(cardsToBottom));
+                sessionManager.sendToPlayer(player.getId(), new SelectCardsToBottomMessage(cardsToBottom));
 
                 String logEntry = player.getUsername() + " keeps their hand and must put " + cardsToBottom +
                         " card" + (cardsToBottom > 1 ? "s" : "") + " on the bottom of their library.";
@@ -468,7 +442,7 @@ public class GameService {
 
             gameData.playerNeedsToBottom.remove(player.getId());
 
-            sendToPlayer(player.getId(), new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(player.getId(), 0)));
+            sessionManager.sendToPlayer(player.getId(), new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(player.getId(), 0)));
 
             String logEntry = player.getUsername() + " puts " + bottomCards.size() +
                     " card" + (bottomCards.size() > 1 ? "s" : "") + " on the bottom of their library (keeping " + hand.size() + " cards).";
@@ -514,8 +488,8 @@ public class GameService {
             int newMulliganCount = currentMulliganCount + 1;
             gameData.mulliganCounts.put(player.getId(), newMulliganCount);
 
-            sendToPlayer(player.getId(), new HandDrawnMessage(new ArrayList<>(newHand), newMulliganCount));
-            broadcastToGame(gameData, new MulliganResolvedMessage(player.getUsername(), false, newMulliganCount));
+            sessionManager.sendToPlayer(player.getId(), new HandDrawnMessage(new ArrayList<>(newHand), newMulliganCount));
+            sessionManager.sendToPlayers(gameData.orderedPlayerIds,new MulliganResolvedMessage(player.getUsername(), false, newMulliganCount));
 
             String logEntry = player.getUsername() + " takes a mulligan (mulligan #" + newMulliganCount + ").";
             gameData.gameLog.add(logEntry);
@@ -538,7 +512,7 @@ public class GameService {
         broadcastLogEntry(gameData, logEntry1);
         broadcastLogEntry(gameData, logEntry2);
 
-        broadcastToGame(gameData, new GameStartedMessage(
+        sessionManager.sendToPlayers(gameData.orderedPlayerIds,new GameStartedMessage(
                 gameData.activePlayerId, gameData.turnNumber, gameData.currentStep, getPriorityPlayerId(gameData)
         ));
 
@@ -547,24 +521,6 @@ public class GameService {
         log.info("Game {} - Game started! Turn 1 begins. Active player: {}", gameData.id, gameData.playerIdToName.get(gameData.activePlayerId));
 
         resolveAutoPass(gameData);
-    }
-
-    private void sendToPlayer(Long playerId, Object message) {
-        String json;
-        try {
-            json = objectMapper.writeValueAsString(message);
-        } catch (Exception e) {
-            log.error("Error serializing message", e);
-            return;
-        }
-        Connection connection = sessionManager.getConnectionByUserId(playerId);
-        if (connection != null && connection.isOpen()) {
-            try {
-                connection.sendMessage(json);
-            } catch (Exception e) {
-                log.error("Error sending message to player {}", playerId, e);
-            }
-        }
     }
 
     private JoinGame toJoinGame(GameData data) {
@@ -610,7 +566,7 @@ public class GameService {
     }
 
     private void broadcastDeckSizes(GameData data) {
-        broadcastToGame(data, new DeckSizesUpdatedMessage(getDeckSizes(data)));
+        sessionManager.sendToPlayers(data.orderedPlayerIds, new DeckSizesUpdatedMessage(getDeckSizes(data)));
     }
 
     private List<List<Permanent>> getBattlefields(GameData data) {
@@ -623,7 +579,7 @@ public class GameService {
     }
 
     private void broadcastBattlefields(GameData data) {
-        broadcastToGame(data, new BattlefieldUpdatedMessage(getBattlefields(data)));
+        sessionManager.sendToPlayers(data.orderedPlayerIds, new BattlefieldUpdatedMessage(getBattlefields(data)));
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex) {
@@ -646,7 +602,7 @@ public class GameService {
                 gameData.playerBattlefields.get(playerId).add(new Permanent(card));
                 gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
 
-                sendToPlayer(playerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+                sessionManager.sendToPlayer(playerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(playerId, 0)));
                 broadcastBattlefields(gameData);
 
                 String logEntry = player.getUsername() + " plays " + card.getName() + ".";
@@ -662,15 +618,15 @@ public class GameService {
                     ManaCost cost = new ManaCost(card.getManaCost());
                     ManaPool pool = gameData.playerManaPools.get(playerId);
                     cost.pay(pool);
-                    sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
+                    sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
                 }
 
                 gameData.stack.add(new StackEntry(card, playerId));
                 gameData.priorityPassedBy.clear();
 
-                sendToPlayer(playerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+                sessionManager.sendToPlayer(playerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(playerId, 0)));
                 broadcastStackUpdate(gameData);
-                broadcastToGame(gameData, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+                sessionManager.sendToPlayers(gameData.orderedPlayerIds,new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
 
                 String logEntry = player.getUsername() + " casts " + card.getName() + ".";
                 gameData.gameLog.add(logEntry);
@@ -716,7 +672,7 @@ public class GameService {
             }
 
             broadcastBattlefields(gameData);
-            sendToPlayer(playerId, new ManaUpdatedMessage(manaPool.toMap()));
+            sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(manaPool.toMap()));
 
             String logEntry = player.getUsername() + " taps " + permanent.getCard().getName() + ".";
             gameData.gameLog.add(logEntry);
@@ -739,7 +695,7 @@ public class GameService {
             stopSet.add(TurnStep.PRECOMBAT_MAIN);
             stopSet.add(TurnStep.POSTCOMBAT_MAIN);
             gameData.playerAutoStopSteps.put(player.getId(), stopSet);
-            sendToPlayer(player.getId(), new AutoStopsUpdatedMessage(new ArrayList<>(stopSet)));
+            sessionManager.sendToPlayer(player.getId(), new AutoStopsUpdatedMessage(new ArrayList<>(stopSet)));
         }
     }
 
@@ -775,7 +731,7 @@ public class GameService {
         gameData.awaitingCardChoice = true;
         gameData.awaitingCardChoicePlayerId = playerId;
         gameData.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
-        sendToPlayer(playerId, new ChooseCardFromHandMessage(validIndices, prompt));
+        sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(validIndices, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a card from hand", gameData.id, playerName);
@@ -812,7 +768,7 @@ public class GameService {
                 Card card = hand.remove(cardIndex);
                 gameData.playerBattlefields.get(playerId).add(new Permanent(card));
 
-                sendToPlayer(playerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+                sessionManager.sendToPlayer(playerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(playerId, 0)));
                 broadcastBattlefields(gameData);
 
                 String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield.";
@@ -895,7 +851,7 @@ public class GameService {
     }
 
     private void broadcastLifeTotals(GameData gameData) {
-        broadcastToGame(gameData, new LifeUpdatedMessage(getLifeTotals(gameData)));
+        sessionManager.sendToPlayers(gameData.orderedPlayerIds,new LifeUpdatedMessage(getLifeTotals(gameData)));
     }
 
     private void handleDeclareAttackersStep(GameData gameData) {
@@ -910,7 +866,7 @@ public class GameService {
         }
 
         gameData.awaitingAttackerDeclaration = true;
-        sendToPlayer(activeId, new AvailableAttackersMessage(attackable));
+        sessionManager.sendToPlayer(activeId, new AvailableAttackersMessage(attackable));
     }
 
     private void skipToEndOfCombat(GameData gameData) {
@@ -920,7 +876,7 @@ public class GameService {
         String logEntry = "Step: " + TurnStep.END_OF_COMBAT.getDisplayName();
         gameData.gameLog.add(logEntry);
         broadcastLogEntry(gameData, logEntry);
-        broadcastToGame(gameData, new StepAdvancedMessage(getPriorityPlayerId(gameData), TurnStep.END_OF_COMBAT));
+        sessionManager.sendToPlayers(gameData.orderedPlayerIds,new StepAdvancedMessage(getPriorityPlayerId(gameData), TurnStep.END_OF_COMBAT));
     }
 
     public void declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices) {
@@ -990,7 +946,7 @@ public class GameService {
         }
 
         gameData.awaitingBlockerDeclaration = true;
-        sendToPlayer(defenderId, new AvailableBlockersMessage(blockable, attackerIndices));
+        sessionManager.sendToPlayer(defenderId, new AvailableBlockersMessage(blockable, attackerIndices));
     }
 
     public void declareBlockers(GameData gameData, Player player, List<BlockerAssignment> blockerAssignments) {
@@ -1174,7 +1130,7 @@ public class GameService {
                 gameData.gameLog.add(logEntry);
                 broadcastLogEntry(gameData, logEntry);
 
-                broadcastToGame(gameData, new GameOverMessage(winnerId, winnerName));
+                sessionManager.sendToPlayers(gameData.orderedPlayerIds,new GameOverMessage(winnerId, winnerName));
 
                 log.info("Game {} - {} wins! {} is at {} life", gameData.id, winnerName,
                         gameData.playerIdToName.get(playerId), life);
@@ -1201,7 +1157,7 @@ public class GameService {
             ManaPool manaPool = gameData.playerManaPools.get(playerId);
             if (manaPool != null) {
                 manaPool.clear();
-                sendToPlayer(playerId, new ManaUpdatedMessage(manaPool.toMap()));
+                sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(manaPool.toMap()));
             }
         }
     }
@@ -1257,7 +1213,7 @@ public class GameService {
     private void broadcastPlayableCards(GameData gameData) {
         for (Long playerId : gameData.orderedPlayerIds) {
             List<Integer> playable = getPlayableCardIndices(gameData, playerId);
-            sendToPlayer(playerId, new PlayableCardsMessage(playable));
+            sessionManager.sendToPlayer(playerId, new PlayableCardsMessage(playable));
         }
     }
 
@@ -1307,7 +1263,7 @@ public class GameService {
             if (gameData.priorityPassedBy.size() >= 2) {
                 advanceStep(gameData);
             } else {
-                broadcastToGame(gameData, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+                sessionManager.sendToPlayers(gameData.orderedPlayerIds,new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
             }
         }
 

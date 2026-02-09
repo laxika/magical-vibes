@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import com.github.laxika.magicalvibes.config.JacksonConfig;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +19,6 @@ public class GameTestHarness {
 
     private final GameRegistry gameRegistry;
     private final WebSocketSessionManager sessionManager;
-    private final ObjectMapper objectMapper;
     private final GameService gameService;
     private final GameData gameData;
     private final Player player1;
@@ -30,9 +28,8 @@ public class GameTestHarness {
 
     public GameTestHarness() {
         gameRegistry = new GameRegistry();
-        sessionManager = new WebSocketSessionManager();
-        objectMapper = new JacksonConfig().objectMapper();
-        gameService = new GameService(gameRegistry, sessionManager, objectMapper);
+        sessionManager = new WebSocketSessionManager(new JacksonConfig().objectMapper());
+        gameService = new GameService(gameRegistry, sessionManager);
 
         player1 = new Player(1L, "Alice");
         player2 = new Player(2L, "Bob");

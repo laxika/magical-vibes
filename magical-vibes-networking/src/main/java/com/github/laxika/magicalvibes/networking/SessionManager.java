@@ -17,4 +17,8 @@ public interface SessionManager {
     void setInGame(String connectionId);
 
     Collection<Player> getLobbyPlayers();
+
+    void sendToPlayer(Long playerId, Object message);
+
+    void sendToPlayers(Collection<Long> playerIds, Object message);
 }
