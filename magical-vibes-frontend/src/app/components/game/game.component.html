@@ -335,10 +335,10 @@
       </div>
     </div>
 
-    @if (choosingCreatureFromHand) {
-      <div class="combat-banner creature-choice-banner">
-        <span>Opponent played Hunted Wumpus — you may put a creature card from your hand onto the battlefield</span>
-        <button class="btn-confirm-combat" (click)="declineCreatureChoice()">Decline</button>
+    @if (choosingFromHand) {
+      <div class="combat-banner hand-choice-banner">
+        <span>{{ handChoicePrompt }}</span>
+        <button class="btn-confirm-combat" (click)="declineHandChoice()">Decline</button>
       </div>
     }
 
@@ -348,9 +348,9 @@
         @for (card of hand; track $index) {
           <div class="card"
                [class.playable]="isCardPlayable($index)"
-               [class.choosable-creature]="choosingCreatureFromHand && isChoosableCreature($index)"
+               [class.choosable-card]="choosingFromHand && isChoosableCard($index)"
                [attr.data-card-type]="card.type"
-               (click)="choosingCreatureFromHand ? chooseCreatureFromHand($index) : playCard($index)">
+               (click)="choosingFromHand ? chooseCardFromHand($index) : playCard($index)">
             @if (card.manaCost) {
               <div class="card-mana-cost">{{ card.manaCost }}</div>
             }

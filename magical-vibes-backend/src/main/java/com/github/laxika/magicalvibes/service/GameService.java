@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.dto.AutoStopsUpdatedMessage;
 import com.github.laxika.magicalvibes.dto.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.dto.AvailableBlockersMessage;
-import com.github.laxika.magicalvibes.dto.ChooseCreatureFromHandMessage;
+import com.github.laxika.magicalvibes.dto.ChooseCardFromHandMessage;
 import com.github.laxika.magicalvibes.dto.BattlefieldUpdatedMessage;
 import com.github.laxika.magicalvibes.dto.DeckSizesUpdatedMessage;
 import com.github.laxika.magicalvibes.dto.GameLogEntryMessage;
@@ -650,7 +650,7 @@ public class GameService {
                 for (CardEffect effect : card.getOnEnterBattlefieldEffects()) {
                     if (effect instanceof OpponentMayPlayCreatureEffect) {
                         resolveOpponentMayPlayCreature(gameData, playerId);
-                        if (gameData.awaitingOpponentCreatureChoice) {
+                        if (gameData.awaitingCardChoice) {
                             return;
                         }
                     }
@@ -749,53 +749,58 @@ public class GameService {
             String logEntry = opponentName + " has no creature cards in hand.";
             gameData.gameLog.add(logEntry);
             broadcastLogEntry(gameData, logEntry);
-            log.info("Game {} - {} has no creatures in hand for Hunted Wumpus ETB", gameData.id, opponentName);
+            log.info("Game {} - {} has no creatures in hand for ETB effect", gameData.id, opponentName);
             return;
         }
 
-        gameData.awaitingOpponentCreatureChoice = true;
-        gameData.awaitingOpponentCreatureChoicePlayerId = opponentId;
-        sendToPlayer(opponentId, new ChooseCreatureFromHandMessage(creatureIndices));
-
-        String opponentName = gameData.playerIdToName.get(opponentId);
-        log.info("Game {} - Awaiting {} to choose a creature to put onto the battlefield", gameData.id, opponentName);
+        String prompt = "You may put a creature card from your hand onto the battlefield.";
+        beginCardChoice(gameData, opponentId, creatureIndices, prompt);
     }
 
-    public void handleCreatureChosen(Long gameId, Player player, int creatureIndex) {
+    private void beginCardChoice(GameData gameData, Long playerId, List<Integer> validIndices, String prompt) {
+        gameData.awaitingCardChoice = true;
+        gameData.awaitingCardChoicePlayerId = playerId;
+        gameData.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
+        sendToPlayer(playerId, new ChooseCardFromHandMessage(validIndices, prompt));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a card from hand", gameData.id, playerName);
+    }
+
+    public void handleCardChosen(Long gameId, Player player, int cardIndex) {
         GameData gameData = games.get(gameId);
         if (gameData == null) {
             throw new IllegalArgumentException("Game not found");
         }
 
         synchronized (gameData) {
-            if (!gameData.awaitingOpponentCreatureChoice) {
-                throw new IllegalStateException("Not awaiting creature choice");
+            if (!gameData.awaitingCardChoice) {
+                throw new IllegalStateException("Not awaiting card choice");
             }
-            if (!player.getId().equals(gameData.awaitingOpponentCreatureChoicePlayerId)) {
+            if (!player.getId().equals(gameData.awaitingCardChoicePlayerId)) {
                 throw new IllegalStateException("Not your turn to choose");
             }
 
             Long playerId = player.getId();
-            gameData.awaitingOpponentCreatureChoice = false;
-            gameData.awaitingOpponentCreatureChoicePlayerId = null;
+            Set<Integer> validIndices = gameData.awaitingCardChoiceValidIndices;
 
-            if (creatureIndex == -1) {
+            gameData.awaitingCardChoice = false;
+            gameData.awaitingCardChoicePlayerId = null;
+            gameData.awaitingCardChoiceValidIndices = null;
+
+            if (cardIndex == -1) {
                 // Player declined
-                String logEntry = player.getUsername() + " chooses not to put a creature onto the battlefield.";
+                String logEntry = player.getUsername() + " chooses not to put a card onto the battlefield.";
                 gameData.gameLog.add(logEntry);
                 broadcastLogEntry(gameData, logEntry);
-                log.info("Game {} - {} declines to put a creature onto the battlefield", gameId, player.getUsername());
+                log.info("Game {} - {} declines to put a card onto the battlefield", gameId, player.getUsername());
             } else {
-                List<Card> hand = gameData.playerHands.get(playerId);
-                if (hand == null || creatureIndex < 0 || creatureIndex >= hand.size()) {
-                    throw new IllegalStateException("Invalid card index");
-                }
-                Card card = hand.get(creatureIndex);
-                if (card.getType() != CardType.CREATURE) {
-                    throw new IllegalStateException("Selected card is not a creature");
+                if (!validIndices.contains(cardIndex)) {
+                    throw new IllegalStateException("Invalid card index: " + cardIndex);
                 }
 
-                hand.remove(creatureIndex);
+                List<Card> hand = gameData.playerHands.get(playerId);
+                Card card = hand.remove(cardIndex);
                 gameData.playerBattlefields.get(playerId).add(new Permanent(card));
 
                 sendToPlayer(playerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(playerId, 0)));
@@ -1241,7 +1246,7 @@ public class GameService {
 
     private void resolveAutoPass(GameData gameData) {
         for (int safety = 0; safety < 100; safety++) {
-            if (gameData.awaitingAttackerDeclaration || gameData.awaitingBlockerDeclaration || gameData.awaitingOpponentCreatureChoice) {
+            if (gameData.awaitingAttackerDeclaration || gameData.awaitingBlockerDeclaration || gameData.awaitingCardChoice) {
                 broadcastPlayableCards(gameData);
                 return;
             }
@@ -1327,8 +1332,9 @@ public class GameService {
         final Map<Long, Integer> playerLifeTotals = new ConcurrentHashMap<>();
         boolean awaitingAttackerDeclaration;
         boolean awaitingBlockerDeclaration;
-        boolean awaitingOpponentCreatureChoice;
-        Long awaitingOpponentCreatureChoicePlayerId;
+        boolean awaitingCardChoice;
+        Long awaitingCardChoicePlayerId;
+        Set<Integer> awaitingCardChoiceValidIndices;
 
         GameData(long id, String gameName, long createdByUserId, String createdByUsername) {
             this.id = id;

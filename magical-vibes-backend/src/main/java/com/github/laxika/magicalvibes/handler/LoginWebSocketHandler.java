@@ -102,7 +102,7 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
                 case SET_AUTO_STOPS -> handleSetAutoStops(session, jsonNode);
                 case DECLARE_ATTACKERS -> handleDeclareAttackers(session, jsonNode);
                 case DECLARE_BLOCKERS -> handleDeclareBlockers(session, jsonNode);
-                case CREATURE_CHOSEN -> handleCreatureChosen(session, jsonNode);
+                case CARD_CHOSEN -> handleCardChosen(session, jsonNode);
                 default -> sendError(session, "Unknown message type: " + type);
             }
         } catch (Exception e) {
@@ -359,7 +359,7 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    private void handleCreatureChosen(WebSocketSession session, JsonNode jsonNode) throws IOException {
+    private void handleCardChosen(WebSocketSession session, JsonNode jsonNode) throws IOException {
         Player player = sessionManager.getPlayer(session.getId());
         if (player == null) {
             sendError(session, "Not authenticated");
@@ -367,10 +367,10 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         }
 
         Long gameId = jsonNode.get("gameId").asLong();
-        int creatureIndex = jsonNode.get("creatureIndex").asInt();
+        int cardIndex = jsonNode.get("cardIndex").asInt();
 
         try {
-            gameService.handleCreatureChosen(gameId, player, creatureIndex);
+            gameService.handleCardChosen(gameId, player, cardIndex);
         } catch (IllegalArgumentException | IllegalStateException e) {
             sendError(session, e.getMessage());
         }

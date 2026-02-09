@@ -898,14 +898,14 @@ h1 {
   gap: 6px;
 }
 
-/* Creature choice (Hunted Wumpus ETB) */
+/* Hand choice (ETB effects, etc.) */
 
-.creature-choice-banner {
+.hand-choice-banner {
   background: linear-gradient(135deg, #8e44ad, #6c3483);
   box-shadow: 0 4px 12px rgba(142, 68, 173, 0.4);
 }
 
-.card.choosable-creature {
+.card.choosable-card {
   border: 2px solid #8e44ad;
   box-shadow: 0 0 12px rgba(142, 68, 173, 0.6);
   cursor: pointer;

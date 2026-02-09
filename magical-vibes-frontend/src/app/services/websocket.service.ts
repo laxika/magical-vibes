@@ -38,8 +38,8 @@ export enum MessageType {
   AVAILABLE_BLOCKERS = 'AVAILABLE_BLOCKERS',
   LIFE_UPDATED = 'LIFE_UPDATED',
   GAME_OVER = 'GAME_OVER',
-  CHOOSE_CREATURE_FROM_HAND = 'CHOOSE_CREATURE_FROM_HAND',
-  CREATURE_CHOSEN = 'CREATURE_CHOSEN',
+  CHOOSE_CARD_FROM_HAND = 'CHOOSE_CARD_FROM_HAND',
+  CARD_CHOSEN = 'CARD_CHOSEN',
   ERROR = 'ERROR'
 }
 
@@ -251,12 +251,13 @@ export interface GameOverNotification {
   winnerName: string;
 }
 
-export interface ChooseCreatureFromHandNotification {
+export interface ChooseCardFromHandNotification {
   type: MessageType;
-  creatureIndices: number[];
+  cardIndices: number[];
+  prompt: string;
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCreatureFromHandNotification;
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCardFromHandNotification;
 
 export interface User {
   userId: number;
