@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.websocket;
 
+import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +12,6 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
 import java.util.concurrent.*;
 
 @Slf4j
@@ -30,10 +30,13 @@ public class WebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) {
         log.info("WebSocket connection established: {}", session.getId());
 
+        Connection connection = new WebSocketConnection(session);
+
         ScheduledFuture<?> timeoutTask = scheduler.schedule(() -> {
             try {
-                if (session.isOpen()) {
+                if (connection.isOpen()) {
                     log.warn("Connection timeout for session: {}", session.getId());
+                    messageHandler.handleTimeout(connection);
                 }
             } finally {
                 timeoutTasks.remove(session.getId());
@@ -53,29 +56,35 @@ public class WebSocketHandler extends TextWebSocketHandler {
             timeoutTask.cancel(false);
         }
 
+        Connection connection = new WebSocketConnection(session);
+
         try {
             JsonNode jsonNode = objectMapper.readTree(message.getPayload());
             MessageType type = MessageType.valueOf(jsonNode.get("type").asString());
 
             switch (type) {
-                case LOGIN -> handleLogin(session, jsonNode);
-                case CREATE_GAME -> handleCreateGame(session, jsonNode);
-                case JOIN_GAME -> handleJoinGame(session, jsonNode);
-                case PASS_PRIORITY -> handlePassPriority(session, jsonNode);
-                case KEEP_HAND -> handleKeepHand(session, jsonNode);
-                case TAKE_MULLIGAN -> handleMulligan(session, jsonNode);
-                case BOTTOM_CARDS -> handleBottomCards(session, jsonNode);
-                case PLAY_CARD -> handlePlayCard(session, jsonNode);
-                case TAP_PERMANENT -> handleTapPermanent(session, jsonNode);
-                case SET_AUTO_STOPS -> handleSetAutoStops(session, jsonNode);
-                case DECLARE_ATTACKERS -> handleDeclareAttackers(session, jsonNode);
-                case DECLARE_BLOCKERS -> handleDeclareBlockers(session, jsonNode);
-                case CARD_CHOSEN -> handleCardChosen(session, jsonNode);
-                default -> sendError(session, "Unknown message type: " + type);
+                case LOGIN -> messageHandler.handleLogin(connection, jsonNode);
+                case CREATE_GAME -> messageHandler.handleCreateGame(connection, jsonNode);
+                case JOIN_GAME -> messageHandler.handleJoinGame(connection, jsonNode);
+                case PASS_PRIORITY -> messageHandler.handlePassPriority(connection, jsonNode);
+                case KEEP_HAND -> messageHandler.handleKeepHand(connection, jsonNode);
+                case TAKE_MULLIGAN -> messageHandler.handleMulligan(connection, jsonNode);
+                case BOTTOM_CARDS -> messageHandler.handleBottomCards(connection, jsonNode);
+                case PLAY_CARD -> messageHandler.handlePlayCard(connection, jsonNode);
+                case TAP_PERMANENT -> messageHandler.handleTapPermanent(connection, jsonNode);
+                case SET_AUTO_STOPS -> messageHandler.handleSetAutoStops(connection, jsonNode);
+                case DECLARE_ATTACKERS -> messageHandler.handleDeclareAttackers(connection, jsonNode);
+                case DECLARE_BLOCKERS -> messageHandler.handleDeclareBlockers(connection, jsonNode);
+                case CARD_CHOSEN -> messageHandler.handleCardChosen(connection, jsonNode);
+                default -> messageHandler.handleError(connection, "Unknown message type: " + type);
             }
         } catch (Exception e) {
             log.error("Error processing message", e);
-            sendError(session, "Error processing request");
+            try {
+                messageHandler.handleError(connection, "Error processing request");
+            } catch (Exception ex) {
+                log.error("Error sending error message", ex);
+            }
         }
     }
 

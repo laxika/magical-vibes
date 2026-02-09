@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.dto;
 
-import com.github.laxika.magicalvibes.model.MessageType;
+import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.model.Permanent;
 
 import java.util.List;

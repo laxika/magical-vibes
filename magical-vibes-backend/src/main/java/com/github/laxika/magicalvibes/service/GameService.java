@@ -38,11 +38,10 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
+import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.*;
@@ -324,10 +323,10 @@ public class GameService {
             return;
         }
         for (Long playerId : gameData.orderedPlayerIds) {
-            WebSocketSession session = sessionManager.getSessionByUserId(playerId);
-            if (session != null && session.isOpen()) {
+            Connection connection = sessionManager.getConnectionByUserId(playerId);
+            if (connection != null && connection.isOpen()) {
                 try {
-                    session.sendMessage(new TextMessage(json));
+                    connection.sendMessage(json);
                 } catch (Exception e) {
                     log.error("Error sending message to player {}", playerId, e);
                 }
@@ -541,10 +540,10 @@ public class GameService {
             log.error("Error serializing message", e);
             return;
         }
-        WebSocketSession session = sessionManager.getSessionByUserId(playerId);
-        if (session != null && session.isOpen()) {
+        Connection connection = sessionManager.getConnectionByUserId(playerId);
+        if (connection != null && connection.isOpen()) {
             try {
-                session.sendMessage(new TextMessage(json));
+                connection.sendMessage(json);
             } catch (Exception e) {
                 log.error("Error sending message to player {}", playerId, e);
             }

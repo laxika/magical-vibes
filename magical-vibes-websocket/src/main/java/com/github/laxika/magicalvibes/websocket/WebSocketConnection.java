@@ -12,6 +12,16 @@ public class WebSocketConnection implements Connection {
     private final WebSocketSession session;
 
     @Override
+    public String getId() {
+        return session.getId();
+    }
+
+    @Override
+    public boolean isOpen() {
+        return session.isOpen();
+    }
+
+    @Override
     @SneakyThrows
     public void sendMessage(String message) {
         session.sendMessage(new TextMessage(message));

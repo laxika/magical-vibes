@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.dto;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.MessageType;
+import com.github.laxika.magicalvibes.networking.model.MessageType;
 
 import java.util.List;
 

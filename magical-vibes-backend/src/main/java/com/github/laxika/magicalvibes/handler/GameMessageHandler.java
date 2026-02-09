@@ -8,36 +8,31 @@ import com.github.laxika.magicalvibes.dto.LobbyGameMessage;
 import com.github.laxika.magicalvibes.dto.LoginRequest;
 import com.github.laxika.magicalvibes.dto.LoginResponse;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.Connection;
+import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.LoginService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.CloseStatus;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
-import org.springframework.web.socket.handler.TextWebSocketHandler;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-import com.github.laxika.magicalvibes.model.TurnStep;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
 
 @Component
 @Slf4j
-public class LoginWebSocketHandler extends TextWebSocketHandler {
+public class GameMessageHandler implements MessageHandler {
 
     private final LoginService loginService;
     private final GameService gameService;
     private final WebSocketSessionManager sessionManager;
     private final ObjectMapper objectMapper;
 
-    public LoginWebSocketHandler(LoginService loginService,
+    public GameMessageHandler(LoginService loginService,
             GameService gameService,
             WebSocketSessionManager sessionManager,
             ObjectMapper objectMapper) {
@@ -47,38 +42,40 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         this.objectMapper = objectMapper;
     }
 
-
-    private void sendLoginTimeout(WebSocketSession session) {
+    @Override
+    public void handleTimeout(Connection connection) {
         LoginResponse timeoutResponse = LoginResponse.timeout();
 
         try {
-            session.sendMessage(new TextMessage(objectMapper.writeValueAsString(timeoutResponse)));
-            session.close(CloseStatus.NORMAL);
-        } catch (IOException e) {
+            connection.sendMessage(objectMapper.writeValueAsString(timeoutResponse));
+            connection.close();
+        } catch (Exception e) {
             log.error("Error sending timeout message", e);
         }
     }
 
-    private void handleLogin(WebSocketSession session, JsonNode jsonNode) throws IOException {
+    @Override
+    public void handleLogin(Connection connection, JsonNode jsonNode) throws Exception {
         LoginRequest loginRequest = objectMapper.treeToValue(jsonNode, LoginRequest.class);
         LoginResponse response = loginService.authenticate(loginRequest);
 
         String jsonResponse = objectMapper.writeValueAsString(response);
-        session.sendMessage(new TextMessage(jsonResponse));
-        log.info("Sent login response to session {}: {}", session.getId(), response.getType());
+        connection.sendMessage(jsonResponse);
+        log.info("Sent login response to connection {}: {}", connection.getId(), response.getType());
 
         if (response.getType() == MessageType.LOGIN_SUCCESS) {
-            sessionManager.registerPlayer(session, response.getUserId(), response.getUsername());
-            log.info("Session {} registered for user {} ({}) - connection staying open", session.getId(), response.getUserId(), response.getUsername());
+            sessionManager.registerPlayer(connection, response.getUserId(), response.getUsername());
+            log.info("Connection {} registered for user {} ({}) - connection staying open", connection.getId(), response.getUserId(), response.getUsername());
         } else {
-            session.close(CloseStatus.NORMAL);
+            connection.close();
         }
     }
 
-    private void handleCreateGame(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        Player player = sessionManager.getPlayer(session.getId());
+    @Override
+    public void handleCreateGame(Connection connection, JsonNode jsonNode) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
-            sendError(session, "Not authenticated");
+            handleError(connection, "Not authenticated");
             return;
         }
 
@@ -86,19 +83,20 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         GameService.GameResult result = gameService.createGame(gameName, player);
 
         // Mark creator as in-game
-        sessionManager.setInGame(session.getId());
+        sessionManager.setInGame(connection.getId());
 
         // Send GAME_JOINED to the creator
-        sendJoinMessage(session, MessageType.GAME_JOINED, result.joinGame());
+        sendJoinMessage(connection, MessageType.GAME_JOINED, result.joinGame());
 
         // Broadcast NEW_GAME to lobby users only
         broadcastToLobby(MessageType.NEW_GAME, result.lobbyGame());
     }
 
-    private void handleJoinGame(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        Player player = sessionManager.getPlayer(session.getId());
+    @Override
+    public void handleJoinGame(Connection connection, JsonNode jsonNode) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
-            sendError(session, "Not authenticated");
+            handleError(connection, "Not authenticated");
             return;
         }
 
@@ -108,33 +106,34 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
             LobbyGame lobbyGame = gameService.joinGame(gameId, player);
 
             // Mark joiner as in-game
-            sessionManager.setInGame(session.getId());
+            sessionManager.setInGame(connection.getId());
 
             // Send GAME_JOINED to the joiner (with their own hand)
             JoinGame joinerGame = gameService.getJoinGame(gameId, player.getId());
-            sendJoinMessage(session, MessageType.GAME_JOINED, joinerGame);
+            sendJoinMessage(connection, MessageType.GAME_JOINED, joinerGame);
 
             // Send OPPONENT_JOINED to the creator (with their own hand)
             Long creatorUserId = gameService.getCreatorUserId(gameId);
             if (creatorUserId != null) {
-                WebSocketSession creatorSession = sessionManager.getSessionByUserId(creatorUserId);
-                if (creatorSession != null && creatorSession.isOpen()) {
+                Connection creatorConnection = sessionManager.getConnectionByUserId(creatorUserId);
+                if (creatorConnection != null && creatorConnection.isOpen()) {
                     JoinGame creatorGame = gameService.getJoinGame(gameId, creatorUserId);
-                    sendJoinMessage(creatorSession, MessageType.OPPONENT_JOINED, creatorGame);
+                    sendJoinMessage(creatorConnection, MessageType.OPPONENT_JOINED, creatorGame);
                 }
             }
 
             // Broadcast GAME_UPDATED to lobby users
             broadcastToLobby(MessageType.GAME_UPDATED, lobbyGame);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            sendError(session, e.getMessage());
+            handleError(connection, e.getMessage());
         }
     }
 
-    private void handlePassPriority(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        Player player = sessionManager.getPlayer(session.getId());
+    @Override
+    public void handlePassPriority(Connection connection, JsonNode jsonNode) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
-            sendError(session, "Not authenticated");
+            handleError(connection, "Not authenticated");
             return;
         }
 
@@ -143,14 +142,15 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         try {
             gameService.passPriority(gameId, player);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            sendError(session, e.getMessage());
+            handleError(connection, e.getMessage());
         }
     }
 
-    private void handleKeepHand(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        Player player = sessionManager.getPlayer(session.getId());
+    @Override
+    public void handleKeepHand(Connection connection, JsonNode jsonNode) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
-            sendError(session, "Not authenticated");
+            handleError(connection, "Not authenticated");
             return;
         }
 
@@ -159,14 +159,15 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         try {
             gameService.keepHand(gameId, player);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            sendError(session, e.getMessage());
+            handleError(connection, e.getMessage());
         }
     }
 
-    private void handleMulligan(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        Player player = sessionManager.getPlayer(session.getId());
+    @Override
+    public void handleMulligan(Connection connection, JsonNode jsonNode) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
-            sendError(session, "Not authenticated");
+            handleError(connection, "Not authenticated");
             return;
         }
 
@@ -175,14 +176,15 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         try {
             gameService.mulligan(gameId, player);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            sendError(session, e.getMessage());
+            handleError(connection, e.getMessage());
         }
     }
 
-    private void handleBottomCards(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        Player player = sessionManager.getPlayer(session.getId());
+    @Override
+    public void handleBottomCards(Connection connection, JsonNode jsonNode) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
-            sendError(session, "Not authenticated");
+            handleError(connection, "Not authenticated");
             return;
         }
 
@@ -198,14 +200,15 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         try {
             gameService.bottomCards(gameId, player, cardIndices);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            sendError(session, e.getMessage());
+            handleError(connection, e.getMessage());
         }
     }
 
-    private void handlePlayCard(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        Player player = sessionManager.getPlayer(session.getId());
+    @Override
+    public void handlePlayCard(Connection connection, JsonNode jsonNode) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
-            sendError(session, "Not authenticated");
+            handleError(connection, "Not authenticated");
             return;
         }
 
@@ -215,14 +218,15 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         try {
             gameService.playCard(gameId, player, cardIndex);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            sendError(session, e.getMessage());
+            handleError(connection, e.getMessage());
         }
     }
 
-    private void handleTapPermanent(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        Player player = sessionManager.getPlayer(session.getId());
+    @Override
+    public void handleTapPermanent(Connection connection, JsonNode jsonNode) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
-            sendError(session, "Not authenticated");
+            handleError(connection, "Not authenticated");
             return;
         }
 
@@ -232,14 +236,15 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         try {
             gameService.tapPermanent(gameId, player, permanentIndex);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            sendError(session, e.getMessage());
+            handleError(connection, e.getMessage());
         }
     }
 
-    private void handleSetAutoStops(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        Player player = sessionManager.getPlayer(session.getId());
+    @Override
+    public void handleSetAutoStops(Connection connection, JsonNode jsonNode) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
-            sendError(session, "Not authenticated");
+            handleError(connection, "Not authenticated");
             return;
         }
 
@@ -255,14 +260,15 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         try {
             gameService.setAutoStops(gameId, player, stops);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            sendError(session, e.getMessage());
+            handleError(connection, e.getMessage());
         }
     }
 
-    private void handleDeclareAttackers(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        Player player = sessionManager.getPlayer(session.getId());
+    @Override
+    public void handleDeclareAttackers(Connection connection, JsonNode jsonNode) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
-            sendError(session, "Not authenticated");
+            handleError(connection, "Not authenticated");
             return;
         }
 
@@ -278,14 +284,15 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         try {
             gameService.declareAttackers(gameId, player, attackerIndices);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            sendError(session, e.getMessage());
+            handleError(connection, e.getMessage());
         }
     }
 
-    private void handleDeclareBlockers(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        Player player = sessionManager.getPlayer(session.getId());
+    @Override
+    public void handleDeclareBlockers(Connection connection, JsonNode jsonNode) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
-            sendError(session, "Not authenticated");
+            handleError(connection, "Not authenticated");
             return;
         }
 
@@ -303,14 +310,15 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         try {
             gameService.declareBlockers(gameId, player, blockerAssignments);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            sendError(session, e.getMessage());
+            handleError(connection, e.getMessage());
         }
     }
 
-    private void handleCardChosen(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        Player player = sessionManager.getPlayer(session.getId());
+    @Override
+    public void handleCardChosen(Connection connection, JsonNode jsonNode) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
-            sendError(session, "Not authenticated");
+            handleError(connection, "Not authenticated");
             return;
         }
 
@@ -320,13 +328,19 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         try {
             gameService.handleCardChosen(gameId, player, cardIndex);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            sendError(session, e.getMessage());
+            handleError(connection, e.getMessage());
         }
     }
 
-    private void sendJoinMessage(WebSocketSession session, MessageType type, JoinGame game) throws IOException {
+    @Override
+    public void handleError(Connection connection, String message) throws Exception {
+        ErrorMessage error = new ErrorMessage(message);
+        connection.sendMessage(objectMapper.writeValueAsString(error));
+    }
+
+    private void sendJoinMessage(Connection connection, MessageType type, JoinGame game) throws Exception {
         JoinGameMessage message = new JoinGameMessage(type, game);
-        session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
+        connection.sendMessage(objectMapper.writeValueAsString(message));
     }
 
     private void broadcastToLobby(MessageType type, LobbyGame game) {
@@ -336,10 +350,10 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
 
         for (Player player : sessionManager.getLobbyPlayers()) {
             try {
-                WebSocketSession playerSession = sessionManager.getSessionByUserId(player.getId());
-                if (playerSession != null && playerSession.isOpen()) {
+                Connection playerConnection = sessionManager.getConnectionByUserId(player.getId());
+                if (playerConnection != null && playerConnection.isOpen()) {
                     String msg = objectMapper.writeValueAsString(notification);
-                    playerSession.sendMessage(new TextMessage(msg));
+                    playerConnection.sendMessage(msg);
                     sentCount++;
                 }
             } catch (Exception e) {
@@ -348,10 +362,5 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
         }
 
         log.info("Broadcasted {} to {} lobby users", type, sentCount);
-    }
-
-    private void sendError(WebSocketSession session, String message) throws IOException {
-        ErrorMessage error = new ErrorMessage(message);
-        session.sendMessage(new TextMessage(objectMapper.writeValueAsString(error)));
     }
 }

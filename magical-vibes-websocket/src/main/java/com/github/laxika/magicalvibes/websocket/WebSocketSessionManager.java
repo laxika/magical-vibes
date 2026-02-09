@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.websocket;
 
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.networking.Connection;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.socket.WebSocketSession;
 
 import java.util.Collection;
 import java.util.Map;
@@ -15,44 +15,44 @@ import java.util.concurrent.ConcurrentHashMap;
 public class WebSocketSessionManager {
 
     private final Map<String, Player> players = new ConcurrentHashMap<>();
-    private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
-    private final Map<Long, String> userIdToSessionId = new ConcurrentHashMap<>();
-    private final Set<String> inGameSessionIds = ConcurrentHashMap.newKeySet();
+    private final Map<String, Connection> connections = new ConcurrentHashMap<>();
+    private final Map<Long, String> userIdToConnectionId = new ConcurrentHashMap<>();
+    private final Set<String> inGameConnectionIds = ConcurrentHashMap.newKeySet();
 
-    public void registerPlayer(WebSocketSession session, Long userId, String username) {
+    public void registerPlayer(Connection connection, Long userId, String username) {
         Player player = new Player(userId, username);
-        players.put(session.getId(), player);
-        sessions.put(session.getId(), session);
-        userIdToSessionId.put(userId, session.getId());
-        log.info("Registered session {} for user {} ({})", session.getId(), userId, username);
+        players.put(connection.getId(), player);
+        connections.put(connection.getId(), connection);
+        userIdToConnectionId.put(userId, connection.getId());
+        log.info("Registered connection {} for user {} ({})", connection.getId(), userId, username);
     }
 
-    public void unregisterSession(String sessionId) {
-        Player player = players.remove(sessionId);
-        sessions.remove(sessionId);
-        inGameSessionIds.remove(sessionId);
+    public void unregisterSession(String connectionId) {
+        Player player = players.remove(connectionId);
+        connections.remove(connectionId);
+        inGameConnectionIds.remove(connectionId);
         if (player != null) {
-            userIdToSessionId.remove(player.getId());
-            log.info("Unregistered session {} for user {} ({})", sessionId, player.getId(), player.getUsername());
+            userIdToConnectionId.remove(player.getId());
+            log.info("Unregistered connection {} for user {} ({})", connectionId, player.getId(), player.getUsername());
         }
     }
 
-    public Player getPlayer(String sessionId) {
-        return players.get(sessionId);
+    public Player getPlayer(String connectionId) {
+        return players.get(connectionId);
     }
 
-    public WebSocketSession getSessionByUserId(Long userId) {
-        String sessionId = userIdToSessionId.get(userId);
-        return sessionId != null ? sessions.get(sessionId) : null;
+    public Connection getConnectionByUserId(Long userId) {
+        String connectionId = userIdToConnectionId.get(userId);
+        return connectionId != null ? connections.get(connectionId) : null;
     }
 
-    public void setInGame(String sessionId) {
-        inGameSessionIds.add(sessionId);
+    public void setInGame(String connectionId) {
+        inGameConnectionIds.add(connectionId);
     }
 
     public Collection<Player> getLobbyPlayers() {
         return players.entrySet().stream()
-                .filter(e -> !inGameSessionIds.contains(e.getKey()))
+                .filter(e -> !inGameConnectionIds.contains(e.getKey()))
                 .map(Map.Entry::getValue)
                 .toList();
     }
