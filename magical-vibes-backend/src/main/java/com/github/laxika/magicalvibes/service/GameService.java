@@ -5,26 +5,27 @@ import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.dto.AutoStopsUpdatedMessage;
-import com.github.laxika.magicalvibes.dto.AvailableAttackersMessage;
-import com.github.laxika.magicalvibes.dto.AvailableBlockersMessage;
-import com.github.laxika.magicalvibes.dto.ChooseCardFromHandMessage;
-import com.github.laxika.magicalvibes.dto.BattlefieldUpdatedMessage;
-import com.github.laxika.magicalvibes.dto.DeckSizesUpdatedMessage;
-import com.github.laxika.magicalvibes.dto.GameLogEntryMessage;
-import com.github.laxika.magicalvibes.dto.GameOverMessage;
-import com.github.laxika.magicalvibes.dto.GameStartedMessage;
-import com.github.laxika.magicalvibes.dto.HandDrawnMessage;
-import com.github.laxika.magicalvibes.dto.JoinGame;
-import com.github.laxika.magicalvibes.dto.LifeUpdatedMessage;
-import com.github.laxika.magicalvibes.dto.LobbyGame;
-import com.github.laxika.magicalvibes.dto.ManaUpdatedMessage;
-import com.github.laxika.magicalvibes.dto.MulliganResolvedMessage;
-import com.github.laxika.magicalvibes.dto.PlayableCardsMessage;
-import com.github.laxika.magicalvibes.dto.PriorityUpdatedMessage;
-import com.github.laxika.magicalvibes.dto.SelectCardsToBottomMessage;
-import com.github.laxika.magicalvibes.dto.StepAdvancedMessage;
-import com.github.laxika.magicalvibes.dto.TurnChangedMessage;
+import com.github.laxika.magicalvibes.networking.message.AutoStopsUpdatedMessage;
+import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
+import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
+import com.github.laxika.magicalvibes.networking.message.BattlefieldUpdatedMessage;
+import com.github.laxika.magicalvibes.networking.message.DeckSizesUpdatedMessage;
+import com.github.laxika.magicalvibes.networking.message.GameLogEntryMessage;
+import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
+import com.github.laxika.magicalvibes.networking.message.GameStartedMessage;
+import com.github.laxika.magicalvibes.networking.message.HandDrawnMessage;
+import com.github.laxika.magicalvibes.networking.message.JoinGame;
+import com.github.laxika.magicalvibes.networking.message.LifeUpdatedMessage;
+import com.github.laxika.magicalvibes.networking.message.LobbyGame;
+import com.github.laxika.magicalvibes.networking.message.ManaUpdatedMessage;
+import com.github.laxika.magicalvibes.networking.message.MulliganResolvedMessage;
+import com.github.laxika.magicalvibes.networking.message.PlayableCardsMessage;
+import com.github.laxika.magicalvibes.networking.message.PriorityUpdatedMessage;
+import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMessage;
+import com.github.laxika.magicalvibes.networking.message.StepAdvancedMessage;
+import com.github.laxika.magicalvibes.networking.message.TurnChangedMessage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -974,7 +975,7 @@ public class GameService {
         sendToPlayer(defenderId, new AvailableBlockersMessage(blockable, attackerIndices));
     }
 
-    public void declareBlockers(Long gameId, Player player, List<int[]> blockerAssignments) {
+    public void declareBlockers(Long gameId, Player player, List<BlockerAssignment> blockerAssignments) {
         GameData gameData = games.get(gameId);
         if (gameData == null) {
             throw new IllegalArgumentException("Game not found");
@@ -998,9 +999,9 @@ public class GameService {
 
             // Validate assignments
             Set<Integer> usedBlockers = new HashSet<>();
-            for (int[] assignment : blockerAssignments) {
-                int blockerIdx = assignment[0];
-                int attackerIdx = assignment[1];
+            for (BlockerAssignment assignment : blockerAssignments) {
+                int blockerIdx = assignment.blockerIndex();
+                int attackerIdx = assignment.attackerIndex();
 
                 if (!blockable.contains(blockerIdx)) {
                     throw new IllegalStateException("Invalid blocker index: " + blockerIdx);
@@ -1024,10 +1025,10 @@ public class GameService {
             gameData.awaitingBlockerDeclaration = false;
 
             // Mark creatures as blocking
-            for (int[] assignment : blockerAssignments) {
-                Permanent blocker = defenderBattlefield.get(assignment[0]);
+            for (BlockerAssignment assignment : blockerAssignments) {
+                Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
                 blocker.setBlocking(true);
-                blocker.setBlockingTarget(assignment[1]);
+                blocker.setBlockingTarget(assignment.attackerIndex());
             }
 
             if (!blockerAssignments.isEmpty()) {

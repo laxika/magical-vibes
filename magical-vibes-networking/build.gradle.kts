@@ -1,3 +1,3 @@
 dependencies {
-    api("tools.jackson.core:jackson-databind")
+    api(project(":magical-vibes-domain"))
 }

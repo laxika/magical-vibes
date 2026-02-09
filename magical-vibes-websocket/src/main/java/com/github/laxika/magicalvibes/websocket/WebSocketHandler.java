@@ -2,6 +2,19 @@ package com.github.laxika.magicalvibes.websocket;
 
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
+import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
+import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.CreateGameRequest;
+import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
+import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
+import com.github.laxika.magicalvibes.networking.message.JoinGameRequest;
+import com.github.laxika.magicalvibes.networking.message.KeepHandRequest;
+import com.github.laxika.magicalvibes.networking.message.LoginRequest;
+import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
+import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
+import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
+import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
+import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,19 +76,19 @@ public class WebSocketHandler extends TextWebSocketHandler {
             MessageType type = MessageType.valueOf(jsonNode.get("type").asString());
 
             switch (type) {
-                case LOGIN -> messageHandler.handleLogin(connection, jsonNode);
-                case CREATE_GAME -> messageHandler.handleCreateGame(connection, jsonNode);
-                case JOIN_GAME -> messageHandler.handleJoinGame(connection, jsonNode);
-                case PASS_PRIORITY -> messageHandler.handlePassPriority(connection, jsonNode);
-                case KEEP_HAND -> messageHandler.handleKeepHand(connection, jsonNode);
-                case TAKE_MULLIGAN -> messageHandler.handleMulligan(connection, jsonNode);
-                case BOTTOM_CARDS -> messageHandler.handleBottomCards(connection, jsonNode);
-                case PLAY_CARD -> messageHandler.handlePlayCard(connection, jsonNode);
-                case TAP_PERMANENT -> messageHandler.handleTapPermanent(connection, jsonNode);
-                case SET_AUTO_STOPS -> messageHandler.handleSetAutoStops(connection, jsonNode);
-                case DECLARE_ATTACKERS -> messageHandler.handleDeclareAttackers(connection, jsonNode);
-                case DECLARE_BLOCKERS -> messageHandler.handleDeclareBlockers(connection, jsonNode);
-                case CARD_CHOSEN -> messageHandler.handleCardChosen(connection, jsonNode);
+                case LOGIN -> messageHandler.handleLogin(connection, objectMapper.treeToValue(jsonNode, LoginRequest.class));
+                case CREATE_GAME -> messageHandler.handleCreateGame(connection, objectMapper.treeToValue(jsonNode, CreateGameRequest.class));
+                case JOIN_GAME -> messageHandler.handleJoinGame(connection, objectMapper.treeToValue(jsonNode, JoinGameRequest.class));
+                case PASS_PRIORITY -> messageHandler.handlePassPriority(connection, objectMapper.treeToValue(jsonNode, PassPriorityRequest.class));
+                case KEEP_HAND -> messageHandler.handleKeepHand(connection, objectMapper.treeToValue(jsonNode, KeepHandRequest.class));
+                case TAKE_MULLIGAN -> messageHandler.handleMulligan(connection, objectMapper.treeToValue(jsonNode, MulliganRequest.class));
+                case BOTTOM_CARDS -> messageHandler.handleBottomCards(connection, objectMapper.treeToValue(jsonNode, BottomCardsRequest.class));
+                case PLAY_CARD -> messageHandler.handlePlayCard(connection, objectMapper.treeToValue(jsonNode, PlayCardRequest.class));
+                case TAP_PERMANENT -> messageHandler.handleTapPermanent(connection, objectMapper.treeToValue(jsonNode, TapPermanentRequest.class));
+                case SET_AUTO_STOPS -> messageHandler.handleSetAutoStops(connection, objectMapper.treeToValue(jsonNode, SetAutoStopsRequest.class));
+                case DECLARE_ATTACKERS -> messageHandler.handleDeclareAttackers(connection, objectMapper.treeToValue(jsonNode, DeclareAttackersRequest.class));
+                case DECLARE_BLOCKERS -> messageHandler.handleDeclareBlockers(connection, objectMapper.treeToValue(jsonNode, DeclareBlockersRequest.class));
+                case CARD_CHOSEN -> messageHandler.handleCardChosen(connection, objectMapper.treeToValue(jsonNode, CardChosenRequest.class));
                 default -> messageHandler.handleError(connection, "Unknown message type: " + type);
             }
         } catch (Exception e) {

@@ -1,27 +1,34 @@
 package com.github.laxika.magicalvibes.handler;
 
-import com.github.laxika.magicalvibes.dto.ErrorMessage;
-import com.github.laxika.magicalvibes.dto.JoinGame;
-import com.github.laxika.magicalvibes.dto.JoinGameMessage;
-import com.github.laxika.magicalvibes.dto.LobbyGame;
-import com.github.laxika.magicalvibes.dto.LobbyGameMessage;
-import com.github.laxika.magicalvibes.dto.LoginRequest;
-import com.github.laxika.magicalvibes.dto.LoginResponse;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
+import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
+import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.CreateGameRequest;
+import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
+import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
+import com.github.laxika.magicalvibes.networking.message.ErrorMessage;
+import com.github.laxika.magicalvibes.networking.message.JoinGame;
+import com.github.laxika.magicalvibes.networking.message.JoinGameMessage;
+import com.github.laxika.magicalvibes.networking.message.JoinGameRequest;
+import com.github.laxika.magicalvibes.networking.message.KeepHandRequest;
+import com.github.laxika.magicalvibes.networking.message.LobbyGame;
+import com.github.laxika.magicalvibes.networking.message.LobbyGameMessage;
+import com.github.laxika.magicalvibes.networking.message.LoginRequest;
+import com.github.laxika.magicalvibes.networking.message.LoginResponse;
+import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
+import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
+import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
+import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
+import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.LoginService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Component
 @Slf4j
@@ -55,9 +62,8 @@ public class GameMessageHandler implements MessageHandler {
     }
 
     @Override
-    public void handleLogin(Connection connection, JsonNode jsonNode) throws Exception {
-        LoginRequest loginRequest = objectMapper.treeToValue(jsonNode, LoginRequest.class);
-        LoginResponse response = loginService.authenticate(loginRequest);
+    public void handleLogin(Connection connection, LoginRequest request) throws Exception {
+        LoginResponse response = loginService.authenticate(request);
 
         String jsonResponse = objectMapper.writeValueAsString(response);
         connection.sendMessage(jsonResponse);
@@ -72,15 +78,14 @@ public class GameMessageHandler implements MessageHandler {
     }
 
     @Override
-    public void handleCreateGame(Connection connection, JsonNode jsonNode) throws Exception {
+    public void handleCreateGame(Connection connection, CreateGameRequest request) throws Exception {
         Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
             handleError(connection, "Not authenticated");
             return;
         }
 
-        String gameName = jsonNode.get("gameName").asString();
-        GameService.GameResult result = gameService.createGame(gameName, player);
+        GameService.GameResult result = gameService.createGame(request.gameName(), player);
 
         // Mark creator as in-game
         sessionManager.setInGame(connection.getId());
@@ -93,31 +98,29 @@ public class GameMessageHandler implements MessageHandler {
     }
 
     @Override
-    public void handleJoinGame(Connection connection, JsonNode jsonNode) throws Exception {
+    public void handleJoinGame(Connection connection, JoinGameRequest request) throws Exception {
         Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
             handleError(connection, "Not authenticated");
             return;
         }
 
-        Long gameId = jsonNode.get("gameId").asLong();
-
         try {
-            LobbyGame lobbyGame = gameService.joinGame(gameId, player);
+            LobbyGame lobbyGame = gameService.joinGame(request.gameId(), player);
 
             // Mark joiner as in-game
             sessionManager.setInGame(connection.getId());
 
             // Send GAME_JOINED to the joiner (with their own hand)
-            JoinGame joinerGame = gameService.getJoinGame(gameId, player.getId());
+            JoinGame joinerGame = gameService.getJoinGame(request.gameId(), player.getId());
             sendJoinMessage(connection, MessageType.GAME_JOINED, joinerGame);
 
             // Send OPPONENT_JOINED to the creator (with their own hand)
-            Long creatorUserId = gameService.getCreatorUserId(gameId);
+            Long creatorUserId = gameService.getCreatorUserId(request.gameId());
             if (creatorUserId != null) {
                 Connection creatorConnection = sessionManager.getConnectionByUserId(creatorUserId);
                 if (creatorConnection != null && creatorConnection.isOpen()) {
-                    JoinGame creatorGame = gameService.getJoinGame(gameId, creatorUserId);
+                    JoinGame creatorGame = gameService.getJoinGame(request.gameId(), creatorUserId);
                     sendJoinMessage(creatorConnection, MessageType.OPPONENT_JOINED, creatorGame);
                 }
             }
@@ -130,203 +133,150 @@ public class GameMessageHandler implements MessageHandler {
     }
 
     @Override
-    public void handlePassPriority(Connection connection, JsonNode jsonNode) throws Exception {
+    public void handlePassPriority(Connection connection, PassPriorityRequest request) throws Exception {
         Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
             handleError(connection, "Not authenticated");
             return;
         }
 
-        Long gameId = jsonNode.get("gameId").asLong();
-
         try {
-            gameService.passPriority(gameId, player);
+            gameService.passPriority(request.gameId(), player);
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
     }
 
     @Override
-    public void handleKeepHand(Connection connection, JsonNode jsonNode) throws Exception {
+    public void handleKeepHand(Connection connection, KeepHandRequest request) throws Exception {
         Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
             handleError(connection, "Not authenticated");
             return;
         }
 
-        Long gameId = jsonNode.get("gameId").asLong();
-
         try {
-            gameService.keepHand(gameId, player);
+            gameService.keepHand(request.gameId(), player);
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
     }
 
     @Override
-    public void handleMulligan(Connection connection, JsonNode jsonNode) throws Exception {
+    public void handleMulligan(Connection connection, MulliganRequest request) throws Exception {
         Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
             handleError(connection, "Not authenticated");
             return;
         }
 
-        Long gameId = jsonNode.get("gameId").asLong();
-
         try {
-            gameService.mulligan(gameId, player);
+            gameService.mulligan(request.gameId(), player);
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
     }
 
     @Override
-    public void handleBottomCards(Connection connection, JsonNode jsonNode) throws Exception {
+    public void handleBottomCards(Connection connection, BottomCardsRequest request) throws Exception {
         Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
             handleError(connection, "Not authenticated");
             return;
         }
 
-        Long gameId = jsonNode.get("gameId").asLong();
-        List<Integer> cardIndices = new ArrayList<>();
-        JsonNode indicesNode = jsonNode.get("cardIndices");
-        if (indicesNode != null && indicesNode.isArray()) {
-            for (JsonNode idx : indicesNode) {
-                cardIndices.add(idx.asInt());
-            }
-        }
-
         try {
-            gameService.bottomCards(gameId, player, cardIndices);
+            gameService.bottomCards(request.gameId(), player, request.cardIndices());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
     }
 
     @Override
-    public void handlePlayCard(Connection connection, JsonNode jsonNode) throws Exception {
+    public void handlePlayCard(Connection connection, PlayCardRequest request) throws Exception {
         Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
             handleError(connection, "Not authenticated");
             return;
         }
 
-        Long gameId = jsonNode.get("gameId").asLong();
-        int cardIndex = jsonNode.get("cardIndex").asInt();
-
         try {
-            gameService.playCard(gameId, player, cardIndex);
+            gameService.playCard(request.gameId(), player, request.cardIndex());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
     }
 
     @Override
-    public void handleTapPermanent(Connection connection, JsonNode jsonNode) throws Exception {
+    public void handleTapPermanent(Connection connection, TapPermanentRequest request) throws Exception {
         Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
             handleError(connection, "Not authenticated");
             return;
         }
 
-        Long gameId = jsonNode.get("gameId").asLong();
-        int permanentIndex = jsonNode.get("permanentIndex").asInt();
-
         try {
-            gameService.tapPermanent(gameId, player, permanentIndex);
+            gameService.tapPermanent(request.gameId(), player, request.permanentIndex());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
     }
 
     @Override
-    public void handleSetAutoStops(Connection connection, JsonNode jsonNode) throws Exception {
+    public void handleSetAutoStops(Connection connection, SetAutoStopsRequest request) throws Exception {
         Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
             handleError(connection, "Not authenticated");
             return;
         }
 
-        Long gameId = jsonNode.get("gameId").asLong();
-        List<TurnStep> stops = new ArrayList<>();
-        JsonNode stopsNode = jsonNode.get("stops");
-        if (stopsNode != null && stopsNode.isArray()) {
-            for (JsonNode stopNode : stopsNode) {
-                stops.add(TurnStep.valueOf(stopNode.asString()));
-            }
-        }
-
         try {
-            gameService.setAutoStops(gameId, player, stops);
+            gameService.setAutoStops(request.gameId(), player, request.stops());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
     }
 
     @Override
-    public void handleDeclareAttackers(Connection connection, JsonNode jsonNode) throws Exception {
+    public void handleDeclareAttackers(Connection connection, DeclareAttackersRequest request) throws Exception {
         Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
             handleError(connection, "Not authenticated");
             return;
         }
 
-        Long gameId = jsonNode.get("gameId").asLong();
-        List<Integer> attackerIndices = new ArrayList<>();
-        JsonNode indicesNode = jsonNode.get("attackerIndices");
-        if (indicesNode != null && indicesNode.isArray()) {
-            for (JsonNode idx : indicesNode) {
-                attackerIndices.add(idx.asInt());
-            }
-        }
-
         try {
-            gameService.declareAttackers(gameId, player, attackerIndices);
+            gameService.declareAttackers(request.gameId(), player, request.attackerIndices());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
     }
 
     @Override
-    public void handleDeclareBlockers(Connection connection, JsonNode jsonNode) throws Exception {
+    public void handleDeclareBlockers(Connection connection, DeclareBlockersRequest request) throws Exception {
         Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
             handleError(connection, "Not authenticated");
             return;
         }
 
-        Long gameId = jsonNode.get("gameId").asLong();
-        List<int[]> blockerAssignments = new ArrayList<>();
-        JsonNode assignmentsNode = jsonNode.get("blockerAssignments");
-        if (assignmentsNode != null && assignmentsNode.isArray()) {
-            for (JsonNode assignment : assignmentsNode) {
-                int blockerIndex = assignment.get("blockerIndex").asInt();
-                int attackerIndex = assignment.get("attackerIndex").asInt();
-                blockerAssignments.add(new int[]{blockerIndex, attackerIndex});
-            }
-        }
-
         try {
-            gameService.declareBlockers(gameId, player, blockerAssignments);
+            gameService.declareBlockers(request.gameId(), player, request.blockerAssignments());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
     }
 
     @Override
-    public void handleCardChosen(Connection connection, JsonNode jsonNode) throws Exception {
+    public void handleCardChosen(Connection connection, CardChosenRequest request) throws Exception {
         Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
             handleError(connection, "Not authenticated");
             return;
         }
 
-        Long gameId = jsonNode.get("gameId").asLong();
-        int cardIndex = jsonNode.get("cardIndex").asInt();
-
         try {
-            gameService.handleCardChosen(gameId, player, cardIndex);
+            gameService.handleCardChosen(request.gameId(), player, request.cardIndex());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

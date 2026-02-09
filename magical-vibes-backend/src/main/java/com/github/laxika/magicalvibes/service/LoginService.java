@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.dto.LoginRequest;
-import com.github.laxika.magicalvibes.dto.LoginResponse;
+import com.github.laxika.magicalvibes.networking.message.LoginRequest;
+import com.github.laxika.magicalvibes.networking.message.LoginResponse;
 import com.github.laxika.magicalvibes.entity.User;
 import com.github.laxika.magicalvibes.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

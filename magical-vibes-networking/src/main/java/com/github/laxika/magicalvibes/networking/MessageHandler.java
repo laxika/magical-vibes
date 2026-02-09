@@ -1,34 +1,46 @@
 package com.github.laxika.magicalvibes.networking;
 
-import tools.jackson.databind.JsonNode;
+import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
+import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.CreateGameRequest;
+import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
+import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
+import com.github.laxika.magicalvibes.networking.message.JoinGameRequest;
+import com.github.laxika.magicalvibes.networking.message.KeepHandRequest;
+import com.github.laxika.magicalvibes.networking.message.LoginRequest;
+import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
+import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
+import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
+import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
+import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 
 public interface MessageHandler {
 
-    void handleLogin(Connection connection, JsonNode jsonNode) throws Exception;
+    void handleLogin(Connection connection, LoginRequest request) throws Exception;
 
-    void handleCreateGame(Connection connection, JsonNode jsonNode) throws Exception;
+    void handleCreateGame(Connection connection, CreateGameRequest request) throws Exception;
 
-    void handleJoinGame(Connection connection, JsonNode jsonNode) throws Exception;
+    void handleJoinGame(Connection connection, JoinGameRequest request) throws Exception;
 
-    void handlePassPriority(Connection connection, JsonNode jsonNode) throws Exception;
+    void handlePassPriority(Connection connection, PassPriorityRequest request) throws Exception;
 
-    void handleKeepHand(Connection connection, JsonNode jsonNode) throws Exception;
+    void handleKeepHand(Connection connection, KeepHandRequest request) throws Exception;
 
-    void handleMulligan(Connection connection, JsonNode jsonNode) throws Exception;
+    void handleMulligan(Connection connection, MulliganRequest request) throws Exception;
 
-    void handleBottomCards(Connection connection, JsonNode jsonNode) throws Exception;
+    void handleBottomCards(Connection connection, BottomCardsRequest request) throws Exception;
 
-    void handlePlayCard(Connection connection, JsonNode jsonNode) throws Exception;
+    void handlePlayCard(Connection connection, PlayCardRequest request) throws Exception;
 
-    void handleTapPermanent(Connection connection, JsonNode jsonNode) throws Exception;
+    void handleTapPermanent(Connection connection, TapPermanentRequest request) throws Exception;
 
-    void handleSetAutoStops(Connection connection, JsonNode jsonNode) throws Exception;
+    void handleSetAutoStops(Connection connection, SetAutoStopsRequest request) throws Exception;
 
-    void handleDeclareAttackers(Connection connection, JsonNode jsonNode) throws Exception;
+    void handleDeclareAttackers(Connection connection, DeclareAttackersRequest request) throws Exception;
 
-    void handleDeclareBlockers(Connection connection, JsonNode jsonNode) throws Exception;
+    void handleDeclareBlockers(Connection connection, DeclareBlockersRequest request) throws Exception;
 
-    void handleCardChosen(Connection connection, JsonNode jsonNode) throws Exception;
+    void handleCardChosen(Connection connection, CardChosenRequest request) throws Exception;
 
     void handleTimeout(Connection connection);
 
