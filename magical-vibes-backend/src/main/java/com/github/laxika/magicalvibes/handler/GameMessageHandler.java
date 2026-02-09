@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
+import com.github.laxika.magicalvibes.service.LobbyService;
 import com.github.laxika.magicalvibes.service.LoginService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import lombok.extern.slf4j.Slf4j;
@@ -38,17 +39,20 @@ public class GameMessageHandler implements MessageHandler {
 
     private final LoginService loginService;
     private final GameService gameService;
+    private final LobbyService lobbyService;
     private final GameRegistry gameRegistry;
     private final WebSocketSessionManager sessionManager;
     private final ObjectMapper objectMapper;
 
     public GameMessageHandler(LoginService loginService,
             GameService gameService,
+            LobbyService lobbyService,
             GameRegistry gameRegistry,
             WebSocketSessionManager sessionManager,
             ObjectMapper objectMapper) {
         this.loginService = loginService;
         this.gameService = gameService;
+        this.lobbyService = lobbyService;
         this.gameRegistry = gameRegistry;
         this.sessionManager = sessionManager;
         this.objectMapper = objectMapper;
@@ -90,7 +94,7 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
-        GameService.GameResult result = gameService.createGame(request.gameName(), player);
+        LobbyService.GameResult result = lobbyService.createGame(request.gameName(), player);
 
         // Mark creator as in-game
         sessionManager.setInGame(connection.getId());
@@ -117,7 +121,7 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
-            LobbyGame lobbyGame = gameService.joinGame(gameData, player);
+            LobbyGame lobbyGame = lobbyService.joinGame(gameData, player);
 
             // Mark joiner as in-game
             sessionManager.setInGame(connection.getId());

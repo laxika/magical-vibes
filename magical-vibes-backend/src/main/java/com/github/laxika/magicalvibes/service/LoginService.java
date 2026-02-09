@@ -17,7 +17,7 @@ import java.util.Optional;
 public class LoginService {
 
     private final UserRepository userRepository;
-    private final GameService gameService;
+    private final LobbyService lobbyService;
 
     // TODO: Implement password hashing with BCrypt for production use
     @Transactional(readOnly = true)
@@ -34,7 +34,7 @@ public class LoginService {
             log.info("Authentication successful for user: {}", user.getUsername());
 
             // Fetch available games
-            var games = gameService.listRunningGames();
+            var games = lobbyService.listRunningGames();
 
             return LoginResponse.success(user.getId(), user.getUsername(), games);
         } else {

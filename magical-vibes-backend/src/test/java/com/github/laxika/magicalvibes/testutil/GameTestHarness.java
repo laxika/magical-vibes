@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.testutil;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
+import com.github.laxika.magicalvibes.service.LobbyService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import com.github.laxika.magicalvibes.config.JacksonConfig;
 
@@ -20,6 +20,7 @@ public class GameTestHarness {
     private final GameRegistry gameRegistry;
     private final WebSocketSessionManager sessionManager;
     private final GameService gameService;
+    private final LobbyService lobbyService;
     private final GameData gameData;
     private final Player player1;
     private final Player player2;
@@ -29,7 +30,8 @@ public class GameTestHarness {
     public GameTestHarness() {
         gameRegistry = new GameRegistry();
         sessionManager = new WebSocketSessionManager(new JacksonConfig().objectMapper());
-        gameService = new GameService(gameRegistry, sessionManager);
+        gameService = new GameService(sessionManager);
+        lobbyService = new LobbyService(gameRegistry, gameService);
 
         player1 = new Player(1L, "Alice");
         player2 = new Player(2L, "Bob");
@@ -39,9 +41,9 @@ public class GameTestHarness {
         sessionManager.registerPlayer(conn1, player1.getId(), player1.getUsername());
         sessionManager.registerPlayer(conn2, player2.getId(), player2.getUsername());
 
-        gameService.createGame("Test Game", player1);
+        lobbyService.createGame("Test Game", player1);
         GameData gd = gameRegistry.getGameForPlayer(player1.getId());
-        gameService.joinGame(gd, player2);
+        lobbyService.joinGame(gd, player2);
 
         this.gameData = gameRegistry.getGameForPlayer(player1.getId());
 

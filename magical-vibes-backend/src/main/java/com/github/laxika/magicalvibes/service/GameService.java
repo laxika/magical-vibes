@@ -1,10 +1,5 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.networking.message.AutoStopsUpdatedMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
@@ -18,7 +13,6 @@ import com.github.laxika.magicalvibes.networking.message.GameStartedMessage;
 import com.github.laxika.magicalvibes.networking.message.HandDrawnMessage;
 import com.github.laxika.magicalvibes.networking.message.JoinGame;
 import com.github.laxika.magicalvibes.networking.message.LifeUpdatedMessage;
-import com.github.laxika.magicalvibes.networking.message.LobbyGame;
 import com.github.laxika.magicalvibes.networking.message.ManaUpdatedMessage;
 import com.github.laxika.magicalvibes.networking.message.MulliganResolvedMessage;
 import com.github.laxika.magicalvibes.networking.message.PlayableCardsMessage;
@@ -55,111 +49,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class GameService {
 
-    public record GameResult(JoinGame joinGame, LobbyGame lobbyGame) {}
-
     private final Random random = new Random();
 
-    private final GameRegistry gameRegistry;
     private final SessionManager sessionManager;
-
-    public GameResult createGame(String gameName, Player player) {
-        long gameId = gameRegistry.nextId();
-
-        GameData gameData = new GameData(gameId, gameName, player.getId(), player.getUsername());
-        gameData.playerIds.add(player.getId());
-        gameData.orderedPlayerIds.add(player.getId());
-        gameData.playerNames.add(player.getUsername());
-        gameData.playerIdToName.put(player.getId(), player.getUsername());
-        gameRegistry.register(gameData);
-
-        log.info("Game created: id={}, name='{}', creator={}", gameId, gameName, player.getUsername());
-        return new GameResult(toJoinGame(gameData), toLobbyGame(gameData));
-    }
-
-    public List<LobbyGame> listRunningGames() {
-        return gameRegistry.getRunningGames().stream()
-                .map(this::toLobbyGame)
-                .toList();
-    }
-
-    public LobbyGame joinGame(GameData gameData, Player player) {
-        if (gameData.status != GameStatus.WAITING) {
-            throw new IllegalStateException("Game is not accepting players");
-        }
-
-        if (gameData.playerIds.contains(player.getId())) {
-            throw new IllegalStateException("You are already in this game");
-        }
-
-        gameData.playerIds.add(player.getId());
-        gameData.orderedPlayerIds.add(player.getId());
-        gameData.playerNames.add(player.getUsername());
-        gameData.playerIdToName.put(player.getId(), player.getUsername());
-
-        if (gameData.playerIds.size() >= 2) {
-            initializeGame(gameData);
-        }
-
-        log.info("User {} joined game {}, status={}", player.getUsername(), gameData.id, gameData.status);
-        return toLobbyGame(gameData);
-    }
-
-    private void initializeGame(GameData gameData) {
-        Card forest = new Forest();
-        Card llanowarElves = new LlanowarElves();
-        Card grizzlyBears = new GrizzlyBears();
-        Card giantSpider = new GiantSpider();
-        Card huntedWumpus = new HuntedWumpus();
-
-        for (Long playerId : gameData.playerIds) {
-            List<Card> deck = new ArrayList<>();
-            for (int i = 0; i < 24; i++) {
-                deck.add(forest);
-            }
-            for (int i = 0; i < 4; i++) {
-                deck.add(llanowarElves);
-            }
-            for (int i = 0; i < 4; i++) {
-                deck.add(giantSpider);
-            }
-            for (int i = 0; i < 4; i++) {
-                deck.add(huntedWumpus);
-            }
-            for (int i = 0; i < 24; i++) {
-                deck.add(grizzlyBears);
-            }
-            Collections.shuffle(deck, random);
-            gameData.playerDecks.put(playerId, deck);
-            gameData.mulliganCounts.put(playerId, 0);
-            gameData.playerBattlefields.put(playerId, new ArrayList<>());
-            gameData.playerManaPools.put(playerId, new ManaPool());
-            gameData.playerLifeTotals.put(playerId, 20);
-
-            List<Card> hand = new ArrayList<>(deck.subList(0, 7));
-            deck.subList(0, 7).clear();
-            gameData.playerHands.put(playerId, hand);
-
-            Set<TurnStep> defaultStops = ConcurrentHashMap.newKeySet();
-            defaultStops.add(TurnStep.PRECOMBAT_MAIN);
-            defaultStops.add(TurnStep.POSTCOMBAT_MAIN);
-            gameData.playerAutoStopSteps.put(playerId, defaultStops);
-        }
-
-        gameData.status = GameStatus.MULLIGAN;
-
-        gameData.gameLog.add("Game started!");
-        gameData.gameLog.add("Each player receives a deck of 24 Forests, 4 Llanowar Elves, 4 Giant Spiders, 4 Hunted Wumpuses, and 24 Grizzly Bears.");
-
-        List<Long> ids = new ArrayList<>(gameData.orderedPlayerIds);
-        Long startingPlayerId = ids.get(random.nextInt(ids.size()));
-        String startingPlayerName = gameData.playerIdToName.get(startingPlayerId);
-        gameData.startingPlayerId = startingPlayerId;
-
-        gameData.gameLog.add(startingPlayerName + " wins the coin toss and goes first!");
-        gameData.gameLog.add("Mulligan phase — decide to keep or mulligan.");
-
-        log.info("Game {} - Mulligan phase begins. Starting player: {}", gameData.id, startingPlayerName);
-    }
 
     public void passPriority(GameData gameData, Player player) {
         if (gameData.status != GameStatus.RUNNING) {
@@ -521,10 +413,6 @@ public class GameService {
         log.info("Game {} - Game started! Turn 1 begins. Active player: {}", gameData.id, gameData.playerIdToName.get(gameData.activePlayerId));
 
         resolveAutoPass(gameData);
-    }
-
-    private JoinGame toJoinGame(GameData data) {
-        return toJoinGame(data, null);
     }
 
     private JoinGame toJoinGame(GameData data, Long playerId) {
@@ -1270,16 +1158,6 @@ public class GameService {
         // Safety: if we somehow looped 100 times, broadcast current state and stop
         log.warn("Game {} - resolveAutoPass hit safety limit", gameData.id);
         broadcastPlayableCards(gameData);
-    }
-
-    private LobbyGame toLobbyGame(GameData data) {
-        return new LobbyGame(
-                data.id,
-                data.gameName,
-                data.createdByUsername,
-                data.playerIds.size(),
-                data.status
-        );
     }
 
 }
