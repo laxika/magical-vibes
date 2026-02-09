@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.MessageType;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.LoginService;
-import com.github.laxika.magicalvibes.service.WebSocketSessionManager;
+import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;

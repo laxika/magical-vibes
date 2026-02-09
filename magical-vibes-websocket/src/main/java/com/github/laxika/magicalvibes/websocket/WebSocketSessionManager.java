@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.service;
+package com.github.laxika.magicalvibes.websocket;
 
 import com.github.laxika.magicalvibes.model.Player;
 import lombok.extern.slf4j.Slf4j;
@@ -41,18 +41,9 @@ public class WebSocketSessionManager {
         return players.get(sessionId);
     }
 
-    public Player getPlayerByUserId(Long userId) {
-        String sessionId = userIdToSessionId.get(userId);
-        return sessionId != null ? players.get(sessionId) : null;
-    }
-
     public WebSocketSession getSessionByUserId(Long userId) {
         String sessionId = userIdToSessionId.get(userId);
         return sessionId != null ? sessions.get(sessionId) : null;
-    }
-
-    public WebSocketSession getSessionById(String sessionId) {
-        return sessions.get(sessionId);
     }
 
     public void setInGame(String sessionId) {
