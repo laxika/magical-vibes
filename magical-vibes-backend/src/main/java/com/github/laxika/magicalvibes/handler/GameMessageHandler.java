@@ -140,8 +140,14 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
+        Long gameId = gameService.getGameIdForPlayer(player.getId());
+        if (gameId == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
         try {
-            gameService.passPriority(request.gameId(), player);
+            gameService.passPriority(gameId, player);
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -155,8 +161,14 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
+        Long gameId = gameService.getGameIdForPlayer(player.getId());
+        if (gameId == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
         try {
-            gameService.keepHand(request.gameId(), player);
+            gameService.keepHand(gameId, player);
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -170,8 +182,14 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
+        Long gameId = gameService.getGameIdForPlayer(player.getId());
+        if (gameId == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
         try {
-            gameService.mulligan(request.gameId(), player);
+            gameService.mulligan(gameId, player);
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -185,8 +203,14 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
+        Long gameId = gameService.getGameIdForPlayer(player.getId());
+        if (gameId == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
         try {
-            gameService.bottomCards(request.gameId(), player, request.cardIndices());
+            gameService.bottomCards(gameId, player, request.cardIndices());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -200,8 +224,14 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
+        Long gameId = gameService.getGameIdForPlayer(player.getId());
+        if (gameId == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
         try {
-            gameService.playCard(request.gameId(), player, request.cardIndex());
+            gameService.playCard(gameId, player, request.cardIndex());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -215,8 +245,14 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
+        Long gameId = gameService.getGameIdForPlayer(player.getId());
+        if (gameId == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
         try {
-            gameService.tapPermanent(request.gameId(), player, request.permanentIndex());
+            gameService.tapPermanent(gameId, player, request.permanentIndex());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -230,8 +266,14 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
+        Long gameId = gameService.getGameIdForPlayer(player.getId());
+        if (gameId == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
         try {
-            gameService.setAutoStops(request.gameId(), player, request.stops());
+            gameService.setAutoStops(gameId, player, request.stops());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -245,8 +287,14 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
+        Long gameId = gameService.getGameIdForPlayer(player.getId());
+        if (gameId == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
         try {
-            gameService.declareAttackers(request.gameId(), player, request.attackerIndices());
+            gameService.declareAttackers(gameId, player, request.attackerIndices());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -260,8 +308,14 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
+        Long gameId = gameService.getGameIdForPlayer(player.getId());
+        if (gameId == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
         try {
-            gameService.declareBlockers(request.gameId(), player, request.blockerAssignments());
+            gameService.declareBlockers(gameId, player, request.blockerAssignments());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -275,8 +329,14 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
+        Long gameId = gameService.getGameIdForPlayer(player.getId());
+        if (gameId == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
         try {
-            gameService.handleCardChosen(request.gameId(), player, request.cardIndex());
+            gameService.handleCardChosen(gameId, player, request.cardIndex());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

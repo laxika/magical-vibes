@@ -357,7 +357,6 @@ export class GameComponent implements OnInit, OnDestroy {
     if (!this.choosableHandIndices().has(index)) return;
     this.websocketService.send({
       type: MessageType.CARD_CHOSEN,
-      gameId: g.id,
       cardIndex: index
     });
     this.choosingFromHand = false;
@@ -370,7 +369,6 @@ export class GameComponent implements OnInit, OnDestroy {
     if (!g || !this.choosingFromHand) return;
     this.websocketService.send({
       type: MessageType.CARD_CHOSEN,
-      gameId: g.id,
       cardIndex: -1
     });
     this.choosingFromHand = false;
@@ -403,7 +401,7 @@ export class GameComponent implements OnInit, OnDestroy {
   playCard(index: number): void {
     const g = this.game();
     if (g && this.isCardPlayable(index)) {
-      this.websocketService.send({ type: MessageType.PLAY_CARD, gameId: g.id, cardIndex: index });
+      this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index });
     }
   }
 
@@ -424,14 +422,14 @@ export class GameComponent implements OnInit, OnDestroy {
   keepHand(): void {
     const g = this.game();
     if (g && !this.selfKept) {
-      this.websocketService.send({ type: MessageType.KEEP_HAND, gameId: g.id });
+      this.websocketService.send({ type: MessageType.KEEP_HAND });
     }
   }
 
   takeMulligan(): void {
     const g = this.game();
     if (g && !this.selfKept) {
-      this.websocketService.send({ type: MessageType.TAKE_MULLIGAN, gameId: g.id });
+      this.websocketService.send({ type: MessageType.TAKE_MULLIGAN });
     }
   }
 
@@ -456,7 +454,6 @@ export class GameComponent implements OnInit, OnDestroy {
     if (g && this.canConfirmBottom) {
       this.websocketService.send({
         type: MessageType.BOTTOM_CARDS,
-        gameId: g.id,
         cardIndices: Array.from(this.selectedCardIndices)
       });
       this.selectingBottomCards = false;
@@ -467,14 +464,14 @@ export class GameComponent implements OnInit, OnDestroy {
   passPriority(): void {
     const g = this.game();
     if (g) {
-      this.websocketService.send({ type: MessageType.PASS_PRIORITY, gameId: g.id });
+      this.websocketService.send({ type: MessageType.PASS_PRIORITY });
     }
   }
 
   tapPermanent(index: number): void {
     const g = this.game();
     if (g && this.canTapPermanent(index)) {
-      this.websocketService.send({ type: MessageType.TAP_PERMANENT, gameId: g.id, permanentIndex: index });
+      this.websocketService.send({ type: MessageType.TAP_PERMANENT, permanentIndex: index });
     }
   }
 
@@ -543,7 +540,6 @@ export class GameComponent implements OnInit, OnDestroy {
 
     this.websocketService.send({
       type: MessageType.SET_AUTO_STOPS,
-      gameId: g.id,
       stops: Array.from(current)
     });
   }
@@ -580,7 +576,6 @@ export class GameComponent implements OnInit, OnDestroy {
     if (!g) return;
     this.websocketService.send({
       type: MessageType.DECLARE_ATTACKERS,
-      gameId: g.id,
       attackerIndices: Array.from(this.selectedAttackerIndices)
     });
     this.declaringAttackers = false;
@@ -627,7 +622,6 @@ export class GameComponent implements OnInit, OnDestroy {
     }));
     this.websocketService.send({
       type: MessageType.DECLARE_BLOCKERS,
-      gameId: g.id,
       blockerAssignments: assignments
     });
     this.declaringBlockers = false;

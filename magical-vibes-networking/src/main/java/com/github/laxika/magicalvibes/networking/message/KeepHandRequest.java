@@ -1,4 +1,4 @@
 package com.github.laxika.magicalvibes.networking.message;
 
-public record KeepHandRequest(Long gameId) {
+public record KeepHandRequest() {
 }
