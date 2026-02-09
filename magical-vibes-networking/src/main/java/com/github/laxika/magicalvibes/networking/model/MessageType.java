@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.model;
+package com.github.laxika.magicalvibes.networking.model;
 
 public enum MessageType {
     LOGIN,

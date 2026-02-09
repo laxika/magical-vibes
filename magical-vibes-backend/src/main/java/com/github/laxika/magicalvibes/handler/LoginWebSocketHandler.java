@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.dto.LobbyGame;
 import com.github.laxika.magicalvibes.dto.LobbyGameMessage;
 import com.github.laxika.magicalvibes.dto.LoginRequest;
 import com.github.laxika.magicalvibes.dto.LoginResponse;
-import com.github.laxika.magicalvibes.model.MessageType;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.LoginService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
@@ -32,82 +32,30 @@ import java.util.concurrent.*;
 @Slf4j
 public class LoginWebSocketHandler extends TextWebSocketHandler {
 
-    private static final int TIMEOUT_SECONDS = 3;
-
     private final LoginService loginService;
     private final GameService gameService;
     private final WebSocketSessionManager sessionManager;
     private final ObjectMapper objectMapper;
-    private final ScheduledExecutorService scheduler;
-    private final ConcurrentHashMap<String, ScheduledFuture<?>> timeoutTasks;
 
     public LoginWebSocketHandler(LoginService loginService,
-                                 GameService gameService,
-                                 WebSocketSessionManager sessionManager,
-                                 ObjectMapper objectMapper) {
+            GameService gameService,
+            WebSocketSessionManager sessionManager,
+            ObjectMapper objectMapper) {
         this.loginService = loginService;
         this.gameService = gameService;
         this.sessionManager = sessionManager;
         this.objectMapper = objectMapper;
-        this.scheduler = Executors.newScheduledThreadPool(10);
-        this.timeoutTasks = new ConcurrentHashMap<>();
     }
 
-    @Override
-    public void afterConnectionEstablished(WebSocketSession session) {
-        log.info("WebSocket connection established: {}", session.getId());
 
-        ScheduledFuture<?> timeoutTask = scheduler.schedule(() -> {
-            try {
-                if (session.isOpen()) {
-                    log.warn("Connection timeout for session: {}", session.getId());
-                    LoginResponse timeoutResponse = LoginResponse.timeout();
-                    session.sendMessage(new TextMessage(objectMapper.writeValueAsString(timeoutResponse)));
-                    session.close(CloseStatus.NORMAL);
-                }
-            } catch (IOException e) {
-                log.error("Error sending timeout message", e);
-            } finally {
-                timeoutTasks.remove(session.getId());
-            }
-        }, TIMEOUT_SECONDS, TimeUnit.SECONDS);
-
-        timeoutTasks.put(session.getId(), timeoutTask);
-    }
-
-    @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        log.debug("Received message from session {}: {}", session.getId(), message.getPayload());
-
-        // Cancel timeout task on first message
-        ScheduledFuture<?> timeoutTask = timeoutTasks.remove(session.getId());
-        if (timeoutTask != null) {
-            timeoutTask.cancel(false);
-        }
+    private void sendLoginTimeout(WebSocketSession session) {
+        LoginResponse timeoutResponse = LoginResponse.timeout();
 
         try {
-            JsonNode jsonNode = objectMapper.readTree(message.getPayload());
-            MessageType type = MessageType.valueOf(jsonNode.get("type").asString());
-
-            switch (type) {
-                case LOGIN -> handleLogin(session, jsonNode);
-                case CREATE_GAME -> handleCreateGame(session, jsonNode);
-                case JOIN_GAME -> handleJoinGame(session, jsonNode);
-                case PASS_PRIORITY -> handlePassPriority(session, jsonNode);
-                case KEEP_HAND -> handleKeepHand(session, jsonNode);
-                case TAKE_MULLIGAN -> handleMulligan(session, jsonNode);
-                case BOTTOM_CARDS -> handleBottomCards(session, jsonNode);
-                case PLAY_CARD -> handlePlayCard(session, jsonNode);
-                case TAP_PERMANENT -> handleTapPermanent(session, jsonNode);
-                case SET_AUTO_STOPS -> handleSetAutoStops(session, jsonNode);
-                case DECLARE_ATTACKERS -> handleDeclareAttackers(session, jsonNode);
-                case DECLARE_BLOCKERS -> handleDeclareBlockers(session, jsonNode);
-                case CARD_CHOSEN -> handleCardChosen(session, jsonNode);
-                default -> sendError(session, "Unknown message type: " + type);
-            }
-        } catch (Exception e) {
-            log.error("Error processing message", e);
-            sendError(session, "Error processing request");
+            session.sendMessage(new TextMessage(objectMapper.writeValueAsString(timeoutResponse)));
+            session.close(CloseStatus.NORMAL);
+        } catch (IOException e) {
+            log.error("Error sending timeout message", e);
         }
     }
 
@@ -405,27 +353,5 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
     private void sendError(WebSocketSession session, String message) throws IOException {
         ErrorMessage error = new ErrorMessage(message);
         session.sendMessage(new TextMessage(objectMapper.writeValueAsString(error)));
-    }
-
-    @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-        log.info("WebSocket connection closed: {} with status: {}", session.getId(), status);
-        sessionManager.unregisterSession(session.getId());
-
-        ScheduledFuture<?> task = timeoutTasks.remove(session.getId());
-        if (task != null) {
-            task.cancel(false);
-        }
-    }
-
-    @Override
-    public void handleTransportError(WebSocketSession session, Throwable exception) {
-        log.error("WebSocket transport error for session: {}", session.getId(), exception);
-        sessionManager.unregisterSession(session.getId());
-
-        ScheduledFuture<?> task = timeoutTasks.remove(session.getId());
-        if (task != null) {
-            task.cancel(false);
-        }
     }
 }
