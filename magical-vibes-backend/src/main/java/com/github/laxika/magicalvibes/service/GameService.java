@@ -43,7 +43,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.networking.Connection;
-import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
+import com.github.laxika.magicalvibes.networking.SessionManager;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
@@ -51,22 +52,18 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Service
 @Slf4j
+@Service
+@RequiredArgsConstructor
 public class GameService {
 
     public record GameResult(JoinGame joinGame, LobbyGame lobbyGame) {}
 
     private final Random random = new Random();
-    private final GameRegistry gameRegistry;
-    private final WebSocketSessionManager sessionManager;
-    private final ObjectMapper objectMapper;
 
-    public GameService(GameRegistry gameRegistry, WebSocketSessionManager sessionManager, ObjectMapper objectMapper) {
-        this.gameRegistry = gameRegistry;
-        this.sessionManager = sessionManager;
-        this.objectMapper = objectMapper;
-    }
+    private final GameRegistry gameRegistry;
+    private final SessionManager sessionManager;
+    private final ObjectMapper objectMapper;
 
     public GameResult createGame(String gameName, Player player) {
         long gameId = gameRegistry.nextId();

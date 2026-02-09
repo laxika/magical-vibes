@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.websocket;
 
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.Connection;
+import com.github.laxika.magicalvibes.networking.SessionManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Slf4j
-public class WebSocketSessionManager {
+public class WebSocketSessionManager implements SessionManager {
 
     private final Map<String, Player> players = new ConcurrentHashMap<>();
     private final Map<String, Connection> connections = new ConcurrentHashMap<>();
