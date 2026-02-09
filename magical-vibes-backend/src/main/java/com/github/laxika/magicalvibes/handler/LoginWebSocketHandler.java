@@ -169,10 +169,10 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
             // Send OPPONENT_JOINED to the creator (with their own hand)
             Long creatorUserId = gameService.getCreatorUserId(gameId);
             if (creatorUserId != null) {
-                Player creator = sessionManager.getPlayerByUserId(creatorUserId);
-                if (creator != null && creator.getSession().isOpen()) {
+                WebSocketSession creatorSession = sessionManager.getSessionByUserId(creatorUserId);
+                if (creatorSession != null && creatorSession.isOpen()) {
                     JoinGame creatorGame = gameService.getJoinGame(gameId, creatorUserId);
-                    sendJoinMessage(creator.getSession(), MessageType.OPPONENT_JOINED, creatorGame);
+                    sendJoinMessage(creatorSession, MessageType.OPPONENT_JOINED, creatorGame);
                 }
             }
 
@@ -388,9 +388,10 @@ public class LoginWebSocketHandler extends TextWebSocketHandler {
 
         for (Player player : sessionManager.getLobbyPlayers()) {
             try {
-                if (player.getSession().isOpen()) {
+                WebSocketSession playerSession = sessionManager.getSessionByUserId(player.getId());
+                if (playerSession != null && playerSession.isOpen()) {
                     String msg = objectMapper.writeValueAsString(notification);
-                    player.getSession().sendMessage(new TextMessage(msg));
+                    playerSession.sendMessage(new TextMessage(msg));
                     sentCount++;
                 }
             } catch (Exception e) {

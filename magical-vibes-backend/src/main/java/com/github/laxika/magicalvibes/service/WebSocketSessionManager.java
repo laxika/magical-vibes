@@ -15,18 +15,21 @@ import java.util.concurrent.ConcurrentHashMap;
 public class WebSocketSessionManager {
 
     private final Map<String, Player> players = new ConcurrentHashMap<>();
+    private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
     private final Map<Long, String> userIdToSessionId = new ConcurrentHashMap<>();
     private final Set<String> inGameSessionIds = ConcurrentHashMap.newKeySet();
 
     public void registerPlayer(WebSocketSession session, Long userId, String username) {
-        Player player = new Player(userId, username, session);
+        Player player = new Player(userId, username);
         players.put(session.getId(), player);
+        sessions.put(session.getId(), session);
         userIdToSessionId.put(userId, session.getId());
         log.info("Registered session {} for user {} ({})", session.getId(), userId, username);
     }
 
     public void unregisterSession(String sessionId) {
         Player player = players.remove(sessionId);
+        sessions.remove(sessionId);
         inGameSessionIds.remove(sessionId);
         if (player != null) {
             userIdToSessionId.remove(player.getId());
@@ -41,6 +44,15 @@ public class WebSocketSessionManager {
     public Player getPlayerByUserId(Long userId) {
         String sessionId = userIdToSessionId.get(userId);
         return sessionId != null ? players.get(sessionId) : null;
+    }
+
+    public WebSocketSession getSessionByUserId(Long userId) {
+        String sessionId = userIdToSessionId.get(userId);
+        return sessionId != null ? sessions.get(sessionId) : null;
+    }
+
+    public WebSocketSession getSessionById(String sessionId) {
+        return sessions.get(sessionId);
     }
 
     public void setInGame(String sessionId) {

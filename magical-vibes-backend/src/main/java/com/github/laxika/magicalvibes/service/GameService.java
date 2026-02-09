@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.dto.StepAdvancedMessage;
 import com.github.laxika.magicalvibes.dto.TurnChangedMessage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -40,9 +41,9 @@ import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
 import tools.jackson.databind.ObjectMapper;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -322,10 +323,10 @@ public class GameService {
             return;
         }
         for (Long playerId : gameData.orderedPlayerIds) {
-            Player player = sessionManager.getPlayerByUserId(playerId);
-            if (player != null && player.getSession().isOpen()) {
+            WebSocketSession session = sessionManager.getSessionByUserId(playerId);
+            if (session != null && session.isOpen()) {
                 try {
-                    player.getSession().sendMessage(new TextMessage(json));
+                    session.sendMessage(new TextMessage(json));
                 } catch (Exception e) {
                     log.error("Error sending message to player {}", playerId, e);
                 }
@@ -539,10 +540,10 @@ public class GameService {
             log.error("Error serializing message", e);
             return;
         }
-        Player player = sessionManager.getPlayerByUserId(playerId);
-        if (player != null && player.getSession().isOpen()) {
+        WebSocketSession session = sessionManager.getSessionByUserId(playerId);
+        if (session != null && session.isOpen()) {
             try {
-                player.getSession().sendMessage(new TextMessage(json));
+                session.sendMessage(new TextMessage(json));
             } catch (Exception e) {
                 log.error("Error sending message to player {}", playerId, e);
             }
@@ -1303,46 +1304,4 @@ public class GameService {
         );
     }
 
-    private static class GameData {
-        final long id;
-        final String gameName;
-        final long createdByUserId;
-        final String createdByUsername;
-        final LocalDateTime createdAt;
-        GameStatus status;
-        final Set<Long> playerIds = ConcurrentHashMap.newKeySet();
-        final List<Long> orderedPlayerIds = Collections.synchronizedList(new ArrayList<>());
-        final List<String> playerNames = Collections.synchronizedList(new ArrayList<>());
-        final Map<Long, String> playerIdToName = new ConcurrentHashMap<>();
-        final Map<Long, List<Card>> playerDecks = new ConcurrentHashMap<>();
-        final Map<Long, List<Card>> playerHands = new ConcurrentHashMap<>();
-        final Map<Long, Integer> mulliganCounts = new ConcurrentHashMap<>();
-        final Set<Long> playerKeptHand = ConcurrentHashMap.newKeySet();
-        final Map<Long, Integer> playerNeedsToBottom = new ConcurrentHashMap<>();
-        final List<String> gameLog = Collections.synchronizedList(new ArrayList<>());
-        Long startingPlayerId;
-        TurnStep currentStep;
-        Long activePlayerId;
-        int turnNumber;
-        final Set<Long> priorityPassedBy = ConcurrentHashMap.newKeySet();
-        final Map<Long, Integer> landsPlayedThisTurn = new ConcurrentHashMap<>();
-        final Map<Long, List<Permanent>> playerBattlefields = new ConcurrentHashMap<>();
-        final Map<Long, ManaPool> playerManaPools = new ConcurrentHashMap<>();
-        final Map<Long, Set<TurnStep>> playerAutoStopSteps = new ConcurrentHashMap<>();
-        final Map<Long, Integer> playerLifeTotals = new ConcurrentHashMap<>();
-        boolean awaitingAttackerDeclaration;
-        boolean awaitingBlockerDeclaration;
-        boolean awaitingCardChoice;
-        Long awaitingCardChoicePlayerId;
-        Set<Integer> awaitingCardChoiceValidIndices;
-
-        GameData(long id, String gameName, long createdByUserId, String createdByUsername) {
-            this.id = id;
-            this.gameName = gameName;
-            this.createdByUserId = createdByUserId;
-            this.createdByUsername = createdByUsername;
-            this.createdAt = LocalDateTime.now();
-            this.status = GameStatus.WAITING;
-        }
-    }
 }
