@@ -6,11 +6,14 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
 import java.util.List;
-import java.util.Set;
 
 public class Forest extends Card {
 
     public Forest() {
-        super("Forest", CardType.BASIC_LAND, List.of(CardSubtype.FOREST), "{T}: Add {G}.", List.of(new AwardManaEffect("G")), null, null, null, Set.of(), List.of(), List.of());
+        super("Forest", CardType.BASIC_LAND, null);
+
+        setSubtypes(List.of(CardSubtype.FOREST));
+        setCardText("{T}: Add {G}.");
+        setOnTapEffects(List.of(new AwardManaEffect("G")));
     }
 }

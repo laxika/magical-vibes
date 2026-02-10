@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 import java.util.Set;
@@ -13,13 +14,14 @@ public class Card {
 
     private final String name;
     private final CardType type;
-    private final List<CardSubtype> subtypes;
-    private final String cardText;
-    private final List<CardEffect> onTapEffects;
     private final String manaCost;
-    private final Integer power;
-    private final Integer toughness;
-    private final Set<Keyword> keywords;
-    private final List<CardEffect> onEnterBattlefieldEffects;
-    private final List<CardEffect> spellEffects;
+
+    @Setter private List<CardSubtype> subtypes = List.of();
+    @Setter private String cardText;
+    @Setter private List<CardEffect> onTapEffects = List.of();
+    @Setter private Integer power;
+    @Setter private Integer toughness;
+    @Setter private Set<Keyword> keywords = Set.of();
+    @Setter private List<CardEffect> onEnterBattlefieldEffects = List.of();
+    @Setter private List<CardEffect> spellEffects = List.of();
 }

@@ -6,11 +6,16 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
 import java.util.List;
-import java.util.Set;
 
 public class LlanowarElves extends Card {
 
     public LlanowarElves() {
-        super("Llanowar Elves", CardType.CREATURE, List.of(CardSubtype.ELF, CardSubtype.DRUID), "{T}: Add {G}.", List.of(new AwardManaEffect("G")), "{G}", 1, 1, Set.of(), List.of(), List.of());
+        super("Llanowar Elves", CardType.CREATURE, "{G}");
+
+        setSubtypes(List.of(CardSubtype.ELF, CardSubtype.DRUID));
+        setCardText("{T}: Add {G}.");
+        setOnTapEffects(List.of(new AwardManaEffect("G")));
+        setPower(1);
+        setToughness(1);
     }
 }

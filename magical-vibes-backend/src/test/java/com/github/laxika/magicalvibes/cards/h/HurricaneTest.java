@@ -29,7 +29,12 @@ class HurricaneTest {
 
     /** A 2/2 flying creature for test purposes. */
     private static Card flyingCreature() {
-        return new Card("Wind Drake", CardType.CREATURE, List.of(), null, List.of(), "{2}{U}", 2, 2, Set.of(Keyword.FLYING), List.of(), List.of());
+        Card card = new Card("Wind Drake", CardType.CREATURE, "{2}{U}");
+
+        card.setPower(2);
+        card.setToughness(2);
+        card.setKeywords(Set.of(Keyword.FLYING));
+        return card;
     }
 
     @BeforeEach

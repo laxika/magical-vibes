@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
 
 import java.util.List;
-import java.util.Set;
 
 public class Hurricane extends Card {
 
     public Hurricane() {
-        super("Hurricane", CardType.SORCERY, List.of(), "Hurricane deals X damage to each creature with flying and each player.", List.of(), "{X}{G}", null, null, Set.of(), List.of(), List.of(new DealDamageToFlyingAndPlayersEffect()));
+        super("Hurricane", CardType.SORCERY, "{X}{G}");
+
+        setCardText("Hurricane deals X damage to each creature with flying and each player.");
+        setSpellEffects(List.of(new DealDamageToFlyingAndPlayersEffect()));
     }
 }
