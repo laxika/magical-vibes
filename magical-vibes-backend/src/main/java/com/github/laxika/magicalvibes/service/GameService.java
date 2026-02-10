@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import lombok.RequiredArgsConstructor;
@@ -236,6 +237,8 @@ public class GameService {
             for (CardEffect effect : entry.getEffectsToResolve()) {
                 if (effect instanceof OpponentMayPlayCreatureEffect) {
                     resolveOpponentMayPlayCreature(gameData, entry.getControllerId());
+                } else if (effect instanceof GainLifeEffect gainLife) {
+                    resolveGainLife(gameData, entry.getControllerId(), gainLife.amount());
                 }
             }
         } else if (entry.getEntryType() == StackEntryType.SORCERY_SPELL) {
@@ -712,6 +715,18 @@ public class GameService {
         beginCardChoice(gameData, opponentId, creatureIndices, prompt);
     }
 
+    private void resolveGainLife(GameData gameData, UUID controllerId, int amount) {
+        Integer currentLife = gameData.playerLifeTotals.get(controllerId);
+        gameData.playerLifeTotals.put(controllerId, currentLife + amount);
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String logEntry = playerName + " gains " + amount + " life.";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        broadcastLifeTotals(gameData);
+        log.info("Game {} - {} gains {} life", gameData.id, playerName, amount);
+    }
+
     private void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         gameData.awaitingCardChoice = true;
         gameData.awaitingCardChoicePlayerId = playerId;
@@ -893,7 +908,7 @@ public class GameService {
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent p = battlefield.get(i);
-            if (p.getCard().getType() == CardType.CREATURE && !p.isTapped() && !p.isSummoningSick()) {
+            if (p.getCard().getType() == CardType.CREATURE && !p.isTapped() && !p.isSummoningSick() && !p.getCard().getKeywords().contains(Keyword.DEFENDER)) {
                 indices.add(i);
             }
         }

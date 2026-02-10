@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards;
 
+import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
+import com.github.laxika.magicalvibes.cards.a.AngelicWall;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -21,6 +23,8 @@ import java.util.List;
 public enum CardSet {
 
     TENTH_EDITION("10E", "Tenth Edition", List.of(
+            new CardPrinting("10E", "2", AngelOfMercy::new, "\"Every tear shed is a drop of immortality.\""),
+            new CardPrinting("10E", "5", AngelicWall::new, "\"The Ancestor protects us in ways we can't begin to comprehend.\"\n\u2014Mystic elder"),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
             new CardPrinting("10E", "382", Forest::new),
