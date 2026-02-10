@@ -436,7 +436,7 @@ export class GameComponent implements OnInit, OnDestroy {
     const g = this.game();
     if (g && this.isCardPlayable(index)) {
       const card = g.hand[index];
-      if (card.type === 'Instant') {
+      if (card.needsTarget) {
         this.targeting = true;
         this.targetingCardIndex = index;
         this.targetingCardName = card.name;
@@ -901,7 +901,19 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   formatKeywords(keywords: string[]): string {
-    return keywords.map(k => k.charAt(0) + k.slice(1).toLowerCase()).join(', ');
+    return keywords.map(k => k.charAt(0) + k.slice(1).toLowerCase().replace('_', ' ')).join(', ');
+  }
+
+  getEffectiveKeywords(perm: Permanent): string[] {
+    const all = [...perm.card.keywords];
+    if (perm.grantedKeywords) {
+      for (const kw of perm.grantedKeywords) {
+        if (!all.includes(kw)) {
+          all.push(kw);
+        }
+      }
+    }
+    return all;
   }
 
   readonly GameStatus = GameStatus;

@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.model;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -17,6 +19,7 @@ public class Permanent {
     private boolean summoningSick;
     @Setter private int powerModifier;
     @Setter private int toughnessModifier;
+    private final Set<Keyword> grantedKeywords = new HashSet<>();
 
     public Permanent(Card card) {
         this.id = UUID.randomUUID();
@@ -63,8 +66,13 @@ public class Permanent {
         return (card.getToughness() != null ? card.getToughness() : 0) + toughnessModifier;
     }
 
+    public boolean hasKeyword(Keyword keyword) {
+        return card.getKeywords().contains(keyword) || grantedKeywords.contains(keyword);
+    }
+
     public void resetModifiers() {
         this.powerModifier = 0;
         this.toughnessModifier = 0;
+        this.grantedKeywords.clear();
     }
 }

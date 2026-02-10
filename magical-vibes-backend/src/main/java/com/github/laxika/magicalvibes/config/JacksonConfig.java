@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -42,6 +43,7 @@ public class JacksonConfig {
             @JsonSubTypes.Type(value = AwardManaEffect.class, name = "AWARD_MANA"),
             @JsonSubTypes.Type(value = GainLifeEffect.class, name = "GAIN_LIFE"),
             @JsonSubTypes.Type(value = GainLifePerGraveyardCardEffect.class, name = "GAIN_LIFE_PER_GRAVEYARD_CARD"),
+            @JsonSubTypes.Type(value = GrantKeywordToTargetEffect.class, name = "GRANT_KEYWORD_TO_TARGET"),
             @JsonSubTypes.Type(value = OpponentMayPlayCreatureEffect.class, name = "OPPONENT_MAY_PLAY_CREATURE")
     })
     static abstract class CardEffectMixin {

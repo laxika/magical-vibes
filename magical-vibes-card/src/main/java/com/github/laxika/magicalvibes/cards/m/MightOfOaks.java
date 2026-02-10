@@ -12,6 +12,7 @@ public class MightOfOaks extends Card {
         super("Might of Oaks", CardType.INSTANT, "{3}{G}");
 
         setCardText("Target creature gets +7/+7 until end of turn.");
+        setNeedsTarget(true);
         setSpellEffects(List.of(new BoostTargetCreatureEffect(7, 7)));
     }
 }

@@ -113,6 +113,7 @@ export interface Card {
   power: number | null;
   toughness: number | null;
   keywords: string[];
+  needsTarget: boolean;
   onEnterBattlefieldEffects: any[] | null;
   setCode: string | null;
   collectorNumber: string | null;
@@ -129,6 +130,7 @@ export interface Permanent {
   summoningSick: boolean;
   powerModifier: number;
   toughnessModifier: number;
+  grantedKeywords: string[];
   effectivePower: number;
   effectiveToughness: number;
 }

@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import lombok.RequiredArgsConstructor;
@@ -254,6 +255,10 @@ public class GameService {
             for (CardEffect effect : entry.getEffectsToResolve()) {
                 if (effect instanceof DealDamageToFlyingAndPlayersEffect) {
                     resolveDealDamageToFlyingAndPlayers(gameData, entry.getXValue());
+                } else if (effect instanceof BoostTargetCreatureEffect boost) {
+                    resolveBoostTargetCreature(gameData, entry, boost);
+                } else if (effect instanceof GrantKeywordToTargetEffect grant) {
+                    resolveGrantKeywordToTarget(gameData, entry, grant);
                 }
             }
 
@@ -269,6 +274,8 @@ public class GameService {
             for (CardEffect effect : entry.getEffectsToResolve()) {
                 if (effect instanceof BoostTargetCreatureEffect boost) {
                     resolveBoostTargetCreature(gameData, entry, boost);
+                } else if (effect instanceof GrantKeywordToTargetEffect grant) {
+                    resolveGrantKeywordToTarget(gameData, entry, grant);
                 }
             }
 
@@ -611,7 +618,7 @@ public class GameService {
 
                 gameData.stack.add(new StackEntry(
                         StackEntryType.SORCERY_SPELL, card, playerId, card.getName(),
-                        new ArrayList<>(card.getSpellEffects()), effectiveXValue
+                        new ArrayList<>(card.getSpellEffects()), effectiveXValue, targetPermanentId
                 ));
                 gameData.priorityPassedBy.clear();
 
@@ -619,11 +626,11 @@ public class GameService {
                 broadcastStackUpdate(gameData);
                 sessionManager.sendToPlayers(gameData.orderedPlayerIds,new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
 
-                String logEntry = player.getUsername() + " casts " + card.getName() + " (X=" + effectiveXValue + ").";
+                String logEntry = player.getUsername() + " casts " + card.getName() + ".";
                 gameData.gameLog.add(logEntry);
                 broadcastLogEntry(gameData, logEntry);
 
-                log.info("Game {} - {} casts {} with X={}", gameData.id, player.getUsername(), card.getName(), effectiveXValue);
+                log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), card.getName());
 
                 resolveAutoPass(gameData);
             } else if (card.getType() == CardType.INSTANT) {
@@ -861,6 +868,28 @@ public class GameService {
         log.info("Game {} - {} gets +{}/+{}", gameData.id, target.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
     }
 
+    private void resolveGrantKeywordToTarget(GameData gameData, StackEntry entry, GrantKeywordToTargetEffect grant) {
+        Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            String fizzleLog = entry.getCard().getName() + " fizzles (target no longer exists).";
+            gameData.gameLog.add(fizzleLog);
+            broadcastLogEntry(gameData, fizzleLog);
+            log.info("Game {} - {} fizzles, target permanent {} no longer exists",
+                    gameData.id, entry.getCard().getName(), entry.getTargetPermanentId());
+            return;
+        }
+
+        target.getGrantedKeywords().add(grant.keyword());
+
+        String keywordName = grant.keyword().name().charAt(0) + grant.keyword().name().substring(1).toLowerCase().replace('_', ' ');
+        String logEntry = target.getCard().getName() + " gains " + keywordName + " until end of turn.";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        broadcastBattlefields(gameData);
+
+        log.info("Game {} - {} gains {}", gameData.id, target.getCard().getName(), grant.keyword());
+    }
+
     private Permanent findPermanentById(GameData gameData, UUID permanentId) {
         if (permanentId == null) return null;
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -881,7 +910,7 @@ public class GameService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
             for (Permanent p : battlefield) {
-                if (p.getPowerModifier() != 0 || p.getToughnessModifier() != 0) {
+                if (p.getPowerModifier() != 0 || p.getToughnessModifier() != 0 || !p.getGrantedKeywords().isEmpty()) {
                     p.resetModifiers();
                     anyReset = true;
                 }
@@ -903,7 +932,7 @@ public class GameService {
             Set<Integer> deadIndices = new TreeSet<>(Collections.reverseOrder());
             for (int i = 0; i < battlefield.size(); i++) {
                 Permanent p = battlefield.get(i);
-                if (p.getCard().getKeywords().contains(Keyword.FLYING)) {
+                if (p.hasKeyword(Keyword.FLYING)) {
                     int toughness = p.getEffectiveToughness();
                     if (damage >= toughness) {
                         deadIndices.add(i);
@@ -951,7 +980,7 @@ public class GameService {
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent p = battlefield.get(i);
-            if (p.getCard().getType() == CardType.CREATURE && !p.isTapped() && !p.isSummoningSick() && !p.getCard().getKeywords().contains(Keyword.DEFENDER)) {
+            if (p.getCard().getType() == CardType.CREATURE && !p.isTapped() && !p.isSummoningSick() && !p.hasKeyword(Keyword.DEFENDER)) {
                 indices.add(i);
             }
         }
@@ -1130,9 +1159,9 @@ public class GameService {
 
                 Permanent attacker = attackerBattlefield.get(attackerIdx);
                 Permanent blocker = defenderBattlefield.get(blockerIdx);
-                if (attacker.getCard().getKeywords().contains(Keyword.FLYING)
-                        && !blocker.getCard().getKeywords().contains(Keyword.FLYING)
-                        && !blocker.getCard().getKeywords().contains(Keyword.REACH)) {
+                if (attacker.hasKeyword(Keyword.FLYING)
+                        && !blocker.hasKeyword(Keyword.FLYING)
+                        && !blocker.hasKeyword(Keyword.REACH)) {
                     throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (flying)");
                 }
             }
@@ -1186,7 +1215,7 @@ public class GameService {
         // Check if any combat creature has first strike
         boolean anyFirstStrike = false;
         for (int atkIdx : attackingIndices) {
-            if (atkBf.get(atkIdx).getCard().getKeywords().contains(Keyword.FIRST_STRIKE)) {
+            if (atkBf.get(atkIdx).hasKeyword(Keyword.FIRST_STRIKE)) {
                 anyFirstStrike = true;
                 break;
             }
@@ -1194,7 +1223,7 @@ public class GameService {
         if (!anyFirstStrike) {
             for (List<Integer> blkIndices : blockerMap.values()) {
                 for (int blkIdx : blkIndices) {
-                    if (defBf.get(blkIdx).getCard().getKeywords().contains(Keyword.FIRST_STRIKE)) {
+                    if (defBf.get(blkIdx).hasKeyword(Keyword.FIRST_STRIKE)) {
                         anyFirstStrike = true;
                         break;
                     }
@@ -1217,7 +1246,7 @@ public class GameService {
                 int atkIdx = entry.getKey();
                 List<Integer> blkIndices = entry.getValue();
                 Permanent atk = atkBf.get(atkIdx);
-                boolean atkHasFS = atk.getCard().getKeywords().contains(Keyword.FIRST_STRIKE);
+                boolean atkHasFS = atk.hasKeyword(Keyword.FIRST_STRIKE);
 
                 if (blkIndices.isEmpty()) {
                     // Unblocked first striker deals damage to player
@@ -1238,7 +1267,7 @@ public class GameService {
                     // First strike blockers deal damage to attacker
                     for (int blkIdx : blkIndices) {
                         Permanent blk = defBf.get(blkIdx);
-                        if (blk.getCard().getKeywords().contains(Keyword.FIRST_STRIKE)) {
+                        if (blk.hasKeyword(Keyword.FIRST_STRIKE)) {
                             atkDamageTaken.merge(atkIdx, blk.getEffectivePower(), Integer::sum);
                         }
                     }
@@ -1269,7 +1298,7 @@ public class GameService {
             if (deadAttackerIndices.contains(atkIdx)) continue;
 
             Permanent atk = atkBf.get(atkIdx);
-            boolean atkHasFS = atk.getCard().getKeywords().contains(Keyword.FIRST_STRIKE);
+            boolean atkHasFS = atk.hasKeyword(Keyword.FIRST_STRIKE);
 
             if (blkIndices.isEmpty()) {
                 // Unblocked regular attacker deals damage to player
@@ -1293,7 +1322,7 @@ public class GameService {
                 for (int blkIdx : blkIndices) {
                     if (deadDefenderIndices.contains(blkIdx)) continue;
                     Permanent blk = defBf.get(blkIdx);
-                    if (!blk.getCard().getKeywords().contains(Keyword.FIRST_STRIKE)) {
+                    if (!blk.hasKeyword(Keyword.FIRST_STRIKE)) {
                         atkDamageTaken.merge(atkIdx, blk.getEffectivePower(), Integer::sum);
                     }
                 }
