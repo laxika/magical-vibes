@@ -222,17 +222,22 @@ public class GameService {
 
             // Check for ETB effects and push triggered abilities onto the stack
             if (card.getOnEnterBattlefieldEffects() != null && !card.getOnEnterBattlefieldEffects().isEmpty()) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        card,
-                        controllerId,
-                        card.getName() + "'s ETB ability",
-                        new ArrayList<>(card.getOnEnterBattlefieldEffects())
-                ));
-                String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
-                gameData.gameLog.add(etbLog);
-                broadcastLogEntry(gameData, etbLog);
-                log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
+                // For targeted ETB effects, only trigger if a target was provided
+                if (!card.isNeedsTarget() || entry.getTargetPermanentId() != null) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            controllerId,
+                            card.getName() + "'s ETB ability",
+                            new ArrayList<>(card.getOnEnterBattlefieldEffects()),
+                            0,
+                            entry.getTargetPermanentId()
+                    ));
+                    String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
+                    gameData.gameLog.add(etbLog);
+                    broadcastLogEntry(gameData, etbLog);
+                    log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
+                }
             }
 
             // Check for ally-creature-enters triggers (e.g. Angelic Chorus)
@@ -263,6 +268,8 @@ public class GameService {
                     resolveGainLife(gameData, entry.getControllerId(), gainLife.amount());
                 } else if (effect instanceof GainLifePerGraveyardCardEffect) {
                     resolveGainLifePerGraveyardCard(gameData, entry.getControllerId());
+                } else if (effect instanceof DestroyTargetPermanentEffect destroy) {
+                    resolveDestroyTargetPermanent(gameData, entry, destroy);
                 }
             }
         } else if (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY) {
@@ -628,7 +635,10 @@ public class GameService {
                     sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
                 }
 
-                gameData.stack.add(new StackEntry(card, playerId));
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.CREATURE_SPELL, card, playerId, card.getName(),
+                        List.of(), 0, targetPermanentId
+                ));
                 gameData.priorityPassedBy.clear();
 
                 sessionManager.sendToPlayer(playerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(playerId, 0)));
