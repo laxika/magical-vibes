@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessa
 import com.github.laxika.magicalvibes.networking.message.BattlefieldUpdatedMessage;
 import com.github.laxika.magicalvibes.networking.message.DeckSizesUpdatedMessage;
 import com.github.laxika.magicalvibes.networking.message.GameLogEntryMessage;
+import com.github.laxika.magicalvibes.networking.message.GraveyardUpdatedMessage;
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
 import com.github.laxika.magicalvibes.networking.message.GameStartedMessage;
 import com.github.laxika.magicalvibes.networking.message.HandDrawnMessage;
@@ -252,6 +253,10 @@ public class GameService {
                     resolveDealDamageToFlyingAndPlayers(gameData, entry.getXValue());
                 }
             }
+
+            // Sorcery goes to graveyard after resolving
+            gameData.playerGraveyards.get(entry.getControllerId()).add(entry.getCard());
+            broadcastGraveyards(gameData);
         } else if (entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
             String logEntry = entry.getDescription() + " resolves.";
             gameData.gameLog.add(logEntry);
@@ -263,6 +268,10 @@ public class GameService {
                     resolveBoostTargetCreature(gameData, entry, boost);
                 }
             }
+
+            // Instant goes to graveyard after resolving
+            gameData.playerGraveyards.get(entry.getControllerId()).add(entry.getCard());
+            broadcastGraveyards(gameData);
         }
 
         broadcastStackUpdate(gameData);
@@ -469,7 +478,8 @@ public class GameService {
                 manaPool,
                 autoStopSteps,
                 getLifeTotals(data),
-                new ArrayList<>(data.stack)
+                new ArrayList<>(data.stack),
+                getGraveyards(data)
         );
     }
 
@@ -497,6 +507,19 @@ public class GameService {
 
     private void broadcastBattlefields(GameData data) {
         sessionManager.sendToPlayers(data.orderedPlayerIds, new BattlefieldUpdatedMessage(getBattlefields(data)));
+    }
+
+    private List<List<Card>> getGraveyards(GameData data) {
+        List<List<Card>> graveyards = new ArrayList<>();
+        for (UUID pid : data.orderedPlayerIds) {
+            List<Card> gy = data.playerGraveyards.get(pid);
+            graveyards.add(gy != null ? new ArrayList<>(gy) : new ArrayList<>());
+        }
+        return graveyards;
+    }
+
+    private void broadcastGraveyards(GameData data) {
+        sessionManager.sendToPlayers(data.orderedPlayerIds, new GraveyardUpdatedMessage(getGraveyards(data)));
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId) {
@@ -871,17 +894,20 @@ public class GameService {
                 }
             }
 
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             for (int idx : deadIndices) {
                 String playerName = gameData.playerIdToName.get(playerId);
-                String creatureName = battlefield.get(idx).getCard().getName();
-                String logEntry = playerName + "'s " + creatureName + " is destroyed by Hurricane.";
+                Permanent dead = battlefield.get(idx);
+                String logEntry = playerName + "'s " + dead.getCard().getName() + " is destroyed by Hurricane.";
                 gameData.gameLog.add(logEntry);
                 broadcastLogEntry(gameData, logEntry);
+                graveyard.add(dead.getCard());
                 battlefield.remove(idx);
             }
         }
 
         broadcastBattlefields(gameData);
+        broadcastGraveyards(gameData);
 
         // Deal damage to each player
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -1178,14 +1204,20 @@ public class GameService {
             }
         }
 
-        // Remove dead creatures (descending order to preserve indices)
+        // Remove dead creatures (descending order to preserve indices) and move to graveyard
         List<String> deadCreatureNames = new ArrayList<>();
+        List<Card> attackerGraveyard = gameData.playerGraveyards.get(activeId);
         for (int idx : deadAttackerIndices) {
-            deadCreatureNames.add(gameData.playerIdToName.get(activeId) + "'s " + attackerBattlefield.get(idx).getCard().getName());
+            Permanent dead = attackerBattlefield.get(idx);
+            deadCreatureNames.add(gameData.playerIdToName.get(activeId) + "'s " + dead.getCard().getName());
+            attackerGraveyard.add(dead.getCard());
             attackerBattlefield.remove(idx);
         }
+        List<Card> defenderGraveyard = gameData.playerGraveyards.get(defenderId);
         for (int idx : deadDefenderIndices) {
-            deadCreatureNames.add(gameData.playerIdToName.get(defenderId) + "'s " + defenderBattlefield.get(idx).getCard().getName());
+            Permanent dead = defenderBattlefield.get(idx);
+            deadCreatureNames.add(gameData.playerIdToName.get(defenderId) + "'s " + dead.getCard().getName());
+            defenderGraveyard.add(dead.getCard());
             defenderBattlefield.remove(idx);
         }
 
@@ -1207,6 +1239,9 @@ public class GameService {
 
         broadcastBattlefields(gameData);
         broadcastLifeTotals(gameData);
+        if (!deadAttackerIndices.isEmpty() || !deadDefenderIndices.isEmpty()) {
+            broadcastGraveyards(gameData);
+        }
 
         log.info("Game {} - Combat damage resolved: {} damage to defender, {} creatures died",
                 gameData.id, damageToDefender, deadAttackerIndices.size() + deadDefenderIndices.size());

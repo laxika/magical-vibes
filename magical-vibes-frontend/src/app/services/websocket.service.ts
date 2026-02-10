@@ -41,6 +41,7 @@ export enum MessageType {
   CHOOSE_CARD_FROM_HAND = 'CHOOSE_CARD_FROM_HAND',
   CARD_CHOSEN = 'CARD_CHOSEN',
   STACK_UPDATED = 'STACK_UPDATED',
+  GRAVEYARD_UPDATED = 'GRAVEYARD_UPDATED',
   ERROR = 'ERROR'
 }
 
@@ -160,6 +161,7 @@ export interface Game {
   autoStopSteps: string[];
   lifeTotals: number[];
   stack: StackEntry[];
+  graveyards: Card[][];
 }
 
 export interface LobbyGame {
@@ -281,7 +283,12 @@ export interface StackUpdatedNotification {
   stack: StackEntry[];
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCardFromHandNotification | StackUpdatedNotification;
+export interface GraveyardUpdatedNotification {
+  type: MessageType;
+  graveyards: Card[][];
+}
+
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCardFromHandNotification | StackUpdatedNotification | GraveyardUpdatedNotification;
 
 export interface User {
   userId: string;

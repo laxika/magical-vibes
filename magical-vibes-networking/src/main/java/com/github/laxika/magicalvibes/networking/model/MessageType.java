@@ -40,5 +40,6 @@ public enum MessageType {
     CHOOSE_CARD_FROM_HAND,
     CARD_CHOSEN,
     STACK_UPDATED,
+    GRAVEYARD_UPDATED,
     ERROR
 }

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, StackEntry, StackUpdatedNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, StackEntry, StackUpdatedNotification, GraveyardUpdatedNotification } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 export interface IndexedPermanent {
@@ -139,6 +139,11 @@ export class GameComponent implements OnInit, OnDestroy {
         if (message.type === MessageType.STACK_UPDATED) {
           const stackMsg = message as StackUpdatedNotification;
           this.updateStack(stackMsg.stack);
+        }
+
+        if (message.type === MessageType.GRAVEYARD_UPDATED) {
+          const gyMsg = message as GraveyardUpdatedNotification;
+          this.updateGraveyards(gyMsg.graveyards);
         }
 
         const update = message as GameUpdate;
@@ -334,6 +339,14 @@ export class GameComponent implements OnInit, OnDestroy {
     this.websocketService.currentGame = updated;
   }
 
+  private updateGraveyards(graveyards: Card[][]): void {
+    const g = this.game();
+    if (!g) return;
+    const updated = { ...g, graveyards };
+    this.game.set(updated);
+    this.websocketService.currentGame = updated;
+  }
+
   private handleAvailableAttackers(msg: AvailableAttackersNotification): void {
     this.declaringAttackers = true;
     this.availableAttackerIndices.set(new Set(msg.attackerIndices));
@@ -409,6 +422,14 @@ export class GameComponent implements OnInit, OnDestroy {
 
   get opponentBattlefield(): Permanent[] {
     return this.game()?.battlefields?.[this.opponentPlayerIndex] ?? [];
+  }
+
+  get myGraveyard(): Card[] {
+    return this.game()?.graveyards?.[this.myPlayerIndex] ?? [];
+  }
+
+  get opponentGraveyard(): Card[] {
+    return this.game()?.graveyards?.[this.opponentPlayerIndex] ?? [];
   }
 
   playCard(index: number): void {

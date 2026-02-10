@@ -284,6 +284,25 @@
         @if (opponentBattlefield.length === 0) {
           <div class="battlefield-empty">No permanents</div>
         }
+        @if (opponentGraveyard.length > 0) {
+          <div class="graveyard-row">
+            <div class="graveyard-label">Graveyard ({{ opponentGraveyard.length }})</div>
+            <div class="graveyard-cards">
+              @for (card of opponentGraveyard; track $index) {
+                <div class="card graveyard-card" [attr.data-card-type]="card.type">
+                  @if (card.manaCost) {
+                    <div class="card-mana-cost">{{ card.manaCost }}</div>
+                  }
+                  <div class="card-name">{{ card.name }}</div>
+                  <div class="card-type">{{ card.type }}</div>
+                  @if (card.power != null && card.toughness != null) {
+                    <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
       </div>
 
       @if (showCombatZone) {
@@ -419,6 +438,25 @@
         </div>
         @if (myBattlefield.length === 0) {
           <div class="battlefield-empty">No permanents</div>
+        }
+        @if (myGraveyard.length > 0) {
+          <div class="graveyard-row">
+            <div class="graveyard-label">Graveyard ({{ myGraveyard.length }})</div>
+            <div class="graveyard-cards">
+              @for (card of myGraveyard; track $index) {
+                <div class="card graveyard-card" [attr.data-card-type]="card.type">
+                  @if (card.manaCost) {
+                    <div class="card-mana-cost">{{ card.manaCost }}</div>
+                  }
+                  <div class="card-name">{{ card.name }}</div>
+                  <div class="card-type">{{ card.type }}</div>
+                  @if (card.power != null && card.toughness != null) {
+                    <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
         }
       </div>
     </div>
