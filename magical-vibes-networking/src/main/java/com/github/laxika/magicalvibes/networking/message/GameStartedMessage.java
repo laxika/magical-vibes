@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.networking.message;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 
-public record GameStartedMessage(MessageType type, Long activePlayerId, int turnNumber,
-                                  TurnStep currentStep, Long priorityPlayerId) {
+import java.util.UUID;
 
-    public GameStartedMessage(Long activePlayerId, int turnNumber, TurnStep currentStep, Long priorityPlayerId) {
+public record GameStartedMessage(MessageType type, UUID activePlayerId, int turnNumber,
+                                  TurnStep currentStep, UUID priorityPlayerId) {
+
+    public GameStartedMessage(UUID activePlayerId, int turnNumber, TurnStep currentStep, UUID priorityPlayerId) {
         this(MessageType.GAME_STARTED, activePlayerId, turnNumber, currentStep, priorityPlayerId);
     }
 }

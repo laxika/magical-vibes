@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.config.JacksonConfig;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class GameTestHarness {
 
@@ -33,8 +34,8 @@ public class GameTestHarness {
         gameService = new GameService(sessionManager);
         lobbyService = new LobbyService(gameRegistry, gameService);
 
-        player1 = new Player(1L, "Alice");
-        player2 = new Player(2L, "Bob");
+        player1 = new Player(UUID.randomUUID(), "Alice");
+        player2 = new Player(UUID.randomUUID(), "Bob");
         conn1 = new FakeConnection("conn-1");
         conn2 = new FakeConnection("conn-2");
 
@@ -76,18 +77,18 @@ public class GameTestHarness {
     }
 
     public void castCreature(Player player, int cardIndex) {
-        gameService.playCard(gameData, player, cardIndex, 0, 0);
+        gameService.playCard(gameData, player, cardIndex, 0, null);
     }
 
     public void castSorcery(Player player, int cardIndex, int xValue) {
-        gameService.playCard(gameData, player, cardIndex, xValue, 0);
+        gameService.playCard(gameData, player, cardIndex, xValue, null);
     }
 
-    public void castInstant(Player player, int cardIndex, int targetPermanentId) {
+    public void castInstant(Player player, int cardIndex, UUID targetPermanentId) {
         gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId);
     }
 
-    public int getPermanentId(Player player, String cardName) {
+    public UUID getPermanentId(Player player, String cardName) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(player.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().getName().equals(cardName)) {

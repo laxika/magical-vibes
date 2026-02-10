@@ -105,7 +105,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.showCreateForm.set(false);
   }
 
-  joinGame(gameId: number) {
+  joinGame(gameId: string) {
     this.errorMessage.set('');
     this.websocketService.send({
       type: MessageType.JOIN_GAME,

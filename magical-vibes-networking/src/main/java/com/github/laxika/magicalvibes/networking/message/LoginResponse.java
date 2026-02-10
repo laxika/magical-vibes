@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -12,14 +13,14 @@ public class LoginResponse {
 
     private MessageType type;
     private String message;
-    private Long userId;
+    private UUID userId;
     private String username;
     private List<LobbyGame> games;
 
     public LoginResponse() {
     }
 
-    public LoginResponse(MessageType type, String message, Long userId, String username, List<LobbyGame> games) {
+    public LoginResponse(MessageType type, String message, UUID userId, String username, List<LobbyGame> games) {
         this.type = type;
         this.message = message;
         this.userId = userId;
@@ -27,7 +28,7 @@ public class LoginResponse {
         this.games = games;
     }
 
-    public static LoginResponse success(Long userId, String username, List<LobbyGame> games) {
+    public static LoginResponse success(UUID userId, String username, List<LobbyGame> games) {
         return new LoginResponse(MessageType.LOGIN_SUCCESS, "Login successful", userId, username, games);
     }
 

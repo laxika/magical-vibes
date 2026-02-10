@@ -6,28 +6,23 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class GameRegistry {
 
-    private final AtomicLong idCounter = new AtomicLong(1);
-    private final Map<Long, GameData> games = new ConcurrentHashMap<>();
-
-    public long nextId() {
-        return idCounter.getAndIncrement();
-    }
+    private final Map<UUID, GameData> games = new ConcurrentHashMap<>();
 
     public void register(GameData gameData) {
         games.put(gameData.id, gameData);
     }
 
-    public GameData get(Long gameId) {
+    public GameData get(UUID gameId) {
         return games.get(gameId);
     }
 
-    public GameData getGameForPlayer(Long userId) {
+    public GameData getGameForPlayer(UUID userId) {
         return games.values().stream()
                 .filter(g -> g.playerIds.contains(userId))
                 .findFirst()

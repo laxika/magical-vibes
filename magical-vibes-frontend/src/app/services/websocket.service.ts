@@ -116,7 +116,7 @@ export interface Card {
 }
 
 export interface Permanent {
-  id: number;
+  id: string;
   card: Card;
   tapped: boolean;
   attacking: boolean;
@@ -132,23 +132,23 @@ export interface Permanent {
 export interface StackEntry {
   entryType: string;
   card: Card;
-  controllerId: number;
+  controllerId: string;
   description: string;
   effectsToResolve: any[];
-  targetPermanentId: number;
+  targetPermanentId: string | null;
 }
 
 export interface Game {
-  id: number;
+  id: string;
   gameName: string;
   status: GameStatus;
   playerNames: string[];
-  playerIds: number[];
+  playerIds: string[];
   gameLog: string[];
   currentStep: TurnStep | null;
-  activePlayerId: number | null;
+  activePlayerId: string | null;
   turnNumber: number;
-  priorityPlayerId: number | null;
+  priorityPlayerId: string | null;
   hand: Card[];
   mulliganCount: number;
   deckSizes: number[];
@@ -160,7 +160,7 @@ export interface Game {
 }
 
 export interface LobbyGame {
-  id: number;
+  id: string;
   gameName: string;
   createdByUsername: string;
   playerCount: number;
@@ -170,7 +170,7 @@ export interface LobbyGame {
 export interface LoginResponse {
   type: MessageType;
   message: string;
-  userId?: number;
+  userId?: string;
   username?: string;
   games?: LobbyGame[];
 }
@@ -188,9 +188,9 @@ export interface LobbyGameNotification {
 
 export interface GameUpdate {
   type: MessageType;
-  priorityPlayerId?: number;
+  priorityPlayerId?: string;
   currentStep?: TurnStep;
-  activePlayerId?: number;
+  activePlayerId?: string;
   turnNumber?: number;
 }
 
@@ -209,10 +209,10 @@ export interface MulliganResolvedNotification {
 
 export interface GameStartedNotification {
   type: MessageType;
-  activePlayerId: number;
+  activePlayerId: string;
   turnNumber: number;
   currentStep: TurnStep;
-  priorityPlayerId: number;
+  priorityPlayerId: string;
 }
 
 export interface SelectCardsToBottomNotification {
@@ -263,7 +263,7 @@ export interface LifeUpdatedNotification {
 
 export interface GameOverNotification {
   type: MessageType;
-  winnerId: number;
+  winnerId: string;
   winnerName: string;
 }
 
@@ -281,7 +281,7 @@ export interface StackUpdatedNotification {
 export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCardFromHandNotification | StackUpdatedNotification;
 
 export interface User {
-  userId: number;
+  userId: string;
   username: string;
 }
 

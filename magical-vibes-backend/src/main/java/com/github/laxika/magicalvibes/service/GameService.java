@@ -115,7 +115,7 @@ public class GameService {
     }
 
     private void handleDrawStep(GameData gameData) {
-        Long activePlayerId = gameData.activePlayerId;
+        UUID activePlayerId = gameData.activePlayerId;
 
         // The starting player skips their draw on turn 1
         if (gameData.turnNumber == 1 && activePlayerId.equals(gameData.startingPlayerId)) {
@@ -149,9 +149,9 @@ public class GameService {
     }
 
     private void advanceTurn(GameData gameData) {
-        List<Long> ids = new ArrayList<>(gameData.orderedPlayerIds);
-        Long currentActive = gameData.activePlayerId;
-        Long nextActive = ids.get(0).equals(currentActive) ? ids.get(1) : ids.get(0);
+        List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);
+        UUID currentActive = gameData.activePlayerId;
+        UUID nextActive = ids.get(0).equals(currentActive) ? ids.get(1) : ids.get(0);
         String nextActiveName = gameData.playerIdToName.get(nextActive);
 
         gameData.activePlayerId = nextActive;
@@ -201,7 +201,7 @@ public class GameService {
 
         if (entry.getEntryType() == StackEntryType.CREATURE_SPELL) {
             Card card = entry.getCard();
-            Long controllerId = entry.getControllerId();
+            UUID controllerId = entry.getControllerId();
 
             gameData.playerBattlefields.get(controllerId).add(new Permanent(card));
             broadcastBattlefields(gameData);
@@ -266,22 +266,22 @@ public class GameService {
         sessionManager.sendToPlayers(gameData.orderedPlayerIds,new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
     }
 
-    private Long getPriorityPlayerId(GameData data) {
+    private UUID getPriorityPlayerId(GameData data) {
         if (data.activePlayerId == null) {
             return null;
         }
         if (!data.priorityPassedBy.contains(data.activePlayerId)) {
             return data.activePlayerId;
         }
-        List<Long> ids = new ArrayList<>(data.orderedPlayerIds);
-        Long nonActive = ids.get(0).equals(data.activePlayerId) ? ids.get(1) : ids.get(0);
+        List<UUID> ids = new ArrayList<>(data.orderedPlayerIds);
+        UUID nonActive = ids.get(0).equals(data.activePlayerId) ? ids.get(1) : ids.get(0);
         if (!data.priorityPassedBy.contains(nonActive)) {
             return nonActive;
         }
         return null;
     }
 
-    public JoinGame getJoinGame(GameData data, Long playerId) {
+    public JoinGame getJoinGame(GameData data, UUID playerId) {
         return toJoinGame(data, playerId);
     }
 
@@ -441,7 +441,7 @@ public class GameService {
         resolveAutoPass(gameData);
     }
 
-    private JoinGame toJoinGame(GameData data, Long playerId) {
+    private JoinGame toJoinGame(GameData data, UUID playerId) {
         List<Card> hand = playerId != null ? new ArrayList<>(data.playerHands.getOrDefault(playerId, List.of())) : List.of();
         int mulliganCount = playerId != null ? data.mulliganCounts.getOrDefault(playerId, 0) : 0;
         Map<String, Integer> manaPool = getManaPool(data, playerId);
@@ -472,7 +472,7 @@ public class GameService {
 
     private List<Integer> getDeckSizes(GameData data) {
         List<Integer> sizes = new ArrayList<>();
-        for (Long pid : data.orderedPlayerIds) {
+        for (UUID pid : data.orderedPlayerIds) {
             List<Card> deck = data.playerDecks.get(pid);
             sizes.add(deck != null ? deck.size() : 0);
         }
@@ -485,7 +485,7 @@ public class GameService {
 
     private List<List<Permanent>> getBattlefields(GameData data) {
         List<List<Permanent>> battlefields = new ArrayList<>();
-        for (Long pid : data.orderedPlayerIds) {
+        for (UUID pid : data.orderedPlayerIds) {
             List<Permanent> bf = data.playerBattlefields.get(pid);
             battlefields.add(bf != null ? new ArrayList<>(bf) : new ArrayList<>());
         }
@@ -496,13 +496,13 @@ public class GameService {
         sessionManager.sendToPlayers(data.orderedPlayerIds, new BattlefieldUpdatedMessage(getBattlefields(data)));
     }
 
-    public void playCard(GameData gameData, Player player, int cardIndex, int xValue, int targetPermanentId) {
+    public void playCard(GameData gameData, Player player, int cardIndex, int xValue, UUID targetPermanentId) {
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
         }
 
         synchronized (gameData) {
-            Long playerId = player.getId();
+            UUID playerId = player.getId();
             List<Integer> playable = getPlayableCardIndices(gameData, playerId);
             if (!playable.contains(cardIndex)) {
                 throw new IllegalStateException("Card is not playable");
@@ -526,7 +526,7 @@ public class GameService {
             }
 
             // Validate target if specified
-            if (targetPermanentId > 0) {
+            if (targetPermanentId != null) {
                 Permanent target = findPermanentById(gameData, targetPermanentId);
                 if (target == null) {
                     throw new IllegalStateException("Invalid target permanent");
@@ -629,7 +629,7 @@ public class GameService {
         }
 
         synchronized (gameData) {
-            Long playerId = player.getId();
+            UUID playerId = player.getId();
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null || permanentIndex < 0 || permanentIndex >= battlefield.size()) {
                 throw new IllegalStateException("Invalid permanent index");
@@ -685,8 +685,8 @@ public class GameService {
 
     // ===== ETB effect methods =====
 
-    private void resolveOpponentMayPlayCreature(GameData gameData, Long controllerId) {
-        Long opponentId = getOpponentId(gameData, controllerId);
+    private void resolveOpponentMayPlayCreature(GameData gameData, UUID controllerId) {
+        UUID opponentId = getOpponentId(gameData, controllerId);
         List<Card> opponentHand = gameData.playerHands.get(opponentId);
 
         List<Integer> creatureIndices = new ArrayList<>();
@@ -711,7 +711,7 @@ public class GameService {
         beginCardChoice(gameData, opponentId, creatureIndices, prompt);
     }
 
-    private void beginCardChoice(GameData gameData, Long playerId, List<Integer> validIndices, String prompt) {
+    private void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         gameData.awaitingCardChoice = true;
         gameData.awaitingCardChoicePlayerId = playerId;
         gameData.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
@@ -730,7 +730,7 @@ public class GameService {
                 throw new IllegalStateException("Not your turn to choose");
             }
 
-            Long playerId = player.getId();
+            UUID playerId = player.getId();
             Set<Integer> validIndices = gameData.awaitingCardChoiceValidIndices;
 
             gameData.awaitingCardChoice = false;
@@ -805,12 +805,13 @@ public class GameService {
         log.info("Game {} - {} gets +{}/+{}", gameData.id, target.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
     }
 
-    private Permanent findPermanentById(GameData gameData, int permanentId) {
-        for (Long playerId : gameData.orderedPlayerIds) {
+    private Permanent findPermanentById(GameData gameData, UUID permanentId) {
+        if (permanentId == null) return null;
+        for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
             for (Permanent p : battlefield) {
-                if (p.getId() == permanentId) {
+                if (p.getId().equals(permanentId)) {
                     return p;
                 }
             }
@@ -820,7 +821,7 @@ public class GameService {
 
     private void resetEndOfTurnModifiers(GameData gameData) {
         boolean anyReset = false;
-        for (Long playerId : gameData.orderedPlayerIds) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
             for (Permanent p : battlefield) {
@@ -839,7 +840,7 @@ public class GameService {
 
     private void resolveDealDamageToFlyingAndPlayers(GameData gameData, int damage) {
         // Deal damage to creatures with flying
-        for (Long playerId : gameData.orderedPlayerIds) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
 
@@ -867,7 +868,7 @@ public class GameService {
         broadcastBattlefields(gameData);
 
         // Deal damage to each player
-        for (Long playerId : gameData.orderedPlayerIds) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
             int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
             gameData.playerLifeTotals.put(playerId, currentLife - damage);
 
@@ -885,7 +886,7 @@ public class GameService {
 
     // ===== Combat methods =====
 
-    private List<Integer> getAttackableCreatureIndices(GameData gameData, Long playerId) {
+    private List<Integer> getAttackableCreatureIndices(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
         List<Integer> indices = new ArrayList<>();
@@ -898,7 +899,7 @@ public class GameService {
         return indices;
     }
 
-    private List<Integer> getBlockableCreatureIndices(GameData gameData, Long playerId) {
+    private List<Integer> getBlockableCreatureIndices(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
         List<Integer> indices = new ArrayList<>();
@@ -911,7 +912,7 @@ public class GameService {
         return indices;
     }
 
-    private List<Integer> getAttackingCreatureIndices(GameData gameData, Long playerId) {
+    private List<Integer> getAttackingCreatureIndices(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
         List<Integer> indices = new ArrayList<>();
@@ -923,14 +924,14 @@ public class GameService {
         return indices;
     }
 
-    private Long getOpponentId(GameData gameData, Long playerId) {
-        List<Long> ids = new ArrayList<>(gameData.orderedPlayerIds);
+    private UUID getOpponentId(GameData gameData, UUID playerId) {
+        List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);
         return ids.get(0).equals(playerId) ? ids.get(1) : ids.get(0);
     }
 
     private List<Integer> getLifeTotals(GameData gameData) {
         List<Integer> totals = new ArrayList<>();
-        for (Long pid : gameData.orderedPlayerIds) {
+        for (UUID pid : gameData.orderedPlayerIds) {
             totals.add(gameData.playerLifeTotals.getOrDefault(pid, 20));
         }
         return totals;
@@ -941,7 +942,7 @@ public class GameService {
     }
 
     private void handleDeclareAttackersStep(GameData gameData) {
-        Long activeId = gameData.activePlayerId;
+        UUID activeId = gameData.activePlayerId;
         List<Integer> attackable = getAttackableCreatureIndices(gameData, activeId);
 
         if (attackable.isEmpty()) {
@@ -974,7 +975,7 @@ public class GameService {
                 throw new IllegalStateException("Only the active player can declare attackers");
             }
 
-            Long playerId = player.getId();
+            UUID playerId = player.getId();
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             List<Integer> attackable = getAttackableCreatureIndices(gameData, playerId);
 
@@ -1020,8 +1021,8 @@ public class GameService {
     }
 
     private void handleDeclareBlockersStep(GameData gameData) {
-        Long activeId = gameData.activePlayerId;
-        Long defenderId = getOpponentId(gameData, activeId);
+        UUID activeId = gameData.activePlayerId;
+        UUID defenderId = getOpponentId(gameData, activeId);
         List<Integer> blockable = getBlockableCreatureIndices(gameData, defenderId);
         List<Integer> attackerIndices = getAttackingCreatureIndices(gameData, activeId);
 
@@ -1041,8 +1042,8 @@ public class GameService {
                 throw new IllegalStateException("Not awaiting blocker declaration");
             }
 
-            Long activeId = gameData.activePlayerId;
-            Long defenderId = getOpponentId(gameData, activeId);
+            UUID activeId = gameData.activePlayerId;
+            UUID defenderId = getOpponentId(gameData, activeId);
 
             if (!player.getId().equals(defenderId)) {
                 throw new IllegalStateException("Only the defending player can declare blockers");
@@ -1103,8 +1104,8 @@ public class GameService {
     }
 
     private void resolveCombatDamage(GameData gameData) {
-        Long activeId = gameData.activePlayerId;
-        Long defenderId = getOpponentId(gameData, activeId);
+        UUID activeId = gameData.activePlayerId;
+        UUID defenderId = getOpponentId(gameData, activeId);
 
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
@@ -1204,10 +1205,10 @@ public class GameService {
     }
 
     private boolean checkWinCondition(GameData gameData) {
-        for (Long playerId : gameData.orderedPlayerIds) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
             int life = gameData.playerLifeTotals.getOrDefault(playerId, 20);
             if (life <= 0) {
-                Long winnerId = getOpponentId(gameData, playerId);
+                UUID winnerId = getOpponentId(gameData, playerId);
                 String winnerName = gameData.playerIdToName.get(winnerId);
 
                 gameData.status = GameStatus.FINISHED;
@@ -1227,7 +1228,7 @@ public class GameService {
     }
 
     private void clearCombatState(GameData gameData) {
-        for (Long playerId : gameData.orderedPlayerIds) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null) {
                 battlefield.forEach(Permanent::clearCombatState);
@@ -1239,7 +1240,7 @@ public class GameService {
     // ===== End combat methods =====
 
     private void drainManaPools(GameData gameData) {
-        for (Long playerId : gameData.orderedPlayerIds) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
             ManaPool manaPool = gameData.playerManaPools.get(playerId);
             if (manaPool != null) {
                 manaPool.clear();
@@ -1248,7 +1249,7 @@ public class GameService {
         }
     }
 
-    private Map<String, Integer> getManaPool(GameData data, Long playerId) {
+    private Map<String, Integer> getManaPool(GameData data, UUID playerId) {
         if (playerId == null) {
             return Map.of("W", 0, "U", 0, "B", 0, "R", 0, "G", 0);
         }
@@ -1256,13 +1257,13 @@ public class GameService {
         return pool != null ? pool.toMap() : Map.of("W", 0, "U", 0, "B", 0, "R", 0, "G", 0);
     }
 
-    private List<Integer> getPlayableCardIndices(GameData gameData, Long playerId) {
+    private List<Integer> getPlayableCardIndices(GameData gameData, UUID playerId) {
         List<Integer> playable = new ArrayList<>();
         if (gameData.status != GameStatus.RUNNING) {
             return playable;
         }
 
-        Long priorityHolder = getPriorityPlayerId(gameData);
+        UUID priorityHolder = getPriorityPlayerId(gameData);
         if (!playerId.equals(priorityHolder)) {
             return playable;
         }
@@ -1312,7 +1313,7 @@ public class GameService {
     }
 
     private void broadcastPlayableCards(GameData gameData) {
-        for (Long playerId : gameData.orderedPlayerIds) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
             List<Integer> playable = getPlayableCardIndices(gameData, playerId);
             sessionManager.sendToPlayer(playerId, new PlayableCardsMessage(playable));
         }
@@ -1332,7 +1333,7 @@ public class GameService {
                 return;
             }
 
-            Long priorityHolder = getPriorityPlayerId(gameData);
+            UUID priorityHolder = getPriorityPlayerId(gameData);
 
             // If no one holds priority (both already passed), advance the step
             if (priorityHolder == null) {

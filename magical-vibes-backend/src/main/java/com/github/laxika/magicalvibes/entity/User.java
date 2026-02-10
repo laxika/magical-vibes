@@ -2,13 +2,15 @@ package com.github.laxika.magicalvibes.entity;
 
 import jakarta.persistence.*;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "users")
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(columnDefinition = "VARCHAR(36)")
+    private UUID id;
 
     @Column(nullable = false, unique = true, length = 50)
     private String username;
@@ -20,15 +22,16 @@ public class User {
     }
 
     public User(String username, String password) {
+        this.id = UUID.randomUUID();
         this.username = username;
         this.password = password;
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

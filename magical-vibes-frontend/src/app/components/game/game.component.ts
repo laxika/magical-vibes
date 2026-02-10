@@ -396,7 +396,7 @@ export class GameComponent implements OnInit, OnDestroy {
   get myPlayerIndex(): number {
     const g = this.game();
     if (!g) return 0;
-    return g.playerIds.indexOf(this.websocketService.currentUser?.userId ?? -1);
+    return g.playerIds.indexOf(this.websocketService.currentUser?.userId ?? '');
   }
 
   get opponentPlayerIndex(): number {
@@ -421,11 +421,11 @@ export class GameComponent implements OnInit, OnDestroy {
         this.targetingCardName = card.name;
         return;
       }
-      this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetPermanentId: 0 });
+      this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetPermanentId: null });
     }
   }
 
-  selectTarget(permanentId: number): void {
+  selectTarget(permanentId: string): void {
     if (!this.targeting) return;
     this.websocketService.send({
       type: MessageType.PLAY_CARD,
@@ -553,7 +553,7 @@ export class GameComponent implements OnInit, OnDestroy {
   blockerAssignments: Map<number, number> = new Map();
   selectedBlockerIndex: number | null = null;
   gameOverWinner: string | null = null;
-  gameOverWinnerId: number | null = null;
+  gameOverWinnerId: string | null = null;
   choosingFromHand = false;
   choosableHandIndices = signal(new Set<number>());
   handChoicePrompt = '';
@@ -694,7 +694,7 @@ export class GameComponent implements OnInit, OnDestroy {
     return (this.game()?.stack ?? []).length === 0;
   }
 
-  getPlayerName(playerId: number): string {
+  getPlayerName(playerId: string): string {
     const g = this.game();
     if (!g) return '';
     const idx = g.playerIds.indexOf(playerId);

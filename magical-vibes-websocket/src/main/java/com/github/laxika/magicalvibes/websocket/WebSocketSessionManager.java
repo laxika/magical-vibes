@@ -11,6 +11,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -22,10 +23,10 @@ public class WebSocketSessionManager implements SessionManager {
 
     private final Map<String, Player> players = new ConcurrentHashMap<>();
     private final Map<String, Connection> connections = new ConcurrentHashMap<>();
-    private final Map<Long, String> userIdToConnectionId = new ConcurrentHashMap<>();
+    private final Map<UUID, String> userIdToConnectionId = new ConcurrentHashMap<>();
     private final Set<String> inGameConnectionIds = ConcurrentHashMap.newKeySet();
 
-    public void registerPlayer(Connection connection, Long userId, String username) {
+    public void registerPlayer(Connection connection, UUID userId, String username) {
         Player player = new Player(userId, username);
         players.put(connection.getId(), player);
         connections.put(connection.getId(), connection);
@@ -47,7 +48,7 @@ public class WebSocketSessionManager implements SessionManager {
         return players.get(connectionId);
     }
 
-    public Connection getConnectionByUserId(Long userId) {
+    public Connection getConnectionByUserId(UUID userId) {
         String connectionId = userIdToConnectionId.get(userId);
         return connectionId != null ? connections.get(connectionId) : null;
     }
@@ -64,7 +65,7 @@ public class WebSocketSessionManager implements SessionManager {
     }
 
     @Override
-    public void sendToPlayer(Long playerId, Object message) {
+    public void sendToPlayer(UUID playerId, Object message) {
         String json;
         try {
             json = objectMapper.writeValueAsString(message);
@@ -83,7 +84,7 @@ public class WebSocketSessionManager implements SessionManager {
     }
 
     @Override
-    public void sendToPlayers(Collection<Long> playerIds, Object message) {
+    public void sendToPlayers(Collection<UUID> playerIds, Object message) {
         String json;
         try {
             json = objectMapper.writeValueAsString(message);
@@ -91,7 +92,7 @@ public class WebSocketSessionManager implements SessionManager {
             log.error("Error serializing message", e);
             return;
         }
-        for (Long playerId : playerIds) {
+        for (UUID playerId : playerIds) {
             Connection connection = getConnectionByUserId(playerId);
             if (connection != null && connection.isOpen()) {
                 try {

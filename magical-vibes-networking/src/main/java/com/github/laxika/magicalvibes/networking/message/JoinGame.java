@@ -8,10 +8,11 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
-public record JoinGame(long id, String gameName, GameStatus status,
-                       List<String> playerNames, List<Long> playerIds, List<String> gameLog,
-                       TurnStep currentStep, Long activePlayerId, int turnNumber, Long priorityPlayerId,
+public record JoinGame(UUID id, String gameName, GameStatus status,
+                       List<String> playerNames, List<UUID> playerIds, List<String> gameLog,
+                       TurnStep currentStep, UUID activePlayerId, int turnNumber, UUID priorityPlayerId,
                        List<Card> hand, int mulliganCount, List<Integer> deckSizes,
                        List<List<Permanent>> battlefields, Map<String, Integer> manaPool,
                        List<TurnStep> autoStopSteps, List<Integer> lifeTotals,

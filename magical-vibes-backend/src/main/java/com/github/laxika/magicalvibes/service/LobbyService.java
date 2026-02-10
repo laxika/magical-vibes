@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -38,7 +39,7 @@ public class LobbyService {
     private final GameService gameService;
 
     public GameResult createGame(String gameName, Player player) {
-        long gameId = gameRegistry.nextId();
+        UUID gameId = UUID.randomUUID();
 
         GameData gameData = new GameData(gameId, gameName, player.getId(), player.getUsername());
         gameData.playerIds.add(player.getId());
@@ -87,7 +88,7 @@ public class LobbyService {
         Card huntedWumpus = new HuntedWumpus();
         Card mightOfOaks = new MightOfOaks();
 
-        for (Long playerId : gameData.playerIds) {
+        for (UUID playerId : gameData.playerIds) {
             List<Card> deck = new ArrayList<>();
             for (int i = 0; i < 24; i++) {
                 deck.add(forest);
@@ -129,8 +130,8 @@ public class LobbyService {
         gameData.gameLog.add("Game started!");
         gameData.gameLog.add("Each player receives a deck of 24 Forests, 4 Llanowar Elves, 4 Giant Spiders, 4 Hunted Wumpuses, 20 Grizzly Bears, and 4 Might of Oaks.");
 
-        List<Long> ids = new ArrayList<>(gameData.orderedPlayerIds);
-        Long startingPlayerId = ids.get(random.nextInt(ids.size()));
+        List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);
+        UUID startingPlayerId = ids.get(random.nextInt(ids.size()));
         String startingPlayerName = gameData.playerIdToName.get(startingPlayerId);
         gameData.startingPlayerId = startingPlayerId;
 

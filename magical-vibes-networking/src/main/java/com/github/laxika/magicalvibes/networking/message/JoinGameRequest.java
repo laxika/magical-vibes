@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.networking.message;
 
-public record JoinGameRequest(Long gameId) {
+import java.util.UUID;
+
+public record JoinGameRequest(UUID gameId) {
 }

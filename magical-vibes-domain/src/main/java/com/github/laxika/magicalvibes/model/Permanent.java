@@ -3,14 +3,12 @@ package com.github.laxika.magicalvibes.model;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.UUID;
 
 @Getter
 public class Permanent {
 
-    private static final AtomicInteger ID_COUNTER = new AtomicInteger(0);
-
-    private final int id;
+    private final UUID id;
     private final Card card;
     private boolean tapped;
     private boolean attacking;
@@ -21,7 +19,7 @@ public class Permanent {
     @Setter private int toughnessModifier;
 
     public Permanent(Card card) {
-        this.id = ID_COUNTER.incrementAndGet();
+        this.id = UUID.randomUUID();
         this.card = card;
         this.tapped = false;
         this.summoningSick = true;

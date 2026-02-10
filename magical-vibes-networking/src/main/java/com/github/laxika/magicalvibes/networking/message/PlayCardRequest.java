@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.networking.message;
 
-public record PlayCardRequest(int cardIndex, int xValue, int targetPermanentId) {
+import java.util.UUID;
+
+public record PlayCardRequest(int cardIndex, int xValue, UUID targetPermanentId) {
 }

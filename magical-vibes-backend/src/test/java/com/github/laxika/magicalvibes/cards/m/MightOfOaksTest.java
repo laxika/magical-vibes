@@ -13,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -42,7 +43,7 @@ class MightOfOaksTest {
     @DisplayName("Casting Might of Oaks puts it on the stack as INSTANT_SPELL with target")
     void castingPutsItOnStack() {
         setupBearAndMight();
-        int bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
 
         harness.castInstant(player1, 0, bearId);
 
@@ -59,7 +60,7 @@ class MightOfOaksTest {
     @DisplayName("Resolving Might of Oaks gives +7/+7 to target creature")
     void resolvingGivesBoost() {
         setupBearAndMight();
-        int bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
 
         harness.castInstant(player1, 0, bearId);
         harness.passBothPriorities();
@@ -75,7 +76,7 @@ class MightOfOaksTest {
     @DisplayName("Boost wears off at cleanup step")
     void boostWearsOffAtCleanup() {
         setupBearAndMight();
-        int bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
 
         harness.castInstant(player1, 0, bearId);
         harness.passBothPriorities();
@@ -105,7 +106,7 @@ class MightOfOaksTest {
         // Player2 is active, passes priority to player1
         harness.passPriority(player2);
 
-        int bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.castInstant(player1, 0, bearId);
 
         assertThat(harness.getGameData().stack).hasSize(1);
@@ -127,7 +128,7 @@ class MightOfOaksTest {
         harness.setHand(player2, List.of(new MightOfOaks()));
         harness.addMana(player2, "G", 4);
 
-        int bearId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castInstant(player2, 0, bearId);
 
         assertThat(harness.getGameData().stack).hasSize(2);
@@ -138,7 +139,7 @@ class MightOfOaksTest {
     @DisplayName("Spell fizzles when target is removed before resolution")
     void fizzlesWhenTargetRemoved() {
         setupBearAndMight();
-        int bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
 
         harness.castInstant(player1, 0, bearId);
 
@@ -156,7 +157,7 @@ class MightOfOaksTest {
     @DisplayName("Boosted creature in combat deals extra damage")
     void boostedCreatureDealsExtraDamage() {
         setupBearAndMight();
-        int bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
 
         // Remove summoning sickness
         harness.getGameData().playerBattlefields.get(player1.getId()).getFirst().setSummoningSick(false);
@@ -183,7 +184,7 @@ class MightOfOaksTest {
         harness.setHand(player1, List.of(new MightOfOaks(), new MightOfOaks()));
         harness.addMana(player1, "G", 8);
 
-        int bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
 
         harness.castInstant(player1, 0, bearId);
         harness.passBothPriorities();
@@ -203,7 +204,7 @@ class MightOfOaksTest {
         harness.setHand(player1, List.of(new MightOfOaks()));
         harness.addMana(player1, "G", 2);
 
-        int bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, bearId))
                 .isInstanceOf(IllegalStateException.class)
@@ -216,7 +217,7 @@ class MightOfOaksTest {
         harness.setHand(player1, List.of(new MightOfOaks()));
         harness.addMana(player1, "G", 4);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, 99999))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, UUID.randomUUID()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid target");
     }

@@ -5,3 +5,5 @@ databaseChangeLog:
       file: db/changelog/changes/002-insert-test-users.yaml
   - include:
       file: db/changelog/changes/003-insert-third-test-user.yaml
+  - include:
+      file: db/changelog/changes/004-convert-user-id-to-uuid.yaml
