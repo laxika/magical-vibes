@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -84,6 +85,7 @@ public class LobbyService {
         Card grizzlyBears = new GrizzlyBears();
         Card giantSpider = new GiantSpider();
         Card huntedWumpus = new HuntedWumpus();
+        Card mightOfOaks = new MightOfOaks();
 
         for (Long playerId : gameData.playerIds) {
             List<Card> deck = new ArrayList<>();
@@ -99,8 +101,11 @@ public class LobbyService {
             for (int i = 0; i < 4; i++) {
                 deck.add(huntedWumpus);
             }
-            for (int i = 0; i < 24; i++) {
+            for (int i = 0; i < 20; i++) {
                 deck.add(grizzlyBears);
+            }
+            for (int i = 0; i < 4; i++) {
+                deck.add(mightOfOaks);
             }
             Collections.shuffle(deck, random);
             gameData.playerDecks.put(playerId, deck);
@@ -122,7 +127,7 @@ public class LobbyService {
         gameData.status = GameStatus.MULLIGAN;
 
         gameData.gameLog.add("Game started!");
-        gameData.gameLog.add("Each player receives a deck of 24 Forests, 4 Llanowar Elves, 4 Giant Spiders, 4 Hunted Wumpuses, and 24 Grizzly Bears.");
+        gameData.gameLog.add("Each player receives a deck of 24 Forests, 4 Llanowar Elves, 4 Giant Spiders, 4 Hunted Wumpuses, 20 Grizzly Bears, and 4 Might of Oaks.");
 
         List<Long> ids = new ArrayList<>(gameData.orderedPlayerIds);
         Long startingPlayerId = ids.get(random.nextInt(ids.size()));

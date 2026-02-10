@@ -76,11 +76,25 @@ public class GameTestHarness {
     }
 
     public void castCreature(Player player, int cardIndex) {
-        gameService.playCard(gameData, player, cardIndex, 0);
+        gameService.playCard(gameData, player, cardIndex, 0, 0);
     }
 
     public void castSorcery(Player player, int cardIndex, int xValue) {
-        gameService.playCard(gameData, player, cardIndex, xValue);
+        gameService.playCard(gameData, player, cardIndex, xValue, 0);
+    }
+
+    public void castInstant(Player player, int cardIndex, int targetPermanentId) {
+        gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId);
+    }
+
+    public int getPermanentId(Player player, String cardName) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(player.getId());
+        for (Permanent p : battlefield) {
+            if (p.getCard().getName().equals(cardName)) {
+                return p.getId();
+            }
+        }
+        throw new IllegalStateException("Permanent not found: " + cardName);
     }
 
     public void passPriority(Player player) {

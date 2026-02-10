@@ -8,7 +8,8 @@ public enum CardType {
 
     BASIC_LAND("Basic Land"),
     CREATURE("Creature"),
-    SORCERY("Sorcery");
+    SORCERY("Sorcery"),
+    INSTANT("Instant");
 
     @Getter
     private final String displayName;

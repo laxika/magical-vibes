@@ -198,6 +198,13 @@
       </div>
     }
 
+    @if (targeting) {
+      <div class="combat-banner targeting-banner">
+        <span>Select a target creature for {{ targetingCardName }}</span>
+        <button class="btn-confirm-combat" (click)="cancelTargeting()">Cancel</button>
+      </div>
+    }
+
     <div class="battlefield-area">
       <div class="battlefield-row">
         <div class="battlefield-label">{{ game()?.playerNames?.[opponentPlayerIndex] }}'s Battlefield</div>
@@ -224,6 +231,7 @@
                  [class.tapped]="ip.perm.tapped"
                  [class.summoning-sick]="ip.perm.summoningSick"
                  [class.block-target]="isBlockTarget(ip.originalIndex)"
+                 [class.targetable]="targeting"
                  [attr.data-card-type]="ip.perm.card.type"
                  (click)="onOpponentBattlefieldCardClick(ip.originalIndex)">
               @if (ip.perm.card.manaCost) {
@@ -235,7 +243,7 @@
                 <div class="card-keywords">{{ formatKeywords(ip.perm.card.keywords) }}</div>
               }
               @if (ip.perm.card.power != null && ip.perm.card.toughness != null) {
-                <div class="card-pt">{{ ip.perm.card.power }}/{{ ip.perm.card.toughness }}</div>
+                <div class="card-pt" [class.buffed]="ip.perm.powerModifier > 0 || ip.perm.toughnessModifier > 0">{{ ip.perm.effectivePower }}/{{ ip.perm.effectiveToughness }}</div>
               }
               @if (ip.perm.tapped) {
                 <div class="card-tapped-badge">Tapped</div>
@@ -270,7 +278,7 @@
                       <div class="card-keywords">{{ formatKeywords(group.attacker.card.keywords) }}</div>
                     }
                     @if (group.attacker.card.power != null && group.attacker.card.toughness != null) {
-                      <div class="card-pt">{{ group.attacker.card.power }}/{{ group.attacker.card.toughness }}</div>
+                      <div class="card-pt" [class.buffed]="group.attacker.powerModifier > 0 || group.attacker.toughnessModifier > 0">{{ group.attacker.effectivePower }}/{{ group.attacker.effectiveToughness }}</div>
                     }
                     <div class="card-combat-badge attacking-badge">Attacking</div>
                   </div>
@@ -290,7 +298,7 @@
                           <div class="card-keywords">{{ formatKeywords(blocker.perm.card.keywords) }}</div>
                         }
                         @if (blocker.perm.card.power != null && blocker.perm.card.toughness != null) {
-                          <div class="card-pt">{{ blocker.perm.card.power }}/{{ blocker.perm.card.toughness }}</div>
+                          <div class="card-pt" [class.buffed]="blocker.perm.powerModifier > 0 || blocker.perm.toughnessModifier > 0">{{ blocker.perm.effectivePower }}/{{ blocker.perm.effectiveToughness }}</div>
                         }
                         <div class="card-combat-badge blocking-badge">Blocking</div>
                       </div>
@@ -317,6 +325,7 @@
                  [class.can-block]="canBlock(ip.originalIndex) && !isAssignedBlocker(ip.originalIndex) && selectedBlockerIndex !== ip.originalIndex"
                  [class.selected-blocker]="selectedBlockerIndex === ip.originalIndex"
                  [class.assigned-blocker]="isAssignedBlocker(ip.originalIndex)"
+                 [class.targetable]="targeting"
                  [attr.data-card-type]="ip.perm.card.type"
                  (click)="onMyBattlefieldCardClick(ip.originalIndex)">
               @if (ip.perm.card.manaCost) {
@@ -328,7 +337,7 @@
                 <div class="card-keywords">{{ formatKeywords(ip.perm.card.keywords) }}</div>
               }
               @if (ip.perm.card.power != null && ip.perm.card.toughness != null) {
-                <div class="card-pt">{{ ip.perm.card.power }}/{{ ip.perm.card.toughness }}</div>
+                <div class="card-pt" [class.buffed]="ip.perm.powerModifier > 0 || ip.perm.toughnessModifier > 0">{{ ip.perm.effectivePower }}/{{ ip.perm.effectiveToughness }}</div>
               }
               @if (ip.perm.tapped) {
                 <div class="card-tapped-badge">Tapped</div>

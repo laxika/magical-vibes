@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -105,6 +106,8 @@ public class GameService {
                 resolveCombatDamage(gameData);
             } else if (next == TurnStep.END_OF_COMBAT) {
                 clearCombatState(gameData);
+            } else if (next == TurnStep.CLEANUP) {
+                resetEndOfTurnModifiers(gameData);
             }
         } else {
             advanceTurn(gameData);
@@ -244,6 +247,17 @@ public class GameService {
             for (CardEffect effect : entry.getEffectsToResolve()) {
                 if (effect instanceof DealDamageToFlyingAndPlayersEffect) {
                     resolveDealDamageToFlyingAndPlayers(gameData, entry.getXValue());
+                }
+            }
+        } else if (entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
+            String logEntry = entry.getDescription() + " resolves.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            log.info("Game {} - {} resolves", gameData.id, entry.getDescription());
+
+            for (CardEffect effect : entry.getEffectsToResolve()) {
+                if (effect instanceof BoostTargetCreatureEffect boost) {
+                    resolveBoostTargetCreature(gameData, entry, boost);
                 }
             }
         }
@@ -482,7 +496,7 @@ public class GameService {
         sessionManager.sendToPlayers(data.orderedPlayerIds, new BattlefieldUpdatedMessage(getBattlefields(data)));
     }
 
-    public void playCard(GameData gameData, Player player, int cardIndex, int xValue) {
+    public void playCard(GameData gameData, Player player, int cardIndex, int xValue, int targetPermanentId) {
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
         }
@@ -508,6 +522,14 @@ public class GameService {
                     if (!cost.canPay(pool, xValue)) {
                         throw new IllegalStateException("Not enough mana to pay for X=" + xValue);
                     }
+                }
+            }
+
+            // Validate target if specified
+            if (targetPermanentId > 0) {
+                Permanent target = findPermanentById(gameData, targetPermanentId);
+                if (target == null) {
+                    throw new IllegalStateException("Invalid target permanent");
                 }
             }
 
@@ -572,6 +594,29 @@ public class GameService {
                 broadcastLogEntry(gameData, logEntry);
 
                 log.info("Game {} - {} casts {} with X={}", gameData.id, player.getUsername(), card.getName(), xValue);
+
+                resolveAutoPass(gameData);
+            } else if (card.getType() == CardType.INSTANT) {
+                ManaCost cost = new ManaCost(card.getManaCost());
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                cost.pay(pool);
+                sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
+
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.INSTANT_SPELL, card, playerId, card.getName(),
+                        new ArrayList<>(card.getSpellEffects()), 0, targetPermanentId
+                ));
+                gameData.priorityPassedBy.clear();
+
+                sessionManager.sendToPlayer(playerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+                broadcastStackUpdate(gameData);
+                sessionManager.sendToPlayers(gameData.orderedPlayerIds,new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+
+                String logEntry = player.getUsername() + " casts " + card.getName() + ".";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+
+                log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), card.getName());
 
                 resolveAutoPass(gameData);
             }
@@ -736,6 +781,60 @@ public class GameService {
         }
     }
 
+    // ===== Instant effect methods =====
+
+    private void resolveBoostTargetCreature(GameData gameData, StackEntry entry, BoostTargetCreatureEffect boost) {
+        Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            String fizzleLog = entry.getCard().getName() + " fizzles (target no longer exists).";
+            gameData.gameLog.add(fizzleLog);
+            broadcastLogEntry(gameData, fizzleLog);
+            log.info("Game {} - {} fizzles, target permanent {} no longer exists",
+                    gameData.id, entry.getCard().getName(), entry.getTargetPermanentId());
+            return;
+        }
+
+        target.setPowerModifier(target.getPowerModifier() + boost.powerBoost());
+        target.setToughnessModifier(target.getToughnessModifier() + boost.toughnessBoost());
+
+        String logEntry = target.getCard().getName() + " gets +" + boost.powerBoost() + "/+" + boost.toughnessBoost() + " until end of turn.";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        broadcastBattlefields(gameData);
+
+        log.info("Game {} - {} gets +{}/+{}", gameData.id, target.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
+    }
+
+    private Permanent findPermanentById(GameData gameData, int permanentId) {
+        for (Long playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (p.getId() == permanentId) {
+                    return p;
+                }
+            }
+        }
+        return null;
+    }
+
+    private void resetEndOfTurnModifiers(GameData gameData) {
+        boolean anyReset = false;
+        for (Long playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (p.getPowerModifier() != 0 || p.getToughnessModifier() != 0) {
+                    p.resetModifiers();
+                    anyReset = true;
+                }
+            }
+        }
+        if (anyReset) {
+            broadcastBattlefields(gameData);
+        }
+    }
+
     // ===== Sorcery effect methods =====
 
     private void resolveDealDamageToFlyingAndPlayers(GameData gameData, int damage) {
@@ -748,7 +847,7 @@ public class GameService {
             for (int i = 0; i < battlefield.size(); i++) {
                 Permanent p = battlefield.get(i);
                 if (p.getCard().getKeywords().contains(Keyword.FLYING)) {
-                    int toughness = p.getCard().getToughness() != null ? p.getCard().getToughness() : 0;
+                    int toughness = p.getEffectiveToughness();
                     if (damage >= toughness) {
                         deadIndices.add(i);
                     }
@@ -1018,8 +1117,8 @@ public class GameService {
 
         for (int atkIdx : attackingIndices) {
             Permanent attacker = attackerBattlefield.get(atkIdx);
-            int attackerPower = attacker.getCard().getPower() != null ? attacker.getCard().getPower() : 0;
-            int attackerToughness = attacker.getCard().getToughness() != null ? attacker.getCard().getToughness() : 0;
+            int attackerPower = attacker.getEffectivePower();
+            int attackerToughness = attacker.getEffectiveToughness();
 
             // Find all blockers targeting this attacker
             List<Integer> blockerIndices = new ArrayList<>();
@@ -1040,8 +1139,8 @@ public class GameService {
 
                 for (int blockerIdx : blockerIndices) {
                     Permanent blocker = defenderBattlefield.get(blockerIdx);
-                    int blockerToughness = blocker.getCard().getToughness() != null ? blocker.getCard().getToughness() : 0;
-                    int blockerPower = blocker.getCard().getPower() != null ? blocker.getCard().getPower() : 0;
+                    int blockerToughness = blocker.getEffectiveToughness();
+                    int blockerPower = blocker.getEffectivePower();
 
                     // Assign lethal damage to this blocker
                     int damageToThisBlocker = Math.min(remainingDamage, blockerToughness);
@@ -1196,6 +1295,13 @@ public class GameService {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 // For X-cost spells, playable if player can pay the colored portion (X=0 minimum)
+                if (cost.canPay(pool)) {
+                    playable.add(i);
+                }
+            }
+            if (card.getType() == CardType.INSTANT && card.getManaCost() != null) {
+                ManaCost cost = new ManaCost(card.getManaCost());
+                ManaPool pool = gameData.playerManaPools.get(playerId);
                 if (cost.canPay(pool)) {
                     playable.add(i);
                 }

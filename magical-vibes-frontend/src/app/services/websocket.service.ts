@@ -116,12 +116,17 @@ export interface Card {
 }
 
 export interface Permanent {
+  id: number;
   card: Card;
   tapped: boolean;
   attacking: boolean;
   blocking: boolean;
   blockingTarget: number;
   summoningSick: boolean;
+  powerModifier: number;
+  toughnessModifier: number;
+  effectivePower: number;
+  effectiveToughness: number;
 }
 
 export interface StackEntry {
@@ -130,6 +135,7 @@ export interface StackEntry {
   controllerId: number;
   description: string;
   effectsToResolve: any[];
+  targetPermanentId: number;
 }
 
 export interface Game {

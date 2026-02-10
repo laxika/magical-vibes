@@ -14,6 +14,7 @@ public class StackEntry {
     private final String description;
     private final List<CardEffect> effectsToResolve;
     private final int xValue;
+    private final int targetPermanentId;
 
     // Creature spell constructor
     public StackEntry(Card card, Long controllerId) {
@@ -23,6 +24,7 @@ public class StackEntry {
         this.description = card.getName();
         this.effectsToResolve = List.of();
         this.xValue = 0;
+        this.targetPermanentId = -1;
     }
 
     // Triggered ability constructor
@@ -33,9 +35,10 @@ public class StackEntry {
         this.description = description;
         this.effectsToResolve = effectsToResolve;
         this.xValue = 0;
+        this.targetPermanentId = -1;
     }
 
-    // General constructor with xValue (for sorcery/instant spells)
+    // General constructor with xValue (for sorcery spells)
     public StackEntry(StackEntryType entryType, Card card, Long controllerId, String description, List<CardEffect> effectsToResolve, int xValue) {
         this.entryType = entryType;
         this.card = card;
@@ -43,5 +46,17 @@ public class StackEntry {
         this.description = description;
         this.effectsToResolve = effectsToResolve;
         this.xValue = xValue;
+        this.targetPermanentId = -1;
+    }
+
+    // Targeted spell constructor (for instants with targets)
+    public StackEntry(StackEntryType entryType, Card card, Long controllerId, String description, List<CardEffect> effectsToResolve, int xValue, int targetPermanentId) {
+        this.entryType = entryType;
+        this.card = card;
+        this.controllerId = controllerId;
+        this.description = description;
+        this.effectsToResolve = effectsToResolve;
+        this.xValue = xValue;
+        this.targetPermanentId = targetPermanentId;
     }
 }

@@ -243,7 +243,7 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
-            gameService.playCard(gameData, player, request.cardIndex(), request.xValue());
+            gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetPermanentId());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

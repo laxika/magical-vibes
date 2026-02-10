@@ -655,6 +655,10 @@ h1 {
   background: linear-gradient(135deg, #8B6914 0%, #C49A2A 100%);
 }
 
+.card[data-card-type="Instant"] {
+  background: linear-gradient(135deg, #1a5276 0%, #2980b9 100%);
+}
+
 .card-mana-cost {
   font-size: 11px;
   font-weight: 700;
@@ -1004,4 +1008,22 @@ h1 {
 
 .combat-zone .card {
   cursor: pointer;
+}
+
+/* Targeting styles */
+
+.targeting-banner {
+  background: linear-gradient(135deg, #27ae60, #1e8449);
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.4);
+}
+
+.card.targetable {
+  border: 2px dashed #27ae60;
+  box-shadow: 0 0 12px rgba(39, 174, 96, 0.5);
+  cursor: crosshair;
+}
+
+.card-pt.buffed {
+  color: #2ecc71;
+  background: rgba(46, 204, 113, 0.3);
 }

@@ -414,8 +414,33 @@ export class GameComponent implements OnInit, OnDestroy {
   playCard(index: number): void {
     const g = this.game();
     if (g && this.isCardPlayable(index)) {
-      this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index });
+      const card = g.hand[index];
+      if (card.type === 'Instant') {
+        this.targeting = true;
+        this.targetingCardIndex = index;
+        this.targetingCardName = card.name;
+        return;
+      }
+      this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetPermanentId: 0 });
     }
+  }
+
+  selectTarget(permanentId: number): void {
+    if (!this.targeting) return;
+    this.websocketService.send({
+      type: MessageType.PLAY_CARD,
+      cardIndex: this.targetingCardIndex,
+      targetPermanentId: permanentId
+    });
+    this.targeting = false;
+    this.targetingCardIndex = -1;
+    this.targetingCardName = '';
+  }
+
+  cancelTargeting(): void {
+    this.targeting = false;
+    this.targetingCardIndex = -1;
+    this.targetingCardName = '';
   }
 
   get player1DeckSize(): number {
@@ -532,6 +557,11 @@ export class GameComponent implements OnInit, OnDestroy {
   choosingFromHand = false;
   choosableHandIndices = signal(new Set<number>());
   handChoicePrompt = '';
+
+  // Targeting state (for instants)
+  targeting = false;
+  targetingCardIndex = -1;
+  targetingCardName = '';
 
   isCardPlayable(index: number): boolean {
     return this.playableCardIndices().has(index);
@@ -676,6 +706,13 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   onMyBattlefieldCardClick(index: number): void {
+    if (this.targeting) {
+      const perm = this.myBattlefield[index];
+      if (perm && perm.card.type === 'Creature') {
+        this.selectTarget(perm.id);
+      }
+      return;
+    }
     if (this.declaringAttackers) {
       this.toggleAttacker(index);
     } else if (this.declaringBlockers) {
@@ -686,6 +723,13 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   onOpponentBattlefieldCardClick(index: number): void {
+    if (this.targeting) {
+      const perm = this.opponentBattlefield[index];
+      if (perm && perm.card.type === 'Creature') {
+        this.selectTarget(perm.id);
+      }
+      return;
+    }
     if (this.declaringBlockers) {
       this.assignBlock(index);
     }
