@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -29,7 +30,7 @@ class HurricaneTest {
 
     /** A 2/2 flying creature for test purposes. */
     private static Card flyingCreature() {
-        Card card = new Card("Wind Drake", CardType.CREATURE, "{2}{U}");
+        Card card = new Card("Wind Drake", CardType.CREATURE, "{2}{U}", CardColor.BLUE);
 
         card.setPower(2);
         card.setToughness(2);

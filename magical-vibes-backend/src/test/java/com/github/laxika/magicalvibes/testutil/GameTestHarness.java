@@ -80,6 +80,10 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null);
     }
 
+    public void castEnchantment(Player player, int cardIndex) {
+        gameService.playCard(gameData, player, cardIndex, 0, null);
+    }
+
     public void castSorcery(Player player, int cardIndex, int xValue) {
         gameService.playCard(gameData, player, cardIndex, xValue, null);
     }
