@@ -15,6 +15,7 @@ public class Card {
     private final String name;
     private final CardType type;
     private final String manaCost;
+    private final CardColor color;
 
     @Setter private List<CardSubtype> subtypes = List.of();
     @Setter private String cardText;

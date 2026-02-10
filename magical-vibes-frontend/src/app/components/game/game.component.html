@@ -31,11 +31,12 @@
           <div class="selection-count">Selected: {{ selectedCardIndices.size }} / {{ bottomCardCount }}</div>
           <div class="hand-cards">
             @for (card of hand; track $index) {
-              <div class="card selectable" [class.selected]="isCardSelected($index)" [attr.data-card-type]="card.type" (click)="toggleCardSelection($index)">
+              <div class="card selectable" [class.selected]="isCardSelected($index)" [attr.data-card-color]="card.color" (click)="toggleCardSelection($index)">
                 @if (card.manaCost) {
                   <div class="card-mana-cost">{{ card.manaCost }}</div>
                 }
                 <div class="card-name">{{ card.name }}</div>
+                <div class="card-art"></div>
                 <div class="card-type">{{ card.type }}</div>
                 @if (card.power != null && card.toughness != null) {
                   <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
@@ -61,11 +62,12 @@
           <div class="hand-label">Your Hand ({{ hand.length }} cards)</div>
           <div class="hand-cards">
             @for (card of hand; track $index) {
-              <div class="card" [attr.data-card-type]="card.type">
+              <div class="card" [attr.data-card-color]="card.color">
                 @if (card.manaCost) {
                   <div class="card-mana-cost">{{ card.manaCost }}</div>
                 }
                 <div class="card-name">{{ card.name }}</div>
+                <div class="card-art"></div>
                 <div class="card-type">{{ card.type }}</div>
                 @if (card.power != null && card.toughness != null) {
                   <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
@@ -230,12 +232,13 @@
           @for (ip of opponentLands; track ip.originalIndex) {
             <div class="card"
                  [class.tapped]="ip.perm.tapped"
-                 [attr.data-card-type]="ip.perm.card.type"
+                 [attr.data-card-color]="ip.perm.card.color"
                  (click)="onOpponentBattlefieldCardClick(ip.originalIndex)">
               @if (ip.perm.card.manaCost) {
                 <div class="card-mana-cost">{{ ip.perm.card.manaCost }}</div>
               }
               <div class="card-name">{{ ip.perm.card.name }}</div>
+              <div class="card-art"></div>
               <div class="card-type">{{ ip.perm.card.type }}</div>
               @if (ip.perm.card.setCode) {
                 <div class="card-set-badge">{{ ip.perm.card.setCode }} #{{ ip.perm.card.collectorNumber }}</div>
@@ -256,12 +259,13 @@
                  [class.summoning-sick]="ip.perm.summoningSick"
                  [class.block-target]="isBlockTarget(ip.originalIndex)"
                  [class.targetable]="targeting"
-                 [attr.data-card-type]="ip.perm.card.type"
+                 [attr.data-card-color]="ip.perm.card.color"
                  (click)="onOpponentBattlefieldCardClick(ip.originalIndex)">
               @if (ip.perm.card.manaCost) {
                 <div class="card-mana-cost">{{ ip.perm.card.manaCost }}</div>
               }
               <div class="card-name">{{ ip.perm.card.name }}</div>
+              <div class="card-art"></div>
               <div class="card-type">{{ ip.perm.card.type }}</div>
               @if (getEffectiveKeywords(ip.perm).length > 0) {
                 <div class="card-keywords">{{ formatKeywords(getEffectiveKeywords(ip.perm)) }}</div>
@@ -289,11 +293,12 @@
             <div class="graveyard-label">Graveyard ({{ opponentGraveyard.length }})</div>
             <div class="graveyard-cards">
               @for (card of opponentGraveyard; track $index) {
-                <div class="card graveyard-card" [attr.data-card-type]="card.type">
+                <div class="card graveyard-card" [attr.data-card-color]="card.color">
                   @if (card.manaCost) {
                     <div class="card-mana-cost">{{ card.manaCost }}</div>
                   }
                   <div class="card-name">{{ card.name }}</div>
+                  <div class="card-art"></div>
                   <div class="card-type">{{ card.type }}</div>
                   @if (card.power != null && card.toughness != null) {
                     <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
@@ -316,12 +321,13 @@
                        [class.attacking]="group.attacker.attacking"
                        [class.selected-attacker]="declaringAttackers && isSelectedAttacker(group.attackerIndex)"
                        [class.block-target]="declaringBlockers && selectedBlockerIndex !== null && !group.attackerIsMine"
-                       [attr.data-card-type]="group.attacker.card.type"
+                       [attr.data-card-color]="group.attacker.card.color"
                        (click)="onCombatAttackerClick(group)">
                     @if (group.attacker.card.manaCost) {
                       <div class="card-mana-cost">{{ group.attacker.card.manaCost }}</div>
                     }
                     <div class="card-name">{{ group.attacker.card.name }}</div>
+                    <div class="card-art"></div>
                     <div class="card-type">{{ group.attacker.card.type }}</div>
                     @if (getEffectiveKeywords(group.attacker).length > 0) {
                       <div class="card-keywords">{{ formatKeywords(getEffectiveKeywords(group.attacker)) }}</div>
@@ -342,12 +348,13 @@
                   <div class="combat-blocker-slots">
                     @for (blocker of group.blockers; track blocker.index) {
                       <div class="card blocking"
-                           [attr.data-card-type]="blocker.perm.card.type"
+                           [attr.data-card-color]="blocker.perm.card.color"
                            (click)="onCombatBlockerClick(blocker)">
                         @if (blocker.perm.card.manaCost) {
                           <div class="card-mana-cost">{{ blocker.perm.card.manaCost }}</div>
                         }
                         <div class="card-name">{{ blocker.perm.card.name }}</div>
+                        <div class="card-art"></div>
                         <div class="card-type">{{ blocker.perm.card.type }}</div>
                         @if (getEffectiveKeywords(blocker.perm).length > 0) {
                           <div class="card-keywords">{{ formatKeywords(getEffectiveKeywords(blocker.perm)) }}</div>
@@ -387,12 +394,13 @@
                  [class.selected-blocker]="selectedBlockerIndex === ip.originalIndex"
                  [class.assigned-blocker]="isAssignedBlocker(ip.originalIndex)"
                  [class.targetable]="targeting"
-                 [attr.data-card-type]="ip.perm.card.type"
+                 [attr.data-card-color]="ip.perm.card.color"
                  (click)="onMyBattlefieldCardClick(ip.originalIndex)">
               @if (ip.perm.card.manaCost) {
                 <div class="card-mana-cost">{{ ip.perm.card.manaCost }}</div>
               }
               <div class="card-name">{{ ip.perm.card.name }}</div>
+              <div class="card-art"></div>
               <div class="card-type">{{ ip.perm.card.type }}</div>
               @if (getEffectiveKeywords(ip.perm).length > 0) {
                 <div class="card-keywords">{{ formatKeywords(getEffectiveKeywords(ip.perm)) }}</div>
@@ -417,12 +425,13 @@
             <div class="card"
                  [class.tapped]="ip.perm.tapped"
                  [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
-                 [attr.data-card-type]="ip.perm.card.type"
+                 [attr.data-card-color]="ip.perm.card.color"
                  (click)="onMyBattlefieldCardClick(ip.originalIndex)">
               @if (ip.perm.card.manaCost) {
                 <div class="card-mana-cost">{{ ip.perm.card.manaCost }}</div>
               }
               <div class="card-name">{{ ip.perm.card.name }}</div>
+              <div class="card-art"></div>
               <div class="card-type">{{ ip.perm.card.type }}</div>
               @if (ip.perm.card.setCode) {
                 <div class="card-set-badge">{{ ip.perm.card.setCode }} #{{ ip.perm.card.collectorNumber }}</div>
@@ -444,11 +453,12 @@
             <div class="graveyard-label">Graveyard ({{ myGraveyard.length }})</div>
             <div class="graveyard-cards">
               @for (card of myGraveyard; track $index) {
-                <div class="card graveyard-card" [attr.data-card-type]="card.type">
+                <div class="card graveyard-card" [attr.data-card-color]="card.color">
                   @if (card.manaCost) {
                     <div class="card-mana-cost">{{ card.manaCost }}</div>
                   }
                   <div class="card-name">{{ card.name }}</div>
+                  <div class="card-art"></div>
                   <div class="card-type">{{ card.type }}</div>
                   @if (card.power != null && card.toughness != null) {
                     <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
@@ -475,12 +485,13 @@
           <div class="card"
                [class.playable]="isCardPlayable($index)"
                [class.choosable-card]="choosingFromHand && isChoosableCard($index)"
-               [attr.data-card-type]="card.type"
+               [attr.data-card-color]="card.color"
                (click)="choosingFromHand ? chooseCardFromHand($index) : playCard($index)">
             @if (card.manaCost) {
               <div class="card-mana-cost">{{ card.manaCost }}</div>
             }
             <div class="card-name">{{ card.name }}</div>
+            <div class="card-art"></div>
             <div class="card-type">{{ card.type }}</div>
             @if (card.keywords.length > 0) {
               <div class="card-keywords">{{ formatKeywords(card.keywords) }}</div>

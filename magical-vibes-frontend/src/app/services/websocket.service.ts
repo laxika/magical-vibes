@@ -118,6 +118,7 @@ export interface Card {
   setCode: string | null;
   collectorNumber: string | null;
   flavorText: string | null;
+  color: string | null;
 }
 
 export interface Permanent {

@@ -376,11 +376,11 @@ h1 {
 }
 
 .card {
-  background: linear-gradient(135deg, #2d5016 0%, #4a7c28 100%);
+  background: linear-gradient(135deg, #3a3a3a 0%, #5a5a5a 100%);
   color: white;
   padding: 16px 12px;
   border-radius: 8px;
-  min-width: 100px;
+  width: 120px;
   text-align: center;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
   transition: transform 0.15s;
@@ -406,6 +406,14 @@ h1 {
 .card-type {
   font-size: 11px;
   opacity: 0.8;
+}
+
+.card-art {
+  height: 60px;
+  margin: 6px -4px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .mulligan-info {
@@ -651,16 +659,25 @@ h1 {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.card[data-card-type="Creature"] {
-  background: linear-gradient(135deg, #8B6914 0%, #C49A2A 100%);
+.card[data-card-color="GREEN"] {
+  background: linear-gradient(135deg, #2d5016 0%, #4a7c28 100%);
 }
 
-.card[data-card-type="Instant"] {
-  background: linear-gradient(135deg, #1a5276 0%, #2980b9 100%);
+.card[data-card-color="WHITE"] {
+  background: linear-gradient(135deg, #b8a44c 0%, #f0e6b2 100%);
+  color: #2c2417;
 }
 
-.card[data-card-type="Sorcery"] {
-  background: linear-gradient(135deg, #6B2D5B 0%, #9B59B6 100%);
+.card[data-card-color="BLUE"] {
+  background: linear-gradient(135deg, #1a3a5c 0%, #2980b9 100%);
+}
+
+.card[data-card-color="RED"] {
+  background: linear-gradient(135deg, #8b1a1a 0%, #c0392b 100%);
+}
+
+.card[data-card-color="BLACK"] {
+  background: linear-gradient(135deg, #1a1a2e 0%, #4a4a5a 100%);
 }
 
 .card-mana-cost {

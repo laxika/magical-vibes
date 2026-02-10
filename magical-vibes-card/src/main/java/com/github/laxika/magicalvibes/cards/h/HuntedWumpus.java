@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
@@ -10,7 +11,7 @@ import java.util.List;
 public class HuntedWumpus extends Card {
 
     public HuntedWumpus() {
-        super("Hunted Wumpus", CardType.CREATURE, "{3}{G}");
+        super("Hunted Wumpus", CardType.CREATURE, "{3}{G}", CardColor.GREEN);
 
         setSubtypes(List.of(CardSubtype.BEAST));
         setCardText("When Hunted Wumpus enters the battlefield, each other player may put a creature card from their hand onto the battlefield.");
