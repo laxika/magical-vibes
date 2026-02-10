@@ -10,6 +10,6 @@ import java.util.Set;
 public class Hurricane extends Card {
 
     public Hurricane() {
-        super("Hurricane", CardType.SORCERY, List.of(), null, List.of(), "{X}{G}", null, null, Set.of(), List.of(), List.of(new DealDamageToFlyingAndPlayersEffect()));
+        super("Hurricane", CardType.SORCERY, List.of(), "Hurricane deals X damage to each creature with flying and each player.", List.of(), "{X}{G}", null, null, Set.of(), List.of(), List.of(new DealDamageToFlyingAndPlayersEffect()));
     }
 }

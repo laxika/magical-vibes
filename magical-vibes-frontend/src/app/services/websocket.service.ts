@@ -106,7 +106,7 @@ export interface Card {
   name: string;
   type: string;
   subtypes: string[];
-  manaProduced: string;
+  cardText: string | null;
   onTapEffects: any[] | null;
   manaCost: string | null;
   power: number | null;
