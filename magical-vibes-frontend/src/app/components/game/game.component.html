@@ -43,6 +43,9 @@
                 @if (card.setCode) {
                   <div class="card-set-badge">{{ card.setCode }} #{{ card.collectorNumber }}</div>
                 }
+                @if (card.flavorText) {
+                  <div class="card-flavor-text">{{ card.flavorText }}</div>
+                }
                 @if (isCardSelected($index)) {
                   <div class="card-selected-badge">Bottom</div>
                 }
@@ -69,6 +72,9 @@
                 }
                 @if (card.setCode) {
                   <div class="card-set-badge">{{ card.setCode }} #{{ card.collectorNumber }}</div>
+                }
+                @if (card.flavorText) {
+                  <div class="card-flavor-text">{{ card.flavorText }}</div>
                 }
               </div>
             }
@@ -179,6 +185,9 @@
               @if (entry.card.setCode) {
                 <div class="card-set-badge">{{ entry.card.setCode }} #{{ entry.card.collectorNumber }}</div>
               }
+              @if (entry.card.flavorText) {
+                <div class="card-flavor-text">{{ entry.card.flavorText }}</div>
+              }
               @if ($index === 0) {
                 <div class="stack-top-badge">Next to resolve</div>
               }
@@ -231,6 +240,9 @@
               @if (ip.perm.card.setCode) {
                 <div class="card-set-badge">{{ ip.perm.card.setCode }} #{{ ip.perm.card.collectorNumber }}</div>
               }
+              @if (ip.perm.card.flavorText) {
+                <div class="card-flavor-text">{{ ip.perm.card.flavorText }}</div>
+              }
               @if (ip.perm.tapped) {
                 <div class="card-tapped-badge">Tapped</div>
               }
@@ -259,6 +271,9 @@
               }
               @if (ip.perm.card.setCode) {
                 <div class="card-set-badge">{{ ip.perm.card.setCode }} #{{ ip.perm.card.collectorNumber }}</div>
+              }
+              @if (ip.perm.card.flavorText) {
+                <div class="card-flavor-text">{{ ip.perm.card.flavorText }}</div>
               }
               @if (ip.perm.tapped) {
                 <div class="card-tapped-badge">Tapped</div>
@@ -298,6 +313,9 @@
                     @if (group.attacker.card.setCode) {
                       <div class="card-set-badge">{{ group.attacker.card.setCode }} #{{ group.attacker.card.collectorNumber }}</div>
                     }
+                    @if (group.attacker.card.flavorText) {
+                      <div class="card-flavor-text">{{ group.attacker.card.flavorText }}</div>
+                    }
                     <div class="card-combat-badge attacking-badge">Attacking</div>
                   </div>
                 </div>
@@ -320,6 +338,9 @@
                         }
                         @if (blocker.perm.card.setCode) {
                           <div class="card-set-badge">{{ blocker.perm.card.setCode }} #{{ blocker.perm.card.collectorNumber }}</div>
+                        }
+                        @if (blocker.perm.card.flavorText) {
+                          <div class="card-flavor-text">{{ blocker.perm.card.flavorText }}</div>
                         }
                         <div class="card-combat-badge blocking-badge">Blocking</div>
                       </div>
@@ -363,6 +384,9 @@
               @if (ip.perm.card.setCode) {
                 <div class="card-set-badge">{{ ip.perm.card.setCode }} #{{ ip.perm.card.collectorNumber }}</div>
               }
+              @if (ip.perm.card.flavorText) {
+                <div class="card-flavor-text">{{ ip.perm.card.flavorText }}</div>
+              }
               @if (ip.perm.tapped) {
                 <div class="card-tapped-badge">Tapped</div>
               }
@@ -383,6 +407,9 @@
               <div class="card-type">{{ ip.perm.card.type }}</div>
               @if (ip.perm.card.setCode) {
                 <div class="card-set-badge">{{ ip.perm.card.setCode }} #{{ ip.perm.card.collectorNumber }}</div>
+              }
+              @if (ip.perm.card.flavorText) {
+                <div class="card-flavor-text">{{ ip.perm.card.flavorText }}</div>
               }
               @if (ip.perm.tapped) {
                 <div class="card-tapped-badge">Tapped</div>
@@ -425,6 +452,9 @@
             }
             @if (card.setCode) {
               <div class="card-set-badge">{{ card.setCode }} #{{ card.collectorNumber }}</div>
+            }
+            @if (card.flavorText) {
+              <div class="card-flavor-text">{{ card.flavorText }}</div>
             }
           </div>
         }

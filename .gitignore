@@ -2,7 +2,6 @@
 .gradle
 magic-ruleset.txt
 nul
-setdata
 
 **/build
 

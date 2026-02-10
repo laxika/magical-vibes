@@ -26,4 +26,5 @@ public class Card {
     @Setter private List<CardEffect> spellEffects = List.of();
     @Setter private String setCode;
     @Setter private String collectorNumber;
+    @Setter private String flavorText;
 }

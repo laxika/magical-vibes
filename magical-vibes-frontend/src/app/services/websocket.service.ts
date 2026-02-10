@@ -115,6 +115,7 @@ export interface Card {
   onEnterBattlefieldEffects: any[] | null;
   setCode: string | null;
   collectorNumber: string | null;
+  flavorText: string | null;
 }
 
 export interface Permanent {

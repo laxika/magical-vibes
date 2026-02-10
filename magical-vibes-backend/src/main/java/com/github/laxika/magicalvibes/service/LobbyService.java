@@ -77,11 +77,11 @@ public class LobbyService {
 
     private void initializeGame(GameData gameData) {
         Card forest = CardSet.TENTH_EDITION.findByCollectorNumber("380").createCard();
-        Card llanowarElves = CardSet.TENTH_EDITION.findByCollectorNumber("268").createCard();
-        Card grizzlyBears = CardSet.TENTH_EDITION.findByCollectorNumber("246").createCard();
-        Card giantSpider = CardSet.TENTH_EDITION.findByCollectorNumber("187").createCard();
-        Card huntedWumpus = CardSet.TENTH_EDITION.findByCollectorNumber("178").createCard();
-        Card mightOfOaks = CardSet.TENTH_EDITION.findByCollectorNumber("270").createCard();
+        Card llanowarElves = CardSet.TENTH_EDITION.findByCollectorNumber("274").createCard();
+        Card grizzlyBears = CardSet.TENTH_EDITION.findByCollectorNumber("268").createCard();
+        Card giantSpider = CardSet.TENTH_EDITION.findByCollectorNumber("267").createCard();
+        Card huntedWumpus = CardSet.TENTH_EDITION.findByCollectorNumber("269").createCard();
+        Card mightOfOaks = CardSet.TENTH_EDITION.findByCollectorNumber("277").createCard();
 
         for (UUID playerId : gameData.playerIds) {
             List<Card> deck = new ArrayList<>();
