@@ -92,6 +92,10 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId);
     }
 
+    public void sacrificePermanent(Player player, int permanentIndex, UUID targetPermanentId) {
+        gameService.sacrificePermanent(gameData, player, permanentIndex, targetPermanentId);
+    }
+
     public UUID getPermanentId(Player player, String cardName) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(player.getId());
         for (Permanent p : battlefield) {
