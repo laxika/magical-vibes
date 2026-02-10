@@ -38,10 +38,12 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import lombok.RequiredArgsConstructor;
@@ -261,6 +263,17 @@ public class GameService {
                     resolveGainLife(gameData, entry.getControllerId(), gainLife.amount());
                 } else if (effect instanceof GainLifePerGraveyardCardEffect) {
                     resolveGainLifePerGraveyardCard(gameData, entry.getControllerId());
+                }
+            }
+        } else if (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY) {
+            String logEntry = entry.getDescription() + " resolves.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            log.info("Game {} - {} resolves", gameData.id, entry.getDescription());
+
+            for (CardEffect effect : entry.getEffectsToResolve()) {
+                if (effect instanceof DestroyTargetPermanentEffect destroy) {
+                    resolveDestroyTargetPermanent(gameData, entry, destroy);
                 }
             }
         } else if (entry.getEntryType() == StackEntryType.SORCERY_SPELL) {
@@ -565,7 +578,7 @@ public class GameService {
             List<Card> hand = gameData.playerHands.get(playerId);
             Card card = hand.get(cardIndex);
 
-            // For X-cost spells, validate that player can pay colored + generic + xValue
+            // For X-cost spells, validate that player can pay colored + generic + xValue + any cost increases
             if (card.getManaCost() != null) {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 if (cost.hasX()) {
@@ -573,7 +586,8 @@ public class GameService {
                         throw new IllegalStateException("X value cannot be negative");
                     }
                     ManaPool pool = gameData.playerManaPools.get(playerId);
-                    if (!cost.canPay(pool, effectiveXValue)) {
+                    int additionalCost = getOpponentCostIncrease(gameData, playerId, card.getType());
+                    if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
                         throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
                     }
                 }
@@ -609,7 +623,8 @@ public class GameService {
                 if (card.getManaCost() != null) {
                     ManaCost cost = new ManaCost(card.getManaCost());
                     ManaPool pool = gameData.playerManaPools.get(playerId);
-                    cost.pay(pool);
+                    int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.CREATURE);
+                    cost.pay(pool, additionalCost);
                     sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
                 }
 
@@ -630,7 +645,8 @@ public class GameService {
             } else if (card.getType() == CardType.ENCHANTMENT) {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
-                cost.pay(pool);
+                int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.ENCHANTMENT);
+                cost.pay(pool, additionalCost);
                 sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
 
                 gameData.stack.add(new StackEntry(
@@ -653,7 +669,8 @@ public class GameService {
             } else if (card.getType() == CardType.SORCERY) {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
-                cost.pay(pool, effectiveXValue);
+                int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.SORCERY);
+                cost.pay(pool, effectiveXValue + additionalCost);
                 sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
 
                 gameData.stack.add(new StackEntry(
@@ -676,7 +693,8 @@ public class GameService {
             } else if (card.getType() == CardType.INSTANT) {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
-                cost.pay(pool);
+                int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.INSTANT);
+                cost.pay(pool, additionalCost);
                 sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
 
                 gameData.stack.add(new StackEntry(
@@ -740,6 +758,69 @@ public class GameService {
             broadcastLogEntry(gameData, logEntry);
 
             log.info("Game {} - {} taps {}", gameData.id, player.getUsername(), permanent.getCard().getName());
+
+            broadcastPlayableCards(gameData);
+        }
+    }
+
+    public void sacrificePermanent(GameData gameData, Player player, int permanentIndex, UUID targetPermanentId) {
+        if (gameData.status != GameStatus.RUNNING) {
+            throw new IllegalStateException("Game is not running");
+        }
+
+        synchronized (gameData) {
+            UUID playerId = player.getId();
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null || permanentIndex < 0 || permanentIndex >= battlefield.size()) {
+                throw new IllegalStateException("Invalid permanent index");
+            }
+
+            Permanent permanent = battlefield.get(permanentIndex);
+            if (permanent.getCard().getOnSacrificeEffects() == null || permanent.getCard().getOnSacrificeEffects().isEmpty()) {
+                throw new IllegalStateException("Permanent has no sacrifice abilities");
+            }
+
+            // Validate target for effects that need one
+            for (CardEffect effect : permanent.getCard().getOnSacrificeEffects()) {
+                if (effect instanceof DestroyTargetPermanentEffect destroy) {
+                    if (targetPermanentId == null) {
+                        throw new IllegalStateException("Sacrifice ability requires a target");
+                    }
+                    Permanent target = findPermanentById(gameData, targetPermanentId);
+                    if (target == null) {
+                        throw new IllegalStateException("Invalid target permanent");
+                    }
+                    if (!destroy.targetTypes().contains(target.getCard().getType())) {
+                        throw new IllegalStateException("Invalid target type for sacrifice ability");
+                    }
+                }
+            }
+
+            // Sacrifice: remove from battlefield, add to graveyard
+            battlefield.remove(permanentIndex);
+            gameData.playerGraveyards.get(playerId).add(permanent.getCard());
+
+            String logEntry = player.getUsername() + " sacrifices " + permanent.getCard().getName() + ".";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            log.info("Game {} - {} sacrifices {}", gameData.id, player.getUsername(), permanent.getCard().getName());
+
+            // Put activated ability on stack
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.ACTIVATED_ABILITY,
+                    permanent.getCard(),
+                    playerId,
+                    permanent.getCard().getName() + "'s ability",
+                    new ArrayList<>(permanent.getCard().getOnSacrificeEffects()),
+                    0,
+                    targetPermanentId
+            ));
+            gameData.priorityPassedBy.clear();
+
+            broadcastBattlefields(gameData);
+            broadcastGraveyards(gameData);
+            broadcastStackUpdate(gameData);
+            sessionManager.sendToPlayers(gameData.orderedPlayerIds, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
 
             broadcastPlayableCards(gameData);
         }
@@ -960,6 +1041,62 @@ public class GameService {
         broadcastBattlefields(gameData);
 
         log.info("Game {} - {} gains {}", gameData.id, target.getCard().getName(), grant.keyword());
+    }
+
+    private void resolveDestroyTargetPermanent(GameData gameData, StackEntry entry, DestroyTargetPermanentEffect destroy) {
+        Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            String fizzleLog = entry.getCard().getName() + "'s ability fizzles (target no longer exists).";
+            gameData.gameLog.add(fizzleLog);
+            broadcastLogEntry(gameData, fizzleLog);
+            log.info("Game {} - {}'s ability fizzles, target {} no longer exists",
+                    gameData.id, entry.getCard().getName(), entry.getTargetPermanentId());
+            return;
+        }
+
+        if (!destroy.targetTypes().contains(target.getCard().getType())) {
+            String fizzleLog = entry.getCard().getName() + "'s ability fizzles (invalid target type).";
+            gameData.gameLog.add(fizzleLog);
+            broadcastLogEntry(gameData, fizzleLog);
+            log.info("Game {} - {}'s ability fizzles, target type mismatch", gameData.id, entry.getCard().getName());
+            return;
+        }
+
+        // Find which player controls the target and remove it
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null && battlefield.remove(target)) {
+                gameData.playerGraveyards.get(playerId).add(target.getCard());
+
+                String logEntry = target.getCard().getName() + " is destroyed.";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+                log.info("Game {} - {} is destroyed by {}'s ability",
+                        gameData.id, target.getCard().getName(), entry.getCard().getName());
+                break;
+            }
+        }
+
+        broadcastBattlefields(gameData);
+        broadcastGraveyards(gameData);
+    }
+
+    private int getOpponentCostIncrease(GameData gameData, UUID playerId, CardType cardType) {
+        UUID opponentId = getOpponentId(gameData, playerId);
+        List<Permanent> opponentBattlefield = gameData.playerBattlefields.get(opponentId);
+        if (opponentBattlefield == null) return 0;
+
+        int totalIncrease = 0;
+        for (Permanent perm : opponentBattlefield) {
+            for (CardEffect effect : perm.getCard().getStaticEffects()) {
+                if (effect instanceof IncreaseOpponentCastCostEffect increase) {
+                    if (increase.affectedTypes().contains(cardType)) {
+                        totalIncrease += increase.amount();
+                    }
+                }
+            }
+        }
+        return totalIncrease;
     }
 
     private Permanent findPermanentById(GameData gameData, UUID permanentId) {
@@ -1554,14 +1691,16 @@ public class GameService {
             if (card.getType() == CardType.CREATURE && isActivePlayer && isMainPhase && stackEmpty && card.getManaCost() != null) {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
-                if (cost.canPay(pool)) {
+                int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.CREATURE);
+                if (cost.canPay(pool, additionalCost)) {
                     playable.add(i);
                 }
             }
             if (card.getType() == CardType.ENCHANTMENT && isActivePlayer && isMainPhase && stackEmpty && card.getManaCost() != null) {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
-                if (cost.canPay(pool)) {
+                int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.ENCHANTMENT);
+                if (cost.canPay(pool, additionalCost)) {
                     playable.add(i);
                 }
             }
@@ -1569,14 +1708,16 @@ public class GameService {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 // For X-cost spells, playable if player can pay the colored portion (X=0 minimum)
-                if (cost.canPay(pool)) {
+                int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.SORCERY);
+                if (cost.canPay(pool, additionalCost)) {
                     playable.add(i);
                 }
             }
             if (card.getType() == CardType.INSTANT && card.getManaCost() != null) {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
-                if (cost.canPay(pool)) {
+                int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.INSTANT);
+                if (cost.canPay(pool, additionalCost)) {
                     playable.add(i);
                 }
             }

@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.networking.message.LoginResponse;
 import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
+import com.github.laxika.magicalvibes.networking.message.SacrificePermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
@@ -265,6 +266,27 @@ public class GameMessageHandler implements MessageHandler {
 
         try {
             gameService.tapPermanent(gameData, player, request.permanentIndex());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            handleError(connection, e.getMessage());
+        }
+    }
+
+    @Override
+    public void handleSacrificePermanent(Connection connection, SacrificePermanentRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
+        try {
+            gameService.sacrificePermanent(gameData, player, request.permanentIndex(), request.targetPermanentId());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

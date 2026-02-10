@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
+import com.github.laxika.magicalvibes.networking.message.SacrificePermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 
 public interface MessageHandler {
@@ -33,6 +34,8 @@ public interface MessageHandler {
     void handlePlayCard(Connection connection, PlayCardRequest request) throws Exception;
 
     void handleTapPermanent(Connection connection, TapPermanentRequest request) throws Exception;
+
+    void handleSacrificePermanent(Connection connection, SacrificePermanentRequest request) throws Exception;
 
     void handleSetAutoStops(Connection connection, SetAutoStopsRequest request) throws Exception;
 
