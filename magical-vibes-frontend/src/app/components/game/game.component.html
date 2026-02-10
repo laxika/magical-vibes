@@ -40,6 +40,9 @@
                 @if (card.power != null && card.toughness != null) {
                   <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
                 }
+                @if (card.setCode) {
+                  <div class="card-set-badge">{{ card.setCode }} #{{ card.collectorNumber }}</div>
+                }
                 @if (isCardSelected($index)) {
                   <div class="card-selected-badge">Bottom</div>
                 }
@@ -63,6 +66,9 @@
                 <div class="card-type">{{ card.type }}</div>
                 @if (card.power != null && card.toughness != null) {
                   <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
+                }
+                @if (card.setCode) {
+                  <div class="card-set-badge">{{ card.setCode }} #{{ card.collectorNumber }}</div>
                 }
               </div>
             }
@@ -170,6 +176,9 @@
               @if (entry.card.power != null && entry.card.toughness != null) {
                 <div class="stack-entry-stats">{{ entry.card.power }}/{{ entry.card.toughness }}</div>
               }
+              @if (entry.card.setCode) {
+                <div class="card-set-badge">{{ entry.card.setCode }} #{{ entry.card.collectorNumber }}</div>
+              }
               @if ($index === 0) {
                 <div class="stack-top-badge">Next to resolve</div>
               }
@@ -219,6 +228,9 @@
               }
               <div class="card-name">{{ ip.perm.card.name }}</div>
               <div class="card-type">{{ ip.perm.card.type }}</div>
+              @if (ip.perm.card.setCode) {
+                <div class="card-set-badge">{{ ip.perm.card.setCode }} #{{ ip.perm.card.collectorNumber }}</div>
+              }
               @if (ip.perm.tapped) {
                 <div class="card-tapped-badge">Tapped</div>
               }
@@ -244,6 +256,9 @@
               }
               @if (ip.perm.card.power != null && ip.perm.card.toughness != null) {
                 <div class="card-pt" [class.buffed]="ip.perm.powerModifier > 0 || ip.perm.toughnessModifier > 0">{{ ip.perm.effectivePower }}/{{ ip.perm.effectiveToughness }}</div>
+              }
+              @if (ip.perm.card.setCode) {
+                <div class="card-set-badge">{{ ip.perm.card.setCode }} #{{ ip.perm.card.collectorNumber }}</div>
               }
               @if (ip.perm.tapped) {
                 <div class="card-tapped-badge">Tapped</div>
@@ -280,6 +295,9 @@
                     @if (group.attacker.card.power != null && group.attacker.card.toughness != null) {
                       <div class="card-pt" [class.buffed]="group.attacker.powerModifier > 0 || group.attacker.toughnessModifier > 0">{{ group.attacker.effectivePower }}/{{ group.attacker.effectiveToughness }}</div>
                     }
+                    @if (group.attacker.card.setCode) {
+                      <div class="card-set-badge">{{ group.attacker.card.setCode }} #{{ group.attacker.card.collectorNumber }}</div>
+                    }
                     <div class="card-combat-badge attacking-badge">Attacking</div>
                   </div>
                 </div>
@@ -299,6 +317,9 @@
                         }
                         @if (blocker.perm.card.power != null && blocker.perm.card.toughness != null) {
                           <div class="card-pt" [class.buffed]="blocker.perm.powerModifier > 0 || blocker.perm.toughnessModifier > 0">{{ blocker.perm.effectivePower }}/{{ blocker.perm.effectiveToughness }}</div>
+                        }
+                        @if (blocker.perm.card.setCode) {
+                          <div class="card-set-badge">{{ blocker.perm.card.setCode }} #{{ blocker.perm.card.collectorNumber }}</div>
                         }
                         <div class="card-combat-badge blocking-badge">Blocking</div>
                       </div>
@@ -339,6 +360,9 @@
               @if (ip.perm.card.power != null && ip.perm.card.toughness != null) {
                 <div class="card-pt" [class.buffed]="ip.perm.powerModifier > 0 || ip.perm.toughnessModifier > 0">{{ ip.perm.effectivePower }}/{{ ip.perm.effectiveToughness }}</div>
               }
+              @if (ip.perm.card.setCode) {
+                <div class="card-set-badge">{{ ip.perm.card.setCode }} #{{ ip.perm.card.collectorNumber }}</div>
+              }
               @if (ip.perm.tapped) {
                 <div class="card-tapped-badge">Tapped</div>
               }
@@ -357,6 +381,9 @@
               }
               <div class="card-name">{{ ip.perm.card.name }}</div>
               <div class="card-type">{{ ip.perm.card.type }}</div>
+              @if (ip.perm.card.setCode) {
+                <div class="card-set-badge">{{ ip.perm.card.setCode }} #{{ ip.perm.card.collectorNumber }}</div>
+              }
               @if (ip.perm.tapped) {
                 <div class="card-tapped-badge">Tapped</div>
               }
@@ -395,6 +422,9 @@
             }
             @if (card.power != null && card.toughness != null) {
               <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
+            }
+            @if (card.setCode) {
+              <div class="card-set-badge">{{ card.setCode }} #{{ card.collectorNumber }}</div>
             }
           </div>
         }

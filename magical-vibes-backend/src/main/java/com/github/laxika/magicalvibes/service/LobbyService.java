@@ -1,11 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
+import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -81,12 +76,12 @@ public class LobbyService {
     }
 
     private void initializeGame(GameData gameData) {
-        Card forest = new Forest();
-        Card llanowarElves = new LlanowarElves();
-        Card grizzlyBears = new GrizzlyBears();
-        Card giantSpider = new GiantSpider();
-        Card huntedWumpus = new HuntedWumpus();
-        Card mightOfOaks = new MightOfOaks();
+        Card forest = CardSet.TENTH_EDITION.findByCollectorNumber("380").createCard();
+        Card llanowarElves = CardSet.TENTH_EDITION.findByCollectorNumber("268").createCard();
+        Card grizzlyBears = CardSet.TENTH_EDITION.findByCollectorNumber("246").createCard();
+        Card giantSpider = CardSet.TENTH_EDITION.findByCollectorNumber("187").createCard();
+        Card huntedWumpus = CardSet.TENTH_EDITION.findByCollectorNumber("178").createCard();
+        Card mightOfOaks = CardSet.TENTH_EDITION.findByCollectorNumber("270").createCard();
 
         for (UUID playerId : gameData.playerIds) {
             List<Card> deck = new ArrayList<>();
@@ -128,7 +123,7 @@ public class LobbyService {
         gameData.status = GameStatus.MULLIGAN;
 
         gameData.gameLog.add("Game started!");
-        gameData.gameLog.add("Each player receives a deck of 24 Forests, 4 Llanowar Elves, 4 Giant Spiders, 4 Hunted Wumpuses, 20 Grizzly Bears, and 4 Might of Oaks.");
+        gameData.gameLog.add("Each player receives a 10th Edition deck: 24 Forests, 4 Llanowar Elves, 4 Giant Spiders, 4 Hunted Wumpuses, 20 Grizzly Bears, and 4 Might of Oaks.");
 
         List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);
         UUID startingPlayerId = ids.get(random.nextInt(ids.size()));

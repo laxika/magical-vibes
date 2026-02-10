@@ -113,6 +113,8 @@ export interface Card {
   toughness: number | null;
   keywords: string[];
   onEnterBattlefieldEffects: any[] | null;
+  setCode: string | null;
+  collectorNumber: string | null;
 }
 
 export interface Permanent {

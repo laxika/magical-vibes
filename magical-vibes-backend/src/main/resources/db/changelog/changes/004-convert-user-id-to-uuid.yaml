@@ -1,0 +1,63 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-convert-user-id-to-uuid
+      author: magical-vibes
+      changes:
+        - dropTable:
+            tableName: users
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: username
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: password
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: 550e8400-e29b-41d4-a716-446655440001
+              - column:
+                  name: username
+                  value: admin
+              - column:
+                  name: password
+                  value: admin123
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: 550e8400-e29b-41d4-a716-446655440002
+              - column:
+                  name: username
+                  value: testuser
+              - column:
+                  name: password
+                  value: testpass
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: 550e8400-e29b-41d4-a716-446655440003
+              - column:
+                  name: username
+                  value: player3
+              - column:
+                  name: password
+                  value: player3pass
