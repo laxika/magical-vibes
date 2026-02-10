@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import lombok.RequiredArgsConstructor;
@@ -240,6 +241,8 @@ public class GameService {
                     resolveOpponentMayPlayCreature(gameData, entry.getControllerId());
                 } else if (effect instanceof GainLifeEffect gainLife) {
                     resolveGainLife(gameData, entry.getControllerId(), gainLife.amount());
+                } else if (effect instanceof GainLifePerGraveyardCardEffect) {
+                    resolveGainLifePerGraveyardCard(gameData, entry.getControllerId());
                 }
             }
         } else if (entry.getEntryType() == StackEntryType.SORCERY_SPELL) {
@@ -750,6 +753,20 @@ public class GameService {
         log.info("Game {} - {} gains {} life", gameData.id, playerName, amount);
     }
 
+    private void resolveGainLifePerGraveyardCard(GameData gameData, UUID controllerId) {
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        int amount = graveyard != null ? graveyard.size() : 0;
+        if (amount == 0) {
+            String playerName = gameData.playerIdToName.get(controllerId);
+            String logEntry = playerName + " has no cards in their graveyard.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            log.info("Game {} - {} has no graveyard cards for life gain", gameData.id, playerName);
+            return;
+        }
+        resolveGainLife(gameData, controllerId, amount);
+    }
+
     private void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         gameData.awaitingCardChoice = true;
         gameData.awaitingCardChoicePlayerId = playerId;
@@ -1149,57 +1166,154 @@ public class GameService {
         UUID activeId = gameData.activePlayerId;
         UUID defenderId = getOpponentId(gameData, activeId);
 
-        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
-        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
-
-        int damageToDefender = 0;
-        Set<Integer> deadAttackerIndices = new TreeSet<>(Collections.reverseOrder());
-        Set<Integer> deadDefenderIndices = new TreeSet<>(Collections.reverseOrder());
+        List<Permanent> atkBf = gameData.playerBattlefields.get(activeId);
+        List<Permanent> defBf = gameData.playerBattlefields.get(defenderId);
 
         List<Integer> attackingIndices = getAttackingCreatureIndices(gameData, activeId);
 
+        // Build blocker map: attackerIndex -> list of blockerIndices
+        Map<Integer, List<Integer>> blockerMap = new LinkedHashMap<>();
         for (int atkIdx : attackingIndices) {
-            Permanent attacker = attackerBattlefield.get(atkIdx);
-            int attackerPower = attacker.getEffectivePower();
-            int attackerToughness = attacker.getEffectiveToughness();
+            List<Integer> blockers = new ArrayList<>();
+            for (int i = 0; i < defBf.size(); i++) {
+                if (defBf.get(i).isBlocking() && defBf.get(i).getBlockingTarget() == atkIdx) {
+                    blockers.add(i);
+                }
+            }
+            blockerMap.put(atkIdx, blockers);
+        }
 
-            // Find all blockers targeting this attacker
-            List<Integer> blockerIndices = new ArrayList<>();
-            for (int i = 0; i < defenderBattlefield.size(); i++) {
-                Permanent p = defenderBattlefield.get(i);
-                if (p.isBlocking() && p.getBlockingTarget() == atkIdx) {
-                    blockerIndices.add(i);
+        // Check if any combat creature has first strike
+        boolean anyFirstStrike = false;
+        for (int atkIdx : attackingIndices) {
+            if (atkBf.get(atkIdx).getCard().getKeywords().contains(Keyword.FIRST_STRIKE)) {
+                anyFirstStrike = true;
+                break;
+            }
+        }
+        if (!anyFirstStrike) {
+            for (List<Integer> blkIndices : blockerMap.values()) {
+                for (int blkIdx : blkIndices) {
+                    if (defBf.get(blkIdx).getCard().getKeywords().contains(Keyword.FIRST_STRIKE)) {
+                        anyFirstStrike = true;
+                        break;
+                    }
+                }
+                if (anyFirstStrike) break;
+            }
+        }
+
+        int damageToDefendingPlayer = 0;
+        Set<Integer> deadAttackerIndices = new TreeSet<>(Collections.reverseOrder());
+        Set<Integer> deadDefenderIndices = new TreeSet<>(Collections.reverseOrder());
+
+        // Track cumulative damage on each creature
+        Map<Integer, Integer> atkDamageTaken = new HashMap<>();
+        Map<Integer, Integer> defDamageTaken = new HashMap<>();
+
+        // Phase 1: First strike damage
+        if (anyFirstStrike) {
+            for (var entry : blockerMap.entrySet()) {
+                int atkIdx = entry.getKey();
+                List<Integer> blkIndices = entry.getValue();
+                Permanent atk = atkBf.get(atkIdx);
+                boolean atkHasFS = atk.getCard().getKeywords().contains(Keyword.FIRST_STRIKE);
+
+                if (blkIndices.isEmpty()) {
+                    // Unblocked first striker deals damage to player
+                    if (atkHasFS) {
+                        damageToDefendingPlayer += atk.getEffectivePower();
+                    }
+                } else {
+                    // First strike attacker deals damage to blockers
+                    if (atkHasFS) {
+                        int remaining = atk.getEffectivePower();
+                        for (int blkIdx : blkIndices) {
+                            Permanent blk = defBf.get(blkIdx);
+                            int dmg = Math.min(remaining, blk.getEffectiveToughness());
+                            defDamageTaken.merge(blkIdx, dmg, Integer::sum);
+                            remaining -= dmg;
+                        }
+                    }
+                    // First strike blockers deal damage to attacker
+                    for (int blkIdx : blkIndices) {
+                        Permanent blk = defBf.get(blkIdx);
+                        if (blk.getCard().getKeywords().contains(Keyword.FIRST_STRIKE)) {
+                            atkDamageTaken.merge(atkIdx, blk.getEffectivePower(), Integer::sum);
+                        }
+                    }
                 }
             }
 
-            if (blockerIndices.isEmpty()) {
-                // Unblocked — damage goes to defending player
-                damageToDefender += attackerPower;
-            } else {
-                // Blocked — auto-assign attacker's damage to blockers in order
-                int remainingDamage = attackerPower;
-                int totalDamageToAttacker = 0;
-
-                for (int blockerIdx : blockerIndices) {
-                    Permanent blocker = defenderBattlefield.get(blockerIdx);
-                    int blockerToughness = blocker.getEffectiveToughness();
-                    int blockerPower = blocker.getEffectivePower();
-
-                    // Assign lethal damage to this blocker
-                    int damageToThisBlocker = Math.min(remainingDamage, blockerToughness);
-                    remainingDamage -= damageToThisBlocker;
-
-                    // Check if blocker dies
-                    if (damageToThisBlocker >= blockerToughness) {
-                        deadDefenderIndices.add(blockerIdx);
-                    }
-
-                    totalDamageToAttacker += blockerPower;
-                }
-
-                // Check if attacker dies
-                if (totalDamageToAttacker >= attackerToughness) {
+            // Determine phase 1 casualties
+            for (int atkIdx : attackingIndices) {
+                int dmg = atkDamageTaken.getOrDefault(atkIdx, 0);
+                if (dmg >= atkBf.get(atkIdx).getEffectiveToughness()) {
                     deadAttackerIndices.add(atkIdx);
+                }
+            }
+            for (List<Integer> blkIndices : blockerMap.values()) {
+                for (int blkIdx : blkIndices) {
+                    int dmg = defDamageTaken.getOrDefault(blkIdx, 0);
+                    if (dmg >= defBf.get(blkIdx).getEffectiveToughness()) {
+                        deadDefenderIndices.add(blkIdx);
+                    }
+                }
+            }
+        }
+
+        // Phase 2: Regular damage (skip dead creatures, skip first-strikers who already dealt)
+        for (var entry : blockerMap.entrySet()) {
+            int atkIdx = entry.getKey();
+            List<Integer> blkIndices = entry.getValue();
+            if (deadAttackerIndices.contains(atkIdx)) continue;
+
+            Permanent atk = atkBf.get(atkIdx);
+            boolean atkHasFS = atk.getCard().getKeywords().contains(Keyword.FIRST_STRIKE);
+
+            if (blkIndices.isEmpty()) {
+                // Unblocked regular attacker deals damage to player
+                if (!atkHasFS) {
+                    damageToDefendingPlayer += atk.getEffectivePower();
+                }
+            } else {
+                // Non-first-strike attacker deals damage to surviving blockers
+                if (!atkHasFS) {
+                    int remaining = atk.getEffectivePower();
+                    for (int blkIdx : blkIndices) {
+                        if (deadDefenderIndices.contains(blkIdx)) continue;
+                        Permanent blk = defBf.get(blkIdx);
+                        int remainingToughness = blk.getEffectiveToughness() - defDamageTaken.getOrDefault(blkIdx, 0);
+                        int dmg = Math.min(remaining, remainingToughness);
+                        defDamageTaken.merge(blkIdx, dmg, Integer::sum);
+                        remaining -= dmg;
+                    }
+                }
+                // Non-first-strike surviving blockers deal damage to attacker
+                for (int blkIdx : blkIndices) {
+                    if (deadDefenderIndices.contains(blkIdx)) continue;
+                    Permanent blk = defBf.get(blkIdx);
+                    if (!blk.getCard().getKeywords().contains(Keyword.FIRST_STRIKE)) {
+                        atkDamageTaken.merge(atkIdx, blk.getEffectivePower(), Integer::sum);
+                    }
+                }
+            }
+        }
+
+        // Determine phase 2 casualties
+        for (int atkIdx : attackingIndices) {
+            if (deadAttackerIndices.contains(atkIdx)) continue;
+            int dmg = atkDamageTaken.getOrDefault(atkIdx, 0);
+            if (dmg >= atkBf.get(atkIdx).getEffectiveToughness()) {
+                deadAttackerIndices.add(atkIdx);
+            }
+        }
+        for (List<Integer> blkIndices : blockerMap.values()) {
+            for (int blkIdx : blkIndices) {
+                if (deadDefenderIndices.contains(blkIdx)) continue;
+                int dmg = defDamageTaken.getOrDefault(blkIdx, 0);
+                if (dmg >= defBf.get(blkIdx).getEffectiveToughness()) {
+                    deadDefenderIndices.add(blkIdx);
                 }
             }
         }
@@ -1208,25 +1322,25 @@ public class GameService {
         List<String> deadCreatureNames = new ArrayList<>();
         List<Card> attackerGraveyard = gameData.playerGraveyards.get(activeId);
         for (int idx : deadAttackerIndices) {
-            Permanent dead = attackerBattlefield.get(idx);
+            Permanent dead = atkBf.get(idx);
             deadCreatureNames.add(gameData.playerIdToName.get(activeId) + "'s " + dead.getCard().getName());
             attackerGraveyard.add(dead.getCard());
-            attackerBattlefield.remove(idx);
+            atkBf.remove(idx);
         }
         List<Card> defenderGraveyard = gameData.playerGraveyards.get(defenderId);
         for (int idx : deadDefenderIndices) {
-            Permanent dead = defenderBattlefield.get(idx);
+            Permanent dead = defBf.get(idx);
             deadCreatureNames.add(gameData.playerIdToName.get(defenderId) + "'s " + dead.getCard().getName());
             defenderGraveyard.add(dead.getCard());
-            defenderBattlefield.remove(idx);
+            defBf.remove(idx);
         }
 
         // Apply life loss
-        if (damageToDefender > 0) {
+        if (damageToDefendingPlayer > 0) {
             int currentLife = gameData.playerLifeTotals.getOrDefault(defenderId, 20);
-            gameData.playerLifeTotals.put(defenderId, currentLife - damageToDefender);
+            gameData.playerLifeTotals.put(defenderId, currentLife - damageToDefendingPlayer);
 
-            String logEntry = gameData.playerIdToName.get(defenderId) + " takes " + damageToDefender + " combat damage.";
+            String logEntry = gameData.playerIdToName.get(defenderId) + " takes " + damageToDefendingPlayer + " combat damage.";
             gameData.gameLog.add(logEntry);
             broadcastLogEntry(gameData, logEntry);
         }
@@ -1244,7 +1358,7 @@ public class GameService {
         }
 
         log.info("Game {} - Combat damage resolved: {} damage to defender, {} creatures died",
-                gameData.id, damageToDefender, deadAttackerIndices.size() + deadDefenderIndices.size());
+                gameData.id, damageToDefendingPlayer, deadAttackerIndices.size() + deadDefenderIndices.size());
 
         // Check win condition
         if (checkWinCondition(gameData)) {
