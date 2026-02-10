@@ -7,7 +7,8 @@ import lombok.RequiredArgsConstructor;
 public enum CardType {
 
     BASIC_LAND("Basic Land"),
-    CREATURE("Creature");
+    CREATURE("Creature"),
+    SORCERY("Sorcery");
 
     @Getter
     private final String displayName;

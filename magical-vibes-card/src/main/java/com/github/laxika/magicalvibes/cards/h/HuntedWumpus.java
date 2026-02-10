@@ -11,6 +11,6 @@ import java.util.Set;
 public class HuntedWumpus extends Card {
 
     public HuntedWumpus() {
-        super("Hunted Wumpus", CardType.CREATURE, List.of(CardSubtype.BEAST), null, List.of(), "{3}{G}", 6, 4, Set.of(), List.of(new OpponentMayPlayCreatureEffect()));
+        super("Hunted Wumpus", CardType.CREATURE, List.of(CardSubtype.BEAST), null, List.of(), "{3}{G}", 6, 4, Set.of(), List.of(new OpponentMayPlayCreatureEffect()), List.of());
     }
 }

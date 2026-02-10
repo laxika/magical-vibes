@@ -13,15 +13,19 @@ public class ManaCost {
 
     private final int genericCost;
     private final Map<String, Integer> coloredCosts;
+    private final boolean hasX;
 
     public ManaCost(String manaCostString) {
         int generic = 0;
+        boolean foundX = false;
         Map<String, Integer> colored = new HashMap<>();
 
         Matcher matcher = MANA_SYMBOL.matcher(manaCostString);
         while (matcher.find()) {
             String symbol = matcher.group(1);
-            if (COLORS.contains(symbol)) {
+            if (symbol.equals("X")) {
+                foundX = true;
+            } else if (COLORS.contains(symbol)) {
                 colored.merge(symbol, 1, Integer::sum);
             } else {
                 generic += Integer.parseInt(symbol);
@@ -30,9 +34,18 @@ public class ManaCost {
 
         this.genericCost = generic;
         this.coloredCosts = colored;
+        this.hasX = foundX;
+    }
+
+    public boolean hasX() {
+        return hasX;
     }
 
     public boolean canPay(ManaPool pool) {
+        return canPay(pool, 0);
+    }
+
+    public boolean canPay(ManaPool pool, int xValue) {
         for (Map.Entry<String, Integer> entry : coloredCosts.entrySet()) {
             if (pool.get(entry.getKey()) < entry.getValue()) {
                 return false;
@@ -44,17 +57,21 @@ public class ManaCost {
             remaining -= entry.getValue();
         }
 
-        return remaining >= genericCost;
+        return remaining >= genericCost + xValue;
     }
 
     public void pay(ManaPool pool) {
+        pay(pool, 0);
+    }
+
+    public void pay(ManaPool pool, int xValue) {
         for (Map.Entry<String, Integer> entry : coloredCosts.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
                 pool.remove(entry.getKey());
             }
         }
 
-        int remainingGeneric = genericCost;
+        int remainingGeneric = genericCost + xValue;
         while (remainingGeneric > 0) {
             String highestColor = null;
             int highestAmount = 0;

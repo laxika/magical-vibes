@@ -11,6 +11,6 @@ import java.util.Set;
 public class LlanowarElves extends Card {
 
     public LlanowarElves() {
-        super("Llanowar Elves", CardType.CREATURE, List.of(CardSubtype.ELF, CardSubtype.DRUID), "G", List.of(new AwardManaEffect("G")), "{G}", 1, 1, Set.of(), List.of());
+        super("Llanowar Elves", CardType.CREATURE, List.of(CardSubtype.ELF, CardSubtype.DRUID), "G", List.of(new AwardManaEffect("G")), "{G}", 1, 1, Set.of(), List.of(), List.of());
     }
 }

@@ -71,8 +71,16 @@ public class GameTestHarness {
         gameData.playerBattlefields.get(player.getId()).add(new Permanent(card));
     }
 
+    public void setLife(Player player, int life) {
+        gameData.playerLifeTotals.put(player.getId(), life);
+    }
+
     public void castCreature(Player player, int cardIndex) {
-        gameService.playCard(gameData, player, cardIndex);
+        gameService.playCard(gameData, player, cardIndex, 0);
+    }
+
+    public void castSorcery(Player player, int cardIndex, int xValue) {
+        gameService.playCard(gameData, player, cardIndex, xValue);
     }
 
     public void passPriority(Player player) {

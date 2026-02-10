@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import lombok.RequiredArgsConstructor;
@@ -232,6 +233,17 @@ public class GameService {
             for (CardEffect effect : entry.getEffectsToResolve()) {
                 if (effect instanceof OpponentMayPlayCreatureEffect) {
                     resolveOpponentMayPlayCreature(gameData, entry.getControllerId());
+                }
+            }
+        } else if (entry.getEntryType() == StackEntryType.SORCERY_SPELL) {
+            String logEntry = entry.getDescription() + " resolves.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            log.info("Game {} - {} resolves (X={})", gameData.id, entry.getDescription(), entry.getXValue());
+
+            for (CardEffect effect : entry.getEffectsToResolve()) {
+                if (effect instanceof DealDamageToFlyingAndPlayersEffect) {
+                    resolveDealDamageToFlyingAndPlayers(gameData, entry.getXValue());
                 }
             }
         }
@@ -470,7 +482,7 @@ public class GameService {
         sessionManager.sendToPlayers(data.orderedPlayerIds, new BattlefieldUpdatedMessage(getBattlefields(data)));
     }
 
-    public void playCard(GameData gameData, Player player, int cardIndex) {
+    public void playCard(GameData gameData, Player player, int cardIndex, int xValue) {
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
         }
@@ -483,7 +495,23 @@ public class GameService {
             }
 
             List<Card> hand = gameData.playerHands.get(playerId);
-            Card card = hand.remove(cardIndex);
+            Card card = hand.get(cardIndex);
+
+            // For X-cost spells, validate that player can pay colored + generic + xValue
+            if (card.getManaCost() != null) {
+                ManaCost cost = new ManaCost(card.getManaCost());
+                if (cost.hasX()) {
+                    if (xValue < 0) {
+                        throw new IllegalStateException("X value cannot be negative");
+                    }
+                    ManaPool pool = gameData.playerManaPools.get(playerId);
+                    if (!cost.canPay(pool, xValue)) {
+                        throw new IllegalStateException("Not enough mana to pay for X=" + xValue);
+                    }
+                }
+            }
+
+            hand.remove(cardIndex);
 
             if (card.getType() == CardType.BASIC_LAND) {
                 // Lands bypass the stack — go directly onto battlefield
@@ -521,6 +549,29 @@ public class GameService {
                 broadcastLogEntry(gameData, logEntry);
 
                 log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), card.getName());
+
+                resolveAutoPass(gameData);
+            } else if (card.getType() == CardType.SORCERY) {
+                ManaCost cost = new ManaCost(card.getManaCost());
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                cost.pay(pool, xValue);
+                sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
+
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.SORCERY_SPELL, card, playerId, card.getName(),
+                        new ArrayList<>(card.getSpellEffects()), xValue
+                ));
+                gameData.priorityPassedBy.clear();
+
+                sessionManager.sendToPlayer(playerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+                broadcastStackUpdate(gameData);
+                sessionManager.sendToPlayers(gameData.orderedPlayerIds,new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+
+                String logEntry = player.getUsername() + " casts " + card.getName() + " (X=" + xValue + ").";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+
+                log.info("Game {} - {} casts {} with X={}", gameData.id, player.getUsername(), card.getName(), xValue);
 
                 resolveAutoPass(gameData);
             }
@@ -683,6 +734,54 @@ public class GameService {
 
             resolveAutoPass(gameData);
         }
+    }
+
+    // ===== Sorcery effect methods =====
+
+    private void resolveDealDamageToFlyingAndPlayers(GameData gameData, int damage) {
+        // Deal damage to creatures with flying
+        for (Long playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+
+            Set<Integer> deadIndices = new TreeSet<>(Collections.reverseOrder());
+            for (int i = 0; i < battlefield.size(); i++) {
+                Permanent p = battlefield.get(i);
+                if (p.getCard().getKeywords().contains(Keyword.FLYING)) {
+                    int toughness = p.getCard().getToughness() != null ? p.getCard().getToughness() : 0;
+                    if (damage >= toughness) {
+                        deadIndices.add(i);
+                    }
+                }
+            }
+
+            for (int idx : deadIndices) {
+                String playerName = gameData.playerIdToName.get(playerId);
+                String creatureName = battlefield.get(idx).getCard().getName();
+                String logEntry = playerName + "'s " + creatureName + " is destroyed by Hurricane.";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+                battlefield.remove(idx);
+            }
+        }
+
+        broadcastBattlefields(gameData);
+
+        // Deal damage to each player
+        for (Long playerId : gameData.orderedPlayerIds) {
+            int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+            gameData.playerLifeTotals.put(playerId, currentLife - damage);
+
+            if (damage > 0) {
+                String playerName = gameData.playerIdToName.get(playerId);
+                String logEntry = playerName + " takes " + damage + " damage from Hurricane.";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+            }
+        }
+
+        broadcastLifeTotals(gameData);
+        checkWinCondition(gameData);
     }
 
     // ===== Combat methods =====
@@ -1089,6 +1188,14 @@ public class GameService {
             if (card.getType() == CardType.CREATURE && isActivePlayer && isMainPhase && stackEmpty && card.getManaCost() != null) {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
+                if (cost.canPay(pool)) {
+                    playable.add(i);
+                }
+            }
+            if (card.getType() == CardType.SORCERY && isActivePlayer && isMainPhase && stackEmpty && card.getManaCost() != null) {
+                ManaCost cost = new ManaCost(card.getManaCost());
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                // For X-cost spells, playable if player can pay the colored portion (X=0 minimum)
                 if (cost.canPay(pool)) {
                     playable.add(i);
                 }

@@ -1,4 +1,4 @@
 package com.github.laxika.magicalvibes.networking.message;
 
-public record PlayCardRequest(int cardIndex) {
+public record PlayCardRequest(int cardIndex, int xValue) {
 }
