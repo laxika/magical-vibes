@@ -496,7 +496,8 @@ public class GameService {
         sessionManager.sendToPlayers(data.orderedPlayerIds, new BattlefieldUpdatedMessage(getBattlefields(data)));
     }
 
-    public void playCard(GameData gameData, Player player, int cardIndex, int xValue, UUID targetPermanentId) {
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId) {
+        int effectiveXValue = xValue != null ? xValue : 0;
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
         }
@@ -515,12 +516,12 @@ public class GameService {
             if (card.getManaCost() != null) {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 if (cost.hasX()) {
-                    if (xValue < 0) {
+                    if (effectiveXValue < 0) {
                         throw new IllegalStateException("X value cannot be negative");
                     }
                     ManaPool pool = gameData.playerManaPools.get(playerId);
-                    if (!cost.canPay(pool, xValue)) {
-                        throw new IllegalStateException("Not enough mana to pay for X=" + xValue);
+                    if (!cost.canPay(pool, effectiveXValue)) {
+                        throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
                     }
                 }
             }
@@ -576,12 +577,12 @@ public class GameService {
             } else if (card.getType() == CardType.SORCERY) {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
-                cost.pay(pool, xValue);
+                cost.pay(pool, effectiveXValue);
                 sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
 
                 gameData.stack.add(new StackEntry(
                         StackEntryType.SORCERY_SPELL, card, playerId, card.getName(),
-                        new ArrayList<>(card.getSpellEffects()), xValue
+                        new ArrayList<>(card.getSpellEffects()), effectiveXValue
                 ));
                 gameData.priorityPassedBy.clear();
 
@@ -589,11 +590,11 @@ public class GameService {
                 broadcastStackUpdate(gameData);
                 sessionManager.sendToPlayers(gameData.orderedPlayerIds,new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
 
-                String logEntry = player.getUsername() + " casts " + card.getName() + " (X=" + xValue + ").";
+                String logEntry = player.getUsername() + " casts " + card.getName() + " (X=" + effectiveXValue + ").";
                 gameData.gameLog.add(logEntry);
                 broadcastLogEntry(gameData, logEntry);
 
-                log.info("Game {} - {} casts {} with X={}", gameData.id, player.getUsername(), card.getName(), xValue);
+                log.info("Game {} - {} casts {} with X={}", gameData.id, player.getUsername(), card.getName(), effectiveXValue);
 
                 resolveAutoPass(gameData);
             } else if (card.getType() == CardType.INSTANT) {
