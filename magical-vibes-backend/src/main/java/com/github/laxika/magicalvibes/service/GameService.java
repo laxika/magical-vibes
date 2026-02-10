@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
@@ -231,6 +232,22 @@ public class GameService {
                 broadcastLogEntry(gameData, etbLog);
                 log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
             }
+
+            // Check for ally-creature-enters triggers (e.g. Angelic Chorus)
+            checkAllyCreatureEntersTriggers(gameData, controllerId, card);
+        } else if (entry.getEntryType() == StackEntryType.ENCHANTMENT_SPELL) {
+            Card card = entry.getCard();
+            UUID controllerId = entry.getControllerId();
+
+            gameData.playerBattlefields.get(controllerId).add(new Permanent(card));
+            broadcastBattlefields(gameData);
+
+            String playerName = gameData.playerIdToName.get(controllerId);
+            String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+
+            log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
         } else if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
             String logEntry = entry.getDescription() + " resolves.";
             gameData.gameLog.add(logEntry);
@@ -610,6 +627,29 @@ public class GameService {
                 log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), card.getName());
 
                 resolveAutoPass(gameData);
+            } else if (card.getType() == CardType.ENCHANTMENT) {
+                ManaCost cost = new ManaCost(card.getManaCost());
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                cost.pay(pool);
+                sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
+
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.ENCHANTMENT_SPELL, card, playerId, card.getName(),
+                        List.of(), 0, null
+                ));
+                gameData.priorityPassedBy.clear();
+
+                sessionManager.sendToPlayer(playerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+                broadcastStackUpdate(gameData);
+                sessionManager.sendToPlayers(gameData.orderedPlayerIds,new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+
+                String logEntry = player.getUsername() + " casts " + card.getName() + ".";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+
+                log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), card.getName());
+
+                resolveAutoPass(gameData);
             } else if (card.getType() == CardType.SORCERY) {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
@@ -774,6 +814,35 @@ public class GameService {
         resolveGainLife(gameData, controllerId, amount);
     }
 
+    private void checkAllyCreatureEntersTriggers(GameData gameData, UUID controllerId, Card enteringCreature) {
+        if (enteringCreature.getToughness() == null) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        for (Permanent perm : battlefield) {
+            List<CardEffect> effects = perm.getCard().getOnAllyCreatureEntersBattlefieldEffects();
+            if (effects == null || effects.isEmpty()) continue;
+
+            for (CardEffect effect : effects) {
+                if (effect instanceof GainLifeEqualToToughnessEffect) {
+                    int toughness = enteringCreature.getToughness();
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            controllerId,
+                            perm.getCard().getName() + "'s ability",
+                            List.of(new GainLifeEffect(toughness))
+                    ));
+                    String triggerLog = perm.getCard().getName() + " triggers — " +
+                            gameData.playerIdToName.get(controllerId) + " will gain " + toughness + " life.";
+                    gameData.gameLog.add(triggerLog);
+                    broadcastLogEntry(gameData, triggerLog);
+                    log.info("Game {} - {} triggers for {} entering (toughness={})",
+                            gameData.id, perm.getCard().getName(), enteringCreature.getName(), toughness);
+                }
+            }
+        }
+    }
+
     private void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         gameData.awaitingCardChoice = true;
         gameData.awaitingCardChoicePlayerId = playerId;
@@ -838,6 +907,9 @@ public class GameService {
                     broadcastStackUpdate(gameData);
                     log.info("Game {} - {} ETB ability pushed onto stack (via Wumpus)", gameData.id, card.getName());
                 }
+
+                // Check for ally-creature-enters triggers (e.g. Angelic Chorus)
+                checkAllyCreatureEntersTriggers(gameData, playerId, card);
             }
 
             resolveAutoPass(gameData);
@@ -1480,6 +1552,13 @@ public class GameService {
                 playable.add(i);
             }
             if (card.getType() == CardType.CREATURE && isActivePlayer && isMainPhase && stackEmpty && card.getManaCost() != null) {
+                ManaCost cost = new ManaCost(card.getManaCost());
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                if (cost.canPay(pool)) {
+                    playable.add(i);
+                }
+            }
+            if (card.getType() == CardType.ENCHANTMENT && isActivePlayer && isMainPhase && stackEmpty && card.getManaCost() != null) {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 if (cost.canPay(pool)) {

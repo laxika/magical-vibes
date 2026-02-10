@@ -8,6 +8,7 @@ public enum CardType {
 
     BASIC_LAND("Basic Land"),
     CREATURE("Creature"),
+    ENCHANTMENT("Enchantment"),
     SORCERY("Sorcery"),
     INSTANT("Instant");
 

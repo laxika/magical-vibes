@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards;
 
 import com.github.laxika.magicalvibes.cards.a.AncestorsChosen;
 import com.github.laxika.magicalvibes.cards.a.AngelicBlessing;
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.a.AngelicWall;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -28,6 +29,7 @@ public enum CardSet {
             new CardPrinting("10E", "1", AncestorsChosen::new),
             new CardPrinting("10E", "2", AngelOfMercy::new, "\"Every tear shed is a drop of immortality.\""),
             new CardPrinting("10E", "3", AngelicBlessing::new, "\"Only the warrior who can admit mortal weakness will be bolstered by immortal strength.\""),
+            new CardPrinting("10E", "4", AngelicChorus::new, "\"The harmony of the glorious is a dirge to the wicked.\""),
             new CardPrinting("10E", "5", AngelicWall::new, "\"The Ancestor protects us in ways we can't begin to comprehend.\"\n\u2014Mystic elder"),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),

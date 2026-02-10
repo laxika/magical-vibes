@@ -25,6 +25,7 @@ public class Card {
     @Setter private Set<Keyword> keywords = Set.of();
     @Setter private List<CardEffect> onEnterBattlefieldEffects = List.of();
     @Setter private List<CardEffect> spellEffects = List.of();
+    @Setter private List<CardEffect> onAllyCreatureEntersBattlefieldEffects = List.of();
     @Setter private boolean needsTarget;
     @Setter private String setCode;
     @Setter private String collectorNumber;
