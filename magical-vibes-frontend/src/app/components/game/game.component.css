@@ -659,6 +659,10 @@ h1 {
   background: linear-gradient(135deg, #1a5276 0%, #2980b9 100%);
 }
 
+.card[data-card-type="Sorcery"] {
+  background: linear-gradient(135deg, #6B2D5B 0%, #9B59B6 100%);
+}
+
 .card-mana-cost {
   font-size: 11px;
   font-weight: 700;
