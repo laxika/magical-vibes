@@ -7,6 +7,10 @@ import lombok.RequiredArgsConstructor;
 public enum CardSubtype {
 
     FOREST("Forest"),
+    MOUNTAIN("Mountain"),
+    ISLAND("Island"),
+    PLAINS("Plains"),
+    SWAMP("Swamp"),
     BEAR("Bear"),
     ELF("Elf"),
     DRUID("Druid"),
