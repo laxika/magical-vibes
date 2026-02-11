@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.c.Condemn;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.f.FieldMarshal;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GhostWarden;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
@@ -51,6 +52,7 @@ public enum CardSet {
             new CardPrinting("10E", "13", Condemn::new),
             new CardPrinting("10E", "14", Demystify::new),
             new CardPrinting("10E", "15", FieldMarshal::new),
+            new CardPrinting("10E", "16", GhostWarden::new, "\"I thought of fate as an iron lattice, intricate but rigidly unchangeable. That was until some force bent fate's bars to spare my life.\"\n\u2014Ilromov, traveling storyteller"),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
             new CardPrinting("10E", "382", Forest::new),
