@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -44,9 +45,9 @@ class BeaconOfImmortalityTest {
         assertThat(card.getManaCost()).isEqualTo("{5}{W}");
         assertThat(card.getColor()).isEqualTo(CardColor.WHITE);
         assertThat(card.isNeedsTarget()).isTrue();
-        assertThat(card.isShuffleIntoLibraryOnResolve()).isTrue();
-        assertThat(card.getSpellEffects()).hasSize(1);
-        assertThat(card.getSpellEffects().getFirst()).isInstanceOf(DoubleTargetPlayerLifeEffect.class);
+        assertThat(card.getSpellEffects()).hasSize(2);
+        assertThat(card.getSpellEffects().get(0)).isInstanceOf(DoubleTargetPlayerLifeEffect.class);
+        assertThat(card.getSpellEffects().get(1)).isInstanceOf(ShuffleIntoLibraryEffect.class);
     }
 
     // ===== Casting =====

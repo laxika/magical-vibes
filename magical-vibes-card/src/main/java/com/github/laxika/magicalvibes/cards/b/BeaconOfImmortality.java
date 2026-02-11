@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 
 import java.util.List;
 
@@ -14,7 +15,6 @@ public class BeaconOfImmortality extends Card {
 
         setCardText("Double target player's life total.\nShuffle Beacon of Immortality into its owner's library.");
         setNeedsTarget(true);
-        setShuffleIntoLibraryOnResolve(true);
-        setSpellEffects(List.of(new DoubleTargetPlayerLifeEffect()));
+        setSpellEffects(List.of(new DoubleTargetPlayerLifeEffect(), new ShuffleIntoLibraryEffect()));
     }
 }

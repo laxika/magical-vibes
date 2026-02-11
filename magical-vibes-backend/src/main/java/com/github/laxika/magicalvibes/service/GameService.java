@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -270,22 +271,19 @@ public class GameService {
 
             resolveEffects(gameData, entry);
 
-            // Spells go to graveyard (or library) after resolving
-            if (entry.getEntryType() == StackEntryType.SORCERY_SPELL
-                    || entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
-                if (entry.getCard().isShuffleIntoLibraryOnResolve()) {
-                    List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
-                    deck.add(entry.getCard());
-                    Collections.shuffle(deck);
-                    broadcastDeckSizes(gameData);
+            if (entry.getEffectsToResolve().stream().anyMatch(e -> e instanceof ShuffleIntoLibraryEffect)) {
+                List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
+                deck.add(entry.getCard());
+                Collections.shuffle(deck);
+                broadcastDeckSizes(gameData);
 
-                    String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
-                    gameData.gameLog.add(shuffleLog);
-                    broadcastLogEntry(gameData, shuffleLog);
-                } else {
-                    gameData.playerGraveyards.get(entry.getControllerId()).add(entry.getCard());
-                    broadcastGraveyards(gameData);
-                }
+                String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
+                gameData.gameLog.add(shuffleLog);
+                broadcastLogEntry(gameData, shuffleLog);
+            } else if (entry.getEntryType() == StackEntryType.SORCERY_SPELL
+                    || entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
+                gameData.playerGraveyards.get(entry.getControllerId()).add(entry.getCard());
+                broadcastGraveyards(gameData);
             }
         }
 
