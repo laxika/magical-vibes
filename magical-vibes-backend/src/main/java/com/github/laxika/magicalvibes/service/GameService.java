@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.networking.message.StackUpdatedMessage;
 import com.github.laxika.magicalvibes.networking.message.StepAdvancedMessage;
 import com.github.laxika.magicalvibes.networking.message.TurnChangedMessage;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -54,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffec
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
@@ -358,7 +360,7 @@ public class GameService {
             } else if (effect instanceof DealXDamageDividedAmongTargetAttackingCreaturesEffect) {
                 resolveDealXDamageDividedAmongTargetAttackingCreatures(gameData, entry);
             } else if (effect instanceof DealDamageToFlyingAndPlayersEffect) {
-                resolveDealDamageToFlyingAndPlayers(gameData, entry.getXValue());
+                resolveDealDamageToFlyingAndPlayers(gameData, entry);
             } else if (effect instanceof BoostTargetCreatureEffect boost) {
                 resolveBoostTargetCreature(gameData, entry, boost);
             } else if (effect instanceof GrantKeywordToTargetEffect grant) {
@@ -384,6 +386,8 @@ public class GameService {
                 resolvePutTargetOnBottomOfLibrary(gameData, entry);
             } else if (effect instanceof PreventAllCombatDamageEffect) {
                 resolvePreventAllCombatDamage(gameData);
+            } else if (effect instanceof PreventDamageFromColorsEffect prevent) {
+                resolvePreventDamageFromColors(gameData, prevent);
             }
         }
         removeOrphanedAuras(gameData);
@@ -1255,6 +1259,13 @@ public class GameService {
             return;
         }
 
+        if (isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+            String logEntry = entry.getCard().getName() + "'s damage is prevented.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            return;
+        }
+
         int damage = applyCreaturePreventionShield(gameData, target, entry.getXValue());
         String logEntry = entry.getCard().getName() + " deals " + damage + " damage to " + target.getCard().getName() + ".";
         gameData.gameLog.add(logEntry);
@@ -1283,6 +1294,13 @@ public class GameService {
     private void resolveDealXDamageDividedAmongTargetAttackingCreatures(GameData gameData, StackEntry entry) {
         Map<UUID, Integer> assignments = entry.getDamageAssignments();
         if (assignments == null || assignments.isEmpty()) {
+            return;
+        }
+
+        if (isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+            String logEntry = entry.getCard().getName() + "'s damage is prevented.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
             return;
         }
 
@@ -1482,6 +1500,23 @@ public class GameService {
         broadcastLogEntry(gameData, logEntry);
     }
 
+    private void resolvePreventDamageFromColors(GameData gameData, PreventDamageFromColorsEffect effect) {
+        gameData.preventDamageFromColors.addAll(effect.colors());
+
+        String colorNames = effect.colors().stream()
+                .map(c -> c.name().toLowerCase())
+                .sorted()
+                .reduce((a, b) -> a + " and " + b)
+                .orElse("");
+        String logEntry = "All damage from " + colorNames + " sources will be prevented this turn.";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+    }
+
+    private boolean isDamageFromSourcePrevented(GameData gameData, CardColor sourceColor) {
+        return sourceColor != null && gameData.preventDamageFromColors.contains(sourceColor);
+    }
+
     private int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage) {
         if (permanent.getCard().getStaticEffects().stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
         if (hasAuraPreventingAllDamage(gameData, permanent)) return 0;
@@ -1510,7 +1545,8 @@ public class GameService {
     }
 
     private boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature) {
-        return hasAuraPreventingAllDamage(gameData, creature);
+        return hasAuraPreventingAllDamage(gameData, creature)
+                || isDamageFromSourcePrevented(gameData, creature.getCard().getColor());
     }
 
     private int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage) {
@@ -1599,6 +1635,7 @@ public class GameService {
         // Clear player damage prevention shields
         gameData.playerDamagePreventionShields.clear();
         gameData.preventAllCombatDamage = false;
+        gameData.preventDamageFromColors.clear();
     }
 
     // ===== Static / continuous effect computation =====
@@ -1644,7 +1681,15 @@ public class GameService {
 
     // ===== Sorcery effect methods =====
 
-    private void resolveDealDamageToFlyingAndPlayers(GameData gameData, int damage) {
+    private void resolveDealDamageToFlyingAndPlayers(GameData gameData, StackEntry entry) {
+        if (isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+            String logMsg = entry.getCard().getName() + "'s damage is prevented.";
+            gameData.gameLog.add(logMsg);
+            broadcastLogEntry(gameData, logMsg);
+            return;
+        }
+
+        int damage = entry.getXValue();
         // Deal damage to creatures with flying
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
