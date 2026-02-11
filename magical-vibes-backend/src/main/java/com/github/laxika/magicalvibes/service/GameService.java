@@ -36,7 +36,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CondemnEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
@@ -339,8 +340,10 @@ public class GameService {
                 String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
                 gameData.gameLog.add(shuffleLog);
                 broadcastLogEntry(gameData, shuffleLog);
-            } else if (effect instanceof CondemnEffect) {
-                resolveCondemn(gameData, entry);
+            } else if (effect instanceof GainLifeEqualToTargetToughnessEffect) {
+                resolveGainLifeEqualToTargetToughness(gameData, entry);
+            } else if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
+                resolvePutTargetOnBottomOfLibrary(gameData, entry);
             }
         }
     }
@@ -629,7 +632,7 @@ public class GameService {
 
                 // Effect-specific target validation
                 for (CardEffect effect : card.getSpellEffects()) {
-                    if (effect instanceof CondemnEffect) {
+                    if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
                         if (target == null || target.getCard().getType() != CardType.CREATURE || !target.isAttacking()) {
                             throw new IllegalStateException("Target must be an attacking creature");
                         }
@@ -1295,40 +1298,53 @@ public class GameService {
         log.info("Game {} - {}'s life doubled from {} to {}", gameData.id, playerName, currentLife, newLife);
     }
 
-    private void resolveCondemn(GameData gameData, StackEntry entry) {
+    private void resolveGainLifeEqualToTargetToughness(GameData gameData, StackEntry entry) {
         Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) return;
 
-        int lifegain = target.getEffectiveToughness();
+        int toughness = target.getEffectiveToughness();
+
+        // Find the controller (owner of the battlefield the creature is on)
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null && battlefield.contains(target)) {
+                int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+                gameData.playerLifeTotals.put(playerId, currentLife + toughness);
+
+                String logEntry = gameData.playerIdToName.get(playerId) + " gains " + toughness + " life.";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+                broadcastLifeTotals(gameData);
+
+                log.info("Game {} - {} gains {} life (equal to {}'s toughness)",
+                        gameData.id, gameData.playerIdToName.get(playerId), toughness, target.getCard().getName());
+                break;
+            }
+        }
+    }
+
+    private void resolvePutTargetOnBottomOfLibrary(GameData gameData, StackEntry entry) {
+        Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) return;
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
-                // Put on bottom of owner's library
                 gameData.playerDecks.get(playerId).add(target.getCard());
-                broadcastDeckSizes(gameData);
 
                 String logEntry = target.getCard().getName() + " is put on the bottom of "
                         + gameData.playerIdToName.get(playerId) + "'s library.";
                 gameData.gameLog.add(logEntry);
                 broadcastLogEntry(gameData, logEntry);
 
-                // Controller gains life equal to toughness
-                int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
-                gameData.playerLifeTotals.put(playerId, currentLife + lifegain);
-
-                String lifeLog = gameData.playerIdToName.get(playerId) + " gains " + lifegain + " life.";
-                gameData.gameLog.add(lifeLog);
-                broadcastLogEntry(gameData, lifeLog);
-
-                log.info("Game {} - {} condemned: put on bottom of library, {} gains {} life",
-                        gameData.id, target.getCard().getName(), gameData.playerIdToName.get(playerId), lifegain);
+                log.info("Game {} - {} put on bottom of {}'s library",
+                        gameData.id, target.getCard().getName(), gameData.playerIdToName.get(playerId));
                 break;
             }
         }
 
         broadcastBattlefields(gameData);
-        broadcastLifeTotals(gameData);
+        broadcastDeckSizes(gameData);
     }
 
     private int applyCreaturePreventionShield(Permanent permanent, int damage) {

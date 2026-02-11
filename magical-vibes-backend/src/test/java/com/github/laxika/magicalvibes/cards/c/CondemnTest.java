@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CondemnEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,8 +49,9 @@ class CondemnTest {
         assertThat(card.getManaCost()).isEqualTo("{W}");
         assertThat(card.getColor()).isEqualTo(CardColor.WHITE);
         assertThat(card.isNeedsTarget()).isTrue();
-        assertThat(card.getSpellEffects()).hasSize(1);
-        assertThat(card.getSpellEffects().getFirst()).isInstanceOf(CondemnEffect.class);
+        assertThat(card.getSpellEffects()).hasSize(2);
+        assertThat(card.getSpellEffects().get(0)).isInstanceOf(GainLifeEqualToTargetToughnessEffect.class);
+        assertThat(card.getSpellEffects().get(1)).isInstanceOf(PutTargetOnBottomOfLibraryEffect.class);
     }
 
     // ===== Casting =====
