@@ -67,7 +67,7 @@ class AvenCloudchaserTest {
         harness.addMana(player1, "W", 4);
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId);
+        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -86,7 +86,7 @@ class AvenCloudchaserTest {
         harness.addMana(player1, "W", 4);
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId);
+        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
 
         // Resolve creature spell → enters battlefield, ETB triggers
         harness.passBothPriorities();
@@ -111,7 +111,7 @@ class AvenCloudchaserTest {
         harness.addMana(player1, "W", 4);
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId);
+        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
 
         // Resolve creature spell
         harness.passBothPriorities();
@@ -134,7 +134,7 @@ class AvenCloudchaserTest {
         harness.addMana(player1, "W", 4);
 
         UUID targetId = harness.getPermanentId(player1, "Angelic Chorus");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId);
+        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
 
         harness.passBothPriorities(); // resolve creature
         harness.passBothPriorities(); // resolve ETB
@@ -154,7 +154,7 @@ class AvenCloudchaserTest {
         harness.addMana(player1, "W", 4);
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId);
+        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
 
         // Resolve creature spell → ETB on stack
         harness.passBothPriorities();
@@ -222,7 +222,7 @@ class AvenCloudchaserTest {
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId))
+        assertThatThrownBy(() -> harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
