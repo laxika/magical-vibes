@@ -206,7 +206,7 @@ public class GameService {
     private void resolveTopOfStack(GameData gameData) {
         if (gameData.stack.isEmpty()) return;
 
-        StackEntry entry = gameData.stack.remove(gameData.stack.size() - 1);
+        StackEntry entry = gameData.stack.removeLast();
         gameData.priorityPassedBy.clear();
 
         if (entry.getEntryType() == StackEntryType.CREATURE_SPELL) {
@@ -258,80 +258,53 @@ public class GameService {
             broadcastLogEntry(gameData, logEntry);
 
             log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
-        } else if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+        } else if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                || entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || entry.getEntryType() == StackEntryType.SORCERY_SPELL
+                || entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
             String logEntry = entry.getDescription() + " resolves.";
             gameData.gameLog.add(logEntry);
             broadcastLogEntry(gameData, logEntry);
             log.info("Game {} - {} resolves", gameData.id, entry.getDescription());
 
-            for (CardEffect effect : entry.getEffectsToResolve()) {
-                if (effect instanceof OpponentMayPlayCreatureEffect) {
-                    resolveOpponentMayPlayCreature(gameData, entry.getControllerId());
-                } else if (effect instanceof GainLifeEffect gainLife) {
-                    resolveGainLife(gameData, entry.getControllerId(), gainLife.amount());
-                } else if (effect instanceof GainLifePerGraveyardCardEffect) {
-                    resolveGainLifePerGraveyardCard(gameData, entry.getControllerId());
-                } else if (effect instanceof DestroyTargetPermanentEffect destroy) {
-                    resolveDestroyTargetPermanent(gameData, entry, destroy);
-                }
+            resolveEffects(gameData, entry);
+
+            // Spells go to graveyard after resolving
+            if (entry.getEntryType() == StackEntryType.SORCERY_SPELL
+                    || entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
+                gameData.playerGraveyards.get(entry.getControllerId()).add(entry.getCard());
+                broadcastGraveyards(gameData);
             }
-        } else if (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY) {
-            String logEntry = entry.getDescription() + " resolves.";
-            gameData.gameLog.add(logEntry);
-            broadcastLogEntry(gameData, logEntry);
-            log.info("Game {} - {} resolves", gameData.id, entry.getDescription());
-
-            for (CardEffect effect : entry.getEffectsToResolve()) {
-                if (effect instanceof DestroyTargetPermanentEffect destroy) {
-                    resolveDestroyTargetPermanent(gameData, entry, destroy);
-                } else if (effect instanceof DealXDamageToTargetCreatureEffect) {
-                    resolveDealXDamageToTargetCreature(gameData, entry);
-                }
-            }
-        } else if (entry.getEntryType() == StackEntryType.SORCERY_SPELL) {
-            String logEntry = entry.getDescription() + " resolves.";
-            gameData.gameLog.add(logEntry);
-            broadcastLogEntry(gameData, logEntry);
-            log.info("Game {} - {} resolves (X={})", gameData.id, entry.getDescription(), entry.getXValue());
-
-            for (CardEffect effect : entry.getEffectsToResolve()) {
-                if (effect instanceof DealDamageToFlyingAndPlayersEffect) {
-                    resolveDealDamageToFlyingAndPlayers(gameData, entry.getXValue());
-                } else if (effect instanceof BoostTargetCreatureEffect boost) {
-                    resolveBoostTargetCreature(gameData, entry, boost);
-                } else if (effect instanceof GrantKeywordToTargetEffect grant) {
-                    resolveGrantKeywordToTarget(gameData, entry, grant);
-                }
-            }
-
-            // Sorcery goes to graveyard after resolving
-            gameData.playerGraveyards.get(entry.getControllerId()).add(entry.getCard());
-            broadcastGraveyards(gameData);
-        } else if (entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
-            String logEntry = entry.getDescription() + " resolves.";
-            gameData.gameLog.add(logEntry);
-            broadcastLogEntry(gameData, logEntry);
-            log.info("Game {} - {} resolves", gameData.id, entry.getDescription());
-
-            for (CardEffect effect : entry.getEffectsToResolve()) {
-                if (effect instanceof BoostTargetCreatureEffect boost) {
-                    resolveBoostTargetCreature(gameData, entry, boost);
-                } else if (effect instanceof GrantKeywordToTargetEffect grant) {
-                    resolveGrantKeywordToTarget(gameData, entry, grant);
-                } else if (effect instanceof PreventDamageToTargetEffect prevent) {
-                    resolvePreventDamageToTarget(gameData, entry, prevent);
-                } else if (effect instanceof DrawCardEffect) {
-                    resolveDrawCard(gameData, entry.getControllerId());
-                }
-            }
-
-            // Instant goes to graveyard after resolving
-            gameData.playerGraveyards.get(entry.getControllerId()).add(entry.getCard());
-            broadcastGraveyards(gameData);
         }
 
         broadcastStackUpdate(gameData);
         sessionManager.sendToPlayers(gameData.orderedPlayerIds,new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+    }
+
+    private void resolveEffects(GameData gameData, StackEntry entry) {
+        for (CardEffect effect : entry.getEffectsToResolve()) {
+            if (effect instanceof OpponentMayPlayCreatureEffect) {
+                resolveOpponentMayPlayCreature(gameData, entry.getControllerId());
+            } else if (effect instanceof GainLifeEffect gainLife) {
+                resolveGainLife(gameData, entry.getControllerId(), gainLife.amount());
+            } else if (effect instanceof GainLifePerGraveyardCardEffect) {
+                resolveGainLifePerGraveyardCard(gameData, entry.getControllerId());
+            } else if (effect instanceof DestroyTargetPermanentEffect destroy) {
+                resolveDestroyTargetPermanent(gameData, entry, destroy);
+            } else if (effect instanceof DealXDamageToTargetCreatureEffect) {
+                resolveDealXDamageToTargetCreature(gameData, entry);
+            } else if (effect instanceof DealDamageToFlyingAndPlayersEffect) {
+                resolveDealDamageToFlyingAndPlayers(gameData, entry.getXValue());
+            } else if (effect instanceof BoostTargetCreatureEffect boost) {
+                resolveBoostTargetCreature(gameData, entry, boost);
+            } else if (effect instanceof GrantKeywordToTargetEffect grant) {
+                resolveGrantKeywordToTarget(gameData, entry, grant);
+            } else if (effect instanceof PreventDamageToTargetEffect prevent) {
+                resolvePreventDamageToTarget(gameData, entry, prevent);
+            } else if (effect instanceof DrawCardEffect) {
+                resolveDrawCard(gameData, entry.getControllerId());
+            }
+        }
     }
 
     private UUID getPriorityPlayerId(GameData data) {
