@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,7 +50,8 @@ class ChoMannoRevolutionaryTest {
         assertThat(card.getPower()).isEqualTo(2);
         assertThat(card.getToughness()).isEqualTo(2);
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.HUMAN, CardSubtype.REBEL);
-        assertThat(card.isPreventAllDamage()).isTrue();
+        assertThat(card.getStaticEffects()).hasSize(1);
+        assertThat(card.getStaticEffects().getFirst()).isInstanceOf(PreventAllDamageEffect.class);
     }
 
     // ===== Casting and resolving =====
@@ -202,7 +204,8 @@ class ChoMannoRevolutionaryTest {
                 .filter(p -> p.getCard().getName().equals("Cho-Manno, Revolutionary"))
                 .findFirst().orElseThrow();
 
-        assertThat(choManno.getCard().isPreventAllDamage()).isTrue();
+        assertThat(choManno.getCard().getStaticEffects())
+                .anyMatch(e -> e instanceof PreventAllDamageEffect);
     }
 
     // ===== Prevention is permanent (not consumed) =====

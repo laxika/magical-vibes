@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -1283,7 +1284,7 @@ public class GameService {
     }
 
     private int applyCreaturePreventionShield(Permanent permanent, int damage) {
-        if (permanent.getCard().isPreventAllDamage()) return 0;
+        if (permanent.getCard().getStaticEffects().stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
         int shield = permanent.getDamagePreventionShield();
         if (shield <= 0 || damage <= 0) return damage;
         int prevented = Math.min(shield, damage);
