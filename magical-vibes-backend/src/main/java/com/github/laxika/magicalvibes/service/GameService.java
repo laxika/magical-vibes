@@ -288,19 +288,14 @@ public class GameService {
 
                 resolveEffects(gameData, entry);
 
-                if (entry.getEffectsToResolve().stream().anyMatch(e -> e instanceof ShuffleIntoLibraryEffect)) {
-                    List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
-                    deck.add(entry.getCard());
-                    Collections.shuffle(deck);
-                    broadcastDeckSizes(gameData);
-
-                    String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
-                    gameData.gameLog.add(shuffleLog);
-                    broadcastLogEntry(gameData, shuffleLog);
-                } else if (entry.getEntryType() == StackEntryType.SORCERY_SPELL
+                if (entry.getEntryType() == StackEntryType.SORCERY_SPELL
                         || entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
-                    gameData.playerGraveyards.get(entry.getControllerId()).add(entry.getCard());
-                    broadcastGraveyards(gameData);
+                    boolean shuffled = entry.getEffectsToResolve().stream()
+                            .anyMatch(e -> e instanceof ShuffleIntoLibraryEffect);
+                    if (!shuffled) {
+                        gameData.playerGraveyards.get(entry.getControllerId()).add(entry.getCard());
+                        broadcastGraveyards(gameData);
+                    }
                 }
             }
         }
@@ -333,6 +328,15 @@ public class GameService {
                 resolveDrawCard(gameData, entry.getControllerId());
             } else if (effect instanceof DoubleTargetPlayerLifeEffect) {
                 resolveDoubleTargetPlayerLife(gameData, entry);
+            } else if (effect instanceof ShuffleIntoLibraryEffect) {
+                List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
+                deck.add(entry.getCard());
+                Collections.shuffle(deck);
+                broadcastDeckSizes(gameData);
+
+                String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
+                gameData.gameLog.add(shuffleLog);
+                broadcastLogEntry(gameData, shuffleLog);
             }
         }
     }
