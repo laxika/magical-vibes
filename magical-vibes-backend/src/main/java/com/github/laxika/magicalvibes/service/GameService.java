@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
@@ -250,7 +251,8 @@ public class GameService {
                             card.getName() + "'s ETB ability",
                             new ArrayList<>(card.getOnEnterBattlefieldEffects()),
                             0,
-                            entry.getTargetPermanentId()
+                            entry.getTargetPermanentId(),
+                            null
                     ));
                     String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
                     gameData.gameLog.add(etbLog);
@@ -265,15 +267,31 @@ public class GameService {
             Card card = entry.getCard();
             UUID controllerId = entry.getControllerId();
 
-            gameData.playerBattlefields.get(controllerId).add(new Permanent(card));
-            broadcastBattlefields(gameData);
+            // Aura fizzles if target creature no longer exists
+            if (entry.getTargetPermanentId() != null
+                    && findPermanentById(gameData, entry.getTargetPermanentId()) == null) {
+                String fizzleLog = card.getName() + " fizzles (target no longer exists).";
+                gameData.gameLog.add(fizzleLog);
+                broadcastLogEntry(gameData, fizzleLog);
+                gameData.playerGraveyards.get(controllerId).add(card);
+                broadcastGraveyards(gameData);
+                log.info("Game {} - {} fizzles, target {} no longer exists",
+                        gameData.id, card.getName(), entry.getTargetPermanentId());
+            } else {
+                Permanent enchantmentPermanent = new Permanent(card);
+                if (entry.getTargetPermanentId() != null) {
+                    enchantmentPermanent.setAttachedTo(entry.getTargetPermanentId());
+                }
+                gameData.playerBattlefields.get(controllerId).add(enchantmentPermanent);
+                broadcastBattlefields(gameData);
 
-            String playerName = gameData.playerIdToName.get(controllerId);
-            String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
-            gameData.gameLog.add(logEntry);
-            broadcastLogEntry(gameData, logEntry);
+                String playerName = gameData.playerIdToName.get(controllerId);
+                String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
 
-            log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
+                log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
+            }
         } else if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 || entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 || entry.getEntryType() == StackEntryType.SORCERY_SPELL
@@ -717,7 +735,7 @@ public class GameService {
 
                 gameData.stack.add(new StackEntry(
                         StackEntryType.ENCHANTMENT_SPELL, card, playerId, card.getName(),
-                        List.of(), 0
+                        List.of(), 0, targetPermanentId, null
                 ));
                 gameData.priorityPassedBy.clear();
 
@@ -894,6 +912,7 @@ public class GameService {
             // Sacrifice: remove from battlefield, add to graveyard
             battlefield.remove(permanentIndex);
             gameData.playerGraveyards.get(playerId).add(permanent.getCard());
+            removeOrphanedAuras(gameData);
 
             String logEntry = player.getUsername() + " sacrifices " + permanent.getCard().getName() + ".";
             gameData.gameLog.add(logEntry);
@@ -908,7 +927,8 @@ public class GameService {
                     permanent.getCard().getName() + "'s ability",
                     new ArrayList<>(permanent.getCard().getOnSacrificeEffects()),
                     0,
-                    targetPermanentId
+                    targetPermanentId,
+                    null
             ));
             gameData.priorityPassedBy.clear();
 
@@ -1002,7 +1022,8 @@ public class GameService {
                     permanent.getCard().getName() + "'s ability",
                     new ArrayList<>(permanent.getCard().getTapActivatedAbilityEffects()),
                     effectiveXValue,
-                    targetPermanentId
+                    targetPermanentId,
+                    null
             ));
             gameData.priorityPassedBy.clear();
 
@@ -1247,6 +1268,7 @@ public class GameService {
                     break;
                 }
             }
+            removeOrphanedAuras(gameData);
             broadcastBattlefields(gameData);
             broadcastGraveyards(gameData);
         }
@@ -1293,6 +1315,7 @@ public class GameService {
         }
 
         if (!destroyed.isEmpty()) {
+            removeOrphanedAuras(gameData);
             broadcastBattlefields(gameData);
             broadcastGraveyards(gameData);
         }
@@ -1327,6 +1350,7 @@ public class GameService {
             }
         }
 
+        removeOrphanedAuras(gameData);
         broadcastBattlefields(gameData);
         broadcastGraveyards(gameData);
     }
@@ -1442,6 +1466,7 @@ public class GameService {
             }
         }
 
+        removeOrphanedAuras(gameData);
         broadcastBattlefields(gameData);
         broadcastDeckSizes(gameData);
     }
@@ -1540,10 +1565,34 @@ public class GameService {
                         toughness += boost.toughnessBoost();
                         keywords.addAll(boost.grantedKeywords());
                     }
+                    if (effect instanceof BoostEnchantedCreatureEffect boost
+                            && source.getAttachedTo() != null
+                            && source.getAttachedTo().equals(target.getId())) {
+                        power += boost.powerBoost();
+                        toughness += boost.toughnessBoost();
+                    }
                 }
             }
         }
         return new StaticBonus(power, toughness, keywords);
+    }
+
+    private void removeOrphanedAuras(GameData gameData) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            Iterator<Permanent> it = bf.iterator();
+            while (it.hasNext()) {
+                Permanent p = it.next();
+                if (p.getAttachedTo() != null && findPermanentById(gameData, p.getAttachedTo()) == null) {
+                    it.remove();
+                    gameData.playerGraveyards.get(playerId).add(p.getCard());
+                    String logEntry = p.getCard().getName() + " is put into the graveyard (enchanted creature no longer exists).";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                }
+            }
+        }
     }
 
     public int getEffectivePower(GameData gameData, Permanent permanent) {
@@ -1590,6 +1639,7 @@ public class GameService {
             }
         }
 
+        removeOrphanedAuras(gameData);
         broadcastBattlefields(gameData);
         broadcastGraveyards(gameData);
 
@@ -2025,6 +2075,9 @@ public class GameService {
             deadCreatureNames.add(gameData.playerIdToName.get(defenderId) + "'s " + dead.getCard().getName());
             defenderGraveyard.add(dead.getCard());
             defBf.remove(idx);
+        }
+        if (!deadAttackerIndices.isEmpty() || !deadDefenderIndices.isEmpty()) {
+            removeOrphanedAuras(gameData);
         }
 
         // Apply life loss (with prevention shield)
