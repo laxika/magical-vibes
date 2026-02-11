@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
@@ -269,11 +270,22 @@ public class GameService {
 
             resolveEffects(gameData, entry);
 
-            // Spells go to graveyard after resolving
+            // Spells go to graveyard (or library) after resolving
             if (entry.getEntryType() == StackEntryType.SORCERY_SPELL
                     || entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
-                gameData.playerGraveyards.get(entry.getControllerId()).add(entry.getCard());
-                broadcastGraveyards(gameData);
+                if (entry.getCard().isShuffleIntoLibraryOnResolve()) {
+                    List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
+                    deck.add(entry.getCard());
+                    Collections.shuffle(deck);
+                    broadcastDeckSizes(gameData);
+
+                    String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
+                    gameData.gameLog.add(shuffleLog);
+                    broadcastLogEntry(gameData, shuffleLog);
+                } else {
+                    gameData.playerGraveyards.get(entry.getControllerId()).add(entry.getCard());
+                    broadcastGraveyards(gameData);
+                }
             }
         }
 
@@ -303,6 +315,8 @@ public class GameService {
                 resolvePreventDamageToTarget(gameData, entry, prevent);
             } else if (effect instanceof DrawCardEffect) {
                 resolveDrawCard(gameData, entry.getControllerId());
+            } else if (effect instanceof DoubleTargetPlayerLifeEffect) {
+                resolveDoubleTargetPlayerLife(gameData, entry);
             }
         }
     }
@@ -1262,6 +1276,27 @@ public class GameService {
         gameData.gameLog.add(logEntry);
         broadcastLogEntry(gameData, logEntry);
         log.info("Game {} - {} draws a card from effect", gameData.id, gameData.playerIdToName.get(playerId));
+    }
+
+    private void resolveDoubleTargetPlayerLife(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            String fizzleLog = entry.getCard().getName() + " fizzles (invalid target player).";
+            gameData.gameLog.add(fizzleLog);
+            broadcastLogEntry(gameData, fizzleLog);
+            return;
+        }
+
+        int currentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
+        int newLife = currentLife * 2;
+        gameData.playerLifeTotals.put(targetPlayerId, newLife);
+
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+        String logEntry = playerName + "'s life total is doubled from " + currentLife + " to " + newLife + ".";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        broadcastLifeTotals(gameData);
+        log.info("Game {} - {}'s life doubled from {} to {}", gameData.id, playerName, currentLife, newLife);
     }
 
     private int applyCreaturePreventionShield(Permanent permanent, int damage) {

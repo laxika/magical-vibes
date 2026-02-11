@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.a.AuraOfSilence;
 import com.github.laxika.magicalvibes.cards.a.AvenCloudchaser;
 import com.github.laxika.magicalvibes.cards.b.BallistaSquad;
 import com.github.laxika.magicalvibes.cards.b.Bandage;
+import com.github.laxika.magicalvibes.cards.b.BeaconOfImmortality;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -39,6 +40,7 @@ public enum CardSet {
             new CardPrinting("10E", "7", AvenCloudchaser::new),
             new CardPrinting("10E", "8", BallistaSquad::new, "\"The perfect antidote for a tightly packed formation.\""),
             new CardPrinting("10E", "9", Bandage::new, "\"Life is measured in inches. To a healer, every one of those inches is precious.\""),
+            new CardPrinting("10E", "10", BeaconOfImmortality::new, "\"The cave floods with light. A thousand rays shine forth and meld into one.\""),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
             new CardPrinting("10E", "382", Forest::new),
