@@ -130,9 +130,10 @@ class BandageTest {
         harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
 
-        // Trigger combat damage by advancing step through game service
+        // Passing priorities advances from DECLARE_BLOCKERS → COMBAT_DAMAGE, triggering resolveCombatDamage
         harness.getGameService().passPriority(harness.getGameData(), player1);
         harness.getGameService().passPriority(harness.getGameData(), player2);
 
@@ -144,6 +145,11 @@ class BandageTest {
         // Attacker took 2 damage with no shield → 2 >= 2 toughness → attacker dies
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        // Prevention shield was consumed
+        Permanent surviving = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
+                .findFirst().orElseThrow();
+        assertThat(surviving.getDamagePreventionShield()).isEqualTo(0);
     }
 
     @Test
@@ -164,7 +170,8 @@ class BandageTest {
         harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
 
         harness.getGameService().passPriority(harness.getGameData(), player1);
         harness.getGameService().passPriority(harness.getGameData(), player2);
@@ -207,7 +214,8 @@ class BandageTest {
         harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
 
         harness.getGameService().passPriority(harness.getGameData(), player1);
         harness.getGameService().passPriority(harness.getGameData(), player2);

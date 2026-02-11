@@ -616,11 +616,11 @@ public class GameService {
                 }
             }
 
-            // Validate target if specified
+            // Validate target if specified (can be a permanent or a player)
             if (targetPermanentId != null) {
                 Permanent target = findPermanentById(gameData, targetPermanentId);
-                if (target == null) {
-                    throw new IllegalStateException("Invalid target permanent");
+                if (target == null && !gameData.playerIds.contains(targetPermanentId)) {
+                    throw new IllegalStateException("Invalid target");
                 }
             }
 
