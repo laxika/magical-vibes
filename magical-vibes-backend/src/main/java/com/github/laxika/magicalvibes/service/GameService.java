@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
@@ -60,6 +61,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -400,6 +402,8 @@ public class GameService {
                 resolvePreventDamageFromColors(gameData, prevent);
             } else if (effect instanceof RedirectUnblockedCombatDamageToSelfEffect) {
                 resolveRedirectUnblockedCombatDamageToSelf(gameData, entry);
+            } else if (effect instanceof CreateCreatureTokenEffect token) {
+                resolveCreateCreatureToken(gameData, entry.getControllerId(), token);
             }
         }
         removeOrphanedAuras(gameData);
@@ -1657,6 +1661,23 @@ public class GameService {
         }
     }
 
+    private void resolveCreateCreatureToken(GameData gameData, UUID controllerId, CreateCreatureTokenEffect token) {
+        Card tokenCard = new Card(token.tokenName(), CardType.CREATURE, "", token.color());
+        tokenCard.setPower(token.power());
+        tokenCard.setToughness(token.toughness());
+        tokenCard.setSubtypes(token.subtypes());
+
+        Permanent tokenPermanent = new Permanent(tokenCard);
+        gameData.playerBattlefields.get(controllerId).add(tokenPermanent);
+
+        String logEntry = "A " + token.power() + "/" + token.toughness() + " " + token.tokenName() + " creature token enters the battlefield.";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        broadcastBattlefields(gameData);
+
+        log.info("Game {} - {} token created for player {}", gameData.id, token.tokenName(), controllerId);
+    }
+
     private int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage) {
         if (permanent.getCard().getStaticEffects().stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
         if (hasAuraPreventingAllDamage(gameData, permanent)) return 0;
@@ -1675,6 +1696,23 @@ public class GameService {
                 if (p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())) {
                     for (CardEffect effect : p.getCard().getStaticEffects()) {
                         if (effect instanceof PreventAllDamageToAndByEnchantedCreatureEffect) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasAuraPreventingAttackOrBlock(GameData gameData, Permanent creature) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                if (p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())) {
+                    for (CardEffect effect : p.getCard().getStaticEffects()) {
+                        if (effect instanceof EnchantedCreatureCantAttackOrBlockEffect) {
                             return true;
                         }
                     }
@@ -1899,7 +1937,7 @@ public class GameService {
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent p = battlefield.get(i);
-            if (p.getCard().getType() == CardType.CREATURE && !p.isTapped() && !p.isSummoningSick() && !hasKeyword(gameData, p, Keyword.DEFENDER)) {
+            if (p.getCard().getType() == CardType.CREATURE && !p.isTapped() && !p.isSummoningSick() && !hasKeyword(gameData, p, Keyword.DEFENDER) && !hasAuraPreventingAttackOrBlock(gameData, p)) {
                 indices.add(i);
             }
         }
@@ -1912,7 +1950,7 @@ public class GameService {
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent p = battlefield.get(i);
-            if (p.getCard().getType() == CardType.CREATURE && !p.isTapped()) {
+            if (p.getCard().getType() == CardType.CREATURE && !p.isTapped() && !hasAuraPreventingAttackOrBlock(gameData, p)) {
                 indices.add(i);
             }
         }
@@ -2006,11 +2044,13 @@ public class GameService {
                 return;
             }
 
-            // Mark creatures as attacking and tap them
+            // Mark creatures as attacking and tap them (vigilance skips tapping)
             for (int idx : attackerIndices) {
                 Permanent attacker = battlefield.get(idx);
                 attacker.setAttacking(true);
-                attacker.tap();
+                if (!hasKeyword(gameData, attacker, Keyword.VIGILANCE)) {
+                    attacker.tap();
+                }
             }
 
             String logEntry = player.getUsername() + " declares " + attackerIndices.size() +

@@ -6,5 +6,6 @@ public enum Keyword {
     REACH,
     DEFENDER,
     FIRST_STRIKE,
-    FLASH
+    FLASH,
+    VIGILANCE
 }
