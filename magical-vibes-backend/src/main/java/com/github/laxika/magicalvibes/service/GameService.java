@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -386,6 +387,8 @@ public class GameService {
                 resolvePutTargetOnBottomOfLibrary(gameData, entry);
             } else if (effect instanceof PreventAllCombatDamageEffect) {
                 resolvePreventAllCombatDamage(gameData);
+            } else if (effect instanceof RedirectUnblockedCombatDamageToSelfEffect) {
+                resolveRedirectUnblockedCombatDamageToSelf(gameData, entry);
             }
         }
         removeOrphanedAuras(gameData);
@@ -1491,6 +1494,23 @@ public class GameService {
         broadcastLogEntry(gameData, logEntry);
     }
 
+    private void resolveRedirectUnblockedCombatDamageToSelf(GameData gameData, StackEntry entry) {
+        // Find the source permanent (the creature whose tap ability was activated)
+        List<Permanent> bf = gameData.playerBattlefields.get(entry.getControllerId());
+        if (bf == null) return;
+        for (Permanent p : bf) {
+            if (p.getCard() == entry.getCard()) {
+                gameData.combatDamageRedirectTarget = p.getId();
+
+                String logEntry = p.getCard().getName() + "'s ability resolves — unblocked combat damage will be redirected to it this turn.";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+                log.info("Game {} - Combat damage redirect set to {}", gameData.id, p.getCard().getName());
+                return;
+            }
+        }
+    }
+
     private int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage) {
         if (permanent.getCard().getStaticEffects().stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
         if (hasAuraPreventingAllDamage(gameData, permanent)) return 0;
@@ -1608,6 +1628,7 @@ public class GameService {
         // Clear player damage prevention shields
         gameData.playerDamagePreventionShields.clear();
         gameData.preventAllCombatDamage = false;
+        gameData.combatDamageRedirectTarget = null;
     }
 
     // ===== Static / continuous effect computation =====
@@ -1963,6 +1984,11 @@ public class GameService {
         List<Permanent> atkBf = gameData.playerBattlefields.get(activeId);
         List<Permanent> defBf = gameData.playerBattlefields.get(defenderId);
 
+        // Check for combat damage redirect (e.g. Kjeldoran Royal Guard)
+        Permanent redirectTarget = gameData.combatDamageRedirectTarget != null
+                ? findPermanentById(gameData, gameData.combatDamageRedirectTarget) : null;
+        int damageRedirectedToGuard = 0;
+
         List<Integer> attackingIndices = getAttackingCreatureIndices(gameData, activeId);
 
         // Build blocker map: attackerIndex -> list of blockerIndices
@@ -2014,9 +2040,13 @@ public class GameService {
                 boolean atkHasFS = hasKeyword(gameData, atk, Keyword.FIRST_STRIKE);
 
                 if (blkIndices.isEmpty()) {
-                    // Unblocked first striker deals damage to player
+                    // Unblocked first striker deals damage to player (or redirect target)
                     if (atkHasFS && !isPreventedFromDealingDamage(gameData, atk)) {
-                        damageToDefendingPlayer += getEffectivePower(gameData, atk);
+                        if (redirectTarget != null) {
+                            damageRedirectedToGuard += getEffectivePower(gameData, atk);
+                        } else {
+                            damageToDefendingPlayer += getEffectivePower(gameData, atk);
+                        }
                     }
                 } else {
                     // First strike attacker deals damage to blockers
@@ -2070,9 +2100,13 @@ public class GameService {
             boolean atkHasFS = hasKeyword(gameData, atk, Keyword.FIRST_STRIKE);
 
             if (blkIndices.isEmpty()) {
-                // Unblocked regular attacker deals damage to player
+                // Unblocked regular attacker deals damage to player (or redirect target)
                 if (!atkHasFS && !isPreventedFromDealingDamage(gameData, atk)) {
-                    damageToDefendingPlayer += getEffectivePower(gameData, atk);
+                    if (redirectTarget != null) {
+                        damageRedirectedToGuard += getEffectivePower(gameData, atk);
+                    } else {
+                        damageToDefendingPlayer += getEffectivePower(gameData, atk);
+                    }
                 }
             } else {
                 // Non-first-strike attacker deals damage to surviving blockers
@@ -2116,6 +2150,28 @@ public class GameService {
                 defDamageTaken.put(blkIdx, dmg);
                 if (dmg >= getEffectiveToughness(gameData, defBf.get(blkIdx))) {
                     deadDefenderIndices.add(blkIdx);
+                }
+            }
+        }
+
+        // Apply redirected damage to guard creature (e.g. Kjeldoran Royal Guard)
+        if (redirectTarget != null && damageRedirectedToGuard > 0) {
+            damageRedirectedToGuard = applyCreaturePreventionShield(gameData, redirectTarget, damageRedirectedToGuard);
+            String redirectLog = redirectTarget.getCard().getName() + " absorbs " + damageRedirectedToGuard + " redirected combat damage.";
+            gameData.gameLog.add(redirectLog);
+            broadcastLogEntry(gameData, redirectLog);
+
+            if (damageRedirectedToGuard >= getEffectiveToughness(gameData, redirectTarget)) {
+                // Guard dies — find and remove it
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    List<Permanent> bf = gameData.playerBattlefields.get(pid);
+                    if (bf != null && bf.remove(redirectTarget)) {
+                        gameData.playerGraveyards.get(pid).add(redirectTarget.getCard());
+                        String deathLog = redirectTarget.getCard().getName() + " is destroyed by redirected combat damage.";
+                        gameData.gameLog.add(deathLog);
+                        broadcastLogEntry(gameData, deathLog);
+                        break;
+                    }
                 }
             }
         }
