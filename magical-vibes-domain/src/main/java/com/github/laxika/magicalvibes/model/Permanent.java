@@ -20,6 +20,7 @@ public class Permanent {
     @Setter private int powerModifier;
     @Setter private int toughnessModifier;
     @Setter private int damagePreventionShield;
+    @Setter private UUID attachedTo;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
 
     public Permanent(Card card) {

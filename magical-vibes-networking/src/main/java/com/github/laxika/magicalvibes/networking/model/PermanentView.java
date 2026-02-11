@@ -12,5 +12,6 @@ public record PermanentView(
         int blockingTarget, boolean summoningSick,
         int powerModifier, int toughnessModifier,
         Set<Keyword> grantedKeywords,
-        int effectivePower, int effectiveToughness
+        int effectivePower, int effectiveToughness,
+        UUID attachedTo
 ) {}
