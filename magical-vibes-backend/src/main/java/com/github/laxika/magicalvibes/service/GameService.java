@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
@@ -381,6 +382,8 @@ public class GameService {
                 resolveGainLifeEqualToTargetToughness(gameData, entry);
             } else if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
                 resolvePutTargetOnBottomOfLibrary(gameData, entry);
+            } else if (effect instanceof DestroyBlockedCreatureAndSelfEffect) {
+                resolveDestroyBlockedCreatureAndSelf(gameData, entry);
             }
         }
         removeOrphanedAuras(gameData);
@@ -1356,6 +1359,43 @@ public class GameService {
         broadcastGraveyards(gameData);
     }
 
+    private void resolveDestroyBlockedCreatureAndSelf(GameData gameData, StackEntry entry) {
+        // Destroy the blocked creature (attacker) — referenced by targetPermanentId
+        Permanent attacker = findPermanentById(gameData, entry.getTargetPermanentId());
+        if (attacker != null) {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                if (battlefield != null && battlefield.remove(attacker)) {
+                    gameData.playerGraveyards.get(playerId).add(attacker.getCard());
+                    String logEntry = attacker.getCard().getName() + " is destroyed by " + entry.getCard().getName() + ".";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                    log.info("Game {} - {} destroyed by {}'s block trigger", gameData.id, attacker.getCard().getName(), entry.getCard().getName());
+                    break;
+                }
+            }
+        }
+
+        // Destroy self (the blocker) — referenced by sourcePermanentId
+        Permanent self = findPermanentById(gameData, entry.getSourcePermanentId());
+        if (self != null) {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                if (battlefield != null && battlefield.remove(self)) {
+                    gameData.playerGraveyards.get(playerId).add(self.getCard());
+                    String logEntry = entry.getCard().getName() + " is destroyed.";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                    log.info("Game {} - {} destroyed (self-destruct from block trigger)", gameData.id, entry.getCard().getName());
+                    break;
+                }
+            }
+        }
+
+        broadcastBattlefields(gameData);
+        broadcastGraveyards(gameData);
+    }
+
     private void resolvePreventDamageToTarget(GameData gameData, StackEntry entry, PreventDamageToTargetEffect prevent) {
         UUID targetId = entry.getTargetPermanentId();
 
@@ -1909,7 +1949,31 @@ public class GameService {
                 broadcastLogEntry(gameData, logEntry);
             }
 
+            // Check for "when this creature blocks" triggers
+            for (BlockerAssignment assignment : blockerAssignments) {
+                Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
+                if (!blocker.getCard().getOnBlockEffects().isEmpty()) {
+                    Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            blocker.getCard(),
+                            defenderId,
+                            blocker.getCard().getName() + "'s block trigger",
+                            new ArrayList<>(blocker.getCard().getOnBlockEffects()),
+                            attacker.getId(),
+                            blocker.getId()
+                    ));
+                    String triggerLog = blocker.getCard().getName() + "'s block ability triggers.";
+                    gameData.gameLog.add(triggerLog);
+                    broadcastLogEntry(gameData, triggerLog);
+                    log.info("Game {} - {} block trigger pushed onto stack", gameData.id, blocker.getCard().getName());
+                }
+            }
+
             broadcastBattlefields(gameData);
+            if (!gameData.stack.isEmpty()) {
+                broadcastStackUpdate(gameData);
+            }
 
             log.info("Game {} - {} declares {} blockers", gameData.id, player.getUsername(), blockerAssignments.size());
 
