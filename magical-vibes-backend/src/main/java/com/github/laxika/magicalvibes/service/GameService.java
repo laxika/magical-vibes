@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
+import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -71,6 +72,7 @@ public class GameService {
     private final Random random = new Random();
 
     private final SessionManager sessionManager;
+    private final PermanentViewFactory permanentViewFactory;
 
     public void passPriority(GameData gameData, Player player) {
         if (gameData.status != GameStatus.RUNNING) {
@@ -577,28 +579,13 @@ public class GameService {
             } else {
                 List<PermanentView> views = new ArrayList<>();
                 for (Permanent p : bf) {
-                    views.add(toPermanentView(data, p));
+                    StaticBonus bonus = computeStaticBonus(data, p);
+                    views.add(permanentViewFactory.create(p, bonus.power(), bonus.toughness(), bonus.keywords()));
                 }
                 battlefields.add(views);
             }
         }
         return battlefields;
-    }
-
-    private PermanentView toPermanentView(GameData data, Permanent p) {
-        StaticBonus bonus = computeStaticBonus(data, p);
-        Set<Keyword> allKeywords = new HashSet<>(p.getGrantedKeywords());
-        allKeywords.addAll(bonus.keywords());
-        return new PermanentView(
-                p.getId(), p.getCard(),
-                p.isTapped(), p.isAttacking(), p.isBlocking(),
-                p.getBlockingTarget(), p.isSummoningSick(),
-                p.getPowerModifier() + bonus.power(),
-                p.getToughnessModifier() + bonus.toughness(),
-                allKeywords,
-                p.getEffectivePower() + bonus.power(),
-                p.getEffectiveToughness() + bonus.toughness()
-        );
     }
 
     private void broadcastBattlefields(GameData data) {
