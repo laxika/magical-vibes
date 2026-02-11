@@ -635,7 +635,9 @@ export class GameComponent implements OnInit, OnDestroy {
 
   canTapPermanent(index: number): boolean {
     const perm = this.myBattlefield[index];
-    if (perm == null || perm.tapped || !this.hasPriority) return false;
+    if (perm == null || !this.hasPriority) return false;
+    if (perm.card.hasManaAbility) return true;
+    if (perm.tapped) return false;
     if (!perm.card.hasTapAbility) return false;
     if (perm.summoningSick && perm.card.type === 'Creature') return false;
     return true;

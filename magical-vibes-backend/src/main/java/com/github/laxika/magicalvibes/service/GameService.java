@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
@@ -361,6 +362,8 @@ public class GameService {
                 resolveDealXDamageDividedAmongTargetAttackingCreatures(gameData, entry);
             } else if (effect instanceof DealDamageToFlyingAndPlayersEffect) {
                 resolveDealDamageToFlyingAndPlayers(gameData, entry.getXValue());
+            } else if (effect instanceof BoostSelfEffect boost) {
+                resolveBoostSelf(gameData, entry, boost);
             } else if (effect instanceof BoostTargetCreatureEffect boost) {
                 resolveBoostTargetCreature(gameData, entry, boost);
             } else if (effect instanceof GrantKeywordToTargetEffect grant) {
@@ -967,18 +970,35 @@ public class GameService {
             }
 
             Permanent permanent = battlefield.get(permanentIndex);
-            if (permanent.getCard().getTapActivatedAbilityEffects() == null || permanent.getCard().getTapActivatedAbilityEffects().isEmpty()) {
+            boolean hasTapAbility = permanent.getCard().getTapActivatedAbilityEffects() != null && !permanent.getCard().getTapActivatedAbilityEffects().isEmpty();
+            boolean hasManaAbility = permanent.getCard().getManaActivatedAbilityEffects() != null && !permanent.getCard().getManaActivatedAbilityEffects().isEmpty();
+            if (!hasTapAbility && !hasManaAbility) {
                 throw new IllegalStateException("Permanent has no activated ability");
             }
-            if (permanent.isTapped()) {
-                throw new IllegalStateException("Permanent is already tapped");
+
+            List<CardEffect> abilityEffects;
+            String abilityCost;
+            boolean isTapAbility;
+            if (hasTapAbility) {
+                isTapAbility = true;
+                abilityEffects = permanent.getCard().getTapActivatedAbilityEffects();
+                abilityCost = permanent.getCard().getTapActivatedAbilityCost();
+            } else {
+                isTapAbility = false;
+                abilityEffects = permanent.getCard().getManaActivatedAbilityEffects();
+                abilityCost = permanent.getCard().getManaActivatedAbilityCost();
             }
-            if (permanent.isSummoningSick() && permanent.getCard().getType() == CardType.CREATURE) {
-                throw new IllegalStateException("Creature has summoning sickness");
+
+            if (isTapAbility) {
+                if (permanent.isTapped()) {
+                    throw new IllegalStateException("Permanent is already tapped");
+                }
+                if (permanent.isSummoningSick() && permanent.getCard().getType() == CardType.CREATURE) {
+                    throw new IllegalStateException("Creature has summoning sickness");
+                }
             }
 
             // Pay mana cost
-            String abilityCost = permanent.getCard().getTapActivatedAbilityCost();
             if (abilityCost != null) {
                 ManaCost cost = new ManaCost(abilityCost);
                 ManaPool pool = gameData.playerManaPools.get(playerId);
@@ -1000,7 +1020,7 @@ public class GameService {
             }
 
             // Validate target for effects that need one
-            for (CardEffect effect : permanent.getCard().getTapActivatedAbilityEffects()) {
+            for (CardEffect effect : abilityEffects) {
                 if (effect instanceof DealXDamageToTargetCreatureEffect) {
                     if (targetPermanentId == null) {
                         throw new IllegalStateException("Ability requires a target");
@@ -1018,8 +1038,16 @@ public class GameService {
                 }
             }
 
-            // Tap the permanent
-            permanent.tap();
+            // For mana abilities, self-target if no explicit target
+            UUID effectiveTargetId = targetPermanentId;
+            if (!isTapAbility && effectiveTargetId == null) {
+                effectiveTargetId = permanent.getId();
+            }
+
+            // Tap the permanent (only for tap abilities)
+            if (isTapAbility) {
+                permanent.tap();
+            }
 
             String logEntry = player.getUsername() + " activates " + permanent.getCard().getName() + "'s ability.";
             gameData.gameLog.add(logEntry);
@@ -1032,9 +1060,9 @@ public class GameService {
                     permanent.getCard(),
                     playerId,
                     permanent.getCard().getName() + "'s ability",
-                    new ArrayList<>(permanent.getCard().getTapActivatedAbilityEffects()),
+                    new ArrayList<>(abilityEffects),
                     effectiveXValue,
-                    targetPermanentId,
+                    effectiveTargetId,
                     Map.of()
             ));
             gameData.priorityPassedBy.clear();
@@ -1219,6 +1247,23 @@ public class GameService {
     }
 
     // ===== Instant effect methods =====
+
+    private void resolveBoostSelf(GameData gameData, StackEntry entry, BoostSelfEffect boost) {
+        Permanent self = findPermanentById(gameData, entry.getTargetPermanentId());
+        if (self == null) {
+            return;
+        }
+
+        self.setPowerModifier(self.getPowerModifier() + boost.powerBoost());
+        self.setToughnessModifier(self.getToughnessModifier() + boost.toughnessBoost());
+
+        String logEntry = self.getCard().getName() + " gets +" + boost.powerBoost() + "/+" + boost.toughnessBoost() + " until end of turn.";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        broadcastBattlefields(gameData);
+
+        log.info("Game {} - {} gets +{}/+{}", gameData.id, self.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
+    }
 
     private void resolveBoostTargetCreature(GameData gameData, StackEntry entry, BoostTargetCreatureEffect boost) {
         Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());

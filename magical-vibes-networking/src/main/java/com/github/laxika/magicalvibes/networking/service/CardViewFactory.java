@@ -19,6 +19,7 @@ public class CardViewFactory {
                 card.getKeywords(),
                 card.isNeedsTarget(),
                 !card.getOnTapEffects().isEmpty(),
+                !card.getManaActivatedAbilityEffects().isEmpty(),
                 card.getSetCode(),
                 card.getCollectorNumber(),
                 card.getFlavorText(),

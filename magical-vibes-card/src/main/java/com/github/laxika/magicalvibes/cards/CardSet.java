@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.cards.h.HailOfArrows;
 import com.github.laxika.magicalvibes.cards.h.HeartOfLight;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.h.HonorGuard;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
@@ -63,6 +64,7 @@ public enum CardSet {
             new CardPrinting("10E", "20", HighGround::new),
             new CardPrinting("10E", "21", HolyDay::new, "\"The meek shall inherit the earth, but not today. Today, they merely survive.\"\n\u2014Onean cleric"),
             new CardPrinting("10E", "22", HolyStrength::new),
+            new CardPrinting("10E", "23", HonorGuard::new, "\"The strength of one. The courage of ten.\""),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
             new CardPrinting("10E", "382", Forest::new),
