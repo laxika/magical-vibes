@@ -177,7 +177,7 @@ class BenalishKnightTest {
         Permanent blocker = new Permanent(bears);
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
-        blocker.setBlockingTarget(0);
+        blocker.addBlockingTarget(0);
         harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
@@ -217,7 +217,7 @@ class BenalishKnightTest {
         Permanent blocker = new Permanent(bigBear);
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
-        blocker.setBlockingTarget(0);
+        blocker.addBlockingTarget(0);
         harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
