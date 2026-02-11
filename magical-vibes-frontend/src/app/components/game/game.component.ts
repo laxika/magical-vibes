@@ -636,7 +636,7 @@ export class GameComponent implements OnInit, OnDestroy {
   canTapPermanent(index: number): boolean {
     const perm = this.myBattlefield[index];
     if (perm == null || perm.tapped || !this.hasPriority) return false;
-    if (perm.card.onTapEffects == null || perm.card.onTapEffects.length === 0) return false;
+    if (!perm.card.hasTapAbility) return false;
     if (perm.summoningSick && perm.card.type === 'Creature') return false;
     return true;
   }
@@ -956,7 +956,7 @@ export class GameComponent implements OnInit, OnDestroy {
         const group: CombatGroup = { attackerIndex: idx, attacker: perm, attackerIsMine: true, blockers: [] };
         // Opponent's blockers targeting this attacker
         oppBf.forEach((defPerm, defIdx) => {
-          if (defPerm.blocking && defPerm.blockingTarget === idx) {
+          if (defPerm.blocking && defPerm.blockingTargets.includes(idx)) {
             group.blockers.push({ index: defIdx, perm: defPerm, isMine: false });
           }
         });
@@ -969,7 +969,7 @@ export class GameComponent implements OnInit, OnDestroy {
         const group: CombatGroup = { attackerIndex: idx, attacker: perm, attackerIsMine: false, blockers: [] };
         // My server-confirmed blockers
         myBf.forEach((defPerm, defIdx) => {
-          if (defPerm.blocking && defPerm.blockingTarget === idx) {
+          if (defPerm.blocking && defPerm.blockingTargets.includes(idx)) {
             group.blockers.push({ index: defIdx, perm: defPerm, isMine: true });
           }
         });

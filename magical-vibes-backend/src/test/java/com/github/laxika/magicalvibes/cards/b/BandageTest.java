@@ -120,7 +120,7 @@ class BandageTest {
         defender.setSummoningSick(false);
         defender.setDamagePreventionShield(1);
         defender.setBlocking(true);
-        defender.setBlockingTarget(0);
+        defender.addBlockingTarget(0);
         harness.getGameData().playerBattlefields.get(player2.getId()).add(defender);
 
         GrizzlyBears bear2 = new GrizzlyBears();
@@ -160,7 +160,7 @@ class BandageTest {
         target.setSummoningSick(false);
         target.setDamagePreventionShield(1);
         target.setBlocking(true);
-        target.setBlockingTarget(0);
+        target.addBlockingTarget(0);
         harness.getGameData().playerBattlefields.get(player2.getId()).add(target);
 
         GrizzlyBears attBear = new GrizzlyBears();

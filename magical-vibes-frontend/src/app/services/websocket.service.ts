@@ -108,14 +108,13 @@ export interface Card {
   type: string;
   subtypes: string[];
   cardText: string | null;
-  onTapEffects: any[] | null;
   manaCost: string | null;
   power: number | null;
   toughness: number | null;
   keywords: string[];
   needsTarget: boolean;
   needsDamageDistribution: boolean;
-  onEnterBattlefieldEffects: any[] | null;
+  hasTapAbility: boolean;
   setCode: string | null;
   collectorNumber: string | null;
   flavorText: string | null;
@@ -128,7 +127,7 @@ export interface Permanent {
   tapped: boolean;
   attacking: boolean;
   blocking: boolean;
-  blockingTarget: number;
+  blockingTargets: number[];
   summoningSick: boolean;
   powerModifier: number;
   toughnessModifier: number;
@@ -142,8 +141,6 @@ export interface StackEntry {
   card: Card;
   controllerId: string;
   description: string;
-  effectsToResolve: any[];
-  targetPermanentId: string | null;
 }
 
 export interface Game {

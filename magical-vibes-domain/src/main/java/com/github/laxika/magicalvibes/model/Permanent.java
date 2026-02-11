@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.model;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -15,7 +17,7 @@ public class Permanent {
     private boolean tapped;
     private boolean attacking;
     private boolean blocking;
-    private int blockingTarget = -1;
+    private final List<Integer> blockingTargets = new ArrayList<>();
     private boolean summoningSick;
     @Setter private int powerModifier;
     @Setter private int toughnessModifier;
@@ -46,8 +48,8 @@ public class Permanent {
         this.blocking = blocking;
     }
 
-    public void setBlockingTarget(int blockingTarget) {
-        this.blockingTarget = blockingTarget;
+    public void addBlockingTarget(int blockingTarget) {
+        this.blockingTargets.add(blockingTarget);
     }
 
     public void setSummoningSick(boolean summoningSick) {
@@ -57,7 +59,7 @@ public class Permanent {
     public void clearCombatState() {
         this.attacking = false;
         this.blocking = false;
-        this.blockingTarget = -1;
+        this.blockingTargets.clear();
     }
 
     public int getEffectivePower() {
