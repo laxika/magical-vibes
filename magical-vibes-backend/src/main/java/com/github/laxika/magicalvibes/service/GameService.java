@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
@@ -281,6 +282,8 @@ public class GameService {
             for (CardEffect effect : entry.getEffectsToResolve()) {
                 if (effect instanceof DestroyTargetPermanentEffect destroy) {
                     resolveDestroyTargetPermanent(gameData, entry, destroy);
+                } else if (effect instanceof DealXDamageToTargetCreatureEffect) {
+                    resolveDealXDamageToTargetCreature(gameData, entry);
                 }
             }
         } else if (entry.getEntryType() == StackEntryType.SORCERY_SPELL) {
@@ -836,6 +839,99 @@ public class GameService {
         }
     }
 
+    public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer xValue, UUID targetPermanentId) {
+        int effectiveXValue = xValue != null ? xValue : 0;
+        if (gameData.status != GameStatus.RUNNING) {
+            throw new IllegalStateException("Game is not running");
+        }
+
+        synchronized (gameData) {
+            UUID playerId = player.getId();
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null || permanentIndex < 0 || permanentIndex >= battlefield.size()) {
+                throw new IllegalStateException("Invalid permanent index");
+            }
+
+            Permanent permanent = battlefield.get(permanentIndex);
+            if (permanent.getCard().getTapActivatedAbilityEffects() == null || permanent.getCard().getTapActivatedAbilityEffects().isEmpty()) {
+                throw new IllegalStateException("Permanent has no activated ability");
+            }
+            if (permanent.isTapped()) {
+                throw new IllegalStateException("Permanent is already tapped");
+            }
+            if (permanent.isSummoningSick() && permanent.getCard().getType() == CardType.CREATURE) {
+                throw new IllegalStateException("Creature has summoning sickness");
+            }
+
+            // Pay mana cost
+            String abilityCost = permanent.getCard().getTapActivatedAbilityCost();
+            if (abilityCost != null) {
+                ManaCost cost = new ManaCost(abilityCost);
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                if (cost.hasX()) {
+                    if (effectiveXValue < 0) {
+                        throw new IllegalStateException("X value cannot be negative");
+                    }
+                    if (!cost.canPay(pool, effectiveXValue)) {
+                        throw new IllegalStateException("Not enough mana to activate ability");
+                    }
+                    cost.pay(pool, effectiveXValue);
+                } else {
+                    if (!cost.canPay(pool)) {
+                        throw new IllegalStateException("Not enough mana to activate ability");
+                    }
+                    cost.pay(pool);
+                }
+                sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
+            }
+
+            // Validate target for effects that need one
+            for (CardEffect effect : permanent.getCard().getTapActivatedAbilityEffects()) {
+                if (effect instanceof DealXDamageToTargetCreatureEffect) {
+                    if (targetPermanentId == null) {
+                        throw new IllegalStateException("Ability requires a target");
+                    }
+                    Permanent target = findPermanentById(gameData, targetPermanentId);
+                    if (target == null) {
+                        throw new IllegalStateException("Invalid target permanent");
+                    }
+                    if (target.getCard().getType() != CardType.CREATURE) {
+                        throw new IllegalStateException("Target must be a creature");
+                    }
+                    if (!target.isAttacking() && !target.isBlocking()) {
+                        throw new IllegalStateException("Target must be an attacking or blocking creature");
+                    }
+                }
+            }
+
+            // Tap the permanent
+            permanent.tap();
+
+            String logEntry = player.getUsername() + " activates " + permanent.getCard().getName() + "'s ability.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            log.info("Game {} - {} activates {}'s ability", gameData.id, player.getUsername(), permanent.getCard().getName());
+
+            // Push activated ability on stack
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.ACTIVATED_ABILITY,
+                    permanent.getCard(),
+                    playerId,
+                    permanent.getCard().getName() + "'s ability",
+                    new ArrayList<>(permanent.getCard().getTapActivatedAbilityEffects()),
+                    effectiveXValue,
+                    targetPermanentId
+            ));
+            gameData.priorityPassedBy.clear();
+
+            broadcastBattlefields(gameData);
+            broadcastStackUpdate(gameData);
+            sessionManager.sendToPlayers(gameData.orderedPlayerIds, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+
+            broadcastPlayableCards(gameData);
+        }
+    }
+
     public void setAutoStops(GameData gameData, Player player, List<TurnStep> stops) {
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
@@ -1051,6 +1147,42 @@ public class GameService {
         broadcastBattlefields(gameData);
 
         log.info("Game {} - {} gains {}", gameData.id, target.getCard().getName(), grant.keyword());
+    }
+
+    private void resolveDealXDamageToTargetCreature(GameData gameData, StackEntry entry) {
+        Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            String fizzleLog = entry.getCard().getName() + "'s ability fizzles (target no longer exists).";
+            gameData.gameLog.add(fizzleLog);
+            broadcastLogEntry(gameData, fizzleLog);
+            log.info("Game {} - {}'s ability fizzles, target {} no longer exists",
+                    gameData.id, entry.getCard().getName(), entry.getTargetPermanentId());
+            return;
+        }
+
+        int damage = entry.getXValue();
+        String logEntry = entry.getCard().getName() + " deals " + damage + " damage to " + target.getCard().getName() + ".";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        log.info("Game {} - {} deals {} damage to {}", gameData.id, entry.getCard().getName(), damage, target.getCard().getName());
+
+        if (damage >= target.getEffectiveToughness()) {
+            // Destroy the creature
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                if (battlefield != null && battlefield.remove(target)) {
+                    gameData.playerGraveyards.get(playerId).add(target.getCard());
+
+                    String destroyLog = target.getCard().getName() + " is destroyed.";
+                    gameData.gameLog.add(destroyLog);
+                    broadcastLogEntry(gameData, destroyLog);
+                    log.info("Game {} - {} is destroyed", gameData.id, target.getCard().getName());
+                    break;
+                }
+            }
+            broadcastBattlefields(gameData);
+            broadcastGraveyards(gameData);
+        }
     }
 
     private void resolveDestroyTargetPermanent(GameData gameData, StackEntry entry, DestroyTargetPermanentEffect destroy) {

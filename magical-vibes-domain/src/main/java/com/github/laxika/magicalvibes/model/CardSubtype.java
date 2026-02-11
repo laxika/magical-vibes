@@ -21,7 +21,8 @@ public enum CardSubtype {
     HUMAN("Human"),
     CLERIC("Cleric"),
     BIRD("Bird"),
-    SOLDIER("Soldier");
+    SOLDIER("Soldier"),
+    REBEL("Rebel");
 
     @Getter
     private final String displayName;

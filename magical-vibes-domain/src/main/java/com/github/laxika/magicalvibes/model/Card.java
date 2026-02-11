@@ -28,6 +28,8 @@ public class Card {
     @Setter private List<CardEffect> onAllyCreatureEntersBattlefieldEffects = List.of();
     @Setter private List<CardEffect> staticEffects = List.of();
     @Setter private List<CardEffect> onSacrificeEffects = List.of();
+    @Setter private List<CardEffect> tapActivatedAbilityEffects = List.of();
+    @Setter private String tapActivatedAbilityCost;
     @Setter private boolean needsTarget;
     @Setter private String setCode;
     @Setter private String collectorNumber;
