@@ -54,7 +54,9 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffec
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -252,7 +254,7 @@ public class GameService {
                             new ArrayList<>(card.getOnEnterBattlefieldEffects()),
                             0,
                             entry.getTargetPermanentId(),
-                            null
+                            Map.of()
                     ));
                     String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
                     gameData.gameLog.add(etbLog);
@@ -267,29 +269,36 @@ public class GameService {
             Card card = entry.getCard();
             UUID controllerId = entry.getControllerId();
 
-            // Aura fizzles if target creature no longer exists
-            if (entry.getTargetPermanentId() != null
-                    && findPermanentById(gameData, entry.getTargetPermanentId()) == null) {
-                String fizzleLog = card.getName() + " fizzles (target no longer exists).";
-                gameData.gameLog.add(fizzleLog);
-                broadcastLogEntry(gameData, fizzleLog);
-                gameData.playerGraveyards.get(controllerId).add(card);
-                broadcastGraveyards(gameData);
-                log.info("Game {} - {} fizzles, target {} no longer exists",
-                        gameData.id, card.getName(), entry.getTargetPermanentId());
-            } else {
-                Permanent enchantmentPermanent = new Permanent(card);
-                if (entry.getTargetPermanentId() != null) {
-                    enchantmentPermanent.setAttachedTo(entry.getTargetPermanentId());
+            // Aura fizzles if its target is no longer on the battlefield
+            if (card.isAura() && entry.getTargetPermanentId() != null) {
+                Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
+                if (target == null) {
+                    String fizzleLog = card.getName() + " fizzles (enchanted creature no longer exists).";
+                    gameData.gameLog.add(fizzleLog);
+                    broadcastLogEntry(gameData, fizzleLog);
+                    gameData.playerGraveyards.get(controllerId).add(card);
+                    broadcastGraveyards(gameData);
+                    log.info("Game {} - {} fizzles, target {} no longer exists", gameData.id, card.getName(), entry.getTargetPermanentId());
+                } else {
+                    Permanent perm = new Permanent(card);
+                    perm.setAttachedTo(entry.getTargetPermanentId());
+                    gameData.playerBattlefields.get(controllerId).add(perm);
+                    broadcastBattlefields(gameData);
+
+                    String playerName = gameData.playerIdToName.get(controllerId);
+                    String logEntry = card.getName() + " enters the battlefield attached to " + target.getCard().getName() + " under " + playerName + "'s control.";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                    log.info("Game {} - {} resolves, attached to {} for {}", gameData.id, card.getName(), target.getCard().getName(), playerName);
                 }
-                gameData.playerBattlefields.get(controllerId).add(enchantmentPermanent);
+            } else {
+                gameData.playerBattlefields.get(controllerId).add(new Permanent(card));
                 broadcastBattlefields(gameData);
 
                 String playerName = gameData.playerIdToName.get(controllerId);
                 String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
                 gameData.gameLog.add(logEntry);
                 broadcastLogEntry(gameData, logEntry);
-
                 log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
             }
         } else if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
@@ -375,8 +384,11 @@ public class GameService {
                 resolveGainLifeEqualToTargetToughness(gameData, entry);
             } else if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
                 resolvePutTargetOnBottomOfLibrary(gameData, entry);
+            } else if (effect instanceof PreventAllCombatDamageEffect) {
+                resolvePreventAllCombatDamage(gameData);
             }
         }
+        removeOrphanedAuras(gameData);
     }
 
     private UUID getPriorityPlayerId(GameData data) {
@@ -928,7 +940,7 @@ public class GameService {
                     new ArrayList<>(permanent.getCard().getOnSacrificeEffects()),
                     0,
                     targetPermanentId,
-                    null
+                    Map.of()
             ));
             gameData.priorityPassedBy.clear();
 
@@ -1023,7 +1035,7 @@ public class GameService {
                     new ArrayList<>(permanent.getCard().getTapActivatedAbilityEffects()),
                     effectiveXValue,
                     targetPermanentId,
-                    null
+                    Map.of()
             ));
             gameData.priorityPassedBy.clear();
 
@@ -1248,7 +1260,7 @@ public class GameService {
             return;
         }
 
-        int damage = applyCreaturePreventionShield(target, entry.getXValue());
+        int damage = applyCreaturePreventionShield(gameData, target, entry.getXValue());
         String logEntry = entry.getCard().getName() + " deals " + damage + " damage to " + target.getCard().getName() + ".";
         gameData.gameLog.add(logEntry);
         broadcastLogEntry(gameData, logEntry);
@@ -1288,7 +1300,7 @@ public class GameService {
                 continue;
             }
 
-            int damage = applyCreaturePreventionShield(target, assignment.getValue());
+            int damage = applyCreaturePreventionShield(gameData, target, assignment.getValue());
             String logEntry = entry.getCard().getName() + " deals " + damage + " damage to " + target.getCard().getName() + ".";
             gameData.gameLog.add(logEntry);
             broadcastLogEntry(gameData, logEntry);
@@ -1471,13 +1483,43 @@ public class GameService {
         broadcastDeckSizes(gameData);
     }
 
-    private int applyCreaturePreventionShield(Permanent permanent, int damage) {
+    private void resolvePreventAllCombatDamage(GameData gameData) {
+        gameData.preventAllCombatDamage = true;
+
+        String logEntry = "All combat damage will be prevented this turn.";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+    }
+
+    private int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage) {
         if (permanent.getCard().getStaticEffects().stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
+        if (hasAuraPreventingAllDamage(gameData, permanent)) return 0;
         int shield = permanent.getDamagePreventionShield();
         if (shield <= 0 || damage <= 0) return damage;
         int prevented = Math.min(shield, damage);
         permanent.setDamagePreventionShield(shield - prevented);
         return damage - prevented;
+    }
+
+    private boolean hasAuraPreventingAllDamage(GameData gameData, Permanent creature) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                if (p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())) {
+                    for (CardEffect effect : p.getCard().getStaticEffects()) {
+                        if (effect instanceof PreventAllDamageToAndByEnchantedCreatureEffect) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature) {
+        return hasAuraPreventingAllDamage(gameData, creature);
     }
 
     private int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage) {
@@ -1504,6 +1546,31 @@ public class GameService {
             }
         }
         return totalIncrease;
+    }
+
+    private void removeOrphanedAuras(GameData gameData) {
+        boolean anyRemoved = false;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            Iterator<Permanent> it = battlefield.iterator();
+            while (it.hasNext()) {
+                Permanent p = it.next();
+                if (p.getAttachedTo() != null && findPermanentById(gameData, p.getAttachedTo()) == null) {
+                    it.remove();
+                    gameData.playerGraveyards.get(playerId).add(p.getCard());
+                    String logEntry = p.getCard().getName() + " is put into the graveyard (enchanted creature left the battlefield).";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                    log.info("Game {} - {} removed (orphaned aura)", gameData.id, p.getCard().getName());
+                    anyRemoved = true;
+                }
+            }
+        }
+        if (anyRemoved) {
+            broadcastBattlefields(gameData);
+            broadcastGraveyards(gameData);
+        }
     }
 
     private Permanent findPermanentById(GameData gameData, UUID permanentId) {
@@ -1540,6 +1607,7 @@ public class GameService {
 
         // Clear player damage prevention shields
         gameData.playerDamagePreventionShields.clear();
+        gameData.preventAllCombatDamage = false;
     }
 
     // ===== Static / continuous effect computation =====
@@ -1577,24 +1645,6 @@ public class GameService {
         return new StaticBonus(power, toughness, keywords);
     }
 
-    private void removeOrphanedAuras(GameData gameData) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            Iterator<Permanent> it = bf.iterator();
-            while (it.hasNext()) {
-                Permanent p = it.next();
-                if (p.getAttachedTo() != null && findPermanentById(gameData, p.getAttachedTo()) == null) {
-                    it.remove();
-                    gameData.playerGraveyards.get(playerId).add(p.getCard());
-                    String logEntry = p.getCard().getName() + " is put into the graveyard (enchanted creature no longer exists).";
-                    gameData.gameLog.add(logEntry);
-                    broadcastLogEntry(gameData, logEntry);
-                }
-            }
-        }
-    }
-
     public int getEffectivePower(GameData gameData, Permanent permanent) {
         return permanent.getEffectivePower() + computeStaticBonus(gameData, permanent).power();
     }
@@ -1619,7 +1669,7 @@ public class GameService {
             for (int i = 0; i < battlefield.size(); i++) {
                 Permanent p = battlefield.get(i);
                 if (hasKeyword(gameData, p, Keyword.FLYING)) {
-                    int effectiveDamage = applyCreaturePreventionShield(p, damage);
+                    int effectiveDamage = applyCreaturePreventionShield(gameData, p, damage);
                     int toughness = getEffectiveToughness(gameData, p);
                     if (effectiveDamage >= toughness) {
                         deadIndices.add(i);
@@ -1897,6 +1947,16 @@ public class GameService {
     }
 
     private void resolveCombatDamage(GameData gameData) {
+        if (gameData.preventAllCombatDamage) {
+            String logEntry = "All combat damage is prevented.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+
+            advanceStep(gameData);
+            resolveAutoPass(gameData);
+            return;
+        }
+
         UUID activeId = gameData.activePlayerId;
         UUID defenderId = getOpponentId(gameData, activeId);
 
@@ -1955,12 +2015,12 @@ public class GameService {
 
                 if (blkIndices.isEmpty()) {
                     // Unblocked first striker deals damage to player
-                    if (atkHasFS) {
+                    if (atkHasFS && !isPreventedFromDealingDamage(gameData, atk)) {
                         damageToDefendingPlayer += getEffectivePower(gameData, atk);
                     }
                 } else {
                     // First strike attacker deals damage to blockers
-                    if (atkHasFS) {
+                    if (atkHasFS && !isPreventedFromDealingDamage(gameData, atk)) {
                         int remaining = getEffectivePower(gameData, atk);
                         for (int blkIdx : blkIndices) {
                             Permanent blk = defBf.get(blkIdx);
@@ -1972,7 +2032,7 @@ public class GameService {
                     // First strike blockers deal damage to attacker
                     for (int blkIdx : blkIndices) {
                         Permanent blk = defBf.get(blkIdx);
-                        if (hasKeyword(gameData, blk, Keyword.FIRST_STRIKE)) {
+                        if (hasKeyword(gameData, blk, Keyword.FIRST_STRIKE) && !isPreventedFromDealingDamage(gameData, blk)) {
                             atkDamageTaken.merge(atkIdx, getEffectivePower(gameData, blk), Integer::sum);
                         }
                     }
@@ -1982,7 +2042,7 @@ public class GameService {
             // Determine phase 1 casualties (apply prevention shields)
             for (int atkIdx : attackingIndices) {
                 int dmg = atkDamageTaken.getOrDefault(atkIdx, 0);
-                dmg = applyCreaturePreventionShield(atkBf.get(atkIdx), dmg);
+                dmg = applyCreaturePreventionShield(gameData, atkBf.get(atkIdx), dmg);
                 atkDamageTaken.put(atkIdx, dmg);
                 if (dmg >= getEffectiveToughness(gameData, atkBf.get(atkIdx))) {
                     deadAttackerIndices.add(atkIdx);
@@ -1991,7 +2051,7 @@ public class GameService {
             for (List<Integer> blkIndices : blockerMap.values()) {
                 for (int blkIdx : blkIndices) {
                     int dmg = defDamageTaken.getOrDefault(blkIdx, 0);
-                    dmg = applyCreaturePreventionShield(defBf.get(blkIdx), dmg);
+                    dmg = applyCreaturePreventionShield(gameData, defBf.get(blkIdx), dmg);
                     defDamageTaken.put(blkIdx, dmg);
                     if (dmg >= getEffectiveToughness(gameData, defBf.get(blkIdx))) {
                         deadDefenderIndices.add(blkIdx);
@@ -2011,12 +2071,12 @@ public class GameService {
 
             if (blkIndices.isEmpty()) {
                 // Unblocked regular attacker deals damage to player
-                if (!atkHasFS) {
+                if (!atkHasFS && !isPreventedFromDealingDamage(gameData, atk)) {
                     damageToDefendingPlayer += getEffectivePower(gameData, atk);
                 }
             } else {
                 // Non-first-strike attacker deals damage to surviving blockers
-                if (!atkHasFS) {
+                if (!atkHasFS && !isPreventedFromDealingDamage(gameData, atk)) {
                     int remaining = getEffectivePower(gameData, atk);
                     for (int blkIdx : blkIndices) {
                         if (deadDefenderIndices.contains(blkIdx)) continue;
@@ -2031,7 +2091,7 @@ public class GameService {
                 for (int blkIdx : blkIndices) {
                     if (deadDefenderIndices.contains(blkIdx)) continue;
                     Permanent blk = defBf.get(blkIdx);
-                    if (!hasKeyword(gameData, blk, Keyword.FIRST_STRIKE)) {
+                    if (!hasKeyword(gameData, blk, Keyword.FIRST_STRIKE) && !isPreventedFromDealingDamage(gameData, blk)) {
                         atkDamageTaken.merge(atkIdx, getEffectivePower(gameData, blk), Integer::sum);
                     }
                 }
@@ -2042,7 +2102,7 @@ public class GameService {
         for (int atkIdx : attackingIndices) {
             if (deadAttackerIndices.contains(atkIdx)) continue;
             int dmg = atkDamageTaken.getOrDefault(atkIdx, 0);
-            dmg = applyCreaturePreventionShield(atkBf.get(atkIdx), dmg);
+            dmg = applyCreaturePreventionShield(gameData, atkBf.get(atkIdx), dmg);
             atkDamageTaken.put(atkIdx, dmg);
             if (dmg >= getEffectiveToughness(gameData, atkBf.get(atkIdx))) {
                 deadAttackerIndices.add(atkIdx);
@@ -2052,7 +2112,7 @@ public class GameService {
             for (int blkIdx : blkIndices) {
                 if (deadDefenderIndices.contains(blkIdx)) continue;
                 int dmg = defDamageTaken.getOrDefault(blkIdx, 0);
-                dmg = applyCreaturePreventionShield(defBf.get(blkIdx), dmg);
+                dmg = applyCreaturePreventionShield(gameData, defBf.get(blkIdx), dmg);
                 defDamageTaken.put(blkIdx, dmg);
                 if (dmg >= getEffectiveToughness(gameData, defBf.get(blkIdx))) {
                     deadDefenderIndices.add(blkIdx);
@@ -2079,6 +2139,8 @@ public class GameService {
         if (!deadAttackerIndices.isEmpty() || !deadDefenderIndices.isEmpty()) {
             removeOrphanedAuras(gameData);
         }
+
+        removeOrphanedAuras(gameData);
 
         // Apply life loss (with prevention shield)
         damageToDefendingPlayer = applyPlayerPreventionShield(gameData, defenderId, damageToDefendingPlayer);

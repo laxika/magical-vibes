@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.networking.service;
 
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,7 +28,8 @@ public class PermanentViewFactory {
                 p.getToughnessModifier() + bonusToughness,
                 allKeywords,
                 p.getEffectivePower() + bonusPower,
-                p.getEffectiveToughness() + bonusToughness
+                p.getEffectiveToughness() + bonusToughness,
+                p.getAttachedTo()
         );
     }
 }
