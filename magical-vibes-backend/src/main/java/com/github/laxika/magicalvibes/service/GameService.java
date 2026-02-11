@@ -39,10 +39,12 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
@@ -53,12 +55,14 @@ import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -254,7 +258,8 @@ public class GameService {
                             card.getName() + "'s ETB ability",
                             new ArrayList<>(card.getOnEnterBattlefieldEffects()),
                             0,
-                            entry.getTargetPermanentId()
+                            entry.getTargetPermanentId(),
+                            Map.of()
                     ));
                     String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
                     gameData.gameLog.add(etbLog);
@@ -361,6 +366,8 @@ public class GameService {
                 resolveDealXDamageDividedAmongTargetAttackingCreatures(gameData, entry);
             } else if (effect instanceof DealDamageToFlyingAndPlayersEffect) {
                 resolveDealDamageToFlyingAndPlayers(gameData, entry);
+            } else if (effect instanceof BoostSelfEffect boost) {
+                resolveBoostSelf(gameData, entry, boost);
             } else if (effect instanceof BoostTargetCreatureEffect boost) {
                 resolveBoostTargetCreature(gameData, entry, boost);
             } else if (effect instanceof GrantKeywordToTargetEffect grant) {
@@ -384,10 +391,14 @@ public class GameService {
                 resolveGainLifeEqualToTargetToughness(gameData, entry);
             } else if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
                 resolvePutTargetOnBottomOfLibrary(gameData, entry);
+            } else if (effect instanceof DestroyBlockedCreatureAndSelfEffect) {
+                resolveDestroyBlockedCreatureAndSelf(gameData, entry);
             } else if (effect instanceof PreventAllCombatDamageEffect) {
                 resolvePreventAllCombatDamage(gameData);
             } else if (effect instanceof PreventDamageFromColorsEffect prevent) {
                 resolvePreventDamageFromColors(gameData, prevent);
+            } else if (effect instanceof RedirectUnblockedCombatDamageToSelfEffect) {
+                resolveRedirectUnblockedCombatDamageToSelf(gameData, entry);
             }
         }
         removeOrphanedAuras(gameData);
@@ -926,6 +937,7 @@ public class GameService {
             // Sacrifice: remove from battlefield, add to graveyard
             battlefield.remove(permanentIndex);
             gameData.playerGraveyards.get(playerId).add(permanent.getCard());
+            removeOrphanedAuras(gameData);
 
             String logEntry = player.getUsername() + " sacrifices " + permanent.getCard().getName() + ".";
             gameData.gameLog.add(logEntry);
@@ -940,7 +952,8 @@ public class GameService {
                     permanent.getCard().getName() + "'s ability",
                     new ArrayList<>(permanent.getCard().getOnSacrificeEffects()),
                     0,
-                    targetPermanentId
+                    targetPermanentId,
+                    Map.of()
             ));
             gameData.priorityPassedBy.clear();
 
@@ -967,18 +980,35 @@ public class GameService {
             }
 
             Permanent permanent = battlefield.get(permanentIndex);
-            if (permanent.getCard().getTapActivatedAbilityEffects() == null || permanent.getCard().getTapActivatedAbilityEffects().isEmpty()) {
+            boolean hasTapAbility = permanent.getCard().getTapActivatedAbilityEffects() != null && !permanent.getCard().getTapActivatedAbilityEffects().isEmpty();
+            boolean hasManaAbility = permanent.getCard().getManaActivatedAbilityEffects() != null && !permanent.getCard().getManaActivatedAbilityEffects().isEmpty();
+            if (!hasTapAbility && !hasManaAbility) {
                 throw new IllegalStateException("Permanent has no activated ability");
             }
-            if (permanent.isTapped()) {
-                throw new IllegalStateException("Permanent is already tapped");
+
+            List<CardEffect> abilityEffects;
+            String abilityCost;
+            boolean isTapAbility;
+            if (hasTapAbility) {
+                isTapAbility = true;
+                abilityEffects = permanent.getCard().getTapActivatedAbilityEffects();
+                abilityCost = permanent.getCard().getTapActivatedAbilityCost();
+            } else {
+                isTapAbility = false;
+                abilityEffects = permanent.getCard().getManaActivatedAbilityEffects();
+                abilityCost = permanent.getCard().getManaActivatedAbilityCost();
             }
-            if (permanent.isSummoningSick() && permanent.getCard().getType() == CardType.CREATURE) {
-                throw new IllegalStateException("Creature has summoning sickness");
+
+            if (isTapAbility) {
+                if (permanent.isTapped()) {
+                    throw new IllegalStateException("Permanent is already tapped");
+                }
+                if (permanent.isSummoningSick() && permanent.getCard().getType() == CardType.CREATURE) {
+                    throw new IllegalStateException("Creature has summoning sickness");
+                }
             }
 
             // Pay mana cost
-            String abilityCost = permanent.getCard().getTapActivatedAbilityCost();
             if (abilityCost != null) {
                 ManaCost cost = new ManaCost(abilityCost);
                 ManaPool pool = gameData.playerManaPools.get(playerId);
@@ -1000,7 +1030,7 @@ public class GameService {
             }
 
             // Validate target for effects that need one
-            for (CardEffect effect : permanent.getCard().getTapActivatedAbilityEffects()) {
+            for (CardEffect effect : abilityEffects) {
                 if (effect instanceof DealXDamageToTargetCreatureEffect) {
                     if (targetPermanentId == null) {
                         throw new IllegalStateException("Ability requires a target");
@@ -1018,8 +1048,16 @@ public class GameService {
                 }
             }
 
-            // Tap the permanent
-            permanent.tap();
+            // For mana abilities, self-target if no explicit target
+            UUID effectiveTargetId = targetPermanentId;
+            if (!isTapAbility && effectiveTargetId == null) {
+                effectiveTargetId = permanent.getId();
+            }
+
+            // Tap the permanent (only for tap abilities)
+            if (isTapAbility) {
+                permanent.tap();
+            }
 
             String logEntry = player.getUsername() + " activates " + permanent.getCard().getName() + "'s ability.";
             gameData.gameLog.add(logEntry);
@@ -1032,9 +1070,10 @@ public class GameService {
                     permanent.getCard(),
                     playerId,
                     permanent.getCard().getName() + "'s ability",
-                    new ArrayList<>(permanent.getCard().getTapActivatedAbilityEffects()),
+                    new ArrayList<>(abilityEffects),
                     effectiveXValue,
-                    targetPermanentId
+                    effectiveTargetId,
+                    Map.of()
             ));
             gameData.priorityPassedBy.clear();
 
@@ -1219,6 +1258,23 @@ public class GameService {
 
     // ===== Instant effect methods =====
 
+    private void resolveBoostSelf(GameData gameData, StackEntry entry, BoostSelfEffect boost) {
+        Permanent self = findPermanentById(gameData, entry.getTargetPermanentId());
+        if (self == null) {
+            return;
+        }
+
+        self.setPowerModifier(self.getPowerModifier() + boost.powerBoost());
+        self.setToughnessModifier(self.getToughnessModifier() + boost.toughnessBoost());
+
+        String logEntry = self.getCard().getName() + " gets +" + boost.powerBoost() + "/+" + boost.toughnessBoost() + " until end of turn.";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        broadcastBattlefields(gameData);
+
+        log.info("Game {} - {} gets +{}/+{}", gameData.id, self.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
+    }
+
     private void resolveBoostTargetCreature(GameData gameData, StackEntry entry, BoostTargetCreatureEffect boost) {
         Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
@@ -1286,6 +1342,7 @@ public class GameService {
                     break;
                 }
             }
+            removeOrphanedAuras(gameData);
             broadcastBattlefields(gameData);
             broadcastGraveyards(gameData);
         }
@@ -1339,6 +1396,7 @@ public class GameService {
         }
 
         if (!destroyed.isEmpty()) {
+            removeOrphanedAuras(gameData);
             broadcastBattlefields(gameData);
             broadcastGraveyards(gameData);
         }
@@ -1370,6 +1428,44 @@ public class GameService {
                 log.info("Game {} - {} is destroyed by {}'s ability",
                         gameData.id, target.getCard().getName(), entry.getCard().getName());
                 break;
+            }
+        }
+
+        removeOrphanedAuras(gameData);
+        broadcastBattlefields(gameData);
+        broadcastGraveyards(gameData);
+    }
+
+    private void resolveDestroyBlockedCreatureAndSelf(GameData gameData, StackEntry entry) {
+        // Destroy the blocked creature (attacker) — referenced by targetPermanentId
+        Permanent attacker = findPermanentById(gameData, entry.getTargetPermanentId());
+        if (attacker != null) {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                if (battlefield != null && battlefield.remove(attacker)) {
+                    gameData.playerGraveyards.get(playerId).add(attacker.getCard());
+                    String logEntry = attacker.getCard().getName() + " is destroyed by " + entry.getCard().getName() + ".";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                    log.info("Game {} - {} destroyed by {}'s block trigger", gameData.id, attacker.getCard().getName(), entry.getCard().getName());
+                    break;
+                }
+            }
+        }
+
+        // Destroy self (the blocker) — referenced by sourcePermanentId
+        Permanent self = findPermanentById(gameData, entry.getSourcePermanentId());
+        if (self != null) {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                if (battlefield != null && battlefield.remove(self)) {
+                    gameData.playerGraveyards.get(playerId).add(self.getCard());
+                    String logEntry = entry.getCard().getName() + " is destroyed.";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                    log.info("Game {} - {} destroyed (self-destruct from block trigger)", gameData.id, entry.getCard().getName());
+                    break;
+                }
             }
         }
 
@@ -1488,6 +1584,7 @@ public class GameService {
             }
         }
 
+        removeOrphanedAuras(gameData);
         broadcastBattlefields(gameData);
         broadcastDeckSizes(gameData);
     }
@@ -1515,6 +1612,23 @@ public class GameService {
 
     private boolean isDamageFromSourcePrevented(GameData gameData, CardColor sourceColor) {
         return sourceColor != null && gameData.preventDamageFromColors.contains(sourceColor);
+    }
+
+    private void resolveRedirectUnblockedCombatDamageToSelf(GameData gameData, StackEntry entry) {
+        // Find the source permanent (the creature whose tap ability was activated)
+        List<Permanent> bf = gameData.playerBattlefields.get(entry.getControllerId());
+        if (bf == null) return;
+        for (Permanent p : bf) {
+            if (p.getCard() == entry.getCard()) {
+                gameData.combatDamageRedirectTarget = p.getId();
+
+                String logEntry = p.getCard().getName() + "'s ability resolves — unblocked combat damage will be redirected to it this turn.";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+                log.info("Game {} - Combat damage redirect set to {}", gameData.id, p.getCard().getName());
+                return;
+            }
+        }
     }
 
     private int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage) {
@@ -1636,6 +1750,7 @@ public class GameService {
         gameData.playerDamagePreventionShields.clear();
         gameData.preventAllCombatDamage = false;
         gameData.preventDamageFromColors.clear();
+        gameData.combatDamageRedirectTarget = null;
     }
 
     // ===== Static / continuous effect computation =====
@@ -1660,6 +1775,12 @@ public class GameService {
                         power += boost.powerBoost();
                         toughness += boost.toughnessBoost();
                         keywords.addAll(boost.grantedKeywords());
+                    }
+                    if (effect instanceof BoostEnchantedCreatureEffect boost
+                            && source.getAttachedTo() != null
+                            && source.getAttachedTo().equals(target.getId())) {
+                        power += boost.powerBoost();
+                        toughness += boost.toughnessBoost();
                     }
                 }
             }
@@ -1719,6 +1840,7 @@ public class GameService {
             }
         }
 
+        removeOrphanedAuras(gameData);
         broadcastBattlefields(gameData);
         broadcastGraveyards(gameData);
 
@@ -1966,7 +2088,31 @@ public class GameService {
                 broadcastLogEntry(gameData, logEntry);
             }
 
+            // Check for "when this creature blocks" triggers
+            for (BlockerAssignment assignment : blockerAssignments) {
+                Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
+                if (!blocker.getCard().getOnBlockEffects().isEmpty()) {
+                    Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            blocker.getCard(),
+                            defenderId,
+                            blocker.getCard().getName() + "'s block trigger",
+                            new ArrayList<>(blocker.getCard().getOnBlockEffects()),
+                            attacker.getId(),
+                            blocker.getId()
+                    ));
+                    String triggerLog = blocker.getCard().getName() + "'s block ability triggers.";
+                    gameData.gameLog.add(triggerLog);
+                    broadcastLogEntry(gameData, triggerLog);
+                    log.info("Game {} - {} block trigger pushed onto stack", gameData.id, blocker.getCard().getName());
+                }
+            }
+
             broadcastBattlefields(gameData);
+            if (!gameData.stack.isEmpty()) {
+                broadcastStackUpdate(gameData);
+            }
 
             log.info("Game {} - {} declares {} blockers", gameData.id, player.getUsername(), blockerAssignments.size());
 
@@ -1991,6 +2137,11 @@ public class GameService {
 
         List<Permanent> atkBf = gameData.playerBattlefields.get(activeId);
         List<Permanent> defBf = gameData.playerBattlefields.get(defenderId);
+
+        // Check for combat damage redirect (e.g. Kjeldoran Royal Guard)
+        Permanent redirectTarget = gameData.combatDamageRedirectTarget != null
+                ? findPermanentById(gameData, gameData.combatDamageRedirectTarget) : null;
+        int damageRedirectedToGuard = 0;
 
         List<Integer> attackingIndices = getAttackingCreatureIndices(gameData, activeId);
 
@@ -2043,9 +2194,13 @@ public class GameService {
                 boolean atkHasFS = hasKeyword(gameData, atk, Keyword.FIRST_STRIKE);
 
                 if (blkIndices.isEmpty()) {
-                    // Unblocked first striker deals damage to player
+                    // Unblocked first striker deals damage to player (or redirect target)
                     if (atkHasFS && !isPreventedFromDealingDamage(gameData, atk)) {
-                        damageToDefendingPlayer += getEffectivePower(gameData, atk);
+                        if (redirectTarget != null) {
+                            damageRedirectedToGuard += getEffectivePower(gameData, atk);
+                        } else {
+                            damageToDefendingPlayer += getEffectivePower(gameData, atk);
+                        }
                     }
                 } else {
                     // First strike attacker deals damage to blockers
@@ -2099,9 +2254,13 @@ public class GameService {
             boolean atkHasFS = hasKeyword(gameData, atk, Keyword.FIRST_STRIKE);
 
             if (blkIndices.isEmpty()) {
-                // Unblocked regular attacker deals damage to player
+                // Unblocked regular attacker deals damage to player (or redirect target)
                 if (!atkHasFS && !isPreventedFromDealingDamage(gameData, atk)) {
-                    damageToDefendingPlayer += getEffectivePower(gameData, atk);
+                    if (redirectTarget != null) {
+                        damageRedirectedToGuard += getEffectivePower(gameData, atk);
+                    } else {
+                        damageToDefendingPlayer += getEffectivePower(gameData, atk);
+                    }
                 }
             } else {
                 // Non-first-strike attacker deals damage to surviving blockers
@@ -2149,6 +2308,28 @@ public class GameService {
             }
         }
 
+        // Apply redirected damage to guard creature (e.g. Kjeldoran Royal Guard)
+        if (redirectTarget != null && damageRedirectedToGuard > 0) {
+            damageRedirectedToGuard = applyCreaturePreventionShield(gameData, redirectTarget, damageRedirectedToGuard);
+            String redirectLog = redirectTarget.getCard().getName() + " absorbs " + damageRedirectedToGuard + " redirected combat damage.";
+            gameData.gameLog.add(redirectLog);
+            broadcastLogEntry(gameData, redirectLog);
+
+            if (damageRedirectedToGuard >= getEffectiveToughness(gameData, redirectTarget)) {
+                // Guard dies — find and remove it
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    List<Permanent> bf = gameData.playerBattlefields.get(pid);
+                    if (bf != null && bf.remove(redirectTarget)) {
+                        gameData.playerGraveyards.get(pid).add(redirectTarget.getCard());
+                        String deathLog = redirectTarget.getCard().getName() + " is destroyed by redirected combat damage.";
+                        gameData.gameLog.add(deathLog);
+                        broadcastLogEntry(gameData, deathLog);
+                        break;
+                    }
+                }
+            }
+        }
+
         // Remove dead creatures (descending order to preserve indices) and move to graveyard
         List<String> deadCreatureNames = new ArrayList<>();
         List<Card> attackerGraveyard = gameData.playerGraveyards.get(activeId);
@@ -2164,6 +2345,9 @@ public class GameService {
             deadCreatureNames.add(gameData.playerIdToName.get(defenderId) + "'s " + dead.getCard().getName());
             defenderGraveyard.add(dead.getCard());
             defBf.remove(idx);
+        }
+        if (!deadAttackerIndices.isEmpty() || !deadDefenderIndices.isEmpty()) {
+            removeOrphanedAuras(gameData);
         }
 
         removeOrphanedAuras(gameData);

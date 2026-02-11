@@ -19,6 +19,7 @@ public record CardView(
         Set<Keyword> keywords,
         boolean needsTarget,
         boolean hasTapAbility,
+        boolean hasManaAbility,
         String setCode,
         String collectorNumber,
         String flavorText,

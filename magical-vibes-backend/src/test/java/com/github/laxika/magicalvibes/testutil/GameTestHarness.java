@@ -81,19 +81,19 @@ public class GameTestHarness {
     }
 
     public void castCreature(Player player, int cardIndex) {
-        gameService.playCard(gameData, player, cardIndex, 0, null);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }
 
     public void castEnchantment(Player player, int cardIndex) {
-        gameService.playCard(gameData, player, cardIndex, 0, null);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }
 
     public void castSorcery(Player player, int cardIndex, int xValue) {
-        gameService.playCard(gameData, player, cardIndex, xValue, null);
+        gameService.playCard(gameData, player, cardIndex, xValue, null, null);
     }
 
     public void castInstant(Player player, int cardIndex, UUID targetPermanentId) {
-        gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId);
+        gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null);
     }
 
     public void sacrificePermanent(Player player, int permanentIndex, UUID targetPermanentId) {

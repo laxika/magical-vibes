@@ -17,6 +17,7 @@ public class StackEntry {
     private final List<CardEffect> effectsToResolve;
     private final int xValue;
     private final UUID targetPermanentId;
+    private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
 
     // Creature spell constructor
@@ -28,6 +29,7 @@ public class StackEntry {
         this.effectsToResolve = List.of();
         this.xValue = 0;
         this.targetPermanentId = null;
+        this.sourcePermanentId = null;
         this.damageAssignments = Map.of();
     }
 
@@ -40,6 +42,7 @@ public class StackEntry {
         this.effectsToResolve = effectsToResolve;
         this.xValue = 0;
         this.targetPermanentId = null;
+        this.sourcePermanentId = null;
         this.damageAssignments = Map.of();
     }
 
@@ -52,6 +55,7 @@ public class StackEntry {
         this.effectsToResolve = effectsToResolve;
         this.xValue = xValue;
         this.targetPermanentId = null;
+        this.sourcePermanentId = null;
         this.damageAssignments = Map.of();
     }
 
@@ -64,6 +68,20 @@ public class StackEntry {
         this.effectsToResolve = effectsToResolve;
         this.xValue = xValue;
         this.targetPermanentId = targetPermanentId;
+        this.sourcePermanentId = null;
         this.damageAssignments = damageAssignments != null ? damageAssignments : Map.of();
+    }
+
+    // Triggered ability with source and target permanent constructor
+    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, UUID targetPermanentId, UUID sourcePermanentId) {
+        this.entryType = entryType;
+        this.card = card;
+        this.controllerId = controllerId;
+        this.description = description;
+        this.effectsToResolve = effectsToResolve;
+        this.xValue = 0;
+        this.targetPermanentId = targetPermanentId;
+        this.sourcePermanentId = sourcePermanentId;
+        this.damageAssignments = Map.of();
     }
 }

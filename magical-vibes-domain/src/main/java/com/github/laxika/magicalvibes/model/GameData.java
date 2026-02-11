@@ -47,6 +47,7 @@ public class GameData {
     public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
     public boolean preventAllCombatDamage;
     public final Set<CardColor> preventDamageFromColors = ConcurrentHashMap.newKeySet();
+    public UUID combatDamageRedirectTarget;
 
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {
         this.id = id;

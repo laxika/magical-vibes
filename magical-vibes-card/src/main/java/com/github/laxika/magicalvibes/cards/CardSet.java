@@ -23,9 +23,13 @@ import com.github.laxika.magicalvibes.cards.h.HailOfArrows;
 import com.github.laxika.magicalvibes.cards.h.HeartOfLight;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.h.HonorGuard;
+import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.l.LoyalSentry;
 import com.github.laxika.magicalvibes.cards.l.Luminesce;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
@@ -62,6 +66,10 @@ public enum CardSet {
             new CardPrinting("10E", "19", HeartOfLight::new, "Harus, the Rune-Reader, pored over the texts: \"In the beginning there was nothing—a profound, luminous nothing rich with potential and power.\""),
             new CardPrinting("10E", "20", HighGround::new),
             new CardPrinting("10E", "21", HolyDay::new, "\"The meek shall inherit the earth, but not today. Today, they merely survive.\"\n\u2014Onean cleric"),
+            new CardPrinting("10E", "22", HolyStrength::new),
+            new CardPrinting("10E", "23", HonorGuard::new, "\"The strength of one. The courage of ten.\""),
+            new CardPrinting("10E", "25", KjeldoranRoyalGuard::new, "\"Upon the frozen tundra stand the Kjeldoran Royal Guard, pikes raised, with the king's oath upon their lips.\""),
+            new CardPrinting("10E", "27", LoyalSentry::new, "\"I am not the first to stand in this doorway, and I will not be the last. I stand here because I was told to, and I will not leave until I am told to. This is all that matters.\""),
             new CardPrinting("10E", "28", Luminesce::new, "\"I will not have my flock cower in the shadow of death.\"\n\u2014Lucilde Fiksdotter, Order of the White Shield"),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
