@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.LobbyService;
@@ -31,7 +32,7 @@ public class GameTestHarness {
     public GameTestHarness() {
         gameRegistry = new GameRegistry();
         sessionManager = new WebSocketSessionManager(new JacksonConfig().objectMapper());
-        gameService = new GameService(sessionManager);
+        gameService = new GameService(sessionManager, new PermanentViewFactory());
         lobbyService = new LobbyService(gameRegistry, gameService);
 
         player1 = new Player(UUID.randomUUID(), "Alice");

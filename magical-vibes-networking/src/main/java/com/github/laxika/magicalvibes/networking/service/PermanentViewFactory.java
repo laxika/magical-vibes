@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.networking.service;
 
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +17,7 @@ public class PermanentViewFactory {
         Set<Keyword> allKeywords = new HashSet<>(p.getGrantedKeywords());
         allKeywords.addAll(bonusKeywords);
         return new PermanentView(
-                p.getId(), p.getCard(),
+                p.getId(), CardView.from(p.getCard()),
                 p.isTapped(), p.isAttacking(), p.isBlocking(),
                 new ArrayList<>(p.getBlockingTargets()), p.isSummoningSick(),
                 p.getPowerModifier() + bonusPower,

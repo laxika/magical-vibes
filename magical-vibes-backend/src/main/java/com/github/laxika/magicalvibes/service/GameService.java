@@ -59,11 +59,8 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
-<<<<<<< HEAD
 import com.github.laxika.magicalvibes.networking.model.StackEntryView;
-=======
 import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
->>>>>>> da7ee5e1d82a4a9cbeea3852286191f5683c7562
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
