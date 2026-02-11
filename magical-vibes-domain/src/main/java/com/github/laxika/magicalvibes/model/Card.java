@@ -33,10 +33,13 @@ public class Card {
     @Setter private List<CardEffect> tapActivatedAbilityEffects = List.of();
     @Setter private String tapActivatedAbilityCost;
     @Setter private boolean needsTarget;
-    @Setter private boolean aura;
     @Setter private String setCode;
     @Setter private String collectorNumber;
     @Setter private String flavorText;
+
+    public boolean isAura() {
+        return subtypes.contains(CardSubtype.AURA);
+    }
 
     public boolean isNeedsDamageDistribution() {
         return Stream.of(spellEffects, tapActivatedAbilityEffects)
