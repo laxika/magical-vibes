@@ -16,7 +16,6 @@ public class HeartOfLight extends Card {
         setSubtypes(List.of(CardSubtype.AURA));
         setCardText("Enchant creature\nPrevent all damage that would be dealt to and dealt by enchanted creature.");
         setNeedsTarget(true);
-        setAura(true);
         setStaticEffects(List.of(new PreventAllDamageToAndByEnchantedCreatureEffect()));
     }
 }

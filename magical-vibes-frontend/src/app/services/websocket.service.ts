@@ -115,6 +115,7 @@ export interface Card {
   needsTarget: boolean;
   needsDamageDistribution: boolean;
   hasTapAbility: boolean;
+  hasManaAbility: boolean;
   setCode: string | null;
   collectorNumber: string | null;
   flavorText: string | null;
