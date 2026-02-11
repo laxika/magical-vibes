@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, StackEntry, StackUpdatedNotification, GraveyardUpdatedNotification } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
@@ -25,7 +26,7 @@ export interface CombatGroup {
 @Component({
   selector: 'app-game',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './game.component.html',
   styleUrl: './game.component.css'
 })
@@ -436,6 +437,16 @@ export class GameComponent implements OnInit, OnDestroy {
     const g = this.game();
     if (g && this.isCardPlayable(index)) {
       const card = g.hand[index];
+      const hasXCost = card.manaCost?.includes('{X}') ?? false;
+
+      if (hasXCost) {
+        this.choosingXValue = true;
+        this.xValueCardIndex = index;
+        this.xValueCardName = card.name;
+        this.xValueInput = 0;
+        this.xValueMaximum = this.totalMana - 1; // subtract 1 for the {W} base cost
+        return;
+      }
       if (card.needsTarget) {
         this.targeting = true;
         this.targetingCardIndex = index;
@@ -444,6 +455,94 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetPermanentId: null });
     }
+  }
+
+  confirmXValue(): void {
+    const g = this.game();
+    if (!g) return;
+    const card = g.hand[this.xValueCardIndex];
+
+    if (card.needsDamageDistribution) {
+      this.distributingDamage = true;
+      this.damageDistributionCardIndex = this.xValueCardIndex;
+      this.damageDistributionCardName = this.xValueCardName;
+      this.damageDistributionXValue = this.xValueInput;
+      this.damageAssignments = new Map();
+      this.choosingXValue = false;
+      this.xValueCardIndex = -1;
+      this.xValueCardName = '';
+      return;
+    }
+
+    if (card.needsTarget) {
+      this.targeting = true;
+      this.targetingCardIndex = this.xValueCardIndex;
+      this.targetingCardName = this.xValueCardName;
+    } else {
+      this.websocketService.send({
+        type: MessageType.PLAY_CARD,
+        cardIndex: this.xValueCardIndex,
+        xValue: this.xValueInput,
+        targetPermanentId: null
+      });
+    }
+    this.choosingXValue = false;
+    this.xValueCardIndex = -1;
+    this.xValueCardName = '';
+  }
+
+  cancelXValue(): void {
+    this.choosingXValue = false;
+    this.xValueCardIndex = -1;
+    this.xValueCardName = '';
+    this.xValueInput = 0;
+  }
+
+  get damageDistributionRemaining(): number {
+    let assigned = 0;
+    this.damageAssignments.forEach(v => assigned += v);
+    return this.damageDistributionXValue - assigned;
+  }
+
+  assignDamage(permanentId: string): void {
+    if (!this.distributingDamage || this.damageDistributionRemaining <= 0) return;
+    const current = this.damageAssignments.get(permanentId) ?? 0;
+    this.damageAssignments.set(permanentId, current + 1);
+  }
+
+  unassignDamage(permanentId: string): void {
+    if (!this.distributingDamage) return;
+    const current = this.damageAssignments.get(permanentId) ?? 0;
+    if (current <= 1) {
+      this.damageAssignments.delete(permanentId);
+    } else {
+      this.damageAssignments.set(permanentId, current - 1);
+    }
+  }
+
+  getDamageAssigned(permanentId: string): number {
+    return this.damageAssignments.get(permanentId) ?? 0;
+  }
+
+  confirmDamageDistribution(): void {
+    if (this.damageDistributionRemaining !== 0) return;
+    const assignments: Record<string, number> = {};
+    this.damageAssignments.forEach((v, k) => assignments[k] = v);
+    this.websocketService.send({
+      type: MessageType.PLAY_CARD,
+      cardIndex: this.damageDistributionCardIndex,
+      xValue: this.damageDistributionXValue,
+      damageAssignments: assignments
+    });
+    this.cancelDamageDistribution();
+  }
+
+  cancelDamageDistribution(): void {
+    this.distributingDamage = false;
+    this.damageDistributionCardIndex = -1;
+    this.damageDistributionCardName = '';
+    this.damageDistributionXValue = 0;
+    this.damageAssignments = new Map();
   }
 
   selectTarget(permanentId: string): void {
@@ -583,6 +682,20 @@ export class GameComponent implements OnInit, OnDestroy {
   targeting = false;
   targetingCardIndex = -1;
   targetingCardName = '';
+
+  // X cost prompt state
+  choosingXValue = false;
+  xValueCardIndex = -1;
+  xValueCardName = '';
+  xValueInput = 0;
+  xValueMaximum = 0;
+
+  // Damage distribution state
+  distributingDamage = false;
+  damageDistributionCardIndex = -1;
+  damageDistributionCardName = '';
+  damageDistributionXValue = 0;
+  damageAssignments: Map<string, number> = new Map();
 
   isCardPlayable(index: number): boolean {
     return this.playableCardIndices().has(index);
@@ -727,6 +840,13 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   onMyBattlefieldCardClick(index: number): void {
+    if (this.distributingDamage) {
+      const perm = this.myBattlefield[index];
+      if (perm && perm.card.type === 'Creature' && perm.attacking) {
+        this.assignDamage(perm.id);
+      }
+      return;
+    }
     if (this.targeting) {
       const perm = this.myBattlefield[index];
       if (perm && perm.card.type === 'Creature') {
@@ -744,6 +864,13 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   onOpponentBattlefieldCardClick(index: number): void {
+    if (this.distributingDamage) {
+      const perm = this.opponentBattlefield[index];
+      if (perm && perm.card.type === 'Creature' && perm.attacking) {
+        this.assignDamage(perm.id);
+      }
+      return;
+    }
     if (this.targeting) {
       const perm = this.opponentBattlefield[index];
       if (perm && perm.card.type === 'Creature') {
@@ -887,6 +1014,10 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   onCombatAttackerClick(group: CombatGroup): void {
+    if (this.distributingDamage) {
+      this.assignDamage(group.attacker.id);
+      return;
+    }
     if (this.declaringAttackers && group.attackerIsMine) {
       this.toggleAttacker(group.attackerIndex);
     } else if (this.declaringBlockers && !group.attackerIsMine) {

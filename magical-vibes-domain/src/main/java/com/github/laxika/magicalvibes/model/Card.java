@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 @Getter
 @RequiredArgsConstructor
@@ -34,4 +36,10 @@ public class Card {
     @Setter private String setCode;
     @Setter private String collectorNumber;
     @Setter private String flavorText;
+
+    public boolean isNeedsDamageDistribution() {
+        return Stream.of(spellEffects, tapActivatedAbilityEffects)
+                .flatMap(List::stream)
+                .anyMatch(e -> e instanceof DealXDamageDividedAmongTargetAttackingCreaturesEffect);
+    }
 }

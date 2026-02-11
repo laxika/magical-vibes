@@ -225,6 +225,23 @@
       </div>
     }
 
+    @if (choosingXValue) {
+      <div class="combat-banner targeting-banner">
+        <span>Choose X value for {{ xValueCardName }} (max {{ xValueMaximum }}):</span>
+        <input type="number" [min]="0" [max]="xValueMaximum" [(ngModel)]="xValueInput" class="x-value-input" />
+        <button class="btn-confirm-combat" (click)="confirmXValue()" [disabled]="xValueInput < 0 || xValueInput > xValueMaximum">Confirm</button>
+        <button class="btn-confirm-combat" (click)="cancelXValue()">Cancel</button>
+      </div>
+    }
+
+    @if (distributingDamage) {
+      <div class="combat-banner targeting-banner">
+        <span>Click attacking creatures to assign damage for {{ damageDistributionCardName }} ({{ damageDistributionRemaining }} remaining of {{ damageDistributionXValue }})</span>
+        <button class="btn-confirm-combat" (click)="confirmDamageDistribution()" [disabled]="damageDistributionRemaining !== 0">Confirm</button>
+        <button class="btn-confirm-combat" (click)="cancelDamageDistribution()">Cancel</button>
+      </div>
+    }
+
     <div class="battlefield-area">
       <div class="battlefield-row">
         <div class="battlefield-label">{{ game()?.playerNames?.[opponentPlayerIndex] }}'s Battlefield</div>
@@ -321,8 +338,10 @@
                        [class.attacking]="group.attacker.attacking"
                        [class.selected-attacker]="declaringAttackers && isSelectedAttacker(group.attackerIndex)"
                        [class.block-target]="declaringBlockers && selectedBlockerIndex !== null && !group.attackerIsMine"
+                       [class.targetable]="distributingDamage"
                        [attr.data-card-color]="group.attacker.card.color"
-                       (click)="onCombatAttackerClick(group)">
+                       (click)="onCombatAttackerClick(group)"
+                       (contextmenu)="$event.preventDefault(); unassignDamage(group.attacker.id)">
                     @if (group.attacker.card.manaCost) {
                       <div class="card-mana-cost">{{ group.attacker.card.manaCost }}</div>
                     }
@@ -342,6 +361,9 @@
                       <div class="card-flavor-text">{{ group.attacker.card.flavorText }}</div>
                     }
                     <div class="card-combat-badge attacking-badge">Attacking</div>
+                    @if (distributingDamage && getDamageAssigned(group.attacker.id) > 0) {
+                      <div class="card-combat-badge damage-badge">{{ getDamageAssigned(group.attacker.id) }} dmg</div>
+                    }
                   </div>
                 </div>
                 @if (group.blockers.length > 0) {
