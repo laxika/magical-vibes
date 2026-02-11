@@ -389,15 +389,12 @@ public class GameService {
                 resolveGainLifeEqualToTargetToughness(gameData, entry);
             } else if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
                 resolvePutTargetOnBottomOfLibrary(gameData, entry);
-<<<<<<< HEAD
             } else if (effect instanceof DestroyBlockedCreatureAndSelfEffect) {
                 resolveDestroyBlockedCreatureAndSelf(gameData, entry);
-=======
             } else if (effect instanceof PreventAllCombatDamageEffect) {
                 resolvePreventAllCombatDamage(gameData);
             } else if (effect instanceof RedirectUnblockedCombatDamageToSelfEffect) {
                 resolveRedirectUnblockedCombatDamageToSelf(gameData, entry);
->>>>>>> origin/main
             }
         }
         removeOrphanedAuras(gameData);
