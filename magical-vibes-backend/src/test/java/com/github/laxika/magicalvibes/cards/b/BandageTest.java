@@ -298,7 +298,7 @@ class BandageTest {
     // ===== Fizzle =====
 
     @Test
-    @DisplayName("Bandage fizzles if target creature is removed before resolution")
+    @DisplayName("Bandage fizzles entirely if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.getGameData().playerDecks.get(player1.getId()).add(new GrizzlyBears());
@@ -316,8 +316,11 @@ class BandageTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
-        // Draw effect should still happen (effects are independent)
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        // Entire spell fizzles — no draw happens
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        // Fizzled spell still goes to graveyard
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Bandage"));
     }
 
     // ===== End of turn cleanup =====

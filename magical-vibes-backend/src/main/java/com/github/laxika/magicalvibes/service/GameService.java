@@ -264,26 +264,44 @@ public class GameService {
                 || entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 || entry.getEntryType() == StackEntryType.SORCERY_SPELL
                 || entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
-            String logEntry = entry.getDescription() + " resolves.";
-            gameData.gameLog.add(logEntry);
-            broadcastLogEntry(gameData, logEntry);
-            log.info("Game {} - {} resolves", gameData.id, entry.getDescription());
+            // Check if targeted spell/ability fizzles due to illegal target
+            if (entry.getTargetPermanentId() != null
+                    && findPermanentById(gameData, entry.getTargetPermanentId()) == null
+                    && !gameData.playerIds.contains(entry.getTargetPermanentId())) {
+                String fizzleLog = entry.getDescription() + " fizzles (target no longer exists).";
+                gameData.gameLog.add(fizzleLog);
+                broadcastLogEntry(gameData, fizzleLog);
+                log.info("Game {} - {} fizzles, target {} no longer exists",
+                        gameData.id, entry.getDescription(), entry.getTargetPermanentId());
 
-            resolveEffects(gameData, entry);
+                // Fizzled spells still go to graveyard
+                if (entry.getEntryType() == StackEntryType.SORCERY_SPELL
+                        || entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
+                    gameData.playerGraveyards.get(entry.getControllerId()).add(entry.getCard());
+                    broadcastGraveyards(gameData);
+                }
+            } else {
+                String logEntry = entry.getDescription() + " resolves.";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+                log.info("Game {} - {} resolves", gameData.id, entry.getDescription());
 
-            if (entry.getEffectsToResolve().stream().anyMatch(e -> e instanceof ShuffleIntoLibraryEffect)) {
-                List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
-                deck.add(entry.getCard());
-                Collections.shuffle(deck);
-                broadcastDeckSizes(gameData);
+                resolveEffects(gameData, entry);
 
-                String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
-                gameData.gameLog.add(shuffleLog);
-                broadcastLogEntry(gameData, shuffleLog);
-            } else if (entry.getEntryType() == StackEntryType.SORCERY_SPELL
-                    || entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
-                gameData.playerGraveyards.get(entry.getControllerId()).add(entry.getCard());
-                broadcastGraveyards(gameData);
+                if (entry.getEffectsToResolve().stream().anyMatch(e -> e instanceof ShuffleIntoLibraryEffect)) {
+                    List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
+                    deck.add(entry.getCard());
+                    Collections.shuffle(deck);
+                    broadcastDeckSizes(gameData);
+
+                    String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
+                    gameData.gameLog.add(shuffleLog);
+                    broadcastLogEntry(gameData, shuffleLog);
+                } else if (entry.getEntryType() == StackEntryType.SORCERY_SPELL
+                        || entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
+                    gameData.playerGraveyards.get(entry.getControllerId()).add(entry.getCard());
+                    broadcastGraveyards(gameData);
+                }
             }
         }
 
@@ -1099,11 +1117,6 @@ public class GameService {
     private void resolveBoostTargetCreature(GameData gameData, StackEntry entry, BoostTargetCreatureEffect boost) {
         Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
-            String fizzleLog = entry.getCard().getName() + " fizzles (target no longer exists).";
-            gameData.gameLog.add(fizzleLog);
-            broadcastLogEntry(gameData, fizzleLog);
-            log.info("Game {} - {} fizzles, target permanent {} no longer exists",
-                    gameData.id, entry.getCard().getName(), entry.getTargetPermanentId());
             return;
         }
 
@@ -1121,11 +1134,6 @@ public class GameService {
     private void resolveGrantKeywordToTarget(GameData gameData, StackEntry entry, GrantKeywordToTargetEffect grant) {
         Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
-            String fizzleLog = entry.getCard().getName() + " fizzles (target no longer exists).";
-            gameData.gameLog.add(fizzleLog);
-            broadcastLogEntry(gameData, fizzleLog);
-            log.info("Game {} - {} fizzles, target permanent {} no longer exists",
-                    gameData.id, entry.getCard().getName(), entry.getTargetPermanentId());
             return;
         }
 
@@ -1143,11 +1151,6 @@ public class GameService {
     private void resolveDealXDamageToTargetCreature(GameData gameData, StackEntry entry) {
         Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
-            String fizzleLog = entry.getCard().getName() + "'s ability fizzles (target no longer exists).";
-            gameData.gameLog.add(fizzleLog);
-            broadcastLogEntry(gameData, fizzleLog);
-            log.info("Game {} - {}'s ability fizzles, target {} no longer exists",
-                    gameData.id, entry.getCard().getName(), entry.getTargetPermanentId());
             return;
         }
 
@@ -1179,11 +1182,6 @@ public class GameService {
     private void resolveDestroyTargetPermanent(GameData gameData, StackEntry entry, DestroyTargetPermanentEffect destroy) {
         Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
-            String fizzleLog = entry.getCard().getName() + "'s ability fizzles (target no longer exists).";
-            gameData.gameLog.add(fizzleLog);
-            broadcastLogEntry(gameData, fizzleLog);
-            log.info("Game {} - {}'s ability fizzles, target {} no longer exists",
-                    gameData.id, entry.getCard().getName(), entry.getTargetPermanentId());
             return;
         }
 
@@ -1216,12 +1214,6 @@ public class GameService {
 
     private void resolvePreventDamageToTarget(GameData gameData, StackEntry entry, PreventDamageToTargetEffect prevent) {
         UUID targetId = entry.getTargetPermanentId();
-        if (targetId == null) {
-            String fizzleLog = entry.getCard().getName() + " fizzles (no target).";
-            gameData.gameLog.add(fizzleLog);
-            broadcastLogEntry(gameData, fizzleLog);
-            return;
-        }
 
         // Check if target is a permanent
         Permanent target = findPermanentById(gameData, targetId);
@@ -1245,12 +1237,7 @@ public class GameService {
             gameData.gameLog.add(logEntry);
             broadcastLogEntry(gameData, logEntry);
             log.info("Game {} - Prevention shield {} added to player {}", gameData.id, prevent.amount(), playerName);
-            return;
         }
-
-        String fizzleLog = entry.getCard().getName() + " fizzles (target no longer exists).";
-        gameData.gameLog.add(fizzleLog);
-        broadcastLogEntry(gameData, fizzleLog);
     }
 
     private void resolveDrawCard(GameData gameData, UUID playerId) {
@@ -1278,12 +1265,6 @@ public class GameService {
 
     private void resolveDoubleTargetPlayerLife(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
-        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
-            String fizzleLog = entry.getCard().getName() + " fizzles (invalid target player).";
-            gameData.gameLog.add(fizzleLog);
-            broadcastLogEntry(gameData, fizzleLog);
-            return;
-        }
 
         int currentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
         int newLife = currentLife * 2;
