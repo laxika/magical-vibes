@@ -23,7 +23,9 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build
-        run: ./gradlew build -x :magical-vibes-frontend:build -x :magical-vibes-frontend:npmInstall -x :magical-vibes-frontend:buildAngular
+        run: |
+          chmod +x ./gradlew
+          ./gradlew build -x :magical-vibes-frontend:build -x :magical-vibes-frontend:npmInstall -x :magical-vibes-frontend:buildAngular
 
       - name: Test
         run: ./gradlew test
