@@ -55,8 +55,8 @@ public class StackEntry {
         this.damageAssignments = Map.of();
     }
 
-    // Targeted spell constructor (for instants with targets)
-    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, int xValue, UUID targetPermanentId) {
+    // Targeted or damage distribution spell constructor
+    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, int xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments) {
         this.entryType = entryType;
         this.card = card;
         this.controllerId = controllerId;
@@ -64,18 +64,6 @@ public class StackEntry {
         this.effectsToResolve = effectsToResolve;
         this.xValue = xValue;
         this.targetPermanentId = targetPermanentId;
-        this.damageAssignments = Map.of();
-    }
-
-    // Damage distribution constructor (for spells that divide damage among multiple targets)
-    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, int xValue, Map<UUID, Integer> damageAssignments) {
-        this.entryType = entryType;
-        this.card = card;
-        this.controllerId = controllerId;
-        this.description = description;
-        this.effectsToResolve = effectsToResolve;
-        this.xValue = xValue;
-        this.targetPermanentId = null;
-        this.damageAssignments = damageAssignments;
+        this.damageAssignments = damageAssignments != null ? damageAssignments : Map.of();
     }
 }
