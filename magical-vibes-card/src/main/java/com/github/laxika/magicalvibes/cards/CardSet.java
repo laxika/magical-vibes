@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.cards.h.HonorGuard;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
@@ -65,6 +66,7 @@ public enum CardSet {
             new CardPrinting("10E", "21", HolyDay::new, "\"The meek shall inherit the earth, but not today. Today, they merely survive.\"\n\u2014Onean cleric"),
             new CardPrinting("10E", "22", HolyStrength::new),
             new CardPrinting("10E", "23", HonorGuard::new, "\"The strength of one. The courage of ten.\""),
+            new CardPrinting("10E", "25", KjeldoranRoyalGuard::new, "\"Upon the frozen tundra stand the Kjeldoran Royal Guard, pikes raised, with the king's oath upon their lips.\""),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
             new CardPrinting("10E", "382", Forest::new),
