@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageFromColorsEffect
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -697,6 +698,11 @@ public class GameService {
                     throw new IllegalStateException("Invalid target");
                 }
 
+                // Protection validation
+                if (target != null && card.isNeedsTarget() && hasProtectionFrom(gameData, target, card.getColor())) {
+                    throw new IllegalStateException(target.getCard().getName() + " has protection from " + card.getColor().name().toLowerCase());
+                }
+
                 // Effect-specific target validation
                 for (CardEffect effect : card.getSpellEffects()) {
                     if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
@@ -931,6 +937,9 @@ public class GameService {
                     if (!destroy.targetTypes().contains(target.getCard().getType())) {
                         throw new IllegalStateException("Invalid target type for sacrifice ability");
                     }
+                    if (hasProtectionFrom(gameData, target, permanent.getCard().getColor())) {
+                        throw new IllegalStateException(target.getCard().getName() + " has protection from " + permanent.getCard().getColor().name().toLowerCase());
+                    }
                 }
             }
 
@@ -1044,6 +1053,9 @@ public class GameService {
                     }
                     if (!target.isAttacking() && !target.isBlocking()) {
                         throw new IllegalStateException("Target must be an attacking or blocking creature");
+                    }
+                    if (hasProtectionFrom(gameData, target, permanent.getCard().getColor())) {
+                        throw new IllegalStateException(target.getCard().getName() + " has protection from " + permanent.getCard().getColor().name().toLowerCase());
                     }
                 }
             }
@@ -1315,7 +1327,8 @@ public class GameService {
             return;
         }
 
-        if (isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+        if (isDamageFromSourcePrevented(gameData, entry.getCard().getColor())
+                || hasProtectionFrom(gameData, target, entry.getCard().getColor())) {
             String logEntry = entry.getCard().getName() + "'s damage is prevented.";
             gameData.gameLog.add(logEntry);
             broadcastLogEntry(gameData, logEntry);
@@ -1366,6 +1379,9 @@ public class GameService {
         for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
             Permanent target = findPermanentById(gameData, assignment.getKey());
             if (target == null) {
+                continue;
+            }
+            if (hasProtectionFrom(gameData, target, entry.getCard().getColor())) {
                 continue;
             }
 
@@ -1614,6 +1630,16 @@ public class GameService {
         return sourceColor != null && gameData.preventDamageFromColors.contains(sourceColor);
     }
 
+    private boolean hasProtectionFrom(GameData gameData, Permanent target, CardColor sourceColor) {
+        if (sourceColor == null) return false;
+        for (CardEffect effect : target.getCard().getStaticEffects()) {
+            if (effect instanceof ProtectionFromColorsEffect protection && protection.colors().contains(sourceColor)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void resolveRedirectUnblockedCombatDamageToSelf(GameData gameData, StackEntry entry) {
         // Find the source permanent (the creature whose tap ability was activated)
         List<Permanent> bf = gameData.playerBattlefields.get(entry.getControllerId());
@@ -1820,6 +1846,9 @@ public class GameService {
             for (int i = 0; i < battlefield.size(); i++) {
                 Permanent p = battlefield.get(i);
                 if (hasKeyword(gameData, p, Keyword.FLYING)) {
+                    if (hasProtectionFrom(gameData, p, entry.getCard().getColor())) {
+                        continue;
+                    }
                     int effectiveDamage = applyCreaturePreventionShield(gameData, p, damage);
                     int toughness = getEffectiveToughness(gameData, p);
                     if (effectiveDamage >= toughness) {
@@ -2070,6 +2099,9 @@ public class GameService {
                         && !hasKeyword(gameData, blocker, Keyword.REACH)) {
                     throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (flying)");
                 }
+                if (hasProtectionFrom(gameData, attacker, blocker.getCard().getColor())) {
+                    throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (protection)");
+                }
             }
 
             gameData.awaitingBlockerDeclaration = false;
@@ -2209,14 +2241,17 @@ public class GameService {
                         for (int blkIdx : blkIndices) {
                             Permanent blk = defBf.get(blkIdx);
                             int dmg = Math.min(remaining, getEffectiveToughness(gameData, blk));
-                            defDamageTaken.merge(blkIdx, dmg, Integer::sum);
+                            if (!hasProtectionFrom(gameData, blk, atk.getCard().getColor())) {
+                                defDamageTaken.merge(blkIdx, dmg, Integer::sum);
+                            }
                             remaining -= dmg;
                         }
                     }
                     // First strike blockers deal damage to attacker
                     for (int blkIdx : blkIndices) {
                         Permanent blk = defBf.get(blkIdx);
-                        if (hasKeyword(gameData, blk, Keyword.FIRST_STRIKE) && !isPreventedFromDealingDamage(gameData, blk)) {
+                        if (hasKeyword(gameData, blk, Keyword.FIRST_STRIKE) && !isPreventedFromDealingDamage(gameData, blk)
+                                && !hasProtectionFrom(gameData, atk, blk.getCard().getColor())) {
                             atkDamageTaken.merge(atkIdx, getEffectivePower(gameData, blk), Integer::sum);
                         }
                     }
@@ -2271,7 +2306,9 @@ public class GameService {
                         Permanent blk = defBf.get(blkIdx);
                         int remainingToughness = getEffectiveToughness(gameData, blk) - defDamageTaken.getOrDefault(blkIdx, 0);
                         int dmg = Math.min(remaining, remainingToughness);
-                        defDamageTaken.merge(blkIdx, dmg, Integer::sum);
+                        if (!hasProtectionFrom(gameData, blk, atk.getCard().getColor())) {
+                            defDamageTaken.merge(blkIdx, dmg, Integer::sum);
+                        }
                         remaining -= dmg;
                     }
                 }
@@ -2279,7 +2316,8 @@ public class GameService {
                 for (int blkIdx : blkIndices) {
                     if (deadDefenderIndices.contains(blkIdx)) continue;
                     Permanent blk = defBf.get(blkIdx);
-                    if (!hasKeyword(gameData, blk, Keyword.FIRST_STRIKE) && !isPreventedFromDealingDamage(gameData, blk)) {
+                    if (!hasKeyword(gameData, blk, Keyword.FIRST_STRIKE) && !isPreventedFromDealingDamage(gameData, blk)
+                            && !hasProtectionFrom(gameData, atk, blk.getCard().getColor())) {
                         atkDamageTaken.merge(atkIdx, getEffectivePower(gameData, blk), Integer::sum);
                     }
                 }
