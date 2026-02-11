@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
@@ -382,6 +383,8 @@ public class GameService {
                 resolveGainLifeEqualToTargetToughness(gameData, entry);
             } else if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
                 resolvePutTargetOnBottomOfLibrary(gameData, entry);
+            } else if (effect instanceof PreventAllCombatDamageEffect) {
+                resolvePreventAllCombatDamage(gameData);
             }
         }
         removeOrphanedAuras(gameData);
@@ -1474,6 +1477,14 @@ public class GameService {
         broadcastDeckSizes(gameData);
     }
 
+    private void resolvePreventAllCombatDamage(GameData gameData) {
+        gameData.preventAllCombatDamage = true;
+
+        String logEntry = "All combat damage will be prevented this turn.";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+    }
+
     private int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage) {
         if (permanent.getCard().getStaticEffects().stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
         if (hasAuraPreventingAllDamage(gameData, permanent)) return 0;
@@ -1590,6 +1601,7 @@ public class GameService {
 
         // Clear player damage prevention shields
         gameData.playerDamagePreventionShields.clear();
+        gameData.preventAllCombatDamage = false;
     }
 
     // ===== Static / continuous effect computation =====
@@ -1922,6 +1934,16 @@ public class GameService {
     }
 
     private void resolveCombatDamage(GameData gameData) {
+        if (gameData.preventAllCombatDamage) {
+            String logEntry = "All combat damage is prevented.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+
+            advanceStep(gameData);
+            resolveAutoPass(gameData);
+            return;
+        }
+
         UUID activeId = gameData.activePlayerId;
         UUID defenderId = getOpponentId(gameData, activeId);
 
