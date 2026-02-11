@@ -32,6 +32,8 @@ public class Card {
     @Setter private List<CardEffect> onSacrificeEffects = List.of();
     @Setter private List<CardEffect> tapActivatedAbilityEffects = List.of();
     @Setter private String tapActivatedAbilityCost;
+    @Setter private List<CardEffect> manaActivatedAbilityEffects = List.of();
+    @Setter private String manaActivatedAbilityCost;
     @Setter private boolean needsTarget;
     @Setter private String setCode;
     @Setter private String collectorNumber;

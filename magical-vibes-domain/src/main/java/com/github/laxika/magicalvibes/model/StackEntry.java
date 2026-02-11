@@ -28,6 +28,7 @@ public class StackEntry {
         this.effectsToResolve = List.of();
         this.xValue = 0;
         this.targetPermanentId = null;
+
         this.damageAssignments = Map.of();
     }
 
@@ -40,6 +41,7 @@ public class StackEntry {
         this.effectsToResolve = effectsToResolve;
         this.xValue = 0;
         this.targetPermanentId = null;
+
         this.damageAssignments = Map.of();
     }
 
@@ -52,6 +54,7 @@ public class StackEntry {
         this.effectsToResolve = effectsToResolve;
         this.xValue = xValue;
         this.targetPermanentId = null;
+
         this.damageAssignments = Map.of();
     }
 
@@ -64,6 +67,8 @@ public class StackEntry {
         this.effectsToResolve = effectsToResolve;
         this.xValue = xValue;
         this.targetPermanentId = targetPermanentId;
+
         this.damageAssignments = damageAssignments != null ? damageAssignments : Map.of();
     }
+
 }
