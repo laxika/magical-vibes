@@ -251,7 +251,8 @@ public class GameService {
                             card.getName() + "'s ETB ability",
                             new ArrayList<>(card.getOnEnterBattlefieldEffects()),
                             0,
-                            entry.getTargetPermanentId()
+                            entry.getTargetPermanentId(),
+                            Map.of()
                     ));
                     String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
                     gameData.gameLog.add(etbLog);
@@ -933,7 +934,8 @@ public class GameService {
                     permanent.getCard().getName() + "'s ability",
                     new ArrayList<>(permanent.getCard().getOnSacrificeEffects()),
                     0,
-                    targetPermanentId
+                    targetPermanentId,
+                    Map.of()
             ));
             gameData.priorityPassedBy.clear();
 
@@ -1027,7 +1029,8 @@ public class GameService {
                     permanent.getCard().getName() + "'s ability",
                     new ArrayList<>(permanent.getCard().getTapActivatedAbilityEffects()),
                     effectiveXValue,
-                    targetPermanentId
+                    targetPermanentId,
+                    Map.of()
             ));
             gameData.priorityPassedBy.clear();
 
