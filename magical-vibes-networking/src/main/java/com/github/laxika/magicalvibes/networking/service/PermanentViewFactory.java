@@ -28,7 +28,8 @@ public class PermanentViewFactory {
                 p.getToughnessModifier() + bonusToughness,
                 allKeywords,
                 p.getEffectivePower() + bonusPower,
-                p.getEffectiveToughness() + bonusToughness
+                p.getEffectiveToughness() + bonusToughness,
+                p.getAttachedTo()
         );
     }
 }
