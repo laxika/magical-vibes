@@ -10,7 +10,8 @@
       "Bash(grep:*)",
       "WebFetch(domain:gatherer.wizards.com)",
       "WebFetch(domain:scryfall.com)",
-      "WebFetch(domain:api.scryfall.com)"
+      "WebFetch(domain:api.scryfall.com)",
+      "Bash(find:*)"
     ]
   }
 }
