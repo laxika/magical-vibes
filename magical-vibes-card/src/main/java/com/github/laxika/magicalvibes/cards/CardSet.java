@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.cards.l.LoyalSentry;
 import com.github.laxika.magicalvibes.cards.l.Luminesce;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
+import com.github.laxika.magicalvibes.cards.m.Mobilization;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -80,6 +81,7 @@ public enum CardSet {
             new CardPrinting("10E", "269", HuntedWumpus::new, "\"Just one can feed a dozen people for a month.\""),
             new CardPrinting("10E", "270", Hurricane::new, "\"Don't envy the grandeur of drakes. Their impression of grace fades when the first gust sends them crashing into one another.\"\n\u2014Molimo, maro-sorcerer"),
             new CardPrinting("10E", "274", LlanowarElves::new, "\"One bone broken for every twig snapped underfoot.\"\n\u2014Llanowar penalty for trespassing"),
+            new CardPrinting("10E", "29", Mobilization::new),
             new CardPrinting("10E", "277", MightOfOaks::new, "\"Guess where I'm gonna plant this!\""),
             new CardPrinting("10E", "376", Mountain::new),
             new CardPrinting("10E", "377", Mountain::new),
