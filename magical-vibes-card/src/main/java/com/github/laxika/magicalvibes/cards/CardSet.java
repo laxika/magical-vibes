@@ -43,7 +43,7 @@ public enum CardSet {
             new CardPrinting("10E", "8", BallistaSquad::new, "\"The perfect antidote for a tightly packed formation.\""),
             new CardPrinting("10E", "9", Bandage::new, "\"Life is measured in inches. To a healer, every one of those inches is precious.\""),
             new CardPrinting("10E", "10", BeaconOfImmortality::new, "\"The cave floods with light. A thousand rays shine forth and meld into one.\""),
-            new CardPrinting("10E", "11", BenalishKnight::new, "\"We return to the place of our firstinjustice. We will right the wrongs of our ancestors.\"\n—Barrin, master wizard"),
+            new CardPrinting("10E", "11", BenalishKnight::new, "\"We return to the place of our first injustice. We will right the wrongs of our ancestors.\"\n—Barrin, master wizard"),
             new CardPrinting("10E", "12", ChoMannoRevolutionary::new),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
