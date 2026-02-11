@@ -44,6 +44,7 @@ public class GameData {
     public Set<Integer> awaitingCardChoiceValidIndices;
     public final List<StackEntry> stack = Collections.synchronizedList(new ArrayList<>());
     public final Map<UUID, List<Card>> playerGraveyards = new ConcurrentHashMap<>();
+    public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
 
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {
         this.id = id;

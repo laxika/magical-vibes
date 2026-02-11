@@ -19,6 +19,7 @@ public class Permanent {
     private boolean summoningSick;
     @Setter private int powerModifier;
     @Setter private int toughnessModifier;
+    @Setter private int damagePreventionShield;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
 
     public Permanent(Card card) {

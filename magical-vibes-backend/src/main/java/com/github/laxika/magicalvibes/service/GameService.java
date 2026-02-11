@@ -44,8 +44,10 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -316,6 +318,10 @@ public class GameService {
                     resolveBoostTargetCreature(gameData, entry, boost);
                 } else if (effect instanceof GrantKeywordToTargetEffect grant) {
                     resolveGrantKeywordToTarget(gameData, entry, grant);
+                } else if (effect instanceof PreventDamageToTargetEffect prevent) {
+                    resolvePreventDamageToTarget(gameData, entry, prevent);
+                } else if (effect instanceof DrawCardEffect) {
+                    resolveDrawCard(gameData, entry.getControllerId());
                 }
             }
 
@@ -1160,7 +1166,7 @@ public class GameService {
             return;
         }
 
-        int damage = entry.getXValue();
+        int damage = applyCreaturePreventionShield(target, entry.getXValue());
         String logEntry = entry.getCard().getName() + " deals " + damage + " damage to " + target.getCard().getName() + ".";
         gameData.gameLog.add(logEntry);
         broadcastLogEntry(gameData, logEntry);
@@ -1223,6 +1229,84 @@ public class GameService {
         broadcastGraveyards(gameData);
     }
 
+    private void resolvePreventDamageToTarget(GameData gameData, StackEntry entry, PreventDamageToTargetEffect prevent) {
+        UUID targetId = entry.getTargetPermanentId();
+        if (targetId == null) {
+            String fizzleLog = entry.getCard().getName() + " fizzles (no target).";
+            gameData.gameLog.add(fizzleLog);
+            broadcastLogEntry(gameData, fizzleLog);
+            return;
+        }
+
+        // Check if target is a permanent
+        Permanent target = findPermanentById(gameData, targetId);
+        if (target != null) {
+            target.setDamagePreventionShield(target.getDamagePreventionShield() + prevent.amount());
+
+            String logEntry = "The next " + prevent.amount() + " damage that would be dealt to " + target.getCard().getName() + " is prevented.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            log.info("Game {} - Prevention shield {} added to permanent {}", gameData.id, prevent.amount(), target.getCard().getName());
+            return;
+        }
+
+        // Check if target is a player
+        if (gameData.playerIds.contains(targetId)) {
+            int currentShield = gameData.playerDamagePreventionShields.getOrDefault(targetId, 0);
+            gameData.playerDamagePreventionShields.put(targetId, currentShield + prevent.amount());
+
+            String playerName = gameData.playerIdToName.get(targetId);
+            String logEntry = "The next " + prevent.amount() + " damage that would be dealt to " + playerName + " is prevented.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            log.info("Game {} - Prevention shield {} added to player {}", gameData.id, prevent.amount(), playerName);
+            return;
+        }
+
+        String fizzleLog = entry.getCard().getName() + " fizzles (target no longer exists).";
+        gameData.gameLog.add(fizzleLog);
+        broadcastLogEntry(gameData, fizzleLog);
+    }
+
+    private void resolveDrawCard(GameData gameData, UUID playerId) {
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        List<Card> hand = gameData.playerHands.get(playerId);
+
+        if (deck == null || deck.isEmpty()) {
+            String logEntry = gameData.playerIdToName.get(playerId) + " has no cards to draw.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            return;
+        }
+
+        Card drawn = deck.removeFirst();
+        hand.add(drawn);
+
+        sessionManager.sendToPlayer(playerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+        broadcastDeckSizes(gameData);
+
+        String logEntry = gameData.playerIdToName.get(playerId) + " draws a card.";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        log.info("Game {} - {} draws a card from effect", gameData.id, gameData.playerIdToName.get(playerId));
+    }
+
+    private int applyCreaturePreventionShield(Permanent permanent, int damage) {
+        int shield = permanent.getDamagePreventionShield();
+        if (shield <= 0 || damage <= 0) return damage;
+        int prevented = Math.min(shield, damage);
+        permanent.setDamagePreventionShield(shield - prevented);
+        return damage - prevented;
+    }
+
+    private int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage) {
+        int shield = gameData.playerDamagePreventionShields.getOrDefault(playerId, 0);
+        if (shield <= 0 || damage <= 0) return damage;
+        int prevented = Math.min(shield, damage);
+        gameData.playerDamagePreventionShields.put(playerId, shield - prevented);
+        return damage - prevented;
+    }
+
     private int getOpponentCostIncrease(GameData gameData, UUID playerId, CardType cardType) {
         UUID opponentId = getOpponentId(gameData, playerId);
         List<Permanent> opponentBattlefield = gameData.playerBattlefields.get(opponentId);
@@ -1261,8 +1345,10 @@ public class GameService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
             for (Permanent p : battlefield) {
-                if (p.getPowerModifier() != 0 || p.getToughnessModifier() != 0 || !p.getGrantedKeywords().isEmpty()) {
+                if (p.getPowerModifier() != 0 || p.getToughnessModifier() != 0 || !p.getGrantedKeywords().isEmpty()
+                        || p.getDamagePreventionShield() != 0) {
                     p.resetModifiers();
+                    p.setDamagePreventionShield(0);
                     anyReset = true;
                 }
             }
@@ -1270,6 +1356,9 @@ public class GameService {
         if (anyReset) {
             broadcastBattlefields(gameData);
         }
+
+        // Clear player damage prevention shields
+        gameData.playerDamagePreventionShields.clear();
     }
 
     // ===== Sorcery effect methods =====
@@ -1284,8 +1373,9 @@ public class GameService {
             for (int i = 0; i < battlefield.size(); i++) {
                 Permanent p = battlefield.get(i);
                 if (p.hasKeyword(Keyword.FLYING)) {
+                    int effectiveDamage = applyCreaturePreventionShield(p, damage);
                     int toughness = p.getEffectiveToughness();
-                    if (damage >= toughness) {
+                    if (effectiveDamage >= toughness) {
                         deadIndices.add(i);
                     }
                 }
@@ -1306,14 +1396,15 @@ public class GameService {
         broadcastBattlefields(gameData);
         broadcastGraveyards(gameData);
 
-        // Deal damage to each player
+        // Deal damage to each player (with prevention shields)
         for (UUID playerId : gameData.orderedPlayerIds) {
+            int effectiveDamage = applyPlayerPreventionShield(gameData, playerId, damage);
             int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
-            gameData.playerLifeTotals.put(playerId, currentLife - damage);
+            gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
 
-            if (damage > 0) {
+            if (effectiveDamage > 0) {
                 String playerName = gameData.playerIdToName.get(playerId);
-                String logEntry = playerName + " takes " + damage + " damage from Hurricane.";
+                String logEntry = playerName + " takes " + effectiveDamage + " damage from Hurricane.";
                 gameData.gameLog.add(logEntry);
                 broadcastLogEntry(gameData, logEntry);
             }
@@ -1625,9 +1716,11 @@ public class GameService {
                 }
             }
 
-            // Determine phase 1 casualties
+            // Determine phase 1 casualties (apply prevention shields)
             for (int atkIdx : attackingIndices) {
                 int dmg = atkDamageTaken.getOrDefault(atkIdx, 0);
+                dmg = applyCreaturePreventionShield(atkBf.get(atkIdx), dmg);
+                atkDamageTaken.put(atkIdx, dmg);
                 if (dmg >= atkBf.get(atkIdx).getEffectiveToughness()) {
                     deadAttackerIndices.add(atkIdx);
                 }
@@ -1635,6 +1728,8 @@ public class GameService {
             for (List<Integer> blkIndices : blockerMap.values()) {
                 for (int blkIdx : blkIndices) {
                     int dmg = defDamageTaken.getOrDefault(blkIdx, 0);
+                    dmg = applyCreaturePreventionShield(defBf.get(blkIdx), dmg);
+                    defDamageTaken.put(blkIdx, dmg);
                     if (dmg >= defBf.get(blkIdx).getEffectiveToughness()) {
                         deadDefenderIndices.add(blkIdx);
                     }
@@ -1680,10 +1775,12 @@ public class GameService {
             }
         }
 
-        // Determine phase 2 casualties
+        // Determine phase 2 casualties (apply prevention shields)
         for (int atkIdx : attackingIndices) {
             if (deadAttackerIndices.contains(atkIdx)) continue;
             int dmg = atkDamageTaken.getOrDefault(atkIdx, 0);
+            dmg = applyCreaturePreventionShield(atkBf.get(atkIdx), dmg);
+            atkDamageTaken.put(atkIdx, dmg);
             if (dmg >= atkBf.get(atkIdx).getEffectiveToughness()) {
                 deadAttackerIndices.add(atkIdx);
             }
@@ -1692,6 +1789,8 @@ public class GameService {
             for (int blkIdx : blkIndices) {
                 if (deadDefenderIndices.contains(blkIdx)) continue;
                 int dmg = defDamageTaken.getOrDefault(blkIdx, 0);
+                dmg = applyCreaturePreventionShield(defBf.get(blkIdx), dmg);
+                defDamageTaken.put(blkIdx, dmg);
                 if (dmg >= defBf.get(blkIdx).getEffectiveToughness()) {
                     deadDefenderIndices.add(blkIdx);
                 }
@@ -1715,7 +1814,8 @@ public class GameService {
             defBf.remove(idx);
         }
 
-        // Apply life loss
+        // Apply life loss (with prevention shield)
+        damageToDefendingPlayer = applyPlayerPreventionShield(gameData, defenderId, damageToDefendingPlayer);
         if (damageToDefendingPlayer > 0) {
             int currentLife = gameData.playerLifeTotals.getOrDefault(defenderId, 20);
             gameData.playerLifeTotals.put(defenderId, currentLife - damageToDefendingPlayer);
