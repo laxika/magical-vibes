@@ -49,11 +49,13 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -566,13 +568,37 @@ public class GameService {
         sessionManager.sendToPlayers(data.orderedPlayerIds, new DeckSizesUpdatedMessage(getDeckSizes(data)));
     }
 
-    private List<List<Permanent>> getBattlefields(GameData data) {
-        List<List<Permanent>> battlefields = new ArrayList<>();
+    private List<List<PermanentView>> getBattlefields(GameData data) {
+        List<List<PermanentView>> battlefields = new ArrayList<>();
         for (UUID pid : data.orderedPlayerIds) {
             List<Permanent> bf = data.playerBattlefields.get(pid);
-            battlefields.add(bf != null ? new ArrayList<>(bf) : new ArrayList<>());
+            if (bf == null) {
+                battlefields.add(new ArrayList<>());
+            } else {
+                List<PermanentView> views = new ArrayList<>();
+                for (Permanent p : bf) {
+                    views.add(toPermanentView(data, p));
+                }
+                battlefields.add(views);
+            }
         }
         return battlefields;
+    }
+
+    private PermanentView toPermanentView(GameData data, Permanent p) {
+        StaticBonus bonus = computeStaticBonus(data, p);
+        Set<Keyword> allKeywords = new HashSet<>(p.getGrantedKeywords());
+        allKeywords.addAll(bonus.keywords());
+        return new PermanentView(
+                p.getId(), p.getCard(),
+                p.isTapped(), p.isAttacking(), p.isBlocking(),
+                p.getBlockingTarget(), p.isSummoningSick(),
+                p.getPowerModifier() + bonus.power(),
+                p.getToughnessModifier() + bonus.toughness(),
+                allKeywords,
+                p.getEffectivePower() + bonus.power(),
+                p.getEffectiveToughness() + bonus.toughness()
+        );
     }
 
     private void broadcastBattlefields(GameData data) {
@@ -1180,7 +1206,7 @@ public class GameService {
         broadcastLogEntry(gameData, logEntry);
         log.info("Game {} - {} deals {} damage to {}", gameData.id, entry.getCard().getName(), damage, target.getCard().getName());
 
-        if (damage >= target.getEffectiveToughness()) {
+        if (damage >= getEffectiveToughness(gameData, target)) {
             // Destroy the creature
             for (UUID playerId : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -1302,7 +1328,7 @@ public class GameService {
         Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) return;
 
-        int toughness = target.getEffectiveToughness();
+        int toughness = getEffectiveToughness(gameData, target);
 
         // Find the controller (owner of the battlefield the creature is on)
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -1418,6 +1444,47 @@ public class GameService {
         gameData.playerDamagePreventionShields.clear();
     }
 
+    // ===== Static / continuous effect computation =====
+
+    private record StaticBonus(int power, int toughness, Set<Keyword> keywords) {
+        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of());
+    }
+
+    private StaticBonus computeStaticBonus(GameData gameData, Permanent target) {
+        if (target.getCard().getType() != CardType.CREATURE) return StaticBonus.NONE;
+        int power = 0;
+        int toughness = 0;
+        Set<Keyword> keywords = new HashSet<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent source : bf) {
+                if (source == target) continue;
+                for (CardEffect effect : source.getCard().getStaticEffects()) {
+                    if (effect instanceof BoostCreaturesBySubtypeEffect boost
+                            && target.getCard().getSubtypes().stream().anyMatch(boost.affectedSubtypes()::contains)) {
+                        power += boost.powerBoost();
+                        toughness += boost.toughnessBoost();
+                        keywords.addAll(boost.grantedKeywords());
+                    }
+                }
+            }
+        }
+        return new StaticBonus(power, toughness, keywords);
+    }
+
+    public int getEffectivePower(GameData gameData, Permanent permanent) {
+        return permanent.getEffectivePower() + computeStaticBonus(gameData, permanent).power();
+    }
+
+    public int getEffectiveToughness(GameData gameData, Permanent permanent) {
+        return permanent.getEffectiveToughness() + computeStaticBonus(gameData, permanent).toughness();
+    }
+
+    public boolean hasKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
+        return permanent.hasKeyword(keyword) || computeStaticBonus(gameData, permanent).keywords().contains(keyword);
+    }
+
     // ===== Sorcery effect methods =====
 
     private void resolveDealDamageToFlyingAndPlayers(GameData gameData, int damage) {
@@ -1429,9 +1496,9 @@ public class GameService {
             Set<Integer> deadIndices = new TreeSet<>(Collections.reverseOrder());
             for (int i = 0; i < battlefield.size(); i++) {
                 Permanent p = battlefield.get(i);
-                if (p.hasKeyword(Keyword.FLYING)) {
+                if (hasKeyword(gameData, p, Keyword.FLYING)) {
                     int effectiveDamage = applyCreaturePreventionShield(p, damage);
-                    int toughness = p.getEffectiveToughness();
+                    int toughness = getEffectiveToughness(gameData, p);
                     if (effectiveDamage >= toughness) {
                         deadIndices.add(i);
                     }
@@ -1479,7 +1546,7 @@ public class GameService {
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent p = battlefield.get(i);
-            if (p.getCard().getType() == CardType.CREATURE && !p.isTapped() && !p.isSummoningSick() && !p.hasKeyword(Keyword.DEFENDER)) {
+            if (p.getCard().getType() == CardType.CREATURE && !p.isTapped() && !p.isSummoningSick() && !hasKeyword(gameData, p, Keyword.DEFENDER)) {
                 indices.add(i);
             }
         }
@@ -1658,9 +1725,9 @@ public class GameService {
 
                 Permanent attacker = attackerBattlefield.get(attackerIdx);
                 Permanent blocker = defenderBattlefield.get(blockerIdx);
-                if (attacker.hasKeyword(Keyword.FLYING)
-                        && !blocker.hasKeyword(Keyword.FLYING)
-                        && !blocker.hasKeyword(Keyword.REACH)) {
+                if (hasKeyword(gameData, attacker, Keyword.FLYING)
+                        && !hasKeyword(gameData, blocker, Keyword.FLYING)
+                        && !hasKeyword(gameData, blocker, Keyword.REACH)) {
                     throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (flying)");
                 }
             }
@@ -1714,7 +1781,7 @@ public class GameService {
         // Check if any combat creature has first strike
         boolean anyFirstStrike = false;
         for (int atkIdx : attackingIndices) {
-            if (atkBf.get(atkIdx).hasKeyword(Keyword.FIRST_STRIKE)) {
+            if (hasKeyword(gameData, atkBf.get(atkIdx), Keyword.FIRST_STRIKE)) {
                 anyFirstStrike = true;
                 break;
             }
@@ -1722,7 +1789,7 @@ public class GameService {
         if (!anyFirstStrike) {
             for (List<Integer> blkIndices : blockerMap.values()) {
                 for (int blkIdx : blkIndices) {
-                    if (defBf.get(blkIdx).hasKeyword(Keyword.FIRST_STRIKE)) {
+                    if (hasKeyword(gameData, defBf.get(blkIdx), Keyword.FIRST_STRIKE)) {
                         anyFirstStrike = true;
                         break;
                     }
@@ -1745,20 +1812,20 @@ public class GameService {
                 int atkIdx = entry.getKey();
                 List<Integer> blkIndices = entry.getValue();
                 Permanent atk = atkBf.get(atkIdx);
-                boolean atkHasFS = atk.hasKeyword(Keyword.FIRST_STRIKE);
+                boolean atkHasFS = hasKeyword(gameData, atk, Keyword.FIRST_STRIKE);
 
                 if (blkIndices.isEmpty()) {
                     // Unblocked first striker deals damage to player
                     if (atkHasFS) {
-                        damageToDefendingPlayer += atk.getEffectivePower();
+                        damageToDefendingPlayer += getEffectivePower(gameData, atk);
                     }
                 } else {
                     // First strike attacker deals damage to blockers
                     if (atkHasFS) {
-                        int remaining = atk.getEffectivePower();
+                        int remaining = getEffectivePower(gameData, atk);
                         for (int blkIdx : blkIndices) {
                             Permanent blk = defBf.get(blkIdx);
-                            int dmg = Math.min(remaining, blk.getEffectiveToughness());
+                            int dmg = Math.min(remaining, getEffectiveToughness(gameData, blk));
                             defDamageTaken.merge(blkIdx, dmg, Integer::sum);
                             remaining -= dmg;
                         }
@@ -1766,8 +1833,8 @@ public class GameService {
                     // First strike blockers deal damage to attacker
                     for (int blkIdx : blkIndices) {
                         Permanent blk = defBf.get(blkIdx);
-                        if (blk.hasKeyword(Keyword.FIRST_STRIKE)) {
-                            atkDamageTaken.merge(atkIdx, blk.getEffectivePower(), Integer::sum);
+                        if (hasKeyword(gameData, blk, Keyword.FIRST_STRIKE)) {
+                            atkDamageTaken.merge(atkIdx, getEffectivePower(gameData, blk), Integer::sum);
                         }
                     }
                 }
@@ -1778,7 +1845,7 @@ public class GameService {
                 int dmg = atkDamageTaken.getOrDefault(atkIdx, 0);
                 dmg = applyCreaturePreventionShield(atkBf.get(atkIdx), dmg);
                 atkDamageTaken.put(atkIdx, dmg);
-                if (dmg >= atkBf.get(atkIdx).getEffectiveToughness()) {
+                if (dmg >= getEffectiveToughness(gameData, atkBf.get(atkIdx))) {
                     deadAttackerIndices.add(atkIdx);
                 }
             }
@@ -1787,7 +1854,7 @@ public class GameService {
                     int dmg = defDamageTaken.getOrDefault(blkIdx, 0);
                     dmg = applyCreaturePreventionShield(defBf.get(blkIdx), dmg);
                     defDamageTaken.put(blkIdx, dmg);
-                    if (dmg >= defBf.get(blkIdx).getEffectiveToughness()) {
+                    if (dmg >= getEffectiveToughness(gameData, defBf.get(blkIdx))) {
                         deadDefenderIndices.add(blkIdx);
                     }
                 }
@@ -1801,21 +1868,21 @@ public class GameService {
             if (deadAttackerIndices.contains(atkIdx)) continue;
 
             Permanent atk = atkBf.get(atkIdx);
-            boolean atkHasFS = atk.hasKeyword(Keyword.FIRST_STRIKE);
+            boolean atkHasFS = hasKeyword(gameData, atk, Keyword.FIRST_STRIKE);
 
             if (blkIndices.isEmpty()) {
                 // Unblocked regular attacker deals damage to player
                 if (!atkHasFS) {
-                    damageToDefendingPlayer += atk.getEffectivePower();
+                    damageToDefendingPlayer += getEffectivePower(gameData, atk);
                 }
             } else {
                 // Non-first-strike attacker deals damage to surviving blockers
                 if (!atkHasFS) {
-                    int remaining = atk.getEffectivePower();
+                    int remaining = getEffectivePower(gameData, atk);
                     for (int blkIdx : blkIndices) {
                         if (deadDefenderIndices.contains(blkIdx)) continue;
                         Permanent blk = defBf.get(blkIdx);
-                        int remainingToughness = blk.getEffectiveToughness() - defDamageTaken.getOrDefault(blkIdx, 0);
+                        int remainingToughness = getEffectiveToughness(gameData, blk) - defDamageTaken.getOrDefault(blkIdx, 0);
                         int dmg = Math.min(remaining, remainingToughness);
                         defDamageTaken.merge(blkIdx, dmg, Integer::sum);
                         remaining -= dmg;
@@ -1825,8 +1892,8 @@ public class GameService {
                 for (int blkIdx : blkIndices) {
                     if (deadDefenderIndices.contains(blkIdx)) continue;
                     Permanent blk = defBf.get(blkIdx);
-                    if (!blk.hasKeyword(Keyword.FIRST_STRIKE)) {
-                        atkDamageTaken.merge(atkIdx, blk.getEffectivePower(), Integer::sum);
+                    if (!hasKeyword(gameData, blk, Keyword.FIRST_STRIKE)) {
+                        atkDamageTaken.merge(atkIdx, getEffectivePower(gameData, blk), Integer::sum);
                     }
                 }
             }
@@ -1838,7 +1905,7 @@ public class GameService {
             int dmg = atkDamageTaken.getOrDefault(atkIdx, 0);
             dmg = applyCreaturePreventionShield(atkBf.get(atkIdx), dmg);
             atkDamageTaken.put(atkIdx, dmg);
-            if (dmg >= atkBf.get(atkIdx).getEffectiveToughness()) {
+            if (dmg >= getEffectiveToughness(gameData, atkBf.get(atkIdx))) {
                 deadAttackerIndices.add(atkIdx);
             }
         }
@@ -1848,7 +1915,7 @@ public class GameService {
                 int dmg = defDamageTaken.getOrDefault(blkIdx, 0);
                 dmg = applyCreaturePreventionShield(defBf.get(blkIdx), dmg);
                 defDamageTaken.put(blkIdx, dmg);
-                if (dmg >= defBf.get(blkIdx).getEffectiveToughness()) {
+                if (dmg >= getEffectiveToughness(gameData, defBf.get(blkIdx))) {
                     deadDefenderIndices.add(blkIdx);
                 }
             }
