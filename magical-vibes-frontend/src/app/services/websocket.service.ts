@@ -127,7 +127,7 @@ export interface Permanent {
   tapped: boolean;
   attacking: boolean;
   blocking: boolean;
-  blockingTarget: number;
+  blockingTargets: number[];
   summoningSick: boolean;
   powerModifier: number;
   toughnessModifier: number;

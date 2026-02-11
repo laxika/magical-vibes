@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -21,7 +22,7 @@ public class PermanentViewFactory {
         return new PermanentView(
                 p.getId(), cardViewFactory.create(p.getCard()),
                 p.isTapped(), p.isAttacking(), p.isBlocking(),
-                p.getBlockingTarget(), p.isSummoningSick(),
+                new ArrayList<>(p.getBlockingTargets()), p.isSummoningSick(),
                 p.getPowerModifier() + bonusPower,
                 p.getToughnessModifier() + bonusToughness,
                 allKeywords,

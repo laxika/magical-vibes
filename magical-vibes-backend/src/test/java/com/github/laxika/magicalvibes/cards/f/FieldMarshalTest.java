@@ -277,7 +277,7 @@ class FieldMarshalTest {
         Permanent blocker = new Permanent(big);
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
-        blocker.setBlockingTarget(1); // Cloudchaser is at index 1 (Marshal is 0)
+        blocker.addBlockingTarget(1); // Cloudchaser is at index 1 (Marshal is 0)
         gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);

@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTarget
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
@@ -1779,8 +1780,20 @@ public class GameService {
             List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
             List<Integer> blockable = getBlockableCreatureIndices(gameData, defenderId);
 
+            // Compute max blocks per creature (1 + additional from static effects)
+            int additionalBlocks = 0;
+            for (Permanent p : defenderBattlefield) {
+                for (CardEffect effect : p.getCard().getStaticEffects()) {
+                    if (effect instanceof GrantAdditionalBlockEffect e) {
+                        additionalBlocks += e.additionalBlocks();
+                    }
+                }
+            }
+            int maxBlocksPerCreature = 1 + additionalBlocks;
+
             // Validate assignments
-            Set<Integer> usedBlockers = new HashSet<>();
+            Map<Integer, Integer> blockerUsageCount = new HashMap<>();
+            Set<String> blockerAttackerPairs = new HashSet<>();
             for (BlockerAssignment assignment : blockerAssignments) {
                 int blockerIdx = assignment.blockerIndex();
                 int attackerIdx = assignment.attackerIndex();
@@ -1788,8 +1801,12 @@ public class GameService {
                 if (!blockable.contains(blockerIdx)) {
                     throw new IllegalStateException("Invalid blocker index: " + blockerIdx);
                 }
-                if (!usedBlockers.add(blockerIdx)) {
-                    throw new IllegalStateException("Duplicate blocker index: " + blockerIdx);
+                int usageCount = blockerUsageCount.merge(blockerIdx, 1, Integer::sum);
+                if (usageCount > maxBlocksPerCreature) {
+                    throw new IllegalStateException("Blocker " + blockerIdx + " assigned too many times");
+                }
+                if (!blockerAttackerPairs.add(blockerIdx + ":" + attackerIdx)) {
+                    throw new IllegalStateException("Duplicate blocker-attacker pair: " + blockerIdx + " -> " + attackerIdx);
                 }
                 if (attackerIdx < 0 || attackerIdx >= attackerBattlefield.size() || !attackerBattlefield.get(attackerIdx).isAttacking()) {
                     throw new IllegalStateException("Invalid attacker index: " + attackerIdx);
@@ -1810,7 +1827,7 @@ public class GameService {
             for (BlockerAssignment assignment : blockerAssignments) {
                 Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
                 blocker.setBlocking(true);
-                blocker.setBlockingTarget(assignment.attackerIndex());
+                blocker.addBlockingTarget(assignment.attackerIndex());
             }
 
             if (!blockerAssignments.isEmpty()) {
@@ -1843,7 +1860,7 @@ public class GameService {
         for (int atkIdx : attackingIndices) {
             List<Integer> blockers = new ArrayList<>();
             for (int i = 0; i < defBf.size(); i++) {
-                if (defBf.get(i).isBlocking() && defBf.get(i).getBlockingTarget() == atkIdx) {
+                if (defBf.get(i).isBlocking() && defBf.get(i).getBlockingTargets().contains(atkIdx)) {
                     blockers.add(i);
                 }
             }

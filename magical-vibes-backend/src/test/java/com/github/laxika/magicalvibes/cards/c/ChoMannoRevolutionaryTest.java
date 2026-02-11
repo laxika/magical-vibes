@@ -107,7 +107,7 @@ class ChoMannoRevolutionaryTest {
         Permanent blocker = new Permanent(choManno);
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
-        blocker.setBlockingTarget(0);
+        blocker.addBlockingTarget(0);
         harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
 
         GrizzlyBears bigCreature = new GrizzlyBears();
@@ -148,7 +148,7 @@ class ChoMannoRevolutionaryTest {
         Permanent blocker = new Permanent(bears);
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
-        blocker.setBlockingTarget(0);
+        blocker.addBlockingTarget(0);
         harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
@@ -226,7 +226,7 @@ class ChoMannoRevolutionaryTest {
         // First combat
         attacker.setAttacking(true);
         defender.setBlocking(true);
-        defender.setBlockingTarget(0);
+        defender.addBlockingTarget(0);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
@@ -247,7 +247,7 @@ class ChoMannoRevolutionaryTest {
         harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker2);
 
         defender.setBlocking(true);
-        defender.setBlockingTarget(0);
+        defender.addBlockingTarget(0);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
