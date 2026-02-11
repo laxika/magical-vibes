@@ -93,8 +93,9 @@ class BallistaSquadTest {
     void canActivateAbilityOnAttackingCreature() {
         Permanent ballistaPerm = addBallistaReadyToCombat(player1);
         Permanent targetPerm = addAttackingCreature(player2);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, "W", 3);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
 
         harness.activateAbility(player1, 0, 2, targetPerm.getId());
 

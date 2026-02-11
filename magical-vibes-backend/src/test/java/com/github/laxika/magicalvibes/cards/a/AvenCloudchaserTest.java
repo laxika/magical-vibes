@@ -136,8 +136,9 @@ class AvenCloudchaserTest {
         UUID targetId = harness.getPermanentId(player1, "Angelic Chorus");
         harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
 
-        harness.passBothPriorities(); // resolve creature
-        harness.passBothPriorities(); // resolve ETB
+        harness.passBothPriorities(); // resolve creature → ETB + Angelic Chorus trigger pushed
+        harness.passBothPriorities(); // resolve Angelic Chorus trigger (top of stack)
+        harness.passBothPriorities(); // resolve ETB (destroy enchantment)
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId()))
