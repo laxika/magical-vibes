@@ -1283,6 +1283,7 @@ public class GameService {
     }
 
     private int applyCreaturePreventionShield(Permanent permanent, int damage) {
+        if (permanent.getCard().isPreventAllDamage()) return 0;
         int shield = permanent.getDamagePreventionShield();
         if (shield <= 0 || damage <= 0) return damage;
         int prevented = Math.min(shield, damage);
