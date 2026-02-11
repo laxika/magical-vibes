@@ -1044,6 +1044,26 @@ h1 {
   cursor: crosshair;
 }
 
+.x-value-input {
+  width: 60px;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  font-size: 14px;
+  text-align: center;
+}
+
+.damage-badge {
+  background: #c0392b;
+  color: white;
+  top: auto;
+  bottom: -8px;
+  left: auto;
+  right: -8px;
+}
+
 .card-pt.buffed {
   color: #2ecc71;
   background: rgba(46, 204, 113, 0.3);

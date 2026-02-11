@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import lombok.Getter;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Getter
@@ -16,6 +17,7 @@ public class StackEntry {
     private final List<CardEffect> effectsToResolve;
     private final int xValue;
     private final UUID targetPermanentId;
+    private final Map<UUID, Integer> damageAssignments;
 
     // Creature spell constructor
     public StackEntry(Card card, UUID controllerId) {
@@ -26,6 +28,7 @@ public class StackEntry {
         this.effectsToResolve = List.of();
         this.xValue = 0;
         this.targetPermanentId = null;
+        this.damageAssignments = Map.of();
     }
 
     // Triggered ability constructor
@@ -37,6 +40,7 @@ public class StackEntry {
         this.effectsToResolve = effectsToResolve;
         this.xValue = 0;
         this.targetPermanentId = null;
+        this.damageAssignments = Map.of();
     }
 
     // General constructor with xValue (for sorcery spells)
@@ -48,6 +52,7 @@ public class StackEntry {
         this.effectsToResolve = effectsToResolve;
         this.xValue = xValue;
         this.targetPermanentId = null;
+        this.damageAssignments = Map.of();
     }
 
     // Targeted spell constructor (for instants with targets)
@@ -59,5 +64,18 @@ public class StackEntry {
         this.effectsToResolve = effectsToResolve;
         this.xValue = xValue;
         this.targetPermanentId = targetPermanentId;
+        this.damageAssignments = Map.of();
+    }
+
+    // Damage distribution constructor (for spells that divide damage among multiple targets)
+    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, int xValue, Map<UUID, Integer> damageAssignments) {
+        this.entryType = entryType;
+        this.card = card;
+        this.controllerId = controllerId;
+        this.description = description;
+        this.effectsToResolve = effectsToResolve;
+        this.xValue = xValue;
+        this.targetPermanentId = null;
+        this.damageAssignments = damageAssignments;
     }
 }

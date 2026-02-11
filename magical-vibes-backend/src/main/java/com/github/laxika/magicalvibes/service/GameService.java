@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnes
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -319,6 +320,8 @@ public class GameService {
                 resolveDestroyTargetPermanent(gameData, entry, destroy);
             } else if (effect instanceof DealXDamageToTargetCreatureEffect) {
                 resolveDealXDamageToTargetCreature(gameData, entry);
+            } else if (effect instanceof DealXDamageDividedAmongTargetAttackingCreaturesEffect) {
+                resolveDealXDamageDividedAmongTargetAttackingCreatures(gameData, entry);
             } else if (effect instanceof DealDamageToFlyingAndPlayersEffect) {
                 resolveDealDamageToFlyingAndPlayers(gameData, entry.getXValue());
             } else if (effect instanceof BoostTargetCreatureEffect boost) {
@@ -592,7 +595,7 @@ public class GameService {
         sessionManager.sendToPlayers(data.orderedPlayerIds, new GraveyardUpdatedMessage(getGraveyards(data)));
     }
 
-    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId) {
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
@@ -736,13 +739,42 @@ public class GameService {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.INSTANT);
-                cost.pay(pool, additionalCost);
+                if (cost.hasX()) {
+                    cost.pay(pool, effectiveXValue + additionalCost);
+                } else {
+                    cost.pay(pool, additionalCost);
+                }
                 sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
 
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.INSTANT_SPELL, card, playerId, card.getName(),
-                        new ArrayList<>(card.getSpellEffects()), 0, targetPermanentId
-                ));
+                // Validate damage assignments for damage distribution spells
+                if (card.isNeedsDamageDistribution()) {
+                    if (damageAssignments == null || damageAssignments.isEmpty()) {
+                        throw new IllegalStateException("Damage assignments required");
+                    }
+                    int totalDamage = damageAssignments.values().stream().mapToInt(Integer::intValue).sum();
+                    if (totalDamage != effectiveXValue) {
+                        throw new IllegalStateException("Damage assignments must sum to X (" + effectiveXValue + ")");
+                    }
+                    for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
+                        Permanent target = findPermanentById(gameData, assignment.getKey());
+                        if (target == null || target.getCard().getType() != CardType.CREATURE || !target.isAttacking()) {
+                            throw new IllegalStateException("All targets must be attacking creatures");
+                        }
+                        if (assignment.getValue() <= 0) {
+                            throw new IllegalStateException("Each damage assignment must be positive");
+                        }
+                    }
+
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.INSTANT_SPELL, card, playerId, card.getName(),
+                            new ArrayList<>(card.getSpellEffects()), effectiveXValue, damageAssignments
+                    ));
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.INSTANT_SPELL, card, playerId, card.getName(),
+                            new ArrayList<>(card.getSpellEffects()), effectiveXValue, targetPermanentId
+                    ));
+                }
                 gameData.priorityPassedBy.clear();
 
                 sessionManager.sendToPlayer(playerId, new HandDrawnMessage(new ArrayList<>(hand), gameData.mulliganCounts.getOrDefault(playerId, 0)));
@@ -1194,6 +1226,52 @@ public class GameService {
                     break;
                 }
             }
+            broadcastBattlefields(gameData);
+            broadcastGraveyards(gameData);
+        }
+    }
+
+    private void resolveDealXDamageDividedAmongTargetAttackingCreatures(GameData gameData, StackEntry entry) {
+        Map<UUID, Integer> assignments = entry.getDamageAssignments();
+        if (assignments == null || assignments.isEmpty()) {
+            return;
+        }
+
+        List<Permanent> destroyed = new ArrayList<>();
+
+        for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
+            Permanent target = findPermanentById(gameData, assignment.getKey());
+            if (target == null) {
+                continue;
+            }
+
+            int damage = applyCreaturePreventionShield(target, assignment.getValue());
+            String logEntry = entry.getCard().getName() + " deals " + damage + " damage to " + target.getCard().getName() + ".";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            log.info("Game {} - {} deals {} damage to {}", gameData.id, entry.getCard().getName(), damage, target.getCard().getName());
+
+            if (damage >= target.getEffectiveToughness()) {
+                destroyed.add(target);
+            }
+        }
+
+        for (Permanent target : destroyed) {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                if (battlefield != null && battlefield.remove(target)) {
+                    gameData.playerGraveyards.get(playerId).add(target.getCard());
+
+                    String destroyLog = target.getCard().getName() + " is destroyed.";
+                    gameData.gameLog.add(destroyLog);
+                    broadcastLogEntry(gameData, destroyLog);
+                    log.info("Game {} - {} is destroyed", gameData.id, target.getCard().getName());
+                    break;
+                }
+            }
+        }
+
+        if (!destroyed.isEmpty()) {
             broadcastBattlefields(gameData);
             broadcastGraveyards(gameData);
         }

@@ -114,6 +114,7 @@ export interface Card {
   toughness: number | null;
   keywords: string[];
   needsTarget: boolean;
+  needsDamageDistribution: boolean;
   onEnterBattlefieldEffects: any[] | null;
   setCode: string | null;
   collectorNumber: string | null;
