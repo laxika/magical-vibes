@@ -2634,10 +2634,11 @@ public class GameService {
             blockerMap.put(atkIdx, blockers);
         }
 
-        // Check if any combat creature has first strike
+        // Check if any combat creature has first strike or double strike
         boolean anyFirstStrike = false;
         for (int atkIdx : attackingIndices) {
-            if (hasKeyword(gameData, atkBf.get(atkIdx), Keyword.FIRST_STRIKE)) {
+            if (hasKeyword(gameData, atkBf.get(atkIdx), Keyword.FIRST_STRIKE)
+                    || hasKeyword(gameData, atkBf.get(atkIdx), Keyword.DOUBLE_STRIKE)) {
                 anyFirstStrike = true;
                 break;
             }
@@ -2645,7 +2646,8 @@ public class GameService {
         if (!anyFirstStrike) {
             for (List<Integer> blkIndices : blockerMap.values()) {
                 for (int blkIdx : blkIndices) {
-                    if (hasKeyword(gameData, defBf.get(blkIdx), Keyword.FIRST_STRIKE)) {
+                    if (hasKeyword(gameData, defBf.get(blkIdx), Keyword.FIRST_STRIKE)
+                            || hasKeyword(gameData, defBf.get(blkIdx), Keyword.DOUBLE_STRIKE)) {
                         anyFirstStrike = true;
                         break;
                     }
@@ -2668,7 +2670,8 @@ public class GameService {
                 int atkIdx = entry.getKey();
                 List<Integer> blkIndices = entry.getValue();
                 Permanent atk = atkBf.get(atkIdx);
-                boolean atkHasFS = hasKeyword(gameData, atk, Keyword.FIRST_STRIKE);
+                boolean atkHasFS = hasKeyword(gameData, atk, Keyword.FIRST_STRIKE)
+                        || hasKeyword(gameData, atk, Keyword.DOUBLE_STRIKE);
 
                 if (blkIndices.isEmpty()) {
                     // Unblocked first striker deals damage to player (or redirect target)
@@ -2692,10 +2695,11 @@ public class GameService {
                             remaining -= dmg;
                         }
                     }
-                    // First strike blockers deal damage to attacker
+                    // First strike / double strike blockers deal damage to attacker
                     for (int blkIdx : blkIndices) {
                         Permanent blk = defBf.get(blkIdx);
-                        if (hasKeyword(gameData, blk, Keyword.FIRST_STRIKE) && !isPreventedFromDealingDamage(gameData, blk)
+                        if ((hasKeyword(gameData, blk, Keyword.FIRST_STRIKE) || hasKeyword(gameData, blk, Keyword.DOUBLE_STRIKE))
+                                && !isPreventedFromDealingDamage(gameData, blk)
                                 && !hasProtectionFrom(gameData, atk, blk.getCard().getColor())) {
                             atkDamageTaken.merge(atkIdx, getEffectivePower(gameData, blk), Integer::sum);
                         }
@@ -2724,18 +2728,19 @@ public class GameService {
             }
         }
 
-        // Phase 2: Regular damage (skip dead creatures, skip first-strikers who already dealt)
+        // Phase 2: Regular damage (skip dead creatures, skip first-strikers who already dealt — double strikers deal again)
         for (var entry : blockerMap.entrySet()) {
             int atkIdx = entry.getKey();
             List<Integer> blkIndices = entry.getValue();
             if (deadAttackerIndices.contains(atkIdx)) continue;
 
             Permanent atk = atkBf.get(atkIdx);
-            boolean atkHasFS = hasKeyword(gameData, atk, Keyword.FIRST_STRIKE);
+            boolean atkSkipPhase2 = hasKeyword(gameData, atk, Keyword.FIRST_STRIKE)
+                    && !hasKeyword(gameData, atk, Keyword.DOUBLE_STRIKE);
 
             if (blkIndices.isEmpty()) {
                 // Unblocked regular attacker deals damage to player (or redirect target)
-                if (!atkHasFS && !isPreventedFromDealingDamage(gameData, atk)) {
+                if (!atkSkipPhase2 && !isPreventedFromDealingDamage(gameData, atk)) {
                     if (redirectTarget != null) {
                         damageRedirectedToGuard += getEffectivePower(gameData, atk);
                     } else {
@@ -2743,8 +2748,8 @@ public class GameService {
                     }
                 }
             } else {
-                // Non-first-strike attacker deals damage to surviving blockers
-                if (!atkHasFS && !isPreventedFromDealingDamage(gameData, atk)) {
+                // Attacker deals damage to surviving blockers (skip first-strike-only, allow double strike)
+                if (!atkSkipPhase2 && !isPreventedFromDealingDamage(gameData, atk)) {
                     int remaining = getEffectivePower(gameData, atk);
                     for (int blkIdx : blkIndices) {
                         if (deadDefenderIndices.contains(blkIdx)) continue;
@@ -2757,11 +2762,13 @@ public class GameService {
                         remaining -= dmg;
                     }
                 }
-                // Non-first-strike surviving blockers deal damage to attacker
+                // Surviving blockers deal damage to attacker (skip first-strike-only, allow double strike)
                 for (int blkIdx : blkIndices) {
                     if (deadDefenderIndices.contains(blkIdx)) continue;
                     Permanent blk = defBf.get(blkIdx);
-                    if (!hasKeyword(gameData, blk, Keyword.FIRST_STRIKE) && !isPreventedFromDealingDamage(gameData, blk)
+                    boolean blkSkipPhase2 = hasKeyword(gameData, blk, Keyword.FIRST_STRIKE)
+                            && !hasKeyword(gameData, blk, Keyword.DOUBLE_STRIKE);
+                    if (!blkSkipPhase2 && !isPreventedFromDealingDamage(gameData, blk)
                             && !hasProtectionFrom(gameData, atk, blk.getCard().getColor())) {
                         atkDamageTaken.merge(atkIdx, getEffectivePower(gameData, blk), Integer::sum);
                     }

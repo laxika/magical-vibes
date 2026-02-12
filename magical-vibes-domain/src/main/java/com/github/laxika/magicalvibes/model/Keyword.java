@@ -5,6 +5,7 @@ public enum Keyword {
     FLYING,
     REACH,
     DEFENDER,
+    DOUBLE_STRIKE,
     FIRST_STRIKE,
     FLASH,
     VIGILANCE
