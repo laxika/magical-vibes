@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, StackEntry, StackUpdatedNotification, GraveyardUpdatedNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, StackEntry, StackUpdatedNotification, GraveyardUpdatedNotification } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 export interface IndexedPermanent {
@@ -135,6 +135,11 @@ export class GameComponent implements OnInit, OnDestroy {
         if (message.type === MessageType.CHOOSE_CARD_FROM_HAND) {
           const chooseMsg = message as ChooseCardFromHandNotification;
           this.handleChooseCardFromHand(chooseMsg);
+        }
+
+        if (message.type === MessageType.CHOOSE_COLOR) {
+          const colorMsg = message as ChooseColorNotification;
+          this.handleChooseColor(colorMsg);
         }
 
         if (message.type === MessageType.STACK_UPDATED) {
@@ -401,6 +406,34 @@ export class GameComponent implements OnInit, OnDestroy {
     this.choosingFromHand = false;
     this.choosableHandIndices.set(new Set());
     this.handChoicePrompt = '';
+  }
+
+  private handleChooseColor(msg: ChooseColorNotification): void {
+    this.choosingColor = true;
+    this.colorChoices = msg.colors;
+    this.colorChoicePrompt = msg.prompt;
+  }
+
+  chooseColor(color: string): void {
+    if (!this.choosingColor) return;
+    this.websocketService.send({
+      type: MessageType.COLOR_CHOSEN,
+      color: color
+    });
+    this.choosingColor = false;
+    this.colorChoices = [];
+    this.colorChoicePrompt = '';
+  }
+
+  getColorDisplayName(color: string): string {
+    switch (color) {
+      case 'WHITE': return 'White';
+      case 'BLUE': return 'Blue';
+      case 'BLACK': return 'Black';
+      case 'RED': return 'Red';
+      case 'GREEN': return 'Green';
+      default: return color;
+    }
   }
 
   isChoosableCard(index: number): boolean {
@@ -679,6 +712,9 @@ export class GameComponent implements OnInit, OnDestroy {
   choosingFromHand = false;
   choosableHandIndices = signal(new Set<number>());
   handChoicePrompt = '';
+  choosingColor = false;
+  colorChoices: string[] = [];
+  colorChoicePrompt = '';
 
   // Targeting state (for instants)
   targeting = false;

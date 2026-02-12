@@ -1016,6 +1016,59 @@ h1 {
   box-shadow: 0 4px 12px rgba(142, 68, 173, 0.4);
 }
 
+.color-choice-banner {
+  background: linear-gradient(135deg, #2c3e50, #1a252f);
+  box-shadow: 0 4px 12px rgba(44, 62, 80, 0.4);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.color-choice-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-color-choice {
+  padding: 8px 16px;
+  border: 2px solid white;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.btn-color-choice:hover {
+  transform: scale(1.05);
+}
+
+.btn-color-choice[data-color="WHITE"] {
+  background: #f0e68c;
+  color: #333;
+  border-color: #daa520;
+}
+
+.btn-color-choice[data-color="BLUE"] {
+  background: #1e90ff;
+  border-color: #4169e1;
+}
+
+.btn-color-choice[data-color="BLACK"] {
+  background: #333;
+  border-color: #666;
+}
+
+.btn-color-choice[data-color="RED"] {
+  background: #dc3545;
+  border-color: #c82333;
+}
+
+.btn-color-choice[data-color="GREEN"] {
+  background: #28a745;
+  border-color: #218838;
+}
+
 .card.choosable-card {
   border: 2px solid #8e44ad;
   box-shadow: 0 0 12px rgba(142, 68, 173, 0.6);

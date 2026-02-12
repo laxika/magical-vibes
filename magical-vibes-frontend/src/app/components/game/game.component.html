@@ -500,6 +500,17 @@
       </div>
     }
 
+    @if (choosingColor) {
+      <div class="combat-banner color-choice-banner">
+        <span>{{ colorChoicePrompt }}</span>
+        <div class="color-choice-buttons">
+          @for (color of colorChoices; track color) {
+            <button class="btn-color-choice" [attr.data-color]="color" (click)="chooseColor(color)">{{ getColorDisplayName(color) }}</button>
+          }
+        </div>
+      </div>
+    }
+
     <div class="hand-area">
       <div class="hand-label">Your Hand ({{ hand.length }} cards)</div>
       <div class="hand-cards">

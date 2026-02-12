@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
 import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.ColorChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.CreateGameRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
@@ -415,6 +416,27 @@ public class GameMessageHandler implements MessageHandler {
 
         try {
             gameService.handlePermanentChosen(gameData, player, request.permanentId());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            handleError(connection, e.getMessage());
+        }
+    }
+
+    @Override
+    public void handleColorChosen(Connection connection, ColorChosenRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
+        try {
+            gameService.handleColorChosen(gameData, player, request.color());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
