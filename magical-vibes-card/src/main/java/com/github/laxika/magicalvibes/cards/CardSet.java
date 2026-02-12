@@ -59,6 +59,8 @@ import com.github.laxika.magicalvibes.cards.s.SerrasEmbrace;
 import com.github.laxika.magicalvibes.cards.t.TempestOfLight;
 import com.github.laxika.magicalvibes.cards.t.TreasureHunter;
 import com.github.laxika.magicalvibes.cards.t.TrueBeliever;
+import com.github.laxika.magicalvibes.cards.t.TundraWolves;
+import com.github.laxika.magicalvibes.cards.v.VenerableMonk;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -119,6 +121,8 @@ public enum CardSet {
             new CardPrinting("10E", "51", TempestOfLight::new, "\"Let the fires of faith keep the shadows at bay.\"\n\u2014Emeria, angel of Kabira"),
             new CardPrinting("10E", "52", TreasureHunter::new, "\"What they call 'holy ground' is just land that hasn't been properly surveyed.\"\n\u2014Sarpadian merchant"),
             new CardPrinting("10E", "53", TrueBeliever::new, "\"So great is his certainty that mere facts cannot shake it.\""),
+            new CardPrinting("10E", "54", TundraWolves::new, "\"I heard their eerie howling, the wolves calling their kindred across the frozen plains.\"\n\u2014Onean scout"),
+            new CardPrinting("10E", "55", VenerableMonk::new, "\"Age wears the flesh but galvanizes the soul.\""),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
             new CardPrinting("10E", "382", Forest::new),
