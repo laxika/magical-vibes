@@ -17,8 +17,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SamiteHealerTest {
@@ -60,6 +58,7 @@ class SamiteHealerTest {
     @Test
     @DisplayName("Activating ability puts it on the stack")
     void activatingPutsOnStack() {
+        addReadyHealer(player1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
