@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
@@ -234,6 +235,7 @@ public class GameService {
         gameData.currentStep = TurnStep.first();
         gameData.priorityPassedBy.clear();
         gameData.landsPlayedThisTurn.clear();
+        gameData.spellsCastThisTurn.clear();
 
         drainManaPools(gameData);
 
@@ -804,6 +806,7 @@ public class GameService {
                         StackEntryType.CREATURE_SPELL, card, playerId, card.getName(),
                         List.of(), 0, targetPermanentId, null
                 ));
+                gameData.spellsCastThisTurn.merge(playerId, 1, Integer::sum);
                 gameData.priorityPassedBy.clear();
 
                 sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
@@ -828,6 +831,7 @@ public class GameService {
                         StackEntryType.ENCHANTMENT_SPELL, card, playerId, card.getName(),
                         List.of(), 0, targetPermanentId, null
                 ));
+                gameData.spellsCastThisTurn.merge(playerId, 1, Integer::sum);
                 gameData.priorityPassedBy.clear();
 
                 sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
@@ -852,6 +856,7 @@ public class GameService {
                         StackEntryType.SORCERY_SPELL, card, playerId, card.getName(),
                         new ArrayList<>(card.getEffects(EffectSlot.SPELL)), effectiveXValue, targetPermanentId, null
                 ));
+                gameData.spellsCastThisTurn.merge(playerId, 1, Integer::sum);
                 gameData.priorityPassedBy.clear();
 
                 sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
@@ -905,6 +910,7 @@ public class GameService {
                             new ArrayList<>(card.getEffects(EffectSlot.SPELL)), effectiveXValue, targetPermanentId, null
                     ));
                 }
+                gameData.spellsCastThisTurn.merge(playerId, 1, Integer::sum);
                 gameData.priorityPassedBy.clear();
 
                 sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
@@ -2064,6 +2070,21 @@ public class GameService {
         return 0;
     }
 
+    private int getMaxSpellsPerTurn(GameData gameData) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof LimitSpellsPerTurnEffect limit) {
+                        return limit.maxSpells();
+                    }
+                }
+            }
+        }
+        return Integer.MAX_VALUE;
+    }
+
     private int getOpponentCostIncrease(GameData gameData, UUID playerId, CardType cardType) {
         UUID opponentId = getOpponentId(gameData, playerId);
         List<Permanent> opponentBattlefield = gameData.playerBattlefields.get(opponentId);
@@ -2894,6 +2915,9 @@ public class GameService {
         boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
+        int spellsCast = gameData.spellsCastThisTurn.getOrDefault(playerId, 0);
+        int maxSpells = getMaxSpellsPerTurn(gameData);
+        boolean spellLimitReached = spellsCast >= maxSpells;
 
         boolean stackEmpty = gameData.stack.isEmpty();
 
@@ -2902,7 +2926,7 @@ public class GameService {
             if (card.getType() == CardType.BASIC_LAND && isActivePlayer && isMainPhase && landsPlayed < 1 && stackEmpty) {
                 playable.add(i);
             }
-            if (card.getType() == CardType.CREATURE && card.getManaCost() != null) {
+            if (card.getType() == CardType.CREATURE && card.getManaCost() != null && !spellLimitReached) {
                 boolean hasFlash = card.getKeywords().contains(Keyword.FLASH);
                 if (hasFlash || (isActivePlayer && isMainPhase && stackEmpty)) {
                     ManaCost cost = new ManaCost(card.getManaCost());
@@ -2913,7 +2937,7 @@ public class GameService {
                     }
                 }
             }
-            if (card.getType() == CardType.ENCHANTMENT && isActivePlayer && isMainPhase && stackEmpty && card.getManaCost() != null) {
+            if (card.getType() == CardType.ENCHANTMENT && isActivePlayer && isMainPhase && stackEmpty && card.getManaCost() != null && !spellLimitReached) {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.ENCHANTMENT);
@@ -2921,7 +2945,7 @@ public class GameService {
                     playable.add(i);
                 }
             }
-            if (card.getType() == CardType.SORCERY && isActivePlayer && isMainPhase && stackEmpty && card.getManaCost() != null) {
+            if (card.getType() == CardType.SORCERY && isActivePlayer && isMainPhase && stackEmpty && card.getManaCost() != null && !spellLimitReached) {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 // For X-cost spells, playable if player can pay the colored portion (X=0 minimum)
@@ -2930,7 +2954,7 @@ public class GameService {
                     playable.add(i);
                 }
             }
-            if (card.getType() == CardType.INSTANT && card.getManaCost() != null) {
+            if (card.getType() == CardType.INSTANT && card.getManaCost() != null && !spellLimitReached) {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.INSTANT);
