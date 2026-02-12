@@ -1,8 +1,7 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-Do no verification. All Java & frontend verification will be done by me after you finish with the coding/implementation.
+- Do no verification. All Java & frontend verification will be done by me after you finish with the coding/implementation.
+- Do not start committing changes until I tell you to do so.
 
 ## Architecture
 
