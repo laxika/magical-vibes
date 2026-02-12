@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.f.FieldMarshal;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GhostWarden;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HailOfArrows;
@@ -94,6 +95,7 @@ public enum CardSet {
             new CardPrinting("10E", "13", Condemn::new),
             new CardPrinting("10E", "14", Demystify::new),
             new CardPrinting("10E", "15", FieldMarshal::new),
+            new CardPrinting("10E", "17", GloriousAnthem::new, "\"Once heard, the battle song of an angel becomes part of the listener forever.\""),
             new CardPrinting("10E", "16", GhostWarden::new, "\"I thought of fate as an iron lattice, intricate but rigidly unchangeable. That was until some force bent fate's bars to spare my life.\"\n\u2014Ilromov, traveling storyteller"),
             new CardPrinting("10E", "18", HailOfArrows::new, "\"Do not let a single shaft loose until my word. And when I give that word, do not leave a single shaft in Eiganjo.\"\n\u2014General Takeno"),
             new CardPrinting("10E", "19", HeartOfLight::new, "Harus, the Rune-Reader, pored over the texts: \"In the beginning there was nothing—a profound, luminous nothing rich with potential and power.\""),

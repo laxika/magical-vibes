@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnes
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
@@ -2526,6 +2527,11 @@ public class GameService {
                             && source.getAttachedTo() != null
                             && source.getAttachedTo().equals(target.getId())) {
                         keywords.add(grant.keyword());
+                    }
+                    if (effect instanceof BoostOwnCreaturesEffect boost
+                            && bf.contains(target)) {
+                        power += boost.powerBoost();
+                        toughness += boost.toughnessBoost();
                     }
                 }
             }
