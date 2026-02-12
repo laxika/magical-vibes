@@ -751,6 +751,12 @@ public class GameService {
                     throw new IllegalStateException(target.getCard().getName() + " has protection from " + card.getColor().name().toLowerCase());
                 }
 
+                // Player shroud validation
+                if (target == null && card.isNeedsTarget() && gameData.playerIds.contains(targetPermanentId)
+                        && playerHasShroud(gameData, targetPermanentId)) {
+                    throw new IllegalStateException(gameData.playerIdToName.get(targetPermanentId) + " has shroud and can't be targeted");
+                }
+
                 // Effect-specific target validation
                 for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
                     if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
@@ -1130,6 +1136,12 @@ public class GameService {
                         throw new IllegalStateException("Target card must be an Aura");
                     }
                 }
+            }
+
+            // Player shroud validation for abilities
+            if (targetPermanentId != null && gameData.playerIds.contains(targetPermanentId)
+                    && playerHasShroud(gameData, targetPermanentId)) {
+                throw new IllegalStateException(gameData.playerIdToName.get(targetPermanentId) + " has shroud and can't be targeted");
             }
 
             // For mana abilities, self-target if no explicit target
@@ -2361,6 +2373,17 @@ public class GameService {
 
     public boolean hasKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
         return permanent.hasKeyword(keyword) || computeStaticBonus(gameData, permanent).keywords().contains(keyword);
+    }
+
+    private boolean playerHasShroud(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent source : battlefield) {
+            if (source.getCard().getKeywords().contains(Keyword.SHROUD)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // ===== Sorcery effect methods =====
