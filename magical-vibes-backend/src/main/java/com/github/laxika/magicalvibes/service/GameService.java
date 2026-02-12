@@ -78,6 +78,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamage
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllEnchantmentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnArtifactFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -443,6 +444,8 @@ public class GameService {
                 resolveCreateCreatureToken(gameData, entry.getControllerId(), token);
             } else if (effect instanceof ReturnCreatureFromGraveyardToBattlefieldEffect) {
                 resolveReturnCreatureFromGraveyardToBattlefield(gameData, entry);
+            } else if (effect instanceof ReturnArtifactFromGraveyardToHandEffect) {
+                resolveReturnArtifactFromGraveyardToHand(gameData, entry);
             }
         }
         removeOrphanedAuras(gameData);
@@ -1958,6 +1961,36 @@ public class GameService {
                 "You may return a creature card from your graveyard to the battlefield.");
     }
 
+    private void resolveReturnArtifactFromGraveyardToHand(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+
+        if (graveyard == null || graveyard.isEmpty()) {
+            String logEntry = entry.getDescription() + " — no artifact cards in graveyard.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            return;
+        }
+
+        List<Integer> artifactIndices = new ArrayList<>();
+        for (int i = 0; i < graveyard.size(); i++) {
+            if (graveyard.get(i).getType() == CardType.ARTIFACT) {
+                artifactIndices.add(i);
+            }
+        }
+
+        if (artifactIndices.isEmpty()) {
+            String logEntry = entry.getDescription() + " — no artifact cards in graveyard.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            return;
+        }
+
+        gameData.graveyardChoiceReturnToHand = true;
+        beginGraveyardChoice(gameData, controllerId, artifactIndices,
+                "You may return an artifact card from your graveyard to your hand.");
+    }
+
     private void beginGraveyardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         gameData.awaitingGraveyardChoice = true;
         gameData.awaitingGraveyardChoicePlayerId = playerId;
@@ -1983,13 +2016,15 @@ public class GameService {
             gameData.awaitingGraveyardChoice = false;
             gameData.awaitingGraveyardChoicePlayerId = null;
             gameData.awaitingGraveyardChoiceValidIndices = null;
+            boolean returnToHand = gameData.graveyardChoiceReturnToHand;
+            gameData.graveyardChoiceReturnToHand = false;
 
             if (cardIndex == -1) {
                 // Player declined
-                String logEntry = player.getUsername() + " chooses not to return a creature.";
+                String logEntry = player.getUsername() + " chooses not to return a card.";
                 gameData.gameLog.add(logEntry);
                 broadcastLogEntry(gameData, logEntry);
-                log.info("Game {} - {} declines to return a creature from graveyard", gameData.id, player.getUsername());
+                log.info("Game {} - {} declines to return a card from graveyard", gameData.id, player.getUsername());
             } else {
                 if (!validIndices.contains(cardIndex)) {
                     throw new IllegalStateException("Invalid card index: " + cardIndex);
@@ -1997,18 +2032,31 @@ public class GameService {
 
                 List<Card> graveyard = gameData.playerGraveyards.get(playerId);
                 Card card = graveyard.remove(cardIndex);
-                Permanent perm = new Permanent(card);
-                gameData.playerBattlefields.get(playerId).add(perm);
 
-                String logEntry = player.getUsername() + " returns " + card.getName() + " from graveyard to the battlefield.";
-                gameData.gameLog.add(logEntry);
-                broadcastLogEntry(gameData, logEntry);
-                log.info("Game {} - {} returns {} from graveyard to battlefield", gameData.id, player.getUsername(), card.getName());
+                if (returnToHand) {
+                    gameData.playerHands.get(playerId).add(card);
 
-                broadcastBattlefields(gameData);
-                broadcastGraveyards(gameData);
+                    String logEntry = player.getUsername() + " returns " + card.getName() + " from graveyard to hand.";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                    log.info("Game {} - {} returns {} from graveyard to hand", gameData.id, player.getUsername(), card.getName());
 
-                handleCreatureEnteredBattlefield(gameData, playerId, card, null);
+                    broadcastGraveyards(gameData);
+                    sessionManager.sendToPlayer(playerId, new HandDrawnMessage(gameData.playerHands.get(playerId).stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+                } else {
+                    Permanent perm = new Permanent(card);
+                    gameData.playerBattlefields.get(playerId).add(perm);
+
+                    String logEntry = player.getUsername() + " returns " + card.getName() + " from graveyard to the battlefield.";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                    log.info("Game {} - {} returns {} from graveyard to battlefield", gameData.id, player.getUsername(), card.getName());
+
+                    broadcastBattlefields(gameData);
+                    broadcastGraveyards(gameData);
+
+                    handleCreatureEnteredBattlefield(gameData, playerId, card, null);
+                }
             }
 
             resolveAutoPass(gameData);
