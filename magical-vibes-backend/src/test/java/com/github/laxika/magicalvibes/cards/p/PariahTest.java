@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -122,12 +123,12 @@ class PariahTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingAttackerDeclaration = true;
+        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         gs.declareAttackers(gd, player1, List.of(0));
 
         // No blockers
-        gd.awaitingBlockerDeclaration = true;
+        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
         gs.declareBlockers(gd, player2, List.of());
 
         // Player2 life should remain at 20 (damage redirected to creature)
@@ -154,11 +155,11 @@ class PariahTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingAttackerDeclaration = true;
+        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         gs.declareAttackers(gd, player1, List.of(0));
 
-        gd.awaitingBlockerDeclaration = true;
+        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
         gs.declareBlockers(gd, player2, List.of());
 
         // Enchanted creature (2/2) takes 2 damage -> dies
@@ -189,11 +190,11 @@ class PariahTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingAttackerDeclaration = true;
+        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         gs.declareAttackers(gd, player1, List.of(0));
 
-        gd.awaitingBlockerDeclaration = true;
+        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
         gs.declareBlockers(gd, player2, List.of());
 
         // Pariah should be in graveyard (orphaned aura cleanup)
@@ -242,11 +243,11 @@ class PariahTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingAttackerDeclaration = true;
+        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         gs.declareAttackers(gd, player1, List.of(0));
 
-        gd.awaitingBlockerDeclaration = true;
+        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
         gs.declareBlockers(gd, player2, List.of());
 
         // Player2 takes 2 combat damage

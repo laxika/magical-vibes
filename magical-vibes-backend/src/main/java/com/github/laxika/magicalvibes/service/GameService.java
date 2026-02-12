@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -1339,7 +1340,7 @@ public class GameService {
     }
 
     private void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
-        gameData.awaitingCardChoice = true;
+        gameData.awaitingInput = AwaitingInput.CARD_CHOICE;
         gameData.awaitingCardChoicePlayerId = playerId;
         gameData.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
         sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(validIndices, prompt));
@@ -1350,7 +1351,7 @@ public class GameService {
 
     public void handleCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
-            if (!gameData.awaitingCardChoice) {
+            if (gameData.awaitingInput != AwaitingInput.CARD_CHOICE) {
                 throw new IllegalStateException("Not awaiting card choice");
             }
             if (!player.getId().equals(gameData.awaitingCardChoicePlayerId)) {
@@ -1360,7 +1361,7 @@ public class GameService {
             UUID playerId = player.getId();
             Set<Integer> validIndices = gameData.awaitingCardChoiceValidIndices;
 
-            gameData.awaitingCardChoice = false;
+            gameData.awaitingInput = null;
             gameData.awaitingCardChoicePlayerId = null;
             gameData.awaitingCardChoiceValidIndices = null;
 
@@ -1872,7 +1873,7 @@ public class GameService {
     }
 
     private void beginPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, String prompt) {
-        gameData.awaitingPermanentChoice = true;
+        gameData.awaitingInput = AwaitingInput.PERMANENT_CHOICE;
         gameData.awaitingPermanentChoicePlayerId = playerId;
         gameData.awaitingPermanentChoiceValidIds = new HashSet<>(validIds);
         sessionManager.sendToPlayer(playerId, new ChoosePermanentMessage(validIds, prompt));
@@ -1883,7 +1884,7 @@ public class GameService {
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         synchronized (gameData) {
-            if (!gameData.awaitingPermanentChoice) {
+            if (gameData.awaitingInput != AwaitingInput.PERMANENT_CHOICE) {
                 throw new IllegalStateException("Not awaiting permanent choice");
             }
             if (!player.getId().equals(gameData.awaitingPermanentChoicePlayerId)) {
@@ -1893,7 +1894,7 @@ public class GameService {
             UUID playerId = player.getId();
             Set<UUID> validIds = gameData.awaitingPermanentChoiceValidIds;
 
-            gameData.awaitingPermanentChoice = false;
+            gameData.awaitingInput = null;
             gameData.awaitingPermanentChoicePlayerId = null;
             gameData.awaitingPermanentChoiceValidIds = null;
 
@@ -1994,7 +1995,7 @@ public class GameService {
     }
 
     private void beginGraveyardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
-        gameData.awaitingGraveyardChoice = true;
+        gameData.awaitingInput = AwaitingInput.GRAVEYARD_CHOICE;
         gameData.awaitingGraveyardChoicePlayerId = playerId;
         gameData.awaitingGraveyardChoiceValidIndices = new HashSet<>(validIndices);
         sessionManager.sendToPlayer(playerId, new ChooseCardFromGraveyardMessage(validIndices, prompt));
@@ -2005,7 +2006,7 @@ public class GameService {
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
-            if (!gameData.awaitingGraveyardChoice) {
+            if (gameData.awaitingInput != AwaitingInput.GRAVEYARD_CHOICE) {
                 throw new IllegalStateException("Not awaiting graveyard choice");
             }
             if (!player.getId().equals(gameData.awaitingGraveyardChoicePlayerId)) {
@@ -2015,7 +2016,7 @@ public class GameService {
             UUID playerId = player.getId();
             Set<Integer> validIndices = gameData.awaitingGraveyardChoiceValidIndices;
 
-            gameData.awaitingGraveyardChoice = false;
+            gameData.awaitingInput = null;
             gameData.awaitingGraveyardChoicePlayerId = null;
             gameData.awaitingGraveyardChoiceValidIndices = null;
             GraveyardChoiceDestination destination = gameData.graveyardChoiceDestination;
@@ -2497,7 +2498,7 @@ public class GameService {
             return;
         }
 
-        gameData.awaitingAttackerDeclaration = true;
+        gameData.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
         sessionManager.sendToPlayer(activeId, new AvailableAttackersMessage(attackable));
     }
 
@@ -2513,7 +2514,7 @@ public class GameService {
 
     public void declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices) {
         synchronized (gameData) {
-            if (!gameData.awaitingAttackerDeclaration) {
+            if (gameData.awaitingInput != AwaitingInput.ATTACKER_DECLARATION) {
                 throw new IllegalStateException("Not awaiting attacker declaration");
             }
             if (!player.getId().equals(gameData.activePlayerId)) {
@@ -2535,7 +2536,7 @@ public class GameService {
                 }
             }
 
-            gameData.awaitingAttackerDeclaration = false;
+            gameData.awaitingInput = null;
 
             if (attackerIndices.isEmpty()) {
                 log.info("Game {} - {} declares no attackers", gameData.id, player.getUsername());
@@ -2579,13 +2580,13 @@ public class GameService {
             return;
         }
 
-        gameData.awaitingBlockerDeclaration = true;
+        gameData.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
         sessionManager.sendToPlayer(defenderId, new AvailableBlockersMessage(blockable, attackerIndices));
     }
 
     public void declareBlockers(GameData gameData, Player player, List<BlockerAssignment> blockerAssignments) {
         synchronized (gameData) {
-            if (!gameData.awaitingBlockerDeclaration) {
+            if (gameData.awaitingInput != AwaitingInput.BLOCKER_DECLARATION) {
                 throw new IllegalStateException("Not awaiting blocker declaration");
             }
 
@@ -2644,7 +2645,7 @@ public class GameService {
                 }
             }
 
-            gameData.awaitingBlockerDeclaration = false;
+            gameData.awaitingInput = null;
 
             // Mark creatures as blocking
             for (BlockerAssignment assignment : blockerAssignments) {
@@ -3141,7 +3142,7 @@ public class GameService {
 
     private void resolveAutoPass(GameData gameData) {
         for (int safety = 0; safety < 100; safety++) {
-            if (gameData.awaitingAttackerDeclaration || gameData.awaitingBlockerDeclaration || gameData.awaitingCardChoice || gameData.awaitingPermanentChoice || gameData.awaitingGraveyardChoice) {
+            if (gameData.awaitingInput != null) {
                 broadcastPlayableCards(gameData);
                 return;
             }

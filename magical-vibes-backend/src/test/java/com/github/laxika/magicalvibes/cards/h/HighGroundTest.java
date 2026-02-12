@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -119,7 +120,7 @@ class HighGroundTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingBlockerDeclaration = true;
+        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         // Blocker is at index 1 (High Ground at 0), attackers at indices 0 and 1
         gs.declareBlockers(gd, player2, List.of(
@@ -156,7 +157,7 @@ class HighGroundTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingBlockerDeclaration = true;
+        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         // Blocker at index 0, attackers at indices 0 and 1
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
@@ -186,7 +187,7 @@ class HighGroundTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingBlockerDeclaration = true;
+        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         // Blocker at index 1 (High Ground at 0), attacker at index 0
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
@@ -219,7 +220,7 @@ class HighGroundTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingBlockerDeclaration = true;
+        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         // Blocker at index 1 tries to block all 3 attackers — max is 2 (1 + 1 from High Ground)
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
@@ -253,7 +254,7 @@ class HighGroundTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingBlockerDeclaration = true;
+        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         // Blocker at index 2 (two High Grounds at 0, 1), attackers at 0, 1, 2
         gs.declareBlockers(gd, player2, List.of(
@@ -424,7 +425,7 @@ class HighGroundTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingBlockerDeclaration = true;
+        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         // Without High Ground, blocker at index 0 can only block one attacker
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
@@ -463,7 +464,7 @@ class HighGroundTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingBlockerDeclaration = true;
+        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         // Player2 doesn't have High Ground — cannot multi-block
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
@@ -253,7 +254,7 @@ class MobilizationTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingAttackerDeclaration = true;
+        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         // Soldier is at index 1 (Mobilization is at 0)
         gs.declareAttackers(gd, player1, List.of(1));
@@ -275,7 +276,7 @@ class MobilizationTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingAttackerDeclaration = true;
+        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         // Bears is at index 1 (Mobilization is at 0)
         gs.declareAttackers(gd, player1, List.of(1));

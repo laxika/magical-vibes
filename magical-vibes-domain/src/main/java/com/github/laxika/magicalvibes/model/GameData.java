@@ -38,9 +38,7 @@ public class GameData {
     public final Map<UUID, ManaPool> playerManaPools = new ConcurrentHashMap<>();
     public final Map<UUID, Set<TurnStep>> playerAutoStopSteps = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> playerLifeTotals = new ConcurrentHashMap<>();
-    public boolean awaitingAttackerDeclaration;
-    public boolean awaitingBlockerDeclaration;
-    public boolean awaitingCardChoice;
+    public AwaitingInput awaitingInput;
     public UUID awaitingCardChoicePlayerId;
     public Set<Integer> awaitingCardChoiceValidIndices;
     public final List<StackEntry> stack = Collections.synchronizedList(new ArrayList<>());
@@ -50,11 +48,9 @@ public class GameData {
     public boolean preventAllCombatDamage;
     public final Set<CardColor> preventDamageFromColors = ConcurrentHashMap.newKeySet();
     public UUID combatDamageRedirectTarget;
-    public boolean awaitingPermanentChoice;
     public UUID awaitingPermanentChoicePlayerId;
     public Set<UUID> awaitingPermanentChoiceValidIds;
     public Card pendingAuraCard;
-    public boolean awaitingGraveyardChoice;
     public UUID awaitingGraveyardChoicePlayerId;
     public Set<Integer> awaitingGraveyardChoiceValidIndices;
     public GraveyardChoiceDestination graveyardChoiceDestination;

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -170,7 +171,7 @@ class MightOfOaksTest {
         // Move to declare attackers
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        harness.getGameData().awaitingAttackerDeclaration = true;
+        harness.getGameData().awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
         harness.getGameService().declareAttackers(harness.getGameData(), player1, List.of(0));
 
         // Opponent life should be reduced by 9 (boosted power)

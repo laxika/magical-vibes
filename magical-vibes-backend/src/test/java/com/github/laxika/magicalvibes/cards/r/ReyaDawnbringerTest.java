@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
@@ -181,7 +182,7 @@ class ReyaDawnbringerTest {
 
         // Resolve trigger → graveyard choice prompt
         harness.passBothPriorities();
-        assertThat(gd.awaitingGraveyardChoice).isTrue();
+        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
 
         // Choose the creature (index 0)
         harness.handleGraveyardCardChosen(player1, 0);
@@ -203,7 +204,7 @@ class ReyaDawnbringerTest {
 
         advanceToUpkeepAndTrigger();
         harness.passBothPriorities();
-        assertThat(gd.awaitingGraveyardChoice).isTrue();
+        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
 
         // Decline with -1
         harness.handleGraveyardCardChosen(player1, -1);
@@ -254,7 +255,7 @@ class ReyaDawnbringerTest {
         // Resolve trigger — should resolve without graveyard choice
         harness.passBothPriorities();
 
-        assertThat(gd.awaitingGraveyardChoice).isFalse();
+        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature cards in graveyard"));
     }
 
@@ -270,7 +271,7 @@ class ReyaDawnbringerTest {
         advanceToUpkeepAndTrigger();
         harness.passBothPriorities();
 
-        assertThat(gd.awaitingGraveyardChoice).isFalse();
+        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature cards in graveyard"));
         // HolyDay stays in graveyard untouched
         assertThat(gd.playerGraveyards.get(player1.getId()))

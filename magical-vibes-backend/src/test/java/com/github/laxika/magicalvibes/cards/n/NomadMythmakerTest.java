@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetZone;
+import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -158,7 +159,7 @@ class NomadMythmakerTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.awaitingPermanentChoice).isTrue();
+        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
         assertThat(gd.awaitingPermanentChoicePlayerId).isEqualTo(player1.getId());
         assertThat(gd.awaitingPermanentChoiceValidIds).contains(creature.getId());
         assertThat(gd.pendingAuraCard).isNotNull();
@@ -185,7 +186,7 @@ class NomadMythmakerTest {
         harness.handlePermanentChosen(player1, creature.getId());
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingPermanentChoice).isFalse();
+        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
         assertThat(gd.pendingAuraCard).isNull();
 
         // Aura should be on the battlefield attached to the creature
@@ -279,7 +280,7 @@ class NomadMythmakerTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.awaitingPermanentChoice).isFalse();
+        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
     }
 
@@ -301,7 +302,7 @@ class NomadMythmakerTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.awaitingPermanentChoice).isFalse();
+        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
     }
 
