@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.cards.r.RevivingDose;
 import com.github.laxika.magicalvibes.cards.r.Righteousness;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.SerrasEmbrace;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -91,6 +92,7 @@ public enum CardSet {
             new CardPrinting("10E", "36", Righteousness::new, "\"Sometimes the greatest strength is the strength of conviction.\""),
             new CardPrinting("10E", "37", RuleOfLaw::new, "Appointed by the kha himself, members of the tribunal ensure all disputes are settled with the utmost fairness."),
             new CardPrinting("10E", "39", SerraAngel::new, "\"Her sword sings more beautifully than any choir.\""),
+            new CardPrinting("10E", "40", SerrasEmbrace::new),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
             new CardPrinting("10E", "382", Forest::new),

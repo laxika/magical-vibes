@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -2219,6 +2220,11 @@ public class GameService {
                             && source.getAttachedTo().equals(target.getId())) {
                         power += boost.powerBoost();
                         toughness += boost.toughnessBoost();
+                    }
+                    if (effect instanceof GrantKeywordToEnchantedCreatureEffect grant
+                            && source.getAttachedTo() != null
+                            && source.getAttachedTo().equals(target.getId())) {
+                        keywords.add(grant.keyword());
                     }
                 }
             }
