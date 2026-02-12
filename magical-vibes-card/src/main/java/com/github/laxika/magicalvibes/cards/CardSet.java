@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.r.ReyaDawnbringer;
 import com.github.laxika.magicalvibes.cards.r.RevivingDose;
 import com.github.laxika.magicalvibes.cards.r.Righteousness;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -82,6 +83,7 @@ public enum CardSet {
             new CardPrinting("10E", "32", PaladinEnVec::new),
             new CardPrinting("10E", "34", RevivingDose::new, "Samite healers never mix their pungent elixir with sweetener or tea. The threat of a second dose is enough to get most warriors back on their feet."),
             new CardPrinting("10E", "36", Righteousness::new, "\"Sometimes the greatest strength is the strength of conviction.\""),
+            new CardPrinting("10E", "35", ReyaDawnbringer::new, "\"You have not died until I consent.\""),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
             new CardPrinting("10E", "382", Forest::new),
