@@ -77,6 +77,10 @@ public class GameTestHarness {
         gameData.playerBattlefields.get(player.getId()).add(new Permanent(card));
     }
 
+    public void setGraveyard(Player player, List<Card> cards) {
+        gameData.playerGraveyards.put(player.getId(), new ArrayList<>(cards));
+    }
+
     public void setLife(Player player, int life) {
         gameData.playerLifeTotals.put(player.getId(), life);
     }
@@ -134,6 +138,10 @@ public class GameTestHarness {
 
     public void handleCardChosen(Player player, int cardIndex) {
         gameService.handleCardChosen(gameData, player, cardIndex);
+    }
+
+    public void handleGraveyardCardChosen(Player player, int cardIndex) {
+        gameService.handleGraveyardCardChosen(gameData, player, cardIndex);
     }
 
     public void forceActivePlayer(Player player) {

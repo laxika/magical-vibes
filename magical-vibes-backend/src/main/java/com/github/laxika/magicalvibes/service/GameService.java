@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.networking.message.AutoStopsUpdatedMessage
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.BattlefieldUpdatedMessage;
@@ -43,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
@@ -70,6 +72,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -137,7 +140,9 @@ public class GameService {
 
             if (gameData.status == GameStatus.FINISHED) return;
 
-            if (next == TurnStep.DRAW) {
+            if (next == TurnStep.UPKEEP) {
+                handleUpkeepTriggers(gameData);
+            } else if (next == TurnStep.DRAW) {
                 handleDrawStep(gameData);
             } else if (next == TurnStep.DECLARE_ATTACKERS) {
                 handleDeclareAttackersStep(gameData);
@@ -152,6 +157,34 @@ public class GameService {
             }
         } else {
             advanceTurn(gameData);
+        }
+    }
+
+    private void handleUpkeepTriggers(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : battlefield) {
+            List<CardEffect> upkeepEffects = perm.getCard().getUpkeepTriggeredEffects();
+            if (upkeepEffects == null || upkeepEffects.isEmpty()) continue;
+
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    perm.getCard(),
+                    activePlayerId,
+                    perm.getCard().getName() + "'s upkeep ability",
+                    new ArrayList<>(upkeepEffects)
+            ));
+
+            String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            log.info("Game {} - {} upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
+        }
+
+        if (!gameData.stack.isEmpty()) {
+            broadcastStackUpdate(gameData);
         }
     }
 
@@ -384,6 +417,8 @@ public class GameService {
                 resolveBoostSelf(gameData, entry, boost);
             } else if (effect instanceof BoostTargetCreatureEffect boost) {
                 resolveBoostTargetCreature(gameData, entry, boost);
+            } else if (effect instanceof BoostTargetBlockingCreatureEffect boost) {
+                resolveBoostTargetCreature(gameData, entry, new BoostTargetCreatureEffect(boost.powerBoost(), boost.toughnessBoost()));
             } else if (effect instanceof GrantKeywordToTargetEffect grant) {
                 resolveGrantKeywordToTarget(gameData, entry, grant);
             } else if (effect instanceof PreventDamageToTargetEffect prevent) {
@@ -417,6 +452,8 @@ public class GameService {
                 resolveReturnAuraFromGraveyardToBattlefield(gameData, entry);
             } else if (effect instanceof CreateCreatureTokenEffect token) {
                 resolveCreateCreatureToken(gameData, entry.getControllerId(), token);
+            } else if (effect instanceof ReturnCreatureFromGraveyardToBattlefieldEffect) {
+                resolveReturnCreatureFromGraveyardToBattlefield(gameData, entry);
             }
         }
         removeOrphanedAuras(gameData);
@@ -725,6 +762,11 @@ public class GameService {
                     if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
                         if (target == null || target.getCard().getType() != CardType.CREATURE || !target.isAttacking()) {
                             throw new IllegalStateException("Target must be an attacking creature");
+                        }
+                    }
+                    if (effect instanceof BoostTargetBlockingCreatureEffect) {
+                        if (target == null || target.getCard().getType() != CardType.CREATURE || !target.isBlocking()) {
+                            throw new IllegalStateException("Target must be a blocking creature");
                         }
                     }
                 }
@@ -1348,6 +1390,7 @@ public class GameService {
         log.info("Game {} - {} gets +{}/+{}", gameData.id, target.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
     }
 
+
     private void resolveGrantKeywordToTarget(GameData gameData, StackEntry entry, GrantKeywordToTargetEffect grant) {
         Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
@@ -1796,6 +1839,111 @@ public class GameService {
             broadcastBattlefields(gameData);
             broadcastGraveyards(gameData);
             broadcastPlayableCards(gameData);
+
+            resolveAutoPass(gameData);
+        }
+    }
+
+    private void resolveReturnCreatureFromGraveyardToBattlefield(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+
+        if (graveyard == null || graveyard.isEmpty()) {
+            String logEntry = entry.getDescription() + " — no creature cards in graveyard.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            return;
+        }
+
+        List<Integer> creatureIndices = new ArrayList<>();
+        for (int i = 0; i < graveyard.size(); i++) {
+            if (graveyard.get(i).getType() == CardType.CREATURE) {
+                creatureIndices.add(i);
+            }
+        }
+
+        if (creatureIndices.isEmpty()) {
+            String logEntry = entry.getDescription() + " — no creature cards in graveyard.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            return;
+        }
+
+        beginGraveyardChoice(gameData, controllerId, creatureIndices,
+                "You may return a creature card from your graveyard to the battlefield.");
+    }
+
+    private void beginGraveyardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
+        gameData.awaitingGraveyardChoice = true;
+        gameData.awaitingGraveyardChoicePlayerId = playerId;
+        gameData.awaitingGraveyardChoiceValidIndices = new HashSet<>(validIndices);
+        sessionManager.sendToPlayer(playerId, new ChooseCardFromGraveyardMessage(validIndices, prompt));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a card from graveyard", gameData.id, playerName);
+    }
+
+    public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
+        synchronized (gameData) {
+            if (!gameData.awaitingGraveyardChoice) {
+                throw new IllegalStateException("Not awaiting graveyard choice");
+            }
+            if (!player.getId().equals(gameData.awaitingGraveyardChoicePlayerId)) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+
+            UUID playerId = player.getId();
+            Set<Integer> validIndices = gameData.awaitingGraveyardChoiceValidIndices;
+
+            gameData.awaitingGraveyardChoice = false;
+            gameData.awaitingGraveyardChoicePlayerId = null;
+            gameData.awaitingGraveyardChoiceValidIndices = null;
+
+            if (cardIndex == -1) {
+                // Player declined
+                String logEntry = player.getUsername() + " chooses not to return a creature.";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+                log.info("Game {} - {} declines to return a creature from graveyard", gameData.id, player.getUsername());
+            } else {
+                if (!validIndices.contains(cardIndex)) {
+                    throw new IllegalStateException("Invalid card index: " + cardIndex);
+                }
+
+                List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+                Card card = graveyard.remove(cardIndex);
+                Permanent perm = new Permanent(card);
+                gameData.playerBattlefields.get(playerId).add(perm);
+
+                String logEntry = player.getUsername() + " returns " + card.getName() + " from graveyard to the battlefield.";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+                log.info("Game {} - {} returns {} from graveyard to battlefield", gameData.id, player.getUsername(), card.getName());
+
+                broadcastBattlefields(gameData);
+                broadcastGraveyards(gameData);
+
+                // Check for ETB effects on the returned creature
+                if (card.getOnEnterBattlefieldEffects() != null && !card.getOnEnterBattlefieldEffects().isEmpty()) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            playerId,
+                            card.getName() + "'s ETB ability",
+                            new ArrayList<>(card.getOnEnterBattlefieldEffects())
+                    ));
+                    String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
+                    gameData.gameLog.add(etbLog);
+                    broadcastLogEntry(gameData, etbLog);
+                    broadcastStackUpdate(gameData);
+                    log.info("Game {} - {} ETB ability pushed onto stack (via graveyard return)", gameData.id, card.getName());
+                }
+
+                // Check for ally-creature-enters triggers
+                checkAllyCreatureEntersTriggers(gameData, playerId, card);
+            }
+
+            resolveAutoPass(gameData);
         }
     }
 
@@ -2803,7 +2951,7 @@ public class GameService {
 
     private void resolveAutoPass(GameData gameData) {
         for (int safety = 0; safety < 100; safety++) {
-            if (gameData.awaitingAttackerDeclaration || gameData.awaitingBlockerDeclaration || gameData.awaitingCardChoice || gameData.awaitingPermanentChoice) {
+            if (gameData.awaitingAttackerDeclaration || gameData.awaitingBlockerDeclaration || gameData.awaitingCardChoice || gameData.awaitingPermanentChoice || gameData.awaitingGraveyardChoice) {
                 broadcastPlayableCards(gameData);
                 return;
             }
