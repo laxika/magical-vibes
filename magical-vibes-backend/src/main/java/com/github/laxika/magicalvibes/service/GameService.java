@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOr
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
@@ -1872,6 +1873,48 @@ public class GameService {
         return damage - prevented;
     }
 
+    private Permanent findEnchantedCreatureByAuraEffect(GameData gameData, UUID playerId, Class<? extends CardEffect> effectClass) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return null;
+        for (Permanent p : bf) {
+            if (p.getAttachedTo() != null) {
+                for (CardEffect effect : p.getCard().getStaticEffects()) {
+                    if (effectClass.isInstance(effect)) {
+                        return findPermanentById(gameData, p.getAttachedTo());
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private int redirectPlayerDamageToEnchantedCreature(GameData gameData, UUID playerId, int damage, String sourceName) {
+        if (damage <= 0) return damage;
+        Permanent target = findEnchantedCreatureByAuraEffect(gameData, playerId, RedirectPlayerDamageToEnchantedCreatureEffect.class);
+        if (target == null) return damage;
+
+        int effectiveDamage = applyCreaturePreventionShield(gameData, target, damage);
+        String logEntry = target.getCard().getName() + " absorbs " + effectiveDamage + " redirected " + sourceName + " damage.";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+
+        if (effectiveDamage >= getEffectiveToughness(gameData, target)) {
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> bf = gameData.playerBattlefields.get(pid);
+                if (bf != null && bf.remove(target)) {
+                    gameData.playerGraveyards.get(pid).add(target.getCard());
+                    String deathLog = target.getCard().getName() + " is destroyed by redirected " + sourceName + " damage.";
+                    gameData.gameLog.add(deathLog);
+                    broadcastLogEntry(gameData, deathLog);
+                    break;
+                }
+            }
+            removeOrphanedAuras(gameData);
+        }
+
+        return 0;
+    }
+
     private int getOpponentCostIncrease(GameData gameData, UUID playerId, CardType cardType) {
         UUID opponentId = getOpponentId(gameData, playerId);
         List<Permanent> opponentBattlefield = gameData.playerBattlefields.get(opponentId);
@@ -2072,15 +2115,17 @@ public class GameService {
         broadcastBattlefields(gameData);
         broadcastGraveyards(gameData);
 
-        // Deal damage to each player (with prevention shields)
+        // Deal damage to each player (with prevention shields and damage redirect)
+        String cardName = entry.getCard().getName();
         for (UUID playerId : gameData.orderedPlayerIds) {
             int effectiveDamage = applyPlayerPreventionShield(gameData, playerId, damage);
+            effectiveDamage = redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
             int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
             gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
 
             if (effectiveDamage > 0) {
                 String playerName = gameData.playerIdToName.get(playerId);
-                String logEntry = playerName + " takes " + effectiveDamage + " damage from Hurricane.";
+                String logEntry = playerName + " takes " + effectiveDamage + " damage from " + cardName + ".";
                 gameData.gameLog.add(logEntry);
                 broadcastLogEntry(gameData, logEntry);
             }
@@ -2591,8 +2636,9 @@ public class GameService {
 
         removeOrphanedAuras(gameData);
 
-        // Apply life loss (with prevention shield)
+        // Apply life loss (with prevention shield and Pariah redirect)
         damageToDefendingPlayer = applyPlayerPreventionShield(gameData, defenderId, damageToDefendingPlayer);
+        damageToDefendingPlayer = redirectPlayerDamageToEnchantedCreature(gameData, defenderId, damageToDefendingPlayer, "combat");
         if (damageToDefendingPlayer > 0) {
             int currentLife = gameData.playerLifeTotals.getOrDefault(defenderId, 20);
             gameData.playerLifeTotals.put(defenderId, currentLife - damageToDefendingPlayer);

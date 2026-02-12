@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.cards.m.Mobilization;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
+import com.github.laxika.magicalvibes.cards.p.Pariah;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import lombok.Getter;
@@ -77,6 +78,7 @@ public enum CardSet {
             new CardPrinting("10E", "28", Luminesce::new, "\"I will not have my flock cower in the shadow of death.\"\n\u2014Lucilde Fiksdotter, Order of the White Shield"),
             new CardPrinting("10E", "30", NomadMythmaker::new, "\"On the wild steppes, history vanishes in the dust. Only the mythmakers remain to say what was, and is, and will be.\""),
             new CardPrinting("10E", "31", Pacifism::new, "For the first time in his life, Grakk felt a little warm and fuzzy inside."),
+            new CardPrinting("10E", "33", Pariah::new),
             new CardPrinting("10E", "32", PaladinEnVec::new),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
