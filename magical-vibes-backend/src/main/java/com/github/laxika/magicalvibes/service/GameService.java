@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
@@ -415,6 +416,8 @@ public class GameService {
                 resolveBoostSelf(gameData, entry, boost);
             } else if (effect instanceof BoostTargetCreatureEffect boost) {
                 resolveBoostTargetCreature(gameData, entry, boost);
+            } else if (effect instanceof BoostTargetBlockingCreatureEffect boost) {
+                resolveBoostTargetCreature(gameData, entry, new BoostTargetCreatureEffect(boost.powerBoost(), boost.toughnessBoost()));
             } else if (effect instanceof GrantKeywordToTargetEffect grant) {
                 resolveGrantKeywordToTarget(gameData, entry, grant);
             } else if (effect instanceof PreventDamageToTargetEffect prevent) {
@@ -758,6 +761,11 @@ public class GameService {
                     if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
                         if (target == null || target.getCard().getType() != CardType.CREATURE || !target.isAttacking()) {
                             throw new IllegalStateException("Target must be an attacking creature");
+                        }
+                    }
+                    if (effect instanceof BoostTargetBlockingCreatureEffect) {
+                        if (target == null || target.getCard().getType() != CardType.CREATURE || !target.isBlocking()) {
+                            throw new IllegalStateException("Target must be a blocking creature");
                         }
                     }
                 }
@@ -1381,6 +1389,7 @@ public class GameService {
         log.info("Game {} - {} gets +{}/+{}", gameData.id, target.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
     }
 
+
     private void resolveGrantKeywordToTarget(GameData gameData, StackEntry entry, GrantKeywordToTargetEffect grant) {
         Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
@@ -1829,6 +1838,8 @@ public class GameService {
             broadcastBattlefields(gameData);
             broadcastGraveyards(gameData);
             broadcastPlayableCards(gameData);
+
+            resolveAutoPass(gameData);
         }
     }
 
