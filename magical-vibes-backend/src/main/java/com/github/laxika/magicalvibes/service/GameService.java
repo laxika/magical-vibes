@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -1957,6 +1958,7 @@ public class GameService {
             return;
         }
 
+        gameData.graveyardChoiceDestination = GraveyardChoiceDestination.BATTLEFIELD;
         beginGraveyardChoice(gameData, controllerId, creatureIndices,
                 "You may return a creature card from your graveyard to the battlefield.");
     }
@@ -1986,7 +1988,7 @@ public class GameService {
             return;
         }
 
-        gameData.graveyardChoiceReturnToHand = true;
+        gameData.graveyardChoiceDestination = GraveyardChoiceDestination.HAND;
         beginGraveyardChoice(gameData, controllerId, artifactIndices,
                 "You may return an artifact card from your graveyard to your hand.");
     }
@@ -2016,8 +2018,8 @@ public class GameService {
             gameData.awaitingGraveyardChoice = false;
             gameData.awaitingGraveyardChoicePlayerId = null;
             gameData.awaitingGraveyardChoiceValidIndices = null;
-            boolean returnToHand = gameData.graveyardChoiceReturnToHand;
-            gameData.graveyardChoiceReturnToHand = false;
+            GraveyardChoiceDestination destination = gameData.graveyardChoiceDestination;
+            gameData.graveyardChoiceDestination = null;
 
             if (cardIndex == -1) {
                 // Player declined
@@ -2033,29 +2035,32 @@ public class GameService {
                 List<Card> graveyard = gameData.playerGraveyards.get(playerId);
                 Card card = graveyard.remove(cardIndex);
 
-                if (returnToHand) {
-                    gameData.playerHands.get(playerId).add(card);
+                switch (destination) {
+                    case HAND -> {
+                        gameData.playerHands.get(playerId).add(card);
 
-                    String logEntry = player.getUsername() + " returns " + card.getName() + " from graveyard to hand.";
-                    gameData.gameLog.add(logEntry);
-                    broadcastLogEntry(gameData, logEntry);
-                    log.info("Game {} - {} returns {} from graveyard to hand", gameData.id, player.getUsername(), card.getName());
+                        String logEntry = player.getUsername() + " returns " + card.getName() + " from graveyard to hand.";
+                        gameData.gameLog.add(logEntry);
+                        broadcastLogEntry(gameData, logEntry);
+                        log.info("Game {} - {} returns {} from graveyard to hand", gameData.id, player.getUsername(), card.getName());
 
-                    broadcastGraveyards(gameData);
-                    sessionManager.sendToPlayer(playerId, new HandDrawnMessage(gameData.playerHands.get(playerId).stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
-                } else {
-                    Permanent perm = new Permanent(card);
-                    gameData.playerBattlefields.get(playerId).add(perm);
+                        broadcastGraveyards(gameData);
+                        sessionManager.sendToPlayer(playerId, new HandDrawnMessage(gameData.playerHands.get(playerId).stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+                    }
+                    case BATTLEFIELD -> {
+                        Permanent perm = new Permanent(card);
+                        gameData.playerBattlefields.get(playerId).add(perm);
 
-                    String logEntry = player.getUsername() + " returns " + card.getName() + " from graveyard to the battlefield.";
-                    gameData.gameLog.add(logEntry);
-                    broadcastLogEntry(gameData, logEntry);
-                    log.info("Game {} - {} returns {} from graveyard to battlefield", gameData.id, player.getUsername(), card.getName());
+                        String logEntry = player.getUsername() + " returns " + card.getName() + " from graveyard to the battlefield.";
+                        gameData.gameLog.add(logEntry);
+                        broadcastLogEntry(gameData, logEntry);
+                        log.info("Game {} - {} returns {} from graveyard to battlefield", gameData.id, player.getUsername(), card.getName());
 
-                    broadcastBattlefields(gameData);
-                    broadcastGraveyards(gameData);
+                        broadcastBattlefields(gameData);
+                        broadcastGraveyards(gameData);
 
-                    handleCreatureEnteredBattlefield(gameData, playerId, card, null);
+                        handleCreatureEnteredBattlefield(gameData, playerId, card, null);
+                    }
                 }
             }
 
