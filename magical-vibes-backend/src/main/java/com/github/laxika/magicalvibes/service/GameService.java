@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -2309,6 +2310,44 @@ public class GameService {
         return totalIncrease;
     }
 
+    private int getAttackPaymentPerCreature(GameData gameData, UUID attackingPlayerId) {
+        UUID defenderId = getOpponentId(gameData, attackingPlayerId);
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        if (defenderBattlefield == null) return 0;
+
+        int totalTax = 0;
+        for (Permanent perm : defenderBattlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof RequirePaymentToAttackEffect tax) {
+                    totalTax += tax.amountPerAttacker();
+                }
+            }
+        }
+        return totalTax;
+    }
+
+    private void payGenericMana(ManaPool pool, int amount) {
+        List<String> colors = List.of("W", "U", "B", "R", "G");
+        int remaining = amount;
+        while (remaining > 0) {
+            String highestColor = null;
+            int highestAmount = 0;
+            for (String color : colors) {
+                int available = pool.get(color);
+                if (available > highestAmount) {
+                    highestAmount = available;
+                    highestColor = color;
+                }
+            }
+            if (highestColor != null) {
+                pool.remove(highestColor);
+                remaining--;
+            } else {
+                break;
+            }
+        }
+    }
+
     private void removeOrphanedAuras(GameData gameData) {
         boolean anyRemoved = false;
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -2641,6 +2680,18 @@ public class GameService {
                 skipToEndOfCombat(gameData);
                 resolveAutoPass(gameData);
                 return;
+            }
+
+            // Check attack tax (e.g. Windborn Muse / Ghostly Prison)
+            int taxPerCreature = getAttackPaymentPerCreature(gameData, playerId);
+            if (taxPerCreature > 0) {
+                int totalTax = taxPerCreature * attackerIndices.size();
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                if (pool.getTotal() < totalTax) {
+                    throw new IllegalStateException("Not enough mana to pay attack tax (" + totalTax + " required)");
+                }
+                payGenericMana(pool, totalTax);
+                broadcastMana(gameData);
             }
 
             // Mark creatures as attacking and tap them (vigilance skips tapping)
