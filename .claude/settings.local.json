@@ -11,7 +11,9 @@
       "WebFetch(domain:gatherer.wizards.com)",
       "WebFetch(domain:scryfall.com)",
       "WebFetch(domain:api.scryfall.com)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
