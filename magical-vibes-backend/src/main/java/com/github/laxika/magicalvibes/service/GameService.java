@@ -2834,6 +2834,9 @@ public class GameService {
             }
         }
 
+        // Process life gain from damage triggers (e.g. Spirit Link) before removing dead creatures
+        processGainLifeEqualToDamageDealt(gameData, combatDamageDealt);
+
         // Remove dead creatures (descending order to preserve indices) and move to graveyard
         List<String> deadCreatureNames = new ArrayList<>();
         List<Card> attackerGraveyard = gameData.playerGraveyards.get(activeId);
@@ -2867,9 +2870,6 @@ public class GameService {
             gameData.gameLog.add(logEntry);
             broadcastLogEntry(gameData, logEntry);
         }
-
-        // Process Spirit Link triggers for creatures that dealt combat damage
-        processGainLifeEqualToDamageDealt(gameData, combatDamageDealt);
 
         if (!deadCreatureNames.isEmpty()) {
             String logEntry = String.join(", ", deadCreatureNames) + " died in combat.";
@@ -2908,7 +2908,7 @@ public class GameService {
                             if (effect instanceof GainLifeEqualToDamageDealtEffect) {
                                 int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
                                 gameData.playerLifeTotals.put(playerId, currentLife + damageDealt);
-                                String logEntry = gameData.playerIdToName.get(playerId) + " gains " + damageDealt + " life from being damaged.";
+                                String logEntry = gameData.playerIdToName.get(playerId) + " gains " + damageDealt + " life from " + perm.getCard().getName() + ".";
                                 gameData.gameLog.add(logEntry);
                                 broadcastLogEntry(gameData, logEntry);
                             }
