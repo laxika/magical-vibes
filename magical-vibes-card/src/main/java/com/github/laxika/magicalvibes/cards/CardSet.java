@@ -66,6 +66,8 @@ import com.github.laxika.magicalvibes.cards.w.WallOfSwords;
 import com.github.laxika.magicalvibes.cards.w.WildGriffin;
 import com.github.laxika.magicalvibes.cards.w.WarriorsHonor;
 import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
+import com.github.laxika.magicalvibes.cards.w.WindbornMuse;
+import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -133,6 +135,8 @@ public enum CardSet {
             new CardPrinting("10E", "59", WildGriffin::new, "\"I abandoned my dream of a squadron of griffin-riders when the cost proved too high. Three trainers were eaten for every griffin broken to the bridle.\"\n\u2014King Darien of Kjeldor"),
             new CardPrinting("10E", "58", WarriorsHonor::new, "\"The day will come when the righteous fury of the soldier will be the only shield between order and chaos.\""),
             new CardPrinting("10E", "62", YouthfulKnight::new, "\"Idealism fits him better than his armor.\""),
+            new CardPrinting("10E", "60", WindbornMuse::new, "\"Her voice is justice, clear and relentless.\"\n\u2014Akroma, angelic avenger"),
+            new CardPrinting("10E", "61", WrathOfGod::new),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
             new CardPrinting("10E", "382", Forest::new),
