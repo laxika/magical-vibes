@@ -30,7 +30,8 @@ public enum CardSubtype {
     NOMAD("Nomad"),
     WIZARD("Wizard"),
     MUTANT("Mutant"),
-    WOLF("Wolf");
+    WOLF("Wolf"),
+    MONK("Monk");
 
     @Getter
     private final String displayName;
