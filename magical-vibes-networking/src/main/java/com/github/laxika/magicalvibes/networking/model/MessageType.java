@@ -47,5 +47,7 @@ public enum MessageType {
     GRAVEYARD_CARD_CHOSEN,
     STACK_UPDATED,
     GRAVEYARD_UPDATED,
+    CHOOSE_COLOR,
+    COLOR_CHOSEN,
     ERROR
 }

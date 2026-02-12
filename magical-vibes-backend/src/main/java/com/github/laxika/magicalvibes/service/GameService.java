@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.networking.message.AutoStopsUpdatedMessage
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
@@ -74,6 +75,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOr
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
@@ -382,7 +384,9 @@ public class GameService {
         }
 
         broadcastStackUpdate(gameData);
-        sessionManager.sendToPlayers(gameData.orderedPlayerIds,new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+        if (gameData.awaitingInput == null) {
+            sessionManager.sendToPlayers(gameData.orderedPlayerIds, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+        }
     }
 
     private void resolveEffects(GameData gameData, StackEntry entry) {
@@ -1251,15 +1255,32 @@ public class GameService {
     }
 
     private void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId) {
-        // 1. Self ETB effects
-        if (!card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).isEmpty()) {
+        // "As enters" effects — require player choice before any ETB triggers fire
+        boolean needsColorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof ChooseColorEffect);
+        if (needsColorChoice) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = bf.get(bf.size() - 1);
+            beginColorChoice(gameData, controllerId, justEntered.getId(), targetPermanentId);
+            return;
+        }
+
+        processCreatureETBEffects(gameData, controllerId, card, targetPermanentId);
+    }
+
+    private void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId) {
+        // 1. Self ETB effects (filter out "as enters" effects already handled)
+        List<CardEffect> triggeredEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(e -> !(e instanceof ChooseColorEffect))
+                .toList();
+        if (!triggeredEffects.isEmpty()) {
             if (!card.isNeedsTarget() || targetPermanentId != null) {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
                         controllerId,
                         card.getName() + "'s ETB ability",
-                        new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)),
+                        new ArrayList<>(triggeredEffects),
                         0,
                         targetPermanentId,
                         Map.of()
@@ -1336,6 +1357,57 @@ public class GameService {
                     }
                 }
             }
+        }
+    }
+
+    private void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetPermanentId) {
+        gameData.awaitingInput = AwaitingInput.COLOR_CHOICE;
+        gameData.awaitingColorChoicePlayerId = playerId;
+        gameData.awaitingColorChoicePermanentId = permanentId;
+        gameData.pendingColorChoiceETBTargetId = etbTargetPermanentId;
+        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        sessionManager.sendToPlayer(playerId, new ChooseColorMessage(colors, "Choose a color."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a color", gameData.id, playerName);
+    }
+
+    public void handleColorChosen(GameData gameData, Player player, String colorName) {
+        synchronized (gameData) {
+            if (gameData.awaitingInput != AwaitingInput.COLOR_CHOICE) {
+                throw new IllegalStateException("Not awaiting color choice");
+            }
+            if (!player.getId().equals(gameData.awaitingColorChoicePlayerId)) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+
+            CardColor color = CardColor.valueOf(colorName);
+            UUID permanentId = gameData.awaitingColorChoicePermanentId;
+            UUID etbTargetId = gameData.pendingColorChoiceETBTargetId;
+
+            gameData.awaitingInput = null;
+            gameData.awaitingColorChoicePlayerId = null;
+            gameData.awaitingColorChoicePermanentId = null;
+            gameData.pendingColorChoiceETBTargetId = null;
+
+            Permanent perm = findPermanentById(gameData, permanentId);
+            if (perm != null) {
+                perm.setChosenColor(color);
+
+                String logEntry = player.getUsername() + " chooses " + color.name().toLowerCase() + " for " + perm.getCard().getName() + ".";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+                log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), color, perm.getCard().getName());
+
+                processCreatureETBEffects(gameData, player.getId(), perm.getCard(), etbTargetId);
+            }
+
+            gameData.priorityPassedBy.clear();
+            broadcastBattlefields(gameData);
+            broadcastStackUpdate(gameData);
+            broadcastPlayableCards(gameData);
+            sessionManager.sendToPlayers(gameData.orderedPlayerIds, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+            resolveAutoPass(gameData);
         }
     }
 
@@ -1813,6 +1885,9 @@ public class GameService {
             if (effect instanceof ProtectionFromColorsEffect protection && protection.colors().contains(sourceColor)) {
                 return true;
             }
+        }
+        if (target.getChosenColor() != null && target.getChosenColor() == sourceColor) {
+            return true;
         }
         return false;
     }

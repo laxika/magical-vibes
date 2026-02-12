@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.networking.model;
 
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 
 import java.util.List;
@@ -13,5 +14,6 @@ public record PermanentView(
         int powerModifier, int toughnessModifier,
         Set<Keyword> grantedKeywords,
         int effectivePower, int effectiveToughness,
-        UUID attachedTo
+        UUID attachedTo,
+        CardColor chosenColor
 ) {}
