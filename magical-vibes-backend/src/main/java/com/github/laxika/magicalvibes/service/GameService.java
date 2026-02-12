@@ -78,6 +78,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamage
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
@@ -2669,6 +2670,7 @@ public class GameService {
         // Track cumulative damage on each creature
         Map<Integer, Integer> atkDamageTaken = new HashMap<>();
         Map<Integer, Integer> defDamageTaken = new HashMap<>();
+        Map<Permanent, Integer> combatDamageDealt = new HashMap<>();
 
         // Phase 1: First strike damage
         if (anyFirstStrike) {
@@ -2687,6 +2689,7 @@ public class GameService {
                         } else {
                             damageToDefendingPlayer += getEffectivePower(gameData, atk);
                         }
+                        combatDamageDealt.merge(atk, getEffectivePower(gameData, atk), Integer::sum);
                     }
                 } else {
                     // First strike attacker deals damage to blockers
@@ -2697,6 +2700,7 @@ public class GameService {
                             int dmg = Math.min(remaining, getEffectiveToughness(gameData, blk));
                             if (!hasProtectionFrom(gameData, blk, atk.getCard().getColor())) {
                                 defDamageTaken.merge(blkIdx, dmg, Integer::sum);
+                                combatDamageDealt.merge(atk, dmg, Integer::sum);
                             }
                             remaining -= dmg;
                         }
@@ -2708,6 +2712,7 @@ public class GameService {
                                 && !isPreventedFromDealingDamage(gameData, blk)
                                 && !hasProtectionFrom(gameData, atk, blk.getCard().getColor())) {
                             atkDamageTaken.merge(atkIdx, getEffectivePower(gameData, blk), Integer::sum);
+                            combatDamageDealt.merge(blk, getEffectivePower(gameData, blk), Integer::sum);
                         }
                     }
                 }
@@ -2752,6 +2757,7 @@ public class GameService {
                     } else {
                         damageToDefendingPlayer += getEffectivePower(gameData, atk);
                     }
+                    combatDamageDealt.merge(atk, getEffectivePower(gameData, atk), Integer::sum);
                 }
             } else {
                 // Attacker deals damage to surviving blockers (skip first-strike-only, allow double strike)
@@ -2764,6 +2770,7 @@ public class GameService {
                         int dmg = Math.min(remaining, remainingToughness);
                         if (!hasProtectionFrom(gameData, blk, atk.getCard().getColor())) {
                             defDamageTaken.merge(blkIdx, dmg, Integer::sum);
+                            combatDamageDealt.merge(atk, dmg, Integer::sum);
                         }
                         remaining -= dmg;
                     }
@@ -2777,6 +2784,7 @@ public class GameService {
                     if (!blkSkipPhase2 && !isPreventedFromDealingDamage(gameData, blk)
                             && !hasProtectionFrom(gameData, atk, blk.getCard().getColor())) {
                         atkDamageTaken.merge(atkIdx, getEffectivePower(gameData, blk), Integer::sum);
+                        combatDamageDealt.merge(blk, getEffectivePower(gameData, blk), Integer::sum);
                     }
                 }
             }
@@ -2860,6 +2868,9 @@ public class GameService {
             broadcastLogEntry(gameData, logEntry);
         }
 
+        // Process Spirit Link triggers for creatures that dealt combat damage
+        processGainLifeEqualToDamageDealt(gameData, combatDamageDealt);
+
         if (!deadCreatureNames.isEmpty()) {
             String logEntry = String.join(", ", deadCreatureNames) + " died in combat.";
             gameData.gameLog.add(logEntry);
@@ -2882,6 +2893,30 @@ public class GameService {
 
         advanceStep(gameData);
         resolveAutoPass(gameData);
+    }
+
+    private void processGainLifeEqualToDamageDealt(GameData gameData, Map<Permanent, Integer> combatDamageDealt) {
+        for (var entry : combatDamageDealt.entrySet()) {
+            Permanent creature = entry.getKey();
+            int damageDealt = entry.getValue();
+            if (damageDealt <= 0) continue;
+
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                for (Permanent perm : gameData.playerBattlefields.get(playerId)) {
+                    if (perm.getAttachedTo() != null && perm.getAttachedTo().equals(creature.getId())) {
+                        for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                            if (effect instanceof GainLifeEqualToDamageDealtEffect) {
+                                int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+                                gameData.playerLifeTotals.put(playerId, currentLife + damageDealt);
+                                String logEntry = gameData.playerIdToName.get(playerId) + " gains " + damageDealt + " life from being damaged.";
+                                gameData.gameLog.add(logEntry);
+                                broadcastLogEntry(gameData, logEntry);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private boolean checkWinCondition(GameData gameData) {
