@@ -315,6 +315,7 @@ public class GameService {
 
             // Check for ally-creature-enters triggers (e.g. Angelic Chorus)
             checkAllyCreatureEntersTriggers(gameData, controllerId, card);
+            checkAnyCreatureEntersTriggers(gameData, controllerId, card);
         } else if (entry.getEntryType() == StackEntryType.ENCHANTMENT_SPELL) {
             Card card = entry.getCard();
             UUID controllerId = entry.getControllerId();
@@ -1292,6 +1293,38 @@ public class GameService {
         }
     }
 
+    private void checkAnyCreatureEntersTriggers(GameData gameData, UUID enteringCreatureControllerId, Card enteringCreature) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent perm : battlefield) {
+                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD);
+                if (effects == null || effects.isEmpty()) continue;
+
+                // "Another creature" — skip if the entering creature IS this permanent
+                if (perm.getCard() == enteringCreature) continue;
+
+                for (CardEffect effect : effects) {
+                    if (effect instanceof GainLifeEffect gainLife) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s ability",
+                                List.of(new GainLifeEffect(gainLife.amount()))
+                        ));
+                        String triggerLog = perm.getCard().getName() + " triggers — " +
+                                gameData.playerIdToName.get(playerId) + " will gain " + gainLife.amount() + " life.";
+                        gameData.gameLog.add(triggerLog);
+                        broadcastLogEntry(gameData, triggerLog);
+                        log.info("Game {} - {} triggers for {} entering (gain {} life)",
+                                gameData.id, perm.getCard().getName(), enteringCreature.getName(), gainLife.amount());
+                    }
+                }
+            }
+        }
+    }
+
     private void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         gameData.awaitingCardChoice = true;
         gameData.awaitingCardChoicePlayerId = playerId;
@@ -1354,11 +1387,11 @@ public class GameService {
                     gameData.gameLog.add(etbLog);
                     broadcastLogEntry(gameData, etbLog);
                     broadcastStackUpdate(gameData);
-                    log.info("Game {} - {} ETB ability pushed onto stack (via Wumpus)", gameData.id, card.getName());
+                    log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
                 }
 
-                // Check for ally-creature-enters triggers (e.g. Angelic Chorus)
                 checkAllyCreatureEntersTriggers(gameData, playerId, card);
+                checkAnyCreatureEntersTriggers(gameData, playerId, card);
             }
 
             resolveAutoPass(gameData);
@@ -1967,8 +2000,8 @@ public class GameService {
                     log.info("Game {} - {} ETB ability pushed onto stack (via graveyard return)", gameData.id, card.getName());
                 }
 
-                // Check for ally-creature-enters triggers
                 checkAllyCreatureEntersTriggers(gameData, playerId, card);
+                checkAnyCreatureEntersTriggers(gameData, playerId, card);
             }
 
             resolveAutoPass(gameData);
@@ -1988,6 +2021,8 @@ public class GameService {
         gameData.gameLog.add(logEntry);
         broadcastLogEntry(gameData, logEntry);
         broadcastBattlefields(gameData);
+
+        checkAnyCreatureEntersTriggers(gameData, controllerId, tokenCard);
 
         log.info("Game {} - {} token created for player {}", gameData.id, token.tokenName(), controllerId);
     }
