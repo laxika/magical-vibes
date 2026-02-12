@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.cards.s.SkyhunterSkirmisher;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import com.github.laxika.magicalvibes.cards.s.SpiritLink;
 import com.github.laxika.magicalvibes.cards.s.SpiritWeaver;
+import com.github.laxika.magicalvibes.cards.s.StarlightInvoker;
 import com.github.laxika.magicalvibes.cards.s.SerrasEmbrace;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import lombok.Getter;
@@ -107,6 +108,7 @@ public enum CardSet {
             new CardPrinting("10E", "44", SoulWarden::new, "\"Count carefully the souls and see that none are lost.\"\n\u2014Vec teaching"),
             new CardPrinting("10E", "45", SpiritLink::new),
             new CardPrinting("10E", "46", SpiritWeaver::new),
+            new CardPrinting("10E", "47", StarlightInvoker::new),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
             new CardPrinting("10E", "382", Forest::new),
