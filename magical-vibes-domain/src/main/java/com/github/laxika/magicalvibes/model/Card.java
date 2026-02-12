@@ -33,6 +33,7 @@ public class Card {
     @Setter private List<CardEffect> staticEffects = List.of();
     @Setter private List<CardEffect> onSacrificeEffects = List.of();
     @Setter private List<CardEffect> onBlockEffects = List.of();
+    @Setter private List<CardEffect> upkeepTriggeredEffects = List.of();
     @Setter private List<CardEffect> tapActivatedAbilityEffects = List.of();
     @Setter private String tapActivatedAbilityCost;
     @Setter private List<CardEffect> manaActivatedAbilityEffects = List.of();

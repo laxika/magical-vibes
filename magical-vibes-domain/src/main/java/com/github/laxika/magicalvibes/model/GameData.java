@@ -52,6 +52,9 @@ public class GameData {
     public UUID awaitingPermanentChoicePlayerId;
     public Set<UUID> awaitingPermanentChoiceValidIds;
     public Card pendingAuraCard;
+    public boolean awaitingGraveyardChoice;
+    public UUID awaitingGraveyardChoicePlayerId;
+    public Set<Integer> awaitingGraveyardChoiceValidIndices;
 
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {
         this.id = id;

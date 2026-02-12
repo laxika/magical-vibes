@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.r.ReyaDawnbringer;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -78,6 +79,7 @@ public enum CardSet {
             new CardPrinting("10E", "30", NomadMythmaker::new, "\"On the wild steppes, history vanishes in the dust. Only the mythmakers remain to say what was, and is, and will be.\""),
             new CardPrinting("10E", "31", Pacifism::new, "For the first time in his life, Grakk felt a little warm and fuzzy inside."),
             new CardPrinting("10E", "32", PaladinEnVec::new),
+            new CardPrinting("10E", "35", ReyaDawnbringer::new, "\"You have not died until I consent.\""),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
             new CardPrinting("10E", "382", Forest::new),
