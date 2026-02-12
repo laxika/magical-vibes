@@ -2747,7 +2747,7 @@ public class GameService {
                     throw new IllegalStateException("Not enough mana to pay attack tax (" + totalTax + " required)");
                 }
                 payGenericMana(pool, totalTax);
-                broadcastMana(gameData);
+                sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
             }
 
             // Mark creatures as attacking and tap them (vigilance skips tapping)
