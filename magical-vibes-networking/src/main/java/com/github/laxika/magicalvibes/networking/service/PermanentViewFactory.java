@@ -29,7 +29,8 @@ public class PermanentViewFactory {
                 allKeywords,
                 p.getEffectivePower() + bonusPower,
                 p.getEffectiveToughness() + bonusToughness,
-                p.getAttachedTo()
+                p.getAttachedTo(),
+                p.getChosenColor()
         );
     }
 }

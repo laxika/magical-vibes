@@ -42,6 +42,8 @@ export enum MessageType {
   CARD_CHOSEN = 'CARD_CHOSEN',
   STACK_UPDATED = 'STACK_UPDATED',
   GRAVEYARD_UPDATED = 'GRAVEYARD_UPDATED',
+  CHOOSE_COLOR = 'CHOOSE_COLOR',
+  COLOR_CHOSEN = 'COLOR_CHOSEN',
   ERROR = 'ERROR'
 }
 
@@ -135,6 +137,7 @@ export interface Permanent {
   grantedKeywords: string[];
   effectivePower: number;
   effectiveToughness: number;
+  chosenColor: string | null;
 }
 
 export interface StackEntry {
@@ -280,6 +283,12 @@ export interface ChooseCardFromHandNotification {
   prompt: string;
 }
 
+export interface ChooseColorNotification {
+  type: MessageType;
+  colors: string[];
+  prompt: string;
+}
+
 export interface StackUpdatedNotification {
   type: MessageType;
   stack: StackEntry[];
@@ -290,7 +299,7 @@ export interface GraveyardUpdatedNotification {
   graveyards: Card[][];
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCardFromHandNotification | StackUpdatedNotification | GraveyardUpdatedNotification;
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | StackUpdatedNotification | GraveyardUpdatedNotification;
 
 export interface User {
   userId: string;

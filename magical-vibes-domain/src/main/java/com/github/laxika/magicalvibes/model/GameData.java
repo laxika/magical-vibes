@@ -54,6 +54,9 @@ public class GameData {
     public UUID awaitingGraveyardChoicePlayerId;
     public Set<Integer> awaitingGraveyardChoiceValidIndices;
     public GraveyardChoiceDestination graveyardChoiceDestination;
+    public UUID awaitingColorChoicePlayerId;
+    public UUID awaitingColorChoicePermanentId;
+    public UUID pendingColorChoiceETBTargetId;
 
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {
         this.id = id;

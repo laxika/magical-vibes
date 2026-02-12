@@ -61,6 +61,9 @@ import com.github.laxika.magicalvibes.cards.t.TreasureHunter;
 import com.github.laxika.magicalvibes.cards.t.TrueBeliever;
 import com.github.laxika.magicalvibes.cards.t.TundraWolves;
 import com.github.laxika.magicalvibes.cards.v.VenerableMonk;
+import com.github.laxika.magicalvibes.cards.v.VoiceOfAll;
+import com.github.laxika.magicalvibes.cards.w.WallOfSwords;
+import com.github.laxika.magicalvibes.cards.w.WildGriffin;
 import com.github.laxika.magicalvibes.cards.w.WarriorsHonor;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import lombok.Getter;
@@ -124,6 +127,9 @@ public enum CardSet {
             new CardPrinting("10E", "53", TrueBeliever::new, "\"So great is his certainty that mere facts cannot shake it.\""),
             new CardPrinting("10E", "54", TundraWolves::new, "\"I heard their eerie howling, the wolves calling their kindred across the frozen plains.\"\n\u2014Onean scout"),
             new CardPrinting("10E", "55", VenerableMonk::new, "\"Age wears the flesh but galvanizes the soul.\""),
+            new CardPrinting("10E", "56", VoiceOfAll::new),
+            new CardPrinting("10E", "57", WallOfSwords::new, "The air hummed with the scissoring sound of uncounted blades that hovered in front of the invaders as though wielded by a phalanx of unseen hands."),
+            new CardPrinting("10E", "59", WildGriffin::new, "\"I abandoned my dream of a squadron of griffin-riders when the cost proved too high. Three trainers were eaten for every griffin broken to the bridle.\"\n\u2014King Darien of Kjeldor"),
             new CardPrinting("10E", "58", WarriorsHonor::new, "\"The day will come when the righteous fury of the soldier will be the only shield between order and chaos.\""),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),

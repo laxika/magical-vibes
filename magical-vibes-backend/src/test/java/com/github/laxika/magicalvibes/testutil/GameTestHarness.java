@@ -144,6 +144,10 @@ public class GameTestHarness {
         gameService.handleGraveyardCardChosen(gameData, player, cardIndex);
     }
 
+    public void handleColorChosen(Player player, String colorName) {
+        gameService.handleColorChosen(gameData, player, colorName);
+    }
+
     public void forceActivePlayer(Player player) {
         gameData.activePlayerId = player.getId();
         gameData.startingPlayerId = player.getId();
