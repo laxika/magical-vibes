@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -52,9 +53,9 @@ class RighteousnessTest {
         assertThat(card.getManaCost()).isEqualTo("{W}");
         assertThat(card.getColor()).isEqualTo(CardColor.WHITE);
         assertThat(card.isNeedsTarget()).isTrue();
-        assertThat(card.getSpellEffects()).hasSize(1);
-        assertThat(card.getSpellEffects().getFirst()).isInstanceOf(BoostTargetBlockingCreatureEffect.class);
-        BoostTargetBlockingCreatureEffect effect = (BoostTargetBlockingCreatureEffect) card.getSpellEffects().getFirst();
+        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(BoostTargetBlockingCreatureEffect.class);
+        BoostTargetBlockingCreatureEffect effect = (BoostTargetBlockingCreatureEffect) card.getEffects(EffectSlot.SPELL).getFirst();
         assertThat(effect.powerBoost()).isEqualTo(7);
         assertThat(effect.toughnessBoost()).isEqualTo(7);
     }

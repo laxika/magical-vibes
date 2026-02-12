@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -19,6 +20,6 @@ public class FieldMarshal extends Card {
         setCardText("Other Soldier creatures get +1/+1 and have first strike.");
         setPower(2);
         setToughness(2);
-        setStaticEffects(List.of(new BoostCreaturesBySubtypeEffect(Set.of(CardSubtype.SOLDIER), 1, 1, Set.of(Keyword.FIRST_STRIKE))));
+        addEffect(EffectSlot.STATIC, new BoostCreaturesBySubtypeEffect(Set.of(CardSubtype.SOLDIER), 1, 1, Set.of(Keyword.FIRST_STRIKE)));
     }
 }

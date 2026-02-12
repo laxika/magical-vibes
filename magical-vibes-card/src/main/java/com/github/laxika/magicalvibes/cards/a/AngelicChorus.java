@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 
@@ -13,6 +14,6 @@ public class AngelicChorus extends Card {
         super("Angelic Chorus", CardType.ENCHANTMENT, "{3}{W}{W}", CardColor.WHITE);
 
         setCardText("Whenever a creature you control enters, you gain life equal to its toughness.");
-        setOnAllyCreatureEntersBattlefieldEffects(List.of(new GainLifeEqualToToughnessEffect()));
+        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new GainLifeEqualToToughnessEffect());
     }
 }

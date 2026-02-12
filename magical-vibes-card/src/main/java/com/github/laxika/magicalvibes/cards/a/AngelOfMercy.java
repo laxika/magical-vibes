@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -20,6 +21,6 @@ public class AngelOfMercy extends Card {
         setKeywords(Set.of(Keyword.FLYING));
         setPower(3);
         setToughness(3);
-        setOnEnterBattlefieldEffects(List.of(new GainLifeEffect(3)));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(3));
     }
 }

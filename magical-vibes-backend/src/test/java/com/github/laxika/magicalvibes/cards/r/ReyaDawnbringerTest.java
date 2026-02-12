@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -70,8 +71,8 @@ class ReyaDawnbringerTest {
         assertThat(card.getToughness()).isEqualTo(6);
         assertThat(card.getKeywords()).contains(Keyword.FLYING);
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.ANGEL);
-        assertThat(card.getUpkeepTriggeredEffects()).hasSize(1);
-        assertThat(card.getUpkeepTriggeredEffects().getFirst())
+        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
                 .isInstanceOf(ReturnCreatureFromGraveyardToBattlefieldEffect.class);
     }
 

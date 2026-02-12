@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -15,7 +16,7 @@ public class LlanowarElves extends Card {
 
         setSubtypes(List.of(CardSubtype.ELF, CardSubtype.DRUID));
         setCardText("{T}: Add {G}.");
-        setOnTapEffects(List.of(new AwardManaEffect("G")));
+        addEffect(EffectSlot.ON_TAP, new AwardManaEffect("G"));
         setPower(1);
         setToughness(1);
     }

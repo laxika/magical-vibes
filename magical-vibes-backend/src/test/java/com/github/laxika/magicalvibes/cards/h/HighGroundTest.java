@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -52,10 +53,10 @@ class HighGroundTest {
         assertThat(card.getType()).isEqualTo(CardType.ENCHANTMENT);
         assertThat(card.getManaCost()).isEqualTo("{W}");
         assertThat(card.getColor()).isEqualTo(CardColor.WHITE);
-        assertThat(card.getStaticEffects()).hasSize(1);
-        assertThat(card.getStaticEffects().getFirst())
+        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
                 .isInstanceOf(GrantAdditionalBlockEffect.class);
-        GrantAdditionalBlockEffect effect = (GrantAdditionalBlockEffect) card.getStaticEffects().getFirst();
+        GrantAdditionalBlockEffect effect = (GrantAdditionalBlockEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(effect.additionalBlocks()).isEqualTo(1);
     }
 

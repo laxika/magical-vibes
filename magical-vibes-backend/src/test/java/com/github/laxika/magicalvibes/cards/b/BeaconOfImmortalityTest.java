@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Player;
@@ -45,9 +46,9 @@ class BeaconOfImmortalityTest {
         assertThat(card.getManaCost()).isEqualTo("{5}{W}");
         assertThat(card.getColor()).isEqualTo(CardColor.WHITE);
         assertThat(card.isNeedsTarget()).isTrue();
-        assertThat(card.getSpellEffects()).hasSize(2);
-        assertThat(card.getSpellEffects().get(0)).isInstanceOf(DoubleTargetPlayerLifeEffect.class);
-        assertThat(card.getSpellEffects().get(1)).isInstanceOf(ShuffleIntoLibraryEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DoubleTargetPlayerLifeEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ShuffleIntoLibraryEffect.class);
     }
 
     // ===== Casting =====

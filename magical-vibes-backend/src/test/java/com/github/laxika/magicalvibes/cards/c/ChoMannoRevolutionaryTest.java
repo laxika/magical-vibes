@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -50,8 +51,8 @@ class ChoMannoRevolutionaryTest {
         assertThat(card.getPower()).isEqualTo(2);
         assertThat(card.getToughness()).isEqualTo(2);
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.HUMAN, CardSubtype.REBEL);
-        assertThat(card.getStaticEffects()).hasSize(1);
-        assertThat(card.getStaticEffects().getFirst()).isInstanceOf(PreventAllDamageEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(PreventAllDamageEffect.class);
     }
 
     // ===== Casting and resolving =====
@@ -204,7 +205,7 @@ class ChoMannoRevolutionaryTest {
                 .filter(p -> p.getCard().getName().equals("Cho-Manno, Revolutionary"))
                 .findFirst().orElseThrow();
 
-        assertThat(choManno.getCard().getStaticEffects())
+        assertThat(choManno.getCard().getEffects(EffectSlot.STATIC))
                 .anyMatch(e -> e instanceof PreventAllDamageEffect);
     }
 

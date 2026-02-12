@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -56,8 +57,8 @@ class LoyalSentryTest {
         assertThat(card.getPower()).isEqualTo(1);
         assertThat(card.getToughness()).isEqualTo(1);
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.HUMAN, CardSubtype.SOLDIER);
-        assertThat(card.getOnBlockEffects()).hasSize(1);
-        assertThat(card.getOnBlockEffects().getFirst()).isInstanceOf(DestroyBlockedCreatureAndSelfEffect.class);
+        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.ON_BLOCK).getFirst()).isInstanceOf(DestroyBlockedCreatureAndSelfEffect.class);
     }
 
     // ===== Casting and resolving =====

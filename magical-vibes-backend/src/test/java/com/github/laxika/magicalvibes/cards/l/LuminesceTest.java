@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -54,10 +55,10 @@ class LuminesceTest {
         assertThat(card.getManaCost()).isEqualTo("{W}");
         assertThat(card.getColor()).isEqualTo(CardColor.WHITE);
         assertThat(card.isNeedsTarget()).isFalse();
-        assertThat(card.getSpellEffects()).hasSize(1);
-        assertThat(card.getSpellEffects().getFirst()).isInstanceOf(PreventDamageFromColorsEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(PreventDamageFromColorsEffect.class);
 
-        PreventDamageFromColorsEffect effect = (PreventDamageFromColorsEffect) card.getSpellEffects().getFirst();
+        PreventDamageFromColorsEffect effect = (PreventDamageFromColorsEffect) card.getEffects(EffectSlot.SPELL).getFirst();
         assertThat(effect.colors()).containsExactlyInAnyOrder(CardColor.BLACK, CardColor.RED);
     }
 

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -18,7 +19,7 @@ public class PaladinEnVec extends Card {
         setSubtypes(List.of(CardSubtype.HUMAN, CardSubtype.KNIGHT));
         setCardText("First strike, protection from black and from red");
         setKeywords(Set.of(Keyword.FIRST_STRIKE));
-        setStaticEffects(List.of(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK, CardColor.RED))));
+        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.BLACK, CardColor.RED)));
         setPower(2);
         setToughness(2);
     }

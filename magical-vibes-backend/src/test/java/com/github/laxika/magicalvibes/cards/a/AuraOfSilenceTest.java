@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Player;
@@ -46,11 +47,11 @@ class AuraOfSilenceTest {
         assertThat(card.getType()).isEqualTo(CardType.ENCHANTMENT);
         assertThat(card.getManaCost()).isEqualTo("{1}{W}{W}");
         assertThat(card.getColor()).isEqualTo(CardColor.WHITE);
-        assertThat(card.getStaticEffects()).hasSize(1);
-        assertThat(card.getStaticEffects().getFirst())
+        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
                 .isInstanceOf(IncreaseOpponentCastCostEffect.class);
-        assertThat(card.getOnSacrificeEffects()).hasSize(1);
-        assertThat(card.getOnSacrificeEffects().getFirst())
+        assertThat(card.getEffects(EffectSlot.ON_SACRIFICE)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.ON_SACRIFICE).getFirst())
                 .isInstanceOf(DestroyTargetPermanentEffect.class);
     }
 

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -55,16 +56,16 @@ class MobilizationTest {
         assertThat(card.getType()).isEqualTo(CardType.ENCHANTMENT);
         assertThat(card.getManaCost()).isEqualTo("{2}{W}");
         assertThat(card.getColor()).isEqualTo(CardColor.WHITE);
-        assertThat(card.getStaticEffects()).hasSize(1);
-        assertThat(card.getStaticEffects().getFirst()).isInstanceOf(BoostCreaturesBySubtypeEffect.class);
-        BoostCreaturesBySubtypeEffect staticEffect = (BoostCreaturesBySubtypeEffect) card.getStaticEffects().getFirst();
+        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(BoostCreaturesBySubtypeEffect.class);
+        BoostCreaturesBySubtypeEffect staticEffect = (BoostCreaturesBySubtypeEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(staticEffect.affectedSubtypes()).containsExactly(CardSubtype.SOLDIER);
         assertThat(staticEffect.powerBoost()).isEqualTo(0);
         assertThat(staticEffect.toughnessBoost()).isEqualTo(0);
         assertThat(staticEffect.grantedKeywords()).containsExactly(Keyword.VIGILANCE);
-        assertThat(card.getManaActivatedAbilityEffects()).hasSize(1);
-        assertThat(card.getManaActivatedAbilityEffects().getFirst()).isInstanceOf(CreateCreatureTokenEffect.class);
-        CreateCreatureTokenEffect tokenEffect = (CreateCreatureTokenEffect) card.getManaActivatedAbilityEffects().getFirst();
+        assertThat(card.getEffects(EffectSlot.MANA_ACTIVATED_ABILITY)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.MANA_ACTIVATED_ABILITY).getFirst()).isInstanceOf(CreateCreatureTokenEffect.class);
+        CreateCreatureTokenEffect tokenEffect = (CreateCreatureTokenEffect) card.getEffects(EffectSlot.MANA_ACTIVATED_ABILITY).getFirst();
         assertThat(tokenEffect.tokenName()).isEqualTo("Soldier");
         assertThat(tokenEffect.power()).isEqualTo(1);
         assertThat(tokenEffect.toughness()).isEqualTo(1);

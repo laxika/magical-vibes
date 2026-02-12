@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -56,8 +57,8 @@ class FieldMarshalTest {
         assertThat(card.getPower()).isEqualTo(2);
         assertThat(card.getToughness()).isEqualTo(2);
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.HUMAN, CardSubtype.SOLDIER);
-        assertThat(card.getStaticEffects()).hasSize(1);
-        assertThat(card.getStaticEffects().getFirst()).isInstanceOf(BoostCreaturesBySubtypeEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(BoostCreaturesBySubtypeEffect.class);
     }
 
     // ===== Casting and resolving =====

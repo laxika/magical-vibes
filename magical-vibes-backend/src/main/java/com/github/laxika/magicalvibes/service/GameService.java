@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.networking.message.StepAdvancedMessage;
 import com.github.laxika.magicalvibes.networking.message.TurnChangedMessage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -166,7 +167,7 @@ public class GameService {
         if (battlefield == null) return;
 
         for (Permanent perm : battlefield) {
-            List<CardEffect> upkeepEffects = perm.getCard().getUpkeepTriggeredEffects();
+            List<CardEffect> upkeepEffects = perm.getCard().getEffects(EffectSlot.UPKEEP_TRIGGERED);
             if (upkeepEffects == null || upkeepEffects.isEmpty()) continue;
 
             gameData.stack.add(new StackEntry(
@@ -288,7 +289,7 @@ public class GameService {
             log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
 
             // Check for ETB effects and push triggered abilities onto the stack
-            if (card.getOnEnterBattlefieldEffects() != null && !card.getOnEnterBattlefieldEffects().isEmpty()) {
+            if (!card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).isEmpty()) {
                 // For targeted ETB effects, only trigger if a target was provided
                 if (!card.isNeedsTarget() || entry.getTargetPermanentId() != null) {
                     gameData.stack.add(new StackEntry(
@@ -296,7 +297,7 @@ public class GameService {
                             card,
                             controllerId,
                             card.getName() + "'s ETB ability",
-                            new ArrayList<>(card.getOnEnterBattlefieldEffects()),
+                            new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)),
                             0,
                             entry.getTargetPermanentId(),
                             Map.of()
@@ -758,7 +759,7 @@ public class GameService {
                 }
 
                 // Effect-specific target validation
-                for (CardEffect effect : card.getSpellEffects()) {
+                for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
                     if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
                         if (target == null || target.getCard().getType() != CardType.CREATURE || !target.isAttacking()) {
                             throw new IllegalStateException("Target must be an attacking creature");
@@ -849,7 +850,7 @@ public class GameService {
 
                 gameData.stack.add(new StackEntry(
                         StackEntryType.SORCERY_SPELL, card, playerId, card.getName(),
-                        new ArrayList<>(card.getSpellEffects()), effectiveXValue, targetPermanentId, null
+                        new ArrayList<>(card.getEffects(EffectSlot.SPELL)), effectiveXValue, targetPermanentId, null
                 ));
                 gameData.priorityPassedBy.clear();
 
@@ -896,12 +897,12 @@ public class GameService {
 
                     gameData.stack.add(new StackEntry(
                             StackEntryType.INSTANT_SPELL, card, playerId, card.getName(),
-                            new ArrayList<>(card.getSpellEffects()), effectiveXValue, null, damageAssignments
+                            new ArrayList<>(card.getEffects(EffectSlot.SPELL)), effectiveXValue, null, damageAssignments
                     ));
                 } else {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.INSTANT_SPELL, card, playerId, card.getName(),
-                            new ArrayList<>(card.getSpellEffects()), effectiveXValue, targetPermanentId, null
+                            new ArrayList<>(card.getEffects(EffectSlot.SPELL)), effectiveXValue, targetPermanentId, null
                     ));
                 }
                 gameData.priorityPassedBy.clear();
@@ -937,7 +938,7 @@ public class GameService {
             if (permanent.isTapped()) {
                 throw new IllegalStateException("Permanent is already tapped");
             }
-            if (permanent.getCard().getOnTapEffects() == null || permanent.getCard().getOnTapEffects().isEmpty()) {
+            if (permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty()) {
                 throw new IllegalStateException("Permanent has no tap effects");
             }
             if (permanent.isSummoningSick() && permanent.getCard().getType() == CardType.CREATURE) {
@@ -947,7 +948,7 @@ public class GameService {
             permanent.tap();
 
             ManaPool manaPool = gameData.playerManaPools.get(playerId);
-            for (CardEffect effect : permanent.getCard().getOnTapEffects()) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
                 if (effect instanceof AwardManaEffect awardMana) {
                     manaPool.add(awardMana.color());
                 }
@@ -979,12 +980,12 @@ public class GameService {
             }
 
             Permanent permanent = battlefield.get(permanentIndex);
-            if (permanent.getCard().getOnSacrificeEffects() == null || permanent.getCard().getOnSacrificeEffects().isEmpty()) {
+            if (permanent.getCard().getEffects(EffectSlot.ON_SACRIFICE).isEmpty()) {
                 throw new IllegalStateException("Permanent has no sacrifice abilities");
             }
 
             // Validate target for effects that need one
-            for (CardEffect effect : permanent.getCard().getOnSacrificeEffects()) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_SACRIFICE)) {
                 if (effect instanceof DestroyTargetPermanentEffect destroy) {
                     if (targetPermanentId == null) {
                         throw new IllegalStateException("Sacrifice ability requires a target");
@@ -1018,7 +1019,7 @@ public class GameService {
                     permanent.getCard(),
                     playerId,
                     permanent.getCard().getName() + "'s ability",
-                    new ArrayList<>(permanent.getCard().getOnSacrificeEffects()),
+                    new ArrayList<>(permanent.getCard().getEffects(EffectSlot.ON_SACRIFICE)),
                     0,
                     targetPermanentId,
                     Map.of()
@@ -1048,8 +1049,8 @@ public class GameService {
             }
 
             Permanent permanent = battlefield.get(permanentIndex);
-            boolean hasTapAbility = permanent.getCard().getTapActivatedAbilityEffects() != null && !permanent.getCard().getTapActivatedAbilityEffects().isEmpty();
-            boolean hasManaAbility = permanent.getCard().getManaActivatedAbilityEffects() != null && !permanent.getCard().getManaActivatedAbilityEffects().isEmpty();
+            boolean hasTapAbility = !permanent.getCard().getEffects(EffectSlot.TAP_ACTIVATED_ABILITY).isEmpty();
+            boolean hasManaAbility = !permanent.getCard().getEffects(EffectSlot.MANA_ACTIVATED_ABILITY).isEmpty();
             if (!hasTapAbility && !hasManaAbility) {
                 throw new IllegalStateException("Permanent has no activated ability");
             }
@@ -1059,11 +1060,11 @@ public class GameService {
             boolean isTapAbility;
             if (hasTapAbility) {
                 isTapAbility = true;
-                abilityEffects = permanent.getCard().getTapActivatedAbilityEffects();
+                abilityEffects = permanent.getCard().getEffects(EffectSlot.TAP_ACTIVATED_ABILITY);
                 abilityCost = permanent.getCard().getTapActivatedAbilityCost();
             } else {
                 isTapAbility = false;
-                abilityEffects = permanent.getCard().getManaActivatedAbilityEffects();
+                abilityEffects = permanent.getCard().getEffects(EffectSlot.MANA_ACTIVATED_ABILITY);
                 abilityCost = permanent.getCard().getManaActivatedAbilityCost();
             }
 
@@ -1257,7 +1258,7 @@ public class GameService {
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         for (Permanent perm : battlefield) {
-            List<CardEffect> effects = perm.getCard().getOnAllyCreatureEntersBattlefieldEffects();
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD);
             if (effects == null || effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
@@ -1331,13 +1332,13 @@ public class GameService {
                 log.info("Game {} - {} puts {} onto the battlefield", gameData.id, player.getUsername(), card.getName());
 
                 // Check if the creature entering via ETB has its own ETB effects
-                if (card.getOnEnterBattlefieldEffects() != null && !card.getOnEnterBattlefieldEffects().isEmpty()) {
+                if (!card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).isEmpty()) {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             card,
                             playerId,
                             card.getName() + "'s ETB ability",
-                            new ArrayList<>(card.getOnEnterBattlefieldEffects())
+                            new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))
                     ));
                     String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
                     gameData.gameLog.add(etbLog);
@@ -1719,7 +1720,7 @@ public class GameService {
 
     private boolean hasProtectionFrom(GameData gameData, Permanent target, CardColor sourceColor) {
         if (sourceColor == null) return false;
-        for (CardEffect effect : target.getCard().getStaticEffects()) {
+        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof ProtectionFromColorsEffect protection && protection.colors().contains(sourceColor)) {
                 return true;
             }
@@ -1924,13 +1925,13 @@ public class GameService {
                 broadcastGraveyards(gameData);
 
                 // Check for ETB effects on the returned creature
-                if (card.getOnEnterBattlefieldEffects() != null && !card.getOnEnterBattlefieldEffects().isEmpty()) {
+                if (!card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).isEmpty()) {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             card,
                             playerId,
                             card.getName() + "'s ETB ability",
-                            new ArrayList<>(card.getOnEnterBattlefieldEffects())
+                            new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))
                     ));
                     String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
                     gameData.gameLog.add(etbLog);
@@ -1965,7 +1966,7 @@ public class GameService {
     }
 
     private int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage) {
-        if (permanent.getCard().getStaticEffects().stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
+        if (permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
         if (hasAuraPreventingAllDamage(gameData, permanent)) return 0;
         int shield = permanent.getDamagePreventionShield();
         if (shield <= 0 || damage <= 0) return damage;
@@ -1980,7 +1981,7 @@ public class GameService {
             if (bf == null) continue;
             for (Permanent p : bf) {
                 if (p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())) {
-                    for (CardEffect effect : p.getCard().getStaticEffects()) {
+                    for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                         if (effect instanceof PreventAllDamageToAndByEnchantedCreatureEffect) {
                             return true;
                         }
@@ -1997,7 +1998,7 @@ public class GameService {
             if (bf == null) continue;
             for (Permanent p : bf) {
                 if (p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())) {
-                    for (CardEffect effect : p.getCard().getStaticEffects()) {
+                    for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                         if (effect instanceof EnchantedCreatureCantAttackOrBlockEffect) {
                             return true;
                         }
@@ -2026,7 +2027,7 @@ public class GameService {
         if (bf == null) return null;
         for (Permanent p : bf) {
             if (p.getAttachedTo() != null) {
-                for (CardEffect effect : p.getCard().getStaticEffects()) {
+                for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effectClass.isInstance(effect)) {
                         return findPermanentById(gameData, p.getAttachedTo());
                     }
@@ -2070,7 +2071,7 @@ public class GameService {
 
         int totalIncrease = 0;
         for (Permanent perm : opponentBattlefield) {
-            for (CardEffect effect : perm.getCard().getStaticEffects()) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof IncreaseOpponentCastCostEffect increase) {
                     if (increase.affectedTypes().contains(cardType)) {
                         totalIncrease += increase.amount();
@@ -2185,7 +2186,7 @@ public class GameService {
             if (bf == null) continue;
             for (Permanent source : bf) {
                 if (source == target) continue;
-                for (CardEffect effect : source.getCard().getStaticEffects()) {
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof BoostCreaturesBySubtypeEffect boost
                             && target.getCard().getSubtypes().stream().anyMatch(boost.affectedSubtypes()::contains)) {
                         power += boost.powerBoost();
@@ -2457,7 +2458,7 @@ public class GameService {
             // Compute max blocks per creature (1 + additional from static effects)
             int additionalBlocks = 0;
             for (Permanent p : defenderBattlefield) {
-                for (CardEffect effect : p.getCard().getStaticEffects()) {
+                for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof GrantAdditionalBlockEffect e) {
                         additionalBlocks += e.additionalBlocks();
                     }
@@ -2517,14 +2518,14 @@ public class GameService {
             // Check for "when this creature blocks" triggers
             for (BlockerAssignment assignment : blockerAssignments) {
                 Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
-                if (!blocker.getCard().getOnBlockEffects().isEmpty()) {
+                if (!blocker.getCard().getEffects(EffectSlot.ON_BLOCK).isEmpty()) {
                     Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             blocker.getCard(),
                             defenderId,
                             blocker.getCard().getName() + "'s block trigger",
-                            new ArrayList<>(blocker.getCard().getOnBlockEffects()),
+                            new ArrayList<>(blocker.getCard().getEffects(EffectSlot.ON_BLOCK)),
                             attacker.getId(),
                             blocker.getId()
                     ));

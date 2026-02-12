@@ -6,7 +6,10 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -23,32 +26,32 @@ public class Card {
 
     @Setter private List<CardSubtype> subtypes = List.of();
     @Setter private String cardText;
-    @Setter private List<CardEffect> onTapEffects = List.of();
     @Setter private Integer power;
     @Setter private Integer toughness;
     @Setter private Set<Keyword> keywords = Set.of();
-    @Setter private List<CardEffect> onEnterBattlefieldEffects = List.of();
-    @Setter private List<CardEffect> spellEffects = List.of();
-    @Setter private List<CardEffect> onAllyCreatureEntersBattlefieldEffects = List.of();
-    @Setter private List<CardEffect> staticEffects = List.of();
-    @Setter private List<CardEffect> onSacrificeEffects = List.of();
-    @Setter private List<CardEffect> onBlockEffects = List.of();
-    @Setter private List<CardEffect> upkeepTriggeredEffects = List.of();
-    @Setter private List<CardEffect> tapActivatedAbilityEffects = List.of();
     @Setter private String tapActivatedAbilityCost;
-    @Setter private List<CardEffect> manaActivatedAbilityEffects = List.of();
     @Setter private String manaActivatedAbilityCost;
     @Setter private boolean needsTarget;
     @Setter private String setCode;
     @Setter private String collectorNumber;
     @Setter private String flavorText;
 
+    private Map<EffectSlot, List<CardEffect>> effects = new EnumMap<>(EffectSlot.class);
+
+    public List<CardEffect> getEffects(EffectSlot slot) {
+        return effects.getOrDefault(slot, List.of());
+    }
+
+    public void addEffect(EffectSlot slot, CardEffect effect) {
+        effects.computeIfAbsent(slot, k -> new ArrayList<>()).add(effect);
+    }
+
     public boolean isAura() {
         return subtypes.contains(CardSubtype.AURA);
     }
 
     public boolean isNeedsDamageDistribution() {
-        return Stream.of(spellEffects, tapActivatedAbilityEffects)
+        return Stream.of(getEffects(EffectSlot.SPELL), getEffects(EffectSlot.TAP_ACTIVATED_ABILITY))
                 .flatMap(List::stream)
                 .anyMatch(e -> e instanceof DealXDamageDividedAmongTargetAttackingCreaturesEffect);
     }

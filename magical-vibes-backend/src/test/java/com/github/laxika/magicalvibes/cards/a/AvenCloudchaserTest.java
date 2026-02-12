@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -52,8 +53,8 @@ class AvenCloudchaserTest {
         assertThat(card.getKeywords()).containsExactly(Keyword.FLYING);
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.BIRD, CardSubtype.SOLDIER);
         assertThat(card.isNeedsTarget()).isTrue();
-        assertThat(card.getOnEnterBattlefieldEffects()).hasSize(1);
-        assertThat(card.getOnEnterBattlefieldEffects().getFirst())
+        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
                 .isInstanceOf(DestroyTargetPermanentEffect.class);
     }
 

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Player;
@@ -46,8 +47,8 @@ class DemystifyTest {
         assertThat(card.getManaCost()).isEqualTo("{W}");
         assertThat(card.getColor()).isEqualTo(CardColor.WHITE);
         assertThat(card.isNeedsTarget()).isTrue();
-        assertThat(card.getSpellEffects()).hasSize(1);
-        assertThat(card.getSpellEffects().getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
     }
 
     // ===== Casting =====

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -73,10 +74,10 @@ class PaladinEnVecTest {
         assertThat(card.getToughness()).isEqualTo(2);
         assertThat(card.getKeywords()).contains(Keyword.FIRST_STRIKE);
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.HUMAN, CardSubtype.KNIGHT);
-        assertThat(card.getStaticEffects()).hasSize(1);
-        assertThat(card.getStaticEffects().getFirst()).isInstanceOf(ProtectionFromColorsEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(ProtectionFromColorsEffect.class);
 
-        ProtectionFromColorsEffect protection = (ProtectionFromColorsEffect) card.getStaticEffects().getFirst();
+        ProtectionFromColorsEffect protection = (ProtectionFromColorsEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(protection.colors()).containsExactlyInAnyOrder(CardColor.BLACK, CardColor.RED);
     }
 

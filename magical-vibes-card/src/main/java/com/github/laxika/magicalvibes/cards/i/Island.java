@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -15,6 +16,6 @@ public class Island extends Card {
 
         setSubtypes(List.of(CardSubtype.ISLAND));
         setCardText("{T}: Add {U}.");
-        setOnTapEffects(List.of(new AwardManaEffect("U")));
+        addEffect(EffectSlot.ON_TAP, new AwardManaEffect("U"));
     }
 }

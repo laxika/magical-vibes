@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -57,8 +58,8 @@ class PacifismTest {
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.AURA);
         assertThat(card.isNeedsTarget()).isTrue();
         assertThat(card.isAura()).isTrue();
-        assertThat(card.getStaticEffects()).hasSize(1);
-        assertThat(card.getStaticEffects().getFirst()).isInstanceOf(EnchantedCreatureCantAttackOrBlockEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(EnchantedCreatureCantAttackOrBlockEffect.class);
     }
 
     // ===== Casting and resolving =====

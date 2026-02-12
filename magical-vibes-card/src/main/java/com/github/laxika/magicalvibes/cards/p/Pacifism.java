@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
@@ -16,6 +17,6 @@ public class Pacifism extends Card {
         setSubtypes(List.of(CardSubtype.AURA));
         setCardText("Enchant creature\nEnchanted creature can't attack or block.");
         setNeedsTarget(true);
-        setStaticEffects(List.of(new EnchantedCreatureCantAttackOrBlockEffect()));
+        addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect());
     }
 }

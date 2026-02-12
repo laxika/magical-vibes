@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -51,8 +52,8 @@ class KjeldoranRoyalGuardTest {
         assertThat(card.getPower()).isEqualTo(2);
         assertThat(card.getToughness()).isEqualTo(5);
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.HUMAN, CardSubtype.SOLDIER);
-        assertThat(card.getTapActivatedAbilityEffects()).hasSize(1);
-        assertThat(card.getTapActivatedAbilityEffects().getFirst())
+        assertThat(card.getEffects(EffectSlot.TAP_ACTIVATED_ABILITY)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.TAP_ACTIVATED_ABILITY).getFirst())
                 .isInstanceOf(RedirectUnblockedCombatDamageToSelfEffect.class);
     }
 

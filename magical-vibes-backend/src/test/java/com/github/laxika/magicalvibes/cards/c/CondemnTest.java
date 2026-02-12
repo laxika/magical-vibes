@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -49,9 +50,9 @@ class CondemnTest {
         assertThat(card.getManaCost()).isEqualTo("{W}");
         assertThat(card.getColor()).isEqualTo(CardColor.WHITE);
         assertThat(card.isNeedsTarget()).isTrue();
-        assertThat(card.getSpellEffects()).hasSize(2);
-        assertThat(card.getSpellEffects().get(0)).isInstanceOf(GainLifeEqualToTargetToughnessEffect.class);
-        assertThat(card.getSpellEffects().get(1)).isInstanceOf(PutTargetOnBottomOfLibraryEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(GainLifeEqualToTargetToughnessEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(PutTargetOnBottomOfLibraryEffect.class);
     }
 
     // ===== Casting =====
