@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.cards.s.StarlightInvoker;
 import com.github.laxika.magicalvibes.cards.s.SteadfastGuard;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.cards.s.SerrasEmbrace;
+import com.github.laxika.magicalvibes.cards.t.TempestOfLight;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -113,6 +114,7 @@ public enum CardSet {
             new CardPrinting("10E", "47", StarlightInvoker::new),
             new CardPrinting("10E", "48", SteadfastGuard::new),
             new CardPrinting("10E", "50", SuntailHawk::new, "It beats its wings of light so fast, all you can see is a golden blur in the sky and a white feather drifting down."),
+            new CardPrinting("10E", "51", TempestOfLight::new, "\"Let the fires of faith keep the shadows at bay.\"\n\u2014Emeria, angel of Kabira"),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
             new CardPrinting("10E", "382", Forest::new),

@@ -77,6 +77,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchant
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -389,6 +390,8 @@ public class GameService {
                 resolveGainLife(gameData, entry.getControllerId(), gainLife.amount());
             } else if (effect instanceof GainLifePerGraveyardCardEffect) {
                 resolveGainLifePerGraveyardCard(gameData, entry.getControllerId());
+            } else if (effect instanceof DestroyAllEnchantmentsEffect) {
+                resolveDestroyAllEnchantments(gameData);
             } else if (effect instanceof DestroyTargetPermanentEffect destroy) {
                 resolveDestroyTargetPermanent(gameData, entry, destroy);
             } else if (effect instanceof DealXDamageToTargetCreatureEffect) {
@@ -1533,6 +1536,38 @@ public class GameService {
 
         if (!destroyed.isEmpty()) {
             removeOrphanedAuras(gameData);
+            broadcastBattlefields(gameData);
+            broadcastGraveyards(gameData);
+        }
+    }
+
+    private void resolveDestroyAllEnchantments(GameData gameData) {
+        List<Permanent> toDestroy = new ArrayList<>();
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            for (Permanent perm : gameData.playerBattlefields.get(playerId)) {
+                if (perm.getCard().getType() == CardType.ENCHANTMENT) {
+                    toDestroy.add(perm);
+                }
+            }
+        }
+
+        for (Permanent perm : toDestroy) {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                if (battlefield != null && battlefield.remove(perm)) {
+                    gameData.playerGraveyards.get(playerId).add(perm.getCard());
+
+                    String logEntry = perm.getCard().getName() + " is destroyed.";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                    log.info("Game {} - {} is destroyed", gameData.id, perm.getCard().getName());
+                    break;
+                }
+            }
+        }
+
+        if (!toDestroy.isEmpty()) {
             broadcastBattlefields(gameData);
             broadcastGraveyards(gameData);
         }
