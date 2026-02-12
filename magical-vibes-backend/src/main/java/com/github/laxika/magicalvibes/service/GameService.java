@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
@@ -409,6 +410,8 @@ public class GameService {
                 resolveBoostTargetCreature(gameData, entry, boost);
             } else if (effect instanceof BoostTargetBlockingCreatureEffect boost) {
                 resolveBoostTargetCreature(gameData, entry, new BoostTargetCreatureEffect(boost.powerBoost(), boost.toughnessBoost()));
+            } else if (effect instanceof BoostAllOwnCreaturesEffect boost) {
+                resolveBoostAllOwnCreatures(gameData, entry, boost);
             } else if (effect instanceof GrantKeywordToTargetEffect grant) {
                 resolveGrantKeywordToTarget(gameData, entry, grant);
             } else if (effect instanceof PreventDamageToTargetEffect prevent) {
@@ -1443,6 +1446,24 @@ public class GameService {
         log.info("Game {} - {} gets +{}/+{}", gameData.id, target.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
     }
 
+    private void resolveBoostAllOwnCreatures(GameData gameData, StackEntry entry, BoostAllOwnCreaturesEffect boost) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (permanent.getCard().getType() == CardType.CREATURE) {
+                permanent.setPowerModifier(permanent.getPowerModifier() + boost.powerBoost());
+                permanent.setToughnessModifier(permanent.getToughnessModifier() + boost.toughnessBoost());
+                count++;
+            }
+        }
+
+        String logEntry = entry.getCard().getName() + " gives +" + boost.powerBoost() + "/+" + boost.toughnessBoost() + " to " + count + " creature(s) until end of turn.";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        broadcastBattlefields(gameData);
+
+        log.info("Game {} - {} boosts {} creatures +{}/+{}", gameData.id, entry.getCard().getName(), count, boost.powerBoost(), boost.toughnessBoost());
+    }
 
     private void resolveGrantKeywordToTarget(GameData gameData, StackEntry entry, GrantKeywordToTargetEffect grant) {
         Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
