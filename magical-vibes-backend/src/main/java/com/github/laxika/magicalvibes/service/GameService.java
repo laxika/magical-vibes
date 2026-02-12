@@ -1795,6 +1795,8 @@ public class GameService {
             broadcastBattlefields(gameData);
             broadcastGraveyards(gameData);
             broadcastPlayableCards(gameData);
+
+            resolveAutoPass(gameData);
         }
     }
 
