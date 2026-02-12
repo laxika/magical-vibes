@@ -19,6 +19,7 @@ public class StackEntry {
     private final UUID targetPermanentId;
     private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
+    private final TargetZone targetZone;
 
     // Creature spell constructor
     public StackEntry(Card card, UUID controllerId) {
@@ -31,6 +32,7 @@ public class StackEntry {
         this.targetPermanentId = null;
         this.sourcePermanentId = null;
         this.damageAssignments = Map.of();
+        this.targetZone = null;
     }
 
     // Triggered ability constructor
@@ -44,6 +46,7 @@ public class StackEntry {
         this.targetPermanentId = null;
         this.sourcePermanentId = null;
         this.damageAssignments = Map.of();
+        this.targetZone = null;
     }
 
     // General constructor with xValue (for sorcery spells)
@@ -57,6 +60,7 @@ public class StackEntry {
         this.targetPermanentId = null;
         this.sourcePermanentId = null;
         this.damageAssignments = Map.of();
+        this.targetZone = null;
     }
 
     // Targeted or damage distribution spell constructor
@@ -70,6 +74,7 @@ public class StackEntry {
         this.targetPermanentId = targetPermanentId;
         this.sourcePermanentId = null;
         this.damageAssignments = damageAssignments != null ? damageAssignments : Map.of();
+        this.targetZone = null;
     }
 
     // Triggered ability with source and target permanent constructor
@@ -83,5 +88,20 @@ public class StackEntry {
         this.targetPermanentId = targetPermanentId;
         this.sourcePermanentId = sourcePermanentId;
         this.damageAssignments = Map.of();
+        this.targetZone = null;
+    }
+
+    // Zone-aware targeted ability constructor (e.g. target a card in graveyard)
+    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, UUID targetPermanentId, TargetZone targetZone) {
+        this.entryType = entryType;
+        this.card = card;
+        this.controllerId = controllerId;
+        this.description = description;
+        this.effectsToResolve = effectsToResolve;
+        this.xValue = 0;
+        this.targetPermanentId = targetPermanentId;
+        this.sourcePermanentId = null;
+        this.damageAssignments = Map.of();
+        this.targetZone = targetZone;
     }
 }

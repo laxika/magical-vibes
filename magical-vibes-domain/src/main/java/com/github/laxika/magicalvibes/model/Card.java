@@ -8,12 +8,14 @@ import lombok.Setter;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 @Getter
 @RequiredArgsConstructor
 public class Card {
 
+    private final UUID id = UUID.randomUUID();
     private final String name;
     private final CardType type;
     private final String manaCost;

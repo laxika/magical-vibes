@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
+import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.SacrificePermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 
@@ -47,6 +48,8 @@ public interface MessageHandler {
     void handleDeclareBlockers(Connection connection, DeclareBlockersRequest request) throws Exception;
 
     void handleCardChosen(Connection connection, CardChosenRequest request) throws Exception;
+
+    void handlePermanentChosen(Connection connection, PermanentChosenRequest request) throws Exception;
 
     void handleTimeout(Connection connection);
 

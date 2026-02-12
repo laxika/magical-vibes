@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
@@ -101,7 +102,15 @@ public class GameTestHarness {
     }
 
     public void activateAbility(Player player, int permanentIndex, Integer xValue, UUID targetPermanentId) {
-        gameService.activateAbility(gameData, player, permanentIndex, xValue, targetPermanentId);
+        gameService.activateAbility(gameData, player, permanentIndex, xValue, targetPermanentId, null);
+    }
+
+    public void activateAbility(Player player, int permanentIndex, Integer xValue, UUID targetPermanentId, TargetZone targetZone) {
+        gameService.activateAbility(gameData, player, permanentIndex, xValue, targetPermanentId, targetZone);
+    }
+
+    public void handlePermanentChosen(Player player, UUID permanentId) {
+        gameService.handlePermanentChosen(gameData, player, permanentId);
     }
 
     public UUID getPermanentId(Player player, String cardName) {

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessa
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
+import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.BattlefieldUpdatedMessage;
 import com.github.laxika.magicalvibes.networking.message.DeckSizesUpdatedMessage;
 import com.github.laxika.magicalvibes.networking.message.GameLogEntryMessage;
@@ -34,6 +35,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -63,6 +65,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -311,9 +314,16 @@ public class GameService {
                 || entry.getEntryType() == StackEntryType.SORCERY_SPELL
                 || entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
             // Check if targeted spell/ability fizzles due to illegal target
-            if (entry.getTargetPermanentId() != null
-                    && findPermanentById(gameData, entry.getTargetPermanentId()) == null
-                    && !gameData.playerIds.contains(entry.getTargetPermanentId())) {
+            boolean targetFizzled = false;
+            if (entry.getTargetPermanentId() != null) {
+                if (entry.getTargetZone() == TargetZone.GRAVEYARD) {
+                    targetFizzled = findCardInGraveyardById(gameData, entry.getTargetPermanentId()) == null;
+                } else {
+                    targetFizzled = findPermanentById(gameData, entry.getTargetPermanentId()) == null
+                            && !gameData.playerIds.contains(entry.getTargetPermanentId());
+                }
+            }
+            if (targetFizzled) {
                 String fizzleLog = entry.getDescription() + " fizzles (target no longer exists).";
                 gameData.gameLog.add(fizzleLog);
                 broadcastLogEntry(gameData, fizzleLog);
@@ -399,6 +409,8 @@ public class GameService {
                 resolvePreventDamageFromColors(gameData, prevent);
             } else if (effect instanceof RedirectUnblockedCombatDamageToSelfEffect) {
                 resolveRedirectUnblockedCombatDamageToSelf(gameData, entry);
+            } else if (effect instanceof ReturnAuraFromGraveyardToBattlefieldEffect) {
+                resolveReturnAuraFromGraveyardToBattlefield(gameData, entry);
             }
         }
         removeOrphanedAuras(gameData);
@@ -966,7 +978,7 @@ public class GameService {
         }
     }
 
-    public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer xValue, UUID targetPermanentId) {
+    public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer xValue, UUID targetPermanentId, TargetZone targetZone) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
@@ -1046,6 +1058,21 @@ public class GameService {
                         throw new IllegalStateException("Target must be an attacking or blocking creature");
                     }
                 }
+                if (effect instanceof ReturnAuraFromGraveyardToBattlefieldEffect) {
+                    if (targetZone != TargetZone.GRAVEYARD) {
+                        throw new IllegalStateException("Ability requires a graveyard target");
+                    }
+                    if (targetPermanentId == null) {
+                        throw new IllegalStateException("Ability requires a target Aura card");
+                    }
+                    Card graveyardCard = findCardInGraveyardById(gameData, targetPermanentId);
+                    if (graveyardCard == null) {
+                        throw new IllegalStateException("Target card not found in any graveyard");
+                    }
+                    if (!graveyardCard.isAura()) {
+                        throw new IllegalStateException("Target card must be an Aura");
+                    }
+                }
             }
 
             // For mana abilities, self-target if no explicit target
@@ -1065,16 +1092,28 @@ public class GameService {
             log.info("Game {} - {} activates {}'s ability", gameData.id, player.getUsername(), permanent.getCard().getName());
 
             // Push activated ability on stack
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.ACTIVATED_ABILITY,
-                    permanent.getCard(),
-                    playerId,
-                    permanent.getCard().getName() + "'s ability",
-                    new ArrayList<>(abilityEffects),
-                    effectiveXValue,
-                    effectiveTargetId,
-                    Map.of()
-            ));
+            if (targetZone != null && targetZone != TargetZone.BATTLEFIELD) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.ACTIVATED_ABILITY,
+                        permanent.getCard(),
+                        playerId,
+                        permanent.getCard().getName() + "'s ability",
+                        new ArrayList<>(abilityEffects),
+                        effectiveTargetId,
+                        targetZone
+                ));
+            } else {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.ACTIVATED_ABILITY,
+                        permanent.getCard(),
+                        playerId,
+                        permanent.getCard().getName() + "'s ability",
+                        new ArrayList<>(abilityEffects),
+                        effectiveXValue,
+                        effectiveTargetId,
+                        Map.of()
+                ));
+            }
             gameData.priorityPassedBy.clear();
 
             broadcastBattlefields(gameData);
@@ -1631,6 +1670,104 @@ public class GameService {
         }
     }
 
+    private void resolveReturnAuraFromGraveyardToBattlefield(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+
+        // Find the target Aura card in graveyards by its Card UUID
+        Card auraCard = findCardInGraveyardById(gameData, entry.getTargetPermanentId());
+        if (auraCard == null || !auraCard.isAura()) {
+            String fizzleLog = entry.getDescription() + " fizzles (target Aura no longer in graveyard).";
+            gameData.gameLog.add(fizzleLog);
+            broadcastLogEntry(gameData, fizzleLog);
+            return;
+        }
+
+        // Check if controller has any creatures to attach to
+        List<Permanent> controllerBf = gameData.playerBattlefields.get(controllerId);
+        List<UUID> creatureIds = new ArrayList<>();
+        if (controllerBf != null) {
+            for (Permanent p : controllerBf) {
+                if (p.getCard().getType() == CardType.CREATURE) {
+                    creatureIds.add(p.getId());
+                }
+            }
+        }
+
+        if (creatureIds.isEmpty()) {
+            String fizzleLog = entry.getDescription() + " fizzles (no creatures to attach Aura to).";
+            gameData.gameLog.add(fizzleLog);
+            broadcastLogEntry(gameData, fizzleLog);
+            return;
+        }
+
+        // Remove Aura from graveyard and store as pending
+        removeCardFromGraveyardById(gameData, auraCard.getId());
+        gameData.pendingAuraCard = auraCard;
+
+        // Prompt controller to choose a creature
+        beginPermanentChoice(gameData, controllerId, creatureIds, "Choose a creature you control to attach " + auraCard.getName() + " to.");
+    }
+
+    private void beginPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, String prompt) {
+        gameData.awaitingPermanentChoice = true;
+        gameData.awaitingPermanentChoicePlayerId = playerId;
+        gameData.awaitingPermanentChoiceValidIds = new HashSet<>(validIds);
+        sessionManager.sendToPlayer(playerId, new ChoosePermanentMessage(validIds, prompt));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a permanent", gameData.id, playerName);
+    }
+
+    public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
+        synchronized (gameData) {
+            if (!gameData.awaitingPermanentChoice) {
+                throw new IllegalStateException("Not awaiting permanent choice");
+            }
+            if (!player.getId().equals(gameData.awaitingPermanentChoicePlayerId)) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+
+            UUID playerId = player.getId();
+            Set<UUID> validIds = gameData.awaitingPermanentChoiceValidIds;
+
+            gameData.awaitingPermanentChoice = false;
+            gameData.awaitingPermanentChoicePlayerId = null;
+            gameData.awaitingPermanentChoiceValidIds = null;
+
+            if (!validIds.contains(permanentId)) {
+                throw new IllegalStateException("Invalid permanent: " + permanentId);
+            }
+
+            Card auraCard = gameData.pendingAuraCard;
+            gameData.pendingAuraCard = null;
+
+            if (auraCard == null) {
+                throw new IllegalStateException("No pending Aura card");
+            }
+
+            Permanent creatureTarget = findPermanentById(gameData, permanentId);
+            if (creatureTarget == null) {
+                throw new IllegalStateException("Target creature no longer exists");
+            }
+
+            // Create Aura permanent attached to the creature, under controller's control
+            Permanent auraPerm = new Permanent(auraCard);
+            auraPerm.setAttachedTo(creatureTarget.getId());
+            gameData.playerBattlefields.get(playerId).add(auraPerm);
+
+            String playerName = gameData.playerIdToName.get(playerId);
+            String logEntry = auraCard.getName() + " enters the battlefield from graveyard attached to " + creatureTarget.getCard().getName() + " under " + playerName + "'s control.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            log.info("Game {} - {} returned {} from graveyard to battlefield attached to {}",
+                    gameData.id, playerName, auraCard.getName(), creatureTarget.getCard().getName());
+
+            broadcastBattlefields(gameData);
+            broadcastGraveyards(gameData);
+            broadcastPlayableCards(gameData);
+        }
+    }
+
     private int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage) {
         if (permanent.getCard().getStaticEffects().stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
         if (hasAuraPreventingAllDamage(gameData, permanent)) return 0;
@@ -1726,6 +1863,30 @@ public class GameService {
             }
         }
         return null;
+    }
+
+    private Card findCardInGraveyardById(GameData gameData, UUID cardId) {
+        if (cardId == null) return null;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card c : graveyard) {
+                if (c.getId().equals(cardId)) {
+                    return c;
+                }
+            }
+        }
+        return null;
+    }
+
+    private void removeCardFromGraveyardById(GameData gameData, UUID cardId) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            if (graveyard.removeIf(c -> c.getId().equals(cardId))) {
+                return;
+            }
+        }
     }
 
     private void resetEndOfTurnModifiers(GameData gameData) {
@@ -2518,7 +2679,7 @@ public class GameService {
 
     private void resolveAutoPass(GameData gameData) {
         for (int safety = 0; safety < 100; safety++) {
-            if (gameData.awaitingAttackerDeclaration || gameData.awaitingBlockerDeclaration || gameData.awaitingCardChoice) {
+            if (gameData.awaitingAttackerDeclaration || gameData.awaitingBlockerDeclaration || gameData.awaitingCardChoice || gameData.awaitingPermanentChoice) {
                 broadcastPlayableCards(gameData);
                 return;
             }

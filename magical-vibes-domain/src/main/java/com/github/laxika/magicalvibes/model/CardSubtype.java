@@ -25,7 +25,8 @@ public enum CardSubtype {
     REBEL("Rebel"),
     KNIGHT("Knight"),
     SPIRIT("Spirit"),
-    AURA("Aura");
+    AURA("Aura"),
+    NOMAD("Nomad");
 
     @Getter
     private final String displayName;

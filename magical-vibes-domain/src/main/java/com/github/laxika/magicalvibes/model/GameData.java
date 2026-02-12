@@ -48,6 +48,10 @@ public class GameData {
     public boolean preventAllCombatDamage;
     public final Set<CardColor> preventDamageFromColors = ConcurrentHashMap.newKeySet();
     public UUID combatDamageRedirectTarget;
+    public boolean awaitingPermanentChoice;
+    public UUID awaitingPermanentChoicePlayerId;
+    public Set<UUID> awaitingPermanentChoiceValidIds;
+    public Card pendingAuraCard;
 
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {
         this.id = id;
