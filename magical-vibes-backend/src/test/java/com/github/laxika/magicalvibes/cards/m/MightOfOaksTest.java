@@ -129,6 +129,7 @@ class MightOfOaksTest {
         harness.addMana(player2, "G", 4);
 
         UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.passPriority(player1);
         harness.castInstant(player2, 0, bearId);
 
         assertThat(harness.getGameData().stack).hasSize(2);

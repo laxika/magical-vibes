@@ -466,8 +466,8 @@ class HighGroundTest {
 
         // Player2 doesn't have High Ground — cannot multi-block
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
-                new BlockerAssignment(0, 0),
-                new BlockerAssignment(0, 1)
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(0, 2)
         )))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("too many times");

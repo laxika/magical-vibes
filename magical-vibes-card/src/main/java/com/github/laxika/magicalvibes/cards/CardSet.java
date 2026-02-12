@@ -34,7 +34,10 @@ import com.github.laxika.magicalvibes.cards.l.LoyalSentry;
 import com.github.laxika.magicalvibes.cards.l.Luminesce;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
+import com.github.laxika.magicalvibes.cards.m.Mobilization;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import lombok.Getter;
@@ -73,6 +76,8 @@ public enum CardSet {
             new CardPrinting("10E", "27", LoyalSentry::new, "\"I am not the first to stand in this doorway, and I will not be the last. I stand here because I was told to, and I will not leave until I am told to. This is all that matters.\""),
             new CardPrinting("10E", "28", Luminesce::new, "\"I will not have my flock cower in the shadow of death.\"\n\u2014Lucilde Fiksdotter, Order of the White Shield"),
             new CardPrinting("10E", "30", NomadMythmaker::new, "\"On the wild steppes, history vanishes in the dust. Only the mythmakers remain to say what was, and is, and will be.\""),
+            new CardPrinting("10E", "31", Pacifism::new, "For the first time in his life, Grakk felt a little warm and fuzzy inside."),
+            new CardPrinting("10E", "32", PaladinEnVec::new),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
             new CardPrinting("10E", "382", Forest::new),
@@ -82,6 +87,7 @@ public enum CardSet {
             new CardPrinting("10E", "269", HuntedWumpus::new, "\"Just one can feed a dozen people for a month.\""),
             new CardPrinting("10E", "270", Hurricane::new, "\"Don't envy the grandeur of drakes. Their impression of grace fades when the first gust sends them crashing into one another.\"\n\u2014Molimo, maro-sorcerer"),
             new CardPrinting("10E", "274", LlanowarElves::new, "\"One bone broken for every twig snapped underfoot.\"\n\u2014Llanowar penalty for trespassing"),
+            new CardPrinting("10E", "29", Mobilization::new),
             new CardPrinting("10E", "277", MightOfOaks::new, "\"Guess where I'm gonna plant this!\""),
             new CardPrinting("10E", "376", Mountain::new),
             new CardPrinting("10E", "377", Mountain::new),

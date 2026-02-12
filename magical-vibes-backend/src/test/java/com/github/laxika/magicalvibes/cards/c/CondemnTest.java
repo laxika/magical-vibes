@@ -69,6 +69,7 @@ class CondemnTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Condemn()));
         harness.addMana(player2, "W", 1);
+        harness.passPriority(player1);
 
         harness.castInstant(player2, 0, attacker.getId());
 
@@ -90,6 +91,7 @@ class CondemnTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Condemn()));
         harness.addMana(player2, "W", 1);
+        harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
@@ -103,6 +105,7 @@ class CondemnTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Condemn()));
         harness.addMana(player2, "W", 1);
+        harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -126,6 +129,7 @@ class CondemnTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Condemn()));
         harness.addMana(player2, "W", 1);
+        harness.passPriority(player1);
 
         harness.castInstant(player2, 0, attacker.getId());
         harness.passBothPriorities();
@@ -158,6 +162,7 @@ class CondemnTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Condemn()));
         harness.addMana(player2, "W", 1);
+        harness.passPriority(player1);
 
         harness.castInstant(player2, 0, attacker.getId());
         harness.passBothPriorities();
@@ -182,6 +187,7 @@ class CondemnTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Condemn()));
         harness.addMana(player2, "W", 1);
+        harness.passPriority(player1);
 
         harness.castInstant(player2, 0, attacker.getId());
         harness.passBothPriorities();
@@ -203,6 +209,7 @@ class CondemnTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Condemn()));
         harness.addMana(player2, "W", 1);
+        harness.passPriority(player1);
 
         harness.castInstant(player2, 0, attacker.getId());
         harness.passBothPriorities();
@@ -230,6 +237,7 @@ class CondemnTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Condemn()));
         harness.addMana(player2, "W", 1);
+        harness.passPriority(player1);
 
         harness.castInstant(player2, 0, attacker.getId());
 
