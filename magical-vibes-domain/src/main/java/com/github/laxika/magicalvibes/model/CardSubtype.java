@@ -21,6 +21,7 @@ public enum CardSubtype {
     HUMAN("Human"),
     CLERIC("Cleric"),
     BIRD("Bird"),
+    CAT("Cat"),
     SOLDIER("Soldier"),
     REBEL("Rebel"),
     KNIGHT("Knight"),

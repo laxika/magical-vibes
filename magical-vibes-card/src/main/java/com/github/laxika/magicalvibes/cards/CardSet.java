@@ -46,6 +46,8 @@ import com.github.laxika.magicalvibes.cards.r.Righteousness;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 import com.github.laxika.magicalvibes.cards.s.SamiteHealer;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.SkyhunterPatrol;
+import com.github.laxika.magicalvibes.cards.s.SkyhunterProwler;
 import com.github.laxika.magicalvibes.cards.s.SerrasEmbrace;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import lombok.Getter;
@@ -95,6 +97,8 @@ public enum CardSet {
             new CardPrinting("10E", "38", SamiteHealer::new, "\"Healers ultimately acquire the divine gifts of spiritual and physical wholeness. The most devout are also granted the ability to pass physical wholeness on to others.\""),
             new CardPrinting("10E", "39", SerraAngel::new, "\"Her sword sings more beautifully than any choir.\""),
             new CardPrinting("10E", "40", SerrasEmbrace::new),
+            new CardPrinting("10E", "41", SkyhunterPatrol::new, "\"We leonin have come to rule the plains by taking to the skies.\"\n\u2014Raksha Golden Cub"),
+            new CardPrinting("10E", "42", SkyhunterProwler::new, "\"As tireless as her mount, a skyhunter's vigil is measured in days.\""),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
             new CardPrinting("10E", "382", Forest::new),
