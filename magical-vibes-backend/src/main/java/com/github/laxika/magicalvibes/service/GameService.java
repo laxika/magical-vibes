@@ -292,30 +292,7 @@ public class GameService {
 
             log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
 
-            // Check for ETB effects and push triggered abilities onto the stack
-            if (!card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).isEmpty()) {
-                // For targeted ETB effects, only trigger if a target was provided
-                if (!card.isNeedsTarget() || entry.getTargetPermanentId() != null) {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            card,
-                            controllerId,
-                            card.getName() + "'s ETB ability",
-                            new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)),
-                            0,
-                            entry.getTargetPermanentId(),
-                            Map.of()
-                    ));
-                    String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
-                    gameData.gameLog.add(etbLog);
-                    broadcastLogEntry(gameData, etbLog);
-                    log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
-                }
-            }
-
-            // Check for ally-creature-enters triggers (e.g. Angelic Chorus)
-            checkAllyCreatureEntersTriggers(gameData, controllerId, card);
-            checkAnyCreatureEntersTriggers(gameData, controllerId, card);
+            handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId());
         } else if (entry.getEntryType() == StackEntryType.ENCHANTMENT_SPELL) {
             Card card = entry.getCard();
             UUID controllerId = entry.getControllerId();
@@ -1264,6 +1241,34 @@ public class GameService {
         resolveGainLife(gameData, controllerId, amount);
     }
 
+    private void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId) {
+        // 1. Self ETB effects
+        if (!card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).isEmpty()) {
+            if (!card.isNeedsTarget() || targetPermanentId != null) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        controllerId,
+                        card.getName() + "'s ETB ability",
+                        new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)),
+                        0,
+                        targetPermanentId,
+                        Map.of()
+                ));
+                String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
+                gameData.gameLog.add(etbLog);
+                broadcastLogEntry(gameData, etbLog);
+                log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
+            }
+        }
+
+        // 2. Ally creature enters triggers (e.g. Angelic Chorus)
+        checkAllyCreatureEntersTriggers(gameData, controllerId, card);
+
+        // 3. Any other creature enters triggers (e.g. Soul Warden)
+        checkAnyCreatureEntersTriggers(gameData, controllerId, card);
+    }
+
     private void checkAllyCreatureEntersTriggers(GameData gameData, UUID controllerId, Card enteringCreature) {
         if (enteringCreature.getToughness() == null) return;
 
@@ -1374,24 +1379,7 @@ public class GameService {
                 broadcastLogEntry(gameData, logEntry);
                 log.info("Game {} - {} puts {} onto the battlefield", gameData.id, player.getUsername(), card.getName());
 
-                // Check if the creature entering via ETB has its own ETB effects
-                if (!card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).isEmpty()) {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            card,
-                            playerId,
-                            card.getName() + "'s ETB ability",
-                            new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))
-                    ));
-                    String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
-                    gameData.gameLog.add(etbLog);
-                    broadcastLogEntry(gameData, etbLog);
-                    broadcastStackUpdate(gameData);
-                    log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
-                }
-
-                checkAllyCreatureEntersTriggers(gameData, playerId, card);
-                checkAnyCreatureEntersTriggers(gameData, playerId, card);
+                handleCreatureEnteredBattlefield(gameData, playerId, card, null);
             }
 
             resolveAutoPass(gameData);
@@ -1984,24 +1972,7 @@ public class GameService {
                 broadcastBattlefields(gameData);
                 broadcastGraveyards(gameData);
 
-                // Check for ETB effects on the returned creature
-                if (!card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).isEmpty()) {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            card,
-                            playerId,
-                            card.getName() + "'s ETB ability",
-                            new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))
-                    ));
-                    String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
-                    gameData.gameLog.add(etbLog);
-                    broadcastLogEntry(gameData, etbLog);
-                    broadcastStackUpdate(gameData);
-                    log.info("Game {} - {} ETB ability pushed onto stack (via graveyard return)", gameData.id, card.getName());
-                }
-
-                checkAllyCreatureEntersTriggers(gameData, playerId, card);
-                checkAnyCreatureEntersTriggers(gameData, playerId, card);
+                handleCreatureEnteredBattlefield(gameData, playerId, card, null);
             }
 
             resolveAutoPass(gameData);
@@ -2022,7 +1993,7 @@ public class GameService {
         broadcastLogEntry(gameData, logEntry);
         broadcastBattlefields(gameData);
 
-        checkAnyCreatureEntersTriggers(gameData, controllerId, tokenCard);
+        handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
 
         log.info("Game {} - {} token created for player {}", gameData.id, token.tokenName(), controllerId);
     }
