@@ -45,6 +45,7 @@ public class GameData {
     public final List<StackEntry> stack = Collections.synchronizedList(new ArrayList<>());
     public final Map<UUID, List<Card>> playerGraveyards = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
+    public int globalDamagePreventionShield;
     public boolean preventAllCombatDamage;
     public final Set<CardColor> preventDamageFromColors = ConcurrentHashMap.newKeySet();
     public UUID combatDamageRedirectTarget;

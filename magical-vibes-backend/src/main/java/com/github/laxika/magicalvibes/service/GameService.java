@@ -69,6 +69,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
@@ -424,6 +425,8 @@ public class GameService {
                 resolveGrantKeywordToTarget(gameData, entry, grant);
             } else if (effect instanceof PreventDamageToTargetEffect prevent) {
                 resolvePreventDamageToTarget(gameData, entry, prevent);
+            } else if (effect instanceof PreventNextDamageEffect prevent) {
+                resolvePreventNextDamage(gameData, prevent);
             } else if (effect instanceof DrawCardEffect) {
                 resolveDrawCard(gameData, entry.getControllerId());
             } else if (effect instanceof DoubleTargetPlayerLifeEffect) {
@@ -1605,6 +1608,23 @@ public class GameService {
         }
     }
 
+    private void resolvePreventNextDamage(GameData gameData, PreventNextDamageEffect prevent) {
+        gameData.globalDamagePreventionShield += prevent.amount();
+
+        String logEntry = "The next " + prevent.amount() + " damage that would be dealt to any permanent or player is prevented.";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        log.info("Game {} - Global prevention shield increased by {}", gameData.id, prevent.amount());
+    }
+
+    private int applyGlobalPreventionShield(GameData gameData, int damage) {
+        int shield = gameData.globalDamagePreventionShield;
+        if (shield <= 0 || damage <= 0) return damage;
+        int prevented = Math.min(shield, damage);
+        gameData.globalDamagePreventionShield = shield - prevented;
+        return damage - prevented;
+    }
+
     private void resolveDrawCard(GameData gameData, UUID playerId) {
         List<Card> deck = gameData.playerDecks.get(playerId);
         List<Card> hand = gameData.playerHands.get(playerId);
@@ -1968,6 +1988,7 @@ public class GameService {
     private int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage) {
         if (permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
         if (hasAuraPreventingAllDamage(gameData, permanent)) return 0;
+        damage = applyGlobalPreventionShield(gameData, damage);
         int shield = permanent.getDamagePreventionShield();
         if (shield <= 0 || damage <= 0) return damage;
         int prevented = Math.min(shield, damage);
@@ -2015,6 +2036,7 @@ public class GameService {
     }
 
     private int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage) {
+        damage = applyGlobalPreventionShield(gameData, damage);
         int shield = gameData.playerDamagePreventionShields.getOrDefault(playerId, 0);
         if (shield <= 0 || damage <= 0) return damage;
         int prevented = Math.min(shield, damage);
@@ -2165,6 +2187,7 @@ public class GameService {
 
         // Clear player damage prevention shields
         gameData.playerDamagePreventionShields.clear();
+        gameData.globalDamagePreventionShield = 0;
         gameData.preventAllCombatDamage = false;
         gameData.preventDamageFromColors.clear();
         gameData.combatDamageRedirectTarget = null;
