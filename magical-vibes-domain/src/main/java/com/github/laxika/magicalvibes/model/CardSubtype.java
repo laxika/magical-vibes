@@ -29,7 +29,8 @@ public enum CardSubtype {
     AURA("Aura"),
     NOMAD("Nomad"),
     WIZARD("Wizard"),
-    MUTANT("Mutant");
+    MUTANT("Mutant"),
+    WOLF("Wolf");
 
     @Getter
     private final String displayName;
