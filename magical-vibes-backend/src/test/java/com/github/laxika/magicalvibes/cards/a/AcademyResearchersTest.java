@@ -111,7 +111,7 @@ class AcademyResearchersTest {
         harness.passBothPriorities(); // resolve ETB
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.CARD_CHOICE);
+        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
         assertThat(gd.awaitingCardChoicePlayerId).isEqualTo(player1.getId());
         assertThat(gd.awaitingCardChoiceValidIndices).containsExactly(0);
     }
@@ -128,7 +128,7 @@ class AcademyResearchersTest {
         harness.passBothPriorities(); // resolve ETB
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.CARD_CHOICE);
+        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
         // Only indices 1 (HolyStrength) and 2 (Pacifism) should be valid
         assertThat(gd.awaitingCardChoiceValidIndices).containsExactlyInAnyOrder(1, 2);
     }
@@ -209,7 +209,7 @@ class AcademyResearchersTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldSizeBefore);
-        assertThat(gd.pendingAuraTargetPermanentId).isNull();
+        assertThat(gd.pendingCardChoiceTargetPermanentId).isNull();
     }
 
     // ===== No Auras in hand =====
@@ -226,7 +226,7 @@ class AcademyResearchersTest {
         harness.passBothPriorities(); // resolve ETB
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.CARD_CHOICE);
+        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("has no Aura cards in hand"));
     }
 
@@ -241,7 +241,7 @@ class AcademyResearchersTest {
         harness.passBothPriorities(); // resolve ETB
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.CARD_CHOICE);
+        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("has no Aura cards in hand"));
     }
 
@@ -262,7 +262,7 @@ class AcademyResearchersTest {
         harness.passBothPriorities(); // resolve ETB → should fizzle
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.CARD_CHOICE);
+        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("fizzles"));
     }
 
@@ -279,7 +279,7 @@ class AcademyResearchersTest {
         harness.passBothPriorities(); // resolve ETB
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.CARD_CHOICE);
+        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
         assertThat(gd.awaitingCardChoiceValidIndices).containsExactlyInAnyOrder(0, 1);
 
         // Choose Spirit Link (index 1)

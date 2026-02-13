@@ -1398,10 +1398,8 @@ public class GameService {
             return;
         }
 
-        gameData.pendingAuraTargetPermanentId = self.getId();
-
         String prompt = "You may put an Aura card from your hand onto the battlefield attached to " + entry.getCard().getName() + ".";
-        beginCardChoice(gameData, controllerId, auraIndices, prompt);
+        beginTargetedCardChoice(gameData, controllerId, auraIndices, prompt, self.getId());
     }
 
     private void resolveGainLife(GameData gameData, UUID controllerId, int amount) {
@@ -1599,9 +1597,20 @@ public class GameService {
         log.info("Game {} - Awaiting {} to choose a card from hand", gameData.id, playerName);
     }
 
+    private void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID targetPermanentId) {
+        gameData.awaitingInput = AwaitingInput.TARGETED_CARD_CHOICE;
+        gameData.awaitingCardChoicePlayerId = playerId;
+        gameData.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
+        gameData.pendingCardChoiceTargetPermanentId = targetPermanentId;
+        sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(validIndices, prompt));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a card from hand (targeted)", gameData.id, playerName);
+    }
+
     public void handleCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
-            if (gameData.awaitingInput != AwaitingInput.CARD_CHOICE) {
+            if (gameData.awaitingInput != AwaitingInput.CARD_CHOICE && gameData.awaitingInput != AwaitingInput.TARGETED_CARD_CHOICE) {
                 throw new IllegalStateException("Not awaiting card choice");
             }
             if (!player.getId().equals(gameData.awaitingCardChoicePlayerId)) {
@@ -1610,16 +1619,16 @@ public class GameService {
 
             UUID playerId = player.getId();
             Set<Integer> validIndices = gameData.awaitingCardChoiceValidIndices;
+            boolean isTargeted = gameData.awaitingInput == AwaitingInput.TARGETED_CARD_CHOICE;
 
             gameData.awaitingInput = null;
             gameData.awaitingCardChoicePlayerId = null;
             gameData.awaitingCardChoiceValidIndices = null;
 
-            UUID auraTargetId = gameData.pendingAuraTargetPermanentId;
-            gameData.pendingAuraTargetPermanentId = null;
+            UUID targetPermanentId = gameData.pendingCardChoiceTargetPermanentId;
+            gameData.pendingCardChoiceTargetPermanentId = null;
 
             if (cardIndex == -1) {
-                // Player declined
                 String logEntry = player.getUsername() + " chooses not to put a card onto the battlefield.";
                 gameData.gameLog.add(logEntry);
                 broadcastLogEntry(gameData, logEntry);
@@ -1632,47 +1641,52 @@ public class GameService {
                 List<Card> hand = gameData.playerHands.get(playerId);
                 Card card = hand.remove(cardIndex);
 
-                if (auraTargetId != null) {
-                    // Aura attachment (e.g. Academy Researchers ETB)
-                    Permanent target = findPermanentById(gameData, auraTargetId);
-                    if (target != null) {
-                        Permanent auraPerm = new Permanent(card);
-                        auraPerm.setAttachedTo(target.getId());
-                        gameData.playerBattlefields.get(playerId).add(auraPerm);
-
-                        sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
-                        broadcastBattlefields(gameData);
-
-                        String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield attached to " + target.getCard().getName() + ".";
-                        gameData.gameLog.add(logEntry);
-                        broadcastLogEntry(gameData, logEntry);
-                        log.info("Game {} - {} puts {} onto the battlefield attached to {}", gameData.id, player.getUsername(), card.getName(), target.getCard().getName());
-                    } else {
-                        // Target left the battlefield, put Aura back in hand
-                        hand.add(card);
-                        String logEntry = card.getName() + " can't be attached (target left the battlefield).";
-                        gameData.gameLog.add(logEntry);
-                        broadcastLogEntry(gameData, logEntry);
-                        log.info("Game {} - Aura target gone, {} returned to hand", gameData.id, card.getName());
-                    }
+                if (isTargeted) {
+                    resolveTargetedCardChoice(gameData, player, playerId, hand, card, targetPermanentId);
                 } else {
-                    // Creature onto battlefield (e.g. Hunted Wumpus ETB)
-                    gameData.playerBattlefields.get(playerId).add(new Permanent(card));
-
-                    sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
-                    broadcastBattlefields(gameData);
-
-                    String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield.";
-                    gameData.gameLog.add(logEntry);
-                    broadcastLogEntry(gameData, logEntry);
-                    log.info("Game {} - {} puts {} onto the battlefield", gameData.id, player.getUsername(), card.getName());
-
-                    handleCreatureEnteredBattlefield(gameData, playerId, card, null);
+                    resolveUntargetedCardChoice(gameData, player, playerId, hand, card);
                 }
             }
 
             resolveAutoPass(gameData);
         }
+    }
+
+    private void resolveTargetedCardChoice(GameData gameData, Player player, UUID playerId, List<Card> hand, Card card, UUID targetPermanentId) {
+        Permanent target = findPermanentById(gameData, targetPermanentId);
+        if (target != null) {
+            Permanent auraPerm = new Permanent(card);
+            auraPerm.setAttachedTo(target.getId());
+            gameData.playerBattlefields.get(playerId).add(auraPerm);
+
+            sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+            broadcastBattlefields(gameData);
+
+            String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield attached to " + target.getCard().getName() + ".";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            log.info("Game {} - {} puts {} onto the battlefield attached to {}", gameData.id, player.getUsername(), card.getName(), target.getCard().getName());
+        } else {
+            hand.add(card);
+            String logEntry = card.getName() + " can't be attached (target left the battlefield).";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            log.info("Game {} - Aura target gone, {} returned to hand", gameData.id, card.getName());
+        }
+    }
+
+    private void resolveUntargetedCardChoice(GameData gameData, Player player, UUID playerId, List<Card> hand, Card card) {
+        gameData.playerBattlefields.get(playerId).add(new Permanent(card));
+
+        sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+        broadcastBattlefields(gameData);
+
+        String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield.";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        log.info("Game {} - {} puts {} onto the battlefield", gameData.id, player.getUsername(), card.getName());
+
+        handleCreatureEnteredBattlefield(gameData, playerId, card, null);
     }
 
     // ===== Instant effect methods =====

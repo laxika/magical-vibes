@@ -52,7 +52,7 @@ public class GameData {
     public UUID awaitingPermanentChoicePlayerId;
     public Set<UUID> awaitingPermanentChoiceValidIds;
     public Card pendingAuraCard;
-    public UUID pendingAuraTargetPermanentId;
+    public UUID pendingCardChoiceTargetPermanentId;
     public UUID awaitingGraveyardChoicePlayerId;
     public Set<Integer> awaitingGraveyardChoiceValidIndices;
     public GraveyardChoiceDestination graveyardChoiceDestination;
