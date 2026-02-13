@@ -74,6 +74,7 @@ import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
@@ -497,6 +498,8 @@ public class GameService {
                 resolveTapTargetPermanent(gameData, entry);
             } else if (effect instanceof PreventNextColorDamageToControllerEffect prevent) {
                 resolvePreventNextColorDamageToController(gameData, entry, prevent);
+            } else if (effect instanceof PutAuraFromHandOntoSelfEffect) {
+                resolvePutAuraFromHandOntoSelf(gameData, entry);
             }
         }
         removeOrphanedAuras(gameData);
@@ -1341,6 +1344,55 @@ public class GameService {
         beginCardChoice(gameData, opponentId, creatureIndices, prompt);
     }
 
+    private void resolvePutAuraFromHandOntoSelf(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+
+        // Find the Academy Researchers permanent on the battlefield
+        Permanent self = null;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (p.getCard().getId().equals(entry.getCard().getId())) {
+                    self = p;
+                    break;
+                }
+            }
+        }
+
+        if (self == null) {
+            String fizzleLog = entry.getCard().getName() + "'s ability fizzles (no longer on the battlefield).";
+            gameData.gameLog.add(fizzleLog);
+            broadcastLogEntry(gameData, fizzleLog);
+            log.info("Game {} - {} ETB fizzles, creature left battlefield", gameData.id, entry.getCard().getName());
+            return;
+        }
+
+        // Find Aura cards in controller's hand
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        List<Integer> auraIndices = new ArrayList<>();
+        if (hand != null) {
+            for (int i = 0; i < hand.size(); i++) {
+                if (hand.get(i).isAura()) {
+                    auraIndices.add(i);
+                }
+            }
+        }
+
+        if (auraIndices.isEmpty()) {
+            String playerName = gameData.playerIdToName.get(controllerId);
+            String logEntry = playerName + " has no Aura cards in hand.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            log.info("Game {} - {} has no Auras in hand for {} ETB", gameData.id, playerName, entry.getCard().getName());
+            return;
+        }
+
+        gameData.pendingAuraTargetPermanentId = self.getId();
+
+        String prompt = "You may put an Aura card from your hand onto the battlefield attached to " + entry.getCard().getName() + ".";
+        beginCardChoice(gameData, controllerId, auraIndices, prompt);
+    }
+
     private void resolveGainLife(GameData gameData, UUID controllerId, int amount) {
         Integer currentLife = gameData.playerLifeTotals.get(controllerId);
         gameData.playerLifeTotals.put(controllerId, currentLife + amount);
@@ -1552,6 +1604,9 @@ public class GameService {
             gameData.awaitingCardChoicePlayerId = null;
             gameData.awaitingCardChoiceValidIndices = null;
 
+            UUID auraTargetId = gameData.pendingAuraTargetPermanentId;
+            gameData.pendingAuraTargetPermanentId = null;
+
             if (cardIndex == -1) {
                 // Player declined
                 String logEntry = player.getUsername() + " chooses not to put a card onto the battlefield.";
@@ -1565,17 +1620,44 @@ public class GameService {
 
                 List<Card> hand = gameData.playerHands.get(playerId);
                 Card card = hand.remove(cardIndex);
-                gameData.playerBattlefields.get(playerId).add(new Permanent(card));
 
-                sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
-                broadcastBattlefields(gameData);
+                if (auraTargetId != null) {
+                    // Aura attachment (e.g. Academy Researchers ETB)
+                    Permanent target = findPermanentById(gameData, auraTargetId);
+                    if (target != null) {
+                        Permanent auraPerm = new Permanent(card);
+                        auraPerm.setAttachedTo(target.getId());
+                        gameData.playerBattlefields.get(playerId).add(auraPerm);
 
-                String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield.";
-                gameData.gameLog.add(logEntry);
-                broadcastLogEntry(gameData, logEntry);
-                log.info("Game {} - {} puts {} onto the battlefield", gameData.id, player.getUsername(), card.getName());
+                        sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+                        broadcastBattlefields(gameData);
 
-                handleCreatureEnteredBattlefield(gameData, playerId, card, null);
+                        String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield attached to " + target.getCard().getName() + ".";
+                        gameData.gameLog.add(logEntry);
+                        broadcastLogEntry(gameData, logEntry);
+                        log.info("Game {} - {} puts {} onto the battlefield attached to {}", gameData.id, player.getUsername(), card.getName(), target.getCard().getName());
+                    } else {
+                        // Target left the battlefield, put Aura back in hand
+                        hand.add(card);
+                        String logEntry = card.getName() + " can't be attached (target left the battlefield).";
+                        gameData.gameLog.add(logEntry);
+                        broadcastLogEntry(gameData, logEntry);
+                        log.info("Game {} - Aura target gone, {} returned to hand", gameData.id, card.getName());
+                    }
+                } else {
+                    // Creature onto battlefield (e.g. Hunted Wumpus ETB)
+                    gameData.playerBattlefields.get(playerId).add(new Permanent(card));
+
+                    sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+                    broadcastBattlefields(gameData);
+
+                    String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield.";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                    log.info("Game {} - {} puts {} onto the battlefield", gameData.id, player.getUsername(), card.getName());
+
+                    handleCreatureEnteredBattlefield(gameData, playerId, card, null);
+                }
             }
 
             resolveAutoPass(gameData);

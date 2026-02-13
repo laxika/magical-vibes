@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards;
 
+import com.github.laxika.magicalvibes.cards.a.AcademyResearchers;
 import com.github.laxika.magicalvibes.cards.a.AncestorsChosen;
 import com.github.laxika.magicalvibes.cards.a.AngelicBlessing;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
@@ -151,6 +152,7 @@ public enum CardSet {
             new CardPrinting("10E", "60", WindbornMuse::new, "\"Her voice is justice, clear and relentless.\"\n\u2014Akroma, angelic avenger"),
             new CardPrinting("10E", "61", WrathOfGod::new),
             new CardPrinting("10E", "62", YouthfulKnight::new, "\"Idealism fits him better than his armor.\""),
+            new CardPrinting("10E", "63", AcademyResearchers::new, "\"They brandish their latest theories as warriors would wield weapons.\""),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
             new CardPrinting("10E", "382", Forest::new),
