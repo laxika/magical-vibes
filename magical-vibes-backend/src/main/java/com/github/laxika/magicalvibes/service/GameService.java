@@ -1220,10 +1220,14 @@ public class GameService {
                 throw new IllegalStateException(gameData.playerIdToName.get(targetPermanentId) + " has shroud and can't be targeted");
             }
 
-            // For mana abilities, self-target if no explicit target
+            // For mana abilities, self-target only if effects need the source permanent
             UUID effectiveTargetId = targetPermanentId;
             if (!isTapAbility && effectiveTargetId == null) {
-                effectiveTargetId = permanent.getId();
+                boolean needsSelfTarget = abilityEffects.stream().anyMatch(e ->
+                        e instanceof RegenerateEffect || e instanceof BoostSelfEffect);
+                if (needsSelfTarget) {
+                    effectiveTargetId = permanent.getId();
+                }
             }
 
             // Tap the permanent (only for tap abilities)
