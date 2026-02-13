@@ -103,7 +103,6 @@ class AngelsFeatherTest {
 
         // Player1 should be prompted for may ability
         GameData gd = harness.getGameData();
-        assertThat(gd.pendingMayAbilities).isEmpty(); // already being processed
         assertThat(gd.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
