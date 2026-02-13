@@ -90,8 +90,6 @@ public enum CardSet {
 
     TENTH_EDITION("10E", "Tenth Edition", List.of(
             new CardPrinting("10E", "1", AncestorsChosen::new),
-            new CardPrinting("10E", "64", AirElemental::new),
-            new CardPrinting("10E", "65", AmbassadorLaquatus::new),
             new CardPrinting("10E", "2", AngelOfMercy::new, "\"Every tear shed is a drop of immortality.\""),
             new CardPrinting("10E", "3", AngelicBlessing::new, "\"Only the warrior who can admit mortal weakness will be bolstered by immortal strength.\""),
             new CardPrinting("10E", "4", AngelicChorus::new, "\"The harmony of the glorious is a dirge to the wicked.\""),
@@ -157,6 +155,8 @@ public enum CardSet {
             new CardPrinting("10E", "61", WrathOfGod::new),
             new CardPrinting("10E", "62", YouthfulKnight::new, "\"Idealism fits him better than his armor.\""),
             new CardPrinting("10E", "63", AcademyResearchers::new, "\"They brandish their latest theories as warriors would wield weapons.\""),
+            new CardPrinting("10E", "64", AirElemental::new),
+            new CardPrinting("10E", "65", AmbassadorLaquatus::new),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
             new CardPrinting("10E", "382", Forest::new),
