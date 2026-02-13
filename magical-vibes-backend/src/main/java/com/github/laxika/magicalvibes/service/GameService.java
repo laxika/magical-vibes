@@ -42,12 +42,15 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
@@ -81,6 +84,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchant
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
@@ -417,6 +421,8 @@ public class GameService {
                 resolveBoostTargetCreature(gameData, entry, boost);
             } else if (effect instanceof BoostTargetBlockingCreatureEffect boost) {
                 resolveBoostTargetCreature(gameData, entry, new BoostTargetCreatureEffect(boost.powerBoost(), boost.toughnessBoost()));
+            } else if (effect instanceof BoostAllOwnCreaturesEffect boost) {
+                resolveBoostAllOwnCreatures(gameData, entry, boost);
             } else if (effect instanceof GrantKeywordToTargetEffect grant) {
                 resolveGrantKeywordToTarget(gameData, entry, grant);
             } else if (effect instanceof PreventDamageToTargetEffect prevent) {
@@ -458,6 +464,8 @@ public class GameService {
                 resolveReturnArtifactFromGraveyardToHand(gameData, entry);
             } else if (effect instanceof RegenerateEffect) {
                 resolveRegenerate(gameData, entry);
+            } else if (effect instanceof TapTargetCreatureEffect) {
+                resolveTapTargetCreature(gameData, entry);
             }
         }
         removeOrphanedAuras(gameData);
@@ -1521,6 +1529,24 @@ public class GameService {
         log.info("Game {} - {} gets +{}/+{}", gameData.id, target.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
     }
 
+    private void resolveBoostAllOwnCreatures(GameData gameData, StackEntry entry, BoostAllOwnCreaturesEffect boost) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (permanent.getCard().getType() == CardType.CREATURE) {
+                permanent.setPowerModifier(permanent.getPowerModifier() + boost.powerBoost());
+                permanent.setToughnessModifier(permanent.getToughnessModifier() + boost.toughnessBoost());
+                count++;
+            }
+        }
+
+        String logEntry = entry.getCard().getName() + " gives +" + boost.powerBoost() + "/+" + boost.toughnessBoost() + " to " + count + " creature(s) until end of turn.";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        broadcastBattlefields(gameData);
+
+        log.info("Game {} - {} boosts {} creatures +{}/+{}", gameData.id, entry.getCard().getName(), count, boost.powerBoost(), boost.toughnessBoost());
+    }
 
     private void resolveGrantKeywordToTarget(GameData gameData, StackEntry entry, GrantKeywordToTargetEffect grant) {
         Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
@@ -2136,6 +2162,22 @@ public class GameService {
                 "You may return an artifact card from your graveyard to your hand.");
     }
 
+    private void resolveTapTargetCreature(GameData gameData, StackEntry entry) {
+        Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        target.tap();
+
+        String logEntry = entry.getCard().getName() + " taps " + target.getCard().getName() + ".";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        broadcastBattlefields(gameData);
+
+        log.info("Game {} - {} taps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
+    }
+
     private void beginGraveyardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         gameData.awaitingInput = AwaitingInput.GRAVEYARD_CHOICE;
         gameData.awaitingGraveyardChoicePlayerId = playerId;
@@ -2364,6 +2406,44 @@ public class GameService {
         return totalIncrease;
     }
 
+    private int getAttackPaymentPerCreature(GameData gameData, UUID attackingPlayerId) {
+        UUID defenderId = getOpponentId(gameData, attackingPlayerId);
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        if (defenderBattlefield == null) return 0;
+
+        int totalTax = 0;
+        for (Permanent perm : defenderBattlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof RequirePaymentToAttackEffect tax) {
+                    totalTax += tax.amountPerAttacker();
+                }
+            }
+        }
+        return totalTax;
+    }
+
+    private void payGenericMana(ManaPool pool, int amount) {
+        List<String> colors = List.of("W", "U", "B", "R", "G");
+        int remaining = amount;
+        while (remaining > 0) {
+            String highestColor = null;
+            int highestAmount = 0;
+            for (String color : colors) {
+                int available = pool.get(color);
+                if (available > highestAmount) {
+                    highestAmount = available;
+                    highestColor = color;
+                }
+            }
+            if (highestColor != null) {
+                pool.remove(highestColor);
+                remaining--;
+            } else {
+                break;
+            }
+        }
+    }
+
     private void removeOrphanedAuras(GameData gameData) {
         boolean anyRemoved = false;
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -2520,6 +2600,11 @@ public class GameService {
                             && source.getAttachedTo() != null
                             && source.getAttachedTo().equals(target.getId())) {
                         keywords.add(grant.keyword());
+                    }
+                    if (effect instanceof BoostOwnCreaturesEffect boost
+                            && bf.contains(target)) {
+                        power += boost.powerBoost();
+                        toughness += boost.toughnessBoost();
                     }
                 }
             }
@@ -2730,6 +2815,18 @@ public class GameService {
                 skipToEndOfCombat(gameData);
                 resolveAutoPass(gameData);
                 return;
+            }
+
+            // Check attack tax (e.g. Windborn Muse / Ghostly Prison)
+            int taxPerCreature = getAttackPaymentPerCreature(gameData, playerId);
+            if (taxPerCreature > 0) {
+                int totalTax = taxPerCreature * attackerIndices.size();
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                if (pool.getTotal() < totalTax) {
+                    throw new IllegalStateException("Not enough mana to pay attack tax (" + totalTax + " required)");
+                }
+                payGenericMana(pool, totalTax);
+                sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
             }
 
             // Mark creatures as attacking and tap them (vigilance skips tapping)

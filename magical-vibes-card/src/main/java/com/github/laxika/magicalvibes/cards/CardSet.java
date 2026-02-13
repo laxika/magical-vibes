@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.FieldMarshal;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GhostWarden;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HailOfArrows;
@@ -29,11 +30,13 @@ import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
+import com.github.laxika.magicalvibes.cards.i.IcatianPriest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.n.NomadMythmaker;
 import com.github.laxika.magicalvibes.cards.l.LoyalSentry;
 import com.github.laxika.magicalvibes.cards.l.Luminesce;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.l.LoxodonMystic;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
 import com.github.laxika.magicalvibes.cards.m.Mobilization;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -65,6 +68,9 @@ import com.github.laxika.magicalvibes.cards.v.VenerableMonk;
 import com.github.laxika.magicalvibes.cards.v.VoiceOfAll;
 import com.github.laxika.magicalvibes.cards.w.WallOfSwords;
 import com.github.laxika.magicalvibes.cards.w.WildGriffin;
+import com.github.laxika.magicalvibes.cards.w.WarriorsHonor;
+import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
+import com.github.laxika.magicalvibes.cards.w.WindbornMuse;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import lombok.Getter;
@@ -94,13 +100,16 @@ public enum CardSet {
             new CardPrinting("10E", "139", DrudgeSkeletons::new, "\"The dead make good soldiers. They obey without question, never surrender, and don't stop fighting when a limb is cut off.\"\n—Nevinyrral, Necromancer's Handbook"),
             new CardPrinting("10E", "15", FieldMarshal::new),
             new CardPrinting("10E", "16", GhostWarden::new, "\"I thought of fate as an iron lattice, intricate but rigidly unchangeable. That was until some force bent fate's bars to spare my life.\"\n\u2014Ilromov, traveling storyteller"),
+            new CardPrinting("10E", "17", GloriousAnthem::new, "\"Once heard, the battle song of an angel becomes part of the listener forever.\""),
             new CardPrinting("10E", "18", HailOfArrows::new, "\"Do not let a single shaft loose until my word. And when I give that word, do not leave a single shaft in Eiganjo.\"\n\u2014General Takeno"),
             new CardPrinting("10E", "19", HeartOfLight::new, "Harus, the Rune-Reader, pored over the texts: \"In the beginning there was nothing—a profound, luminous nothing rich with potential and power.\""),
             new CardPrinting("10E", "20", HighGround::new),
             new CardPrinting("10E", "21", HolyDay::new, "\"The meek shall inherit the earth, but not today. Today, they merely survive.\"\n\u2014Onean cleric"),
             new CardPrinting("10E", "22", HolyStrength::new),
             new CardPrinting("10E", "23", HonorGuard::new, "\"The strength of one. The courage of ten.\""),
+            new CardPrinting("10E", "24", IcatianPriest::new, "\"Grelden knelt and felt the cool, dry hand of the priest on his brow. Hours later, when his wits returned, he was covered in his enemies' blood on the field of victory.\""),
             new CardPrinting("10E", "25", KjeldoranRoyalGuard::new, "\"Upon the frozen tundra stand the Kjeldoran Royal Guard, pikes raised, with the king's oath upon their lips.\""),
+            new CardPrinting("10E", "26", LoxodonMystic::new, "\"Elder mystics take their vow of silence so seriously that they impose it on any who enter their presence.\""),
             new CardPrinting("10E", "27", LoyalSentry::new, "\"I am not the first to stand in this doorway, and I will not be the last. I stand here because I was told to, and I will not leave until I am told to. This is all that matters.\""),
             new CardPrinting("10E", "28", Luminesce::new, "\"I will not have my flock cower in the shadow of death.\"\n\u2014Lucilde Fiksdotter, Order of the White Shield"),
             new CardPrinting("10E", "29", Mobilization::new),
@@ -132,6 +141,9 @@ public enum CardSet {
             new CardPrinting("10E", "56", VoiceOfAll::new),
             new CardPrinting("10E", "57", WallOfSwords::new, "The air hummed with the scissoring sound of uncounted blades that hovered in front of the invaders as though wielded by a phalanx of unseen hands."),
             new CardPrinting("10E", "59", WildGriffin::new, "\"I abandoned my dream of a squadron of griffin-riders when the cost proved too high. Three trainers were eaten for every griffin broken to the bridle.\"\n\u2014King Darien of Kjeldor"),
+            new CardPrinting("10E", "58", WarriorsHonor::new, "\"The day will come when the righteous fury of the soldier will be the only shield between order and chaos.\""),
+            new CardPrinting("10E", "62", YouthfulKnight::new, "\"Idealism fits him better than his armor.\""),
+            new CardPrinting("10E", "60", WindbornMuse::new, "\"Her voice is justice, clear and relentless.\"\n\u2014Akroma, angelic avenger"),
             new CardPrinting("10E", "61", WrathOfGod::new),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
