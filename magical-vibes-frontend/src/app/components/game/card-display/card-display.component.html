@@ -18,7 +18,7 @@
   <div class="card-pt" [class.buffed]="isBuffed">{{ displayPower }}/{{ displayToughness }}</div>
 }
 @if (card.setCode) {
-  <div class="card-set-badge">{{ card.setCode }} #{{ card.collectorNumber }}</div>
+  <div class="card-set-badge" [attr.data-rarity]="card.rarity">{{ card.setCode }} #{{ card.collectorNumber }}</div>
 }
 @if (card.flavorText) {
   <div class="card-flavor-text">{{ card.flavorText }}</div>
