@@ -128,6 +128,7 @@ export interface Card {
   collectorNumber: string | null;
   flavorText: string | null;
   artist: string | null;
+  rarity: string | null;
   color: string | null;
   allowedTargetTypes: string[];
   targetsPlayer: boolean;

@@ -110,6 +110,18 @@ img.card-art {
   letter-spacing: 0.5px;
 }
 
+.card-set-badge[data-rarity="UNCOMMON"] {
+  color: #c0c0c0;
+}
+
+.card-set-badge[data-rarity="RARE"] {
+  color: #ffd700;
+}
+
+.card-set-badge[data-rarity="MYTHIC"] {
+  color: #ff6b35;
+}
+
 .card-flavor-text {
   font-size: 9px;
   font-style: italic;
