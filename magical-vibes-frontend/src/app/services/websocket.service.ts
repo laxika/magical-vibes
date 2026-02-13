@@ -126,6 +126,7 @@ export interface Card {
   flavorText: string | null;
   color: string | null;
   allowedTargetTypes: string[];
+  targetsPlayer: boolean;
 }
 
 export interface Permanent {

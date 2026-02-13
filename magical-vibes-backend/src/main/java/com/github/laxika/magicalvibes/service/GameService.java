@@ -71,6 +71,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
@@ -497,6 +498,8 @@ public class GameService {
                 resolveTapTargetPermanent(gameData, entry);
             } else if (effect instanceof PreventNextColorDamageToControllerEffect prevent) {
                 resolvePreventNextColorDamageToController(gameData, entry, prevent);
+            } else if (effect instanceof MillTargetPlayerEffect mill) {
+                resolveMillTargetPlayer(gameData, entry, mill);
             }
         }
         removeOrphanedAuras(gameData);
@@ -1210,6 +1213,14 @@ public class GameService {
                     }
                     if (!tapEffect.allowedTypes().contains(target.getCard().getType())) {
                         throw new IllegalStateException("Target must be an artifact, creature, or land");
+                    }
+                }
+                if (effect instanceof MillTargetPlayerEffect) {
+                    if (targetPermanentId == null) {
+                        throw new IllegalStateException("Ability requires a target player");
+                    }
+                    if (!gameData.playerIds.contains(targetPermanentId)) {
+                        throw new IllegalStateException("Target must be a player");
                     }
                 }
                 if (effect instanceof ReturnAuraFromGraveyardToBattlefieldEffect) {
@@ -1984,6 +1995,26 @@ public class GameService {
         broadcastLogEntry(gameData, logEntry);
         broadcastLifeTotals(gameData);
         log.info("Game {} - {}'s life doubled from {} to {}", gameData.id, playerName, currentLife, newLife);
+    }
+
+    private void resolveMillTargetPlayer(GameData gameData, StackEntry entry, MillTargetPlayerEffect mill) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+
+        int cardsToMill = Math.min(mill.count(), deck.size());
+        for (int i = 0; i < cardsToMill; i++) {
+            Card card = deck.removeFirst();
+            graveyard.add(card);
+        }
+
+        String logEntry = playerName + " mills " + cardsToMill + " card" + (cardsToMill != 1 ? "s" : "") + ".";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        broadcastDeckSizes(gameData);
+        broadcastGraveyards(gameData);
+        log.info("Game {} - {} mills {} cards", gameData.id, playerName, cardsToMill);
     }
 
     private void resolveGainLifeEqualToTargetToughness(GameData gameData, StackEntry entry) {

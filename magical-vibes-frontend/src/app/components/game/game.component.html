@@ -113,7 +113,7 @@
 
   @if (game()?.status === GameStatus.RUNNING || game()?.status === GameStatus.FINISHED) {
     <div class="turn-info">
-      <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)">
+      <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)" [class.targetable]="targetingForPlayer" (click)="selectPlayerTarget(0)">
         {{ player1Name }}
         <span class="life-total">Life: {{ getLifeTotal(0) }}</span>
         <span class="deck-size">Deck: {{ player1DeckSize }}</span>
@@ -125,7 +125,7 @@
         <span class="turn-number">Turn {{ game()?.turnNumber }}</span>
         <span class="vs-label">VS</span>
       </div>
-      <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)">
+      <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)" [class.targetable]="targetingForPlayer" (click)="selectPlayerTarget(1)">
         {{ player2Name }}
         <span class="life-total">Life: {{ getLifeTotal(1) }}</span>
         <span class="deck-size">Deck: {{ player2DeckSize }}</span>
@@ -220,7 +220,11 @@
 
     @if (targeting) {
       <div class="combat-banner targeting-banner">
-        <span>Select a target creature for {{ targetingCardName }}</span>
+        @if (targetingForPlayer) {
+          <span>Select a target player for {{ targetingCardName }}</span>
+        } @else {
+          <span>Select a target creature for {{ targetingCardName }}</span>
+        }
         <button class="btn-confirm-combat" (click)="cancelTargeting()">Cancel</button>
       </div>
     }

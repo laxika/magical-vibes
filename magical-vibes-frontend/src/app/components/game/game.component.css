@@ -198,6 +198,12 @@ h1 {
   outline-offset: 2px;
 }
 
+.player-badge.targetable {
+  border: 2px dashed #27ae60;
+  box-shadow: 0 0 12px rgba(39, 174, 96, 0.5);
+  cursor: crosshair;
+}
+
 .life-total {
   display: block;
   font-size: 14px;

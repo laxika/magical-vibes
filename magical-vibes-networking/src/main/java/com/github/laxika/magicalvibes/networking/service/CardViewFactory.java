@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import org.springframework.stereotype.Service;
@@ -31,8 +32,23 @@ public class CardViewFactory {
                 card.getCollectorNumber(),
                 card.getFlavorText(),
                 card.getColor(),
-                computeAllowedTargetTypes(card)
+                computeAllowedTargetTypes(card),
+                computeTargetsPlayer(card)
         );
+    }
+
+    private boolean computeTargetsPlayer(Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.MANA_ACTIVATED_ABILITY)) {
+            if (effect instanceof MillTargetPlayerEffect) {
+                return true;
+            }
+        }
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof MillTargetPlayerEffect) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private List<CardType> computeAllowedTargetTypes(Card card) {
