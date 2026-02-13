@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -330,5 +331,60 @@ class AuraOfSilenceTest {
 
         assertThat(harness.getGameData().stack).hasSize(1);
         assertThat(harness.getGameData().stack.getFirst().getCard().getName()).isEqualTo("Aura of Silence");
+    }
+
+    // ===== Artifact interactions =====
+
+    @Test
+    @DisplayName("Opponent's artifact spells cost {2} more")
+    void opponentArtifactsCostMore() {
+        harness.addToBattlefield(player1, new AuraOfSilence());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new AngelsFeather()));
+        harness.addMana(player2, "W", 2);
+
+        // 2 mana is not enough (needs 2 + 2 = 4)
+        assertThatThrownBy(() -> harness.castArtifact(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Opponent can cast artifact with enough mana to cover the increase")
+    void opponentCanCastArtifactWithEnoughMana() {
+        harness.addToBattlefield(player1, new AuraOfSilence());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new AngelsFeather()));
+        harness.addMana(player2, "W", 4);
+
+        harness.castArtifact(player2, 0);
+
+        assertThat(harness.getGameData().stack).hasSize(1);
+        assertThat(harness.getGameData().stack.getFirst().getCard().getName()).isEqualTo("Angel's Feather");
+        assertThat(harness.getGameData().playerManaPools.get(player2.getId()).getTotal()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Sacrifice ability can destroy target artifact")
+    void sacrificeDestroysTargetArtifact() {
+        harness.addToBattlefield(player1, new AuraOfSilence());
+        harness.addToBattlefield(player2, new AngelsFeather());
+
+        UUID targetId = harness.getPermanentId(player2, "Angel's Feather");
+        harness.sacrificePermanent(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Angel's Feather"));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Angel's Feather"));
     }
 }

@@ -16,7 +16,7 @@ public class AuraOfSilence extends Card {
         super("Aura of Silence", CardType.ENCHANTMENT, "{1}{W}{W}", CardColor.WHITE);
 
         setCardText("Artifact and enchantment spells your opponents cast cost {2} more to cast.\nSacrifice Aura of Silence: Destroy target artifact or enchantment.");
-        addEffect(EffectSlot.STATIC, new IncreaseOpponentCastCostEffect(Set.of(CardType.ENCHANTMENT), 2));
-        addEffect(EffectSlot.ON_SACRIFICE, new DestroyTargetPermanentEffect(Set.of(CardType.ENCHANTMENT)));
+        addEffect(EffectSlot.STATIC, new IncreaseOpponentCastCostEffect(Set.of(CardType.ARTIFACT, CardType.ENCHANTMENT), 2));
+        addEffect(EffectSlot.ON_SACRIFICE, new DestroyTargetPermanentEffect(Set.of(CardType.ARTIFACT, CardType.ENCHANTMENT)));
     }
 }
