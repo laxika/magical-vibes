@@ -47,9 +47,9 @@ public class GameTestHarness {
         sessionManager.registerPlayer(conn1, player1.getId(), player1.getUsername());
         sessionManager.registerPlayer(conn2, player2.getId(), player2.getUsername());
 
-        lobbyService.createGame("Test Game", player1);
+        lobbyService.createGame("Test Game", player1, "cho-mannos-resolve");
         GameData gd = gameRegistry.getGameForPlayer(player1.getId());
-        lobbyService.joinGame(gd, player2);
+        lobbyService.joinGame(gd, player2, "cho-mannos-resolve");
 
         this.gameData = gameRegistry.getGameForPlayer(player1.getId());
 
