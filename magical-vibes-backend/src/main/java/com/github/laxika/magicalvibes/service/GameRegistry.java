@@ -29,11 +29,15 @@ public class GameRegistry {
             if (g.status == GameStatus.MULLIGAN || g.status == GameStatus.RUNNING) {
                 return g;
             }
-            if (fallback == null) {
+            if (fallback == null && g.status == GameStatus.WAITING) {
                 fallback = g;
             }
         }
         return fallback;
+    }
+
+    public void remove(UUID gameId) {
+        games.remove(gameId);
     }
 
     public Collection<GameData> getRunningGames() {
