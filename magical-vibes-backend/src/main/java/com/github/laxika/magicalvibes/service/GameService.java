@@ -124,6 +124,7 @@ public class GameService {
     private final Random random = new Random();
 
     private final SessionManager sessionManager;
+    private final GameRegistry gameRegistry;
     private final CardViewFactory cardViewFactory;
     private final PermanentViewFactory permanentViewFactory;
     private final StackEntryViewFactory stackEntryViewFactory;
@@ -3762,6 +3763,8 @@ public class GameService {
                 broadcastLogEntry(gameData, logEntry);
 
                 sessionManager.sendToPlayers(gameData.orderedPlayerIds,new GameOverMessage(winnerId, winnerName));
+
+                gameRegistry.remove(gameData.id);
 
                 log.info("Game {} - {} wins! {} is at {} life", gameData.id, winnerName,
                         gameData.playerIdToName.get(playerId), life);

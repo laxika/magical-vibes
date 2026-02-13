@@ -36,7 +36,7 @@ public class GameTestHarness {
         gameRegistry = new GameRegistry();
         sessionManager = new WebSocketSessionManager(new JacksonConfig().objectMapper());
         CardViewFactory cardViewFactory = new CardViewFactory();
-        gameService = new GameService(sessionManager, cardViewFactory, new PermanentViewFactory(cardViewFactory), new StackEntryViewFactory(cardViewFactory));
+        gameService = new GameService(sessionManager, gameRegistry, cardViewFactory, new PermanentViewFactory(cardViewFactory), new StackEntryViewFactory(cardViewFactory));
         lobbyService = new LobbyService(gameRegistry, gameService);
 
         player1 = new Player(UUID.randomUUID(), "Alice");
