@@ -71,10 +71,14 @@ export class CardDisplayComponent implements OnInit, OnChanges {
     return this.permanent ? this.permanent.effectiveToughness : this.card.toughness;
   }
 
+  private formatEnumName(s: string): string {
+    return s.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
+  }
+
   get typeLine(): string {
-    const supertypes = (this.card.supertypes ?? []).map(s => s.charAt(0) + s.slice(1).toLowerCase());
-    const mainType = [...supertypes, this.card.type].join(' ');
-    const subtypes = (this.card.subtypes ?? []).map(s => s.charAt(0) + s.slice(1).toLowerCase());
+    const supertypes = (this.card.supertypes ?? []).map(s => this.formatEnumName(s));
+    const mainType = [...supertypes, this.formatEnumName(this.card.type)].join(' ');
+    const subtypes = (this.card.subtypes ?? []).map(s => this.formatEnumName(s));
     if (subtypes.length > 0) {
       return `${mainType} \u2014 ${subtypes.join(' ')}`;
     }
