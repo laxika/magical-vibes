@@ -16,7 +16,7 @@ public class GameData {
     public final UUID createdByUserId;
     public final String createdByUsername;
     public final LocalDateTime createdAt;
-    public GameStatus status;
+    public volatile GameStatus status;
     public final Set<UUID> playerIds = ConcurrentHashMap.newKeySet();
     public final List<UUID> orderedPlayerIds = Collections.synchronizedList(new ArrayList<>());
     public final List<String> playerNames = Collections.synchronizedList(new ArrayList<>());

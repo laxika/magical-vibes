@@ -23,10 +23,17 @@ public class GameRegistry {
     }
 
     public GameData getGameForPlayer(UUID userId) {
-        return games.values().stream()
-                .filter(g -> g.playerIds.contains(userId))
-                .findFirst()
-                .orElse(null);
+        GameData fallback = null;
+        for (GameData g : games.values()) {
+            if (!g.playerIds.contains(userId)) continue;
+            if (g.status == GameStatus.MULLIGAN || g.status == GameStatus.RUNNING) {
+                return g;
+            }
+            if (fallback == null) {
+                fallback = g;
+            }
+        }
+        return fallback;
     }
 
     public Collection<GameData> getRunningGames() {

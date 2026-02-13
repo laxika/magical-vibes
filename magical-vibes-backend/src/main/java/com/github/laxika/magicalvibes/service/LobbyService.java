@@ -55,26 +55,28 @@ public class LobbyService {
     }
 
     public LobbyGame joinGame(GameData gameData, Player player, String deckId) {
-        if (gameData.status != GameStatus.WAITING) {
-            throw new IllegalStateException("Game is not accepting players");
+        synchronized (gameData) {
+            if (gameData.status != GameStatus.WAITING) {
+                throw new IllegalStateException("Game is not accepting players");
+            }
+
+            if (gameData.playerIds.contains(player.getId())) {
+                throw new IllegalStateException("You are already in this game");
+            }
+
+            gameData.playerIds.add(player.getId());
+            gameData.orderedPlayerIds.add(player.getId());
+            gameData.playerNames.add(player.getUsername());
+            gameData.playerIdToName.put(player.getId(), player.getUsername());
+            gameData.playerDeckChoices.put(player.getId(), deckId);
+
+            if (gameData.playerIds.size() >= 2) {
+                initializeGame(gameData);
+            }
+
+            log.info("User {} joined game {}, status={}", player.getUsername(), gameData.id, gameData.status);
+            return toLobbyGame(gameData);
         }
-
-        if (gameData.playerIds.contains(player.getId())) {
-            throw new IllegalStateException("You are already in this game");
-        }
-
-        gameData.playerIds.add(player.getId());
-        gameData.orderedPlayerIds.add(player.getId());
-        gameData.playerNames.add(player.getUsername());
-        gameData.playerIdToName.put(player.getId(), player.getUsername());
-        gameData.playerDeckChoices.put(player.getId(), deckId);
-
-        if (gameData.playerIds.size() >= 2) {
-            initializeGame(gameData);
-        }
-
-        log.info("User {} joined game {}, status={}", player.getUsername(), gameData.id, gameData.status);
-        return toLobbyGame(gameData);
     }
 
     private void initializeGame(GameData gameData) {
