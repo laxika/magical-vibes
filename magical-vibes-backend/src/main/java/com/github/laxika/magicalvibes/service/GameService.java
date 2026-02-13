@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.networking.message.StepAdvancedMessage;
 import com.github.laxika.magicalvibes.networking.message.TurnChangedMessage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -75,6 +76,7 @@ import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
@@ -312,6 +314,9 @@ public class GameService {
             log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
 
             handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId());
+            if (gameData.awaitingInput == null) {
+                checkLegendRule(gameData, controllerId);
+            }
         } else if (entry.getEntryType() == StackEntryType.ENCHANTMENT_SPELL) {
             Card card = entry.getCard();
             UUID controllerId = entry.getControllerId();
@@ -356,6 +361,9 @@ public class GameService {
                     Permanent justEntered = bf.get(bf.size() - 1);
                     beginColorChoice(gameData, controllerId, justEntered.getId(), null);
                 }
+                if (gameData.awaitingInput == null) {
+                    checkLegendRule(gameData, controllerId);
+                }
             }
         } else if (entry.getEntryType() == StackEntryType.ARTIFACT_SPELL) {
             Card card = entry.getCard();
@@ -370,6 +378,9 @@ public class GameService {
             broadcastLogEntry(gameData, logEntry);
 
             log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
+            if (gameData.awaitingInput == null) {
+                checkLegendRule(gameData, controllerId);
+            }
         } else if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 || entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 || entry.getEntryType() == StackEntryType.SORCERY_SPELL
@@ -498,6 +509,8 @@ public class GameService {
                 resolveTapTargetPermanent(gameData, entry);
             } else if (effect instanceof PreventNextColorDamageToControllerEffect prevent) {
                 resolvePreventNextColorDamageToController(gameData, entry, prevent);
+            } else if (effect instanceof PutAuraFromHandOntoSelfEffect) {
+                resolvePutAuraFromHandOntoSelf(gameData, entry);
             } else if (effect instanceof MillTargetPlayerEffect mill) {
                 resolveMillTargetPlayer(gameData, entry, mill);
             }
@@ -1352,6 +1365,55 @@ public class GameService {
         beginCardChoice(gameData, opponentId, creatureIndices, prompt);
     }
 
+    private void resolvePutAuraFromHandOntoSelf(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+
+        // Find the Academy Researchers permanent on the battlefield
+        Permanent self = null;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (p.getCard().getId().equals(entry.getCard().getId())) {
+                    self = p;
+                    break;
+                }
+            }
+        }
+
+        if (self == null) {
+            String fizzleLog = entry.getCard().getName() + "'s ability fizzles (no longer on the battlefield).";
+            gameData.gameLog.add(fizzleLog);
+            broadcastLogEntry(gameData, fizzleLog);
+            log.info("Game {} - {} ETB fizzles, creature left battlefield", gameData.id, entry.getCard().getName());
+            return;
+        }
+
+        // Find Aura cards in controller's hand
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        List<Integer> auraIndices = new ArrayList<>();
+        if (hand != null) {
+            for (int i = 0; i < hand.size(); i++) {
+                if (hand.get(i).isAura()) {
+                    auraIndices.add(i);
+                }
+            }
+        }
+
+        if (auraIndices.isEmpty()) {
+            String playerName = gameData.playerIdToName.get(controllerId);
+            String logEntry = playerName + " has no Aura cards in hand.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            log.info("Game {} - {} has no Auras in hand for {} ETB", gameData.id, playerName, entry.getCard().getName());
+            return;
+        }
+
+        gameData.pendingAuraTargetPermanentId = self.getId();
+
+        String prompt = "You may put an Aura card from your hand onto the battlefield attached to " + entry.getCard().getName() + ".";
+        beginCardChoice(gameData, controllerId, auraIndices, prompt);
+    }
+
     private void resolveGainLife(GameData gameData, UUID controllerId, int amount) {
         Integer currentLife = gameData.playerLifeTotals.get(controllerId);
         gameData.playerLifeTotals.put(controllerId, currentLife + amount);
@@ -1563,6 +1625,9 @@ public class GameService {
             gameData.awaitingCardChoicePlayerId = null;
             gameData.awaitingCardChoiceValidIndices = null;
 
+            UUID auraTargetId = gameData.pendingAuraTargetPermanentId;
+            gameData.pendingAuraTargetPermanentId = null;
+
             if (cardIndex == -1) {
                 // Player declined
                 String logEntry = player.getUsername() + " chooses not to put a card onto the battlefield.";
@@ -1576,17 +1641,44 @@ public class GameService {
 
                 List<Card> hand = gameData.playerHands.get(playerId);
                 Card card = hand.remove(cardIndex);
-                gameData.playerBattlefields.get(playerId).add(new Permanent(card));
 
-                sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
-                broadcastBattlefields(gameData);
+                if (auraTargetId != null) {
+                    // Aura attachment (e.g. Academy Researchers ETB)
+                    Permanent target = findPermanentById(gameData, auraTargetId);
+                    if (target != null) {
+                        Permanent auraPerm = new Permanent(card);
+                        auraPerm.setAttachedTo(target.getId());
+                        gameData.playerBattlefields.get(playerId).add(auraPerm);
 
-                String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield.";
-                gameData.gameLog.add(logEntry);
-                broadcastLogEntry(gameData, logEntry);
-                log.info("Game {} - {} puts {} onto the battlefield", gameData.id, player.getUsername(), card.getName());
+                        sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+                        broadcastBattlefields(gameData);
 
-                handleCreatureEnteredBattlefield(gameData, playerId, card, null);
+                        String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield attached to " + target.getCard().getName() + ".";
+                        gameData.gameLog.add(logEntry);
+                        broadcastLogEntry(gameData, logEntry);
+                        log.info("Game {} - {} puts {} onto the battlefield attached to {}", gameData.id, player.getUsername(), card.getName(), target.getCard().getName());
+                    } else {
+                        // Target left the battlefield, put Aura back in hand
+                        hand.add(card);
+                        String logEntry = card.getName() + " can't be attached (target left the battlefield).";
+                        gameData.gameLog.add(logEntry);
+                        broadcastLogEntry(gameData, logEntry);
+                        log.info("Game {} - Aura target gone, {} returned to hand", gameData.id, card.getName());
+                    }
+                } else {
+                    // Creature onto battlefield (e.g. Hunted Wumpus ETB)
+                    gameData.playerBattlefields.get(playerId).add(new Permanent(card));
+
+                    sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+                    broadcastBattlefields(gameData);
+
+                    String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield.";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                    log.info("Game {} - {} puts {} onto the battlefield", gameData.id, player.getUsername(), card.getName());
+
+                    handleCreatureEnteredBattlefield(gameData, playerId, card, null);
+                }
             }
 
             resolveAutoPass(gameData);
@@ -2180,6 +2272,30 @@ public class GameService {
         beginPermanentChoice(gameData, controllerId, creatureIds, "Choose a creature you control to attach " + auraCard.getName() + " to.");
     }
 
+    private boolean checkLegendRule(GameData gameData, UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+
+        // Group legendary permanents by name
+        Map<String, List<UUID>> legendaryByName = new HashMap<>();
+        for (Permanent perm : battlefield) {
+            if (perm.getCard().getSupertypes().contains(CardSupertype.LEGENDARY)) {
+                legendaryByName.computeIfAbsent(perm.getCard().getName(), k -> new ArrayList<>()).add(perm.getId());
+            }
+        }
+
+        // Find the first name with duplicates
+        for (Map.Entry<String, List<UUID>> entry : legendaryByName.entrySet()) {
+            if (entry.getValue().size() >= 2) {
+                gameData.pendingLegendRuleCardName = entry.getKey();
+                beginPermanentChoice(gameData, controllerId, entry.getValue(),
+                        "You control multiple legendary permanents named " + entry.getKey() + ". Choose one to keep.");
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void beginPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, String prompt) {
         gameData.awaitingInput = AwaitingInput.PERMANENT_CHOICE;
         gameData.awaitingPermanentChoicePlayerId = playerId;
@@ -2210,35 +2326,62 @@ public class GameService {
                 throw new IllegalStateException("Invalid permanent: " + permanentId);
             }
 
-            Card auraCard = gameData.pendingAuraCard;
-            gameData.pendingAuraCard = null;
+            if (gameData.pendingLegendRuleCardName != null) {
+                // Legend rule: keep chosen permanent, move all others with the same name to graveyard
+                String legendName = gameData.pendingLegendRuleCardName;
+                gameData.pendingLegendRuleCardName = null;
 
-            if (auraCard == null) {
-                throw new IllegalStateException("No pending Aura card");
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                List<Permanent> toRemove = new ArrayList<>();
+                for (Permanent perm : battlefield) {
+                    if (perm.getCard().getName().equals(legendName) && !perm.getId().equals(permanentId)) {
+                        toRemove.add(perm);
+                    }
+                }
+                for (Permanent perm : toRemove) {
+                    battlefield.remove(perm);
+                    gameData.playerGraveyards.get(playerId).add(perm.getCard());
+                    String logEntry = perm.getCard().getName() + " is put into the graveyard (legend rule).";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                    log.info("Game {} - {} sent to graveyard by legend rule", gameData.id, perm.getCard().getName());
+                }
+
+                removeOrphanedAuras(gameData);
+                broadcastBattlefields(gameData);
+                broadcastGraveyards(gameData);
+                broadcastPlayableCards(gameData);
+
+                resolveAutoPass(gameData);
+            } else if (gameData.pendingAuraCard != null) {
+                Card auraCard = gameData.pendingAuraCard;
+                gameData.pendingAuraCard = null;
+
+                Permanent creatureTarget = findPermanentById(gameData, permanentId);
+                if (creatureTarget == null) {
+                    throw new IllegalStateException("Target creature no longer exists");
+                }
+
+                // Create Aura permanent attached to the creature, under controller's control
+                Permanent auraPerm = new Permanent(auraCard);
+                auraPerm.setAttachedTo(creatureTarget.getId());
+                gameData.playerBattlefields.get(playerId).add(auraPerm);
+
+                String playerName = gameData.playerIdToName.get(playerId);
+                String logEntry = auraCard.getName() + " enters the battlefield from graveyard attached to " + creatureTarget.getCard().getName() + " under " + playerName + "'s control.";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+                log.info("Game {} - {} returned {} from graveyard to battlefield attached to {}",
+                        gameData.id, playerName, auraCard.getName(), creatureTarget.getCard().getName());
+
+                broadcastBattlefields(gameData);
+                broadcastGraveyards(gameData);
+                broadcastPlayableCards(gameData);
+
+                resolveAutoPass(gameData);
+            } else {
+                throw new IllegalStateException("No pending permanent choice context");
             }
-
-            Permanent creatureTarget = findPermanentById(gameData, permanentId);
-            if (creatureTarget == null) {
-                throw new IllegalStateException("Target creature no longer exists");
-            }
-
-            // Create Aura permanent attached to the creature, under controller's control
-            Permanent auraPerm = new Permanent(auraCard);
-            auraPerm.setAttachedTo(creatureTarget.getId());
-            gameData.playerBattlefields.get(playerId).add(auraPerm);
-
-            String playerName = gameData.playerIdToName.get(playerId);
-            String logEntry = auraCard.getName() + " enters the battlefield from graveyard attached to " + creatureTarget.getCard().getName() + " under " + playerName + "'s control.";
-            gameData.gameLog.add(logEntry);
-            broadcastLogEntry(gameData, logEntry);
-            log.info("Game {} - {} returned {} from graveyard to battlefield attached to {}",
-                    gameData.id, playerName, auraCard.getName(), creatureTarget.getCard().getName());
-
-            broadcastBattlefields(gameData);
-            broadcastGraveyards(gameData);
-            broadcastPlayableCards(gameData);
-
-            resolveAutoPass(gameData);
         }
     }
 
@@ -2401,6 +2544,9 @@ public class GameService {
                         broadcastGraveyards(gameData);
 
                         handleCreatureEnteredBattlefield(gameData, playerId, card, null);
+                        if (gameData.awaitingInput == null) {
+                            checkLegendRule(gameData, playerId);
+                        }
                     }
                 }
             }
@@ -2424,6 +2570,9 @@ public class GameService {
         broadcastBattlefields(gameData);
 
         handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
+        if (gameData.awaitingInput == null) {
+            checkLegendRule(gameData, controllerId);
+        }
 
         log.info("Game {} - {} token created for player {}", gameData.id, token.tokenName(), controllerId);
     }

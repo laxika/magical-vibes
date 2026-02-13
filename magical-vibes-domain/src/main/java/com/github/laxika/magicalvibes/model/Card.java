@@ -24,6 +24,7 @@ public class Card {
     private final String manaCost;
     private final CardColor color;
 
+    @Setter private Set<CardSupertype> supertypes = Set.of();
     @Setter private List<CardSubtype> subtypes = List.of();
     @Setter private String cardText;
     @Setter private Integer power;

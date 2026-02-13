@@ -47,6 +47,11 @@ export class CardDisplayComponent {
     return this.permanent ? this.permanent.effectiveToughness : this.card.toughness;
   }
 
+  get typeLine(): string {
+    const supertypes = (this.card.supertypes ?? []).map(s => s.charAt(0) + s.slice(1).toLowerCase());
+    return [...supertypes, this.card.type].join(' ');
+  }
+
   formatKeywords(keywords: string[]): string {
     return keywords.map(k => k.charAt(0) + k.slice(1).toLowerCase().replace('_', ' ')).join(', ');
   }

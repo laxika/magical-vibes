@@ -319,6 +319,7 @@
               [class.selected-blocker]="selectedBlockerIndex === ip.originalIndex"
               [class.assigned-blocker]="isAssignedBlocker(ip.originalIndex)"
               [class.targetable]="targeting"
+              [class.choosable-permanent]="choosingPermanent && choosablePermanentIds().has(ip.perm.id)"
               (click)="onMyBattlefieldCardClick(ip.originalIndex)" />
           }
         </div>
@@ -329,6 +330,7 @@
               [permanent]="ip.perm"
               [class.tapped]="ip.perm.tapped"
               [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
+              [class.choosable-permanent]="choosingPermanent && choosablePermanentIds().has(ip.perm.id)"
               (click)="onMyBattlefieldCardClick(ip.originalIndex)" />
           }
         </div>
@@ -371,6 +373,12 @@
         <span>{{ mayAbilityPrompt }}</span>
         <button class="btn-confirm-combat" (click)="acceptMayAbility()">Yes</button>
         <button class="btn-confirm-combat" (click)="declineMayAbility()">No</button>
+      </div>
+    }
+
+    @if (choosingPermanent) {
+      <div class="combat-banner permanent-choice-banner">
+        <span>{{ permanentChoicePrompt }}</span>
       </div>
     }
 

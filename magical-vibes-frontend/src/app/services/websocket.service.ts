@@ -47,6 +47,8 @@ export enum MessageType {
   MAY_ABILITY_CHOICE = 'MAY_ABILITY_CHOICE',
   MAY_ABILITY_CHOSEN = 'MAY_ABILITY_CHOSEN',
   ACTIVATE_ABILITY = 'ACTIVATE_ABILITY',
+  CHOOSE_PERMANENT = 'CHOOSE_PERMANENT',
+  PERMANENT_CHOSEN = 'PERMANENT_CHOSEN',
   ERROR = 'ERROR'
 }
 
@@ -111,6 +113,7 @@ export const PHASE_GROUPS: PhaseGroup[] = TURN_STEPS.reduce<PhaseGroup[]>((group
 export interface Card {
   name: string;
   type: string;
+  supertypes: string[];
   subtypes: string[];
   cardText: string | null;
   manaCost: string | null;
@@ -306,6 +309,12 @@ export interface MayAbilityNotification {
   prompt: string;
 }
 
+export interface ChoosePermanentNotification {
+  type: MessageType;
+  permanentIds: string[];
+  prompt: string;
+}
+
 export interface StackUpdatedNotification {
   type: MessageType;
   stack: StackEntry[];
@@ -316,7 +325,7 @@ export interface GraveyardUpdatedNotification {
   graveyards: Card[][];
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | StackUpdatedNotification | GraveyardUpdatedNotification;
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | StackUpdatedNotification | GraveyardUpdatedNotification;
 
 export interface User {
   userId: string;

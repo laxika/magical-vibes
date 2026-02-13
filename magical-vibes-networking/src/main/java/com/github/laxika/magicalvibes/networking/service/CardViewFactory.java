@@ -19,6 +19,7 @@ public class CardViewFactory {
         return new CardView(
                 card.getName(),
                 card.getType(),
+                card.getSupertypes(),
                 card.getSubtypes(),
                 card.getCardText(),
                 card.getManaCost(),
