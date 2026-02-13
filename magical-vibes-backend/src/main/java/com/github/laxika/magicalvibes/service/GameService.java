@@ -89,6 +89,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamage
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
@@ -492,6 +493,8 @@ public class GameService {
                 resolveRegenerate(gameData, entry);
             } else if (effect instanceof TapTargetCreatureEffect) {
                 resolveTapTargetCreature(gameData, entry);
+            } else if (effect instanceof TapTargetPermanentEffect) {
+                resolveTapTargetPermanent(gameData, entry);
             } else if (effect instanceof PreventNextColorDamageToControllerEffect prevent) {
                 resolvePreventNextColorDamageToController(gameData, entry, prevent);
             }
@@ -1195,6 +1198,18 @@ public class GameService {
                     }
                     if (hasProtectionFrom(gameData, target, permanent.getCard().getColor())) {
                         throw new IllegalStateException(target.getCard().getName() + " has protection from " + permanent.getCard().getColor().name().toLowerCase());
+                    }
+                }
+                if (effect instanceof TapTargetPermanentEffect tapEffect) {
+                    if (targetPermanentId == null) {
+                        throw new IllegalStateException("Ability requires a target");
+                    }
+                    Permanent target = findPermanentById(gameData, targetPermanentId);
+                    if (target == null) {
+                        throw new IllegalStateException("Invalid target permanent");
+                    }
+                    if (!tapEffect.allowedTypes().contains(target.getCard().getType())) {
+                        throw new IllegalStateException("Target must be an artifact, creature, or land");
                     }
                 }
                 if (effect instanceof ReturnAuraFromGraveyardToBattlefieldEffect) {
@@ -2253,6 +2268,22 @@ public class GameService {
     }
 
     private void resolveTapTargetCreature(GameData gameData, StackEntry entry) {
+        Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        target.tap();
+
+        String logEntry = entry.getCard().getName() + " taps " + target.getCard().getName() + ".";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        broadcastBattlefields(gameData);
+
+        log.info("Game {} - {} taps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
+    }
+
+    private void resolveTapTargetPermanent(GameData gameData, StackEntry entry) {
         Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
             return;

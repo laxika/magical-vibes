@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
 import com.github.laxika.magicalvibes.cards.i.IcatianPriest;
+import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.n.NomadMythmaker;
 import com.github.laxika.magicalvibes.cards.l.LoyalSentry;
@@ -91,6 +92,7 @@ public enum CardSet {
             new CardPrinting("10E", "4", AngelicChorus::new, "\"The harmony of the glorious is a dirge to the wicked.\""),
             new CardPrinting("10E", "5", AngelicWall::new, "\"The Ancestor protects us in ways we can't begin to comprehend.\"\n\u2014Mystic elder"),
             new CardPrinting("10E", "311", AngelsFeather::new, "\"If taken, it cuts the hand that clutches it. If given, it heals the hand that holds it.\""),
+            new CardPrinting("10E", "326", IcyManipulator::new, "\"In fire there is the spark of chaos and destruction, the seed of life. In ice there is perfect tranquility, perfect order, and the silence of death.\""),
             new CardPrinting("10E", "6", AuraOfSilence::new, "Not all silences are easily broken."),
             new CardPrinting("10E", "7", AvenCloudchaser::new),
             new CardPrinting("10E", "8", BallistaSquad::new, "\"The perfect antidote for a tightly packed formation.\""),

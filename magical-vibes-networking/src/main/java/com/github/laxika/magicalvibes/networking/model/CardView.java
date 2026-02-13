@@ -23,6 +23,7 @@ public record CardView(
         String setCode,
         String collectorNumber,
         String flavorText,
-        CardColor color
+        CardColor color,
+        List<CardType> allowedTargetTypes
 ) {
 }
