@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.networking.message.StepAdvancedMessage;
 import com.github.laxika.magicalvibes.networking.message.TurnChangedMessage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -49,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -513,6 +515,8 @@ public class GameService {
                 resolvePutAuraFromHandOntoSelf(gameData, entry);
             } else if (effect instanceof MillTargetPlayerEffect mill) {
                 resolveMillTargetPlayer(gameData, entry, mill);
+            } else if (effect instanceof GainControlOfTargetAuraEffect) {
+                resolveGainControlOfTargetAura(gameData, entry);
             }
         }
         removeOrphanedAuras(gameData);
@@ -832,6 +836,13 @@ public class GameService {
                     if (effect instanceof BoostTargetBlockingCreatureEffect) {
                         if (target == null || target.getCard().getType() != CardType.CREATURE || !target.isBlocking()) {
                             throw new IllegalStateException("Target must be a blocking creature");
+                        }
+                    }
+                    if (effect instanceof GainControlOfTargetAuraEffect) {
+                        if (target == null || target.getCard().getType() != CardType.ENCHANTMENT
+                                || !target.getCard().getSubtypes().contains(CardSubtype.AURA)
+                                || target.getAttachedTo() == null) {
+                            throw new IllegalStateException("Target must be an Aura attached to a permanent");
                         }
                     }
                 }
@@ -2123,6 +2134,58 @@ public class GameService {
         log.info("Game {} - {} mills {} cards", gameData.id, playerName, cardsToMill);
     }
 
+    private void resolveGainControlOfTargetAura(GameData gameData, StackEntry entry) {
+        UUID casterId = entry.getControllerId();
+        Permanent aura = findPermanentById(gameData, entry.getTargetPermanentId());
+        if (aura == null) return;
+
+        // Step 1: Gain control of the aura (move from current controller's battlefield to caster's)
+        UUID currentControllerId = null;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf != null && bf.contains(aura)) {
+                currentControllerId = pid;
+                break;
+            }
+        }
+        if (currentControllerId != null && !currentControllerId.equals(casterId)) {
+            gameData.playerBattlefields.get(currentControllerId).remove(aura);
+            gameData.playerBattlefields.get(casterId).add(aura);
+            String casterName = gameData.playerIdToName.get(casterId);
+            String logEntry = casterName + " gains control of " + aura.getCard().getName() + ".";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            log.info("Game {} - {} gains control of {}", gameData.id, casterName, aura.getCard().getName());
+        }
+
+        // Step 2: Attach it to another permanent it can enchant
+        // Collect all creature permanents across ALL battlefields, excluding the one it's currently attached to
+        List<UUID> validCreatureIds = new ArrayList<>();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                if (p.getCard().getType() == CardType.CREATURE && !p.getId().equals(aura.getAttachedTo())) {
+                    validCreatureIds.add(p.getId());
+                }
+            }
+        }
+
+        if (!validCreatureIds.isEmpty()) {
+            gameData.pendingAuraGraftPermanentId = aura.getId();
+            beginPermanentChoice(gameData, casterId, validCreatureIds,
+                    "Attach " + aura.getCard().getName() + " to another permanent it can enchant.");
+        } else {
+            // No other valid creatures — aura stays attached as-is
+            String logEntry = aura.getCard().getName() + " stays attached to its current target (no other valid permanents).";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+        }
+
+        broadcastBattlefields(gameData);
+        broadcastPlayableCards(gameData);
+    }
+
     private void resolveGainLifeEqualToTargetToughness(GameData gameData, StackEntry entry) {
         Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) return;
@@ -2340,7 +2403,32 @@ public class GameService {
                 throw new IllegalStateException("Invalid permanent: " + permanentId);
             }
 
-            if (gameData.pendingLegendRuleCardName != null) {
+            if (gameData.pendingAuraGraftPermanentId != null) {
+                UUID auraId = gameData.pendingAuraGraftPermanentId;
+                gameData.pendingAuraGraftPermanentId = null;
+
+                Permanent aura = findPermanentById(gameData, auraId);
+                if (aura == null) {
+                    throw new IllegalStateException("Aura permanent no longer exists");
+                }
+
+                Permanent newTarget = findPermanentById(gameData, permanentId);
+                if (newTarget == null) {
+                    throw new IllegalStateException("Target permanent no longer exists");
+                }
+
+                aura.setAttachedTo(permanentId);
+
+                String logEntry = aura.getCard().getName() + " is now attached to " + newTarget.getCard().getName() + ".";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+                log.info("Game {} - {} reattached to {}", gameData.id, aura.getCard().getName(), newTarget.getCard().getName());
+
+                broadcastBattlefields(gameData);
+                broadcastPlayableCards(gameData);
+
+                resolveAutoPass(gameData);
+            } else if (gameData.pendingLegendRuleCardName != null) {
                 // Legend rule: keep chosen permanent, move all others with the same name to graveyard
                 String legendName = gameData.pendingLegendRuleCardName;
                 gameData.pendingLegendRuleCardName = null;

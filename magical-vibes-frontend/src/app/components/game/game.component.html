@@ -198,6 +198,8 @@
       <div class="combat-banner targeting-banner">
         @if (targetingForPlayer) {
           <span>Select a target player for {{ targetingCardName }}</span>
+        } @else if (targetingAllowedTypes.includes('Enchantment')) {
+          <span>Select a target Aura for {{ targetingCardName }}</span>
         } @else {
           <span>Select a target creature for {{ targetingCardName }}</span>
         }
@@ -231,6 +233,7 @@
               [card]="ip.perm.card"
               [permanent]="ip.perm"
               [class.tapped]="ip.perm.tapped"
+              [class.targetable]="targeting"
               (click)="onOpponentBattlefieldCardClick(ip.originalIndex)" />
           }
         </div>
@@ -330,6 +333,7 @@
               [permanent]="ip.perm"
               [class.tapped]="ip.perm.tapped"
               [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
+              [class.targetable]="targeting"
               [class.choosable-permanent]="choosingPermanent && choosablePermanentIds().has(ip.perm.id)"
               (click)="onMyBattlefieldCardClick(ip.originalIndex)" />
           }

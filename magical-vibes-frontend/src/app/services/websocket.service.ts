@@ -147,6 +147,7 @@ export interface Permanent {
   effectiveToughness: number;
   chosenColor: string | null;
   regenerationShield: number;
+  attachedTo: string | null;
 }
 
 export interface StackEntry {

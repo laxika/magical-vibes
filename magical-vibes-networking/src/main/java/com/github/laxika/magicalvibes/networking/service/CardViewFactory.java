@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -56,6 +57,11 @@ public class CardViewFactory {
         for (CardEffect effect : card.getEffects(EffectSlot.TAP_ACTIVATED_ABILITY)) {
             if (effect instanceof TapTargetPermanentEffect tapEffect) {
                 return new ArrayList<>(tapEffect.allowedTypes());
+            }
+        }
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof GainControlOfTargetAuraEffect) {
+                return List.of(CardType.ENCHANTMENT);
             }
         }
         return List.of();

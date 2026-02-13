@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AmbassadorLaquatus;
 import com.github.laxika.magicalvibes.cards.a.AcademyResearchers;
+import com.github.laxika.magicalvibes.cards.a.AuraGraft;
 import com.github.laxika.magicalvibes.cards.a.AncestorsChosen;
 import com.github.laxika.magicalvibes.cards.a.AngelicBlessing;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
@@ -157,6 +158,7 @@ public enum CardSet {
             new CardPrinting("10E", "63", AcademyResearchers::new, "\"They brandish their latest theories as warriors would wield weapons.\""),
             new CardPrinting("10E", "64", AirElemental::new),
             new CardPrinting("10E", "65", AmbassadorLaquatus::new),
+            new CardPrinting("10E", "67", AuraGraft::new, "\"It's not really stealing. It's more like extended borrowing.\""),
             new CardPrinting("10E", "380", Forest::new),
             new CardPrinting("10E", "381", Forest::new),
             new CardPrinting("10E", "382", Forest::new),
