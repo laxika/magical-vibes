@@ -1,4 +1,4 @@
-import { Component, Input, HostBinding, OnInit, inject } from '@angular/core';
+import { Component, Input, HostBinding, OnInit, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { Card, Permanent } from '../../../services/websocket.service';
 import { ScryfallImageService } from '../../../services/scryfall-image.service';
 
@@ -9,7 +9,7 @@ import { ScryfallImageService } from '../../../services/scryfall-image.service';
   styleUrl: './card-display.component.css',
   host: { 'class': 'card' }
 })
-export class CardDisplayComponent implements OnInit {
+export class CardDisplayComponent implements OnInit, OnChanges {
   @Input({ required: true }) card!: Card;
   @Input() permanent: Permanent | null = null;
 
@@ -18,10 +18,29 @@ export class CardDisplayComponent implements OnInit {
   private scryfallImageService = inject(ScryfallImageService);
 
   ngOnInit(): void {
+    this.fetchCardArt();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['card'] && !changes['card'].firstChange) {
+      if (this.card.setCode && this.card.collectorNumber) {
+        const cached = this.scryfallImageService.getCachedArtCropUrl(this.card.setCode, this.card.collectorNumber);
+        if (cached) {
+          this.artUrl = cached;
+        } else {
+          this.fetchCardArt();
+        }
+      } else {
+        this.artUrl = null;
+      }
+    }
+  }
+
+  private fetchCardArt(): void {
     if (this.card.setCode && this.card.collectorNumber) {
       this.scryfallImageService.getArtCropUrl(this.card.setCode, this.card.collectorNumber)
         .then(url => this.artUrl = url)
-        .catch(() => { /* keep placeholder */ });
+        .catch(() => { this.artUrl = null; });
     }
   }
 

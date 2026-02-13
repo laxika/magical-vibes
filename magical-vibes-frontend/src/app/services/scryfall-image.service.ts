@@ -24,6 +24,10 @@ export class ScryfallImageService {
     this.dbPromise = this.openDb();
   }
 
+  getCachedArtCropUrl(setCode: string, collectorNumber: string): string | null {
+    return this.objectUrls.get(`${setCode}:${collectorNumber}`) ?? null;
+  }
+
   getArtCropUrl(setCode: string, collectorNumber: string): Promise<string> {
     const cacheKey = `${setCode}:${collectorNumber}`;
 
