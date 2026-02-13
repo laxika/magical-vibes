@@ -2,6 +2,7 @@
 
 - Do no verification. All Java & frontend verification will be done by me after you finish with the coding/implementation.
 - Do not start committing changes until I tell you to do so.
+- Make sure that the way we are implementing the cards and the rules is accurate. Having non-rules-correct behavior in the engine is not fine nor acceptable!
 
 ## Architecture
 

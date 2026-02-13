@@ -13,7 +13,10 @@
       "WebFetch(domain:api.scryfall.com)",
       "Bash(find:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "WebFetch(domain:draftsim.com)",
+      "WebFetch(domain:tappedout.net)",
+      "WebFetch(domain:mtg.fandom.com)"
     ]
   }
 }
