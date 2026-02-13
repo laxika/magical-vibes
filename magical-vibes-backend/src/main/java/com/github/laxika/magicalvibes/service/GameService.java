@@ -84,6 +84,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchant
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactFromGraveyardToHandEffect;
@@ -460,6 +461,8 @@ public class GameService {
                 resolveReturnCreatureFromGraveyardToBattlefield(gameData, entry);
             } else if (effect instanceof ReturnArtifactFromGraveyardToHandEffect) {
                 resolveReturnArtifactFromGraveyardToHand(gameData, entry);
+            } else if (effect instanceof TapTargetCreatureEffect) {
+                resolveTapTargetCreature(gameData, entry);
             }
         }
         removeOrphanedAuras(gameData);
@@ -2137,6 +2140,22 @@ public class GameService {
         gameData.graveyardChoiceDestination = GraveyardChoiceDestination.HAND;
         beginGraveyardChoice(gameData, controllerId, artifactIndices,
                 "You may return an artifact card from your graveyard to your hand.");
+    }
+
+    private void resolveTapTargetCreature(GameData gameData, StackEntry entry) {
+        Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        target.tap();
+
+        String logEntry = entry.getCard().getName() + " taps " + target.getCard().getName() + ".";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        broadcastBattlefields(gameData);
+
+        log.info("Game {} - {} taps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
     }
 
     private void beginGraveyardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {

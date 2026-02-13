@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.cards.n.NomadMythmaker;
 import com.github.laxika.magicalvibes.cards.l.LoyalSentry;
 import com.github.laxika.magicalvibes.cards.l.Luminesce;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.l.LoxodonMystic;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
 import com.github.laxika.magicalvibes.cards.m.Mobilization;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -106,6 +107,7 @@ public enum CardSet {
             new CardPrinting("10E", "23", HonorGuard::new, "\"The strength of one. The courage of ten.\""),
             new CardPrinting("10E", "24", IcatianPriest::new, "\"Grelden knelt and felt the cool, dry hand of the priest on his brow. Hours later, when his wits returned, he was covered in his enemies' blood on the field of victory.\""),
             new CardPrinting("10E", "25", KjeldoranRoyalGuard::new, "\"Upon the frozen tundra stand the Kjeldoran Royal Guard, pikes raised, with the king's oath upon their lips.\""),
+            new CardPrinting("10E", "26", LoxodonMystic::new, "\"Elder mystics take their vow of silence so seriously that they impose it on any who enter their presence.\""),
             new CardPrinting("10E", "27", LoyalSentry::new, "\"I am not the first to stand in this doorway, and I will not be the last. I stand here because I was told to, and I will not leave until I am told to. This is all that matters.\""),
             new CardPrinting("10E", "28", Luminesce::new, "\"I will not have my flock cower in the shadow of death.\"\n\u2014Lucilde Fiksdotter, Order of the White Shield"),
             new CardPrinting("10E", "29", Mobilization::new),
