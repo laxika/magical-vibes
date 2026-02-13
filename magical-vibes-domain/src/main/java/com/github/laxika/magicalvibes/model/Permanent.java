@@ -22,6 +22,7 @@ public class Permanent {
     @Setter private int powerModifier;
     @Setter private int toughnessModifier;
     @Setter private int damagePreventionShield;
+    @Setter private int regenerationShield;
     @Setter private UUID attachedTo;
     @Setter private CardColor chosenColor;
     private final Set<Keyword> grantedKeywords = new HashSet<>();

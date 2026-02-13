@@ -33,6 +33,7 @@ public enum CardSubtype {
     WOLF("Wolf"),
     MONK("Monk"),
     GRIFFIN("Griffin"),
+    SKELETON("Skeleton"),
     ELEPHANT("Elephant");
 
     @Getter
