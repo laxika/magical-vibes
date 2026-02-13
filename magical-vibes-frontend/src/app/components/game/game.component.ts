@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, StackEntry, StackUpdatedNotification, GraveyardUpdatedNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, StackEntry, StackUpdatedNotification, GraveyardUpdatedNotification } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 export interface IndexedPermanent {
@@ -155,6 +155,11 @@ export class GameComponent implements OnInit, OnDestroy {
         if (message.type === MessageType.GRAVEYARD_UPDATED) {
           const gyMsg = message as GraveyardUpdatedNotification;
           this.updateGraveyards(gyMsg.graveyards);
+        }
+
+        if (message.type === MessageType.CHOOSE_PERMANENT) {
+          const permMsg = message as ChoosePermanentNotification;
+          this.handleChoosePermanent(permMsg);
         }
 
         const update = message as GameUpdate;
@@ -453,6 +458,24 @@ export class GameComponent implements OnInit, OnDestroy {
     });
     this.awaitingMayAbility = false;
     this.mayAbilityPrompt = '';
+  }
+
+  private handleChoosePermanent(msg: ChoosePermanentNotification): void {
+    this.choosingPermanent = true;
+    this.choosablePermanentIds.set(new Set(msg.permanentIds));
+    this.permanentChoicePrompt = msg.prompt;
+  }
+
+  choosePermanent(permanentId: string): void {
+    if (!this.choosingPermanent) return;
+    if (!this.choosablePermanentIds().has(permanentId)) return;
+    this.websocketService.send({
+      type: MessageType.PERMANENT_CHOSEN,
+      permanentId: permanentId
+    });
+    this.choosingPermanent = false;
+    this.choosablePermanentIds.set(new Set());
+    this.permanentChoicePrompt = '';
   }
 
   getColorDisplayName(color: string): string {
@@ -815,6 +838,9 @@ export class GameComponent implements OnInit, OnDestroy {
   colorChoicePrompt = '';
   awaitingMayAbility = false;
   mayAbilityPrompt = '';
+  choosingPermanent = false;
+  choosablePermanentIds = signal(new Set<string>());
+  permanentChoicePrompt = '';
 
   // Targeting state (for instants and activated abilities)
   targeting = false;
@@ -981,6 +1007,13 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   onMyBattlefieldCardClick(index: number): void {
+    if (this.choosingPermanent) {
+      const perm = this.myBattlefield[index];
+      if (perm && this.choosablePermanentIds().has(perm.id)) {
+        this.choosePermanent(perm.id);
+      }
+      return;
+    }
     if (this.distributingDamage) {
       const perm = this.myBattlefield[index];
       if (perm && perm.card.type === 'Creature' && perm.attacking) {
@@ -1170,6 +1203,11 @@ export class GameComponent implements OnInit, OnDestroy {
     if (this.declaringBlockers && blocker.isMine) {
       this.selectBlocker(blocker.index);
     }
+  }
+
+  formatTypeLine(card: Card): string {
+    const supertypes = (card.supertypes ?? []).map(s => s.charAt(0) + s.slice(1).toLowerCase());
+    return [...supertypes, card.type].join(' ');
   }
 
   formatKeywords(keywords: string[]): string {

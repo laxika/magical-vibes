@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.networking.message.StepAdvancedMessage;
 import com.github.laxika.magicalvibes.networking.message.TurnChangedMessage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -312,6 +313,9 @@ public class GameService {
             log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
 
             handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId());
+            if (gameData.awaitingInput == null) {
+                checkLegendRule(gameData, controllerId);
+            }
         } else if (entry.getEntryType() == StackEntryType.ENCHANTMENT_SPELL) {
             Card card = entry.getCard();
             UUID controllerId = entry.getControllerId();
@@ -356,6 +360,9 @@ public class GameService {
                     Permanent justEntered = bf.get(bf.size() - 1);
                     beginColorChoice(gameData, controllerId, justEntered.getId(), null);
                 }
+                if (gameData.awaitingInput == null) {
+                    checkLegendRule(gameData, controllerId);
+                }
             }
         } else if (entry.getEntryType() == StackEntryType.ARTIFACT_SPELL) {
             Card card = entry.getCard();
@@ -370,6 +377,9 @@ public class GameService {
             broadcastLogEntry(gameData, logEntry);
 
             log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
+            if (gameData.awaitingInput == null) {
+                checkLegendRule(gameData, controllerId);
+            }
         } else if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 || entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 || entry.getEntryType() == StackEntryType.SORCERY_SPELL
@@ -2180,6 +2190,30 @@ public class GameService {
         beginPermanentChoice(gameData, controllerId, creatureIds, "Choose a creature you control to attach " + auraCard.getName() + " to.");
     }
 
+    private boolean checkLegendRule(GameData gameData, UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+
+        // Group legendary permanents by name
+        Map<String, List<UUID>> legendaryByName = new HashMap<>();
+        for (Permanent perm : battlefield) {
+            if (perm.getCard().getSupertypes().contains(CardSupertype.LEGENDARY)) {
+                legendaryByName.computeIfAbsent(perm.getCard().getName(), k -> new ArrayList<>()).add(perm.getId());
+            }
+        }
+
+        // Find the first name with duplicates
+        for (Map.Entry<String, List<UUID>> entry : legendaryByName.entrySet()) {
+            if (entry.getValue().size() >= 2) {
+                gameData.pendingLegendRuleCardName = entry.getKey();
+                beginPermanentChoice(gameData, controllerId, entry.getValue(),
+                        "You control multiple legendary permanents named " + entry.getKey() + ". Choose one to keep.");
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void beginPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, String prompt) {
         gameData.awaitingInput = AwaitingInput.PERMANENT_CHOICE;
         gameData.awaitingPermanentChoicePlayerId = playerId;
@@ -2210,35 +2244,62 @@ public class GameService {
                 throw new IllegalStateException("Invalid permanent: " + permanentId);
             }
 
-            Card auraCard = gameData.pendingAuraCard;
-            gameData.pendingAuraCard = null;
+            if (gameData.pendingLegendRuleCardName != null) {
+                // Legend rule: keep chosen permanent, move all others with the same name to graveyard
+                String legendName = gameData.pendingLegendRuleCardName;
+                gameData.pendingLegendRuleCardName = null;
 
-            if (auraCard == null) {
-                throw new IllegalStateException("No pending Aura card");
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                List<Permanent> toRemove = new ArrayList<>();
+                for (Permanent perm : battlefield) {
+                    if (perm.getCard().getName().equals(legendName) && !perm.getId().equals(permanentId)) {
+                        toRemove.add(perm);
+                    }
+                }
+                for (Permanent perm : toRemove) {
+                    battlefield.remove(perm);
+                    gameData.playerGraveyards.get(playerId).add(perm.getCard());
+                    String logEntry = perm.getCard().getName() + " is put into the graveyard (legend rule).";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                    log.info("Game {} - {} sent to graveyard by legend rule", gameData.id, perm.getCard().getName());
+                }
+
+                removeOrphanedAuras(gameData);
+                broadcastBattlefields(gameData);
+                broadcastGraveyards(gameData);
+                broadcastPlayableCards(gameData);
+
+                resolveAutoPass(gameData);
+            } else if (gameData.pendingAuraCard != null) {
+                Card auraCard = gameData.pendingAuraCard;
+                gameData.pendingAuraCard = null;
+
+                Permanent creatureTarget = findPermanentById(gameData, permanentId);
+                if (creatureTarget == null) {
+                    throw new IllegalStateException("Target creature no longer exists");
+                }
+
+                // Create Aura permanent attached to the creature, under controller's control
+                Permanent auraPerm = new Permanent(auraCard);
+                auraPerm.setAttachedTo(creatureTarget.getId());
+                gameData.playerBattlefields.get(playerId).add(auraPerm);
+
+                String playerName = gameData.playerIdToName.get(playerId);
+                String logEntry = auraCard.getName() + " enters the battlefield from graveyard attached to " + creatureTarget.getCard().getName() + " under " + playerName + "'s control.";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+                log.info("Game {} - {} returned {} from graveyard to battlefield attached to {}",
+                        gameData.id, playerName, auraCard.getName(), creatureTarget.getCard().getName());
+
+                broadcastBattlefields(gameData);
+                broadcastGraveyards(gameData);
+                broadcastPlayableCards(gameData);
+
+                resolveAutoPass(gameData);
+            } else {
+                throw new IllegalStateException("No pending permanent choice context");
             }
-
-            Permanent creatureTarget = findPermanentById(gameData, permanentId);
-            if (creatureTarget == null) {
-                throw new IllegalStateException("Target creature no longer exists");
-            }
-
-            // Create Aura permanent attached to the creature, under controller's control
-            Permanent auraPerm = new Permanent(auraCard);
-            auraPerm.setAttachedTo(creatureTarget.getId());
-            gameData.playerBattlefields.get(playerId).add(auraPerm);
-
-            String playerName = gameData.playerIdToName.get(playerId);
-            String logEntry = auraCard.getName() + " enters the battlefield from graveyard attached to " + creatureTarget.getCard().getName() + " under " + playerName + "'s control.";
-            gameData.gameLog.add(logEntry);
-            broadcastLogEntry(gameData, logEntry);
-            log.info("Game {} - {} returned {} from graveyard to battlefield attached to {}",
-                    gameData.id, playerName, auraCard.getName(), creatureTarget.getCard().getName());
-
-            broadcastBattlefields(gameData);
-            broadcastGraveyards(gameData);
-            broadcastPlayableCards(gameData);
-
-            resolveAutoPass(gameData);
         }
     }
 
@@ -2401,6 +2462,9 @@ public class GameService {
                         broadcastGraveyards(gameData);
 
                         handleCreatureEnteredBattlefield(gameData, playerId, card, null);
+                        if (gameData.awaitingInput == null) {
+                            checkLegendRule(gameData, playerId);
+                        }
                     }
                 }
             }
@@ -2424,6 +2488,9 @@ public class GameService {
         broadcastBattlefields(gameData);
 
         handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
+        if (gameData.awaitingInput == null) {
+            checkLegendRule(gameData, controllerId);
+        }
 
         log.info("Game {} - {} token created for player {}", gameData.id, token.tokenName(), controllerId);
     }

@@ -37,7 +37,7 @@
                 }
                 <div class="card-name">{{ card.name }}</div>
                 <div class="card-art"></div>
-                <div class="card-type">{{ card.type }}</div>
+                <div class="card-type">{{ formatTypeLine(card) }}</div>
                 @if (card.power != null && card.toughness != null) {
                   <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
                 }
@@ -68,7 +68,7 @@
                 }
                 <div class="card-name">{{ card.name }}</div>
                 <div class="card-art"></div>
-                <div class="card-type">{{ card.type }}</div>
+                <div class="card-type">{{ formatTypeLine(card) }}</div>
                 @if (card.power != null && card.toughness != null) {
                   <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
                 }
@@ -260,7 +260,7 @@
               }
               <div class="card-name">{{ ip.perm.card.name }}</div>
               <div class="card-art"></div>
-              <div class="card-type">{{ ip.perm.card.type }}</div>
+              <div class="card-type">{{ formatTypeLine(ip.perm.card) }}</div>
               @if (ip.perm.card.setCode) {
                 <div class="card-set-badge">{{ ip.perm.card.setCode }} #{{ ip.perm.card.collectorNumber }}</div>
               }
@@ -290,7 +290,7 @@
               }
               <div class="card-name">{{ ip.perm.card.name }}</div>
               <div class="card-art"></div>
-              <div class="card-type">{{ ip.perm.card.type }}</div>
+              <div class="card-type">{{ formatTypeLine(ip.perm.card) }}</div>
               @if (getEffectiveKeywords(ip.perm).length > 0) {
                 <div class="card-keywords">{{ formatKeywords(getEffectiveKeywords(ip.perm)) }}</div>
               }
@@ -326,7 +326,7 @@
                   }
                   <div class="card-name">{{ card.name }}</div>
                   <div class="card-art"></div>
-                  <div class="card-type">{{ card.type }}</div>
+                  <div class="card-type">{{ formatTypeLine(card) }}</div>
                   @if (card.power != null && card.toughness != null) {
                     <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
                   }
@@ -357,7 +357,7 @@
                     }
                     <div class="card-name">{{ group.attacker.card.name }}</div>
                     <div class="card-art"></div>
-                    <div class="card-type">{{ group.attacker.card.type }}</div>
+                    <div class="card-type">{{ formatTypeLine(group.attacker.card) }}</div>
                     @if (getEffectiveKeywords(group.attacker).length > 0) {
                       <div class="card-keywords">{{ formatKeywords(getEffectiveKeywords(group.attacker)) }}</div>
                     }
@@ -390,7 +390,7 @@
                         }
                         <div class="card-name">{{ blocker.perm.card.name }}</div>
                         <div class="card-art"></div>
-                        <div class="card-type">{{ blocker.perm.card.type }}</div>
+                        <div class="card-type">{{ formatTypeLine(blocker.perm.card) }}</div>
                         @if (getEffectiveKeywords(blocker.perm).length > 0) {
                           <div class="card-keywords">{{ formatKeywords(getEffectiveKeywords(blocker.perm)) }}</div>
                         }
@@ -432,6 +432,7 @@
                  [class.selected-blocker]="selectedBlockerIndex === ip.originalIndex"
                  [class.assigned-blocker]="isAssignedBlocker(ip.originalIndex)"
                  [class.targetable]="targeting"
+                 [class.choosable-permanent]="choosingPermanent && choosablePermanentIds().has(ip.perm.id)"
                  [attr.data-card-color]="ip.perm.card.color"
                  (click)="onMyBattlefieldCardClick(ip.originalIndex)">
               @if (ip.perm.card.manaCost) {
@@ -439,7 +440,7 @@
               }
               <div class="card-name">{{ ip.perm.card.name }}</div>
               <div class="card-art"></div>
-              <div class="card-type">{{ ip.perm.card.type }}</div>
+              <div class="card-type">{{ formatTypeLine(ip.perm.card) }}</div>
               @if (getEffectiveKeywords(ip.perm).length > 0) {
                 <div class="card-keywords">{{ formatKeywords(getEffectiveKeywords(ip.perm)) }}</div>
               }
@@ -466,6 +467,7 @@
             <div class="card"
                  [class.tapped]="ip.perm.tapped"
                  [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
+                 [class.choosable-permanent]="choosingPermanent && choosablePermanentIds().has(ip.perm.id)"
                  [attr.data-card-color]="ip.perm.card.color"
                  (click)="onMyBattlefieldCardClick(ip.originalIndex)">
               @if (ip.perm.card.manaCost) {
@@ -473,7 +475,7 @@
               }
               <div class="card-name">{{ ip.perm.card.name }}</div>
               <div class="card-art"></div>
-              <div class="card-type">{{ ip.perm.card.type }}</div>
+              <div class="card-type">{{ formatTypeLine(ip.perm.card) }}</div>
               @if (ip.perm.card.setCode) {
                 <div class="card-set-badge">{{ ip.perm.card.setCode }} #{{ ip.perm.card.collectorNumber }}</div>
               }
@@ -500,7 +502,7 @@
                   }
                   <div class="card-name">{{ card.name }}</div>
                   <div class="card-art"></div>
-                  <div class="card-type">{{ card.type }}</div>
+                  <div class="card-type">{{ formatTypeLine(card) }}</div>
                   @if (card.power != null && card.toughness != null) {
                     <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
                   }
@@ -538,6 +540,12 @@
       </div>
     }
 
+    @if (choosingPermanent) {
+      <div class="combat-banner permanent-choice-banner">
+        <span>{{ permanentChoicePrompt }}</span>
+      </div>
+    }
+
     <div class="hand-area">
       <div class="hand-label">Your Hand ({{ hand.length }} cards)</div>
       <div class="hand-cards">
@@ -552,7 +560,7 @@
             }
             <div class="card-name">{{ card.name }}</div>
             <div class="card-art"></div>
-            <div class="card-type">{{ card.type }}</div>
+            <div class="card-type">{{ formatTypeLine(card) }}</div>
             @if (card.keywords.length > 0) {
               <div class="card-keywords">{{ formatKeywords(card.keywords) }}</div>
             }
