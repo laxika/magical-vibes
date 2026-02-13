@@ -57,6 +57,7 @@ public class GameData {
     public UUID awaitingColorChoicePlayerId;
     public UUID awaitingColorChoicePermanentId;
     public UUID pendingColorChoiceETBTargetId;
+    public final Map<UUID, Map<CardColor, Integer>> playerColorDamagePreventionCount = new ConcurrentHashMap<>();
 
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {
         this.id = id;

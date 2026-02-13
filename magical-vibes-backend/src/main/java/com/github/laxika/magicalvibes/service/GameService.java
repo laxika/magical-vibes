@@ -77,6 +77,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -340,6 +341,15 @@ public class GameService {
                 gameData.gameLog.add(logEntry);
                 broadcastLogEntry(gameData, logEntry);
                 log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
+
+                // Check if enchantment has "as enters" color choice
+                boolean needsColorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .anyMatch(e -> e instanceof ChooseColorEffect);
+                if (needsColorChoice) {
+                    List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+                    Permanent justEntered = bf.get(bf.size() - 1);
+                    beginColorChoice(gameData, controllerId, justEntered.getId(), null);
+                }
             }
         } else if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 || entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
@@ -463,6 +473,8 @@ public class GameService {
                 resolveReturnArtifactFromGraveyardToHand(gameData, entry);
             } else if (effect instanceof TapTargetCreatureEffect) {
                 resolveTapTargetCreature(gameData, entry);
+            } else if (effect instanceof PreventNextColorDamageToControllerEffect) {
+                resolvePreventNextColorDamageToController(gameData, entry);
             }
         }
         removeOrphanedAuras(gameData);
@@ -1422,7 +1434,9 @@ public class GameService {
                 broadcastLogEntry(gameData, logEntry);
                 log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), color, perm.getCard().getName());
 
-                processCreatureETBEffects(gameData, player.getId(), perm.getCard(), etbTargetId);
+                if (perm.getCard().getType() == CardType.CREATURE) {
+                    processCreatureETBEffects(gameData, player.getId(), perm.getCard(), etbTargetId);
+                }
             }
 
             gameData.priorityPassedBy.clear();
@@ -1950,6 +1964,28 @@ public class GameService {
 
     private boolean isDamageFromSourcePrevented(GameData gameData, CardColor sourceColor) {
         return sourceColor != null && gameData.preventDamageFromColors.contains(sourceColor);
+    }
+
+    private void resolvePreventNextColorDamageToController(GameData gameData, StackEntry entry) {
+        UUID permanentId = entry.getTargetPermanentId();
+        Permanent perm = findPermanentById(gameData, permanentId);
+        if (perm == null || perm.getChosenColor() == null) return;
+
+        UUID controllerId = entry.getControllerId();
+        CardColor chosenColor = perm.getChosenColor();
+        gameData.playerColorDamagePreventionCount
+                .computeIfAbsent(controllerId, k -> new ConcurrentHashMap<>())
+                .merge(chosenColor, 1, Integer::sum);
+    }
+
+    private boolean applyColorDamagePreventionForPlayer(GameData gameData, UUID playerId, CardColor sourceColor) {
+        if (sourceColor == null) return false;
+        Map<CardColor, Integer> colorMap = gameData.playerColorDamagePreventionCount.get(playerId);
+        if (colorMap == null) return false;
+        Integer count = colorMap.get(sourceColor);
+        if (count == null || count <= 0) return false;
+        colorMap.put(sourceColor, count - 1);
+        return true;
     }
 
     private boolean hasProtectionFrom(GameData gameData, Permanent target, CardColor sourceColor) {
@@ -2511,6 +2547,7 @@ public class GameService {
         gameData.preventAllCombatDamage = false;
         gameData.preventDamageFromColors.clear();
         gameData.combatDamageRedirectTarget = null;
+        gameData.playerColorDamagePreventionCount.clear();
     }
 
     // ===== Static / continuous effect computation =====
@@ -2631,6 +2668,9 @@ public class GameService {
         // Deal damage to each player (with prevention shields and damage redirect)
         String cardName = entry.getCard().getName();
         for (UUID playerId : gameData.orderedPlayerIds) {
+            if (applyColorDamagePreventionForPlayer(gameData, playerId, entry.getCard().getColor())) {
+                continue;
+            }
             int effectiveDamage = applyPlayerPreventionShield(gameData, playerId, damage);
             effectiveDamage = redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
             int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
@@ -3005,7 +3045,7 @@ public class GameService {
                     if (atkHasFS && !isPreventedFromDealingDamage(gameData, atk)) {
                         if (redirectTarget != null) {
                             damageRedirectedToGuard += getEffectivePower(gameData, atk);
-                        } else {
+                        } else if (!applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
                             damageToDefendingPlayer += getEffectivePower(gameData, atk);
                         }
                         combatDamageDealt.merge(atk, getEffectivePower(gameData, atk), Integer::sum);
@@ -3073,7 +3113,7 @@ public class GameService {
                 if (!atkSkipPhase2 && !isPreventedFromDealingDamage(gameData, atk)) {
                     if (redirectTarget != null) {
                         damageRedirectedToGuard += getEffectivePower(gameData, atk);
-                    } else {
+                    } else if (!applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
                         damageToDefendingPlayer += getEffectivePower(gameData, atk);
                     }
                     combatDamageDealt.merge(atk, getEffectivePower(gameData, atk), Integer::sum);
