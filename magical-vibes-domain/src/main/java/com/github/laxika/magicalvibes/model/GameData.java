@@ -21,6 +21,7 @@ public class GameData {
     public final List<UUID> orderedPlayerIds = Collections.synchronizedList(new ArrayList<>());
     public final List<String> playerNames = Collections.synchronizedList(new ArrayList<>());
     public final Map<UUID, String> playerIdToName = new ConcurrentHashMap<>();
+    public final Map<UUID, String> playerDeckChoices = new ConcurrentHashMap<>();
     public final Map<UUID, List<Card>> playerDecks = new ConcurrentHashMap<>();
     public final Map<UUID, List<Card>> playerHands = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> mulliganCounts = new ConcurrentHashMap<>();

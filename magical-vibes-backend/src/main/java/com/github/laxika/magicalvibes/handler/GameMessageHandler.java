@@ -99,7 +99,7 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
-        LobbyService.GameResult result = lobbyService.createGame(request.gameName(), player);
+        LobbyService.GameResult result = lobbyService.createGame(request.gameName(), player, request.deckId());
 
         // Mark creator as in-game
         sessionManager.setInGame(connection.getId());
@@ -126,7 +126,7 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
-            LobbyGame lobbyGame = lobbyService.joinGame(gameData, player);
+            LobbyGame lobbyGame = lobbyService.joinGame(gameData, player, request.deckId());
 
             // Mark joiner as in-game
             sessionManager.setInGame(connection.getId());

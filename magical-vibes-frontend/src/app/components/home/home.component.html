@@ -14,6 +14,15 @@
       </div>
     }
 
+    <div class="deck-selector">
+      <label for="deckSelect">Select Deck</label>
+      <select id="deckSelect" [ngModel]="selectedDeckId()" (ngModelChange)="selectedDeckId.set($event)">
+        @for (deck of websocketService.availableDecks; track deck.id) {
+          <option [value]="deck.id">{{ deck.name }}</option>
+        }
+      </select>
+    </div>
+
     <div class="actions">
       <button class="btn-primary" (click)="toggleCreateForm()">
         @if (showCreateForm()) {

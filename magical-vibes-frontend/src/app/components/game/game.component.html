@@ -38,6 +38,9 @@
                 <div class="card-name">{{ card.name }}</div>
                 <div class="card-art"></div>
                 <div class="card-type">{{ card.type }}</div>
+                @if (card.cardText) {
+                  <div class="card-text">{{ card.cardText }}</div>
+                }
                 @if (card.power != null && card.toughness != null) {
                   <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
                 }
@@ -69,6 +72,9 @@
                 <div class="card-name">{{ card.name }}</div>
                 <div class="card-art"></div>
                 <div class="card-type">{{ card.type }}</div>
+                @if (card.cardText) {
+                  <div class="card-text">{{ card.cardText }}</div>
+                }
                 @if (card.power != null && card.toughness != null) {
                   <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
                 }
@@ -113,7 +119,7 @@
 
   @if (game()?.status === GameStatus.RUNNING || game()?.status === GameStatus.FINISHED) {
     <div class="turn-info">
-      <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)">
+      <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)" [class.targetable]="targetingForPlayer" (click)="selectPlayerTarget(0)">
         {{ player1Name }}
         <span class="life-total">Life: {{ getLifeTotal(0) }}</span>
         <span class="deck-size">Deck: {{ player1DeckSize }}</span>
@@ -125,7 +131,7 @@
         <span class="turn-number">Turn {{ game()?.turnNumber }}</span>
         <span class="vs-label">VS</span>
       </div>
-      <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)">
+      <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)" [class.targetable]="targetingForPlayer" (click)="selectPlayerTarget(1)">
         {{ player2Name }}
         <span class="life-total">Life: {{ getLifeTotal(1) }}</span>
         <span class="deck-size">Deck: {{ player2DeckSize }}</span>
@@ -181,6 +187,9 @@
               @if (entry.card.manaCost) {
                 <div class="stack-entry-cost">{{ entry.card.manaCost }}</div>
               }
+              @if (entry.card.cardText) {
+                <div class="card-text">{{ entry.card.cardText }}</div>
+              }
               @if (entry.card.power != null && entry.card.toughness != null) {
                 <div class="stack-entry-stats">{{ entry.card.power }}/{{ entry.card.toughness }}</div>
               }
@@ -220,7 +229,11 @@
 
     @if (targeting) {
       <div class="combat-banner targeting-banner">
-        <span>Select a target creature for {{ targetingCardName }}</span>
+        @if (targetingForPlayer) {
+          <span>Select a target player for {{ targetingCardName }}</span>
+        } @else {
+          <span>Select a target creature for {{ targetingCardName }}</span>
+        }
         <button class="btn-confirm-combat" (click)="cancelTargeting()">Cancel</button>
       </div>
     }
@@ -257,6 +270,9 @@
               <div class="card-name">{{ ip.perm.card.name }}</div>
               <div class="card-art"></div>
               <div class="card-type">{{ ip.perm.card.type }}</div>
+              @if (ip.perm.card.cardText) {
+                <div class="card-text">{{ ip.perm.card.cardText }}</div>
+              }
               @if (ip.perm.card.setCode) {
                 <div class="card-set-badge">{{ ip.perm.card.setCode }} #{{ ip.perm.card.collectorNumber }}</div>
               }
@@ -287,6 +303,9 @@
               <div class="card-name">{{ ip.perm.card.name }}</div>
               <div class="card-art"></div>
               <div class="card-type">{{ ip.perm.card.type }}</div>
+              @if (ip.perm.card.cardText) {
+                <div class="card-text">{{ ip.perm.card.cardText }}</div>
+              }
               @if (getEffectiveKeywords(ip.perm).length > 0) {
                 <div class="card-keywords">{{ formatKeywords(getEffectiveKeywords(ip.perm)) }}</div>
               }
@@ -323,6 +342,9 @@
                   <div class="card-name">{{ card.name }}</div>
                   <div class="card-art"></div>
                   <div class="card-type">{{ card.type }}</div>
+                  @if (card.cardText) {
+                    <div class="card-text">{{ card.cardText }}</div>
+                  }
                   @if (card.power != null && card.toughness != null) {
                     <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
                   }
@@ -354,6 +376,9 @@
                     <div class="card-name">{{ group.attacker.card.name }}</div>
                     <div class="card-art"></div>
                     <div class="card-type">{{ group.attacker.card.type }}</div>
+                    @if (group.attacker.card.cardText) {
+                      <div class="card-text">{{ group.attacker.card.cardText }}</div>
+                    }
                     @if (getEffectiveKeywords(group.attacker).length > 0) {
                       <div class="card-keywords">{{ formatKeywords(getEffectiveKeywords(group.attacker)) }}</div>
                     }
@@ -387,6 +412,9 @@
                         <div class="card-name">{{ blocker.perm.card.name }}</div>
                         <div class="card-art"></div>
                         <div class="card-type">{{ blocker.perm.card.type }}</div>
+                        @if (blocker.perm.card.cardText) {
+                          <div class="card-text">{{ blocker.perm.card.cardText }}</div>
+                        }
                         @if (getEffectiveKeywords(blocker.perm).length > 0) {
                           <div class="card-keywords">{{ formatKeywords(getEffectiveKeywords(blocker.perm)) }}</div>
                         }
@@ -436,6 +464,9 @@
               <div class="card-name">{{ ip.perm.card.name }}</div>
               <div class="card-art"></div>
               <div class="card-type">{{ ip.perm.card.type }}</div>
+              @if (ip.perm.card.cardText) {
+                <div class="card-text">{{ ip.perm.card.cardText }}</div>
+              }
               @if (getEffectiveKeywords(ip.perm).length > 0) {
                 <div class="card-keywords">{{ formatKeywords(getEffectiveKeywords(ip.perm)) }}</div>
               }
@@ -470,6 +501,9 @@
               <div class="card-name">{{ ip.perm.card.name }}</div>
               <div class="card-art"></div>
               <div class="card-type">{{ ip.perm.card.type }}</div>
+              @if (ip.perm.card.cardText) {
+                <div class="card-text">{{ ip.perm.card.cardText }}</div>
+              }
               @if (ip.perm.card.setCode) {
                 <div class="card-set-badge">{{ ip.perm.card.setCode }} #{{ ip.perm.card.collectorNumber }}</div>
               }
@@ -497,6 +531,9 @@
                   <div class="card-name">{{ card.name }}</div>
                   <div class="card-art"></div>
                   <div class="card-type">{{ card.type }}</div>
+                  @if (card.cardText) {
+                    <div class="card-text">{{ card.cardText }}</div>
+                  }
                   @if (card.power != null && card.toughness != null) {
                     <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
                   }
@@ -549,6 +586,9 @@
             <div class="card-name">{{ card.name }}</div>
             <div class="card-art"></div>
             <div class="card-type">{{ card.type }}</div>
+            @if (card.cardText) {
+              <div class="card-text">{{ card.cardText }}</div>
+            }
             @if (card.keywords.length > 0) {
               <div class="card-keywords">{{ formatKeywords(card.keywords) }}</div>
             }
