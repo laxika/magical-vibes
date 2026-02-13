@@ -38,6 +38,9 @@
                 <div class="card-name">{{ card.name }}</div>
                 <div class="card-art"></div>
                 <div class="card-type">{{ formatTypeLine(card) }}</div>
+                @if (card.cardText) {
+                  <div class="card-text">{{ card.cardText }}</div>
+                }
                 @if (card.power != null && card.toughness != null) {
                   <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
                 }
@@ -69,6 +72,9 @@
                 <div class="card-name">{{ card.name }}</div>
                 <div class="card-art"></div>
                 <div class="card-type">{{ formatTypeLine(card) }}</div>
+                @if (card.cardText) {
+                  <div class="card-text">{{ card.cardText }}</div>
+                }
                 @if (card.power != null && card.toughness != null) {
                   <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
                 }
@@ -181,6 +187,9 @@
               @if (entry.card.manaCost) {
                 <div class="stack-entry-cost">{{ entry.card.manaCost }}</div>
               }
+              @if (entry.card.cardText) {
+                <div class="card-text">{{ entry.card.cardText }}</div>
+              }
               @if (entry.card.power != null && entry.card.toughness != null) {
                 <div class="stack-entry-stats">{{ entry.card.power }}/{{ entry.card.toughness }}</div>
               }
@@ -261,6 +270,9 @@
               <div class="card-name">{{ ip.perm.card.name }}</div>
               <div class="card-art"></div>
               <div class="card-type">{{ formatTypeLine(ip.perm.card) }}</div>
+              @if (ip.perm.card.cardText) {
+                <div class="card-text">{{ ip.perm.card.cardText }}</div>
+              }
               @if (ip.perm.card.setCode) {
                 <div class="card-set-badge">{{ ip.perm.card.setCode }} #{{ ip.perm.card.collectorNumber }}</div>
               }
@@ -291,6 +303,9 @@
               <div class="card-name">{{ ip.perm.card.name }}</div>
               <div class="card-art"></div>
               <div class="card-type">{{ formatTypeLine(ip.perm.card) }}</div>
+              @if (ip.perm.card.cardText) {
+                <div class="card-text">{{ ip.perm.card.cardText }}</div>
+              }
               @if (getEffectiveKeywords(ip.perm).length > 0) {
                 <div class="card-keywords">{{ formatKeywords(getEffectiveKeywords(ip.perm)) }}</div>
               }
@@ -327,6 +342,9 @@
                   <div class="card-name">{{ card.name }}</div>
                   <div class="card-art"></div>
                   <div class="card-type">{{ formatTypeLine(card) }}</div>
+                  @if (card.cardText) {
+                    <div class="card-text">{{ card.cardText }}</div>
+                  }
                   @if (card.power != null && card.toughness != null) {
                     <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
                   }
@@ -358,6 +376,9 @@
                     <div class="card-name">{{ group.attacker.card.name }}</div>
                     <div class="card-art"></div>
                     <div class="card-type">{{ formatTypeLine(group.attacker.card) }}</div>
+                    @if (group.attacker.card.cardText) {
+                      <div class="card-text">{{ group.attacker.card.cardText }}</div>
+                    }
                     @if (getEffectiveKeywords(group.attacker).length > 0) {
                       <div class="card-keywords">{{ formatKeywords(getEffectiveKeywords(group.attacker)) }}</div>
                     }
@@ -391,6 +412,9 @@
                         <div class="card-name">{{ blocker.perm.card.name }}</div>
                         <div class="card-art"></div>
                         <div class="card-type">{{ formatTypeLine(blocker.perm.card) }}</div>
+                        @if (blocker.perm.card.cardText) {
+                          <div class="card-text">{{ blocker.perm.card.cardText }}</div>
+                        }
                         @if (getEffectiveKeywords(blocker.perm).length > 0) {
                           <div class="card-keywords">{{ formatKeywords(getEffectiveKeywords(blocker.perm)) }}</div>
                         }
@@ -441,6 +465,9 @@
               <div class="card-name">{{ ip.perm.card.name }}</div>
               <div class="card-art"></div>
               <div class="card-type">{{ formatTypeLine(ip.perm.card) }}</div>
+              @if (ip.perm.card.cardText) {
+                <div class="card-text">{{ ip.perm.card.cardText }}</div>
+              }
               @if (getEffectiveKeywords(ip.perm).length > 0) {
                 <div class="card-keywords">{{ formatKeywords(getEffectiveKeywords(ip.perm)) }}</div>
               }
@@ -476,6 +503,9 @@
               <div class="card-name">{{ ip.perm.card.name }}</div>
               <div class="card-art"></div>
               <div class="card-type">{{ formatTypeLine(ip.perm.card) }}</div>
+              @if (ip.perm.card.cardText) {
+                <div class="card-text">{{ ip.perm.card.cardText }}</div>
+              }
               @if (ip.perm.card.setCode) {
                 <div class="card-set-badge">{{ ip.perm.card.setCode }} #{{ ip.perm.card.collectorNumber }}</div>
               }
@@ -503,6 +533,9 @@
                   <div class="card-name">{{ card.name }}</div>
                   <div class="card-art"></div>
                   <div class="card-type">{{ formatTypeLine(card) }}</div>
+                  @if (card.cardText) {
+                    <div class="card-text">{{ card.cardText }}</div>
+                  }
                   @if (card.power != null && card.toughness != null) {
                     <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
                   }
@@ -561,6 +594,9 @@
             <div class="card-name">{{ card.name }}</div>
             <div class="card-art"></div>
             <div class="card-type">{{ formatTypeLine(card) }}</div>
+            @if (card.cardText) {
+              <div class="card-text">{{ card.cardText }}</div>
+            }
             @if (card.keywords.length > 0) {
               <div class="card-keywords">{{ formatKeywords(card.keywords) }}</div>
             }
