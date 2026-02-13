@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AncestorsChosen;
 import com.github.laxika.magicalvibes.cards.a.AngelicBlessing;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
@@ -87,6 +88,7 @@ public enum CardSet {
 
     TENTH_EDITION("10E", "Tenth Edition", List.of(
             new CardPrinting("10E", "1", AncestorsChosen::new),
+            new CardPrinting("10E", "64", AirElemental::new),
             new CardPrinting("10E", "2", AngelOfMercy::new, "\"Every tear shed is a drop of immortality.\""),
             new CardPrinting("10E", "3", AngelicBlessing::new, "\"Only the warrior who can admit mortal weakness will be bolstered by immortal strength.\""),
             new CardPrinting("10E", "4", AngelicChorus::new, "\"The harmony of the glorious is a dirge to the wicked.\""),
