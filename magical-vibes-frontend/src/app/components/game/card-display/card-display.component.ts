@@ -49,7 +49,12 @@ export class CardDisplayComponent {
 
   get typeLine(): string {
     const supertypes = (this.card.supertypes ?? []).map(s => s.charAt(0) + s.slice(1).toLowerCase());
-    return [...supertypes, this.card.type].join(' ');
+    const mainType = [...supertypes, this.card.type].join(' ');
+    const subtypes = (this.card.subtypes ?? []).map(s => s.charAt(0) + s.slice(1).toLowerCase());
+    if (subtypes.length > 0) {
+      return `${mainType} \u2014 ${subtypes.join(' ')}`;
+    }
+    return mainType;
   }
 
   formatKeywords(keywords: string[]): string {
