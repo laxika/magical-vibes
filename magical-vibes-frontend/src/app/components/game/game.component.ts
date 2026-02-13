@@ -514,6 +514,9 @@ export class GameComponent implements OnInit, OnDestroy {
         this.targeting = true;
         this.targetingCardIndex = index;
         this.targetingCardName = card.name;
+        if (card.targetsPlayer) {
+          this.targetingForPlayer = true;
+        }
         return;
       }
       this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetPermanentId: null });
@@ -630,11 +633,38 @@ export class GameComponent implements OnInit, OnDestroy {
     this.targetingAllowedTypes = [];
   }
 
+  selectPlayerTarget(playerIndex: number): void {
+    if (!this.targeting || !this.targetingForPlayer) return;
+    const g = this.game();
+    if (!g) return;
+    const playerId = g.playerIds[playerIndex];
+    if (this.targetingForAbility) {
+      this.websocketService.send({
+        type: MessageType.ACTIVATE_ABILITY,
+        permanentIndex: this.targetingCardIndex,
+        targetPermanentId: playerId
+      });
+    } else {
+      this.websocketService.send({
+        type: MessageType.PLAY_CARD,
+        cardIndex: this.targetingCardIndex,
+        targetPermanentId: playerId
+      });
+    }
+    this.targeting = false;
+    this.targetingCardIndex = -1;
+    this.targetingCardName = '';
+    this.targetingForAbility = false;
+    this.targetingForPlayer = false;
+    this.targetingAllowedTypes = [];
+  }
+
   cancelTargeting(): void {
     this.targeting = false;
     this.targetingCardIndex = -1;
     this.targetingCardName = '';
     this.targetingForAbility = false;
+    this.targetingForPlayer = false;
     this.targetingAllowedTypes = [];
   }
 
@@ -712,6 +742,14 @@ export class GameComponent implements OnInit, OnDestroy {
     const g = this.game();
     if (g && this.canTapPermanent(index)) {
       const perm = this.myBattlefield[index];
+      if (perm && perm.card.needsTarget && perm.card.hasManaAbility && perm.card.targetsPlayer) {
+        this.targeting = true;
+        this.targetingCardIndex = index;
+        this.targetingCardName = perm.card.name;
+        this.targetingForAbility = true;
+        this.targetingForPlayer = true;
+        return;
+      }
       if (perm && perm.card.needsTarget && !perm.card.hasManaAbility) {
         this.targeting = true;
         this.targetingCardIndex = index;
@@ -783,6 +821,7 @@ export class GameComponent implements OnInit, OnDestroy {
   targetingCardIndex = -1;
   targetingCardName = '';
   targetingForAbility = false;
+  targetingForPlayer = false;
   targetingAllowedTypes: string[] = [];
 
   // X cost prompt state
