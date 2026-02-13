@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
@@ -18,7 +18,6 @@ public class BallistaSquad extends Card {
         setCardText("{X}{W}, {T}: Ballista Squad deals X damage to target attacking or blocking creature.");
         setPower(2);
         setToughness(2);
-        addEffect(EffectSlot.TAP_ACTIVATED_ABILITY, new DealXDamageToTargetCreatureEffect());
-        setTapActivatedAbilityCost("{X}{W}");
+        addActivatedAbility(new ActivatedAbility(true, "{X}{W}", List.of(new DealXDamageToTargetCreatureEffect()), true, "{X}{W}, {T}: Ballista Squad deals X damage to target attacking or blocking creature."));
     }
 }

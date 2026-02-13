@@ -995,6 +995,19 @@ h1 {
   box-shadow: 0 4px 12px rgba(230, 126, 34, 0.4);
 }
 
+.ability-choice-banner {
+  background: linear-gradient(135deg, #8e44ad, #6c3483);
+  box-shadow: 0 4px 12px rgba(142, 68, 173, 0.4);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ability-choice-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 /* Override tapped opacity in combat zone — attacking creatures are tapped but should appear at full opacity */
 .combat-zone .card.tapped {
   opacity: 1;

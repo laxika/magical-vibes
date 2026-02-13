@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -53,10 +53,10 @@ class DrudgeSkeletonsTest {
         assertThat(card.getPower()).isEqualTo(1);
         assertThat(card.getToughness()).isEqualTo(1);
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.SKELETON);
-        assertThat(card.getEffects(EffectSlot.MANA_ACTIVATED_ABILITY)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.MANA_ACTIVATED_ABILITY).getFirst())
+        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
+        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
                 .isInstanceOf(RegenerateEffect.class);
-        assertThat(card.getManaActivatedAbilityCost()).isEqualTo("{B}");
+        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{B}");
     }
 
     // ===== Casting =====

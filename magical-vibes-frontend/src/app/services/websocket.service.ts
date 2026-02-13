@@ -110,6 +110,15 @@ export const PHASE_GROUPS: PhaseGroup[] = TURN_STEPS.reduce<PhaseGroup[]>((group
   return groups;
 }, []);
 
+export interface ActivatedAbilityView {
+  description: string;
+  requiresTap: boolean;
+  needsTarget: boolean;
+  targetsPlayer: boolean;
+  allowedTargetTypes: string[];
+  manaCost: string | null;
+}
+
 export interface Card {
   name: string;
   type: string;
@@ -120,16 +129,12 @@ export interface Card {
   power: number | null;
   toughness: number | null;
   keywords: string[];
-  needsTarget: boolean;
-  needsDamageDistribution: boolean;
   hasTapAbility: boolean;
-  hasManaAbility: boolean;
   setCode: string | null;
   collectorNumber: string | null;
   flavorText: string | null;
   color: string | null;
-  allowedTargetTypes: string[];
-  targetsPlayer: boolean;
+  activatedAbilities: ActivatedAbilityView[];
 }
 
 export interface Permanent {

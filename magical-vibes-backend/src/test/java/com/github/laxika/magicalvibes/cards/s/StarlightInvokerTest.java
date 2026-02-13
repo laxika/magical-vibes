@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -45,12 +45,12 @@ class StarlightInvokerTest {
         assertThat(card.getPower()).isEqualTo(1);
         assertThat(card.getToughness()).isEqualTo(3);
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.HUMAN, CardSubtype.CLERIC, CardSubtype.MUTANT);
-        assertThat(card.getEffects(EffectSlot.MANA_ACTIVATED_ABILITY)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.MANA_ACTIVATED_ABILITY).getFirst())
+        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
+        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
                 .isInstanceOf(GainLifeEffect.class);
-        GainLifeEffect effect = (GainLifeEffect) card.getEffects(EffectSlot.MANA_ACTIVATED_ABILITY).getFirst();
+        GainLifeEffect effect = (GainLifeEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
         assertThat(effect.amount()).isEqualTo(5);
-        assertThat(card.getManaActivatedAbilityCost()).isEqualTo("{7}{W}");
+        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{7}{W}");
     }
 
     // ===== Activation =====

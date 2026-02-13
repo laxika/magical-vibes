@@ -110,11 +110,15 @@ public class GameTestHarness {
     }
 
     public void activateAbility(Player player, int permanentIndex, Integer xValue, UUID targetPermanentId) {
-        gameService.activateAbility(gameData, player, permanentIndex, xValue, targetPermanentId, null);
+        gameService.activateAbility(gameData, player, permanentIndex, 0, xValue, targetPermanentId, null);
     }
 
     public void activateAbility(Player player, int permanentIndex, Integer xValue, UUID targetPermanentId, TargetZone targetZone) {
-        gameService.activateAbility(gameData, player, permanentIndex, xValue, targetPermanentId, targetZone);
+        gameService.activateAbility(gameData, player, permanentIndex, 0, xValue, targetPermanentId, targetZone);
+    }
+
+    public void activateAbility(Player player, int permanentIndex, int abilityIndex, Integer xValue, UUID targetPermanentId) {
+        gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetPermanentId, null);
     }
 
     public void handlePermanentChosen(Player player, UUID permanentId) {

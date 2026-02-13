@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, StackEntry, StackUpdatedNotification, GraveyardUpdatedNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, StackEntry, StackUpdatedNotification, GraveyardUpdatedNotification } from '../../services/websocket.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { Subscription } from 'rxjs';
 
@@ -534,15 +534,6 @@ export class GameComponent implements OnInit, OnDestroy {
         this.xValueMaximum = this.totalMana - 1; // subtract 1 for the {W} base cost
         return;
       }
-      if (card.needsTarget) {
-        this.targeting = true;
-        this.targetingCardIndex = index;
-        this.targetingCardName = card.name;
-        if (card.targetsPlayer) {
-          this.targetingForPlayer = true;
-        }
-        return;
-      }
       this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetPermanentId: null });
     }
   }
@@ -550,24 +541,28 @@ export class GameComponent implements OnInit, OnDestroy {
   confirmXValue(): void {
     const g = this.game();
     if (!g) return;
-    const card = g.hand[this.xValueCardIndex];
 
-    if (card.needsDamageDistribution) {
-      this.distributingDamage = true;
-      this.damageDistributionCardIndex = this.xValueCardIndex;
-      this.damageDistributionCardName = this.xValueCardName;
-      this.damageDistributionXValue = this.xValueInput;
-      this.damageAssignments = new Map();
-      this.choosingXValue = false;
-      this.xValueCardIndex = -1;
-      this.xValueCardName = '';
-      return;
-    }
-
-    if (card.needsTarget) {
-      this.targeting = true;
-      this.targetingCardIndex = this.xValueCardIndex;
-      this.targetingCardName = this.xValueCardName;
+    if (this.targetingForAbility) {
+      const perm = this.myBattlefield[this.xValueCardIndex];
+      const ability = perm?.card.activatedAbilities[this.targetingAbilityIndex];
+      if (ability?.needsTarget) {
+        // Store X value and enter targeting mode
+        this.pendingAbilityXValue = this.xValueInput;
+        this.choosingXValue = false;
+        this.targeting = true;
+        this.targetingCardIndex = this.xValueCardIndex;
+        this.targetingCardName = this.xValueCardName;
+        this.targetingForPlayer = ability.targetsPlayer;
+        this.targetingAllowedTypes = ability.allowedTargetTypes ?? [];
+        return;
+      }
+      // X value only, no target
+      this.websocketService.send({
+        type: MessageType.ACTIVATE_ABILITY,
+        permanentIndex: this.xValueCardIndex,
+        abilityIndex: this.targetingAbilityIndex,
+        xValue: this.xValueInput
+      });
     } else {
       this.websocketService.send({
         type: MessageType.PLAY_CARD,
@@ -579,6 +574,8 @@ export class GameComponent implements OnInit, OnDestroy {
     this.choosingXValue = false;
     this.xValueCardIndex = -1;
     this.xValueCardName = '';
+    this.targetingForAbility = false;
+    this.targetingAbilityIndex = -1;
   }
 
   cancelXValue(): void {
@@ -586,6 +583,8 @@ export class GameComponent implements OnInit, OnDestroy {
     this.xValueCardIndex = -1;
     this.xValueCardName = '';
     this.xValueInput = 0;
+    this.targetingForAbility = false;
+    this.targetingAbilityIndex = -1;
   }
 
   get damageDistributionRemaining(): number {
@@ -638,11 +637,16 @@ export class GameComponent implements OnInit, OnDestroy {
   selectTarget(permanentId: string): void {
     if (!this.targeting) return;
     if (this.targetingForAbility) {
-      this.websocketService.send({
+      const msg: any = {
         type: MessageType.ACTIVATE_ABILITY,
         permanentIndex: this.targetingCardIndex,
+        abilityIndex: this.targetingAbilityIndex,
         targetPermanentId: permanentId
-      });
+      };
+      if (this.pendingAbilityXValue != null) {
+        msg.xValue = this.pendingAbilityXValue;
+      }
+      this.websocketService.send(msg);
     } else {
       this.websocketService.send({
         type: MessageType.PLAY_CARD,
@@ -654,7 +658,9 @@ export class GameComponent implements OnInit, OnDestroy {
     this.targetingCardIndex = -1;
     this.targetingCardName = '';
     this.targetingForAbility = false;
+    this.targetingAbilityIndex = -1;
     this.targetingAllowedTypes = [];
+    this.pendingAbilityXValue = null;
   }
 
   selectPlayerTarget(playerIndex: number): void {
@@ -666,6 +672,7 @@ export class GameComponent implements OnInit, OnDestroy {
       this.websocketService.send({
         type: MessageType.ACTIVATE_ABILITY,
         permanentIndex: this.targetingCardIndex,
+        abilityIndex: this.targetingAbilityIndex,
         targetPermanentId: playerId
       });
     } else {
@@ -680,7 +687,9 @@ export class GameComponent implements OnInit, OnDestroy {
     this.targetingCardName = '';
     this.targetingForAbility = false;
     this.targetingForPlayer = false;
+    this.targetingAbilityIndex = -1;
     this.targetingAllowedTypes = [];
+    this.pendingAbilityXValue = null;
   }
 
   cancelTargeting(): void {
@@ -689,7 +698,9 @@ export class GameComponent implements OnInit, OnDestroy {
     this.targetingCardName = '';
     this.targetingForAbility = false;
     this.targetingForPlayer = false;
+    this.targetingAbilityIndex = -1;
     this.targetingAllowedTypes = [];
+    this.pendingAbilityXValue = null;
   }
 
   isValidTarget(perm: Permanent): boolean {
@@ -766,32 +777,112 @@ export class GameComponent implements OnInit, OnDestroy {
     const g = this.game();
     if (g && this.canTapPermanent(index)) {
       const perm = this.myBattlefield[index];
-      if (perm && perm.card.needsTarget && perm.card.hasManaAbility && perm.card.targetsPlayer) {
-        this.targeting = true;
-        this.targetingCardIndex = index;
-        this.targetingCardName = perm.card.name;
-        this.targetingForAbility = true;
-        this.targetingForPlayer = true;
+      if (!perm) return;
+
+      const abilities = perm.card.activatedAbilities;
+      if (abilities.length === 0) {
+        // No activated abilities — just tap for mana (ON_TAP)
+        this.websocketService.send({ type: MessageType.TAP_PERMANENT, permanentIndex: index });
         return;
       }
-      if (perm && perm.card.needsTarget && !perm.card.hasManaAbility) {
-        this.targeting = true;
-        this.targetingCardIndex = index;
-        this.targetingCardName = perm.card.name;
-        this.targetingForAbility = true;
-        this.targetingAllowedTypes = perm.card.allowedTargetTypes.length > 0
-          ? perm.card.allowedTargetTypes
-          : ['Creature'];
+
+      // Filter to usable abilities
+      const usable = abilities.filter(a => this.canUseAbility(perm, a));
+      if (usable.length === 0) {
+        // Has abilities but none usable — fall back to tap for mana if ON_TAP
+        if (perm.card.hasTapAbility && !perm.tapped) {
+          this.websocketService.send({ type: MessageType.TAP_PERMANENT, permanentIndex: index });
+        }
         return;
       }
-      this.websocketService.send({ type: MessageType.TAP_PERMANENT, permanentIndex: index });
+
+      if (usable.length === 1) {
+        // Single usable ability — activate directly
+        const abilityIndex = abilities.indexOf(usable[0]);
+        this.activateAbilityAtIndex(index, abilityIndex, perm);
+      } else {
+        // Multiple usable abilities — show picker
+        this.choosingAbility = true;
+        this.abilityChoicePermanentIndex = index;
+        this.abilityChoices = abilities.map((a, i) => ({ ability: a, index: i, usable: this.canUseAbility(perm, a) }));
+      }
     }
+  }
+
+  private canUseAbility(perm: Permanent, ability: ActivatedAbilityView): boolean {
+    if (ability.requiresTap) {
+      if (perm.tapped) return false;
+      if (perm.summoningSick && perm.card.type === 'Creature') return false;
+    }
+    return true;
+  }
+
+  private activateAbilityAtIndex(permanentIndex: number, abilityIndex: number, perm: Permanent): void {
+    const ability = perm.card.activatedAbilities[abilityIndex];
+
+    // Check for X cost
+    const hasXCost = ability.manaCost?.includes('{X}') ?? false;
+    if (hasXCost) {
+      const baseCost = (ability.manaCost ?? '').replace('{X}', '');
+      let base = 0;
+      const matches = baseCost.match(/\{([^}]+)\}/g) || [];
+      for (const m of matches) {
+        const inner = m.slice(1, -1);
+        const num = parseInt(inner);
+        base += isNaN(num) ? 1 : num;
+      }
+      this.choosingXValue = true;
+      this.xValueCardIndex = permanentIndex;
+      this.xValueCardName = perm.card.name;
+      this.xValueInput = 0;
+      this.xValueMaximum = this.totalMana - base;
+      this.targetingForAbility = true;
+      this.targetingAbilityIndex = abilityIndex;
+      return;
+    }
+
+    // Check for targeting
+    if (ability.needsTarget) {
+      this.targeting = true;
+      this.targetingCardIndex = permanentIndex;
+      this.targetingCardName = perm.card.name;
+      this.targetingForAbility = true;
+      this.targetingAbilityIndex = abilityIndex;
+      this.targetingForPlayer = ability.targetsPlayer;
+      this.targetingAllowedTypes = ability.allowedTargetTypes ?? [];
+      return;
+    }
+
+    // No target or X needed — send immediately
+    this.websocketService.send({
+      type: MessageType.ACTIVATE_ABILITY,
+      permanentIndex,
+      abilityIndex
+    });
+  }
+
+  chooseAbility(choice: { ability: ActivatedAbilityView; index: number; usable: boolean }): void {
+    if (!choice.usable) return;
+    const perm = this.myBattlefield[this.abilityChoicePermanentIndex];
+    if (!perm) return;
+    this.activateAbilityAtIndex(this.abilityChoicePermanentIndex, choice.index, perm);
+    this.choosingAbility = false;
+    this.abilityChoicePermanentIndex = -1;
+    this.abilityChoices = [];
+  }
+
+  cancelAbilityChoice(): void {
+    this.choosingAbility = false;
+    this.abilityChoicePermanentIndex = -1;
+    this.abilityChoices = [];
   }
 
   canTapPermanent(index: number): boolean {
     const perm = this.myBattlefield[index];
     if (perm == null || !this.hasPriority) return false;
-    if (perm.card.hasManaAbility) return true;
+    const abilities = perm.card.activatedAbilities;
+    // Has a non-tap activated ability (mana-cost only) — always usable
+    if (abilities.some(a => !a.requiresTap)) return true;
     if (perm.tapped) return false;
     if (!perm.card.hasTapAbility) return false;
     if (perm.summoningSick && perm.card.type === 'Creature') return false;
@@ -843,6 +934,11 @@ export class GameComponent implements OnInit, OnDestroy {
   choosablePermanentIds = signal(new Set<string>());
   permanentChoicePrompt = '';
 
+  // Ability picker state
+  choosingAbility = false;
+  abilityChoicePermanentIndex = -1;
+  abilityChoices: { ability: ActivatedAbilityView; index: number; usable: boolean }[] = [];
+
   // Targeting state (for instants and activated abilities)
   targeting = false;
   targetingCardIndex = -1;
@@ -850,6 +946,8 @@ export class GameComponent implements OnInit, OnDestroy {
   targetingForAbility = false;
   targetingForPlayer = false;
   targetingAllowedTypes: string[] = [];
+  targetingAbilityIndex = -1;
+  pendingAbilityXValue: number | null = null;
 
   // X cost prompt state
   choosingXValue = false;

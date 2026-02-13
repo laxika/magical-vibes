@@ -376,6 +376,18 @@
       </div>
     }
 
+    @if (choosingAbility) {
+      <div class="combat-banner ability-choice-banner">
+        <span>Choose an ability to activate:</span>
+        <div class="ability-choice-buttons">
+          @for (choice of abilityChoices; track choice.index) {
+            <button class="btn-confirm-combat" [disabled]="!choice.usable" (click)="chooseAbility(choice)">{{ choice.ability.description }}</button>
+          }
+        </div>
+        <button class="btn-confirm-combat" (click)="cancelAbilityChoice()">Cancel</button>
+      </div>
+    }
+
     @if (choosingPermanent) {
       <div class="combat-banner permanent-choice-banner">
         <span>{{ permanentChoicePrompt }}</span>

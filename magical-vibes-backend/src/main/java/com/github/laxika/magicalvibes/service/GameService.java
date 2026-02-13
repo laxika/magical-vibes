@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMess
 import com.github.laxika.magicalvibes.networking.message.StackUpdatedMessage;
 import com.github.laxika.magicalvibes.networking.message.StepAdvancedMessage;
 import com.github.laxika.magicalvibes.networking.message.TurnChangedMessage;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -70,6 +71,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatu
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
@@ -468,8 +470,10 @@ public class GameService {
                 resolvePreventDamageToTarget(gameData, entry, prevent);
             } else if (effect instanceof PreventNextDamageEffect prevent) {
                 resolvePreventNextDamage(gameData, prevent);
-            } else if (effect instanceof DrawCardEffect) {
-                resolveDrawCard(gameData, entry.getControllerId());
+            } else if (effect instanceof DrawCardEffect drawCard) {
+                resolveDrawCards(gameData, entry.getControllerId(), drawCard.amount());
+            } else if (effect instanceof ReturnSelfToHandEffect) {
+                resolveReturnSelfToHand(gameData, entry);
             } else if (effect instanceof DoubleTargetPlayerLifeEffect) {
                 resolveDoubleTargetPlayerLife(gameData, entry);
             } else if (effect instanceof ShuffleIntoLibraryEffect) {
@@ -1133,7 +1137,7 @@ public class GameService {
         }
     }
 
-    public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer xValue, UUID targetPermanentId, TargetZone targetZone) {
+    public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetPermanentId, TargetZone targetZone) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
@@ -1147,25 +1151,22 @@ public class GameService {
             }
 
             Permanent permanent = battlefield.get(permanentIndex);
-            boolean hasTapAbility = !permanent.getCard().getEffects(EffectSlot.TAP_ACTIVATED_ABILITY).isEmpty();
-            boolean hasManaAbility = !permanent.getCard().getEffects(EffectSlot.MANA_ACTIVATED_ABILITY).isEmpty();
-            if (!hasTapAbility && !hasManaAbility) {
+            List<ActivatedAbility> abilities = permanent.getCard().getActivatedAbilities();
+            if (abilities.isEmpty()) {
                 throw new IllegalStateException("Permanent has no activated ability");
             }
 
-            List<CardEffect> abilityEffects;
-            String abilityCost;
-            boolean isTapAbility;
-            if (hasTapAbility) {
-                isTapAbility = true;
-                abilityEffects = permanent.getCard().getEffects(EffectSlot.TAP_ACTIVATED_ABILITY);
-                abilityCost = permanent.getCard().getTapActivatedAbilityCost();
-            } else {
-                isTapAbility = false;
-                abilityEffects = permanent.getCard().getEffects(EffectSlot.MANA_ACTIVATED_ABILITY);
-                abilityCost = permanent.getCard().getManaActivatedAbilityCost();
+            int effectiveIndex = abilityIndex != null ? abilityIndex : 0;
+            if (effectiveIndex < 0 || effectiveIndex >= abilities.size()) {
+                throw new IllegalStateException("Invalid ability index");
             }
 
+            ActivatedAbility ability = abilities.get(effectiveIndex);
+            List<CardEffect> abilityEffects = ability.getEffects();
+            String abilityCost = ability.getManaCost();
+            boolean isTapAbility = ability.isRequiresTap();
+
+            // Validate tap requirement
             if (isTapAbility) {
                 if (permanent.isTapped()) {
                     throw new IllegalStateException("Permanent is already tapped");
@@ -1259,9 +1260,9 @@ public class GameService {
                 throw new IllegalStateException(gameData.playerIdToName.get(targetPermanentId) + " has shroud and can't be targeted");
             }
 
-            // For mana abilities, self-target only if effects need the source permanent
+            // Self-target if effects need the source permanent
             UUID effectiveTargetId = targetPermanentId;
-            if (!isTapAbility && effectiveTargetId == null) {
+            if (effectiveTargetId == null) {
                 boolean needsSelfTarget = abilityEffects.stream().anyMatch(e ->
                         e instanceof RegenerateEffect || e instanceof BoostSelfEffect);
                 if (needsSelfTarget) {
@@ -2086,6 +2087,45 @@ public class GameService {
         gameData.gameLog.add(logEntry);
         broadcastLogEntry(gameData, logEntry);
         log.info("Game {} - {} draws a card from effect", gameData.id, gameData.playerIdToName.get(playerId));
+    }
+
+    private void resolveDrawCards(GameData gameData, UUID playerId, int amount) {
+        for (int i = 0; i < amount; i++) {
+            resolveDrawCard(gameData, playerId);
+        }
+    }
+
+    private void resolveReturnSelfToHand(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        List<Card> hand = gameData.playerHands.get(controllerId);
+
+        Permanent toReturn = null;
+        for (Permanent p : battlefield) {
+            if (p.getCard().getName().equals(entry.getCard().getName())) {
+                toReturn = p;
+                break;
+            }
+        }
+
+        if (toReturn == null) {
+            String logEntry = entry.getCard().getName() + " is no longer on the battlefield.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            return;
+        }
+
+        battlefield.remove(toReturn);
+        removeOrphanedAuras(gameData);
+        hand.add(toReturn.getCard());
+
+        String logEntry = entry.getCard().getName() + " is returned to its owner's hand.";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        log.info("Game {} - {} returned to hand", gameData.id, entry.getCard().getName());
+
+        broadcastBattlefields(gameData);
+        sessionManager.sendToPlayer(controllerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(controllerId, 0)));
     }
 
     private void resolveDoubleTargetPlayerLife(GameData gameData, StackEntry entry) {

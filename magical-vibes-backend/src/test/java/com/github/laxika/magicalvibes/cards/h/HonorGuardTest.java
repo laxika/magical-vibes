@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -48,13 +48,13 @@ class HonorGuardTest {
         assertThat(card.getPower()).isEqualTo(1);
         assertThat(card.getToughness()).isEqualTo(1);
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.HUMAN, CardSubtype.SOLDIER);
-        assertThat(card.getEffects(EffectSlot.MANA_ACTIVATED_ABILITY)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.MANA_ACTIVATED_ABILITY).getFirst())
+        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
+        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
                 .isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getEffects(EffectSlot.MANA_ACTIVATED_ABILITY).getFirst();
+        BoostSelfEffect effect = (BoostSelfEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
         assertThat(effect.powerBoost()).isEqualTo(0);
         assertThat(effect.toughnessBoost()).isEqualTo(1);
-        assertThat(card.getManaActivatedAbilityCost()).isEqualTo("{W}");
+        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{W}");
     }
 
     // ===== Casting =====

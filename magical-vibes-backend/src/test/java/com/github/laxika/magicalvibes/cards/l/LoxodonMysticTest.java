@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -50,11 +50,11 @@ class LoxodonMysticTest {
         assertThat(card.getPower()).isEqualTo(3);
         assertThat(card.getToughness()).isEqualTo(3);
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.ELEPHANT, CardSubtype.CLERIC);
-        assertThat(card.isNeedsTarget()).isTrue();
-        assertThat(card.getEffects(EffectSlot.TAP_ACTIVATED_ABILITY)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.TAP_ACTIVATED_ABILITY).getFirst())
+        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
+        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
+        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
                 .isInstanceOf(TapTargetCreatureEffect.class);
-        assertThat(card.getTapActivatedAbilityCost()).isEqualTo("{W}");
+        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{W}");
     }
 
     // ===== Casting and resolving =====

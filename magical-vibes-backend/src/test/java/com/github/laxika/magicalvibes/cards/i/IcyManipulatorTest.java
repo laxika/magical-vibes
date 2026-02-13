@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -51,14 +51,14 @@ class IcyManipulatorTest {
         assertThat(card.getColor()).isNull();
         assertThat(card.getPower()).isNull();
         assertThat(card.getToughness()).isNull();
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
         assertThat(card.getCardText()).isEqualTo("{1}, {T}: Tap target artifact, creature, or land.");
-        assertThat(card.getEffects(EffectSlot.TAP_ACTIVATED_ABILITY)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.TAP_ACTIVATED_ABILITY).getFirst())
+        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
+        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
                 .isInstanceOf(TapTargetPermanentEffect.class);
-        TapTargetPermanentEffect effect = (TapTargetPermanentEffect) card.getEffects(EffectSlot.TAP_ACTIVATED_ABILITY).getFirst();
+        TapTargetPermanentEffect effect = (TapTargetPermanentEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
         assertThat(effect.allowedTypes()).containsExactlyInAnyOrder(CardType.ARTIFACT, CardType.CREATURE, CardType.BASIC_LAND);
-        assertThat(card.getTapActivatedAbilityCost()).isEqualTo("{1}");
+        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}");
     }
 
     // ===== Casting and resolving =====

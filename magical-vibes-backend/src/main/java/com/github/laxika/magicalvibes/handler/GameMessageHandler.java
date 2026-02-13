@@ -290,7 +290,7 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
-            gameService.activateAbility(gameData, player, request.permanentIndex(), request.xValue(), request.targetPermanentId(), request.targetZone());
+            gameService.activateAbility(gameData, player, request.permanentIndex(), request.abilityIndex(), request.xValue(), request.targetPermanentId(), request.targetZone());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

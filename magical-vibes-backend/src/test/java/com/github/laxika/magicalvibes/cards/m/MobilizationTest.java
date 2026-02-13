@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -64,15 +65,15 @@ class MobilizationTest {
         assertThat(staticEffect.powerBoost()).isEqualTo(0);
         assertThat(staticEffect.toughnessBoost()).isEqualTo(0);
         assertThat(staticEffect.grantedKeywords()).containsExactly(Keyword.VIGILANCE);
-        assertThat(card.getEffects(EffectSlot.MANA_ACTIVATED_ABILITY)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.MANA_ACTIVATED_ABILITY).getFirst()).isInstanceOf(CreateCreatureTokenEffect.class);
-        CreateCreatureTokenEffect tokenEffect = (CreateCreatureTokenEffect) card.getEffects(EffectSlot.MANA_ACTIVATED_ABILITY).getFirst();
+        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
+        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst()).isInstanceOf(CreateCreatureTokenEffect.class);
+        CreateCreatureTokenEffect tokenEffect = (CreateCreatureTokenEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
         assertThat(tokenEffect.tokenName()).isEqualTo("Soldier");
         assertThat(tokenEffect.power()).isEqualTo(1);
         assertThat(tokenEffect.toughness()).isEqualTo(1);
         assertThat(tokenEffect.color()).isEqualTo(CardColor.WHITE);
         assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.SOLDIER);
-        assertThat(card.getManaActivatedAbilityCost()).isEqualTo("{2}{W}");
+        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}{W}");
     }
 
     // ===== Casting and resolving =====

@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
@@ -18,7 +18,6 @@ public class NomadMythmaker extends Card {
         setCardText("{W}, {T}: Put target Aura card from a graveyard onto the battlefield under your control attached to a creature you control.");
         setPower(2);
         setToughness(2);
-        addEffect(EffectSlot.TAP_ACTIVATED_ABILITY, new ReturnAuraFromGraveyardToBattlefieldEffect());
-        setTapActivatedAbilityCost("{W}");
+        addActivatedAbility(new ActivatedAbility(true, "{W}", List.of(new ReturnAuraFromGraveyardToBattlefieldEffect()), false, "{W}, {T}: Put target Aura card from a graveyard onto the battlefield under your control attached to a creature you control."));
     }
 }

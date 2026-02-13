@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Stream;
 
 @Getter
 @RequiredArgsConstructor
@@ -30,14 +29,13 @@ public class Card {
     @Setter private Integer power;
     @Setter private Integer toughness;
     @Setter private Set<Keyword> keywords = Set.of();
-    @Setter private String tapActivatedAbilityCost;
-    @Setter private String manaActivatedAbilityCost;
     @Setter private boolean needsTarget;
     @Setter private String setCode;
     @Setter private String collectorNumber;
     @Setter private String flavorText;
 
     private Map<EffectSlot, List<CardEffect>> effects = new EnumMap<>(EffectSlot.class);
+    private List<ActivatedAbility> activatedAbilities = new ArrayList<>();
 
     public List<CardEffect> getEffects(EffectSlot slot) {
         return effects.getOrDefault(slot, List.of());
@@ -47,13 +45,20 @@ public class Card {
         effects.computeIfAbsent(slot, k -> new ArrayList<>()).add(effect);
     }
 
+    public void addActivatedAbility(ActivatedAbility ability) {
+        activatedAbilities.add(ability);
+    }
+
     public boolean isAura() {
         return subtypes.contains(CardSubtype.AURA);
     }
 
     public boolean isNeedsDamageDistribution() {
-        return Stream.of(getEffects(EffectSlot.SPELL), getEffects(EffectSlot.TAP_ACTIVATED_ABILITY))
-                .flatMap(List::stream)
+        boolean inSpell = getEffects(EffectSlot.SPELL).stream()
                 .anyMatch(e -> e instanceof DealXDamageDividedAmongTargetAttackingCreaturesEffect);
+        boolean inAbility = activatedAbilities.stream()
+                .flatMap(a -> a.getEffects().stream())
+                .anyMatch(e -> e instanceof DealXDamageDividedAmongTargetAttackingCreaturesEffect);
+        return inSpell || inAbility;
     }
 }

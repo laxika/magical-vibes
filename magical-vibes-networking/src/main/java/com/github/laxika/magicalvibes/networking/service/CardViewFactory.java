@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.networking.service;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,13 @@ import java.util.List;
 public class CardViewFactory {
 
     public CardView create(Card card) {
+        boolean hasTapAbility = !card.getEffects(EffectSlot.ON_TAP).isEmpty()
+                || card.getActivatedAbilities().stream().anyMatch(ActivatedAbility::isRequiresTap);
+
+        List<ActivatedAbilityView> abilityViews = card.getActivatedAbilities().stream()
+                .map(this::createAbilityView)
+                .toList();
+
         return new CardView(
                 card.getName(),
                 card.getType(),
@@ -26,38 +34,33 @@ public class CardViewFactory {
                 card.getPower(),
                 card.getToughness(),
                 card.getKeywords(),
-                card.isNeedsTarget(),
-                !card.getEffects(EffectSlot.ON_TAP).isEmpty() || !card.getEffects(EffectSlot.TAP_ACTIVATED_ABILITY).isEmpty(),
-                !card.getEffects(EffectSlot.MANA_ACTIVATED_ABILITY).isEmpty(),
+                hasTapAbility,
                 card.getSetCode(),
                 card.getCollectorNumber(),
                 card.getFlavorText(),
                 card.getColor(),
-                computeAllowedTargetTypes(card),
-                computeTargetsPlayer(card)
+                abilityViews
         );
     }
 
-    private boolean computeTargetsPlayer(Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.MANA_ACTIVATED_ABILITY)) {
-            if (effect instanceof MillTargetPlayerEffect) {
-                return true;
-            }
-        }
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof MillTargetPlayerEffect) {
-                return true;
-            }
-        }
-        return false;
-    }
+    private ActivatedAbilityView createAbilityView(ActivatedAbility ability) {
+        boolean targetsPlayer = ability.getEffects().stream()
+                .anyMatch(e -> e instanceof MillTargetPlayerEffect);
 
-    private List<CardType> computeAllowedTargetTypes(Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.TAP_ACTIVATED_ABILITY)) {
+        List<String> allowedTargetTypes = new ArrayList<>();
+        for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof TapTargetPermanentEffect tapEffect) {
-                return new ArrayList<>(tapEffect.allowedTypes());
+                tapEffect.allowedTypes().forEach(t -> allowedTargetTypes.add(t.getDisplayName()));
             }
         }
-        return List.of();
+
+        return new ActivatedAbilityView(
+                ability.getDescription(),
+                ability.isRequiresTap(),
+                ability.isNeedsTarget(),
+                targetsPlayer,
+                allowedTargetTypes,
+                ability.getManaCost()
+        );
     }
 }

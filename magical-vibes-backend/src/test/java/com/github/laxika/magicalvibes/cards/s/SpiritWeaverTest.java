@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -49,14 +49,14 @@ class SpiritWeaverTest {
         assertThat(card.getPower()).isEqualTo(2);
         assertThat(card.getToughness()).isEqualTo(1);
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.HUMAN, CardSubtype.WIZARD);
-        assertThat(card.isNeedsTarget()).isTrue();
-        assertThat(card.getEffects(EffectSlot.MANA_ACTIVATED_ABILITY)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.MANA_ACTIVATED_ABILITY).getFirst())
+        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
+        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
+        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
                 .isInstanceOf(BoostTargetCreatureEffect.class);
-        BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.MANA_ACTIVATED_ABILITY).getFirst();
+        BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
         assertThat(effect.powerBoost()).isEqualTo(0);
         assertThat(effect.toughnessBoost()).isEqualTo(1);
-        assertThat(card.getManaActivatedAbilityCost()).isEqualTo("{2}");
+        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}");
     }
 
     // ===== Activation =====

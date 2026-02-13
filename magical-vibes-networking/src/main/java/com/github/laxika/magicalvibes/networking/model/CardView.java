@@ -19,14 +19,11 @@ public record CardView(
         Integer power,
         Integer toughness,
         Set<Keyword> keywords,
-        boolean needsTarget,
         boolean hasTapAbility,
-        boolean hasManaAbility,
         String setCode,
         String collectorNumber,
         String flavorText,
         CardColor color,
-        List<CardType> allowedTargetTypes,
-        boolean targetsPlayer
+        List<ActivatedAbilityView> activatedAbilities
 ) {
 }
