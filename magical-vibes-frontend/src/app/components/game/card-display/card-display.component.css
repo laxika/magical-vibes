@@ -60,6 +60,12 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+img.card-art {
+  width: calc(100% + 8px);
+  object-fit: cover;
+  display: block;
+}
+
 .card-type {
   font-size: 11px;
   opacity: 0.8;

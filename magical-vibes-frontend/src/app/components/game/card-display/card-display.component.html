@@ -2,7 +2,11 @@
   <div class="card-mana-cost">{{ card.manaCost }}</div>
 }
 <div class="card-name">{{ card.name }}</div>
-<div class="card-art"></div>
+@if (artUrl) {
+  <img class="card-art" [src]="artUrl" [alt]="card.name + ' art'" />
+} @else {
+  <div class="card-art"></div>
+}
 <div class="card-type">{{ typeLine }}</div>
 @if (card.cardText) {
   <div class="card-text">{{ card.cardText }}</div>
