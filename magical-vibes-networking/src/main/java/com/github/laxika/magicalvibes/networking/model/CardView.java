@@ -25,6 +25,7 @@ public record CardView(
         String setCode,
         String collectorNumber,
         String flavorText,
+        String artist,
         CardColor color,
         List<CardType> allowedTargetTypes,
         boolean targetsPlayer

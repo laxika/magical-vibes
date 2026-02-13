@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.model.Card;
 
 import java.util.function.Supplier;
 
-public record CardPrinting(String setCode, String collectorNumber, Supplier<Card> factory, String flavorText) {
+public record CardPrinting(String setCode, String collectorNumber, Supplier<Card> factory, String flavorText, String artist) {
 
-    public CardPrinting(String setCode, String collectorNumber, Supplier<Card> factory) {
-        this(setCode, collectorNumber, factory, null);
+    public CardPrinting(String setCode, String collectorNumber, Supplier<Card> factory, String artist) {
+        this(setCode, collectorNumber, factory, null, artist);
     }
 
     public Card createCard() {
@@ -15,6 +15,7 @@ public record CardPrinting(String setCode, String collectorNumber, Supplier<Card
         card.setSetCode(setCode);
         card.setCollectorNumber(collectorNumber);
         card.setFlavorText(flavorText);
+        card.setArtist(artist);
         return card;
     }
 }
