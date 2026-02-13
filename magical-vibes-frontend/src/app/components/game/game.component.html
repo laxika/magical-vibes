@@ -31,29 +31,15 @@
           <div class="selection-count">Selected: {{ selectedCardIndices.size }} / {{ bottomCardCount }}</div>
           <div class="hand-cards">
             @for (card of hand; track $index) {
-              <div class="card selectable" [class.selected]="isCardSelected($index)" [attr.data-card-color]="card.color" (click)="toggleCardSelection($index)">
-                @if (card.manaCost) {
-                  <div class="card-mana-cost">{{ card.manaCost }}</div>
-                }
-                <div class="card-name">{{ card.name }}</div>
-                <div class="card-art"></div>
-                <div class="card-type">{{ card.type }}</div>
-                @if (card.cardText) {
-                  <div class="card-text">{{ card.cardText }}</div>
-                }
-                @if (card.power != null && card.toughness != null) {
-                  <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
-                }
-                @if (card.setCode) {
-                  <div class="card-set-badge">{{ card.setCode }} #{{ card.collectorNumber }}</div>
-                }
-                @if (card.flavorText) {
-                  <div class="card-flavor-text">{{ card.flavorText }}</div>
-                }
+              <app-card-display
+                [card]="card"
+                class="selectable"
+                [class.selected]="isCardSelected($index)"
+                (click)="toggleCardSelection($index)">
                 @if (isCardSelected($index)) {
                   <div class="card-selected-badge">Bottom</div>
                 }
-              </div>
+              </app-card-display>
             }
           </div>
           <div class="mulligan-actions">
@@ -65,26 +51,7 @@
           <div class="hand-label">Your Hand ({{ hand.length }} cards)</div>
           <div class="hand-cards">
             @for (card of hand; track $index) {
-              <div class="card" [attr.data-card-color]="card.color">
-                @if (card.manaCost) {
-                  <div class="card-mana-cost">{{ card.manaCost }}</div>
-                }
-                <div class="card-name">{{ card.name }}</div>
-                <div class="card-art"></div>
-                <div class="card-type">{{ card.type }}</div>
-                @if (card.cardText) {
-                  <div class="card-text">{{ card.cardText }}</div>
-                }
-                @if (card.power != null && card.toughness != null) {
-                  <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
-                }
-                @if (card.setCode) {
-                  <div class="card-set-badge">{{ card.setCode }} #{{ card.collectorNumber }}</div>
-                }
-                @if (card.flavorText) {
-                  <div class="card-flavor-text">{{ card.flavorText }}</div>
-                }
-              </div>
+              <app-card-display [card]="card" />
             }
           </div>
         </div>
@@ -260,71 +227,23 @@
         <div class="battlefield-label">{{ game()?.playerNames?.[opponentPlayerIndex] }}'s Battlefield</div>
         <div class="battlefield-sub-row lands-row">
           @for (ip of opponentLands; track ip.originalIndex) {
-            <div class="card"
-                 [class.tapped]="ip.perm.tapped"
-                 [attr.data-card-color]="ip.perm.card.color"
-                 (click)="onOpponentBattlefieldCardClick(ip.originalIndex)">
-              @if (ip.perm.card.manaCost) {
-                <div class="card-mana-cost">{{ ip.perm.card.manaCost }}</div>
-              }
-              <div class="card-name">{{ ip.perm.card.name }}</div>
-              <div class="card-art"></div>
-              <div class="card-type">{{ ip.perm.card.type }}</div>
-              @if (ip.perm.card.cardText) {
-                <div class="card-text">{{ ip.perm.card.cardText }}</div>
-              }
-              @if (ip.perm.card.setCode) {
-                <div class="card-set-badge">{{ ip.perm.card.setCode }} #{{ ip.perm.card.collectorNumber }}</div>
-              }
-              @if (ip.perm.card.flavorText) {
-                <div class="card-flavor-text">{{ ip.perm.card.flavorText }}</div>
-              }
-              @if (ip.perm.tapped) {
-                <div class="card-tapped-badge">Tapped</div>
-              }
-              @if (ip.perm.regenerationShield > 0) {
-                <div class="card-regen-badge">Regen x{{ ip.perm.regenerationShield }}</div>
-              }
-            </div>
+            <app-card-display
+              [card]="ip.perm.card"
+              [permanent]="ip.perm"
+              [class.tapped]="ip.perm.tapped"
+              (click)="onOpponentBattlefieldCardClick(ip.originalIndex)" />
           }
         </div>
         <div class="battlefield-sub-row creatures-row">
           @for (ip of opponentCreaturesNotInCombat; track ip.originalIndex) {
-            <div class="card"
-                 [class.tapped]="ip.perm.tapped"
-                 [class.summoning-sick]="ip.perm.summoningSick"
-                 [class.block-target]="isBlockTarget(ip.originalIndex)"
-                 [class.targetable]="targeting"
-                 [attr.data-card-color]="ip.perm.card.color"
-                 (click)="onOpponentBattlefieldCardClick(ip.originalIndex)">
-              @if (ip.perm.card.manaCost) {
-                <div class="card-mana-cost">{{ ip.perm.card.manaCost }}</div>
-              }
-              <div class="card-name">{{ ip.perm.card.name }}</div>
-              <div class="card-art"></div>
-              <div class="card-type">{{ ip.perm.card.type }}</div>
-              @if (ip.perm.card.cardText) {
-                <div class="card-text">{{ ip.perm.card.cardText }}</div>
-              }
-              @if (getEffectiveKeywords(ip.perm).length > 0) {
-                <div class="card-keywords">{{ formatKeywords(getEffectiveKeywords(ip.perm)) }}</div>
-              }
-              @if (ip.perm.card.power != null && ip.perm.card.toughness != null) {
-                <div class="card-pt" [class.buffed]="ip.perm.powerModifier > 0 || ip.perm.toughnessModifier > 0">{{ ip.perm.effectivePower }}/{{ ip.perm.effectiveToughness }}</div>
-              }
-              @if (ip.perm.card.setCode) {
-                <div class="card-set-badge">{{ ip.perm.card.setCode }} #{{ ip.perm.card.collectorNumber }}</div>
-              }
-              @if (ip.perm.card.flavorText) {
-                <div class="card-flavor-text">{{ ip.perm.card.flavorText }}</div>
-              }
-              @if (ip.perm.tapped) {
-                <div class="card-tapped-badge">Tapped</div>
-              }
-              @if (ip.perm.regenerationShield > 0) {
-                <div class="card-regen-badge">Regen x{{ ip.perm.regenerationShield }}</div>
-              }
-            </div>
+            <app-card-display
+              [card]="ip.perm.card"
+              [permanent]="ip.perm"
+              [class.tapped]="ip.perm.tapped"
+              [class.summoning-sick]="ip.perm.summoningSick"
+              [class.block-target]="isBlockTarget(ip.originalIndex)"
+              [class.targetable]="targeting"
+              (click)="onOpponentBattlefieldCardClick(ip.originalIndex)" />
           }
         </div>
         @if (opponentBattlefield.length === 0) {
@@ -335,20 +254,7 @@
             <div class="graveyard-label">Graveyard ({{ opponentGraveyard.length }})</div>
             <div class="graveyard-cards">
               @for (card of opponentGraveyard; track $index) {
-                <div class="card graveyard-card" [attr.data-card-color]="card.color">
-                  @if (card.manaCost) {
-                    <div class="card-mana-cost">{{ card.manaCost }}</div>
-                  }
-                  <div class="card-name">{{ card.name }}</div>
-                  <div class="card-art"></div>
-                  <div class="card-type">{{ card.type }}</div>
-                  @if (card.cardText) {
-                    <div class="card-text">{{ card.cardText }}</div>
-                  }
-                  @if (card.power != null && card.toughness != null) {
-                    <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
-                  }
-                </div>
+                <app-card-display [card]="card" class="graveyard-card" />
               }
             </div>
           </div>
@@ -362,76 +268,31 @@
             @for (group of combatPairings; track group.attackerIndex) {
               <div class="combat-group">
                 <div class="combat-attacker-slot">
-                  <div class="card"
-                       [class.attacking]="group.attacker.attacking"
-                       [class.selected-attacker]="declaringAttackers && isSelectedAttacker(group.attackerIndex)"
-                       [class.block-target]="declaringBlockers && selectedBlockerIndex !== null && !group.attackerIsMine"
-                       [class.targetable]="distributingDamage"
-                       [attr.data-card-color]="group.attacker.card.color"
-                       (click)="onCombatAttackerClick(group)"
-                       (contextmenu)="$event.preventDefault(); unassignDamage(group.attacker.id)">
-                    @if (group.attacker.card.manaCost) {
-                      <div class="card-mana-cost">{{ group.attacker.card.manaCost }}</div>
-                    }
-                    <div class="card-name">{{ group.attacker.card.name }}</div>
-                    <div class="card-art"></div>
-                    <div class="card-type">{{ group.attacker.card.type }}</div>
-                    @if (group.attacker.card.cardText) {
-                      <div class="card-text">{{ group.attacker.card.cardText }}</div>
-                    }
-                    @if (getEffectiveKeywords(group.attacker).length > 0) {
-                      <div class="card-keywords">{{ formatKeywords(getEffectiveKeywords(group.attacker)) }}</div>
-                    }
-                    @if (group.attacker.card.power != null && group.attacker.card.toughness != null) {
-                      <div class="card-pt" [class.buffed]="group.attacker.powerModifier > 0 || group.attacker.toughnessModifier > 0">{{ group.attacker.effectivePower }}/{{ group.attacker.effectiveToughness }}</div>
-                    }
-                    @if (group.attacker.card.setCode) {
-                      <div class="card-set-badge">{{ group.attacker.card.setCode }} #{{ group.attacker.card.collectorNumber }}</div>
-                    }
-                    @if (group.attacker.card.flavorText) {
-                      <div class="card-flavor-text">{{ group.attacker.card.flavorText }}</div>
-                    }
+                  <app-card-display
+                    [card]="group.attacker.card"
+                    [permanent]="group.attacker"
+                    [class.attacking]="group.attacker.attacking"
+                    [class.selected-attacker]="declaringAttackers && isSelectedAttacker(group.attackerIndex)"
+                    [class.block-target]="declaringBlockers && selectedBlockerIndex !== null && !group.attackerIsMine"
+                    [class.targetable]="distributingDamage"
+                    (click)="onCombatAttackerClick(group)"
+                    (contextmenu)="$event.preventDefault(); unassignDamage(group.attacker.id)">
                     <div class="card-combat-badge attacking-badge">Attacking</div>
                     @if (distributingDamage && getDamageAssigned(group.attacker.id) > 0) {
                       <div class="card-combat-badge damage-badge">{{ getDamageAssigned(group.attacker.id) }} dmg</div>
                     }
-                    @if (group.attacker.regenerationShield > 0) {
-                      <div class="card-regen-badge">Regen x{{ group.attacker.regenerationShield }}</div>
-                    }
-                  </div>
+                  </app-card-display>
                 </div>
                 @if (group.blockers.length > 0) {
                   <div class="combat-blocker-slots">
                     @for (blocker of group.blockers; track blocker.index) {
-                      <div class="card blocking"
-                           [attr.data-card-color]="blocker.perm.card.color"
-                           (click)="onCombatBlockerClick(blocker)">
-                        @if (blocker.perm.card.manaCost) {
-                          <div class="card-mana-cost">{{ blocker.perm.card.manaCost }}</div>
-                        }
-                        <div class="card-name">{{ blocker.perm.card.name }}</div>
-                        <div class="card-art"></div>
-                        <div class="card-type">{{ blocker.perm.card.type }}</div>
-                        @if (blocker.perm.card.cardText) {
-                          <div class="card-text">{{ blocker.perm.card.cardText }}</div>
-                        }
-                        @if (getEffectiveKeywords(blocker.perm).length > 0) {
-                          <div class="card-keywords">{{ formatKeywords(getEffectiveKeywords(blocker.perm)) }}</div>
-                        }
-                        @if (blocker.perm.card.power != null && blocker.perm.card.toughness != null) {
-                          <div class="card-pt" [class.buffed]="blocker.perm.powerModifier > 0 || blocker.perm.toughnessModifier > 0">{{ blocker.perm.effectivePower }}/{{ blocker.perm.effectiveToughness }}</div>
-                        }
-                        @if (blocker.perm.card.setCode) {
-                          <div class="card-set-badge">{{ blocker.perm.card.setCode }} #{{ blocker.perm.card.collectorNumber }}</div>
-                        }
-                        @if (blocker.perm.card.flavorText) {
-                          <div class="card-flavor-text">{{ blocker.perm.card.flavorText }}</div>
-                        }
+                      <app-card-display
+                        [card]="blocker.perm.card"
+                        [permanent]="blocker.perm"
+                        class="blocking"
+                        (click)="onCombatBlockerClick(blocker)">
                         <div class="card-combat-badge blocking-badge">Blocking</div>
-                        @if (blocker.perm.regenerationShield > 0) {
-                          <div class="card-regen-badge">Regen x{{ blocker.perm.regenerationShield }}</div>
-                        }
-                      </div>
+                      </app-card-display>
                     }
                   </div>
                 }
@@ -447,73 +308,28 @@
         <div class="battlefield-label">Your Battlefield</div>
         <div class="battlefield-sub-row creatures-row">
           @for (ip of myCreaturesNotInCombat; track ip.originalIndex) {
-            <div class="card"
-                 [class.tapped]="ip.perm.tapped"
-                 [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
-                 [class.summoning-sick]="ip.perm.summoningSick"
-                 [class.can-attack]="canAttack(ip.originalIndex) && !isSelectedAttacker(ip.originalIndex)"
-                 [class.can-block]="canBlock(ip.originalIndex) && !isAssignedBlocker(ip.originalIndex) && selectedBlockerIndex !== ip.originalIndex"
-                 [class.selected-blocker]="selectedBlockerIndex === ip.originalIndex"
-                 [class.assigned-blocker]="isAssignedBlocker(ip.originalIndex)"
-                 [class.targetable]="targeting"
-                 [attr.data-card-color]="ip.perm.card.color"
-                 (click)="onMyBattlefieldCardClick(ip.originalIndex)">
-              @if (ip.perm.card.manaCost) {
-                <div class="card-mana-cost">{{ ip.perm.card.manaCost }}</div>
-              }
-              <div class="card-name">{{ ip.perm.card.name }}</div>
-              <div class="card-art"></div>
-              <div class="card-type">{{ ip.perm.card.type }}</div>
-              @if (ip.perm.card.cardText) {
-                <div class="card-text">{{ ip.perm.card.cardText }}</div>
-              }
-              @if (getEffectiveKeywords(ip.perm).length > 0) {
-                <div class="card-keywords">{{ formatKeywords(getEffectiveKeywords(ip.perm)) }}</div>
-              }
-              @if (ip.perm.card.power != null && ip.perm.card.toughness != null) {
-                <div class="card-pt" [class.buffed]="ip.perm.powerModifier > 0 || ip.perm.toughnessModifier > 0">{{ ip.perm.effectivePower }}/{{ ip.perm.effectiveToughness }}</div>
-              }
-              @if (ip.perm.card.setCode) {
-                <div class="card-set-badge">{{ ip.perm.card.setCode }} #{{ ip.perm.card.collectorNumber }}</div>
-              }
-              @if (ip.perm.card.flavorText) {
-                <div class="card-flavor-text">{{ ip.perm.card.flavorText }}</div>
-              }
-              @if (ip.perm.tapped) {
-                <div class="card-tapped-badge">Tapped</div>
-              }
-              @if (ip.perm.regenerationShield > 0) {
-                <div class="card-regen-badge">Regen x{{ ip.perm.regenerationShield }}</div>
-              }
-            </div>
+            <app-card-display
+              [card]="ip.perm.card"
+              [permanent]="ip.perm"
+              [class.tapped]="ip.perm.tapped"
+              [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
+              [class.summoning-sick]="ip.perm.summoningSick"
+              [class.can-attack]="canAttack(ip.originalIndex) && !isSelectedAttacker(ip.originalIndex)"
+              [class.can-block]="canBlock(ip.originalIndex) && !isAssignedBlocker(ip.originalIndex) && selectedBlockerIndex !== ip.originalIndex"
+              [class.selected-blocker]="selectedBlockerIndex === ip.originalIndex"
+              [class.assigned-blocker]="isAssignedBlocker(ip.originalIndex)"
+              [class.targetable]="targeting"
+              (click)="onMyBattlefieldCardClick(ip.originalIndex)" />
           }
         </div>
         <div class="battlefield-sub-row lands-row">
           @for (ip of myLands; track ip.originalIndex) {
-            <div class="card"
-                 [class.tapped]="ip.perm.tapped"
-                 [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
-                 [attr.data-card-color]="ip.perm.card.color"
-                 (click)="onMyBattlefieldCardClick(ip.originalIndex)">
-              @if (ip.perm.card.manaCost) {
-                <div class="card-mana-cost">{{ ip.perm.card.manaCost }}</div>
-              }
-              <div class="card-name">{{ ip.perm.card.name }}</div>
-              <div class="card-art"></div>
-              <div class="card-type">{{ ip.perm.card.type }}</div>
-              @if (ip.perm.card.cardText) {
-                <div class="card-text">{{ ip.perm.card.cardText }}</div>
-              }
-              @if (ip.perm.card.setCode) {
-                <div class="card-set-badge">{{ ip.perm.card.setCode }} #{{ ip.perm.card.collectorNumber }}</div>
-              }
-              @if (ip.perm.card.flavorText) {
-                <div class="card-flavor-text">{{ ip.perm.card.flavorText }}</div>
-              }
-              @if (ip.perm.tapped) {
-                <div class="card-tapped-badge">Tapped</div>
-              }
-            </div>
+            <app-card-display
+              [card]="ip.perm.card"
+              [permanent]="ip.perm"
+              [class.tapped]="ip.perm.tapped"
+              [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
+              (click)="onMyBattlefieldCardClick(ip.originalIndex)" />
           }
         </div>
         @if (myBattlefield.length === 0) {
@@ -524,20 +340,7 @@
             <div class="graveyard-label">Graveyard ({{ myGraveyard.length }})</div>
             <div class="graveyard-cards">
               @for (card of myGraveyard; track $index) {
-                <div class="card graveyard-card" [attr.data-card-color]="card.color">
-                  @if (card.manaCost) {
-                    <div class="card-mana-cost">{{ card.manaCost }}</div>
-                  }
-                  <div class="card-name">{{ card.name }}</div>
-                  <div class="card-art"></div>
-                  <div class="card-type">{{ card.type }}</div>
-                  @if (card.cardText) {
-                    <div class="card-text">{{ card.cardText }}</div>
-                  }
-                  @if (card.power != null && card.toughness != null) {
-                    <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
-                  }
-                </div>
+                <app-card-display [card]="card" class="graveyard-card" />
               }
             </div>
           </div>
@@ -575,33 +378,11 @@
       <div class="hand-label">Your Hand ({{ hand.length }} cards)</div>
       <div class="hand-cards">
         @for (card of hand; track $index) {
-          <div class="card"
-               [class.playable]="isCardPlayable($index)"
-               [class.choosable-card]="choosingFromHand && isChoosableCard($index)"
-               [attr.data-card-color]="card.color"
-               (click)="choosingFromHand ? chooseCardFromHand($index) : playCard($index)">
-            @if (card.manaCost) {
-              <div class="card-mana-cost">{{ card.manaCost }}</div>
-            }
-            <div class="card-name">{{ card.name }}</div>
-            <div class="card-art"></div>
-            <div class="card-type">{{ card.type }}</div>
-            @if (card.cardText) {
-              <div class="card-text">{{ card.cardText }}</div>
-            }
-            @if (card.keywords.length > 0) {
-              <div class="card-keywords">{{ formatKeywords(card.keywords) }}</div>
-            }
-            @if (card.power != null && card.toughness != null) {
-              <div class="card-pt">{{ card.power }}/{{ card.toughness }}</div>
-            }
-            @if (card.setCode) {
-              <div class="card-set-badge">{{ card.setCode }} #{{ card.collectorNumber }}</div>
-            }
-            @if (card.flavorText) {
-              <div class="card-flavor-text">{{ card.flavorText }}</div>
-            }
-          </div>
+          <app-card-display
+            [card]="card"
+            [class.playable]="isCardPlayable($index)"
+            [class.choosable-card]="choosingFromHand && isChoosableCard($index)"
+            (click)="choosingFromHand ? chooseCardFromHand($index) : playCard($index)" />
         }
       </div>
     </div>

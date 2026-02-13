@@ -381,45 +381,10 @@ h1 {
   flex-wrap: wrap;
 }
 
-.card {
-  background: linear-gradient(135deg, #3a3a3a 0%, #5a5a5a 100%);
-  color: white;
-  padding: 16px 12px;
-  border-radius: 8px;
-  width: 120px;
-  text-align: center;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
-  transition: transform 0.15s;
-  position: relative;
-}
-
 .card.playable {
   border: 2px solid #f6c343;
   box-shadow: 0 0 12px rgba(246, 195, 67, 0.5);
   cursor: pointer;
-}
-
-.card:hover {
-  transform: translateY(-4px);
-}
-
-.card-name {
-  font-size: 14px;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-
-.card-type {
-  font-size: 11px;
-  opacity: 0.8;
-}
-
-.card-art {
-  height: 60px;
-  margin: 6px -4px;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .mulligan-info {
@@ -607,32 +572,6 @@ h1 {
   box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
 }
 
-.card-tapped-badge {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background: #dc3545;
-  color: white;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 8px;
-  text-transform: uppercase;
-}
-
-.card-regen-badge {
-  position: absolute;
-  bottom: -8px;
-  left: -8px;
-  background: #28a745;
-  color: white;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 8px;
-  text-transform: uppercase;
-}
-
 .mana-pool {
   display: flex;
   gap: 8px;
@@ -676,55 +615,6 @@ h1 {
 
 .mana-count {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.card[data-card-color="GREEN"] {
-  background: linear-gradient(135deg, #2d5016 0%, #4a7c28 100%);
-}
-
-.card[data-card-color="WHITE"] {
-  background: linear-gradient(135deg, #b8a44c 0%, #f0e6b2 100%);
-  color: #2c2417;
-}
-
-.card[data-card-color="BLUE"] {
-  background: linear-gradient(135deg, #1a3a5c 0%, #2980b9 100%);
-}
-
-.card[data-card-color="RED"] {
-  background: linear-gradient(135deg, #8b1a1a 0%, #c0392b 100%);
-}
-
-.card[data-card-color="BLACK"] {
-  background: linear-gradient(135deg, #1a1a2e 0%, #4a4a5a 100%);
-}
-
-.card-mana-cost {
-  font-size: 11px;
-  font-weight: 700;
-  background: rgba(0, 0, 0, 0.4);
-  padding: 2px 6px;
-  border-radius: 4px;
-  margin-bottom: 4px;
-  display: inline-block;
-}
-
-.card-keywords {
-  font-size: 10px;
-  font-weight: 600;
-  font-style: italic;
-  opacity: 0.9;
-  margin-top: 2px;
-}
-
-.card-pt {
-  font-size: 13px;
-  font-weight: 700;
-  background: rgba(0, 0, 0, 0.4);
-  padding: 2px 8px;
-  border-radius: 4px;
-  margin-top: 6px;
-  display: inline-block;
 }
 
 /* Combat styles */
@@ -1134,11 +1024,6 @@ h1 {
   bottom: -8px;
   left: auto;
   right: -8px;
-}
-
-.card-pt.buffed {
-  color: #2ecc71;
-  background: rgba(46, 204, 113, 0.3);
 }
 
 .card-set-badge {

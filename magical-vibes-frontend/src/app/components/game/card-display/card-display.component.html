@@ -1,0 +1,28 @@
+@if (card.manaCost) {
+  <div class="card-mana-cost">{{ card.manaCost }}</div>
+}
+<div class="card-name">{{ card.name }}</div>
+<div class="card-art"></div>
+<div class="card-type">{{ card.type }}</div>
+@if (card.cardText) {
+  <div class="card-text">{{ card.cardText }}</div>
+}
+@if (effectiveKeywords.length > 0) {
+  <div class="card-keywords">{{ formatKeywords(effectiveKeywords) }}</div>
+}
+@if (card.power != null && card.toughness != null) {
+  <div class="card-pt" [class.buffed]="isBuffed">{{ displayPower }}/{{ displayToughness }}</div>
+}
+@if (card.setCode) {
+  <div class="card-set-badge">{{ card.setCode }} #{{ card.collectorNumber }}</div>
+}
+@if (card.flavorText) {
+  <div class="card-flavor-text">{{ card.flavorText }}</div>
+}
+@if (permanent?.tapped) {
+  <div class="card-tapped-badge">Tapped</div>
+}
+@if (permanent && permanent.regenerationShield > 0) {
+  <div class="card-regen-badge">Regen x{{ permanent.regenerationShield }}</div>
+}
+<ng-content></ng-content>
