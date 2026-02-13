@@ -610,20 +610,39 @@ export class GameComponent implements OnInit, OnDestroy {
 
   selectTarget(permanentId: string): void {
     if (!this.targeting) return;
-    this.websocketService.send({
-      type: MessageType.PLAY_CARD,
-      cardIndex: this.targetingCardIndex,
-      targetPermanentId: permanentId
-    });
+    if (this.targetingForAbility) {
+      this.websocketService.send({
+        type: MessageType.ACTIVATE_ABILITY,
+        permanentIndex: this.targetingCardIndex,
+        targetPermanentId: permanentId
+      });
+    } else {
+      this.websocketService.send({
+        type: MessageType.PLAY_CARD,
+        cardIndex: this.targetingCardIndex,
+        targetPermanentId: permanentId
+      });
+    }
     this.targeting = false;
     this.targetingCardIndex = -1;
     this.targetingCardName = '';
+    this.targetingForAbility = false;
+    this.targetingAllowedTypes = [];
   }
 
   cancelTargeting(): void {
     this.targeting = false;
     this.targetingCardIndex = -1;
     this.targetingCardName = '';
+    this.targetingForAbility = false;
+    this.targetingAllowedTypes = [];
+  }
+
+  isValidTarget(perm: Permanent): boolean {
+    if (this.targetingAllowedTypes.length > 0) {
+      return this.targetingAllowedTypes.includes(perm.card.type);
+    }
+    return perm.card.type === 'Creature';
   }
 
   get player1DeckSize(): number {
@@ -692,6 +711,17 @@ export class GameComponent implements OnInit, OnDestroy {
   tapPermanent(index: number): void {
     const g = this.game();
     if (g && this.canTapPermanent(index)) {
+      const perm = this.myBattlefield[index];
+      if (perm && perm.card.needsTarget && !perm.card.hasManaAbility) {
+        this.targeting = true;
+        this.targetingCardIndex = index;
+        this.targetingCardName = perm.card.name;
+        this.targetingForAbility = true;
+        this.targetingAllowedTypes = perm.card.allowedTargetTypes.length > 0
+          ? perm.card.allowedTargetTypes
+          : ['Creature'];
+        return;
+      }
       this.websocketService.send({ type: MessageType.TAP_PERMANENT, permanentIndex: index });
     }
   }
@@ -748,10 +778,12 @@ export class GameComponent implements OnInit, OnDestroy {
   awaitingMayAbility = false;
   mayAbilityPrompt = '';
 
-  // Targeting state (for instants)
+  // Targeting state (for instants and activated abilities)
   targeting = false;
   targetingCardIndex = -1;
   targetingCardName = '';
+  targetingForAbility = false;
+  targetingAllowedTypes: string[] = [];
 
   // X cost prompt state
   choosingXValue = false;
@@ -919,7 +951,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
     if (this.targeting) {
       const perm = this.myBattlefield[index];
-      if (perm && perm.card.type === 'Creature') {
+      if (perm && this.isValidTarget(perm)) {
         this.selectTarget(perm.id);
       }
       return;
@@ -943,7 +975,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
     if (this.targeting) {
       const perm = this.opponentBattlefield[index];
-      if (perm && perm.card.type === 'Creature') {
+      if (perm && this.isValidTarget(perm)) {
         this.selectTarget(perm.id);
       }
       return;

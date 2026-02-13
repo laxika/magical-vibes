@@ -46,6 +46,7 @@ export enum MessageType {
   COLOR_CHOSEN = 'COLOR_CHOSEN',
   MAY_ABILITY_CHOICE = 'MAY_ABILITY_CHOICE',
   MAY_ABILITY_CHOSEN = 'MAY_ABILITY_CHOSEN',
+  ACTIVATE_ABILITY = 'ACTIVATE_ABILITY',
   ERROR = 'ERROR'
 }
 
@@ -124,6 +125,7 @@ export interface Card {
   collectorNumber: string | null;
   flavorText: string | null;
   color: string | null;
+  allowedTargetTypes: string[];
 }
 
 export interface Permanent {

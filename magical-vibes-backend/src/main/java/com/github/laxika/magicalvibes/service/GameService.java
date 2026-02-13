@@ -89,6 +89,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamage
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
@@ -492,6 +493,8 @@ public class GameService {
                 resolveRegenerate(gameData, entry);
             } else if (effect instanceof TapTargetCreatureEffect) {
                 resolveTapTargetCreature(gameData, entry);
+            } else if (effect instanceof TapTargetPermanentEffect) {
+                resolveTapTargetPermanent(gameData, entry);
             } else if (effect instanceof PreventNextColorDamageToControllerEffect prevent) {
                 resolvePreventNextColorDamageToController(gameData, entry, prevent);
             }
@@ -1197,6 +1200,18 @@ public class GameService {
                         throw new IllegalStateException(target.getCard().getName() + " has protection from " + permanent.getCard().getColor().name().toLowerCase());
                     }
                 }
+                if (effect instanceof TapTargetPermanentEffect tapEffect) {
+                    if (targetPermanentId == null) {
+                        throw new IllegalStateException("Ability requires a target");
+                    }
+                    Permanent target = findPermanentById(gameData, targetPermanentId);
+                    if (target == null) {
+                        throw new IllegalStateException("Invalid target permanent");
+                    }
+                    if (!tapEffect.allowedTypes().contains(target.getCard().getType())) {
+                        throw new IllegalStateException("Target must be an artifact, creature, or land");
+                    }
+                }
                 if (effect instanceof ReturnAuraFromGraveyardToBattlefieldEffect) {
                     if (targetZone != TargetZone.GRAVEYARD) {
                         throw new IllegalStateException("Ability requires a graveyard target");
@@ -1220,10 +1235,14 @@ public class GameService {
                 throw new IllegalStateException(gameData.playerIdToName.get(targetPermanentId) + " has shroud and can't be targeted");
             }
 
-            // For mana abilities, self-target if no explicit target
+            // For mana abilities, self-target only if effects need the source permanent
             UUID effectiveTargetId = targetPermanentId;
             if (!isTapAbility && effectiveTargetId == null) {
-                effectiveTargetId = permanent.getId();
+                boolean needsSelfTarget = abilityEffects.stream().anyMatch(e ->
+                        e instanceof RegenerateEffect || e instanceof BoostSelfEffect);
+                if (needsSelfTarget) {
+                    effectiveTargetId = permanent.getId();
+                }
             }
 
             // Tap the permanent (only for tap abilities)
@@ -2253,6 +2272,22 @@ public class GameService {
     }
 
     private void resolveTapTargetCreature(GameData gameData, StackEntry entry) {
+        Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        target.tap();
+
+        String logEntry = entry.getCard().getName() + " taps " + target.getCard().getName() + ".";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        broadcastBattlefields(gameData);
+
+        log.info("Game {} - {} taps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
+    }
+
+    private void resolveTapTargetPermanent(GameData gameData, StackEntry entry) {
         Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
             return;
