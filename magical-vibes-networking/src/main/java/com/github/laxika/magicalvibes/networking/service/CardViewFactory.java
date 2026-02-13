@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
@@ -24,6 +25,8 @@ public class CardViewFactory {
                 .map(this::createAbilityView)
                 .toList();
 
+        List<String> spellAllowedTargetTypes = computeSpellAllowedTargetTypes(card);
+
         return new CardView(
                 card.getName(),
                 card.getType(),
@@ -38,7 +41,11 @@ public class CardViewFactory {
                 card.getSetCode(),
                 card.getCollectorNumber(),
                 card.getFlavorText(),
+                card.getArtist(),
+                card.getRarity(),
                 card.getColor(),
+                card.isNeedsTarget(),
+                spellAllowedTargetTypes,
                 abilityViews
         );
     }
@@ -62,5 +69,14 @@ public class CardViewFactory {
                 allowedTargetTypes,
                 ability.getManaCost()
         );
+    }
+
+    private List<String> computeSpellAllowedTargetTypes(Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof GainControlOfTargetAuraEffect) {
+                return List.of(CardType.ENCHANTMENT.getDisplayName());
+            }
+        }
+        return List.of();
     }
 }

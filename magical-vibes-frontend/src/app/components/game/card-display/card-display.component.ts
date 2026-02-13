@@ -1,5 +1,6 @@
-import { Component, Input, HostBinding } from '@angular/core';
+import { Component, Input, HostBinding, OnInit, inject } from '@angular/core';
 import { Card, Permanent } from '../../../services/websocket.service';
+import { ScryfallImageService } from '../../../services/scryfall-image.service';
 
 @Component({
   selector: 'app-card-display',
@@ -8,12 +9,24 @@ import { Card, Permanent } from '../../../services/websocket.service';
   styleUrl: './card-display.component.css',
   host: { 'class': 'card' }
 })
-export class CardDisplayComponent {
+export class CardDisplayComponent implements OnInit {
   @Input({ required: true }) card!: Card;
   @Input() permanent: Permanent | null = null;
 
+  artUrl: string | null = null;
+
+  private scryfallImageService = inject(ScryfallImageService);
+
+  ngOnInit(): void {
+    if (this.card.setCode && this.card.collectorNumber) {
+      this.scryfallImageService.getArtCropUrl(this.card.setCode, this.card.collectorNumber)
+        .then(url => this.artUrl = url)
+        .catch(() => { /* keep placeholder */ });
+    }
+  }
+
   @HostBinding('attr.data-card-color')
-  get cardColor(): string {
+  get cardColor(): string | null {
     return this.card.color;
   }
 

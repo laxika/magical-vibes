@@ -534,6 +534,15 @@ export class GameComponent implements OnInit, OnDestroy {
         this.xValueMaximum = this.totalMana - 1; // subtract 1 for the {W} base cost
         return;
       }
+      if (card.needsTarget) {
+        this.targeting = true;
+        this.targetingCardIndex = index;
+        this.targetingCardName = card.name;
+        if (card.allowedTargetTypes.length > 0) {
+          this.targetingAllowedTypes = card.allowedTargetTypes;
+        }
+        return;
+      }
       this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetPermanentId: null });
     }
   }
@@ -705,7 +714,14 @@ export class GameComponent implements OnInit, OnDestroy {
 
   isValidTarget(perm: Permanent): boolean {
     if (this.targetingAllowedTypes.length > 0) {
-      return this.targetingAllowedTypes.includes(perm.card.type);
+      if (!this.targetingAllowedTypes.includes(perm.card.type)) {
+        return false;
+      }
+      // For enchantment targeting, only allow auras that are attached to a permanent
+      if (perm.card.type === 'Enchantment' && perm.attachedTo == null) {
+        return false;
+      }
+      return true;
     }
     return perm.card.type === 'Creature';
   }

@@ -2,7 +2,11 @@
   <div class="card-mana-cost">{{ card.manaCost }}</div>
 }
 <div class="card-name">{{ card.name }}</div>
-<div class="card-art"></div>
+@if (artUrl) {
+  <img class="card-art" [src]="artUrl" [alt]="card.name + ' art'" />
+} @else {
+  <div class="card-art"></div>
+}
 <div class="card-type">{{ typeLine }}</div>
 @if (card.cardText) {
   <div class="card-text">{{ card.cardText }}</div>
@@ -14,10 +18,13 @@
   <div class="card-pt" [class.buffed]="isBuffed">{{ displayPower }}/{{ displayToughness }}</div>
 }
 @if (card.setCode) {
-  <div class="card-set-badge">{{ card.setCode }} #{{ card.collectorNumber }}</div>
+  <div class="card-set-badge" [attr.data-rarity]="card.rarity">{{ card.setCode }} #{{ card.collectorNumber }}</div>
 }
 @if (card.flavorText) {
   <div class="card-flavor-text">{{ card.flavorText }}</div>
+}
+@if (card.artist) {
+  <div class="card-artist">Illus. {{ card.artist }}</div>
 }
 @if (permanent?.tapped) {
   <div class="card-tapped-badge">Tapped</div>

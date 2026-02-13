@@ -133,7 +133,11 @@ export interface Card {
   setCode: string | null;
   collectorNumber: string | null;
   flavorText: string | null;
+  artist: string | null;
+  rarity: string | null;
   color: string | null;
+  needsTarget: boolean;
+  allowedTargetTypes: string[];
   activatedAbilities: ActivatedAbilityView[];
 }
 
@@ -152,6 +156,7 @@ export interface Permanent {
   effectiveToughness: number;
   chosenColor: string | null;
   regenerationShield: number;
+  attachedTo: string | null;
 }
 
 export interface StackEntry {

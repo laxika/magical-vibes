@@ -33,6 +33,8 @@ public class Card {
     @Setter private String setCode;
     @Setter private String collectorNumber;
     @Setter private String flavorText;
+    @Setter private String artist;
+    @Setter private CardRarity rarity;
 
     private Map<EffectSlot, List<CardEffect>> effects = new EnumMap<>(EffectSlot.class);
     private List<ActivatedAbility> activatedAbilities = new ArrayList<>();
