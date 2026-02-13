@@ -1330,15 +1330,10 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   getEffectiveKeywords(perm: Permanent): string[] {
-    const all = [...perm.card.keywords];
     if (perm.grantedKeywords) {
-      for (const kw of perm.grantedKeywords) {
-        if (!all.includes(kw)) {
-          all.push(kw);
-        }
-      }
+      return perm.grantedKeywords.filter(kw => !perm.card.keywords.includes(kw));
     }
-    return all;
+    return [];
   }
 
   readonly GameStatus = GameStatus;

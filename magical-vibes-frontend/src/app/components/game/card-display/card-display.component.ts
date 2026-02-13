@@ -50,18 +50,10 @@ export class CardDisplayComponent implements OnInit, OnChanges {
   }
 
   get effectiveKeywords(): string[] {
-    if (this.permanent) {
-      const all = [...this.card.keywords];
-      if (this.permanent.grantedKeywords) {
-        for (const kw of this.permanent.grantedKeywords) {
-          if (!all.includes(kw)) {
-            all.push(kw);
-          }
-        }
-      }
-      return all;
+    if (this.permanent && this.permanent.grantedKeywords) {
+      return this.permanent.grantedKeywords.filter(kw => !this.card.keywords.includes(kw));
     }
-    return this.card.keywords;
+    return [];
   }
 
   get isBuffed(): boolean {
