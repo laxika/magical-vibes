@@ -4,6 +4,7 @@
 - Do not start committing changes until I tell you to do so.
 - Make sure that the way we are implementing the cards and the rules is accurate. Having non-rules-correct behavior in the engine is not fine nor acceptable!
 - If you need any rules clarification feel free to search the web! Being rules accurate is our number one priority.
+- You are always started in the project folder so don't need to change directories to run git commands.
 
 ## Architecture
 
