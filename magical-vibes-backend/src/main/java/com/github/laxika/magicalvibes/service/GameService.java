@@ -476,8 +476,8 @@ public class GameService {
                 resolveRegenerate(gameData, entry);
             } else if (effect instanceof TapTargetCreatureEffect) {
                 resolveTapTargetCreature(gameData, entry);
-            } else if (effect instanceof PreventNextColorDamageToControllerEffect) {
-                resolvePreventNextColorDamageToController(gameData, entry);
+            } else if (effect instanceof PreventNextColorDamageToControllerEffect prevent) {
+                resolvePreventNextColorDamageToController(gameData, entry, prevent);
             }
         }
         removeOrphanedAuras(gameData);
@@ -1190,6 +1190,16 @@ public class GameService {
             broadcastLogEntry(gameData, logEntry);
             log.info("Game {} - {} activates {}'s ability", gameData.id, player.getUsername(), permanent.getCard().getName());
 
+            // Snapshot permanent state into effects so the ability resolves independently of its source
+            List<CardEffect> snapshotEffects = new ArrayList<>();
+            for (CardEffect effect : abilityEffects) {
+                if (effect instanceof PreventNextColorDamageToControllerEffect && permanent.getChosenColor() != null) {
+                    snapshotEffects.add(new PreventNextColorDamageToControllerEffect(permanent.getChosenColor()));
+                } else {
+                    snapshotEffects.add(effect);
+                }
+            }
+
             // Push activated ability on stack
             if (targetZone != null && targetZone != TargetZone.BATTLEFIELD) {
                 gameData.stack.add(new StackEntry(
@@ -1197,7 +1207,7 @@ public class GameService {
                         permanent.getCard(),
                         playerId,
                         permanent.getCard().getName() + "'s ability",
-                        new ArrayList<>(abilityEffects),
+                        snapshotEffects,
                         effectiveTargetId,
                         targetZone
                 ));
@@ -1207,7 +1217,7 @@ public class GameService {
                         permanent.getCard(),
                         playerId,
                         permanent.getCard().getName() + "'s ability",
-                        new ArrayList<>(abilityEffects),
+                        snapshotEffects,
                         effectiveXValue,
                         effectiveTargetId,
                         Map.of()
@@ -1986,13 +1996,11 @@ public class GameService {
         return sourceColor != null && gameData.preventDamageFromColors.contains(sourceColor);
     }
 
-    private void resolvePreventNextColorDamageToController(GameData gameData, StackEntry entry) {
-        UUID permanentId = entry.getTargetPermanentId();
-        Permanent perm = findPermanentById(gameData, permanentId);
-        if (perm == null || perm.getChosenColor() == null) return;
+    private void resolvePreventNextColorDamageToController(GameData gameData, StackEntry entry, PreventNextColorDamageToControllerEffect effect) {
+        CardColor chosenColor = effect.chosenColor();
+        if (chosenColor == null) return;
 
         UUID controllerId = entry.getControllerId();
-        CardColor chosenColor = perm.getChosenColor();
         gameData.playerColorDamagePreventionCount
                 .computeIfAbsent(controllerId, k -> new ConcurrentHashMap<>())
                 .merge(chosenColor, 1, Integer::sum);

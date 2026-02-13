@@ -302,20 +302,22 @@ class StoryCircleTest {
     // ===== Empty battlefield safety =====
 
     @Test
-    @DisplayName("Resolving ability with Story Circle removed does not crash")
-    void resolvingAbilityWithRemovedSourceDoesNotCrash() {
+    @DisplayName("Ability still resolves after Story Circle is destroyed")
+    void abilityResolvesAfterSourceDestroyed() {
         Permanent storyCircle = addReadyStoryCircle(player1, CardColor.RED);
         harness.addMana(player1, "W", 1);
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Remove Story Circle before resolution
+        // Remove Story Circle before resolution (e.g. destroyed in response)
         gd.playerBattlefields.get(player1.getId()).remove(storyCircle);
 
-        // Should resolve without crash (no prevention added since source is gone)
+        // Ability resolves independently — prevention should still be added
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerColorDamagePreventionCount.get(player1.getId()))
+                .containsEntry(CardColor.RED, 1);
     }
 
     // ===== Helpers =====
