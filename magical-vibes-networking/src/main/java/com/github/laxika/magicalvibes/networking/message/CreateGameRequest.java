@@ -1,4 +1,4 @@
 package com.github.laxika.magicalvibes.networking.message;
 
-public record CreateGameRequest(String gameName) {
+public record CreateGameRequest(String gameName, String deckId) {
 }

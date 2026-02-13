@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.cards.CardSet;
+import com.github.laxika.magicalvibes.cards.PrebuiltDeck;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -33,7 +33,7 @@ public class LobbyService {
     private final GameRegistry gameRegistry;
     private final GameService gameService;
 
-    public GameResult createGame(String gameName, Player player) {
+    public GameResult createGame(String gameName, Player player, String deckId) {
         UUID gameId = UUID.randomUUID();
 
         GameData gameData = new GameData(gameId, gameName, player.getId(), player.getUsername());
@@ -41,6 +41,7 @@ public class LobbyService {
         gameData.orderedPlayerIds.add(player.getId());
         gameData.playerNames.add(player.getUsername());
         gameData.playerIdToName.put(player.getId(), player.getUsername());
+        gameData.playerDeckChoices.put(player.getId(), deckId);
         gameRegistry.register(gameData);
 
         log.info("Game created: id={}, name='{}', creator={}", gameId, gameName, player.getUsername());
@@ -53,7 +54,7 @@ public class LobbyService {
                 .toList();
     }
 
-    public LobbyGame joinGame(GameData gameData, Player player) {
+    public LobbyGame joinGame(GameData gameData, Player player, String deckId) {
         if (gameData.status != GameStatus.WAITING) {
             throw new IllegalStateException("Game is not accepting players");
         }
@@ -66,6 +67,7 @@ public class LobbyService {
         gameData.orderedPlayerIds.add(player.getId());
         gameData.playerNames.add(player.getUsername());
         gameData.playerIdToName.put(player.getId(), player.getUsername());
+        gameData.playerDeckChoices.put(player.getId(), deckId);
 
         if (gameData.playerIds.size() >= 2) {
             initializeGame(gameData);
@@ -76,33 +78,11 @@ public class LobbyService {
     }
 
     private void initializeGame(GameData gameData) {
-        Card forest = CardSet.TENTH_EDITION.findByCollectorNumber("380").createCard();
-        Card llanowarElves = CardSet.TENTH_EDITION.findByCollectorNumber("274").createCard();
-        Card grizzlyBears = CardSet.TENTH_EDITION.findByCollectorNumber("268").createCard();
-        Card giantSpider = CardSet.TENTH_EDITION.findByCollectorNumber("267").createCard();
-        Card huntedWumpus = CardSet.TENTH_EDITION.findByCollectorNumber("269").createCard();
-        Card mightOfOaks = CardSet.TENTH_EDITION.findByCollectorNumber("277").createCard();
-
         for (UUID playerId : gameData.playerIds) {
-            List<Card> deck = new ArrayList<>();
-            for (int i = 0; i < 24; i++) {
-                deck.add(forest);
-            }
-            for (int i = 0; i < 4; i++) {
-                deck.add(llanowarElves);
-            }
-            for (int i = 0; i < 4; i++) {
-                deck.add(giantSpider);
-            }
-            for (int i = 0; i < 4; i++) {
-                deck.add(huntedWumpus);
-            }
-            for (int i = 0; i < 20; i++) {
-                deck.add(grizzlyBears);
-            }
-            for (int i = 0; i < 4; i++) {
-                deck.add(mightOfOaks);
-            }
+            String deckId = gameData.playerDeckChoices.get(playerId);
+            PrebuiltDeck prebuiltDeck = PrebuiltDeck.findById(deckId);
+            List<Card> deck = prebuiltDeck.buildDeck();
+
             Collections.shuffle(deck, random);
             gameData.playerDecks.put(playerId, deck);
             gameData.mulliganCounts.put(playerId, 0);
@@ -124,7 +104,12 @@ public class LobbyService {
         gameData.status = GameStatus.MULLIGAN;
 
         gameData.gameLog.add("Game started!");
-        gameData.gameLog.add("Each player receives a 10th Edition deck: 24 Forests, 4 Llanowar Elves, 4 Giant Spiders, 4 Hunted Wumpuses, 20 Grizzly Bears, and 4 Might of Oaks.");
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            String deckId = gameData.playerDeckChoices.get(playerId);
+            PrebuiltDeck prebuiltDeck = PrebuiltDeck.findById(deckId);
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameData.gameLog.add(playerName + " is playing with " + prebuiltDeck.getName() + ".");
+        }
 
         List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);
         UUID startingPlayerId = ids.get(random.nextInt(ids.size()));
