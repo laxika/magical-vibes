@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
 import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.ColorChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.CreateGameRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
@@ -97,6 +98,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 case CARD_CHOSEN -> messageHandler.handleCardChosen(connection, objectMapper.treeToValue(jsonNode, CardChosenRequest.class));
                 case PERMANENT_CHOSEN -> messageHandler.handlePermanentChosen(connection, objectMapper.treeToValue(jsonNode, PermanentChosenRequest.class));
                 case COLOR_CHOSEN -> messageHandler.handleColorChosen(connection, objectMapper.treeToValue(jsonNode, ColorChosenRequest.class));
+                case MAY_ABILITY_CHOSEN -> messageHandler.handleMayAbilityChosen(connection, objectMapper.treeToValue(jsonNode, MayAbilityChosenRequest.class));
                 default -> messageHandler.handleError(connection, "Unknown message type: " + type);
             }
         } catch (Exception e) {

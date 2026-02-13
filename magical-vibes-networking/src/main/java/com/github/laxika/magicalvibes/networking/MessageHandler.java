@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ColorChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.SacrificePermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
@@ -53,6 +54,8 @@ public interface MessageHandler {
     void handlePermanentChosen(Connection connection, PermanentChosenRequest request) throws Exception;
 
     void handleColorChosen(Connection connection, ColorChosenRequest request) throws Exception;
+
+    void handleMayAbilityChosen(Connection connection, MayAbilityChosenRequest request) throws Exception;
 
     void handleTimeout(Connection connection);
 

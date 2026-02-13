@@ -526,6 +526,14 @@
       </div>
     }
 
+    @if (awaitingMayAbility) {
+      <div class="combat-banner may-ability-banner">
+        <span>{{ mayAbilityPrompt }}</span>
+        <button class="btn-confirm-combat" (click)="acceptMayAbility()">Yes</button>
+        <button class="btn-confirm-combat" (click)="declineMayAbility()">No</button>
+      </div>
+    }
+
     <div class="hand-area">
       <div class="hand-label">Your Hand ({{ hand.length }} cards)</div>
       <div class="hand-cards">

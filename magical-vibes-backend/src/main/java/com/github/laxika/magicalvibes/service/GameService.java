@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.networking.message.AutoStopsUpdatedMessage
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
+import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
@@ -59,6 +61,7 @@ import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEf
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffect;
@@ -352,6 +355,19 @@ public class GameService {
                     beginColorChoice(gameData, controllerId, justEntered.getId(), null);
                 }
             }
+        } else if (entry.getEntryType() == StackEntryType.ARTIFACT_SPELL) {
+            Card card = entry.getCard();
+            UUID controllerId = entry.getControllerId();
+
+            gameData.playerBattlefields.get(controllerId).add(new Permanent(card));
+            broadcastBattlefields(gameData);
+
+            String playerName = gameData.playerIdToName.get(controllerId);
+            String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+
+            log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
         } else if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 || entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 || entry.getEntryType() == StackEntryType.SORCERY_SPELL
@@ -846,6 +862,7 @@ public class GameService {
 
                 log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), card.getName());
 
+                checkSpellCastTriggers(gameData, card);
                 resolveAutoPass(gameData);
             } else if (card.getType() == CardType.ENCHANTMENT) {
                 ManaCost cost = new ManaCost(card.getManaCost());
@@ -871,6 +888,33 @@ public class GameService {
 
                 log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), card.getName());
 
+                checkSpellCastTriggers(gameData, card);
+                resolveAutoPass(gameData);
+            } else if (card.getType() == CardType.ARTIFACT) {
+                ManaCost cost = new ManaCost(card.getManaCost());
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.ARTIFACT);
+                cost.pay(pool, additionalCost);
+                sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
+
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.ARTIFACT_SPELL, card, playerId, card.getName(),
+                        List.of(), 0, null, null
+                ));
+                gameData.spellsCastThisTurn.merge(playerId, 1, Integer::sum);
+                gameData.priorityPassedBy.clear();
+
+                sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+                broadcastStackUpdate(gameData);
+                sessionManager.sendToPlayers(gameData.orderedPlayerIds,new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+
+                String logEntry = player.getUsername() + " casts " + card.getName() + ".";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+
+                log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), card.getName());
+
+                checkSpellCastTriggers(gameData, card);
                 resolveAutoPass(gameData);
             } else if (card.getType() == CardType.SORCERY) {
                 ManaCost cost = new ManaCost(card.getManaCost());
@@ -896,6 +940,7 @@ public class GameService {
 
                 log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), card.getName());
 
+                checkSpellCastTriggers(gameData, card);
                 resolveAutoPass(gameData);
             } else if (card.getType() == CardType.INSTANT) {
                 ManaCost cost = new ManaCost(card.getManaCost());
@@ -950,6 +995,7 @@ public class GameService {
 
                 log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), card.getName());
 
+                checkSpellCastTriggers(gameData, card);
                 resolveAutoPass(gameData);
             }
         }
@@ -3448,6 +3494,14 @@ public class GameService {
                     playable.add(i);
                 }
             }
+            if (card.getType() == CardType.ARTIFACT && isActivePlayer && isMainPhase && stackEmpty && card.getManaCost() != null && !spellLimitReached) {
+                ManaCost cost = new ManaCost(card.getManaCost());
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.ARTIFACT);
+                if (cost.canPay(pool, additionalCost)) {
+                    playable.add(i);
+                }
+            }
             if (card.getType() == CardType.SORCERY && isActivePlayer && isMainPhase && stackEmpty && card.getManaCost() != null && !spellLimitReached) {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
@@ -3474,6 +3528,94 @@ public class GameService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Integer> playable = getPlayableCardIndices(gameData, playerId);
             sessionManager.sendToPlayer(playerId, new PlayableCardsMessage(playable));
+        }
+    }
+
+    private void checkSpellCastTriggers(GameData gameData, Card spellCard) {
+        if (spellCard.getColor() == null) {
+            return;
+        }
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+
+            for (Permanent perm : battlefield) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)) {
+                    if (effect instanceof GainLifeOnColorSpellCastEffect trigger
+                            && spellCard.getColor() == trigger.triggerColor()) {
+                        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                                perm.getCard(),
+                                playerId,
+                                List.of(new GainLifeEffect(trigger.amount())),
+                                perm.getCard().getName() + " — Gain " + trigger.amount() + " life?"
+                        ));
+                    }
+                }
+            }
+        }
+
+        processNextMayAbility(gameData);
+    }
+
+    private void processNextMayAbility(GameData gameData) {
+        if (gameData.pendingMayAbilities.isEmpty()) {
+            return;
+        }
+
+        PendingMayAbility next = gameData.pendingMayAbilities.getFirst();
+        gameData.awaitingInput = AwaitingInput.MAY_ABILITY_CHOICE;
+        gameData.awaitingMayAbilityPlayerId = next.controllerId();
+        sessionManager.sendToPlayer(next.controllerId(), new MayAbilityMessage(next.description()));
+
+        String playerName = gameData.playerIdToName.get(next.controllerId());
+        log.info("Game {} - Awaiting {} to decide on may ability: {}", gameData.id, playerName, next.description());
+    }
+
+    public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
+        synchronized (gameData) {
+            if (gameData.awaitingInput != AwaitingInput.MAY_ABILITY_CHOICE) {
+                throw new IllegalStateException("Not awaiting may ability choice");
+            }
+            if (!player.getId().equals(gameData.awaitingMayAbilityPlayerId)) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+
+            PendingMayAbility ability = gameData.pendingMayAbilities.removeFirst();
+            gameData.awaitingInput = null;
+            gameData.awaitingMayAbilityPlayerId = null;
+
+            if (accepted) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        ability.sourceCard(),
+                        ability.controllerId(),
+                        ability.sourceCard().getName() + "'s ability",
+                        new ArrayList<>(ability.effects())
+                ));
+                broadcastStackUpdate(gameData);
+
+                String logEntry = player.getUsername() + " accepts — " + ability.sourceCard().getName() + "'s triggered ability goes on the stack.";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+                log.info("Game {} - {} accepts may ability from {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
+            } else {
+                String logEntry = player.getUsername() + " declines " + ability.sourceCard().getName() + "'s triggered ability.";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+                log.info("Game {} - {} declines may ability from {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
+            }
+
+            processNextMayAbility(gameData);
+
+            if (gameData.pendingMayAbilities.isEmpty() && gameData.awaitingInput == null) {
+                gameData.priorityPassedBy.clear();
+                broadcastBattlefields(gameData);
+                broadcastStackUpdate(gameData);
+                broadcastPlayableCards(gameData);
+                sessionManager.sendToPlayers(gameData.orderedPlayerIds, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+                resolveAutoPass(gameData);
+            }
         }
     }
 

@@ -44,6 +44,8 @@ export enum MessageType {
   GRAVEYARD_UPDATED = 'GRAVEYARD_UPDATED',
   CHOOSE_COLOR = 'CHOOSE_COLOR',
   COLOR_CHOSEN = 'COLOR_CHOSEN',
+  MAY_ABILITY_CHOICE = 'MAY_ABILITY_CHOICE',
+  MAY_ABILITY_CHOSEN = 'MAY_ABILITY_CHOSEN',
   ERROR = 'ERROR'
 }
 
@@ -290,6 +292,11 @@ export interface ChooseColorNotification {
   prompt: string;
 }
 
+export interface MayAbilityNotification {
+  type: MessageType;
+  prompt: string;
+}
+
 export interface StackUpdatedNotification {
   type: MessageType;
   stack: StackEntry[];
@@ -300,7 +307,7 @@ export interface GraveyardUpdatedNotification {
   graveyards: Card[][];
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | StackUpdatedNotification | GraveyardUpdatedNotification;
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | StackUpdatedNotification | GraveyardUpdatedNotification;
 
 export interface User {
   userId: string;

@@ -7,5 +7,6 @@ public enum AwaitingInput {
     CARD_CHOICE,
     PERMANENT_CHOICE,
     GRAVEYARD_CHOICE,
-    COLOR_CHOICE
+    COLOR_CHOICE,
+    MAY_ABILITY_CHOICE
 }

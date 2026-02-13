@@ -93,6 +93,10 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }
 
+    public void castArtifact(Player player, int cardIndex) {
+        gameService.playCard(gameData, player, cardIndex, 0, null, null);
+    }
+
     public void castSorcery(Player player, int cardIndex, int xValue) {
         gameService.playCard(gameData, player, cardIndex, xValue, null, null);
     }
@@ -146,6 +150,10 @@ public class GameTestHarness {
 
     public void handleColorChosen(Player player, String colorName) {
         gameService.handleColorChosen(gameData, player, colorName);
+    }
+
+    public void handleMayAbilityChosen(Player player, boolean accepted) {
+        gameService.handleMayAbilityChosen(gameData, player, accepted);
     }
 
     public void forceActivePlayer(Player player) {

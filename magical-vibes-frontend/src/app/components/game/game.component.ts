@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, StackEntry, StackUpdatedNotification, GraveyardUpdatedNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, StackEntry, StackUpdatedNotification, GraveyardUpdatedNotification } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 export interface IndexedPermanent {
@@ -140,6 +140,11 @@ export class GameComponent implements OnInit, OnDestroy {
         if (message.type === MessageType.CHOOSE_COLOR) {
           const colorMsg = message as ChooseColorNotification;
           this.handleChooseColor(colorMsg);
+        }
+
+        if (message.type === MessageType.MAY_ABILITY_CHOICE) {
+          const mayMsg = message as MayAbilityNotification;
+          this.handleMayAbilityChoice(mayMsg);
         }
 
         if (message.type === MessageType.STACK_UPDATED) {
@@ -423,6 +428,31 @@ export class GameComponent implements OnInit, OnDestroy {
     this.choosingColor = false;
     this.colorChoices = [];
     this.colorChoicePrompt = '';
+  }
+
+  private handleMayAbilityChoice(msg: MayAbilityNotification): void {
+    this.awaitingMayAbility = true;
+    this.mayAbilityPrompt = msg.prompt;
+  }
+
+  acceptMayAbility(): void {
+    if (!this.awaitingMayAbility) return;
+    this.websocketService.send({
+      type: MessageType.MAY_ABILITY_CHOSEN,
+      accepted: true
+    });
+    this.awaitingMayAbility = false;
+    this.mayAbilityPrompt = '';
+  }
+
+  declineMayAbility(): void {
+    if (!this.awaitingMayAbility) return;
+    this.websocketService.send({
+      type: MessageType.MAY_ABILITY_CHOSEN,
+      accepted: false
+    });
+    this.awaitingMayAbility = false;
+    this.mayAbilityPrompt = '';
   }
 
   getColorDisplayName(color: string): string {
@@ -715,6 +745,8 @@ export class GameComponent implements OnInit, OnDestroy {
   choosingColor = false;
   colorChoices: string[] = [];
   colorChoicePrompt = '';
+  awaitingMayAbility = false;
+  mayAbilityPrompt = '';
 
   // Targeting state (for instants)
   targeting = false;
