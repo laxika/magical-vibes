@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, GameNotification, LobbyGame, LobbyGameNotification, GameStatus, MessageType } from '../../services/websocket.service';
+import { WebsocketService, GameNotification, LobbyGame, LobbyGameNotification, DeckInfo, GameStatus, MessageType } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -15,13 +15,14 @@ import { Subscription } from 'rxjs';
 export class HomeComponent implements OnInit, OnDestroy {
   games = signal<LobbyGame[]>([]);
   newGameName = signal('');
+  selectedDeckId = signal<string>('');
   errorMessage = signal('');
   showCreateForm = signal(false);
   private subscriptions: Subscription[] = [];
 
   constructor(
     private router: Router,
-    private websocketService: WebsocketService
+    public websocketService: WebsocketService
   ) {}
 
   ngOnInit() {
@@ -33,6 +34,11 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     // Load initial games received with login response
     this.games.set(this.websocketService.initialGames);
+
+    // Initialize selected deck to first available deck
+    if (this.websocketService.availableDecks.length > 0) {
+      this.selectedDeckId.set(this.websocketService.availableDecks[0].id);
+    }
 
     // Listen for game notifications
     this.subscriptions.push(
@@ -98,7 +104,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.errorMessage.set('');
     this.websocketService.send({
       type: MessageType.CREATE_GAME,
-      gameName: this.newGameName()
+      gameName: this.newGameName(),
+      deckId: this.selectedDeckId()
     });
 
     this.newGameName.set('');
@@ -109,7 +116,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.errorMessage.set('');
     this.websocketService.send({
       type: MessageType.JOIN_GAME,
-      gameId: gameId
+      gameId: gameId,
+      deckId: this.selectedDeckId()
     });
   }
 

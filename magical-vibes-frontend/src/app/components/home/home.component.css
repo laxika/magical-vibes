@@ -74,6 +74,41 @@ h1 {
   border: 1px solid #cfc;
 }
 
+.deck-selector {
+  background: white;
+  padding: 20px 30px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.deck-selector label {
+  color: #555;
+  font-weight: 600;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.deck-selector select {
+  flex: 1;
+  padding: 10px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 5px;
+  font-size: 15px;
+  background: white;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.3s;
+}
+
+.deck-selector select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
 .actions {
   display: flex;
   gap: 15px;
