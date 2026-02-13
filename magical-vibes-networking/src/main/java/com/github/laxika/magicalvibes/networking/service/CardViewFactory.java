@@ -32,6 +32,7 @@ public class CardViewFactory {
                 card.getSetCode(),
                 card.getCollectorNumber(),
                 card.getFlavorText(),
+                card.getArtist(),
                 card.getColor(),
                 computeAllowedTargetTypes(card),
                 computeTargetsPlayer(card)

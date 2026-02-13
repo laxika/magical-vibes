@@ -23,6 +23,9 @@
 @if (card.flavorText) {
   <div class="card-flavor-text">{{ card.flavorText }}</div>
 }
+@if (card.artist) {
+  <div class="card-artist">Illus. {{ card.artist }}</div>
+}
 @if (permanent?.tapped) {
   <div class="card-tapped-badge">Tapped</div>
 }

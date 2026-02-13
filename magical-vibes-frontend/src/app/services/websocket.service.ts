@@ -127,6 +127,7 @@ export interface Card {
   setCode: string | null;
   collectorNumber: string | null;
   flavorText: string | null;
+  artist: string | null;
   color: string | null;
   allowedTargetTypes: string[];
   targetsPlayer: boolean;
