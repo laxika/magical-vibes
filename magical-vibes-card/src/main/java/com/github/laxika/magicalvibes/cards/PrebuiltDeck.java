@@ -27,7 +27,8 @@ public enum PrebuiltDeck {
             new DeckEntry("31", 2),    // Pacifism
             new DeckEntry("33", 1),    // Pariah
             new DeckEntry("40", 1),    // Serra's Embrace
-            new DeckEntry("311", 1)    // Angel's Feather
+            new DeckEntry("311", 1),   // Angel's Feather
+            new DeckEntry("326", 1)    // Icy Manipulator
     ));
 
     public record DeckEntry(String collectorNumber, int count) {}
