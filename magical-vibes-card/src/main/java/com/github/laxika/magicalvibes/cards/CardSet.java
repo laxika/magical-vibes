@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.c.ChoMannoRevolutionary;
 import com.github.laxika.magicalvibes.cards.c.Condemn;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
+import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.FieldMarshal;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GhostWarden;
@@ -90,6 +91,7 @@ public enum CardSet {
             new CardPrinting("10E", "12", ChoMannoRevolutionary::new),
             new CardPrinting("10E", "13", Condemn::new),
             new CardPrinting("10E", "14", Demystify::new),
+            new CardPrinting("10E", "139", DrudgeSkeletons::new, "\"The dead make good soldiers. They obey without question, never surrender, and don't stop fighting when a limb is cut off.\"\n—Nevinyrral, Necromancer's Handbook"),
             new CardPrinting("10E", "15", FieldMarshal::new),
             new CardPrinting("10E", "16", GhostWarden::new, "\"I thought of fate as an iron lattice, intricate but rigidly unchangeable. That was until some force bent fate's bars to spare my life.\"\n\u2014Ilromov, traveling storyteller"),
             new CardPrinting("10E", "18", HailOfArrows::new, "\"Do not let a single shaft loose until my word. And when I give that word, do not leave a single shaft in Eiganjo.\"\n\u2014General Takeno"),

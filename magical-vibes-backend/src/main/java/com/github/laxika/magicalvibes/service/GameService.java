@@ -83,6 +83,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBatt
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllEnchantmentsEffect;
+import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
@@ -398,8 +399,8 @@ public class GameService {
                 resolveGainLife(gameData, entry.getControllerId(), gainLife.amount());
             } else if (effect instanceof GainLifePerGraveyardCardEffect) {
                 resolveGainLifePerGraveyardCard(gameData, entry.getControllerId());
-            } else if (effect instanceof DestroyAllCreaturesEffect) {
-                resolveDestroyAllCreatures(gameData);
+            } else if (effect instanceof DestroyAllCreaturesEffect destroy) {
+                resolveDestroyAllCreatures(gameData, destroy.cannotBeRegenerated());
             } else if (effect instanceof DestroyAllEnchantmentsEffect) {
                 resolveDestroyAllEnchantments(gameData);
             } else if (effect instanceof DestroyTargetPermanentEffect destroy) {
@@ -455,6 +456,8 @@ public class GameService {
                 resolveReturnCreatureFromGraveyardToBattlefield(gameData, entry);
             } else if (effect instanceof ReturnArtifactFromGraveyardToHandEffect) {
                 resolveReturnArtifactFromGraveyardToHand(gameData, entry);
+            } else if (effect instanceof RegenerateEffect) {
+                resolveRegenerate(gameData, entry);
             }
         }
         removeOrphanedAuras(gameData);
@@ -1557,22 +1560,26 @@ public class GameService {
         log.info("Game {} - {} deals {} damage to {}", gameData.id, entry.getCard().getName(), damage, target.getCard().getName());
 
         if (damage >= getEffectiveToughness(gameData, target)) {
-            // Destroy the creature
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                if (battlefield != null && battlefield.remove(target)) {
-                    gameData.playerGraveyards.get(playerId).add(target.getCard());
+            if (tryRegenerate(gameData, target)) {
+                broadcastBattlefields(gameData);
+            } else {
+                // Destroy the creature
+                for (UUID playerId : gameData.orderedPlayerIds) {
+                    List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                    if (battlefield != null && battlefield.remove(target)) {
+                        gameData.playerGraveyards.get(playerId).add(target.getCard());
 
-                    String destroyLog = target.getCard().getName() + " is destroyed.";
-                    gameData.gameLog.add(destroyLog);
-                    broadcastLogEntry(gameData, destroyLog);
-                    log.info("Game {} - {} is destroyed", gameData.id, target.getCard().getName());
-                    break;
+                        String destroyLog = target.getCard().getName() + " is destroyed.";
+                        gameData.gameLog.add(destroyLog);
+                        broadcastLogEntry(gameData, destroyLog);
+                        log.info("Game {} - {} is destroyed", gameData.id, target.getCard().getName());
+                        break;
+                    }
                 }
+                removeOrphanedAuras(gameData);
+                broadcastBattlefields(gameData);
+                broadcastGraveyards(gameData);
             }
-            removeOrphanedAuras(gameData);
-            broadcastBattlefields(gameData);
-            broadcastGraveyards(gameData);
         }
     }
 
@@ -1607,7 +1614,9 @@ public class GameService {
             log.info("Game {} - {} deals {} damage to {}", gameData.id, entry.getCard().getName(), damage, target.getCard().getName());
 
             if (damage >= target.getEffectiveToughness()) {
-                destroyed.add(target);
+                if (!tryRegenerate(gameData, target)) {
+                    destroyed.add(target);
+                }
             }
         }
 
@@ -1628,12 +1637,14 @@ public class GameService {
 
         if (!destroyed.isEmpty()) {
             removeOrphanedAuras(gameData);
-            broadcastBattlefields(gameData);
+        }
+        broadcastBattlefields(gameData);
+        if (!destroyed.isEmpty()) {
             broadcastGraveyards(gameData);
         }
     }
 
-    private void resolveDestroyAllCreatures(GameData gameData) {
+    private void resolveDestroyAllCreatures(GameData gameData, boolean cannotBeRegenerated) {
         List<Permanent> toDestroy = new ArrayList<>();
 
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -1645,6 +1656,9 @@ public class GameService {
         }
 
         for (Permanent perm : toDestroy) {
+            if (!cannotBeRegenerated && tryRegenerate(gameData, perm)) {
+                continue;
+            }
             for (UUID playerId : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 if (battlefield != null && battlefield.remove(perm)) {
@@ -1711,6 +1725,12 @@ public class GameService {
             return;
         }
 
+        // Try regeneration for creatures
+        if (target.getCard().getType() == CardType.CREATURE && tryRegenerate(gameData, target)) {
+            broadcastBattlefields(gameData);
+            return;
+        }
+
         // Find which player controls the target and remove it
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -1734,7 +1754,7 @@ public class GameService {
     private void resolveDestroyBlockedCreatureAndSelf(GameData gameData, StackEntry entry) {
         // Destroy the blocked creature (attacker) — referenced by targetPermanentId
         Permanent attacker = findPermanentById(gameData, entry.getTargetPermanentId());
-        if (attacker != null) {
+        if (attacker != null && !tryRegenerate(gameData, attacker)) {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 if (battlefield != null && battlefield.remove(attacker)) {
@@ -1750,7 +1770,7 @@ public class GameService {
 
         // Destroy self (the blocker) — referenced by sourcePermanentId
         Permanent self = findPermanentById(gameData, entry.getSourcePermanentId());
-        if (self != null) {
+        if (self != null && !tryRegenerate(gameData, self)) {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 if (battlefield != null && battlefield.remove(self)) {
@@ -2414,9 +2434,10 @@ public class GameService {
             if (battlefield == null) continue;
             for (Permanent p : battlefield) {
                 if (p.getPowerModifier() != 0 || p.getToughnessModifier() != 0 || !p.getGrantedKeywords().isEmpty()
-                        || p.getDamagePreventionShield() != 0) {
+                        || p.getDamagePreventionShield() != 0 || p.getRegenerationShield() != 0) {
                     p.resetModifiers();
                     p.setDamagePreventionShield(0);
+                    p.setRegenerationShield(0);
                     anyReset = true;
                 }
             }
@@ -2431,6 +2452,39 @@ public class GameService {
         gameData.preventAllCombatDamage = false;
         gameData.preventDamageFromColors.clear();
         gameData.combatDamageRedirectTarget = null;
+    }
+
+    // ===== Regeneration =====
+
+    private void resolveRegenerate(GameData gameData, StackEntry entry) {
+        Permanent perm = findPermanentById(gameData, entry.getTargetPermanentId());
+        if (perm == null) {
+            return;
+        }
+        perm.setRegenerationShield(perm.getRegenerationShield() + 1);
+
+        String logEntry = perm.getCard().getName() + " gains a regeneration shield.";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        log.info("Game {} - {} gains a regeneration shield", gameData.id, perm.getCard().getName());
+        broadcastBattlefields(gameData);
+    }
+
+    private boolean tryRegenerate(GameData gameData, Permanent perm) {
+        if (perm.getRegenerationShield() > 0) {
+            perm.setRegenerationShield(perm.getRegenerationShield() - 1);
+            perm.tap();
+            perm.setAttacking(false);
+            perm.setBlocking(false);
+            perm.getBlockingTargets().clear();
+
+            String logEntry = perm.getCard().getName() + " regenerates.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+            log.info("Game {} - {} regenerates", gameData.id, perm.getCard().getName());
+            return true;
+        }
+        return false;
     }
 
     // ===== Static / continuous effect computation =====
@@ -2521,7 +2575,7 @@ public class GameService {
                     }
                     int effectiveDamage = applyCreaturePreventionShield(gameData, p, damage);
                     int toughness = getEffectiveToughness(gameData, p);
-                    if (effectiveDamage >= toughness) {
+                    if (effectiveDamage >= toughness && !tryRegenerate(gameData, p)) {
                         deadIndices.add(i);
                     }
                 }
@@ -2945,7 +2999,8 @@ public class GameService {
                 int dmg = atkDamageTaken.getOrDefault(atkIdx, 0);
                 dmg = applyCreaturePreventionShield(gameData, atkBf.get(atkIdx), dmg);
                 atkDamageTaken.put(atkIdx, dmg);
-                if (dmg >= getEffectiveToughness(gameData, atkBf.get(atkIdx))) {
+                if (dmg >= getEffectiveToughness(gameData, atkBf.get(atkIdx))
+                        && !tryRegenerate(gameData, atkBf.get(atkIdx))) {
                     deadAttackerIndices.add(atkIdx);
                 }
             }
@@ -2954,7 +3009,8 @@ public class GameService {
                     int dmg = defDamageTaken.getOrDefault(blkIdx, 0);
                     dmg = applyCreaturePreventionShield(gameData, defBf.get(blkIdx), dmg);
                     defDamageTaken.put(blkIdx, dmg);
-                    if (dmg >= getEffectiveToughness(gameData, defBf.get(blkIdx))) {
+                    if (dmg >= getEffectiveToughness(gameData, defBf.get(blkIdx))
+                            && !tryRegenerate(gameData, defBf.get(blkIdx))) {
                         deadDefenderIndices.add(blkIdx);
                     }
                 }
@@ -3018,7 +3074,8 @@ public class GameService {
             int dmg = atkDamageTaken.getOrDefault(atkIdx, 0);
             dmg = applyCreaturePreventionShield(gameData, atkBf.get(atkIdx), dmg);
             atkDamageTaken.put(atkIdx, dmg);
-            if (dmg >= getEffectiveToughness(gameData, atkBf.get(atkIdx))) {
+            if (dmg >= getEffectiveToughness(gameData, atkBf.get(atkIdx))
+                    && !tryRegenerate(gameData, atkBf.get(atkIdx))) {
                 deadAttackerIndices.add(atkIdx);
             }
         }
@@ -3028,7 +3085,8 @@ public class GameService {
                 int dmg = defDamageTaken.getOrDefault(blkIdx, 0);
                 dmg = applyCreaturePreventionShield(gameData, defBf.get(blkIdx), dmg);
                 defDamageTaken.put(blkIdx, dmg);
-                if (dmg >= getEffectiveToughness(gameData, defBf.get(blkIdx))) {
+                if (dmg >= getEffectiveToughness(gameData, defBf.get(blkIdx))
+                        && !tryRegenerate(gameData, defBf.get(blkIdx))) {
                     deadDefenderIndices.add(blkIdx);
                 }
             }
@@ -3041,7 +3099,8 @@ public class GameService {
             gameData.gameLog.add(redirectLog);
             broadcastLogEntry(gameData, redirectLog);
 
-            if (damageRedirectedToGuard >= getEffectiveToughness(gameData, redirectTarget)) {
+            if (damageRedirectedToGuard >= getEffectiveToughness(gameData, redirectTarget)
+                    && !tryRegenerate(gameData, redirectTarget)) {
                 // Guard dies — find and remove it
                 for (UUID pid : gameData.orderedPlayerIds) {
                     List<Permanent> bf = gameData.playerBattlefields.get(pid);

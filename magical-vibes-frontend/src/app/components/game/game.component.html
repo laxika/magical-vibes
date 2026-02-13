@@ -266,6 +266,9 @@
               @if (ip.perm.tapped) {
                 <div class="card-tapped-badge">Tapped</div>
               }
+              @if (ip.perm.regenerationShield > 0) {
+                <div class="card-regen-badge">Regen x{{ ip.perm.regenerationShield }}</div>
+              }
             </div>
           }
         </div>
@@ -298,6 +301,9 @@
               }
               @if (ip.perm.tapped) {
                 <div class="card-tapped-badge">Tapped</div>
+              }
+              @if (ip.perm.regenerationShield > 0) {
+                <div class="card-regen-badge">Regen x{{ ip.perm.regenerationShield }}</div>
               }
             </div>
           }
@@ -364,6 +370,9 @@
                     @if (distributingDamage && getDamageAssigned(group.attacker.id) > 0) {
                       <div class="card-combat-badge damage-badge">{{ getDamageAssigned(group.attacker.id) }} dmg</div>
                     }
+                    @if (group.attacker.regenerationShield > 0) {
+                      <div class="card-regen-badge">Regen x{{ group.attacker.regenerationShield }}</div>
+                    }
                   </div>
                 </div>
                 @if (group.blockers.length > 0) {
@@ -391,6 +400,9 @@
                           <div class="card-flavor-text">{{ blocker.perm.card.flavorText }}</div>
                         }
                         <div class="card-combat-badge blocking-badge">Blocking</div>
+                        @if (blocker.perm.regenerationShield > 0) {
+                          <div class="card-regen-badge">Regen x{{ blocker.perm.regenerationShield }}</div>
+                        }
                       </div>
                     }
                   </div>
@@ -438,6 +450,9 @@
               }
               @if (ip.perm.tapped) {
                 <div class="card-tapped-badge">Tapped</div>
+              }
+              @if (ip.perm.regenerationShield > 0) {
+                <div class="card-regen-badge">Regen x{{ ip.perm.regenerationShield }}</div>
               }
             </div>
           }

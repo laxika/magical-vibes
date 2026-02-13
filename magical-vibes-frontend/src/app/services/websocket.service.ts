@@ -138,6 +138,7 @@ export interface Permanent {
   effectivePower: number;
   effectiveToughness: number;
   chosenColor: string | null;
+  regenerationShield: number;
 }
 
 export interface StackEntry {

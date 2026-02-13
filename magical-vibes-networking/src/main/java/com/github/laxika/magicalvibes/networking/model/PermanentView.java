@@ -15,5 +15,6 @@ public record PermanentView(
         Set<Keyword> grantedKeywords,
         int effectivePower, int effectiveToughness,
         UUID attachedTo,
-        CardColor chosenColor
+        CardColor chosenColor,
+        int regenerationShield
 ) {}

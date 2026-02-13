@@ -30,7 +30,8 @@ public class PermanentViewFactory {
                 p.getEffectivePower() + bonusPower,
                 p.getEffectiveToughness() + bonusToughness,
                 p.getAttachedTo(),
-                p.getChosenColor()
+                p.getChosenColor(),
+                p.getRegenerationShield()
         );
     }
 }
