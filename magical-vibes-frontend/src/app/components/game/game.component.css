@@ -325,30 +325,36 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 6px;
 }
 
 .btn-pass {
-  padding: 10px 32px;
+  width: 100%;
+  padding: 8px;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
+  border-radius: 6px;
+  font-size: 14px;
   font-weight: 600;
   color: white;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(230, 126, 34, 0.4);
   transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.mana-pool-bar {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 6px;
 }
 
 .btn-pass:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+  box-shadow: 0 6px 16px rgba(230, 126, 34, 0.5);
 }
 
 .btn-pass:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 2px 8px rgba(230, 126, 34, 0.4);
 }
 
 .btn-pass:disabled {
@@ -656,18 +662,18 @@
 
 .btn-confirm-combat {
   padding: 8px 20px;
-  border: 2px solid white;
+  border: none;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
   color: white;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.25);
   cursor: pointer;
   transition: background 0.15s;
 }
 
 .btn-confirm-combat:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .card.attacking {
