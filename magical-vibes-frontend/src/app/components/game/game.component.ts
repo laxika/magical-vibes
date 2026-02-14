@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -330,6 +330,13 @@ export class GameComponent implements OnInit, OnDestroy {
     const updated = { ...g, battlefields };
     this.game.set(updated);
     this.websocketService.currentGame = updated;
+    // Clear pending combat state now that server has confirmed the battlefield
+    if (!this.declaringAttackers) {
+      this.selectedAttackerIndices.set(new Set());
+    }
+    if (!this.declaringBlockers) {
+      this.blockerAssignments.set(new Map());
+    }
   }
 
   private updateManaPool(manaPool: Record<string, number>): void {
@@ -367,14 +374,14 @@ export class GameComponent implements OnInit, OnDestroy {
   private handleAvailableAttackers(msg: AvailableAttackersNotification): void {
     this.declaringAttackers = true;
     this.availableAttackerIndices.set(new Set(msg.attackerIndices));
-    this.selectedAttackerIndices.clear();
+    this.selectedAttackerIndices.set(new Set());
   }
 
   private handleAvailableBlockers(msg: AvailableBlockersNotification): void {
     this.declaringBlockers = true;
     this.availableBlockerIndices.set(new Set(msg.blockerIndices));
     this.opponentAttackerIndices = msg.attackerIndices;
-    this.blockerAssignments.clear();
+    this.blockerAssignments.set(new Map());
     this.selectedBlockerIndex = null;
   }
 
@@ -714,16 +721,16 @@ export class GameComponent implements OnInit, OnDestroy {
 
   isValidTarget(perm: Permanent): boolean {
     if (this.targetingAllowedTypes.length > 0) {
-      if (!this.targetingAllowedTypes.includes(perm.card.type)) {
+      if (!this.targetingAllowedTypes.some(t => t.toUpperCase() === perm.card.type.toUpperCase())) {
         return false;
       }
       // For enchantment targeting, only allow auras that are attached to a permanent
-      if (perm.card.type === 'Enchantment' && perm.attachedTo == null) {
+      if (perm.card.type === 'ENCHANTMENT' && perm.attachedTo == null) {
         return false;
       }
       return true;
     }
-    return perm.card.type === 'Creature';
+    return perm.card.type === 'CREATURE';
   }
 
   get player1DeckSize(): number {
@@ -828,7 +835,7 @@ export class GameComponent implements OnInit, OnDestroy {
   private canUseAbility(perm: Permanent, ability: ActivatedAbilityView): boolean {
     if (ability.requiresTap) {
       if (perm.tapped) return false;
-      if (perm.summoningSick && perm.card.type === 'Creature') return false;
+      if (perm.summoningSick && perm.card.type === 'CREATURE') return false;
     }
     return true;
   }
@@ -901,7 +908,7 @@ export class GameComponent implements OnInit, OnDestroy {
     if (abilities.some(a => !a.requiresTap)) return true;
     if (perm.tapped) return false;
     if (!perm.card.hasTapAbility) return false;
-    if (perm.summoningSick && perm.card.type === 'Creature') return false;
+    if (perm.summoningSick && perm.card.type === 'CREATURE') return false;
     return true;
   }
 
@@ -932,9 +939,9 @@ export class GameComponent implements OnInit, OnDestroy {
   declaringBlockers = false;
   availableAttackerIndices = signal(new Set<number>());
   availableBlockerIndices = signal(new Set<number>());
-  selectedAttackerIndices = new Set<number>();
+  selectedAttackerIndices = signal(new Set<number>());
   opponentAttackerIndices: number[] = [];
-  blockerAssignments: Map<number, number> = new Map();
+  blockerAssignments = signal(new Map<number, number>());
   selectedBlockerIndex: number | null = null;
   gameOverWinner: string | null = null;
   gameOverWinnerId: string | null = null;
@@ -1018,16 +1025,18 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   isSelectedAttacker(index: number): boolean {
-    return this.selectedAttackerIndices.has(index);
+    return this.selectedAttackerIndices().has(index);
   }
 
   toggleAttacker(index: number): void {
     if (!this.canAttack(index)) return;
-    if (this.selectedAttackerIndices.has(index)) {
-      this.selectedAttackerIndices.delete(index);
+    const updated = new Set(this.selectedAttackerIndices());
+    if (updated.has(index)) {
+      updated.delete(index);
     } else {
-      this.selectedAttackerIndices.add(index);
+      updated.add(index);
     }
+    this.selectedAttackerIndices.set(updated);
   }
 
   confirmAttackers(): void {
@@ -1035,10 +1044,10 @@ export class GameComponent implements OnInit, OnDestroy {
     if (!g) return;
     this.websocketService.send({
       type: MessageType.DECLARE_ATTACKERS,
-      attackerIndices: Array.from(this.selectedAttackerIndices)
+      attackerIndices: Array.from(this.selectedAttackerIndices())
     });
     this.declaringAttackers = false;
-    this.selectedAttackerIndices.clear();
+    // Keep selectedAttackerIndices populated until server responds with battlefield update
     this.availableAttackerIndices.set(new Set());
   }
 
@@ -1047,13 +1056,15 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   isAssignedBlocker(index: number): boolean {
-    return this.blockerAssignments.has(index);
+    return this.blockerAssignments().has(index);
   }
 
   selectBlocker(index: number): void {
     if (!this.canBlock(index)) return;
-    if (this.blockerAssignments.has(index)) {
-      this.blockerAssignments.delete(index);
+    if (this.blockerAssignments().has(index)) {
+      const updated = new Map(this.blockerAssignments());
+      updated.delete(index);
+      this.blockerAssignments.set(updated);
       return;
     }
     this.selectedBlockerIndex = index;
@@ -1068,14 +1079,16 @@ export class GameComponent implements OnInit, OnDestroy {
     if (this.selectedBlockerIndex === null || !this.declaringBlockers) return;
     const perm = this.opponentBattlefield[attackerIndex];
     if (!perm || !perm.attacking) return;
-    this.blockerAssignments.set(this.selectedBlockerIndex, attackerIndex);
+    const updated = new Map(this.blockerAssignments());
+    updated.set(this.selectedBlockerIndex, attackerIndex);
+    this.blockerAssignments.set(updated);
     this.selectedBlockerIndex = null;
   }
 
   confirmBlockers(): void {
     const g = this.game();
     if (!g) return;
-    const assignments = Array.from(this.blockerAssignments.entries()).map(([blockerIndex, attackerIndex]) => ({
+    const assignments = Array.from(this.blockerAssignments().entries()).map(([blockerIndex, attackerIndex]) => ({
       blockerIndex,
       attackerIndex
     }));
@@ -1084,7 +1097,7 @@ export class GameComponent implements OnInit, OnDestroy {
       blockerAssignments: assignments
     });
     this.declaringBlockers = false;
-    this.blockerAssignments.clear();
+    // Keep blockerAssignments populated until server responds with battlefield update
     this.selectedBlockerIndex = null;
     this.availableBlockerIndices.set(new Set());
     this.opponentAttackerIndices = [];
@@ -1131,7 +1144,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
     if (this.distributingDamage) {
       const perm = this.myBattlefield[index];
-      if (perm && perm.card.type === 'Creature' && perm.attacking) {
+      if (perm && perm.card.type === 'CREATURE' && perm.attacking) {
         this.assignDamage(perm.id);
       }
       return;
@@ -1155,7 +1168,7 @@ export class GameComponent implements OnInit, OnDestroy {
   onOpponentBattlefieldCardClick(index: number): void {
     if (this.distributingDamage) {
       const perm = this.opponentBattlefield[index];
-      if (perm && perm.card.type === 'Creature' && perm.attacking) {
+      if (perm && perm.card.type === 'CREATURE' && perm.attacking) {
         this.assignDamage(perm.id);
       }
       return;
@@ -1183,7 +1196,7 @@ export class GameComponent implements OnInit, OnDestroy {
     const creatures: IndexedPermanent[] = [];
     battlefield.forEach((perm, idx) => {
       const entry: IndexedPermanent = { perm, originalIndex: idx };
-      if (perm.card.type === 'Creature') {
+      if (perm.card.type === 'CREATURE') {
         creatures.push(entry);
       } else {
         lands.push(entry);
@@ -1200,15 +1213,23 @@ export class GameComponent implements OnInit, OnDestroy {
     return this.splitBattlefield(this.opponentBattlefield).lands;
   }
 
-  get myCreaturesNotInCombat(): IndexedPermanent[] {
-    const inCombat = this.myIndicesInCombat;
-    return this.splitBattlefield(this.myBattlefield).creatures.filter(c => !inCombat.has(c.originalIndex));
-  }
+  myCreaturesNotInCombat = computed(() => {
+    const selectedAttackers = this.selectedAttackerIndices();
+    const assignedBlockers = this.blockerAssignments();
+    return this.splitBattlefield(this.myBattlefield).creatures.filter(c => {
+      if (selectedAttackers.has(c.originalIndex)) return false;
+      if (assignedBlockers.has(c.originalIndex)) return false;
+      if (c.perm.attacking || c.perm.blocking) return false;
+      return true;
+    });
+  });
 
-  get opponentCreaturesNotInCombat(): IndexedPermanent[] {
-    const inCombat = this.opponentIndicesInCombat;
-    return this.splitBattlefield(this.opponentBattlefield).creatures.filter(c => !inCombat.has(c.originalIndex));
-  }
+  opponentCreaturesNotInCombat = computed(() => {
+    return this.splitBattlefield(this.opponentBattlefield).creatures.filter(c => {
+      if (c.perm.attacking || c.perm.blocking) return false;
+      return true;
+    });
+  });
 
   // Combat zone: groups of attacker + blockers
 
@@ -1219,9 +1240,10 @@ export class GameComponent implements OnInit, OnDestroy {
   get combatPairings(): CombatGroup[] {
     const groups: CombatGroup[] = [];
 
-    // During declaring attackers: selected attackers (always mine) move to combat zone
-    if (this.declaringAttackers) {
-      for (const idx of this.selectedAttackerIndices) {
+    // During declaring attackers (or pending server confirmation): selected attackers move to combat zone
+    const selectedAttackers = this.selectedAttackerIndices();
+    if (this.declaringAttackers || selectedAttackers.size > 0) {
+      for (const idx of selectedAttackers) {
         groups.push({
           attackerIndex: idx,
           attacker: this.myBattlefield[idx],
@@ -1262,9 +1284,10 @@ export class GameComponent implements OnInit, OnDestroy {
             group.blockers.push({ index: defIdx, perm: defPerm, isMine: true });
           }
         });
-        // My locally assigned blockers (during declaration, before server confirms)
-        if (this.declaringBlockers) {
-          for (const [blockerIdx, atkIdx] of this.blockerAssignments) {
+        // My locally assigned blockers (during declaration or pending server confirmation)
+        const assignments = this.blockerAssignments();
+        if (this.declaringBlockers || assignments.size > 0) {
+          for (const [blockerIdx, atkIdx] of assignments) {
             if (atkIdx === idx) {
               const alreadyIncluded = group.blockers.some(b => b.index === blockerIdx && b.isMine);
               if (!alreadyIncluded) {

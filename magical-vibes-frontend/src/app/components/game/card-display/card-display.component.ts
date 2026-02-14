@@ -1,4 +1,4 @@
-import { Component, Input, HostBinding, OnInit, OnChanges, SimpleChanges, inject } from '@angular/core';
+import { Component, Input, HostBinding, OnInit, OnChanges, SimpleChanges, inject, signal } from '@angular/core';
 import { Card, Permanent } from '../../../services/websocket.service';
 import { ScryfallImageService } from '../../../services/scryfall-image.service';
 
@@ -13,7 +13,7 @@ export class CardDisplayComponent implements OnInit, OnChanges {
   @Input({ required: true }) card!: Card;
   @Input() permanent: Permanent | null = null;
 
-  artUrl: string | null = null;
+  artUrl = signal<string | null>(null);
 
   private scryfallImageService = inject(ScryfallImageService);
 
@@ -26,12 +26,12 @@ export class CardDisplayComponent implements OnInit, OnChanges {
       if (this.card.setCode && this.card.collectorNumber) {
         const cached = this.scryfallImageService.getCachedArtCropUrl(this.card.setCode, this.card.collectorNumber);
         if (cached) {
-          this.artUrl = cached;
+          this.artUrl.set(cached);
         } else {
           this.fetchCardArt();
         }
       } else {
-        this.artUrl = null;
+        this.artUrl.set(null);
       }
     }
   }
@@ -39,8 +39,8 @@ export class CardDisplayComponent implements OnInit, OnChanges {
   private fetchCardArt(): void {
     if (this.card.setCode && this.card.collectorNumber) {
       this.scryfallImageService.getArtCropUrl(this.card.setCode, this.card.collectorNumber)
-        .then(url => this.artUrl = url)
-        .catch(() => { this.artUrl = null; });
+        .then(url => this.artUrl.set(url))
+        .catch(() => { this.artUrl.set(null); });
     }
   }
 
@@ -71,10 +71,14 @@ export class CardDisplayComponent implements OnInit, OnChanges {
     return this.permanent ? this.permanent.effectiveToughness : this.card.toughness;
   }
 
+  private formatEnumName(s: string): string {
+    return s.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
+  }
+
   get typeLine(): string {
-    const supertypes = (this.card.supertypes ?? []).map(s => s.charAt(0) + s.slice(1).toLowerCase());
-    const mainType = [...supertypes, this.card.type].join(' ');
-    const subtypes = (this.card.subtypes ?? []).map(s => s.charAt(0) + s.slice(1).toLowerCase());
+    const supertypes = (this.card.supertypes ?? []).map(s => this.formatEnumName(s));
+    const mainType = [...supertypes, this.formatEnumName(this.card.type)].join(' ');
+    const subtypes = (this.card.subtypes ?? []).map(s => this.formatEnumName(s));
     if (subtypes.length > 0) {
       return `${mainType} \u2014 ${subtypes.join(' ')}`;
     }

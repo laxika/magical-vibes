@@ -673,7 +673,8 @@ h1 {
 }
 
 .card.can-attack {
-  border: 2px dashed #27ae60;
+  border: 2px solid #f6c343;
+  box-shadow: 0 0 12px rgba(246, 195, 67, 0.5);
   cursor: pointer;
 }
 
@@ -684,7 +685,8 @@ h1 {
 }
 
 .card.can-block {
-  border: 2px dashed #3498db;
+  border: 2px solid #f6c343;
+  box-shadow: 0 0 12px rgba(246, 195, 67, 0.5);
   cursor: pointer;
 }
 

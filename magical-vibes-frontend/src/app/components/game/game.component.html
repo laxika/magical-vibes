@@ -238,7 +238,7 @@
           }
         </div>
         <div class="battlefield-sub-row creatures-row">
-          @for (ip of opponentCreaturesNotInCombat; track ip.originalIndex) {
+          @for (ip of opponentCreaturesNotInCombat(); track ip.originalIndex) {
             <app-card-display
               [card]="ip.perm.card"
               [permanent]="ip.perm"
@@ -310,7 +310,7 @@
       <div class="battlefield-row">
         <div class="battlefield-label">Your Battlefield</div>
         <div class="battlefield-sub-row creatures-row">
-          @for (ip of myCreaturesNotInCombat; track ip.originalIndex) {
+          @for (ip of myCreaturesNotInCombat(); track ip.originalIndex) {
             <app-card-display
               [card]="ip.perm.card"
               [permanent]="ip.perm"
