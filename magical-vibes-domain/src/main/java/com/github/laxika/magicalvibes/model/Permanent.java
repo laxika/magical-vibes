@@ -28,6 +28,7 @@ public class Permanent {
     @Setter private CardColor chosenColor;
     @Setter private boolean cantBeBlocked;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
+    private final List<TextReplacement> textReplacements = new ArrayList<>();
 
     public Permanent(Card card) {
         this.id = UUID.randomUUID();

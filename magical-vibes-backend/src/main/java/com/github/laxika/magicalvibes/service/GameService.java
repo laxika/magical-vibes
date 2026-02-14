@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.networking.message.AutoStopsUpdatedMessage
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
@@ -105,6 +107,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchan
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
@@ -621,6 +624,11 @@ public class GameService {
                 resolveReturnCreaturesToOwnersHand(gameData, entry, bounce);
             } else if (effect instanceof ReturnArtifactsTargetPlayerOwnsToHandEffect) {
                 resolveReturnArtifactsTargetPlayerOwnsToHand(gameData, entry);
+            } else if (effect instanceof ChangeColorTextEffect) {
+                resolveChangeColorText(gameData, entry);
+                if (gameData.awaitingInput == AwaitingInput.COLOR_CHOICE) {
+                    break;
+                }
             } else if (effect instanceof CounterSpellEffect) {
                 resolveCounterSpell(gameData, entry);
             } else if (effect instanceof ReorderTopCardsOfLibraryEffect reorder) {
@@ -1703,6 +1711,16 @@ public class GameService {
                 throw new IllegalStateException("Not your turn to choose");
             }
 
+            // Mind Bend two-step color choice
+            if (gameData.colorChoiceContext instanceof ColorChoiceContext.MindBendFromWord ctx) {
+                handleMindBendFromWordChosen(gameData, player, colorName, ctx);
+                return;
+            }
+            if (gameData.colorChoiceContext instanceof ColorChoiceContext.MindBendToWord ctx) {
+                handleMindBendToWordChosen(gameData, player, colorName, ctx);
+                return;
+            }
+
             CardColor color = CardColor.valueOf(colorName);
             UUID permanentId = gameData.awaitingColorChoicePermanentId;
             UUID etbTargetId = gameData.pendingColorChoiceETBTargetId;
@@ -1732,6 +1750,111 @@ public class GameService {
             sessionManager.sendToPlayers(gameData.orderedPlayerIds, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
             resolveAutoPass(gameData);
         }
+    }
+
+    private static final List<String> MIND_BEND_COLOR_WORDS = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+    private static final List<String> MIND_BEND_LAND_TYPES = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
+
+    private void resolveChangeColorText(GameData gameData, StackEntry entry) {
+        UUID targetPermanentId = entry.getTargetPermanentId();
+        Permanent target = findPermanentById(gameData, targetPermanentId);
+        if (target == null) {
+            return;
+        }
+
+        gameData.colorChoiceContext = new ColorChoiceContext.MindBendFromWord(targetPermanentId);
+        gameData.awaitingInput = AwaitingInput.COLOR_CHOICE;
+        gameData.awaitingColorChoicePlayerId = entry.getControllerId();
+
+        List<String> options = new ArrayList<>();
+        options.addAll(MIND_BEND_COLOR_WORDS);
+        options.addAll(MIND_BEND_LAND_TYPES);
+        sessionManager.sendToPlayer(entry.getControllerId(), new ChooseColorMessage(options, "Choose a color word or basic land type to replace."));
+
+        String playerName = gameData.playerIdToName.get(entry.getControllerId());
+        log.info("Game {} - Awaiting {} to choose a color word or basic land type for Mind Bend", gameData.id, playerName);
+    }
+
+    private void handleMindBendFromWordChosen(GameData gameData, Player player, String chosenWord, ColorChoiceContext.MindBendFromWord ctx) {
+        boolean isColor = MIND_BEND_COLOR_WORDS.contains(chosenWord);
+        boolean isLandType = MIND_BEND_LAND_TYPES.contains(chosenWord);
+        if (!isColor && !isLandType) {
+            throw new IllegalArgumentException("Invalid choice: " + chosenWord);
+        }
+
+        gameData.colorChoiceContext = new ColorChoiceContext.MindBendToWord(ctx.targetPermanentId(), chosenWord, isColor);
+
+        List<String> remainingOptions;
+        String promptType;
+        if (isColor) {
+            remainingOptions = MIND_BEND_COLOR_WORDS.stream().filter(c -> !c.equals(chosenWord)).toList();
+            promptType = "color word";
+        } else {
+            remainingOptions = MIND_BEND_LAND_TYPES.stream().filter(t -> !t.equals(chosenWord)).toList();
+            promptType = "basic land type";
+        }
+
+        sessionManager.sendToPlayer(player.getId(), new ChooseColorMessage(remainingOptions, "Choose the replacement " + promptType + "."));
+        log.info("Game {} - Awaiting {} to choose replacement word for Mind Bend", gameData.id, player.getUsername());
+    }
+
+    private void handleMindBendToWordChosen(GameData gameData, Player player, String chosenWord, ColorChoiceContext.MindBendToWord ctx) {
+        if (ctx.isColor()) {
+            if (!MIND_BEND_COLOR_WORDS.contains(chosenWord)) {
+                throw new IllegalArgumentException("Invalid color choice: " + chosenWord);
+            }
+        } else {
+            if (!MIND_BEND_LAND_TYPES.contains(chosenWord)) {
+                throw new IllegalArgumentException("Invalid land type choice: " + chosenWord);
+            }
+        }
+
+        gameData.awaitingInput = null;
+        gameData.awaitingColorChoicePlayerId = null;
+        gameData.colorChoiceContext = null;
+
+        Permanent target = findPermanentById(gameData, ctx.targetPermanentId());
+        if (target != null) {
+            String fromText = mindBendChoiceToTextWord(ctx.fromWord());
+            String toText = mindBendChoiceToTextWord(chosenWord);
+            target.getTextReplacements().add(new TextReplacement(fromText, toText));
+
+            // If the permanent has a chosenColor matching the from-color, update it
+            if (ctx.isColor()) {
+                CardColor fromColor = CardColor.valueOf(ctx.fromWord());
+                CardColor toColor = CardColor.valueOf(chosenWord);
+                if (fromColor.equals(target.getChosenColor())) {
+                    target.setChosenColor(toColor);
+                }
+            }
+
+            String logEntry = player.getUsername() + " changes all instances of " + fromText + " to " + toText + " on " + target.getCard().getName() + ".";
+            logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} changes {} to {} on {}", gameData.id, player.getUsername(), fromText, toText, target.getCard().getName());
+        }
+
+        gameData.priorityPassedBy.clear();
+        broadcastBattlefields(gameData);
+        broadcastStackUpdate(gameData);
+        broadcastPlayableCards(gameData);
+        sessionManager.sendToPlayers(gameData.orderedPlayerIds, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+        resolveAutoPass(gameData);
+    }
+
+    private String mindBendChoiceToTextWord(String choice) {
+        return switch (choice) {
+            case "WHITE" -> "white";
+            case "BLUE" -> "blue";
+            case "BLACK" -> "black";
+            case "RED" -> "red";
+            case "GREEN" -> "green";
+            case "PLAINS" -> "Plains";
+            case "ISLAND" -> "Island";
+            case "SWAMP" -> "Swamp";
+            case "MOUNTAIN" -> "Mountain";
+            case "FOREST" -> "Forest";
+            default -> throw new IllegalArgumentException("Invalid choice: " + choice);
+        };
     }
 
     private void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
