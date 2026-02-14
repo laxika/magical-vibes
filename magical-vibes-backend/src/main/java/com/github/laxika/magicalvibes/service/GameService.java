@@ -105,6 +105,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureOnEnterEffect;
@@ -122,6 +124,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEff
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
+import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -430,6 +433,9 @@ public class GameService {
             if (entry.getTargetPermanentId() != null) {
                 if (entry.getTargetZone() == TargetZone.GRAVEYARD) {
                     targetFizzled = findCardInGraveyardById(gameData, entry.getTargetPermanentId()) == null;
+                } else if (entry.getTargetZone() == TargetZone.STACK) {
+                    targetFizzled = gameData.stack.stream()
+                            .noneMatch(se -> se.getCard().getId().equals(entry.getTargetPermanentId()));
                 } else {
                     targetFizzled = findPermanentById(gameData, entry.getTargetPermanentId()) == null
                             && !gameData.playerIds.contains(entry.getTargetPermanentId());
@@ -573,6 +579,13 @@ public class GameService {
                 resolveReturnTargetPermanentToHand(gameData, entry);
             } else if (effect instanceof ReturnCreaturesToOwnersHandEffect bounce) {
                 resolveReturnCreaturesToOwnersHand(gameData, entry, bounce);
+            } else if (effect instanceof CounterSpellEffect) {
+                resolveCounterSpell(gameData, entry);
+            } else if (effect instanceof ReorderTopCardsOfLibraryEffect reorder) {
+                resolveReorderTopCardsOfLibrary(gameData, entry, reorder);
+                if (gameData.awaitingInput == AwaitingInput.LIBRARY_REORDER) {
+                    break;
+                }
             }
         }
         removeOrphanedAuras(gameData);
@@ -864,8 +877,22 @@ public class GameService {
                 }
             }
 
+            // Validate spell target (targeting a spell on the stack)
+            if (card.isNeedsSpellTarget()) {
+                if (targetPermanentId == null) {
+                    throw new IllegalStateException("Must target a spell on the stack");
+                }
+                boolean validSpellTarget = gameData.stack.stream()
+                        .anyMatch(se -> se.getCard().getId().equals(targetPermanentId)
+                                && se.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                                && se.getEntryType() != StackEntryType.ACTIVATED_ABILITY);
+                if (!validSpellTarget) {
+                    throw new IllegalStateException("Target must be a spell on the stack");
+                }
+            }
+
             // Validate target if specified (can be a permanent or a player)
-            if (targetPermanentId != null) {
+            if (targetPermanentId != null && !card.isNeedsSpellTarget()) {
                 Permanent target = findPermanentById(gameData, targetPermanentId);
                 if (target == null && !gameData.playerIds.contains(targetPermanentId)) {
                     throw new IllegalStateException("Invalid target");
@@ -1066,6 +1093,11 @@ public class GameService {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.INSTANT_SPELL, card, playerId, card.getName(),
                             new ArrayList<>(card.getEffects(EffectSlot.SPELL)), effectiveXValue, null, damageAssignments
+                    ));
+                } else if (card.isNeedsSpellTarget()) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.INSTANT_SPELL, card, playerId, card.getName(),
+                            new ArrayList<>(card.getEffects(EffectSlot.SPELL)), targetPermanentId, TargetZone.STACK
                     ));
                 } else {
                     gameData.stack.add(new StackEntry(
@@ -4652,6 +4684,123 @@ public class GameService {
         // Safety: if we somehow looped 100 times, broadcast current state and stop
         log.warn("Game {} - resolveAutoPass hit safety limit", gameData.id);
         broadcastPlayableCards(gameData);
+    }
+
+    private void resolveCounterSpell(GameData gameData, StackEntry entry) {
+        UUID targetCardId = entry.getTargetPermanentId();
+        if (targetCardId == null) return;
+
+        StackEntry targetEntry = null;
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(targetCardId)) {
+                targetEntry = se;
+                break;
+            }
+        }
+
+        if (targetEntry == null) {
+            log.info("Game {} - Counter target no longer on stack", gameData.id);
+            return;
+        }
+
+        gameData.stack.remove(targetEntry);
+
+        // Countered spells go to their owner's graveyard
+        UUID ownerId = targetEntry.getControllerId();
+        gameData.playerGraveyards.get(ownerId).add(targetEntry.getCard());
+        broadcastGraveyards(gameData);
+        broadcastStackUpdate(gameData);
+
+        String logMsg = targetEntry.getCard().getName() + " is countered.";
+        gameData.gameLog.add(logMsg);
+        broadcastLogEntry(gameData, logMsg);
+        log.info("Game {} - {} countered {}", gameData.id, entry.getCard().getName(), targetEntry.getCard().getName());
+    }
+
+    private void resolveReorderTopCardsOfLibrary(GameData gameData, StackEntry entry, ReorderTopCardsOfLibraryEffect reorder) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+
+        int count = Math.min(reorder.count(), deck.size());
+        if (count == 0) {
+            String logMsg = entry.getCard().getName() + ": library is empty, nothing to reorder.";
+            gameData.gameLog.add(logMsg);
+            broadcastLogEntry(gameData, logMsg);
+            return;
+        }
+
+        if (count == 1) {
+            // Only one card — no choice needed, it stays where it is
+            String logMsg = gameData.playerIdToName.get(controllerId) + " looks at the top card of their library.";
+            gameData.gameLog.add(logMsg);
+            broadcastLogEntry(gameData, logMsg);
+            return;
+        }
+
+        // Take the top N cards (index 0 = top of library)
+        List<Card> topCards = new ArrayList<>(deck.subList(0, count));
+
+        gameData.awaitingLibraryReorderPlayerId = controllerId;
+        gameData.awaitingLibraryReorderCards = topCards;
+        gameData.awaitingInput = AwaitingInput.LIBRARY_REORDER;
+
+        List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ReorderLibraryCardsMessage(
+                cardViews,
+                "Put these cards back on top of your library in any order (top to bottom)."
+        ));
+
+        String logMsg = gameData.playerIdToName.get(controllerId) + " looks at the top " + count + " cards of their library.";
+        gameData.gameLog.add(logMsg);
+        broadcastLogEntry(gameData, logMsg);
+        log.info("Game {} - {} reordering top {} cards of library", gameData.id, gameData.playerIdToName.get(controllerId), count);
+    }
+
+    public void handleLibraryCardsReordered(GameData gameData, Player player, List<Integer> cardOrder) {
+        synchronized (gameData) {
+            if (gameData.awaitingInput != AwaitingInput.LIBRARY_REORDER) {
+                throw new IllegalStateException("Not awaiting library reorder");
+            }
+            if (!player.getId().equals(gameData.awaitingLibraryReorderPlayerId)) {
+                throw new IllegalStateException("Not your turn to reorder");
+            }
+
+            List<Card> reorderCards = gameData.awaitingLibraryReorderCards;
+            int count = reorderCards.size();
+
+            if (cardOrder.size() != count) {
+                throw new IllegalStateException("Must specify order for all " + count + " cards");
+            }
+
+            // Validate that cardOrder is a permutation of 0..count-1
+            Set<Integer> seen = new HashSet<>();
+            for (int idx : cardOrder) {
+                if (idx < 0 || idx >= count) {
+                    throw new IllegalStateException("Invalid card index: " + idx);
+                }
+                if (!seen.add(idx)) {
+                    throw new IllegalStateException("Duplicate card index: " + idx);
+                }
+            }
+
+            // Apply the reorder: replace top N cards of deck with the reordered ones
+            List<Card> deck = gameData.playerDecks.get(player.getId());
+            for (int i = 0; i < count; i++) {
+                deck.set(i, reorderCards.get(cardOrder.get(i)));
+            }
+
+            // Clear awaiting state
+            gameData.awaitingInput = null;
+            gameData.awaitingLibraryReorderPlayerId = null;
+            gameData.awaitingLibraryReorderCards = null;
+
+            String logMsg = player.getUsername() + " puts " + count + " cards back on top of their library.";
+            gameData.gameLog.add(logMsg);
+            broadcastLogEntry(gameData, logMsg);
+            log.info("Game {} - {} reordered top {} cards", gameData.id, player.getUsername(), count);
+
+            resolveAutoPass(gameData);
+        }
     }
 
 }

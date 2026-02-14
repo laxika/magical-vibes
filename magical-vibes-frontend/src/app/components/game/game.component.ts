@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, StackEntry, StackUpdatedNotification, GraveyardUpdatedNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, StackEntry, StackUpdatedNotification, GraveyardUpdatedNotification, ReorderLibraryCardsNotification } from '../../services/websocket.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { Subscription } from 'rxjs';
 
@@ -174,6 +174,11 @@ export class GameComponent implements OnInit, OnDestroy {
         if (message.type === MessageType.CHOOSE_MULTIPLE_PERMANENTS) {
           const multiPermMsg = message as ChooseMultiplePermanentsNotification;
           this.handleChooseMultiplePermanents(multiPermMsg);
+        }
+
+        if (message.type === MessageType.REORDER_LIBRARY_CARDS) {
+          const reorderMsg = message as ReorderLibraryCardsNotification;
+          this.handleReorderLibraryCards(reorderMsg);
         }
 
         const update = message as GameUpdate;
@@ -587,6 +592,12 @@ export class GameComponent implements OnInit, OnDestroy {
         this.xValueMaximum = this.totalMana - 1; // subtract 1 for the {W} base cost
         return;
       }
+      if (card.needsSpellTarget) {
+        this.targetingSpell = true;
+        this.targetingSpellCardIndex = index;
+        this.targetingSpellCardName = card.name;
+        return;
+      }
       if (card.needsTarget) {
         this.targeting = true;
         this.targetingCardIndex = index;
@@ -769,6 +780,68 @@ export class GameComponent implements OnInit, OnDestroy {
     this.targetingAbilityIndex = -1;
     this.targetingAllowedTypes = [];
     this.pendingAbilityXValue = null;
+  }
+
+  selectSpellTarget(entry: StackEntry): void {
+    if (!this.targetingSpell || !entry.isSpell) return;
+    this.websocketService.send({
+      type: MessageType.PLAY_CARD,
+      cardIndex: this.targetingSpellCardIndex,
+      targetPermanentId: entry.cardId
+    });
+    this.targetingSpell = false;
+    this.targetingSpellCardIndex = -1;
+    this.targetingSpellCardName = '';
+  }
+
+  cancelSpellTargeting(): void {
+    this.targetingSpell = false;
+    this.targetingSpellCardIndex = -1;
+    this.targetingSpellCardName = '';
+  }
+
+  handleReorderLibraryCards(msg: ReorderLibraryCardsNotification): void {
+    this.reorderingLibrary = true;
+    this.reorderAllCards = msg.cards;
+    this.reorderAvailableIndices = msg.cards.map((_, i) => i);
+    this.reorderOriginalIndices = [];
+    this.reorderPrompt = msg.prompt;
+  }
+
+  get reorderAvailableCards(): { card: Card; originalIndex: number }[] {
+    return this.reorderAvailableIndices.map(i => ({ card: this.reorderAllCards[i], originalIndex: i }));
+  }
+
+  get reorderPlacedCards(): { card: Card; originalIndex: number; position: number }[] {
+    return this.reorderOriginalIndices.map((origIdx, pos) => ({
+      card: this.reorderAllCards[origIdx],
+      originalIndex: origIdx,
+      position: pos + 1
+    }));
+  }
+
+  selectReorderCard(originalIndex: number): void {
+    this.reorderOriginalIndices = [...this.reorderOriginalIndices, originalIndex];
+    this.reorderAvailableIndices = this.reorderAvailableIndices.filter(i => i !== originalIndex);
+  }
+
+  undoLastReorderCard(): void {
+    if (this.reorderOriginalIndices.length === 0) return;
+    const lastIdx = this.reorderOriginalIndices[this.reorderOriginalIndices.length - 1];
+    this.reorderOriginalIndices = this.reorderOriginalIndices.slice(0, -1);
+    this.reorderAvailableIndices = [...this.reorderAvailableIndices, lastIdx];
+  }
+
+  confirmReorder(): void {
+    this.websocketService.send({
+      type: MessageType.LIBRARY_CARDS_REORDERED,
+      cardOrder: this.reorderOriginalIndices
+    });
+    this.reorderingLibrary = false;
+    this.reorderAllCards = [];
+    this.reorderAvailableIndices = [];
+    this.reorderOriginalIndices = [];
+    this.reorderPrompt = '';
   }
 
   isValidTarget(perm: Permanent): boolean {
@@ -1032,6 +1105,18 @@ export class GameComponent implements OnInit, OnDestroy {
   targetingRequiresAttacking = false;
   targetingAbilityIndex = -1;
   pendingAbilityXValue: number | null = null;
+
+  // Spell targeting state (for counterspells)
+  targetingSpell = false;
+  targetingSpellCardIndex = -1;
+  targetingSpellCardName = '';
+
+  // Library reorder state
+  reorderingLibrary = false;
+  reorderAllCards: Card[] = [];
+  reorderAvailableIndices: number[] = [];
+  reorderOriginalIndices: number[] = [];
+  reorderPrompt = '';
 
   // X cost prompt state
   choosingXValue = false;

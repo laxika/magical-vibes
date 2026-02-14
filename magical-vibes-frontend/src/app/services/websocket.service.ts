@@ -51,6 +51,8 @@ export enum MessageType {
   PERMANENT_CHOSEN = 'PERMANENT_CHOSEN',
   CHOOSE_MULTIPLE_PERMANENTS = 'CHOOSE_MULTIPLE_PERMANENTS',
   MULTIPLE_PERMANENTS_CHOSEN = 'MULTIPLE_PERMANENTS_CHOSEN',
+  REORDER_LIBRARY_CARDS = 'REORDER_LIBRARY_CARDS',
+  LIBRARY_CARDS_REORDERED = 'LIBRARY_CARDS_REORDERED',
   ERROR = 'ERROR'
 }
 
@@ -139,6 +141,7 @@ export interface Card {
   rarity: string | null;
   color: string | null;
   needsTarget: boolean;
+  needsSpellTarget: boolean;
   requiresAttackingTarget: boolean;
   allowedTargetTypes: string[];
   activatedAbilities: ActivatedAbilityView[];
@@ -168,6 +171,8 @@ export interface StackEntry {
   card: Card;
   controllerId: string;
   description: string;
+  cardId: string;
+  isSpell: boolean;
 }
 
 export interface Game {
@@ -347,7 +352,13 @@ export interface GraveyardUpdatedNotification {
   graveyards: Card[][];
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | StackUpdatedNotification | GraveyardUpdatedNotification;
+export interface ReorderLibraryCardsNotification {
+  type: MessageType;
+  cards: Card[];
+  prompt: string;
+}
+
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | StackUpdatedNotification | GraveyardUpdatedNotification | ReorderLibraryCardsNotification;
 
 export interface User {
   userId: string;

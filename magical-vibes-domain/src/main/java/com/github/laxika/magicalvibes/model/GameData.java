@@ -67,6 +67,8 @@ public class GameData {
     public Set<UUID> awaitingMultiPermanentChoiceValidIds;
     public int awaitingMultiPermanentChoiceMaxCount;
     public UUID pendingCombatDamageBounceTargetPlayerId;
+    public UUID awaitingLibraryReorderPlayerId;
+    public List<Card> awaitingLibraryReorderCards;
 
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {
         this.id = id;

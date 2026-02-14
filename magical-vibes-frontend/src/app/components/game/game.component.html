@@ -117,7 +117,10 @@
         <div class="stack-label">The Stack</div>
         <div class="stack-entries">
           @for (entry of stackEntries; track $index) {
-            <div class="stack-entry" [attr.data-entry-type]="entry.entryType">
+            <div class="stack-entry"
+                 [attr.data-entry-type]="entry.entryType"
+                 [class.spell-targetable]="targetingSpell && entry.isSpell"
+                 (click)="targetingSpell && entry.isSpell ? selectSpellTarget(entry) : null">
               <div class="stack-entry-description">{{ entry.description }}</div>
               <div class="stack-entry-controller">
                 ({{ getPlayerName(entry.controllerId) }})
@@ -177,6 +180,57 @@
           <span>Select a target creature for {{ targetingCardName }}</span>
         }
         <button class="btn-confirm-combat" (click)="cancelTargeting()">Cancel</button>
+      </div>
+    }
+
+    @if (targetingSpell) {
+      <div class="combat-banner spell-targeting-banner">
+        <span>Select a spell on the stack to counter with {{ targetingSpellCardName }}</span>
+        <button class="btn-confirm-combat" (click)="cancelSpellTargeting()">Cancel</button>
+      </div>
+    }
+
+    @if (reorderingLibrary) {
+      <div class="combat-banner reorder-banner">
+        <span>{{ reorderPrompt }}</span>
+      </div>
+      <div class="reorder-zone">
+        @if (reorderAvailableCards.length > 0) {
+          <div class="reorder-section">
+            <div class="reorder-label">Click cards to set their order (top to bottom):</div>
+            <div class="reorder-cards">
+              @for (item of reorderAvailableCards; track item.originalIndex) {
+                <app-card-display
+                  [card]="item.card"
+                  class="reorder-card available"
+                  (click)="selectReorderCard(item.originalIndex)"
+                  (mouseenter)="onCardHover(item.card)"
+                  (mouseleave)="onCardHoverEnd()" />
+              }
+            </div>
+          </div>
+        }
+        @if (reorderPlacedCards.length > 0) {
+          <div class="reorder-section">
+            <div class="reorder-label">New order (top of library first):</div>
+            <div class="reorder-cards">
+              @for (item of reorderPlacedCards; track item.originalIndex) {
+                <div class="reorder-card-wrapper">
+                  <div class="reorder-position-badge">{{ item.position }}</div>
+                  <app-card-display
+                    [card]="item.card"
+                    class="reorder-card placed"
+                    (mouseenter)="onCardHover(item.card)"
+                    (mouseleave)="onCardHoverEnd()" />
+                </div>
+              }
+            </div>
+          </div>
+        }
+        <div class="reorder-actions">
+          <button class="btn-confirm-combat" (click)="undoLastReorderCard()" [disabled]="reorderOriginalIndices.length === 0">Undo</button>
+          <button class="btn-confirm-combat" (click)="confirmReorder()" [disabled]="reorderAvailableCards.length > 0">Confirm Order</button>
+        </div>
       </div>
     }
 
