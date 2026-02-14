@@ -94,6 +94,7 @@ import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ExcludeSelfTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.MaxPowerTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.SpellColorTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.SpellTypeTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.MillByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
@@ -978,6 +979,16 @@ public class GameService {
                     if (targetSpell != null && !colorFilter.colors().contains(targetSpell.getCard().getColor())) {
                         throw new IllegalStateException("Target spell must be " +
                                 colorFilter.colors().stream().map(c -> c.name().toLowerCase()).reduce((a, b) -> a + " or " + b).orElse("") + ".");
+                    }
+                }
+
+                // Validate spell type filter (e.g., "Counter target creature spell")
+                if (card.getTargetFilter() instanceof SpellTypeTargetFilter typeFilter) {
+                    StackEntry targetSpell = gameData.stack.stream()
+                            .filter(se -> se.getCard().getId().equals(targetPermanentId))
+                            .findFirst().orElse(null);
+                    if (targetSpell != null && !typeFilter.spellTypes().contains(targetSpell.getEntryType())) {
+                        throw new IllegalStateException("Target must be a creature spell.");
                     }
                 }
             }
