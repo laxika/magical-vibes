@@ -85,29 +85,19 @@
         <div class="stack-label">The Stack</div>
         <div class="stack-entries">
           @for (entry of stackEntries; track $index) {
-            <div class="stack-entry"
-                 [attr.data-entry-type]="entry.entryType"
+            <div class="stack-entry-wrapper"
                  [class.spell-targetable]="targetingSpell && entry.isSpell"
-                 (click)="targetingSpell && entry.isSpell ? selectSpellTarget(entry) : null">
-              <div class="stack-entry-description">{{ entry.description }}</div>
-              <div class="stack-entry-controller">
-                ({{ getPlayerName(entry.controllerId) }})
+                 (click)="targetingSpell && entry.isSpell ? selectSpellTarget(entry) : null"
+                 (mouseenter)="onCardHover(entry.card)"
+                 (mouseleave)="onCardHoverEnd()">
+              <app-card-display
+                [card]="entry.card"
+                [attr.data-entry-type]="entry.entryType" />
+              <div class="stack-entry-overlay">
+                <div class="stack-entry-controller">
+                  ({{ getPlayerName(entry.controllerId) }})
+                </div>
               </div>
-              @if (entry.card.manaCost) {
-                <div class="stack-entry-cost">{{ entry.card.manaCost }}</div>
-              }
-              @if (entry.card.cardText) {
-                <div class="card-text">{{ entry.card.cardText }}</div>
-              }
-              @if (entry.card.power != null && entry.card.toughness != null) {
-                <div class="stack-entry-stats">{{ entry.card.power }}/{{ entry.card.toughness }}</div>
-              }
-              @if (entry.card.setCode) {
-                <div class="card-set-badge">{{ entry.card.setCode }} #{{ entry.card.collectorNumber }}</div>
-              }
-              @if (entry.card.flavorText) {
-                <div class="card-flavor-text">{{ entry.card.flavorText }}</div>
-              }
               @if ($index === 0) {
                 <div class="stack-top-badge">Next to resolve</div>
               }
