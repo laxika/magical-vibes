@@ -137,6 +137,7 @@ export interface Card {
   rarity: string | null;
   color: string | null;
   needsTarget: boolean;
+  requiresAttackingTarget: boolean;
   allowedTargetTypes: string[];
   activatedAbilities: ActivatedAbilityView[];
 }

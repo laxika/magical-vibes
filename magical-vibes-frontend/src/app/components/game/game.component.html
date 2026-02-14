@@ -200,6 +200,8 @@
           <span>Select a target player for {{ targetingCardName }}</span>
         } @else if (targetingAllowedTypes.includes('Enchantment')) {
           <span>Select a target Aura for {{ targetingCardName }}</span>
+        } @else if (targetingRequiresAttacking) {
+          <span>Select a target attacking creature for {{ targetingCardName }}</span>
         } @else {
           <span>Select a target creature for {{ targetingCardName }}</span>
         }
@@ -233,7 +235,7 @@
               [card]="ip.perm.card"
               [permanent]="ip.perm"
               [class.tapped]="ip.perm.tapped"
-              [class.targetable]="targeting"
+              [class.targetable]="targeting && isValidTarget(ip.perm)"
               (click)="onOpponentBattlefieldCardClick(ip.originalIndex)" />
           }
         </div>
@@ -245,7 +247,7 @@
               [class.tapped]="ip.perm.tapped"
               [class.summoning-sick]="ip.perm.summoningSick"
               [class.block-target]="isBlockTarget(ip.originalIndex)"
-              [class.targetable]="targeting"
+              [class.targetable]="targeting && isValidTarget(ip.perm)"
               (click)="onOpponentBattlefieldCardClick(ip.originalIndex)" />
           }
         </div>
@@ -277,7 +279,7 @@
                     [class.attacking]="group.attacker.attacking"
                     [class.selected-attacker]="declaringAttackers && isSelectedAttacker(group.attackerIndex)"
                     [class.block-target]="declaringBlockers && selectedBlockerIndex !== null && !group.attackerIsMine"
-                    [class.targetable]="distributingDamage"
+                    [class.targetable]="distributingDamage || (targeting && isValidTarget(group.attacker))"
                     (click)="onCombatAttackerClick(group)"
                     (contextmenu)="$event.preventDefault(); unassignDamage(group.attacker.id)">
                     <div class="card-combat-badge attacking-badge">Attacking</div>
@@ -321,7 +323,7 @@
               [class.can-block]="canBlock(ip.originalIndex) && !isAssignedBlocker(ip.originalIndex) && selectedBlockerIndex !== ip.originalIndex"
               [class.selected-blocker]="selectedBlockerIndex === ip.originalIndex"
               [class.assigned-blocker]="isAssignedBlocker(ip.originalIndex)"
-              [class.targetable]="targeting"
+              [class.targetable]="targeting && isValidTarget(ip.perm)"
               [class.choosable-permanent]="choosingPermanent && choosablePermanentIds().has(ip.perm.id)"
               (click)="onMyBattlefieldCardClick(ip.originalIndex)" />
           }
@@ -333,7 +335,7 @@
               [permanent]="ip.perm"
               [class.tapped]="ip.perm.tapped"
               [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
-              [class.targetable]="targeting"
+              [class.targetable]="targeting && isValidTarget(ip.perm)"
               [class.choosable-permanent]="choosingPermanent && choosablePermanentIds().has(ip.perm.id)"
               (click)="onMyBattlefieldCardClick(ip.originalIndex)" />
           }
