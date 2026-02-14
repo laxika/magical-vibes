@@ -134,6 +134,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamag
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
+import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -2469,6 +2470,9 @@ public class GameService {
             String logEntry = casterName + " looks at " + targetName + "'s hand: " + cardNames + ".";
             logAndBroadcast(gameData, logEntry);
         }
+
+        List<CardView> cardViews = hand.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(entry.getControllerId(), new RevealHandMessage(cardViews, targetName));
 
         log.info("Game {} - {} looks at {}'s hand", gameData.id, casterName, targetName);
     }

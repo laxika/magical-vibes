@@ -53,6 +53,7 @@ export enum MessageType {
   MULTIPLE_PERMANENTS_CHOSEN = 'MULTIPLE_PERMANENTS_CHOSEN',
   REORDER_LIBRARY_CARDS = 'REORDER_LIBRARY_CARDS',
   LIBRARY_CARDS_REORDERED = 'LIBRARY_CARDS_REORDERED',
+  REVEAL_HAND = 'REVEAL_HAND',
   ERROR = 'ERROR'
 }
 
@@ -361,7 +362,13 @@ export interface ReorderLibraryCardsNotification {
   prompt: string;
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | StackUpdatedNotification | GraveyardUpdatedNotification | ReorderLibraryCardsNotification;
+export interface RevealHandNotification {
+  type: MessageType;
+  cards: Card[];
+  playerName: string;
+}
+
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | StackUpdatedNotification | GraveyardUpdatedNotification | ReorderLibraryCardsNotification | RevealHandNotification;
 
 export interface User {
   userId: string;
