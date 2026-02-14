@@ -29,6 +29,7 @@ public record CardView(
         CardColor color,
         boolean needsTarget,
         boolean needsSpellTarget,
+        boolean targetsPlayer,
         boolean requiresAttackingTarget,
         List<String> allowedTargetTypes,
         List<ActivatedAbilityView> activatedAbilities

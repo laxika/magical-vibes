@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.h.HonorGuard;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.h.HorseshoeCrab;
+import com.github.laxika.magicalvibes.cards.h.HurkylsRecall;
 import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
@@ -201,6 +202,7 @@ public enum CardSet {
             new CardPrinting("10E", "84", Flashfreeze::new, "\"Nature? Fire? Bah! Both are chaotic and difficult to control. Ice is structured, latticed, light as a feather, massive as a glacier. In ice, there is power!\"\n\u2014Heidar, Rimewind master", "Brian Despain", UNCOMMON),
             new CardPrinting("10E", "86", FugitiveWizard::new, "\"The law has its place\u2014as a footnote in my spellbook.\"\n\u2014Siyani, fugitive mage", "Mark Zug", COMMON),
             new CardPrinting("10E", "87", HorseshoeCrab::new, "\"Hmm . . . It looks kinda like a bug. Let's crack it open an' see if it tastes like one!\"\n\u2014Squee, goblin cabin hand", "Scott Kirschner", COMMON),
+            new CardPrinting("10E", "88", HurkylsRecall::new, "Hurkyl's research at the College of Lat-Nam wasn't enough to stop the two brothers, but for centuries thereafter her spellcraft taught artificers restraint.", "Ralph Horsley", RARE),
             new CardPrinting("10E", "77", CraftyPathmage::new, "\"Follow the pathmage\"\n\u2014Otarian expression meaning \"escape quickly\"", "Jim Murray", COMMON),
             new CardPrinting("10E", "380", Forest::new, "Anthony S. Waters", COMMON),
             new CardPrinting("10E", "381", Forest::new, "John Avon", COMMON),

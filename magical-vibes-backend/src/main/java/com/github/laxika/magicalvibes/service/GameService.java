@@ -123,6 +123,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
@@ -356,7 +357,8 @@ public class GameService {
     }
 
     private void logAndBroadcast(GameData gameData, String logEntry) {
-        logAndBroadcast(gameData, logEntry);
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
     }
 
     private void broadcastStackUpdate(GameData gameData) {
@@ -606,6 +608,8 @@ public class GameService {
                 resolveReturnTargetPermanentToHand(gameData, entry);
             } else if (effect instanceof ReturnCreaturesToOwnersHandEffect bounce) {
                 resolveReturnCreaturesToOwnersHand(gameData, entry, bounce);
+            } else if (effect instanceof ReturnArtifactsTargetPlayerOwnsToHandEffect) {
+                resolveReturnArtifactsTargetPlayerOwnsToHand(gameData, entry);
             } else if (effect instanceof CounterSpellEffect) {
                 resolveCounterSpell(gameData, entry);
             } else if (effect instanceof ReorderTopCardsOfLibraryEffect reorder) {
@@ -2253,6 +2257,41 @@ public class GameService {
                 sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
             }
         }
+    }
+
+    private void resolveReturnArtifactsTargetPlayerOwnsToHand(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        List<Permanent> artifactsToReturn = battlefield.stream()
+                .filter(p -> p.getCard().getType() == CardType.ARTIFACT)
+                .toList();
+
+        if (artifactsToReturn.isEmpty()) {
+            return;
+        }
+
+        for (Permanent artifact : artifactsToReturn) {
+            battlefield.remove(artifact);
+            List<Card> hand = gameData.playerHands.get(targetPlayerId);
+            hand.add(artifact.getOriginalCard());
+
+            String logEntry = artifact.getCard().getName() + " is returned to its owner's hand.";
+            logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} returned to owner's hand by {}", gameData.id, artifact.getCard().getName(), entry.getCard().getName());
+        }
+
+        removeOrphanedAuras(gameData);
+        broadcastBattlefields(gameData);
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        sessionManager.sendToPlayer(targetPlayerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(targetPlayerId, 0)));
     }
 
     private void resolveDoubleTargetPlayerLife(GameData gameData, StackEntry entry) {
