@@ -44,6 +44,7 @@ public class GameData {
     public Set<Integer> awaitingCardChoiceValidIndices;
     public final List<StackEntry> stack = Collections.synchronizedList(new ArrayList<>());
     public final Map<UUID, List<Card>> playerGraveyards = new ConcurrentHashMap<>();
+    public final Map<UUID, List<Card>> playerExiledCards = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
     public int globalDamagePreventionShield;
     public boolean preventAllCombatDamage;
