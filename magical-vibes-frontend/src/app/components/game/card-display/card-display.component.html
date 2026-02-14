@@ -11,7 +11,9 @@
 }
 <div class="type-line">
   <span class="card-type">{{ typeLine }}</span>
-  @if (card.rarity) {
+  @if (setSymbolUrl) {
+    <img class="set-symbol" [src]="setSymbolUrl" [attr.data-rarity]="card.rarity" alt="set symbol" />
+  } @else if (card.rarity) {
     <span class="rarity-diamond" [attr.data-rarity]="card.rarity">&#9670;</span>
   }
 </div>

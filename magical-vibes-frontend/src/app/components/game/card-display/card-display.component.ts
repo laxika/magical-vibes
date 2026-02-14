@@ -3,6 +3,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Card, Permanent } from '../../../services/websocket.service';
 import { ScryfallImageService } from '../../../services/scryfall-image.service';
 import { ManaSymbolService } from '../../../services/mana-symbol.service';
+import { SetSymbolService } from '../../../services/set-symbol.service';
 
 @Component({
   selector: 'app-card-display',
@@ -20,6 +21,7 @@ export class CardDisplayComponent implements OnInit, OnChanges {
 
   private scryfallImageService = inject(ScryfallImageService);
   private manaSymbolService = inject(ManaSymbolService);
+  private setSymbolService = inject(SetSymbolService);
   private sanitizer = inject(DomSanitizer);
 
   ngOnInit(): void {
@@ -111,6 +113,11 @@ export class CardDisplayComponent implements OnInit, OnChanges {
     if (len <= 140) return '10px';
     if (len <= 200) return '9.5px';
     return '9px';
+  }
+
+  get setSymbolUrl(): string | null {
+    if (!this.card.setCode) return null;
+    return this.setSymbolService.getSymbolUrl(this.card.setCode);
   }
 
   get formattedManaCost(): SafeHtml {

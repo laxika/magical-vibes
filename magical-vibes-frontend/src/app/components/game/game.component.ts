@@ -30,6 +30,11 @@ export interface AttachedAura {
   isMine: boolean;
 }
 
+export interface LandStack {
+  lands: IndexedPermanent[];
+  name: string;
+}
+
 @Component({
   selector: 'app-game',
   standalone: true,
@@ -1412,6 +1417,57 @@ export class GameComponent implements OnInit, OnDestroy {
 
   get opponentLands(): IndexedPermanent[] {
     return this.splitBattlefield(this.opponentBattlefield).lands;
+  }
+
+  private stackBasicLands(lands: IndexedPermanent[]): (IndexedPermanent | LandStack)[] {
+    const MAX_STACK = 4;
+    const result: (IndexedPermanent | LandStack)[] = [];
+    const basicGroups = new Map<string, IndexedPermanent[]>();
+    const nonBasic: IndexedPermanent[] = [];
+
+    for (const ip of lands) {
+      if (ip.perm.card.type === 'BASIC_LAND') {
+        // Group by name + tapped state so tapped/untapped form separate stacks
+        const key = ip.perm.card.name + (ip.perm.tapped ? ':tapped' : ':untapped');
+        if (!basicGroups.has(key)) {
+          basicGroups.set(key, []);
+        }
+        basicGroups.get(key)!.push(ip);
+      } else {
+        nonBasic.push(ip);
+      }
+    }
+
+    // Create stacks for basic lands (max 4 per stack)
+    for (const [, group] of basicGroups) {
+      for (let i = 0; i < group.length; i += MAX_STACK) {
+        const chunk = group.slice(i, i + MAX_STACK);
+        if (chunk.length === 1) {
+          result.push(chunk[0]);
+        } else {
+          result.push({ lands: chunk, name: chunk[0].perm.card.name });
+        }
+      }
+    }
+
+    // Non-basic lands remain individual
+    for (const ip of nonBasic) {
+      result.push(ip);
+    }
+
+    return result;
+  }
+
+  get myLandStacks(): (IndexedPermanent | LandStack)[] {
+    return this.stackBasicLands(this.myLands);
+  }
+
+  get opponentLandStacks(): (IndexedPermanent | LandStack)[] {
+    return this.stackBasicLands(this.opponentLands);
+  }
+
+  isLandStack(item: IndexedPermanent | LandStack): item is LandStack {
+    return 'lands' in item;
   }
 
   myCreaturesNotInCombat = computed(() => {
