@@ -17,28 +17,30 @@ public class LoginResponse {
     private String username;
     private List<LobbyGame> games;
     private List<DeckInfo> decks;
+    private JoinGame activeGame;
 
     public LoginResponse() {
     }
 
-    public LoginResponse(MessageType type, String message, UUID userId, String username, List<LobbyGame> games, List<DeckInfo> decks) {
+    public LoginResponse(MessageType type, String message, UUID userId, String username, List<LobbyGame> games, List<DeckInfo> decks, JoinGame activeGame) {
         this.type = type;
         this.message = message;
         this.userId = userId;
         this.username = username;
         this.games = games;
         this.decks = decks;
+        this.activeGame = activeGame;
     }
 
-    public static LoginResponse success(UUID userId, String username, List<LobbyGame> games, List<DeckInfo> decks) {
-        return new LoginResponse(MessageType.LOGIN_SUCCESS, "Login successful", userId, username, games, decks);
+    public static LoginResponse success(UUID userId, String username, List<LobbyGame> games, List<DeckInfo> decks, JoinGame activeGame) {
+        return new LoginResponse(MessageType.LOGIN_SUCCESS, "Login successful", userId, username, games, decks, activeGame);
     }
 
     public static LoginResponse failure(String message) {
-        return new LoginResponse(MessageType.LOGIN_FAILURE, message, null, null, null, null);
+        return new LoginResponse(MessageType.LOGIN_FAILURE, message, null, null, null, null, null);
     }
 
     public static LoginResponse timeout() {
-        return new LoginResponse(MessageType.TIMEOUT, "Connection timeout - no login message received", null, null, null, null);
+        return new LoginResponse(MessageType.TIMEOUT, "Connection timeout - no login message received", null, null, null, null, null);
     }
 }

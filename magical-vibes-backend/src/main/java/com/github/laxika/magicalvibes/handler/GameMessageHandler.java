@@ -79,13 +79,27 @@ public class GameMessageHandler implements MessageHandler {
     public void handleLogin(Connection connection, LoginRequest request) throws Exception {
         LoginResponse response = loginService.authenticate(request);
 
+        if (response.getType() == MessageType.LOGIN_SUCCESS) {
+            // Check if the player has an active game to rejoin
+            GameData activeGame = gameRegistry.getGameForPlayer(response.getUserId());
+            if (activeGame != null) {
+                JoinGame joinGame = gameService.getJoinGame(activeGame, response.getUserId());
+                response.setActiveGame(joinGame);
+            }
+        }
+
         String jsonResponse = objectMapper.writeValueAsString(response);
         connection.sendMessage(jsonResponse);
         log.info("Sent login response to connection {}: {}", connection.getId(), response.getType());
 
         if (response.getType() == MessageType.LOGIN_SUCCESS) {
             sessionManager.registerPlayer(connection, response.getUserId(), response.getUsername());
-            log.info("Connection {} registered for user {} ({}) - connection staying open", connection.getId(), response.getUserId(), response.getUsername());
+            if (response.getActiveGame() != null) {
+                sessionManager.setInGame(connection.getId());
+                log.info("Connection {} registered for user {} ({}) - rejoining active game {}", connection.getId(), response.getUserId(), response.getUsername(), response.getActiveGame().id());
+            } else {
+                log.info("Connection {} registered for user {} ({}) - connection staying open", connection.getId(), response.getUserId(), response.getUsername());
+            }
         } else {
             connection.close();
         }
@@ -96,6 +110,11 @@ public class GameMessageHandler implements MessageHandler {
         Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
             handleError(connection, "Not authenticated");
+            return;
+        }
+
+        if (gameRegistry.getGameForPlayer(player.getId()) != null) {
+            handleError(connection, "You are already in a game");
             return;
         }
 
@@ -116,6 +135,11 @@ public class GameMessageHandler implements MessageHandler {
         Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
             handleError(connection, "Not authenticated");
+            return;
+        }
+
+        if (gameRegistry.getGameForPlayer(player.getId()) != null) {
+            handleError(connection, "You are already in a game");
             return;
         }
 

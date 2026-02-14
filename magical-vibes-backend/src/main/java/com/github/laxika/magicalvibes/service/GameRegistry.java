@@ -23,17 +23,12 @@ public class GameRegistry {
     }
 
     public GameData getGameForPlayer(UUID userId) {
-        GameData fallback = null;
         for (GameData g : games.values()) {
-            if (!g.playerIds.contains(userId)) continue;
-            if (g.status == GameStatus.MULLIGAN || g.status == GameStatus.RUNNING) {
+            if (g.playerIds.contains(userId) && g.status != GameStatus.FINISHED) {
                 return g;
             }
-            if (fallback == null && g.status == GameStatus.WAITING) {
-                fallback = g;
-            }
         }
-        return fallback;
+        return null;
     }
 
     public void remove(UUID gameId) {

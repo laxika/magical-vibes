@@ -208,6 +208,7 @@ export interface LoginResponse {
   username?: string;
   games?: LobbyGame[];
   decks?: DeckInfo[];
+  activeGame?: Game;
 }
 
 export interface GameNotification {
@@ -387,6 +388,9 @@ export class WebsocketService {
               this.currentUser = { userId: response.userId!, username: response.username! };
               this.initialGames = response.games ?? [];
               this.availableDecks = response.decks ?? [];
+              if (response.activeGame) {
+                this.currentGame = response.activeGame;
+              }
             }
             observer.next(response);
             observer.complete();

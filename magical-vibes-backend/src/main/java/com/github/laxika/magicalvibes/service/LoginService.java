@@ -45,7 +45,7 @@ public class LoginService {
                     .map(d -> new DeckInfo(d.getId(), d.getName()))
                     .toList();
 
-            return LoginResponse.success(user.getId(), user.getUsername(), games, decks);
+            return LoginResponse.success(user.getId(), user.getUsername(), games, decks, null);
         } else {
             log.warn("Authentication failed for username: {}", loginRequest.getUsername());
             return LoginResponse.failure("Invalid username or password");
