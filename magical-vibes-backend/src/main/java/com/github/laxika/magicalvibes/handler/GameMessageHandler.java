@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsRequest;
 import com.github.laxika.magicalvibes.networking.message.SacrificePermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
@@ -505,6 +506,27 @@ public class GameMessageHandler implements MessageHandler {
 
         try {
             gameService.handleMayAbilityChosen(gameData, player, request.accepted());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            handleError(connection, e.getMessage());
+        }
+    }
+
+    @Override
+    public void handleLibraryCardsReordered(Connection connection, ReorderLibraryCardsRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
+        try {
+            gameService.handleLibraryCardsReordered(gameData, player, request.cardOrder());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

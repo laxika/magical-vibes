@@ -28,6 +28,7 @@ public record CardView(
         CardRarity rarity,
         CardColor color,
         boolean needsTarget,
+        boolean needsSpellTarget,
         boolean requiresAttackingTarget,
         List<String> allowedTargetTypes,
         List<ActivatedAbilityView> activatedAbilities

@@ -1211,3 +1211,102 @@
 .permanent-stack > .card:last-child {
   z-index: 1;
 }
+
+/* Spell targeting styles */
+
+.spell-targeting-banner {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+
+.stack-entry.spell-targetable {
+  outline: 2px dashed #e74c3c;
+  box-shadow: 0 0 12px rgba(231, 76, 60, 0.5);
+  cursor: pointer;
+  animation: spell-target-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes spell-target-pulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(231, 76, 60, 0.5); }
+  50% { box-shadow: 0 0 20px rgba(231, 76, 60, 0.8); }
+}
+
+/* Library reorder styles */
+
+.reorder-banner {
+  background: linear-gradient(135deg, #2980b9, #1a5276);
+  box-shadow: 0 4px 12px rgba(41, 128, 185, 0.4);
+}
+
+.reorder-zone {
+  background: linear-gradient(135deg, rgba(41, 128, 185, 0.08), rgba(26, 82, 118, 0.12));
+  border: 1px dashed rgba(41, 128, 185, 0.4);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 6px;
+}
+
+.reorder-section {
+  margin-bottom: 12px;
+}
+
+.reorder-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2c3e50;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.reorder-cards {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.reorder-card.available {
+  cursor: pointer;
+  outline: 2px dashed #2980b9;
+  box-shadow: 0 0 8px rgba(41, 128, 185, 0.4);
+}
+
+.reorder-card.available:hover {
+  outline: 2px solid #2980b9;
+  box-shadow: 0 0 16px rgba(41, 128, 185, 0.6);
+  transform: translateY(-4px);
+}
+
+.reorder-card-wrapper {
+  position: relative;
+}
+
+.reorder-position-badge {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: 24px;
+  height: 24px;
+  background: #2980b9;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.reorder-card.placed {
+  opacity: 0.8;
+}
+
+.reorder-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 8px;
+}

@@ -8,6 +8,8 @@ public record StackEntryView(
         StackEntryType entryType,
         CardView card,
         UUID controllerId,
-        String description
+        String description,
+        UUID cardId,
+        boolean isSpell
 ) {
 }

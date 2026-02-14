@@ -50,6 +50,7 @@ public class CardViewFactory {
                 card.getRarity(),
                 card.getColor(),
                 card.isNeedsTarget(),
+                card.isNeedsSpellTarget(),
                 requiresAttackingTarget,
                 spellAllowedTargetTypes,
                 abilityViews

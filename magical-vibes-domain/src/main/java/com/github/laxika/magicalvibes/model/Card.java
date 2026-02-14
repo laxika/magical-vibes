@@ -30,6 +30,7 @@ public class Card {
     @Setter private Integer toughness;
     @Setter private Set<Keyword> keywords = Set.of();
     @Setter private boolean needsTarget;
+    @Setter private boolean needsSpellTarget;
     @Setter private TargetFilter targetFilter;
     @Setter private String setCode;
     @Setter private String collectorNumber;
