@@ -238,8 +238,8 @@
 }
 
 .player-badge.targetable {
-  border: 2px dashed #2d7a50;
-  box-shadow: 0 0 12px rgba(45, 122, 80, 0.5);
+  border: 3px dashed #2d7a50;
+  box-shadow: 0 0 12px rgba(45, 122, 80, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5);
   cursor: pointer;
 }
 
@@ -443,8 +443,8 @@
 }
 
 .card.playable {
-  outline: 2px solid #c8a951;
-  box-shadow: 0 0 12px rgba(200, 169, 81, 0.5);
+  outline: 3px solid #c8a951;
+  box-shadow: 0 0 12px rgba(200, 169, 81, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5);
   cursor: pointer;
 }
 
@@ -645,8 +645,8 @@
 
 .card.tappable {
   cursor: pointer;
-  outline: 2px solid #2d7a50;
-  box-shadow: 0 0 12px rgba(45, 122, 80, 0.5);
+  outline: 3px solid #2d7a50;
+  box-shadow: 0 0 12px rgba(45, 122, 80, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5);
 }
 
 .mana-pool {
@@ -1053,14 +1053,14 @@
 }
 
 .card.choosable-card {
-  outline: 2px solid #7040a0;
-  box-shadow: 0 0 12px rgba(112, 64, 160, 0.5);
+  outline: 3px solid #7040a0;
+  box-shadow: 0 0 12px rgba(112, 64, 160, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5);
   cursor: pointer;
 }
 
 .card.choosable-permanent {
-  outline: 2px dashed #c08040;
-  box-shadow: 0 0 12px rgba(192, 128, 64, 0.5);
+  outline: 3px dashed #c08040;
+  box-shadow: 0 0 12px rgba(192, 128, 64, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5);
   cursor: pointer;
 }
 
@@ -1110,8 +1110,8 @@
 }
 
 .card.targetable {
-  outline: 2px dashed #2d7a50;
-  box-shadow: 0 0 12px rgba(45, 122, 80, 0.5);
+  outline: 3px dashed #2d7a50;
+  box-shadow: 0 0 12px rgba(45, 122, 80, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5);
   cursor: pointer;
 }
 
@@ -1212,7 +1212,7 @@
 /* Stack target highlight (hover over stack entry to show its target) */
 
 .card.stack-targeted {
-  outline: 2px solid #c04040;
+  outline: 3px solid #c04040;
   outline-offset: 1px;
   box-shadow: 0 0 12px rgba(192, 64, 64, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5);
   animation: stack-target-highlight 2s ease-in-out infinite;
@@ -1254,8 +1254,8 @@
 }
 
 .stack-entry-wrapper.spell-targetable {
-  outline: 2px dashed #e74c3c;
-  box-shadow: 0 0 12px rgba(231, 76, 60, 0.5);
+  outline: 3px dashed #e74c3c;
+  box-shadow: 0 0 12px rgba(231, 76, 60, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5);
   cursor: pointer;
   animation: spell-target-pulse 1.5s ease-in-out infinite;
 }
