@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -70,7 +71,7 @@ class RootwaterMatriarchTest {
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new RootwaterMatriarch()));
-        harness.addMana(player1, "U", 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castCreature(player1, 0);
 
@@ -84,7 +85,7 @@ class RootwaterMatriarchTest {
     @DisplayName("Resolving puts it on the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new RootwaterMatriarch()));
-        harness.addMana(player1, "U", 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -212,7 +213,7 @@ class RootwaterMatriarchTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Demystify()));
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
 
         harness.passPriority(player1);
         harness.castInstant(player2, 0, pacifismPerm.getId());
@@ -255,7 +256,7 @@ class RootwaterMatriarchTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Demystify()));
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
 
         harness.passPriority(player1);
         harness.castInstant(player2, 0, pacifismPerm.getId());
