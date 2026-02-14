@@ -72,6 +72,7 @@ public class GameData {
     public List<Card> awaitingLibraryReorderCards;
     public final Set<UUID> permanentsToSacrificeAtEndOfCombat = ConcurrentHashMap.newKeySet();
     public int awaitingDiscardRemainingCount;
+    public final Map<UUID, UUID> drawReplacementTargetToController = new ConcurrentHashMap<>();
 
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {
         this.id = id;

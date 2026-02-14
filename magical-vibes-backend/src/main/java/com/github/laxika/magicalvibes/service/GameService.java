@@ -116,6 +116,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.PlagiarizeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
@@ -304,6 +305,19 @@ public class GameService {
             String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips the draw (first turn).";
             logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} skips draw on turn 1", gameData.id, gameData.playerIdToName.get(activePlayerId));
+            return;
+        }
+
+        // Check for Plagiarize replacement effect
+        UUID replacementController = gameData.drawReplacementTargetToController.get(activePlayerId);
+        if (replacementController != null) {
+            String playerName = gameData.playerIdToName.get(activePlayerId);
+            String controllerName = gameData.playerIdToName.get(replacementController);
+            String logEntry = playerName + "'s draw is replaced by Plagiarize — " + controllerName + " draws a card instead.";
+            logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - Plagiarize replaces {}'s draw step draw, {} draws instead",
+                    gameData.id, playerName, controllerName);
+            resolveDrawCard(gameData, replacementController);
             return;
         }
 
@@ -641,6 +655,8 @@ public class GameService {
                 }
             } else if (effect instanceof CounterSpellEffect) {
                 resolveCounterSpell(gameData, entry);
+            } else if (effect instanceof PlagiarizeEffect) {
+                resolvePlagiarize(gameData, entry);
             } else if (effect instanceof ReorderTopCardsOfLibraryEffect reorder) {
                 resolveReorderTopCardsOfLibrary(gameData, entry, reorder);
                 if (gameData.awaitingInput == AwaitingInput.LIBRARY_REORDER) {
@@ -2330,6 +2346,26 @@ public class GameService {
     }
 
     private void resolveDrawCard(GameData gameData, UUID playerId) {
+        // Check for Plagiarize replacement effect
+        UUID replacementController = gameData.drawReplacementTargetToController.get(playerId);
+        if (replacementController != null) {
+            String playerName = gameData.playerIdToName.get(playerId);
+            String controllerName = gameData.playerIdToName.get(replacementController);
+            String logEntry = playerName + "'s draw is replaced by Plagiarize — " + controllerName + " draws a card instead.";
+            logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - Plagiarize replaces {}'s draw, {} draws instead",
+                    gameData.id, playerName, controllerName);
+            // Draw for the replacement controller (no recursion risk: the controller
+            // is a different player, and if the controller also has a replacement
+            // that would be a separate entry)
+            performDrawCard(gameData, replacementController);
+            return;
+        }
+
+        performDrawCard(gameData, playerId);
+    }
+
+    private void performDrawCard(GameData gameData, UUID playerId) {
         List<Card> deck = gameData.playerDecks.get(playerId);
         List<Card> hand = gameData.playerHands.get(playerId);
 
@@ -3486,6 +3522,7 @@ public class GameService {
         gameData.preventDamageFromColors.clear();
         gameData.combatDamageRedirectTarget = null;
         gameData.playerColorDamagePreventionCount.clear();
+        gameData.drawReplacementTargetToController.clear();
     }
 
     // ===== Regeneration =====
@@ -4876,6 +4913,26 @@ public class GameService {
         String logMsg = targetEntry.getCard().getName() + " is countered.";
         logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} countered {}", gameData.id, entry.getCard().getName(), targetEntry.getCard().getName());
+    }
+
+    private void resolvePlagiarize(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID controllerId = entry.getControllerId();
+
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            log.warn("Game {} - Plagiarize target player not found", gameData.id);
+            return;
+        }
+
+        gameData.drawReplacementTargetToController.put(targetPlayerId, controllerId);
+
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String logEntry = "Plagiarize resolves targeting " + targetName
+                + ". Until end of turn, " + targetName + "'s draws are replaced.";
+        logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - Plagiarize: {}'s draws replaced by {} until end of turn",
+                gameData.id, targetName, controllerName);
     }
 
     private void resolveReorderTopCardsOfLibrary(GameData gameData, StackEntry entry, ReorderTopCardsOfLibraryEffect reorder) {
