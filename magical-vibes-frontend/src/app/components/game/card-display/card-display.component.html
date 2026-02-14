@@ -1,31 +1,43 @@
-@if (card.manaCost) {
-  <div class="card-mana-cost">{{ card.manaCost }}</div>
-}
-<div class="card-name">{{ card.name }}</div>
+<div class="title-bar">
+  <span class="card-name">{{ card.name }}</span>
+  @if (card.manaCost) {
+    <span class="card-mana-cost">{{ card.manaCost }}</span>
+  }
+</div>
 @if (artUrl()) {
   <img class="card-art" [src]="artUrl()" [alt]="card.name + ' art'" />
 } @else {
   <div class="card-art"></div>
 }
-<div class="card-type">{{ typeLine }}</div>
-@if (card.cardText) {
-  <div class="card-text">{{ card.cardText }}</div>
-}
-@if (effectiveKeywords.length > 0) {
-  <div class="card-keywords">{{ formatKeywords(effectiveKeywords) }}</div>
-}
-@if (card.power != null && card.toughness != null) {
-  <div class="card-pt" [class.buffed]="isBuffed">{{ displayPower }}/{{ displayToughness }}</div>
-}
-@if (card.setCode) {
-  <div class="card-set-badge" [attr.data-rarity]="card.rarity">{{ card.setCode }} #{{ card.collectorNumber }}</div>
-}
-@if (card.flavorText) {
-  <div class="card-flavor-text">{{ card.flavorText }}</div>
-}
-@if (card.artist) {
-  <div class="card-artist">Illus. {{ card.artist }}</div>
-}
+<div class="type-line">
+  <span class="card-type">{{ typeLine }}</span>
+  @if (card.rarity) {
+    <span class="rarity-diamond" [attr.data-rarity]="card.rarity">&#9670;</span>
+  }
+</div>
+<div class="text-box" [style.font-size]="textBoxFontSize">
+  @if (card.cardText) {
+    <div class="card-text">{{ card.cardText }}</div>
+  }
+  @if (effectiveKeywords.length > 0) {
+    <div class="card-keywords">{{ formatKeywords(effectiveKeywords) }}</div>
+  }
+  @if (card.flavorText) {
+    <div class="flavor-separator"></div>
+    <div class="card-flavor-text">{{ card.flavorText }}</div>
+  }
+  @if (card.power != null && card.toughness != null) {
+    <div class="card-pt" [class.buffed]="isBuffed">{{ displayPower }}/{{ displayToughness }}</div>
+  }
+</div>
+<div class="info-line">
+  @if (card.artist) {
+    <span class="card-artist">{{ card.artist }}</span>
+  }
+  @if (card.setCode) {
+    <span class="card-set-badge" [attr.data-rarity]="card.rarity">{{ card.setCode }} #{{ card.collectorNumber }}</span>
+  }
+</div>
 @if (permanent?.tapped) {
   <div class="card-tapped-badge">Tapped</div>
 }

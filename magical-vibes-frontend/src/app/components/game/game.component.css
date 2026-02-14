@@ -88,13 +88,13 @@
   pointer-events: none;
   transform: scale(1.6);
   transform-origin: top center;
-  margin-bottom: 80px;
+  margin-bottom: 110px;
 }
 
 .card-preview-empty {
-  width: 192px;
-  height: 280px;
-  border-radius: 8px;
+  width: 208px;
+  height: 291px;
+  border-radius: 10px;
   background: linear-gradient(135deg, #3a3a3a 0%, #5a5a5a 100%);
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
 }
@@ -381,7 +381,7 @@
 }
 
 .card.playable {
-  border: 2px solid #f6c343;
+  outline: 2px solid #f6c343;
   box-shadow: 0 0 12px rgba(246, 195, 67, 0.5);
   cursor: pointer;
 }
@@ -481,17 +481,17 @@
 
 .card.selectable {
   cursor: pointer;
-  border: 2px solid transparent;
-  transition: transform 0.15s, border-color 0.2s;
+  outline: 2px solid transparent;
+  transition: transform 0.15s, outline-color 0.2s;
 }
 
 .card.selectable:hover {
   transform: translateY(-4px);
-  border-color: rgba(255, 255, 255, 0.5);
+  outline-color: rgba(255, 255, 255, 0.5);
 }
 
 .card.selectable.selected {
-  border-color: #f6c343;
+  outline-color: #f6c343;
   opacity: 0.7;
 }
 
@@ -567,7 +567,7 @@
 
 .card.tappable {
   cursor: pointer;
-  border: 2px solid #28a745;
+  outline: 2px solid #28a745;
   box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
 }
 
@@ -662,46 +662,46 @@
 }
 
 .card.attacking {
-  border: 2px solid #e67e22;
+  outline: 2px solid #e67e22;
   box-shadow: 0 0 12px rgba(230, 126, 34, 0.6);
 }
 
 .card.blocking {
-  border: 2px solid #3498db;
+  outline: 2px solid #3498db;
   box-shadow: 0 0 12px rgba(52, 152, 219, 0.6);
 }
 
 .card.can-attack {
-  border: 2px solid #f6c343;
+  outline: 2px solid #f6c343;
   box-shadow: 0 0 12px rgba(246, 195, 67, 0.5);
   cursor: pointer;
 }
 
 .card.selected-attacker {
-  border: 2px solid #f6c343;
+  outline: 2px solid #f6c343;
   box-shadow: 0 0 16px rgba(246, 195, 67, 0.7);
   cursor: pointer;
 }
 
 .card.can-block {
-  border: 2px solid #f6c343;
+  outline: 2px solid #f6c343;
   box-shadow: 0 0 12px rgba(246, 195, 67, 0.5);
   cursor: pointer;
 }
 
 .card.selected-blocker {
-  border: 2px solid #9b59b6;
+  outline: 2px solid #9b59b6;
   box-shadow: 0 0 16px rgba(155, 89, 182, 0.7);
   cursor: pointer;
 }
 
 .card.assigned-blocker {
-  border: 2px solid #3498db;
+  outline: 2px solid #3498db;
   box-shadow: 0 0 12px rgba(52, 152, 219, 0.5);
 }
 
 .card.block-target {
-  border: 2px dashed #e74c3c;
+  outline: 2px dashed #e74c3c;
   box-shadow: 0 0 16px rgba(231, 76, 60, 0.6);
   cursor: pointer;
 }
@@ -980,13 +980,13 @@
 }
 
 .card.choosable-card {
-  border: 2px solid #8e44ad;
+  outline: 2px solid #8e44ad;
   box-shadow: 0 0 12px rgba(142, 68, 173, 0.6);
   cursor: pointer;
 }
 
 .card.choosable-permanent {
-  border: 2px dashed #e67e22;
+  outline: 2px dashed #e67e22;
   box-shadow: 0 0 12px rgba(230, 126, 34, 0.6);
   cursor: pointer;
 }
@@ -1026,7 +1026,7 @@
 }
 
 .card.targetable {
-  border: 2px dashed #27ae60;
+  outline: 2px dashed #27ae60;
   box-shadow: 0 0 12px rgba(39, 174, 96, 0.5);
   cursor: pointer;
 }
@@ -1051,30 +1051,6 @@
   right: -8px;
 }
 
-.card-set-badge {
-  font-size: 9px;
-  font-weight: 600;
-  opacity: 0.7;
-  margin-top: 4px;
-  letter-spacing: 0.5px;
-}
-
-.card-text {
-  font-size: 9px;
-  opacity: 0.9;
-  margin-top: 4px;
-  line-height: 1.3;
-  white-space: pre-line;
-}
-
-.card-flavor-text {
-  font-size: 9px;
-  font-style: italic;
-  opacity: 0.7;
-  margin-top: 4px;
-  line-height: 1.3;
-  white-space: pre-line;
-}
 
 /* Graveyard zone */
 
@@ -1114,8 +1090,8 @@
 }
 
 .permanent-stack > .card.attached-aura {
-  margin-bottom: -200px;
-  margin-left: 60px;
+  margin-bottom: -150px;
+  margin-left: 50px;
   z-index: 0;
 }
 

@@ -85,6 +85,19 @@ export class CardDisplayComponent implements OnInit, OnChanges {
     return mainType;
   }
 
+  get textBoxFontSize(): string {
+    let total = '';
+    if (this.card.cardText) total += this.card.cardText;
+    if (this.effectiveKeywords.length > 0) total += this.formatKeywords(this.effectiveKeywords);
+    if (this.card.flavorText) total += this.card.flavorText;
+    const len = total.length;
+    if (len <= 50) return '8px';
+    if (len <= 90) return '7.5px';
+    if (len <= 140) return '7px';
+    if (len <= 200) return '6.5px';
+    return '6px';
+  }
+
   formatKeywords(keywords: string[]): string {
     return keywords.map(k => k.charAt(0) + k.slice(1).toLowerCase().replace('_', ' ')).join(', ');
   }
