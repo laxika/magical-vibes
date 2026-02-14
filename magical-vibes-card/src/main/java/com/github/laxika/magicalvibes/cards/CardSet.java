@@ -63,6 +63,8 @@ import com.github.laxika.magicalvibes.cards.l.LoyalSentry;
 import com.github.laxika.magicalvibes.cards.l.Luminesce;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.l.LoxodonMystic;
+import com.github.laxika.magicalvibes.cards.l.LumengridWarden;
+import com.github.laxika.magicalvibes.cards.m.MahamotiDjinn;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
 import com.github.laxika.magicalvibes.cards.m.Mobilization;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -203,6 +205,8 @@ public enum CardSet {
             new CardPrinting("10E", "85", FogElemental::new, "\"It's the perfect sentry. Those who should pass can go right through it.\"\n\u2014Teferi", "Scott Kirschner", UNCOMMON),
             new CardPrinting("10E", "86", FugitiveWizard::new, "\"The law has its place\u2014as a footnote in my spellbook.\"\n\u2014Siyani, fugitive mage", "Mark Zug", COMMON),
             new CardPrinting("10E", "87", HorseshoeCrab::new, "\"Hmm . . . It looks kinda like a bug. Let's crack it open an' see if it tastes like one!\"\n\u2014Squee, goblin cabin hand", "Scott Kirschner", COMMON),
+            new CardPrinting("10E", "89", LumengridWarden::new, "\"The wardens keep watch over an endless sea of progress.\"", "Wayne England", COMMON),
+            new CardPrinting("10E", "90", MahamotiDjinn::new, "\"Of royal blood among the spirits of the air, the Mahamoti djinn rides on the wings of the winds. As dangerous in the gambling hall as he is in battle, he is a master of trickery and misdirection.\"", "Greg Staples", RARE),
             new CardPrinting("10E", "77", CraftyPathmage::new, "\"Follow the pathmage\"\n\u2014Otarian expression meaning \"escape quickly\"", "Jim Murray", COMMON),
             new CardPrinting("10E", "380", Forest::new, "Anthony S. Waters", COMMON),
             new CardPrinting("10E", "381", Forest::new, "John Avon", COMMON),
