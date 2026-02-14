@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.e.Evacuation;
 import com.github.laxika.magicalvibes.cards.f.FieldMarshal;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GhostWarden;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
@@ -48,6 +49,7 @@ import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.h.HonorGuard;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
+import com.github.laxika.magicalvibes.cards.h.HorseshoeCrab;
 import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
@@ -195,6 +197,8 @@ public enum CardSet {
             new CardPrinting("10E", "81", Discombobulate::new, "The pain isn't the worst part. The worst part is the tickling.", "Wayne England", UNCOMMON),
             new CardPrinting("10E", "82", DreambornMuse::new, "\"Her voice is insight, piercing and true.\"\n\u2014Ixidor, reality sculptor", "Kev Walker", RARE),
             new CardPrinting("10E", "83", Evacuation::new, "\"Once I supply the breeze, you'll see your warriors for the smoke they truly are.\"\n\u2014Alexi, zephyr mage", "Franz Vohwinkel", RARE),
+            new CardPrinting("10E", "86", FugitiveWizard::new, "\"The law has its place\u2014as a footnote in my spellbook.\"\n\u2014Siyani, fugitive mage", "Mark Zug", COMMON),
+            new CardPrinting("10E", "87", HorseshoeCrab::new, "\"Hmm . . . It looks kinda like a bug. Let's crack it open an' see if it tastes like one!\"\n\u2014Squee, goblin cabin hand", "Scott Kirschner", COMMON),
             new CardPrinting("10E", "77", CraftyPathmage::new, "\"Follow the pathmage\"\n\u2014Otarian expression meaning \"escape quickly\"", "Jim Murray", COMMON),
             new CardPrinting("10E", "380", Forest::new, "Anthony S. Waters", COMMON),
             new CardPrinting("10E", "381", Forest::new, "John Avon", COMMON),

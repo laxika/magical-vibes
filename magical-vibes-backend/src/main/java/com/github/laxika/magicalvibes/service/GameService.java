@@ -77,6 +77,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
@@ -595,6 +596,8 @@ public class GameService {
                 resolveTapTargetCreature(gameData, entry);
             } else if (effect instanceof TapTargetPermanentEffect) {
                 resolveTapTargetPermanent(gameData, entry);
+            } else if (effect instanceof UntapSelfEffect) {
+                resolveUntapSelf(gameData, entry);
             } else if (effect instanceof PreventNextColorDamageToControllerEffect prevent) {
                 resolvePreventNextColorDamageToController(gameData, entry, prevent);
             } else if (effect instanceof PutAuraFromHandOntoSelfEffect) {
@@ -1415,7 +1418,7 @@ public class GameService {
             UUID effectiveTargetId = targetPermanentId;
             if (effectiveTargetId == null) {
                 boolean needsSelfTarget = abilityEffects.stream().anyMatch(e ->
-                        e instanceof RegenerateEffect || e instanceof BoostSelfEffect);
+                        e instanceof RegenerateEffect || e instanceof BoostSelfEffect || e instanceof UntapSelfEffect);
                 if (needsSelfTarget) {
                     effectiveTargetId = permanent.getId();
                 }
@@ -3013,6 +3016,22 @@ public class GameService {
         broadcastBattlefields(gameData);
 
         log.info("Game {} - {} taps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
+    }
+
+    private void resolveUntapSelf(GameData gameData, StackEntry entry) {
+        Permanent self = findPermanentById(gameData, entry.getTargetPermanentId());
+        if (self == null) {
+            return;
+        }
+
+        self.untap();
+
+        String logEntry = entry.getCard().getName() + " untaps.";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        broadcastBattlefields(gameData);
+
+        log.info("Game {} - {} untaps", gameData.id, entry.getCard().getName());
     }
 
     private void beginGraveyardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
