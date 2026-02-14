@@ -80,29 +80,6 @@
   }
 
   @if (game()?.status === GameStatus.RUNNING || game()?.status === GameStatus.FINISHED) {
-    <div class="turn-info">
-      <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)" [class.targetable]="targetingForPlayer" (click)="selectPlayerTarget(0)">
-        {{ player1Name }}
-        <span class="life-total">Life: {{ getLifeTotal(0) }}</span>
-        <span class="deck-size">Deck: {{ player1DeckSize }}</span>
-        @if (holdsPriority(0)) {
-          <span class="priority-indicator">Priority</span>
-        }
-      </div>
-      <div class="turn-center">
-        <span class="turn-number">Turn {{ game()?.turnNumber }}</span>
-        <span class="vs-label">VS</span>
-      </div>
-      <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)" [class.targetable]="targetingForPlayer" (click)="selectPlayerTarget(1)">
-        {{ player2Name }}
-        <span class="life-total">Life: {{ getLifeTotal(1) }}</span>
-        <span class="deck-size">Deck: {{ player2DeckSize }}</span>
-        @if (holdsPriority(1)) {
-          <span class="priority-indicator">Priority</span>
-        }
-      </div>
-    </div>
-
     <div class="phase-tracker">
       @for (group of phaseGroups; track group.phaseName) {
         <div class="phase-group">
@@ -123,9 +100,8 @@
       }
     </div>
 
-    <div class="action-bar">
-      <button class="btn-pass" (click)="passPriority()" [disabled]="!hasPriority || declaringAttackers || declaringBlockers">Pass Priority</button>
-      @if (totalMana > 0) {
+    @if (totalMana > 0) {
+      <div class="mana-pool-bar">
         <div class="mana-pool">
           @for (entry of manaEntries; track entry.color) {
             <div class="mana-pip" [attr.data-color]="entry.color">
@@ -133,8 +109,8 @@
             </div>
           }
         </div>
-      }
-    </div>
+      </div>
+    }
 
     @if (!isStackEmpty) {
       <div class="stack-zone">
@@ -453,14 +429,6 @@
       </div>
     }
 
-    @if (awaitingMayAbility) {
-      <div class="combat-banner may-ability-banner">
-        <span>{{ mayAbilityPrompt }}</span>
-        <button class="btn-confirm-combat" (click)="acceptMayAbility()">Yes</button>
-        <button class="btn-confirm-combat" (click)="declineMayAbility()">No</button>
-      </div>
-    }
-
     @if (choosingAbility) {
       <div class="combat-banner ability-choice-banner">
         <span>Choose an ability to activate:</span>
@@ -530,11 +498,46 @@
     <div class="side-panel">
       <div class="card-preview-panel">
         @if (hoveredCard()) {
-          <app-card-display [card]="hoveredCard()!" [permanent]="hoveredPermanent()" class="preview-card" />
+          <app-card-display [card]="hoveredCard()!" [permanent]="hoveredPermanent()" [preview]="true" class="preview-card" />
         } @else {
           <div class="card-preview-empty"></div>
         }
       </div>
+
+      <div class="turn-info">
+        <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)" [class.targetable]="targetingForPlayer" (click)="selectPlayerTarget(0)">
+          {{ player1Name }}
+          <span class="life-total">Life: {{ getLifeTotal(0) }}</span>
+          <span class="deck-size">Deck: {{ player1DeckSize }}</span>
+          @if (holdsPriority(0)) {
+            <span class="priority-indicator">Priority</span>
+          }
+        </div>
+        <div class="turn-center">
+          <span class="turn-number">Turn {{ game()?.turnNumber }}</span>
+          <span class="vs-label">VS</span>
+        </div>
+        <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)" [class.targetable]="targetingForPlayer" (click)="selectPlayerTarget(1)">
+          {{ player2Name }}
+          <span class="life-total">Life: {{ getLifeTotal(1) }}</span>
+          <span class="deck-size">Deck: {{ player2DeckSize }}</span>
+          @if (holdsPriority(1)) {
+            <span class="priority-indicator">Priority</span>
+          }
+        </div>
+      </div>
+
+      <div class="action-bar">
+        <button class="btn-pass" (click)="passPriority()" [disabled]="!hasPriority || declaringAttackers || declaringBlockers">Pass Priority</button>
+      </div>
+
+      @if (awaitingMayAbility) {
+        <div class="combat-banner may-ability-banner">
+          <span>{{ mayAbilityPrompt }}</span>
+          <button class="btn-confirm-combat" (click)="acceptMayAbility()">Yes</button>
+          <button class="btn-confirm-combat" (click)="declineMayAbility()">No</button>
+        </div>
+      }
 
       <div class="log-panel">
         <div class="log-header">Game Log</div>

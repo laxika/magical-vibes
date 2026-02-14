@@ -38,9 +38,6 @@
     <span class="card-set-badge" [attr.data-rarity]="card.rarity">{{ card.setCode }} #{{ card.collectorNumber }}</span>
   }
 </div>
-@if (permanent?.tapped) {
-  <div class="card-tapped-badge">Tapped</div>
-}
 @if (permanent && permanent.regenerationShield > 0) {
   <div class="card-regen-badge">Regen x{{ permanent.regenerationShield }}</div>
 }
