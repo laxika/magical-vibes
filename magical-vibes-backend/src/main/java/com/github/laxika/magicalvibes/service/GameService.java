@@ -97,6 +97,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchant
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
@@ -1145,7 +1146,7 @@ public class GameService {
 
             // Sacrifice: remove from battlefield, add to graveyard
             battlefield.remove(permanentIndex);
-            gameData.playerGraveyards.get(playerId).add(permanent.getCard());
+            gameData.playerGraveyards.get(playerId).add(permanent.getOriginalCard());
             collectDeathTrigger(gameData, permanent.getCard(), playerId);
             removeOrphanedAuras(gameData);
 
@@ -1493,6 +1494,44 @@ public class GameService {
 
     private void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId) {
         // "As enters" effects — require player choice before any ETB triggers fire
+
+        // Clone / copy creature effect
+        boolean needsCopyChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof CopyCreatureOnEnterEffect);
+        if (needsCopyChoice) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent clonePerm = bf.get(bf.size() - 1);
+            gameData.pendingClonePermanentId = clonePerm.getId();
+
+            // Collect all creatures on all battlefields (excluding Clone itself)
+            List<UUID> creatureIds = new ArrayList<>();
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) continue;
+                for (Permanent p : battlefield) {
+                    if (p.getCard().getType() == CardType.CREATURE && !p.getId().equals(clonePerm.getId())) {
+                        creatureIds.add(p.getId());
+                    }
+                }
+            }
+
+            if (!creatureIds.isEmpty()) {
+                gameData.pendingMayAbilities.add(new PendingMayAbility(
+                        card,
+                        controllerId,
+                        List.of(new CopyCreatureOnEnterEffect()),
+                        card.getName() + " — You may have it enter as a copy of any creature on the battlefield."
+                ));
+                processNextMayAbility(gameData);
+                return;
+            } else {
+                // No creatures to copy — Clone stays as 0/0
+                gameData.pendingClonePermanentId = null;
+                performStateBasedActions(gameData);
+                return;
+            }
+        }
+
         boolean needsColorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof ChooseColorEffect);
         if (needsColorChoice) {
@@ -1867,7 +1906,7 @@ public class GameService {
                 for (UUID playerId : gameData.orderedPlayerIds) {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                     if (battlefield != null && battlefield.remove(target)) {
-                        gameData.playerGraveyards.get(playerId).add(target.getCard());
+                        gameData.playerGraveyards.get(playerId).add(target.getOriginalCard());
                         collectDeathTrigger(gameData, target.getCard(), playerId);
 
                         String destroyLog = target.getCard().getName() + " is destroyed.";
@@ -1925,7 +1964,7 @@ public class GameService {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 if (battlefield != null && battlefield.remove(target)) {
-                    gameData.playerGraveyards.get(playerId).add(target.getCard());
+                    gameData.playerGraveyards.get(playerId).add(target.getOriginalCard());
                     collectDeathTrigger(gameData, target.getCard(), playerId);
 
                     String destroyLog = target.getCard().getName() + " is destroyed.";
@@ -1964,7 +2003,7 @@ public class GameService {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 if (battlefield != null && battlefield.remove(perm)) {
-                    gameData.playerGraveyards.get(playerId).add(perm.getCard());
+                    gameData.playerGraveyards.get(playerId).add(perm.getOriginalCard());
                     collectDeathTrigger(gameData, perm.getCard(), playerId);
 
                     String logEntry = perm.getCard().getName() + " is destroyed.";
@@ -1997,7 +2036,7 @@ public class GameService {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 if (battlefield != null && battlefield.remove(perm)) {
-                    gameData.playerGraveyards.get(playerId).add(perm.getCard());
+                    gameData.playerGraveyards.get(playerId).add(perm.getOriginalCard());
 
                     String logEntry = perm.getCard().getName() + " is destroyed.";
                     gameData.gameLog.add(logEntry);
@@ -2038,7 +2077,7 @@ public class GameService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
-                gameData.playerGraveyards.get(playerId).add(target.getCard());
+                gameData.playerGraveyards.get(playerId).add(target.getOriginalCard());
                 collectDeathTrigger(gameData, target.getCard(), playerId);
 
                 String logEntry = target.getCard().getName() + " is destroyed.";
@@ -2062,7 +2101,7 @@ public class GameService {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 if (battlefield != null && battlefield.remove(attacker)) {
-                    gameData.playerGraveyards.get(playerId).add(attacker.getCard());
+                    gameData.playerGraveyards.get(playerId).add(attacker.getOriginalCard());
                     collectDeathTrigger(gameData, attacker.getCard(), playerId);
                     String logEntry = attacker.getCard().getName() + " is destroyed by " + entry.getCard().getName() + ".";
                     gameData.gameLog.add(logEntry);
@@ -2079,7 +2118,7 @@ public class GameService {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 if (battlefield != null && battlefield.remove(self)) {
-                    gameData.playerGraveyards.get(playerId).add(self.getCard());
+                    gameData.playerGraveyards.get(playerId).add(self.getOriginalCard());
                     collectDeathTrigger(gameData, self.getCard(), playerId);
                     String logEntry = entry.getCard().getName() + " is destroyed.";
                     gameData.gameLog.add(logEntry);
@@ -2190,7 +2229,7 @@ public class GameService {
 
         battlefield.remove(toReturn);
         removeOrphanedAuras(gameData);
-        hand.add(toReturn.getCard());
+        hand.add(toReturn.getOriginalCard());
 
         String logEntry = entry.getCard().getName() + " is returned to its owner's hand.";
         gameData.gameLog.add(logEntry);
@@ -2212,7 +2251,7 @@ public class GameService {
             if (battlefield != null && battlefield.remove(target)) {
                 removeOrphanedAuras(gameData);
                 List<Card> hand = gameData.playerHands.get(playerId);
-                hand.add(target.getCard());
+                hand.add(target.getOriginalCard());
 
                 String logEntry = target.getCard().getName() + " is returned to its owner's hand.";
                 gameData.gameLog.add(logEntry);
@@ -2364,7 +2403,7 @@ public class GameService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
-                gameData.playerDecks.get(playerId).add(target.getCard());
+                gameData.playerDecks.get(playerId).add(target.getOriginalCard());
 
                 String logEntry = target.getCard().getName() + " is put on the bottom of "
                         + gameData.playerIdToName.get(playerId) + "'s library.";
@@ -2549,7 +2588,36 @@ public class GameService {
                 throw new IllegalStateException("Invalid permanent: " + permanentId);
             }
 
-            if (gameData.pendingAuraGraftPermanentId != null) {
+            if (gameData.pendingClonePermanentId != null) {
+                UUID cloneId = gameData.pendingClonePermanentId;
+                gameData.pendingClonePermanentId = null;
+
+                Permanent clonePerm = findPermanentById(gameData, cloneId);
+                if (clonePerm == null) {
+                    throw new IllegalStateException("Clone permanent no longer exists");
+                }
+
+                Permanent targetPerm = findPermanentById(gameData, permanentId);
+                if (targetPerm == null) {
+                    throw new IllegalStateException("Target creature no longer exists");
+                }
+
+                applyCloneCopy(clonePerm, targetPerm);
+
+                String logEntry = "Clone enters as a copy of " + targetPerm.getCard().getName() + ".";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+                log.info("Game {} - Clone copies {}", gameData.id, targetPerm.getCard().getName());
+
+                broadcastBattlefields(gameData);
+
+                // Check legend rule (Clone may have copied a legendary creature)
+                if (!checkLegendRule(gameData, playerId)) {
+                    performStateBasedActions(gameData);
+                    broadcastPlayableCards(gameData);
+                    resolveAutoPass(gameData);
+                }
+            } else if (gameData.pendingAuraGraftPermanentId != null) {
                 UUID auraId = gameData.pendingAuraGraftPermanentId;
                 gameData.pendingAuraGraftPermanentId = null;
 
@@ -2588,7 +2656,7 @@ public class GameService {
                 }
                 for (Permanent perm : toRemove) {
                     battlefield.remove(perm);
-                    gameData.playerGraveyards.get(playerId).add(perm.getCard());
+                    gameData.playerGraveyards.get(playerId).add(perm.getOriginalCard());
                     collectDeathTrigger(gameData, perm.getCard(), playerId);
                     String logEntry = perm.getCard().getName() + " is put into the graveyard (legend rule).";
                     gameData.gameLog.add(logEntry);
@@ -2914,7 +2982,7 @@ public class GameService {
             for (UUID pid : gameData.orderedPlayerIds) {
                 List<Permanent> bf = gameData.playerBattlefields.get(pid);
                 if (bf != null && bf.remove(target)) {
-                    gameData.playerGraveyards.get(pid).add(target.getCard());
+                    gameData.playerGraveyards.get(pid).add(target.getOriginalCard());
                     collectDeathTrigger(gameData, target.getCard(), pid);
                     String deathLog = target.getCard().getName() + " is destroyed by redirected " + sourceName + " damage.";
                     gameData.gameLog.add(deathLog);
@@ -3009,7 +3077,7 @@ public class GameService {
                 Permanent p = it.next();
                 if (p.getAttachedTo() != null && findPermanentById(gameData, p.getAttachedTo()) == null) {
                     it.remove();
-                    gameData.playerGraveyards.get(playerId).add(p.getCard());
+                    gameData.playerGraveyards.get(playerId).add(p.getOriginalCard());
                     String logEntry = p.getCard().getName() + " is put into the graveyard (enchanted creature left the battlefield).";
                     gameData.gameLog.add(logEntry);
                     broadcastLogEntry(gameData, logEntry);
@@ -3019,6 +3087,58 @@ public class GameService {
             }
         }
         if (anyRemoved) {
+            broadcastBattlefields(gameData);
+            broadcastGraveyards(gameData);
+        }
+    }
+
+    private void applyCloneCopy(Permanent clonePerm, Permanent targetPerm) {
+        Card target = targetPerm.getCard();
+        Card copy = new Card(target.getName(), target.getType(), target.getManaCost(), target.getColor());
+        copy.setSupertypes(target.getSupertypes());
+        copy.setSubtypes(target.getSubtypes());
+        copy.setCardText(target.getCardText());
+        copy.setPower(target.getPower());
+        copy.setToughness(target.getToughness());
+        copy.setKeywords(target.getKeywords());
+        copy.setNeedsTarget(target.isNeedsTarget());
+        copy.setSetCode(target.getSetCode());
+        copy.setCollectorNumber(target.getCollectorNumber());
+        copy.setArtist(target.getArtist());
+        copy.setRarity(target.getRarity());
+        for (EffectSlot slot : EffectSlot.values()) {
+            for (CardEffect effect : target.getEffects(slot)) {
+                copy.addEffect(slot, effect);
+            }
+        }
+        for (ActivatedAbility ability : target.getActivatedAbilities()) {
+            copy.addActivatedAbility(ability);
+        }
+        clonePerm.setCard(copy);
+    }
+
+    private void performStateBasedActions(GameData gameData) {
+        boolean anyDied = false;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            Iterator<Permanent> it = battlefield.iterator();
+            while (it.hasNext()) {
+                Permanent p = it.next();
+                if (p.getCard().getType() == CardType.CREATURE && getEffectiveToughness(gameData, p) <= 0) {
+                    it.remove();
+                    gameData.playerGraveyards.get(playerId).add(p.getOriginalCard());
+                    collectDeathTrigger(gameData, p.getCard(), playerId);
+                    String logEntry = p.getCard().getName() + " is put into the graveyard (0 toughness).";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                    log.info("Game {} - {} dies to state-based actions (0 toughness)", gameData.id, p.getCard().getName());
+                    anyDied = true;
+                }
+            }
+        }
+        if (anyDied) {
+            removeOrphanedAuras(gameData);
             broadcastBattlefields(gameData);
             broadcastGraveyards(gameData);
         }
@@ -3229,7 +3349,7 @@ public class GameService {
                 String logEntry = playerName + "'s " + dead.getCard().getName() + " is destroyed by Hurricane.";
                 gameData.gameLog.add(logEntry);
                 broadcastLogEntry(gameData, logEntry);
-                graveyard.add(dead.getCard());
+                graveyard.add(dead.getOriginalCard());
                 collectDeathTrigger(gameData, dead.getCard(), playerId);
                 battlefield.remove(idx);
             }
@@ -3762,7 +3882,7 @@ public class GameService {
                 for (UUID pid : gameData.orderedPlayerIds) {
                     List<Permanent> bf = gameData.playerBattlefields.get(pid);
                     if (bf != null && bf.remove(redirectTarget)) {
-                        gameData.playerGraveyards.get(pid).add(redirectTarget.getCard());
+                        gameData.playerGraveyards.get(pid).add(redirectTarget.getOriginalCard());
                         collectDeathTrigger(gameData, redirectTarget.getCard(), pid);
                         String deathLog = redirectTarget.getCard().getName() + " is destroyed by redirected combat damage.";
                         gameData.gameLog.add(deathLog);
@@ -3782,7 +3902,7 @@ public class GameService {
         for (int idx : deadAttackerIndices) {
             Permanent dead = atkBf.get(idx);
             deadCreatureNames.add(gameData.playerIdToName.get(activeId) + "'s " + dead.getCard().getName());
-            attackerGraveyard.add(dead.getCard());
+            attackerGraveyard.add(dead.getOriginalCard());
             collectDeathTrigger(gameData, dead.getCard(), activeId);
             atkBf.remove(idx);
         }
@@ -3790,7 +3910,7 @@ public class GameService {
         for (int idx : deadDefenderIndices) {
             Permanent dead = defBf.get(idx);
             deadCreatureNames.add(gameData.playerIdToName.get(defenderId) + "'s " + dead.getCard().getName());
-            defenderGraveyard.add(dead.getCard());
+            defenderGraveyard.add(dead.getOriginalCard());
             collectDeathTrigger(gameData, dead.getCard(), defenderId);
             defBf.remove(idx);
         }
@@ -4100,6 +4220,44 @@ public class GameService {
             PendingMayAbility ability = gameData.pendingMayAbilities.removeFirst();
             gameData.awaitingInput = null;
             gameData.awaitingMayAbilityPlayerId = null;
+
+            // Clone copy creature effect — handled separately (not via the stack)
+            boolean isCloneCopy = ability.effects().stream().anyMatch(e -> e instanceof CopyCreatureOnEnterEffect);
+            if (isCloneCopy) {
+                if (accepted) {
+                    // Collect valid creature targets
+                    UUID cloneId = gameData.pendingClonePermanentId;
+                    List<UUID> creatureIds = new ArrayList<>();
+                    for (UUID pid : gameData.orderedPlayerIds) {
+                        List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                        if (battlefield == null) continue;
+                        for (Permanent p : battlefield) {
+                            if (p.getCard().getType() == CardType.CREATURE && !p.getId().equals(cloneId)) {
+                                creatureIds.add(p.getId());
+                            }
+                        }
+                    }
+                    beginPermanentChoice(gameData, ability.controllerId(), creatureIds, "Choose a creature to copy.");
+
+                    String logEntry = player.getUsername() + " accepts — choosing a creature to copy.";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                    log.info("Game {} - {} accepts clone copy", gameData.id, player.getUsername());
+                } else {
+                    gameData.pendingClonePermanentId = null;
+                    String logEntry = player.getUsername() + " declines to copy a creature. Clone enters as 0/0.";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                    log.info("Game {} - {} declines clone copy", gameData.id, player.getUsername());
+
+                    performStateBasedActions(gameData);
+                    broadcastBattlefields(gameData);
+                    broadcastGraveyards(gameData);
+                    broadcastPlayableCards(gameData);
+                    resolveAutoPass(gameData);
+                }
+                return;
+            }
 
             if (accepted) {
                 gameData.stack.add(new StackEntry(

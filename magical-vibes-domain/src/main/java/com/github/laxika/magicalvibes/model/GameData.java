@@ -64,6 +64,7 @@ public class GameData {
     public final Map<UUID, Map<CardColor, Integer>> playerColorDamagePreventionCount = new ConcurrentHashMap<>();
     public final List<PendingMayAbility> pendingMayAbilities = new ArrayList<>();
     public UUID awaitingMayAbilityPlayerId;
+    public UUID pendingClonePermanentId;
 
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {
         this.id = id;
