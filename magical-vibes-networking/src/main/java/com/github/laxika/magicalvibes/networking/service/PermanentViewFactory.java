@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.networking.service;
 
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +21,10 @@ public class PermanentViewFactory {
     public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature) {
         Set<Keyword> allKeywords = new HashSet<>(p.getGrantedKeywords());
         allKeywords.addAll(bonusKeywords);
+        CardView cardView = cardViewFactory.create(p.getCard());
+        cardView = applyTextReplacements(cardView, p);
         return new PermanentView(
-                p.getId(), cardViewFactory.create(p.getCard()),
+                p.getId(), cardView,
                 p.isTapped(), p.isAttacking(), p.isBlocking(),
                 new ArrayList<>(p.getBlockingTargets()), p.isSummoningSick(),
                 p.getPowerModifier() + bonusPower,
@@ -34,6 +37,26 @@ public class PermanentViewFactory {
                 p.getRegenerationShield(),
                 p.isCantBeBlocked(),
                 animatedCreature
+        );
+    }
+
+    private CardView applyTextReplacements(CardView cardView, Permanent p) {
+        if (p.getTextReplacements().isEmpty() || cardView.cardText() == null) {
+            return cardView;
+        }
+        String modifiedText = cardView.cardText();
+        for (TextReplacement rep : p.getTextReplacements()) {
+            modifiedText = modifiedText.replace(rep.fromWord(), rep.toWord());
+        }
+        return new CardView(
+                cardView.name(), cardView.type(), cardView.supertypes(), cardView.subtypes(),
+                modifiedText, cardView.manaCost(), cardView.power(), cardView.toughness(),
+                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
+                cardView.collectorNumber(), cardView.flavorText(), cardView.artist(),
+                cardView.rarity(), cardView.color(), cardView.needsTarget(),
+                cardView.needsSpellTarget(), cardView.targetsPlayer(),
+                cardView.requiresAttackingTarget(), cardView.allowedTargetTypes(),
+                cardView.activatedAbilities()
         );
     }
 }

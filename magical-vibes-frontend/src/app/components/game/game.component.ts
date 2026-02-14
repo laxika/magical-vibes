@@ -557,6 +557,11 @@ export class GameComponent implements OnInit, OnDestroy {
       case 'BLACK': return 'Black';
       case 'RED': return 'Red';
       case 'GREEN': return 'Green';
+      case 'PLAINS': return 'Plains';
+      case 'ISLAND': return 'Island';
+      case 'SWAMP': return 'Swamp';
+      case 'MOUNTAIN': return 'Mountain';
+      case 'FOREST': return 'Forest';
       default: return color;
     }
   }

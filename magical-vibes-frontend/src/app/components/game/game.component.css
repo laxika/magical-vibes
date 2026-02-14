@@ -1103,6 +1103,32 @@
   border-color: #1e5a38;
 }
 
+.btn-color-choice[data-color="PLAINS"] {
+  background: #d4b87a;
+  color: #2b1b17;
+  border-color: #a08030;
+}
+
+.btn-color-choice[data-color="ISLAND"] {
+  background: #2c5ea2;
+  border-color: #1a3a5c;
+}
+
+.btn-color-choice[data-color="SWAMP"] {
+  background: #1a1210;
+  border-color: #3b2314;
+}
+
+.btn-color-choice[data-color="MOUNTAIN"] {
+  background: #8b1a1a;
+  border-color: #6b1010;
+}
+
+.btn-color-choice[data-color="FOREST"] {
+  background: #2d7a50;
+  border-color: #1e5a38;
+}
+
 .card.choosable-card {
   outline: 3px solid #7040a0;
   box-shadow: 0 0 12px rgba(112, 64, 160, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5);
