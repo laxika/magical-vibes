@@ -42,7 +42,8 @@ public enum CardSubtype {
     SERPENT("Serpent"),
     SHAPESHIFTER("Shapeshifter"),
     CRAB("Crab"),
-    DJINN("Djinn");
+    DJINN("Djinn"),
+    ROGUE("Rogue");
 
     @Getter
     private final String displayName;

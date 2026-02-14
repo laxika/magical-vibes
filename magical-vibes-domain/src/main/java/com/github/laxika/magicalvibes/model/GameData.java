@@ -71,6 +71,7 @@ public class GameData {
     public UUID awaitingLibraryReorderPlayerId;
     public List<Card> awaitingLibraryReorderCards;
     public final Set<UUID> permanentsToSacrificeAtEndOfCombat = ConcurrentHashMap.newKeySet();
+    public int awaitingDiscardRemainingCount;
 
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {
         this.id = id;

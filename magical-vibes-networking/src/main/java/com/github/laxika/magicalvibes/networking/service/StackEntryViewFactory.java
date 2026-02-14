@@ -29,7 +29,8 @@ public class StackEntryViewFactory {
                 entry.getControllerId(),
                 entry.getDescription(),
                 entry.getCard().getId(),
-                SPELL_TYPES.contains(entry.getEntryType())
+                SPELL_TYPES.contains(entry.getEntryType()),
+                entry.getTargetPermanentId()
         );
     }
 }
