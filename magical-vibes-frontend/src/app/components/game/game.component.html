@@ -80,38 +80,6 @@
   }
 
   @if (game()?.status === GameStatus.RUNNING || game()?.status === GameStatus.FINISHED) {
-    <div class="phase-tracker">
-      @for (group of phaseGroups; track group.phaseName) {
-        <div class="phase-group">
-          <div class="phase-label">{{ group.phaseName }}</div>
-          <div class="phase-steps">
-            @for (stepInfo of group.steps; track stepInfo.step) {
-              <div class="step-pip"
-                   [class.active]="game()?.currentStep === stepInfo.step"
-                   [class.auto-stop]="isAutoStop(stepInfo.step)"
-                   [class.force-stop]="isForceStop(stepInfo.step)"
-                   [title]="stepInfo.displayName"
-                   (click)="toggleAutoStop(stepInfo.step)">
-                {{ stepInfo.displayName }}
-              </div>
-            }
-          </div>
-        </div>
-      }
-    </div>
-
-    @if (totalMana > 0) {
-      <div class="mana-pool-bar">
-        <div class="mana-pool">
-          @for (entry of manaEntries; track entry.color) {
-            <div class="mana-pip" [attr.data-color]="entry.color">
-              <span class="mana-count">{{ entry.count }}</span>
-            </div>
-          }
-        </div>
-      </div>
-    }
-
     @if (!isStackEmpty) {
       <div class="stack-zone">
         <div class="stack-label">The Stack</div>
@@ -533,6 +501,38 @@
         }
       </div>
     </div>
+
+    <div class="phase-tracker">
+      @for (group of phaseGroups; track group.phaseName) {
+        <div class="phase-group">
+          <div class="phase-label">{{ group.phaseName }}</div>
+          <div class="phase-steps">
+            @for (stepInfo of group.steps; track stepInfo.step) {
+              <div class="step-pip"
+                   [class.active]="game()?.currentStep === stepInfo.step"
+                   [class.auto-stop]="isAutoStop(stepInfo.step)"
+                   [class.force-stop]="isForceStop(stepInfo.step)"
+                   [title]="stepInfo.displayName"
+                   (click)="toggleAutoStop(stepInfo.step)">
+                {{ stepInfo.displayName }}
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (totalMana > 0) {
+      <div class="mana-pool-bar">
+        <div class="mana-pool">
+          @for (entry of manaEntries; track entry.color) {
+            <div class="mana-pip" [attr.data-color]="entry.color">
+              <span class="mana-count">{{ entry.count }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
 
     @if (choosingFromHand) {
       <div class="combat-banner hand-choice-banner">
