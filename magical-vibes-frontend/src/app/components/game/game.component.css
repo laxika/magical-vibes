@@ -844,54 +844,26 @@
   justify-content: center;
 }
 
-.stack-entry {
-  background: linear-gradient(135deg, #3b2314 0%, #2b1810 100%);
-  color: #f5e6c8;
-  padding: 12px 16px;
-  border-radius: 4px;
-  border: 2px solid #5c3a2e;
-  min-width: 120px;
-  text-align: center;
-  box-shadow: 0 3px 8px rgba(43, 27, 23, 0.5), 0 0 15px rgba(43, 27, 23, 0.2);
+.stack-entry-wrapper {
   position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.stack-entry[data-entry-type="TRIGGERED_ABILITY"] {
-  background: linear-gradient(135deg, #5c1818 0%, #3b1515 100%);
+.stack-entry-wrapper .card[data-entry-type="TRIGGERED_ABILITY"] {
   border-color: #7a2222;
-  box-shadow: 0 3px 8px rgba(92, 24, 24, 0.4);
-  color: #f0d8c0;
+  box-shadow: 0 3px 8px rgba(92, 24, 24, 0.4), 0 0 10px rgba(139, 26, 26, 0.3);
 }
 
-.stack-entry-description {
-  font-size: 14px;
-  font-weight: 700;
-  margin-bottom: 4px;
+.stack-entry-overlay {
+  text-align: center;
+  margin-top: 2px;
 }
 
 .stack-entry-controller {
-  font-size: 11px;
-  opacity: 0.8;
-}
-
-.stack-entry-cost {
-  font-size: 11px;
-  font-weight: 700;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 2px 6px;
-  border-radius: 3px;
-  margin-top: 4px;
-  display: inline-block;
-}
-
-.stack-entry-stats {
-  font-size: 12px;
-  font-weight: 700;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 2px 8px;
-  border-radius: 3px;
-  margin-top: 4px;
-  display: inline-block;
+  font-size: 10px;
+  color: #a89070;
 }
 
 .stack-top-badge {
@@ -906,6 +878,7 @@
   border-radius: 3px;
   text-transform: uppercase;
   font-family: 'Cinzel', Georgia, serif;
+  z-index: 1;
 }
 
 /* Game over overlay */
@@ -1236,6 +1209,43 @@
   z-index: 10;
 }
 
+/* Stack target highlight (hover over stack entry to show its target) */
+
+.card.stack-targeted {
+  outline: 2px solid #c04040;
+  outline-offset: 1px;
+  box-shadow: 0 0 12px rgba(192, 64, 64, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5);
+  animation: stack-target-highlight 2s ease-in-out infinite;
+  z-index: 10;
+}
+
+.stack-entry-wrapper.stack-targeted .card {
+  outline: 2px solid #c04040;
+  outline-offset: 1px;
+  box-shadow: 0 0 12px rgba(192, 64, 64, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5);
+  animation: stack-target-highlight 2s ease-in-out infinite;
+}
+
+.player-badge.stack-targeted {
+  outline: 2px solid #c04040;
+  outline-offset: 1px;
+  box-shadow: 0 0 12px rgba(192, 64, 64, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5);
+  animation: stack-target-highlight 2s ease-in-out infinite;
+}
+
+.stack-entry-target {
+  font-size: 10px;
+  color: #c04040;
+  font-weight: 600;
+  font-family: 'Cinzel', Georgia, serif;
+  white-space: nowrap;
+}
+
+@keyframes stack-target-highlight {
+  0%, 100% { box-shadow: 0 0 10px rgba(192, 64, 64, 0.4), 2px 3px 8px rgba(0, 0, 0, 0.5); }
+  50% { box-shadow: 0 0 18px rgba(192, 64, 64, 0.7), 2px 3px 10px rgba(0, 0, 0, 0.6); }
+}
+
 /* Spell targeting styles */
 
 .spell-targeting-banner {
@@ -1243,7 +1253,7 @@
   box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
 }
 
-.stack-entry.spell-targetable {
+.stack-entry-wrapper.spell-targetable {
   outline: 2px dashed #e74c3c;
   box-shadow: 0 0 12px rgba(231, 76, 60, 0.5);
   cursor: pointer;

@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
@@ -862,7 +863,7 @@ public class GameService {
                 List<PermanentView> views = new ArrayList<>();
                 for (Permanent p : bf) {
                     StaticBonus bonus = computeStaticBonus(data, p);
-                    views.add(permanentViewFactory.create(p, bonus.power(), bonus.toughness(), bonus.keywords()));
+                    views.add(permanentViewFactory.create(p, bonus.power(), bonus.toughness(), bonus.keywords(), bonus.animatedCreature()));
                 }
                 battlefields.add(views);
             }
@@ -969,12 +970,12 @@ public class GameService {
                 // Effect-specific target validation
                 for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
                     if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
-                        if (target == null || target.getCard().getType() != CardType.CREATURE) {
+                        if (target == null || !isCreature(gameData, target)) {
                             throw new IllegalStateException("Target must be a creature");
                         }
                     }
                     if (effect instanceof BoostTargetBlockingCreatureEffect) {
-                        if (target == null || target.getCard().getType() != CardType.CREATURE || !target.isBlocking()) {
+                        if (target == null || !isCreature(gameData, target) || !target.isBlocking()) {
                             throw new IllegalStateException("Target must be a blocking creature");
                         }
                     }
@@ -1046,7 +1047,7 @@ public class GameService {
                     }
                     for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
                         Permanent target = findPermanentById(gameData, assignment.getKey());
-                        if (target == null || target.getCard().getType() != CardType.CREATURE || !target.isAttacking()) {
+                        if (target == null || !isCreature(gameData, target) || !target.isAttacking()) {
                             throw new IllegalStateException("All targets must be attacking creatures");
                         }
                         if (assignment.getValue() <= 0) {
@@ -1123,7 +1124,7 @@ public class GameService {
             if (permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty()) {
                 throw new IllegalStateException("Permanent has no tap effects");
             }
-            if (permanent.isSummoningSick() && permanent.getCard().getType() == CardType.CREATURE) {
+            if (permanent.isSummoningSick() && isCreature(gameData, permanent)) {
                 throw new IllegalStateException("Creature has summoning sickness");
             }
 
@@ -1185,9 +1186,10 @@ public class GameService {
             }
 
             // Sacrifice: remove from battlefield, add to graveyard
+            boolean wasCreature = isCreature(gameData, permanent);
             battlefield.remove(permanentIndex);
             gameData.playerGraveyards.get(playerId).add(permanent.getOriginalCard());
-            collectDeathTrigger(gameData, permanent.getCard(), playerId);
+            collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature);
             removeOrphanedAuras(gameData);
 
             String logEntry = player.getUsername() + " sacrifices " + permanent.getCard().getName() + ".";
@@ -1255,7 +1257,7 @@ public class GameService {
                 if (permanent.isTapped()) {
                     throw new IllegalStateException("Permanent is already tapped");
                 }
-                if (permanent.isSummoningSick() && permanent.getCard().getType() == CardType.CREATURE) {
+                if (permanent.isSummoningSick() && isCreature(gameData, permanent)) {
                     throw new IllegalStateException("Creature has summoning sickness");
                 }
             }
@@ -1291,7 +1293,7 @@ public class GameService {
                     if (target == null) {
                         throw new IllegalStateException("Invalid target permanent");
                     }
-                    if (target.getCard().getType() != CardType.CREATURE) {
+                    if (!isCreature(gameData, target)) {
                         throw new IllegalStateException("Target must be a creature");
                     }
                     if (hasProtectionFrom(gameData, target, permanent.getCard().getColor())) {
@@ -1547,7 +1549,7 @@ public class GameService {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
-                    if (p.getCard().getType() == CardType.CREATURE && !p.getId().equals(clonePerm.getId())) {
+                    if (isCreature(gameData, p) && !p.getId().equals(clonePerm.getId())) {
                         creatureIds.add(p.getId());
                     }
                 }
@@ -1724,7 +1726,7 @@ public class GameService {
                 logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), color, perm.getCard().getName());
 
-                if (perm.getCard().getType() == CardType.CREATURE) {
+                if (isCreature(gameData, perm)) {
                     processCreatureETBEffects(gameData, player.getId(), perm.getCard(), etbTargetId);
                 }
             }
@@ -1915,7 +1917,7 @@ public class GameService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (permanent.getCard().getType() == CardType.CREATURE) {
+            if (isCreature(gameData, permanent)) {
                 permanent.setPowerModifier(permanent.getPowerModifier() + boost.powerBoost());
                 permanent.setToughnessModifier(permanent.getToughnessModifier() + boost.toughnessBoost());
                 count++;
@@ -2049,7 +2051,7 @@ public class GameService {
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             for (Permanent perm : gameData.playerBattlefields.get(playerId)) {
-                if (perm.getCard().getType() == CardType.CREATURE) {
+                if (isCreature(gameData, perm)) {
                     toDestroy.add(perm);
                 }
             }
@@ -2109,7 +2111,7 @@ public class GameService {
         }
 
         // Try regeneration for creatures
-        if (target.getCard().getType() == CardType.CREATURE && tryRegenerate(gameData, target)) {
+        if (isCreature(gameData, target) && tryRegenerate(gameData, target)) {
             broadcastBattlefields(gameData);
             return;
         }
@@ -2328,7 +2330,7 @@ public class GameService {
             }
 
             List<Permanent> creaturesToReturn = battlefield.stream()
-                    .filter(p -> p.getCard().getType() == CardType.CREATURE)
+                    .filter(p -> isCreature(gameData, p))
                     .filter(p -> !excludeSelf || !p.getOriginalCard().getId().equals(entry.getCard().getId()))
                     .toList();
 
@@ -2497,7 +2499,7 @@ public class GameService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent p : bf) {
-                if (p.getCard().getType() == CardType.CREATURE && !p.getId().equals(aura.getAttachedTo())) {
+                if (isCreature(gameData, p) && !p.getId().equals(aura.getAttachedTo())) {
                     validCreatureIds.add(p.getId());
                 }
             }
@@ -2653,7 +2655,7 @@ public class GameService {
         List<UUID> creatureIds = new ArrayList<>();
         if (controllerBf != null) {
             for (Permanent p : controllerBf) {
-                if (p.getCard().getType() == CardType.CREATURE) {
+                if (isCreature(gameData, p)) {
                     creatureIds.add(p.getId());
                 }
             }
@@ -2786,9 +2788,10 @@ public class GameService {
                     }
                 }
                 for (Permanent perm : toRemove) {
+                    boolean wasCreature = isCreature(gameData, perm);
                     battlefield.remove(perm);
                     gameData.playerGraveyards.get(playerId).add(perm.getOriginalCard());
-                    collectDeathTrigger(gameData, perm.getCard(), playerId);
+                    collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature);
                     String logEntry = perm.getCard().getName() + " is put into the graveyard (legend rule).";
                     logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} sent to graveyard by legend rule", gameData.id, perm.getCard().getName());
@@ -2872,7 +2875,7 @@ public class GameService {
             if (battlefield == null) continue;
 
             for (Permanent p : battlefield) {
-                if (p.getCard().getType() != CardType.CREATURE) continue;
+                if (!isCreature(gameData, p)) continue;
                 if (!matchesFilters(gameData, p, tap.filters())) continue;
 
                 p.tap();
@@ -3227,10 +3230,10 @@ public class GameService {
             Iterator<Permanent> it = battlefield.iterator();
             while (it.hasNext()) {
                 Permanent p = it.next();
-                if (p.getCard().getType() == CardType.CREATURE && getEffectiveToughness(gameData, p) <= 0) {
+                if (isCreature(gameData, p) && getEffectiveToughness(gameData, p) <= 0) {
                     it.remove();
                     gameData.playerGraveyards.get(playerId).add(p.getOriginalCard());
-                    collectDeathTrigger(gameData, p.getCard(), playerId);
+                    collectDeathTrigger(gameData, p.getCard(), playerId, true);
                     String logEntry = p.getCard().getName() + " is put into the graveyard (0 toughness).";
                     logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} dies to state-based actions (0 toughness)", gameData.id, p.getCard().getName());
@@ -3276,11 +3279,12 @@ public class GameService {
     }
 
     private boolean removePermanentToGraveyard(GameData gameData, Permanent target) {
+        boolean wasCreature = isCreature(gameData, target);
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
                 gameData.playerGraveyards.get(playerId).add(target.getOriginalCard());
-                collectDeathTrigger(gameData, target.getCard(), playerId);
+                collectDeathTrigger(gameData, target.getCard(), playerId, wasCreature);
                 return true;
             }
         }
@@ -3372,12 +3376,14 @@ public class GameService {
 
     // ===== Static / continuous effect computation =====
 
-    private record StaticBonus(int power, int toughness, Set<Keyword> keywords) {
-        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of());
+    private record StaticBonus(int power, int toughness, Set<Keyword> keywords, boolean animatedCreature) {
+        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), false);
     }
 
     private StaticBonus computeStaticBonus(GameData gameData, Permanent target) {
-        if (target.getCard().getType() != CardType.CREATURE) return StaticBonus.NONE;
+        boolean isNaturalCreature = target.getCard().getType() == CardType.CREATURE;
+        boolean isArtifact = target.getCard().getType() == CardType.ARTIFACT;
+        boolean animatedCreature = false;
         int power = 0;
         int toughness = 0;
         Set<Keyword> keywords = new HashSet<>();
@@ -3387,6 +3393,9 @@ public class GameService {
             for (Permanent source : bf) {
                 if (source == target) continue;
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof AnimateNoncreatureArtifactsEffect && isArtifact) {
+                        animatedCreature = true;
+                    }
                     if (effect instanceof BoostCreaturesBySubtypeEffect boost
                             && target.getCard().getSubtypes().stream().anyMatch(boost.affectedSubtypes()::contains)) {
                         power += boost.powerBoost();
@@ -3412,7 +3421,34 @@ public class GameService {
                 }
             }
         }
-        return new StaticBonus(power, toughness, keywords);
+        if (!isNaturalCreature && !animatedCreature) return StaticBonus.NONE;
+
+        if (animatedCreature) {
+            int manaValue = target.getCard().getManaValue();
+            power += manaValue;
+            toughness += manaValue;
+        }
+
+        return new StaticBonus(power, toughness, keywords, animatedCreature);
+    }
+
+    public boolean isCreature(GameData gameData, Permanent permanent) {
+        if (permanent.getCard().getType() == CardType.CREATURE) return true;
+        if (permanent.getCard().getType() != CardType.ARTIFACT) return false;
+        return hasAnimateArtifactEffect(gameData);
+    }
+
+    private boolean hasAnimateArtifactEffect(GameData gameData) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent source : bf) {
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof AnimateNoncreatureArtifactsEffect) return true;
+                }
+            }
+        }
+        return false;
     }
 
     public int getEffectivePower(GameData gameData, Permanent permanent) {
@@ -3475,7 +3511,7 @@ public class GameService {
                 String logEntry = playerName + "'s " + dead.getCard().getName() + " is destroyed by Hurricane.";
                 logAndBroadcast(gameData, logEntry);
                 graveyard.add(dead.getOriginalCard());
-                collectDeathTrigger(gameData, dead.getCard(), playerId);
+                collectDeathTrigger(gameData, dead.getCard(), playerId, true);
                 battlefield.remove(idx);
             }
         }
@@ -3514,7 +3550,7 @@ public class GameService {
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent p = battlefield.get(i);
-            if (p.getCard().getType() == CardType.CREATURE && !p.isTapped() && !p.isSummoningSick() && !hasKeyword(gameData, p, Keyword.DEFENDER) && !hasAuraWithEffect(gameData, p, EnchantedCreatureCantAttackOrBlockEffect.class)) {
+            if (isCreature(gameData, p) && !p.isTapped() && !p.isSummoningSick() && !hasKeyword(gameData, p, Keyword.DEFENDER) && !hasAuraWithEffect(gameData, p, EnchantedCreatureCantAttackOrBlockEffect.class)) {
                 indices.add(i);
             }
         }
@@ -3527,7 +3563,7 @@ public class GameService {
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent p = battlefield.get(i);
-            if (p.getCard().getType() == CardType.CREATURE && !p.isTapped() && !hasAuraWithEffect(gameData, p, EnchantedCreatureCantAttackOrBlockEffect.class)) {
+            if (isCreature(gameData, p) && !p.isTapped() && !hasAuraWithEffect(gameData, p, EnchantedCreatureCantAttackOrBlockEffect.class)) {
                 indices.add(i);
             }
         }
@@ -4057,7 +4093,7 @@ public class GameService {
             Permanent dead = atkBf.get(idx);
             deadCreatureNames.add(gameData.playerIdToName.get(activeId) + "'s " + dead.getCard().getName());
             attackerGraveyard.add(dead.getOriginalCard());
-            collectDeathTrigger(gameData, dead.getCard(), activeId);
+            collectDeathTrigger(gameData, dead.getCard(), activeId, true);
             atkBf.remove(idx);
         }
         List<Card> defenderGraveyard = gameData.playerGraveyards.get(defenderId);
@@ -4065,7 +4101,7 @@ public class GameService {
             Permanent dead = defBf.get(idx);
             deadCreatureNames.add(gameData.playerIdToName.get(defenderId) + "'s " + dead.getCard().getName());
             defenderGraveyard.add(dead.getOriginalCard());
-            collectDeathTrigger(gameData, dead.getCard(), defenderId);
+            collectDeathTrigger(gameData, dead.getCard(), defenderId, true);
             defBf.remove(idx);
         }
         if (!deadAttackerIndices.isEmpty() || !deadDefenderIndices.isEmpty()) {
@@ -4318,9 +4354,10 @@ public class GameService {
                         .filter(p -> gameData.permanentsToSacrificeAtEndOfCombat.contains(p.getId()))
                         .toList();
                 for (Permanent perm : toSacrifice) {
+                    boolean wasCreature = isCreature(gameData, perm);
                     battlefield.remove(perm);
                     gameData.playerGraveyards.get(playerId).add(perm.getOriginalCard());
-                    collectDeathTrigger(gameData, perm.getCard(), playerId);
+                    collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature);
                     String logEntry = perm.getCard().getName() + " is sacrificed.";
                     gameData.gameLog.add(logEntry);
                     broadcastLogEntry(gameData, logEntry);
@@ -4441,8 +4478,8 @@ public class GameService {
         }
     }
 
-    private void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId) {
-        if (dyingCard.getType() != CardType.CREATURE) return;
+    private void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature) {
+        if (!wasCreature) return;
 
         List<CardEffect> deathEffects = dyingCard.getEffects(EffectSlot.ON_DEATH);
         if (deathEffects.isEmpty()) return;
@@ -4547,7 +4584,7 @@ public class GameService {
                         List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                         if (battlefield == null) continue;
                         for (Permanent p : battlefield) {
-                            if (p.getCard().getType() == CardType.CREATURE && !p.getId().equals(cloneId)) {
+                            if (isCreature(gameData, p) && !p.getId().equals(cloneId)) {
                                 creatureIds.add(p.getId());
                             }
                         }

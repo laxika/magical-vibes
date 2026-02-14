@@ -165,6 +165,7 @@ export interface Permanent {
   regenerationShield: number;
   attachedTo: string | null;
   cantBeBlocked: boolean;
+  animatedCreature: boolean;
 }
 
 export interface StackEntry {
@@ -174,6 +175,7 @@ export interface StackEntry {
   description: string;
   cardId: string;
   isSpell: boolean;
+  targetPermanentId: string | null;
 }
 
 export interface Game {

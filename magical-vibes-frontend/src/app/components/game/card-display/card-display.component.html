@@ -28,7 +28,7 @@
     <div class="flavor-separator"></div>
     <div class="card-flavor-text">{{ card.flavorText }}</div>
   }
-  @if (card.power != null && card.toughness != null) {
+  @if (card.power != null && card.toughness != null || permanent?.animatedCreature) {
     <div class="card-pt" [class.buffed]="isBuffed">{{ displayPower }}/{{ displayToughness }}</div>
   }
 </div>

@@ -17,5 +17,6 @@ public record PermanentView(
         UUID attachedTo,
         CardColor chosenColor,
         int regenerationShield,
-        boolean cantBeBlocked
+        boolean cantBeBlocked,
+        boolean animatedCreature
 ) {}
