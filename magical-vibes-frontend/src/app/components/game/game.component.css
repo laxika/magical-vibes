@@ -820,8 +820,8 @@
 /* Stack zone */
 
 .stack-zone {
-  background: linear-gradient(135deg, rgba(75, 0, 130, 0.1), rgba(46, 8, 84, 0.18));
-  border: 1px dashed rgba(75, 0, 130, 0.5);
+  background: linear-gradient(135deg, rgba(92, 24, 24, 0.08), rgba(43, 27, 23, 0.15));
+  border: 1px dashed rgba(139, 26, 26, 0.4);
   border-radius: 4px;
   padding: 8px 10px;
   margin-bottom: 6px;
@@ -830,7 +830,7 @@
 .stack-label {
   font-size: 12px;
   font-weight: 700;
-  color: #7b2d8e;
+  color: #8b1a1a;
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 8px;
@@ -845,22 +845,22 @@
 }
 
 .stack-entry {
-  background: linear-gradient(135deg, #4b0082 0%, #2e0854 100%);
-  color: #e8d5f0;
+  background: linear-gradient(135deg, #3b2314 0%, #2b1810 100%);
+  color: #f5e6c8;
   padding: 12px 16px;
   border-radius: 4px;
-  border: 2px solid #3a0068;
+  border: 2px solid #5c3a2e;
   min-width: 120px;
   text-align: center;
-  box-shadow: 0 3px 8px rgba(75, 0, 130, 0.4), 0 0 15px rgba(75, 0, 130, 0.15);
+  box-shadow: 0 3px 8px rgba(43, 27, 23, 0.5), 0 0 15px rgba(43, 27, 23, 0.2);
   position: relative;
 }
 
 .stack-entry[data-entry-type="TRIGGERED_ABILITY"] {
-  background: linear-gradient(135deg, #2c5ea2 0%, #1a3a5c 100%);
-  border-color: #143050;
-  box-shadow: 0 3px 8px rgba(44, 94, 162, 0.4);
-  color: #d0e0f0;
+  background: linear-gradient(135deg, #5c1818 0%, #3b1515 100%);
+  border-color: #7a2222;
+  box-shadow: 0 3px 8px rgba(92, 24, 24, 0.4);
+  color: #f0d8c0;
 }
 
 .stack-entry-description {
