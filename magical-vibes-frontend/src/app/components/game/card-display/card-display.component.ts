@@ -79,11 +79,13 @@ export class CardDisplayComponent implements OnInit, OnChanges {
   }
 
   get displayPower(): number | null {
+    if (this.permanent?.animatedCreature) return this.permanent.effectivePower;
     if (this.card.power == null) return null;
     return this.permanent ? this.permanent.effectivePower : this.card.power;
   }
 
   get displayToughness(): number | null {
+    if (this.permanent?.animatedCreature) return this.permanent.effectiveToughness;
     if (this.card.toughness == null) return null;
     return this.permanent ? this.permanent.effectiveToughness : this.card.toughness;
   }

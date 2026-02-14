@@ -142,6 +142,7 @@ export interface Card {
   color: string | null;
   needsTarget: boolean;
   needsSpellTarget: boolean;
+  targetsPlayer: boolean;
   requiresAttackingTarget: boolean;
   allowedTargetTypes: string[];
   activatedAbilities: ActivatedAbilityView[];
@@ -164,6 +165,7 @@ export interface Permanent {
   regenerationShield: number;
   attachedTo: string | null;
   cantBeBlocked: boolean;
+  animatedCreature: boolean;
 }
 
 export interface StackEntry {

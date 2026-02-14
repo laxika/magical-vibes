@@ -41,6 +41,14 @@ public class ManaCost {
         return hasX;
     }
 
+    public int getManaValue() {
+        int total = genericCost;
+        for (int count : coloredCosts.values()) {
+            total += count;
+        }
+        return total;
+    }
+
     public boolean canPay(ManaPool pool) {
         return canPay(pool, 0);
     }

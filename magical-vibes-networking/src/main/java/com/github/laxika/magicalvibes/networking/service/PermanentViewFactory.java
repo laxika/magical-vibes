@@ -17,7 +17,7 @@ public class PermanentViewFactory {
 
     private final CardViewFactory cardViewFactory;
 
-    public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords) {
+    public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature) {
         Set<Keyword> allKeywords = new HashSet<>(p.getGrantedKeywords());
         allKeywords.addAll(bonusKeywords);
         return new PermanentView(
@@ -32,7 +32,8 @@ public class PermanentViewFactory {
                 p.getAttachedTo(),
                 p.getChosenColor(),
                 p.getRegenerationShield(),
-                p.isCantBeBlocked()
+                p.isCantBeBlocked(),
+                animatedCreature
         );
     }
 }
