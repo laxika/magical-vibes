@@ -47,6 +47,7 @@ export class GameComponent implements OnInit, OnDestroy {
   hoveredCard = signal<Card | null>(null);
   hoveredPermanent = signal<Permanent | null>(null);
   stackTargetId = signal<string | null>(null);
+  activeTab = signal<'log' | 'stack'>('log');
   private subscriptions: Subscription[] = [];
 
   constructor(
@@ -392,6 +393,12 @@ export class GameComponent implements OnInit, OnDestroy {
     const updated = { ...g, stack };
     this.game.set(updated);
     this.websocketService.currentGame = updated;
+
+    if (stack.length > 0) {
+      this.activeTab.set('stack');
+    } else {
+      this.activeTab.set('log');
+    }
   }
 
   private updateGraveyards(graveyards: Card[][]): void {

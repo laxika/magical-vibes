@@ -80,39 +80,6 @@
   }
 
   @if (game()?.status === GameStatus.RUNNING || game()?.status === GameStatus.FINISHED) {
-    @if (!isStackEmpty) {
-      <div class="stack-zone">
-        <div class="stack-label">The Stack</div>
-        <div class="stack-entries">
-          @for (entry of stackEntries; track $index) {
-            <div class="stack-entry-wrapper"
-                 [class.spell-targetable]="targetingSpell && entry.isSpell"
-                 [class.stack-targeted]="isStackTargetSpell(entry)"
-                 (click)="targetingSpell && entry.isSpell ? selectSpellTarget(entry) : null"
-                 (mouseenter)="onStackEntryHover(entry); onCardHover(entry.card)"
-                 (mouseleave)="onStackEntryHoverEnd(); onCardHoverEnd()">
-              <app-card-display
-                [card]="entry.card"
-                [attr.data-entry-type]="entry.entryType" />
-              <div class="stack-entry-overlay">
-                <div class="stack-entry-controller">
-                  ({{ getPlayerName(entry.controllerId) }})
-                </div>
-                @if (entry.targetPermanentId) {
-                  <div class="stack-entry-target">
-                    Target: {{ getStackEntryTargetName(entry) ?? entry.targetPermanentId }}
-                  </div>
-                }
-              </div>
-              @if ($index === 0) {
-                <div class="stack-top-badge">Next to resolve</div>
-              }
-            </div>
-          }
-        </div>
-      </div>
-    }
-
     @if (declaringAttackers) {
       <div class="combat-banner attackers-banner">
         <span>Declare Attackers — select creatures to attack, then confirm</span>
@@ -694,14 +661,58 @@
       }
 
       <div class="log-panel">
-        <div class="log-header">Game Log</div>
-        <div class="log-entries">
-          @if (gameLog.length === 0) {
-            <div class="log-entry empty">Waiting for game to start...</div>
-          } @else {
-            @for (entry of gameLog; track $index) {
-              <div class="log-entry">{{ entry }}</div>
+        <div class="tab-header">
+          <div class="tab" [class.active]="activeTab() === 'log'" (click)="activeTab.set('log')">Game Log</div>
+          <div class="tab" [class.active]="activeTab() === 'stack'" (click)="activeTab.set('stack')">
+            Stack
+            @if (!isStackEmpty) {
+              <span class="tab-badge">{{ stackEntries.length }}</span>
             }
+          </div>
+        </div>
+        <div class="tab-content">
+          @if (activeTab() === 'log') {
+            <div class="log-entries">
+              @if (gameLog.length === 0) {
+                <div class="log-entry empty">Waiting for game to start...</div>
+              } @else {
+                @for (entry of gameLog; track $index) {
+                  <div class="log-entry">{{ entry }}</div>
+                }
+              }
+            </div>
+          } @else {
+            <div class="stack-entries">
+              @if (isStackEmpty) {
+                <div class="log-entry empty">The stack is empty.</div>
+              } @else {
+                @for (entry of stackEntries; track $index) {
+                  <div class="stack-entry-wrapper"
+                       [class.spell-targetable]="targetingSpell && entry.isSpell"
+                       [class.stack-targeted]="isStackTargetSpell(entry)"
+                       (click)="targetingSpell && entry.isSpell ? selectSpellTarget(entry) : null"
+                       (mouseenter)="onStackEntryHover(entry); onCardHover(entry.card)"
+                       (mouseleave)="onStackEntryHoverEnd(); onCardHoverEnd()">
+                    <app-card-display
+                      [card]="entry.card"
+                      [attr.data-entry-type]="entry.entryType" />
+                    <div class="stack-entry-overlay">
+                      <div class="stack-entry-controller">
+                        ({{ getPlayerName(entry.controllerId) }})
+                      </div>
+                      @if (entry.targetPermanentId) {
+                        <div class="stack-entry-target">
+                          Target: {{ getStackEntryTargetName(entry) ?? entry.targetPermanentId }}
+                        </div>
+                      }
+                    </div>
+                    @if ($index === 0) {
+                      <div class="stack-top-badge">Next to resolve</div>
+                    }
+                  </div>
+                }
+              }
+            </div>
           }
         </div>
       </div>

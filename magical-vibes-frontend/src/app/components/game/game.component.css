@@ -138,21 +138,56 @@
   flex-direction: column;
 }
 
-.log-header {
+.tab-header {
+  display: flex;
+  border-bottom: 1px solid #d4b87a;
+}
+
+.tab {
+  flex: 1;
   padding: 8px 12px;
   font-size: 13px;
   font-weight: 700;
-  color: #8b1a1a;
+  color: #8b7060;
   font-family: 'Cinzel', Georgia, serif;
-  border-bottom: 1px solid #d4b87a;
   letter-spacing: 1px;
   text-transform: uppercase;
+  text-align: center;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.tab:hover {
+  color: #5c3a2e;
+}
+
+.tab.active {
+  color: #8b1a1a;
+  border-bottom-color: #8b1a1a;
+}
+
+.tab-badge {
+  display: inline-block;
+  background: #8b1a1a;
+  color: #f5e6c8;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 8px;
+  margin-left: 4px;
+  vertical-align: middle;
+  line-height: 1.2;
+}
+
+.tab-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .log-entries {
   padding: 6px 12px;
-  overflow-y: auto;
-  flex: 1;
 }
 
 .log-entry {
@@ -817,31 +852,14 @@
   color: #f5e6c8;
 }
 
-/* Stack zone */
-
-.stack-zone {
-  background: linear-gradient(135deg, rgba(92, 24, 24, 0.08), rgba(43, 27, 23, 0.15));
-  border: 1px dashed rgba(139, 26, 26, 0.4);
-  border-radius: 4px;
-  padding: 8px 10px;
-  margin-bottom: 6px;
-}
-
-.stack-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: #8b1a1a;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 8px;
-  font-family: 'Cinzel', Georgia, serif;
-}
+/* Stack entries in tabbed panel */
 
 .stack-entries {
   display: flex;
+  flex-direction: column;
   gap: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
+  padding: 8px 12px;
+  align-items: center;
 }
 
 .stack-entry-wrapper {
