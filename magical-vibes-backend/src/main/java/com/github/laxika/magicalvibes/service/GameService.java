@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
@@ -416,12 +417,20 @@ public class GameService {
                     Permanent perm = new Permanent(card);
                     perm.setAttachedTo(entry.getTargetPermanentId());
                     gameData.playerBattlefields.get(controllerId).add(perm);
-                    broadcastBattlefields(gameData);
 
                     String playerName = gameData.playerIdToName.get(controllerId);
                     String logEntry = card.getName() + " enters the battlefield attached to " + target.getCard().getName() + " under " + playerName + "'s control.";
                     logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} resolves, attached to {} for {}", gameData.id, card.getName(), target.getCard().getName(), playerName);
+
+                    // Handle control-changing auras (e.g., Persuasion)
+                    boolean hasControlEffect = card.getEffects(EffectSlot.STATIC).stream()
+                            .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
+                    if (hasControlEffect) {
+                        stealCreature(gameData, controllerId, target);
+                    }
+
+                    broadcastBattlefields(gameData);
                 }
             } else {
                 gameData.playerBattlefields.get(controllerId).add(new Permanent(card));
@@ -2301,7 +2310,10 @@ public class GameService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
                 removeOrphanedAuras(gameData);
-                List<Card> hand = gameData.playerHands.get(playerId);
+                // Stolen creatures return to their owner's hand, not the controller's
+                UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
+                gameData.stolenCreatures.remove(target.getId());
+                List<Card> hand = gameData.playerHands.get(ownerId);
                 hand.add(target.getOriginalCard());
 
                 String logEntry = target.getCard().getName() + " is returned to its owner's hand.";
@@ -2309,7 +2321,7 @@ public class GameService {
                 log.info("Game {} - {} returned to owner's hand by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
 
                 broadcastBattlefields(gameData);
-                sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+                sessionManager.sendToPlayer(ownerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(ownerId, 0)));
                 break;
             }
         }
@@ -2339,9 +2351,12 @@ public class GameService {
 
             for (Permanent creature : creaturesToReturn) {
                 battlefield.remove(creature);
-                List<Card> hand = gameData.playerHands.get(playerId);
+                // Stolen creatures return to their owner's hand
+                UUID ownerId = gameData.stolenCreatures.getOrDefault(creature.getId(), playerId);
+                gameData.stolenCreatures.remove(creature.getId());
+                List<Card> hand = gameData.playerHands.get(ownerId);
                 hand.add(creature.getOriginalCard());
-                affectedPlayers.add(playerId);
+                affectedPlayers.add(ownerId);
 
                 String logEntry = creature.getCard().getName() + " is returned to its owner's hand.";
                 logAndBroadcast(gameData, logEntry);
@@ -2538,6 +2553,78 @@ public class GameService {
 
         broadcastBattlefields(gameData);
         broadcastPlayableCards(gameData);
+    }
+
+    private void stealCreature(GameData gameData, UUID newControllerId, Permanent creature) {
+        UUID originalOwnerId = null;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf != null && bf.contains(creature)) {
+                originalOwnerId = pid;
+                break;
+            }
+        }
+        if (originalOwnerId == null || originalOwnerId.equals(newControllerId)) {
+            return;
+        }
+
+        gameData.playerBattlefields.get(originalOwnerId).remove(creature);
+        gameData.playerBattlefields.get(newControllerId).add(creature);
+        creature.setSummoningSick(true);
+
+        // Track the original owner so we can return the creature later
+        if (!gameData.stolenCreatures.containsKey(creature.getId())) {
+            gameData.stolenCreatures.put(creature.getId(), originalOwnerId);
+        }
+
+        String newControllerName = gameData.playerIdToName.get(newControllerId);
+        String logEntry = newControllerName + " gains control of " + creature.getCard().getName() + ".";
+        logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} gains control of {}", gameData.id, newControllerName, creature.getCard().getName());
+    }
+
+    private void returnStolenCreatures(GameData gameData) {
+        if (gameData.stolenCreatures.isEmpty()) return;
+
+        boolean anyReturned = false;
+        Iterator<Map.Entry<UUID, UUID>> it = gameData.stolenCreatures.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<UUID, UUID> entry = it.next();
+            UUID creatureId = entry.getKey();
+            UUID ownerId = entry.getValue();
+
+            Permanent creature = findPermanentById(gameData, creatureId);
+            if (creature == null) {
+                // Creature left the battlefield, clean up
+                it.remove();
+                continue;
+            }
+
+            // Check if any aura with ControlEnchantedCreatureEffect is still attached
+            if (hasAuraWithEffect(gameData, creature, ControlEnchantedCreatureEffect.class)) {
+                continue;
+            }
+
+            // No control aura attached — return creature to its owner
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> bf = gameData.playerBattlefields.get(pid);
+                if (bf != null && bf.remove(creature)) {
+                    gameData.playerBattlefields.get(ownerId).add(creature);
+                    creature.setSummoningSick(true);
+
+                    String ownerName = gameData.playerIdToName.get(ownerId);
+                    String logEntry = creature.getCard().getName() + " returns to " + ownerName + "'s control.";
+                    logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} returns to {}'s control", gameData.id, creature.getCard().getName(), ownerName);
+                    anyReturned = true;
+                    break;
+                }
+            }
+            it.remove();
+        }
+        if (anyReturned) {
+            broadcastBattlefields(gameData);
+        }
     }
 
     private void resolveGainLifeEqualToTargetToughness(GameData gameData, StackEntry entry) {
@@ -3216,6 +3303,7 @@ public class GameService {
             broadcastBattlefields(gameData);
             broadcastGraveyards(gameData);
         }
+        returnStolenCreatures(gameData);
     }
 
     private void applyCloneCopy(Permanent clonePerm, Permanent targetPerm) {
@@ -3253,7 +3341,10 @@ public class GameService {
                 Permanent p = it.next();
                 if (isCreature(gameData, p) && getEffectiveToughness(gameData, p) <= 0) {
                     it.remove();
-                    gameData.playerGraveyards.get(playerId).add(p.getOriginalCard());
+                    // Stolen creatures go to their owner's graveyard
+                    UUID graveyardOwnerId = gameData.stolenCreatures.getOrDefault(p.getId(), playerId);
+                    gameData.stolenCreatures.remove(p.getId());
+                    gameData.playerGraveyards.get(graveyardOwnerId).add(p.getOriginalCard());
                     collectDeathTrigger(gameData, p.getCard(), playerId, true);
                     String logEntry = p.getCard().getName() + " is put into the graveyard (0 toughness).";
                     logAndBroadcast(gameData, logEntry);
@@ -3304,7 +3395,10 @@ public class GameService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
-                gameData.playerGraveyards.get(playerId).add(target.getOriginalCard());
+                // Stolen creatures go to their owner's graveyard, not the controller's
+                UUID graveyardOwnerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
+                gameData.playerGraveyards.get(graveyardOwnerId).add(target.getOriginalCard());
+                gameData.stolenCreatures.remove(target.getId());
                 collectDeathTrigger(gameData, target.getCard(), playerId, wasCreature);
                 return true;
             }
@@ -4109,19 +4203,23 @@ public class GameService {
 
         // Remove dead creatures (descending order to preserve indices) and move to graveyard
         List<String> deadCreatureNames = new ArrayList<>();
-        List<Card> attackerGraveyard = gameData.playerGraveyards.get(activeId);
         for (int idx : deadAttackerIndices) {
             Permanent dead = atkBf.get(idx);
             deadCreatureNames.add(gameData.playerIdToName.get(activeId) + "'s " + dead.getCard().getName());
-            attackerGraveyard.add(dead.getOriginalCard());
+            // Stolen creatures go to their owner's graveyard
+            UUID atkGraveyardOwner = gameData.stolenCreatures.getOrDefault(dead.getId(), activeId);
+            gameData.stolenCreatures.remove(dead.getId());
+            gameData.playerGraveyards.get(atkGraveyardOwner).add(dead.getOriginalCard());
             collectDeathTrigger(gameData, dead.getCard(), activeId, true);
             atkBf.remove(idx);
         }
-        List<Card> defenderGraveyard = gameData.playerGraveyards.get(defenderId);
         for (int idx : deadDefenderIndices) {
             Permanent dead = defBf.get(idx);
             deadCreatureNames.add(gameData.playerIdToName.get(defenderId) + "'s " + dead.getCard().getName());
-            defenderGraveyard.add(dead.getOriginalCard());
+            // Stolen creatures go to their owner's graveyard
+            UUID defGraveyardOwner = gameData.stolenCreatures.getOrDefault(dead.getId(), defenderId);
+            gameData.stolenCreatures.remove(dead.getId());
+            gameData.playerGraveyards.get(defGraveyardOwner).add(dead.getOriginalCard());
             collectDeathTrigger(gameData, dead.getCard(), defenderId, true);
             defBf.remove(idx);
         }
