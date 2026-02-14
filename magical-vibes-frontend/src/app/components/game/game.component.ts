@@ -851,7 +851,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   isValidTarget(perm: Permanent): boolean {
     if (this.targetingRequiresAttacking) {
-      return perm.card.type === 'CREATURE' && perm.attacking;
+      return this.isPermanentCreature(perm) && perm.attacking;
     }
     if (this.targetingAllowedTypes.length > 0) {
       if (!this.targetingAllowedTypes.some(t => t.toUpperCase() === perm.card.type.toUpperCase())) {
@@ -863,7 +863,7 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return true;
     }
-    return perm.card.type === 'CREATURE';
+    return this.isPermanentCreature(perm);
   }
 
   get player1DeckSize(): number {
@@ -965,10 +965,14 @@ export class GameComponent implements OnInit, OnDestroy {
     }
   }
 
+  isPermanentCreature(perm: Permanent): boolean {
+    return perm.card.type === 'CREATURE' || perm.animatedCreature;
+  }
+
   private canUseAbility(perm: Permanent, ability: ActivatedAbilityView): boolean {
     if (ability.requiresTap) {
       if (perm.tapped) return false;
-      if (perm.summoningSick && perm.card.type === 'CREATURE') return false;
+      if (perm.summoningSick && this.isPermanentCreature(perm)) return false;
     }
     return true;
   }
@@ -1041,7 +1045,7 @@ export class GameComponent implements OnInit, OnDestroy {
     if (abilities.some(a => !a.requiresTap)) return true;
     if (perm.tapped) return false;
     if (!perm.card.hasTapAbility) return false;
-    if (perm.summoningSick && perm.card.type === 'CREATURE') return false;
+    if (perm.summoningSick && this.isPermanentCreature(perm)) return false;
     return true;
   }
 
@@ -1302,7 +1306,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
     if (this.distributingDamage) {
       const perm = this.myBattlefield[index];
-      if (perm && perm.card.type === 'CREATURE' && perm.attacking) {
+      if (perm && this.isPermanentCreature(perm) && perm.attacking) {
         this.assignDamage(perm.id);
       }
       return;
@@ -1340,7 +1344,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
     if (this.distributingDamage) {
       const perm = this.opponentBattlefield[index];
-      if (perm && perm.card.type === 'CREATURE' && perm.attacking) {
+      if (perm && this.isPermanentCreature(perm) && perm.attacking) {
         this.assignDamage(perm.id);
       }
       return;
@@ -1379,7 +1383,7 @@ export class GameComponent implements OnInit, OnDestroy {
     battlefield.forEach((perm, idx) => {
       if (perm.attachedTo != null) return; // Auras rendered with their host
       const entry: IndexedPermanent = { perm, originalIndex: idx };
-      if (perm.card.type === 'CREATURE') {
+      if (perm.card.type === 'CREATURE' || perm.animatedCreature) {
         creatures.push(entry);
       } else {
         lands.push(entry);

@@ -53,6 +53,11 @@ public class Card {
         activatedAbilities.add(ability);
     }
 
+    public int getManaValue() {
+        if (manaCost == null) return 0;
+        return new ManaCost(manaCost).getManaValue();
+    }
+
     public boolean isAura() {
         return subtypes.contains(CardSubtype.AURA);
     }

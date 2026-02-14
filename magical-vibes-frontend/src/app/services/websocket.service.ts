@@ -164,6 +164,7 @@ export interface Permanent {
   regenerationShield: number;
   attachedTo: string | null;
   cantBeBlocked: boolean;
+  animatedCreature: boolean;
 }
 
 export interface StackEntry {
