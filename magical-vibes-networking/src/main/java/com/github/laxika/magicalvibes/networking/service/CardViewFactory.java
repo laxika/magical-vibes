@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
@@ -97,7 +98,8 @@ public class CardViewFactory {
             if (effect instanceof DoubleTargetPlayerLifeEffect
                     || effect instanceof LookAtHandEffect
                     || effect instanceof MillTargetPlayerEffect
-                    || effect instanceof ReturnArtifactsTargetPlayerOwnsToHandEffect) {
+                    || effect instanceof ReturnArtifactsTargetPlayerOwnsToHandEffect
+                    || effect instanceof ShuffleGraveyardIntoLibraryEffect) {
                 return true;
             }
         }

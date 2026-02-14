@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnes
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockOnlyFlyersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.IslandwalkEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
@@ -94,6 +95,7 @@ import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ExcludeSelfTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.MaxPowerTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.SpellColorTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.SpellTypeTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.MillByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
@@ -134,6 +136,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
@@ -613,6 +616,8 @@ public class GameService {
 
                 String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
                 logAndBroadcast(gameData, shuffleLog);
+            } else if (effect instanceof ShuffleGraveyardIntoLibraryEffect) {
+                resolveShuffleGraveyardIntoLibrary(gameData, entry);
             } else if (effect instanceof GainLifeEqualToTargetToughnessEffect) {
                 resolveGainLifeEqualToTargetToughness(gameData, entry);
             } else if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
@@ -1092,6 +1097,16 @@ public class GameService {
                                 colorFilter.colors().stream().map(c -> c.name().toLowerCase()).reduce((a, b) -> a + " or " + b).orElse("") + ".");
                     }
                 }
+
+                // Validate spell type filter (e.g., "Counter target creature spell")
+                if (card.getTargetFilter() instanceof SpellTypeTargetFilter typeFilter) {
+                    StackEntry targetSpell = gameData.stack.stream()
+                            .filter(se -> se.getCard().getId().equals(targetPermanentId))
+                            .findFirst().orElse(null);
+                    if (targetSpell != null && !typeFilter.spellTypes().contains(targetSpell.getEntryType())) {
+                        throw new IllegalStateException("Target must be a creature spell.");
+                    }
+                }
             }
 
             // Validate target if specified (can be a permanent or a player)
@@ -1104,6 +1119,11 @@ public class GameService {
                 // Protection validation
                 if (target != null && card.isNeedsTarget() && hasProtectionFrom(gameData, target, card.getColor())) {
                     throw new IllegalStateException(target.getCard().getName() + " has protection from " + card.getColor().name().toLowerCase());
+                }
+
+                // Creature shroud validation
+                if (target != null && card.isNeedsTarget() && hasKeyword(gameData, target, Keyword.SHROUD)) {
+                    throw new IllegalStateException(target.getCard().getName() + " has shroud and can't be targeted");
                 }
 
                 // Player shroud validation
@@ -1500,6 +1520,14 @@ public class GameService {
                 Permanent target = findPermanentById(gameData, targetPermanentId);
                 if (target != null) {
                     validateTargetFilter(ability.getTargetFilter(), target);
+                }
+            }
+
+            // Creature shroud validation for abilities
+            if (targetPermanentId != null) {
+                Permanent shroudTarget = findPermanentById(gameData, targetPermanentId);
+                if (shroudTarget != null && hasKeyword(gameData, shroudTarget, Keyword.SHROUD)) {
+                    throw new IllegalStateException(shroudTarget.getCard().getName() + " has shroud and can't be targeted");
                 }
             }
 
@@ -2741,6 +2769,32 @@ public class GameService {
         broadcastDeckSizes(gameData);
         broadcastGraveyards(gameData);
         log.info("Game {} - {} mills {} cards", gameData.id, playerName, cardsToMill);
+    }
+
+    private void resolveShuffleGraveyardIntoLibrary(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+
+        if (graveyard.isEmpty()) {
+            String logEntry = playerName + "'s graveyard is empty. Library is shuffled.";
+            logAndBroadcast(gameData, logEntry);
+            Collections.shuffle(deck);
+            broadcastDeckSizes(gameData);
+            return;
+        }
+
+        int count = graveyard.size();
+        deck.addAll(graveyard);
+        graveyard.clear();
+        Collections.shuffle(deck);
+
+        String logEntry = playerName + " shuffles their graveyard (" + count + " card" + (count != 1 ? "s" : "") + ") into their library.";
+        logAndBroadcast(gameData, logEntry);
+        broadcastDeckSizes(gameData);
+        broadcastGraveyards(gameData);
+        log.info("Game {} - {} shuffles graveyard ({} cards) into library", gameData.id, playerName, count);
     }
 
     private void resolveLookAtHand(GameData gameData, StackEntry entry) {
@@ -4198,6 +4252,15 @@ public class GameService {
                         .anyMatch(e -> e instanceof BlockOnlyFlyersEffect);
                 if (blockOnlyFlyers && !hasKeyword(gameData, attacker, Keyword.FLYING)) {
                     throw new IllegalStateException(blocker.getCard().getName() + " can only block creatures with flying");
+                }
+                boolean hasIslandwalk = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof IslandwalkEffect);
+                if (hasIslandwalk) {
+                    boolean defenderControlsIsland = defenderBattlefield.stream()
+                            .anyMatch(p -> p.getCard().getSubtypes().contains(CardSubtype.ISLAND));
+                    if (defenderControlsIsland) {
+                        throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked (islandwalk)");
+                    }
                 }
                 if (hasProtectionFrom(gameData, attacker, blocker.getCard().getColor())) {
                     throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (protection)");
