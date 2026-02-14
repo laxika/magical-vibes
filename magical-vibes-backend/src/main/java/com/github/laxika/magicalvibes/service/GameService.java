@@ -124,6 +124,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
@@ -180,6 +181,13 @@ public class GameService {
     }
 
     private void advanceStep(GameData gameData) {
+        // Process end-of-combat sacrifices when leaving END_OF_COMBAT
+        if (gameData.currentStep == TurnStep.END_OF_COMBAT && !gameData.permanentsToSacrificeAtEndOfCombat.isEmpty()) {
+            processEndOfCombatSacrifices(gameData);
+            gameData.priorityPassedBy.clear();
+            return;
+        }
+
         gameData.priorityPassedBy.clear();
         TurnStep next = gameData.currentStep.next();
 
@@ -564,6 +572,8 @@ public class GameService {
                 resolvePutTargetOnBottomOfLibrary(gameData, entry);
             } else if (effect instanceof DestroyBlockedCreatureAndSelfEffect) {
                 resolveDestroyBlockedCreatureAndSelf(gameData, entry);
+            } else if (effect instanceof SacrificeAtEndOfCombatEffect) {
+                resolveSacrificeAtEndOfCombat(gameData, entry);
             } else if (effect instanceof PreventAllCombatDamageEffect) {
                 resolvePreventAllCombatDamage(gameData);
             } else if (effect instanceof PreventDamageFromColorsEffect prevent) {
@@ -2091,6 +2101,16 @@ public class GameService {
         broadcastGraveyards(gameData);
     }
 
+    private void resolveSacrificeAtEndOfCombat(GameData gameData, StackEntry entry) {
+        Permanent self = findPermanentById(gameData, entry.getSourcePermanentId());
+        if (self != null) {
+            gameData.permanentsToSacrificeAtEndOfCombat.add(self.getId());
+            String logEntry = entry.getCard().getName() + " will be sacrificed at end of combat.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+        }
+    }
+
     private void resolvePreventDamageToTarget(GameData gameData, StackEntry entry, PreventDamageToTargetEffect prevent) {
         UUID targetId = entry.getTargetPermanentId();
 
@@ -3552,6 +3572,29 @@ public class GameService {
 
             broadcastBattlefields(gameData);
 
+            // Check for "when this creature attacks" triggers
+            for (int idx : attackerIndices) {
+                Permanent attacker = battlefield.get(idx);
+                if (!attacker.getCard().getEffects(EffectSlot.ON_ATTACK).isEmpty()) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            attacker.getCard(),
+                            playerId,
+                            attacker.getCard().getName() + "'s attack trigger",
+                            new ArrayList<>(attacker.getCard().getEffects(EffectSlot.ON_ATTACK)),
+                            null,
+                            attacker.getId()
+                    ));
+                    String triggerLog = attacker.getCard().getName() + "'s attack ability triggers.";
+                    gameData.gameLog.add(triggerLog);
+                    broadcastLogEntry(gameData, triggerLog);
+                    log.info("Game {} - {} attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+                }
+            }
+            if (!gameData.stack.isEmpty()) {
+                broadcastStackUpdate(gameData);
+            }
+
             log.info("Game {} - {} declares {} attackers", gameData.id, player.getUsername(), attackerIndices.size());
 
             advanceStep(gameData);
@@ -3670,13 +3713,16 @@ public class GameService {
                 Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
                 if (!blocker.getCard().getEffects(EffectSlot.ON_BLOCK).isEmpty()) {
                     Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
+                    // Only set target if effects need the attacker reference
+                    boolean needsAttackerTarget = blocker.getCard().getEffects(EffectSlot.ON_BLOCK).stream()
+                            .anyMatch(e -> e instanceof DestroyBlockedCreatureAndSelfEffect);
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             blocker.getCard(),
                             defenderId,
                             blocker.getCard().getName() + "'s block trigger",
                             new ArrayList<>(blocker.getCard().getEffects(EffectSlot.ON_BLOCK)),
-                            attacker.getId(),
+                            needsAttackerTarget ? attacker.getId() : null,
                             blocker.getId()
                     ));
                     String triggerLog = blocker.getCard().getName() + "'s block ability triggers.";
@@ -4187,6 +4233,30 @@ public class GameService {
             }
         }
         broadcastBattlefields(gameData);
+    }
+
+    private void processEndOfCombatSacrifices(GameData gameData) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null) {
+                List<Permanent> toSacrifice = battlefield.stream()
+                        .filter(p -> gameData.permanentsToSacrificeAtEndOfCombat.contains(p.getId()))
+                        .toList();
+                for (Permanent perm : toSacrifice) {
+                    battlefield.remove(perm);
+                    gameData.playerGraveyards.get(playerId).add(perm.getOriginalCard());
+                    collectDeathTrigger(gameData, perm.getCard(), playerId);
+                    String logEntry = perm.getCard().getName() + " is sacrificed.";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                    log.info("Game {} - {} sacrificed at end of combat", gameData.id, perm.getCard().getName());
+                }
+            }
+        }
+        gameData.permanentsToSacrificeAtEndOfCombat.clear();
+        removeOrphanedAuras(gameData);
+        broadcastBattlefields(gameData);
+        broadcastGraveyards(gameData);
     }
 
     // ===== End combat methods =====
