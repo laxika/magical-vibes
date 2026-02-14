@@ -60,6 +60,7 @@ public class GameData {
     public UUID awaitingColorChoicePlayerId;
     public UUID awaitingColorChoicePermanentId;
     public UUID pendingColorChoiceETBTargetId;
+    public ColorChoiceContext colorChoiceContext;
     public final Map<UUID, Map<CardColor, Integer>> playerColorDamagePreventionCount = new ConcurrentHashMap<>();
     public final List<PendingMayAbility> pendingMayAbilities = new ArrayList<>();
     public UUID awaitingMayAbilityPlayerId;

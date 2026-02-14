@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.networking.message.AutoStopsUpdatedMessage
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
@@ -59,6 +61,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockOnlyFlyersEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
@@ -108,6 +111,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchan
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
@@ -135,6 +139,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamag
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
+import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -639,6 +644,11 @@ public class GameService {
                 resolveReturnCreaturesToOwnersHand(gameData, entry, bounce);
             } else if (effect instanceof ReturnArtifactsTargetPlayerOwnsToHandEffect) {
                 resolveReturnArtifactsTargetPlayerOwnsToHand(gameData, entry);
+            } else if (effect instanceof ChangeColorTextEffect) {
+                resolveChangeColorText(gameData, entry);
+                if (gameData.awaitingInput == AwaitingInput.COLOR_CHOICE) {
+                    break;
+                }
             } else if (effect instanceof CounterSpellEffect) {
                 resolveCounterSpell(gameData, entry);
             } else if (effect instanceof ReorderTopCardsOfLibraryEffect reorder) {
@@ -1721,6 +1731,16 @@ public class GameService {
                 throw new IllegalStateException("Not your turn to choose");
             }
 
+            // Text-changing effects (Mind Bend, etc.) — two-step color/land-type choice
+            if (gameData.colorChoiceContext instanceof ColorChoiceContext.TextChangeFromWord ctx) {
+                handleTextChangeFromWordChosen(gameData, player, colorName, ctx);
+                return;
+            }
+            if (gameData.colorChoiceContext instanceof ColorChoiceContext.TextChangeToWord ctx) {
+                handleTextChangeToWordChosen(gameData, player, colorName, ctx);
+                return;
+            }
+
             CardColor color = CardColor.valueOf(colorName);
             UUID permanentId = gameData.awaitingColorChoicePermanentId;
             UUID etbTargetId = gameData.pendingColorChoiceETBTargetId;
@@ -1750,6 +1770,111 @@ public class GameService {
             sessionManager.sendToPlayers(gameData.orderedPlayerIds, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
             resolveAutoPass(gameData);
         }
+    }
+
+    private static final List<String> TEXT_CHANGE_COLOR_WORDS = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+    private static final List<String> TEXT_CHANGE_LAND_TYPES = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
+
+    private void resolveChangeColorText(GameData gameData, StackEntry entry) {
+        UUID targetPermanentId = entry.getTargetPermanentId();
+        Permanent target = findPermanentById(gameData, targetPermanentId);
+        if (target == null) {
+            return;
+        }
+
+        gameData.colorChoiceContext = new ColorChoiceContext.TextChangeFromWord(targetPermanentId);
+        gameData.awaitingInput = AwaitingInput.COLOR_CHOICE;
+        gameData.awaitingColorChoicePlayerId = entry.getControllerId();
+
+        List<String> options = new ArrayList<>();
+        options.addAll(TEXT_CHANGE_COLOR_WORDS);
+        options.addAll(TEXT_CHANGE_LAND_TYPES);
+        sessionManager.sendToPlayer(entry.getControllerId(), new ChooseColorMessage(options, "Choose a color word or basic land type to replace."));
+
+        String playerName = gameData.playerIdToName.get(entry.getControllerId());
+        log.info("Game {} - Awaiting {} to choose a color word or basic land type for text change", gameData.id, playerName);
+    }
+
+    private void handleTextChangeFromWordChosen(GameData gameData, Player player, String chosenWord, ColorChoiceContext.TextChangeFromWord ctx) {
+        boolean isColor = TEXT_CHANGE_COLOR_WORDS.contains(chosenWord);
+        boolean isLandType = TEXT_CHANGE_LAND_TYPES.contains(chosenWord);
+        if (!isColor && !isLandType) {
+            throw new IllegalArgumentException("Invalid choice: " + chosenWord);
+        }
+
+        gameData.colorChoiceContext = new ColorChoiceContext.TextChangeToWord(ctx.targetPermanentId(), chosenWord, isColor);
+
+        List<String> remainingOptions;
+        String promptType;
+        if (isColor) {
+            remainingOptions = TEXT_CHANGE_COLOR_WORDS.stream().filter(c -> !c.equals(chosenWord)).toList();
+            promptType = "color word";
+        } else {
+            remainingOptions = TEXT_CHANGE_LAND_TYPES.stream().filter(t -> !t.equals(chosenWord)).toList();
+            promptType = "basic land type";
+        }
+
+        sessionManager.sendToPlayer(player.getId(), new ChooseColorMessage(remainingOptions, "Choose the replacement " + promptType + "."));
+        log.info("Game {} - Awaiting {} to choose replacement word for text change", gameData.id, player.getUsername());
+    }
+
+    private void handleTextChangeToWordChosen(GameData gameData, Player player, String chosenWord, ColorChoiceContext.TextChangeToWord ctx) {
+        if (ctx.isColor()) {
+            if (!TEXT_CHANGE_COLOR_WORDS.contains(chosenWord)) {
+                throw new IllegalArgumentException("Invalid color choice: " + chosenWord);
+            }
+        } else {
+            if (!TEXT_CHANGE_LAND_TYPES.contains(chosenWord)) {
+                throw new IllegalArgumentException("Invalid land type choice: " + chosenWord);
+            }
+        }
+
+        gameData.awaitingInput = null;
+        gameData.awaitingColorChoicePlayerId = null;
+        gameData.colorChoiceContext = null;
+
+        Permanent target = findPermanentById(gameData, ctx.targetPermanentId());
+        if (target != null) {
+            String fromText = textChangeChoiceToWord(ctx.fromWord());
+            String toText = textChangeChoiceToWord(chosenWord);
+            target.getTextReplacements().add(new TextReplacement(fromText, toText));
+
+            // If the permanent has a chosenColor matching the from-color, update it
+            if (ctx.isColor()) {
+                CardColor fromColor = CardColor.valueOf(ctx.fromWord());
+                CardColor toColor = CardColor.valueOf(chosenWord);
+                if (fromColor.equals(target.getChosenColor())) {
+                    target.setChosenColor(toColor);
+                }
+            }
+
+            String logEntry = player.getUsername() + " changes all instances of " + fromText + " to " + toText + " on " + target.getCard().getName() + ".";
+            logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} changes {} to {} on {}", gameData.id, player.getUsername(), fromText, toText, target.getCard().getName());
+        }
+
+        gameData.priorityPassedBy.clear();
+        broadcastBattlefields(gameData);
+        broadcastStackUpdate(gameData);
+        broadcastPlayableCards(gameData);
+        sessionManager.sendToPlayers(gameData.orderedPlayerIds, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+        resolveAutoPass(gameData);
+    }
+
+    private String textChangeChoiceToWord(String choice) {
+        return switch (choice) {
+            case "WHITE" -> "white";
+            case "BLUE" -> "blue";
+            case "BLACK" -> "black";
+            case "RED" -> "red";
+            case "GREEN" -> "green";
+            case "PLAINS" -> "Plains";
+            case "ISLAND" -> "Island";
+            case "SWAMP" -> "Swamp";
+            case "MOUNTAIN" -> "Mountain";
+            case "FOREST" -> "Forest";
+            default -> throw new IllegalArgumentException("Invalid choice: " + choice);
+        };
     }
 
     private void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
@@ -2484,6 +2609,9 @@ public class GameService {
             String logEntry = casterName + " looks at " + targetName + "'s hand: " + cardNames + ".";
             logAndBroadcast(gameData, logEntry);
         }
+
+        List<CardView> cardViews = hand.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(entry.getControllerId(), new RevealHandMessage(cardViews, targetName));
 
         log.info("Game {} - {} looks at {}'s hand", gameData.id, casterName, targetName);
     }
@@ -3837,7 +3965,9 @@ public class GameService {
         // Filter out attackers that can't be blocked
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
         attackerIndices = attackerIndices.stream()
-                .filter(idx -> !attackerBattlefield.get(idx).isCantBeBlocked())
+                .filter(idx -> !attackerBattlefield.get(idx).isCantBeBlocked()
+                        && attackerBattlefield.get(idx).getCard().getEffects(EffectSlot.STATIC).stream()
+                                .noneMatch(e -> e instanceof CantBeBlockedEffect))
                 .toList();
 
         if (blockable.isEmpty() || attackerIndices.isEmpty()) {
@@ -3903,6 +4033,11 @@ public class GameService {
                 Permanent blocker = defenderBattlefield.get(blockerIdx);
                 if (attacker.isCantBeBlocked()) {
                     throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked this turn");
+                }
+                boolean hasCantBeBlockedStatic = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof CantBeBlockedEffect);
+                if (hasCantBeBlockedStatic) {
+                    throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked");
                 }
                 if (hasKeyword(gameData, attacker, Keyword.FLYING)
                         && !hasKeyword(gameData, blocker, Keyword.FLYING)

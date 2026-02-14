@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, StackEntry, StackUpdatedNotification, GraveyardUpdatedNotification, ReorderLibraryCardsNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, StackEntry, StackUpdatedNotification, GraveyardUpdatedNotification, ReorderLibraryCardsNotification, RevealHandNotification } from '../../services/websocket.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { Subscription } from 'rxjs';
 
@@ -185,6 +185,13 @@ export class GameComponent implements OnInit, OnDestroy {
         if (message.type === MessageType.REORDER_LIBRARY_CARDS) {
           const reorderMsg = message as ReorderLibraryCardsNotification;
           this.handleReorderLibraryCards(reorderMsg);
+        }
+
+        if (message.type === MessageType.REVEAL_HAND) {
+          const revealMsg = message as RevealHandNotification;
+          this.revealingHand = true;
+          this.revealedHandCards = revealMsg.cards;
+          this.revealedHandPlayerName = revealMsg.playerName;
         }
 
         const update = message as GameUpdate;
@@ -550,6 +557,11 @@ export class GameComponent implements OnInit, OnDestroy {
       case 'BLACK': return 'Black';
       case 'RED': return 'Red';
       case 'GREEN': return 'Green';
+      case 'PLAINS': return 'Plains';
+      case 'ISLAND': return 'Island';
+      case 'SWAMP': return 'Swamp';
+      case 'MOUNTAIN': return 'Mountain';
+      case 'FOREST': return 'Forest';
       default: return color;
     }
   }
@@ -850,6 +862,12 @@ export class GameComponent implements OnInit, OnDestroy {
     this.reorderPrompt = '';
   }
 
+  closeRevealHand(): void {
+    this.revealingHand = false;
+    this.revealedHandCards = [];
+    this.revealedHandPlayerName = '';
+  }
+
   isValidTarget(perm: Permanent): boolean {
     if (this.targetingRequiresAttacking) {
       return this.isPermanentCreature(perm) && perm.attacking;
@@ -1127,6 +1145,11 @@ export class GameComponent implements OnInit, OnDestroy {
   reorderAvailableIndices: number[] = [];
   reorderOriginalIndices: number[] = [];
   reorderPrompt = '';
+
+  // Reveal hand state
+  revealingHand = false;
+  revealedHandCards: Card[] = [];
+  revealedHandPlayerName = '';
 
   // X cost prompt state
   choosingXValue = false;
