@@ -11,5 +11,6 @@ public enum EffectSlot {
     ON_BLOCK,
     UPKEEP_TRIGGERED,
     ON_ANY_PLAYER_CASTS_SPELL,
-    ON_DEATH
+    ON_DEATH,
+    ON_COMBAT_DAMAGE_TO_PLAYER
 }

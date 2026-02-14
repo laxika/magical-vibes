@@ -999,6 +999,12 @@
   cursor: pointer;
 }
 
+.card.selected-multi-permanent {
+  outline: 3px solid #2ecc71;
+  box-shadow: 0 0 16px rgba(46, 204, 113, 0.8);
+  cursor: pointer;
+}
+
 .permanent-choice-banner {
   background: linear-gradient(135deg, #e67e22, #d35400);
   box-shadow: 0 4px 12px rgba(230, 126, 34, 0.4);

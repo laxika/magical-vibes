@@ -36,7 +36,8 @@ public enum CardSubtype {
     SKELETON("Skeleton"),
     ELEPHANT("Elephant"),
     ELEMENTAL("Elemental"),
-    MERFOLK("Merfolk");
+    MERFOLK("Merfolk"),
+    OCTOPUS("Octopus");
 
     @Getter
     private final String displayName;

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
+import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.SacrificePermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
@@ -97,6 +98,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 case DECLARE_BLOCKERS -> messageHandler.handleDeclareBlockers(connection, objectMapper.treeToValue(jsonNode, DeclareBlockersRequest.class));
                 case CARD_CHOSEN -> messageHandler.handleCardChosen(connection, objectMapper.treeToValue(jsonNode, CardChosenRequest.class));
                 case PERMANENT_CHOSEN -> messageHandler.handlePermanentChosen(connection, objectMapper.treeToValue(jsonNode, PermanentChosenRequest.class));
+                case MULTIPLE_PERMANENTS_CHOSEN -> messageHandler.handleMultiplePermanentsChosen(connection, objectMapper.treeToValue(jsonNode, MultiplePermanentsChosenRequest.class));
                 case COLOR_CHOSEN -> messageHandler.handleColorChosen(connection, objectMapper.treeToValue(jsonNode, ColorChosenRequest.class));
                 case MAY_ABILITY_CHOSEN -> messageHandler.handleMayAbilityChosen(connection, objectMapper.treeToValue(jsonNode, MayAbilityChosenRequest.class));
                 default -> messageHandler.handleError(connection, "Unknown message type: " + type);

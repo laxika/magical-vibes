@@ -242,6 +242,8 @@
                 [permanent]="ip.perm"
                 [class.tapped]="ip.perm.tapped"
                 [class.targetable]="targeting && isValidTarget(ip.perm)"
+                [class.choosable-permanent]="(choosingPermanent && choosablePermanentIds().has(ip.perm.id)) || (choosingMultiplePermanents && multiPermanentChoiceIds().has(ip.perm.id))"
+                [class.selected-multi-permanent]="choosingMultiplePermanents && multiPermanentSelectedIds().has(ip.perm.id)"
                 (click)="onOpponentBattlefieldCardClick(ip.originalIndex)"
                 (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
                 (mouseleave)="onCardHoverEnd()" />
@@ -268,6 +270,8 @@
                 [class.summoning-sick]="ip.perm.summoningSick"
                 [class.block-target]="isBlockTarget(ip.originalIndex)"
                 [class.targetable]="targeting && isValidTarget(ip.perm)"
+                [class.choosable-permanent]="(choosingPermanent && choosablePermanentIds().has(ip.perm.id)) || (choosingMultiplePermanents && multiPermanentChoiceIds().has(ip.perm.id))"
+                [class.selected-multi-permanent]="choosingMultiplePermanents && multiPermanentSelectedIds().has(ip.perm.id)"
                 (click)="onOpponentBattlefieldCardClick(ip.originalIndex)"
                 (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
                 (mouseleave)="onCardHoverEnd()" />
@@ -386,7 +390,8 @@
                 [class.selected-blocker]="selectedBlockerIndex === ip.originalIndex"
                 [class.assigned-blocker]="isAssignedBlocker(ip.originalIndex)"
                 [class.targetable]="targeting && isValidTarget(ip.perm)"
-                [class.choosable-permanent]="choosingPermanent && choosablePermanentIds().has(ip.perm.id)"
+                [class.choosable-permanent]="(choosingPermanent && choosablePermanentIds().has(ip.perm.id)) || (choosingMultiplePermanents && multiPermanentChoiceIds().has(ip.perm.id))"
+                [class.selected-multi-permanent]="choosingMultiplePermanents && multiPermanentSelectedIds().has(ip.perm.id)"
                 (click)="onMyBattlefieldCardClick(ip.originalIndex)"
                 (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
                 (mouseleave)="onCardHoverEnd()" />
@@ -412,7 +417,8 @@
                 [class.tapped]="ip.perm.tapped"
                 [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
                 [class.targetable]="targeting && isValidTarget(ip.perm)"
-                [class.choosable-permanent]="choosingPermanent && choosablePermanentIds().has(ip.perm.id)"
+                [class.choosable-permanent]="(choosingPermanent && choosablePermanentIds().has(ip.perm.id)) || (choosingMultiplePermanents && multiPermanentChoiceIds().has(ip.perm.id))"
+                [class.selected-multi-permanent]="choosingMultiplePermanents && multiPermanentSelectedIds().has(ip.perm.id)"
                 (click)="onMyBattlefieldCardClick(ip.originalIndex)"
                 (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
                 (mouseleave)="onCardHoverEnd()" />
@@ -476,6 +482,13 @@
     @if (choosingPermanent) {
       <div class="combat-banner permanent-choice-banner">
         <span>{{ permanentChoicePrompt }}</span>
+      </div>
+    }
+
+    @if (choosingMultiplePermanents) {
+      <div class="combat-banner permanent-choice-banner">
+        <span>{{ multiPermanentChoicePrompt }} ({{ multiPermanentSelectedIds().size }}/{{ multiPermanentMaxCount }} selected)</span>
+        <button class="btn-confirm-combat" (click)="confirmMultiPermanentChoice()">Confirm</button>
       </div>
     }
 
