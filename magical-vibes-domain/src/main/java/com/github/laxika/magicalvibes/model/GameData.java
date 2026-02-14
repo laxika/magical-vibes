@@ -74,6 +74,7 @@ public class GameData {
     public int awaitingDiscardRemainingCount;
     public final Map<UUID, UUID> drawReplacementTargetToController = new ConcurrentHashMap<>();
     public final Map<UUID, UUID> stolenCreatures = new ConcurrentHashMap<>();
+    public final Set<UUID> enchantmentDependentStolenCreatures = ConcurrentHashMap.newKeySet();
 
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {
         this.id = id;
