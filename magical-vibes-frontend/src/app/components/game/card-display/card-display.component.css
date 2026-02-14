@@ -5,8 +5,8 @@
   color: white;
   border: 3px solid #555;
   border-radius: 8px;
-  width: 130px;
-  height: 182px;
+  width: 165px;
+  height: 231px;
   box-sizing: border-box;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
   transition: transform 0.15s;
@@ -50,14 +50,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 18px;
-  padding: 0 4px;
+  height: 22px;
+  padding: 0 5px;
   background: rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
 }
 
 .card-name {
-  font-size: 9px;
+  font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -66,7 +66,7 @@
 }
 
 .card-mana-cost {
-  font-size: 8px;
+  font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
   flex-shrink: 0;
@@ -75,7 +75,7 @@
 
 /* Art box */
 .card-art {
-  height: 68px;
+  height: 86px;
   margin: 2px 3px;
   border-radius: 2px;
   background: rgba(0, 0, 0, 0.15);
@@ -94,14 +94,14 @@ img.card-art {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 14px;
-  padding: 0 4px;
+  height: 18px;
+  padding: 0 5px;
   background: rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
 }
 
 .card-type {
-  font-size: 8px;
+  font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -135,7 +135,7 @@ img.card-art {
 /* Text box */
 .text-box {
   flex: 1;
-  padding: 3px 4px;
+  padding: 3px 5px;
   overflow: hidden;
   position: relative;
   min-height: 0;
@@ -179,7 +179,7 @@ img.card-art {
   position: absolute;
   bottom: 2px;
   right: 2px;
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 700;
   background: rgba(0, 0, 0, 0.4);
   padding: 1px 5px;
@@ -196,13 +196,13 @@ img.card-art {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 11px;
-  padding: 0 4px;
+  height: 14px;
+  padding: 0 5px;
   flex-shrink: 0;
 }
 
 .card-artist {
-  font-size: 6px;
+  font-size: 9px;
   opacity: 0.6;
   white-space: nowrap;
   overflow: hidden;
@@ -211,7 +211,7 @@ img.card-art {
 }
 
 .card-set-badge {
-  font-size: 6px;
+  font-size: 9px;
   font-weight: 600;
   opacity: 0.7;
   white-space: nowrap;
