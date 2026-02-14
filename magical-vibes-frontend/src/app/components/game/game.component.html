@@ -233,7 +233,7 @@
               [card]="ip.perm.card"
               [permanent]="ip.perm"
               [class.tapped]="ip.perm.tapped"
-              [class.targetable]="targeting"
+              [class.targetable]="targeting && isValidTarget(ip.perm)"
               (click)="onOpponentBattlefieldCardClick(ip.originalIndex)" />
           }
         </div>
@@ -245,7 +245,7 @@
               [class.tapped]="ip.perm.tapped"
               [class.summoning-sick]="ip.perm.summoningSick"
               [class.block-target]="isBlockTarget(ip.originalIndex)"
-              [class.targetable]="targeting"
+              [class.targetable]="targeting && isValidTarget(ip.perm)"
               (click)="onOpponentBattlefieldCardClick(ip.originalIndex)" />
           }
         </div>
@@ -321,7 +321,7 @@
               [class.can-block]="canBlock(ip.originalIndex) && !isAssignedBlocker(ip.originalIndex) && selectedBlockerIndex !== ip.originalIndex"
               [class.selected-blocker]="selectedBlockerIndex === ip.originalIndex"
               [class.assigned-blocker]="isAssignedBlocker(ip.originalIndex)"
-              [class.targetable]="targeting"
+              [class.targetable]="targeting && isValidTarget(ip.perm)"
               [class.choosable-permanent]="choosingPermanent && choosablePermanentIds().has(ip.perm.id)"
               (click)="onMyBattlefieldCardClick(ip.originalIndex)" />
           }
@@ -333,7 +333,7 @@
               [permanent]="ip.perm"
               [class.tapped]="ip.perm.tapped"
               [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
-              [class.targetable]="targeting"
+              [class.targetable]="targeting && isValidTarget(ip.perm)"
               [class.choosable-permanent]="choosingPermanent && choosablePermanentIds().has(ip.perm.id)"
               (click)="onMyBattlefieldCardClick(ip.originalIndex)" />
           }

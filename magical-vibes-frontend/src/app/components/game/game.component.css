@@ -201,7 +201,7 @@ h1 {
 .player-badge.targetable {
   border: 2px dashed #27ae60;
   box-shadow: 0 0 12px rgba(39, 174, 96, 0.5);
-  cursor: crosshair;
+  cursor: pointer;
 }
 
 .life-total {
@@ -1029,7 +1029,7 @@ h1 {
 .card.targetable {
   border: 2px dashed #27ae60;
   box-shadow: 0 0 12px rgba(39, 174, 96, 0.5);
-  cursor: crosshair;
+  cursor: pointer;
 }
 
 .x-value-input {

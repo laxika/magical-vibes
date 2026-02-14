@@ -545,9 +545,11 @@ export class GameComponent implements OnInit, OnDestroy {
         this.targeting = true;
         this.targetingCardIndex = index;
         this.targetingCardName = card.name;
-        if (card.allowedTargetTypes.length > 0) {
-          this.targetingAllowedTypes = card.allowedTargetTypes;
-        }
+        this.targetingForAbility = false;
+        this.targetingForPlayer = false;
+        this.targetingAbilityIndex = -1;
+        this.pendingAbilityXValue = null;
+        this.targetingAllowedTypes = card.allowedTargetTypes?.length > 0 ? card.allowedTargetTypes : [];
         return;
       }
       this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetPermanentId: null });
