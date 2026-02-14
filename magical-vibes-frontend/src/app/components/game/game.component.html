@@ -1,13 +1,6 @@
 <div class="game-container">
-  <header>
-    <h1>{{ game()?.gameName }}</h1>
-    <div class="game-status">
-      <span class="status-badge" [class.waiting]="game()?.status === GameStatus.WAITING" [class.mulligan]="game()?.status === GameStatus.MULLIGAN" [class.running]="game()?.status === GameStatus.RUNNING" [class.finished]="game()?.status === GameStatus.FINISHED">
-        {{ game()?.status }}
-      </span>
-    </div>
-  </header>
-
+  <div class="game-layout">
+    <div class="game-area">
   @if (game()?.status === GameStatus.MULLIGAN) {
     <div class="mulligan-section">
       <div class="turn-info">
@@ -231,24 +224,44 @@
         <div class="battlefield-label">{{ game()?.playerNames?.[opponentPlayerIndex] }}'s Battlefield</div>
         <div class="battlefield-sub-row lands-row">
           @for (ip of opponentLands; track ip.originalIndex) {
-            <app-card-display
-              [card]="ip.perm.card"
-              [permanent]="ip.perm"
-              [class.tapped]="ip.perm.tapped"
-              [class.targetable]="targeting && isValidTarget(ip.perm)"
-              (click)="onOpponentBattlefieldCardClick(ip.originalIndex)" />
+            <div class="permanent-stack">
+              @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
+                <app-card-display
+                  [card]="aura.perm.card"
+                  [permanent]="aura.perm"
+                  class="attached-aura"
+                  [class.targetable]="targeting && isValidTarget(aura.perm)"
+                  (click)="onAuraClick(aura)" />
+              }
+              <app-card-display
+                [card]="ip.perm.card"
+                [permanent]="ip.perm"
+                [class.tapped]="ip.perm.tapped"
+                [class.targetable]="targeting && isValidTarget(ip.perm)"
+                (click)="onOpponentBattlefieldCardClick(ip.originalIndex)" />
+            </div>
           }
         </div>
         <div class="battlefield-sub-row creatures-row">
           @for (ip of opponentCreaturesNotInCombat(); track ip.originalIndex) {
-            <app-card-display
-              [card]="ip.perm.card"
-              [permanent]="ip.perm"
-              [class.tapped]="ip.perm.tapped"
-              [class.summoning-sick]="ip.perm.summoningSick"
-              [class.block-target]="isBlockTarget(ip.originalIndex)"
-              [class.targetable]="targeting && isValidTarget(ip.perm)"
-              (click)="onOpponentBattlefieldCardClick(ip.originalIndex)" />
+            <div class="permanent-stack">
+              @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
+                <app-card-display
+                  [card]="aura.perm.card"
+                  [permanent]="aura.perm"
+                  class="attached-aura"
+                  [class.targetable]="targeting && isValidTarget(aura.perm)"
+                  (click)="onAuraClick(aura)" />
+              }
+              <app-card-display
+                [card]="ip.perm.card"
+                [permanent]="ip.perm"
+                [class.tapped]="ip.perm.tapped"
+                [class.summoning-sick]="ip.perm.summoningSick"
+                [class.block-target]="isBlockTarget(ip.originalIndex)"
+                [class.targetable]="targeting && isValidTarget(ip.perm)"
+                (click)="onOpponentBattlefieldCardClick(ip.originalIndex)" />
+            </div>
           }
         </div>
         @if (opponentBattlefield.length === 0) {
@@ -273,31 +286,51 @@
             @for (group of combatPairings; track group.attackerIndex) {
               <div class="combat-group">
                 <div class="combat-attacker-slot">
-                  <app-card-display
-                    [card]="group.attacker.card"
-                    [permanent]="group.attacker"
-                    [class.attacking]="group.attacker.attacking"
-                    [class.selected-attacker]="declaringAttackers && isSelectedAttacker(group.attackerIndex)"
-                    [class.block-target]="declaringBlockers && selectedBlockerIndex !== null && !group.attackerIsMine"
-                    [class.targetable]="distributingDamage || (targeting && isValidTarget(group.attacker))"
-                    (click)="onCombatAttackerClick(group)"
-                    (contextmenu)="$event.preventDefault(); unassignDamage(group.attacker.id)">
-                    <div class="card-combat-badge attacking-badge">Attacking</div>
-                    @if (distributingDamage && getDamageAssigned(group.attacker.id) > 0) {
-                      <div class="card-combat-badge damage-badge">{{ getDamageAssigned(group.attacker.id) }} dmg</div>
+                  <div class="permanent-stack">
+                    @for (aura of getAttachedAuras(group.attacker.id); track aura.perm.id) {
+                      <app-card-display
+                        [card]="aura.perm.card"
+                        [permanent]="aura.perm"
+                        class="attached-aura"
+                        [class.targetable]="targeting && isValidTarget(aura.perm)"
+                        (click)="onAuraClick(aura)" />
                     }
-                  </app-card-display>
+                    <app-card-display
+                      [card]="group.attacker.card"
+                      [permanent]="group.attacker"
+                      [class.attacking]="group.attacker.attacking"
+                      [class.selected-attacker]="declaringAttackers && isSelectedAttacker(group.attackerIndex)"
+                      [class.block-target]="declaringBlockers && selectedBlockerIndex !== null && !group.attackerIsMine"
+                      [class.targetable]="distributingDamage || (targeting && isValidTarget(group.attacker))"
+                      (click)="onCombatAttackerClick(group)"
+                      (contextmenu)="$event.preventDefault(); unassignDamage(group.attacker.id)">
+                      <div class="card-combat-badge attacking-badge">Attacking</div>
+                      @if (distributingDamage && getDamageAssigned(group.attacker.id) > 0) {
+                        <div class="card-combat-badge damage-badge">{{ getDamageAssigned(group.attacker.id) }} dmg</div>
+                      }
+                    </app-card-display>
+                  </div>
                 </div>
                 @if (group.blockers.length > 0) {
                   <div class="combat-blocker-slots">
                     @for (blocker of group.blockers; track blocker.index) {
-                      <app-card-display
-                        [card]="blocker.perm.card"
-                        [permanent]="blocker.perm"
-                        class="blocking"
-                        (click)="onCombatBlockerClick(blocker)">
-                        <div class="card-combat-badge blocking-badge">Blocking</div>
-                      </app-card-display>
+                      <div class="permanent-stack">
+                        @for (aura of getAttachedAuras(blocker.perm.id); track aura.perm.id) {
+                          <app-card-display
+                            [card]="aura.perm.card"
+                            [permanent]="aura.perm"
+                            class="attached-aura"
+                            [class.targetable]="targeting && isValidTarget(aura.perm)"
+                            (click)="onAuraClick(aura)" />
+                        }
+                        <app-card-display
+                          [card]="blocker.perm.card"
+                          [permanent]="blocker.perm"
+                          class="blocking"
+                          (click)="onCombatBlockerClick(blocker)">
+                          <div class="card-combat-badge blocking-badge">Blocking</div>
+                        </app-card-display>
+                      </div>
                     }
                   </div>
                 }
@@ -313,31 +346,51 @@
         <div class="battlefield-label">Your Battlefield</div>
         <div class="battlefield-sub-row creatures-row">
           @for (ip of myCreaturesNotInCombat(); track ip.originalIndex) {
-            <app-card-display
-              [card]="ip.perm.card"
-              [permanent]="ip.perm"
-              [class.tapped]="ip.perm.tapped"
-              [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
-              [class.summoning-sick]="ip.perm.summoningSick"
-              [class.can-attack]="canAttack(ip.originalIndex) && !isSelectedAttacker(ip.originalIndex)"
-              [class.can-block]="canBlock(ip.originalIndex) && !isAssignedBlocker(ip.originalIndex) && selectedBlockerIndex !== ip.originalIndex"
-              [class.selected-blocker]="selectedBlockerIndex === ip.originalIndex"
-              [class.assigned-blocker]="isAssignedBlocker(ip.originalIndex)"
-              [class.targetable]="targeting && isValidTarget(ip.perm)"
-              [class.choosable-permanent]="choosingPermanent && choosablePermanentIds().has(ip.perm.id)"
-              (click)="onMyBattlefieldCardClick(ip.originalIndex)" />
+            <div class="permanent-stack">
+              @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
+                <app-card-display
+                  [card]="aura.perm.card"
+                  [permanent]="aura.perm"
+                  class="attached-aura"
+                  [class.targetable]="targeting && isValidTarget(aura.perm)"
+                  (click)="onAuraClick(aura)" />
+              }
+              <app-card-display
+                [card]="ip.perm.card"
+                [permanent]="ip.perm"
+                [class.tapped]="ip.perm.tapped"
+                [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
+                [class.summoning-sick]="ip.perm.summoningSick"
+                [class.can-attack]="canAttack(ip.originalIndex) && !isSelectedAttacker(ip.originalIndex)"
+                [class.can-block]="canBlock(ip.originalIndex) && !isAssignedBlocker(ip.originalIndex) && selectedBlockerIndex !== ip.originalIndex"
+                [class.selected-blocker]="selectedBlockerIndex === ip.originalIndex"
+                [class.assigned-blocker]="isAssignedBlocker(ip.originalIndex)"
+                [class.targetable]="targeting && isValidTarget(ip.perm)"
+                [class.choosable-permanent]="choosingPermanent && choosablePermanentIds().has(ip.perm.id)"
+                (click)="onMyBattlefieldCardClick(ip.originalIndex)" />
+            </div>
           }
         </div>
         <div class="battlefield-sub-row lands-row">
           @for (ip of myLands; track ip.originalIndex) {
-            <app-card-display
-              [card]="ip.perm.card"
-              [permanent]="ip.perm"
-              [class.tapped]="ip.perm.tapped"
-              [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
-              [class.targetable]="targeting && isValidTarget(ip.perm)"
-              [class.choosable-permanent]="choosingPermanent && choosablePermanentIds().has(ip.perm.id)"
-              (click)="onMyBattlefieldCardClick(ip.originalIndex)" />
+            <div class="permanent-stack">
+              @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
+                <app-card-display
+                  [card]="aura.perm.card"
+                  [permanent]="aura.perm"
+                  class="attached-aura"
+                  [class.targetable]="targeting && isValidTarget(aura.perm)"
+                  (click)="onAuraClick(aura)" />
+              }
+              <app-card-display
+                [card]="ip.perm.card"
+                [permanent]="ip.perm"
+                [class.tapped]="ip.perm.tapped"
+                [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
+                [class.targetable]="targeting && isValidTarget(ip.perm)"
+                [class.choosable-permanent]="choosingPermanent && choosablePermanentIds().has(ip.perm.id)"
+                (click)="onMyBattlefieldCardClick(ip.originalIndex)" />
+            </div>
           }
         </div>
         @if (myBattlefield.length === 0) {
@@ -424,27 +477,26 @@
     </div>
   }
 
-  <div class="game-layout">
-    <div class="game-area">
-      @if (game()?.status === GameStatus.WAITING) {
-        <div class="players-area">
-          <div class="player-card">
-            <div class="player-label">Player 1</div>
-            <div class="player-name">{{ player1Name }}</div>
-          </div>
+  @if (game()?.status === GameStatus.WAITING) {
+    <div class="players-area">
+      <div class="game-title">{{ game()?.gameName }}</div>
+      <div class="player-card">
+        <div class="player-label">Player 1</div>
+        <div class="player-name">{{ player1Name }}</div>
+      </div>
 
-          <div class="vs-divider">VS</div>
+      <div class="vs-divider">VS</div>
 
-          <div class="player-card">
-            <div class="player-label">Player 2</div>
-            @if (isWaitingForOpponent) {
-              <div class="player-name waiting">Waiting for an opponent</div>
-            } @else {
-              <div class="player-name">{{ player2Name }}</div>
-            }
-          </div>
-        </div>
-      }
+      <div class="player-card">
+        <div class="player-label">Player 2</div>
+        @if (isWaitingForOpponent) {
+          <div class="player-name waiting">Waiting for an opponent</div>
+        } @else {
+          <div class="player-name">{{ player2Name }}</div>
+        }
+      </div>
+    </div>
+  }
     </div>
 
     <div class="log-panel">
