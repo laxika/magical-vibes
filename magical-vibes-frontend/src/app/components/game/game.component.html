@@ -1,13 +1,4 @@
 <div class="game-container">
-  <header>
-    <h1>{{ game()?.gameName }}</h1>
-    <div class="game-status">
-      <span class="status-badge" [class.waiting]="game()?.status === GameStatus.WAITING" [class.mulligan]="game()?.status === GameStatus.MULLIGAN" [class.running]="game()?.status === GameStatus.RUNNING" [class.finished]="game()?.status === GameStatus.FINISHED">
-        {{ game()?.status }}
-      </span>
-    </div>
-  </header>
-
   @if (game()?.status === GameStatus.MULLIGAN) {
     <div class="mulligan-section">
       <div class="turn-info">
@@ -488,6 +479,7 @@
     <div class="game-area">
       @if (game()?.status === GameStatus.WAITING) {
         <div class="players-area">
+          <div class="game-title">{{ game()?.gameName }}</div>
           <div class="player-card">
             <div class="player-label">Player 1</div>
             <div class="player-name">{{ player1Name }}</div>
