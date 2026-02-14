@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfEffect;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,7 +56,9 @@ class AcademyResearchersTest {
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.HUMAN, CardSubtype.WIZARD);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(PutAuraFromHandOntoSelfEffect.class);
+                .isInstanceOf(MayEffect.class);
+        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
+        assertThat(mayEffect.wrapped()).isInstanceOf(PutAuraFromHandOntoSelfEffect.class);
     }
 
     // ===== Casting and resolving =====
@@ -77,7 +80,7 @@ class AcademyResearchersTest {
     }
 
     @Test
-    @DisplayName("Resolving Academy Researchers puts it on the battlefield with ETB on stack")
+    @DisplayName("Resolving Academy Researchers puts it on the battlefield with may prompt, then ETB on stack")
     void resolvingPutsItOnBattlefieldWithEtb() {
         harness.setHand(player1, List.of(new AcademyResearchers()));
         harness.addMana(player1, "U", 3);
@@ -90,6 +93,13 @@ class AcademyResearchersTest {
         // Academy Researchers is on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Academy Researchers"));
+
+        // May ability prompt is pending
+        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
+
+        // Accept the may ability
+        harness.handleMayAbilityChosen(player1, true);
 
         // ETB triggered ability is on the stack
         assertThat(gd.stack).hasSize(1);
@@ -104,7 +114,8 @@ class AcademyResearchersTest {
     @DisplayName("ETB prompts controller to choose an Aura from hand")
     void etbPromptsAuraChoice() {
         setupAndCast();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → ETB on stack
 
         harness.setHand(player1, List.of(new HolyStrength()));
 
@@ -120,7 +131,8 @@ class AcademyResearchersTest {
     @DisplayName("Only Aura card indices are offered when hand has mixed cards")
     void onlyAuraIndicesOffered() {
         setupAndCast();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → ETB on stack
 
         // Hand: [GrizzlyBears, HolyStrength, Pacifism, GrizzlyBears]
         harness.setHand(player1, List.of(new GrizzlyBears(), new HolyStrength(), new Pacifism(), new GrizzlyBears()));
@@ -137,7 +149,8 @@ class AcademyResearchersTest {
     @DisplayName("Choosing an Aura puts it onto the battlefield attached to Academy Researchers")
     void choosingAuraAttachesToSelf() {
         setupAndCast();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → ETB on stack
 
         harness.setHand(player1, List.of(new HolyStrength()));
 
@@ -170,7 +183,8 @@ class AcademyResearchersTest {
     @DisplayName("Aura static effect applies to Academy Researchers after attachment")
     void auraStaticEffectApplies() {
         setupAndCast();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → ETB on stack
 
         harness.setHand(player1, List.of(new HolyStrength()));
 
@@ -195,7 +209,8 @@ class AcademyResearchersTest {
     @DisplayName("Declining to choose an Aura leaves hand and battlefield unchanged")
     void decliningLeavesHandUnchanged() {
         setupAndCast();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → ETB on stack
 
         harness.setHand(player1, List.of(new HolyStrength()));
 
@@ -218,7 +233,8 @@ class AcademyResearchersTest {
     @DisplayName("ETB does nothing when no Auras are in hand")
     void etbDoesNothingWithNoAuras() {
         setupAndCast();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → ETB on stack
 
         // Hand has only non-Aura cards
         harness.setHand(player1, List.of(new GrizzlyBears()));
@@ -234,7 +250,8 @@ class AcademyResearchersTest {
     @DisplayName("ETB does nothing when hand is empty")
     void etbDoesNothingWithEmptyHand() {
         setupAndCast();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → ETB on stack
 
         harness.setHand(player1, List.of());
 
@@ -251,7 +268,8 @@ class AcademyResearchersTest {
     @DisplayName("ETB fizzles if Academy Researchers left the battlefield before resolution")
     void etbFizzlesIfCreatureLeftBattlefield() {
         setupAndCast();
-        harness.passBothPriorities(); // resolve creature spell → ETB on stack
+        harness.passBothPriorities(); // resolve creature spell → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → ETB on stack
 
         harness.setHand(player1, List.of(new HolyStrength()));
 
@@ -272,7 +290,8 @@ class AcademyResearchersTest {
     @DisplayName("Player can choose among multiple Auras in hand")
     void canChooseAmongMultipleAuras() {
         setupAndCast();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → ETB on stack
 
         harness.setHand(player1, List.of(new HolyStrength(), new SpiritLink()));
 

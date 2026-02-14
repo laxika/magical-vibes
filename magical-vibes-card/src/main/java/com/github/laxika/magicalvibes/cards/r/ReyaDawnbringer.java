@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public class ReyaDawnbringer extends Card {
         setSubtypes(List.of(CardSubtype.ANGEL));
         setCardText("Flying\nAt the beginning of your upkeep, you may return target creature card from your graveyard to the battlefield.");
         setKeywords(Set.of(Keyword.FLYING));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ReturnCreatureFromGraveyardToBattlefieldEffect());
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(new ReturnCreatureFromGraveyardToBattlefieldEffect(), "Return a creature from your graveyard to the battlefield?"));
         setPower(4);
         setToughness(6);
     }

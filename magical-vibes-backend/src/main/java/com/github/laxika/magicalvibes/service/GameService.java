@@ -200,23 +200,36 @@ public class GameService {
             List<CardEffect> upkeepEffects = perm.getCard().getEffects(EffectSlot.UPKEEP_TRIGGERED);
             if (upkeepEffects == null || upkeepEffects.isEmpty()) continue;
 
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    perm.getCard(),
-                    activePlayerId,
-                    perm.getCard().getName() + "'s upkeep ability",
-                    new ArrayList<>(upkeepEffects)
-            ));
+            for (CardEffect effect : upkeepEffects) {
+                if (effect instanceof MayEffect may) {
+                    gameData.pendingMayAbilities.add(new PendingMayAbility(
+                            perm.getCard(),
+                            activePlayerId,
+                            List.of(may.wrapped()),
+                            perm.getCard().getName() + " — " + may.prompt()
+                    ));
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            activePlayerId,
+                            perm.getCard().getName() + "'s upkeep ability",
+                            new ArrayList<>(List.of(effect))
+                    ));
 
-            String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
-            gameData.gameLog.add(logEntry);
-            broadcastLogEntry(gameData, logEntry);
-            log.info("Game {} - {} upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                    String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                    log.info("Game {} - {} upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                }
+            }
         }
 
         if (!gameData.stack.isEmpty()) {
             broadcastStackUpdate(gameData);
         }
+
+        processNextMayAbility(gameData);
     }
 
     private void handleDrawStep(GameData gameData) {
@@ -1484,21 +1497,36 @@ public class GameService {
                 .filter(e -> !(e instanceof ChooseColorEffect))
                 .toList();
         if (!triggeredEffects.isEmpty()) {
-            if (!card.isNeedsTarget() || targetPermanentId != null) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+            List<CardEffect> mayEffects = triggeredEffects.stream().filter(e -> e instanceof MayEffect).toList();
+            List<CardEffect> mandatoryEffects = triggeredEffects.stream().filter(e -> !(e instanceof MayEffect)).toList();
+
+            for (CardEffect effect : mayEffects) {
+                MayEffect may = (MayEffect) effect;
+                gameData.pendingMayAbilities.add(new PendingMayAbility(
                         card,
                         controllerId,
-                        card.getName() + "'s ETB ability",
-                        new ArrayList<>(triggeredEffects),
-                        0,
-                        targetPermanentId,
-                        Map.of()
+                        List.of(may.wrapped()),
+                        card.getName() + " — " + may.prompt()
                 ));
-                String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
-                gameData.gameLog.add(etbLog);
-                broadcastLogEntry(gameData, etbLog);
-                log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
+            }
+
+            if (!mandatoryEffects.isEmpty()) {
+                if (!card.isNeedsTarget() || targetPermanentId != null) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            controllerId,
+                            card.getName() + "'s ETB ability",
+                            new ArrayList<>(mandatoryEffects),
+                            0,
+                            targetPermanentId,
+                            Map.of()
+                    ));
+                    String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
+                    gameData.gameLog.add(etbLog);
+                    broadcastLogEntry(gameData, etbLog);
+                    log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
+                }
             }
         }
 
@@ -3958,14 +3986,28 @@ public class GameService {
 
             for (Permanent perm : battlefield) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)) {
-                    if (effect instanceof GainLifeOnColorSpellCastEffect trigger
+                    CardEffect inner = effect instanceof MayEffect m ? m.wrapped() : effect;
+
+                    if (inner instanceof GainLifeOnColorSpellCastEffect trigger
                             && spellCard.getColor() == trigger.triggerColor()) {
-                        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                                perm.getCard(),
-                                playerId,
-                                List.of(new GainLifeEffect(trigger.amount())),
-                                perm.getCard().getName() + " — Gain " + trigger.amount() + " life?"
-                        ));
+                        List<CardEffect> resolvedEffects = List.of(new GainLifeEffect(trigger.amount()));
+
+                        if (effect instanceof MayEffect may) {
+                            gameData.pendingMayAbilities.add(new PendingMayAbility(
+                                    perm.getCard(),
+                                    playerId,
+                                    resolvedEffects,
+                                    perm.getCard().getName() + " — " + may.prompt()
+                            ));
+                        } else {
+                            gameData.stack.add(new StackEntry(
+                                    StackEntryType.TRIGGERED_ABILITY,
+                                    perm.getCard(),
+                                    playerId,
+                                    perm.getCard().getName() + "'s ability",
+                                    new ArrayList<>(resolvedEffects)
+                            ));
+                        }
                     }
                 }
             }
