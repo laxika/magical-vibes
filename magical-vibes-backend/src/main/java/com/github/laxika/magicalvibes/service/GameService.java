@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockOnlyFlyersEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
@@ -3866,7 +3867,9 @@ public class GameService {
         // Filter out attackers that can't be blocked
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
         attackerIndices = attackerIndices.stream()
-                .filter(idx -> !attackerBattlefield.get(idx).isCantBeBlocked())
+                .filter(idx -> !attackerBattlefield.get(idx).isCantBeBlocked()
+                        && attackerBattlefield.get(idx).getCard().getEffects(EffectSlot.STATIC).stream()
+                                .noneMatch(e -> e instanceof CantBeBlockedEffect))
                 .toList();
 
         if (blockable.isEmpty() || attackerIndices.isEmpty()) {
@@ -3932,6 +3935,11 @@ public class GameService {
                 Permanent blocker = defenderBattlefield.get(blockerIdx);
                 if (attacker.isCantBeBlocked()) {
                     throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked this turn");
+                }
+                boolean hasCantBeBlockedStatic = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof CantBeBlockedEffect);
+                if (hasCantBeBlockedStatic) {
+                    throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked");
                 }
                 if (hasKeyword(gameData, attacker, Keyword.FLYING)
                         && !hasKeyword(gameData, blocker, Keyword.FLYING)
