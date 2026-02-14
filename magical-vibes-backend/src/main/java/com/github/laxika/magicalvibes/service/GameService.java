@@ -82,6 +82,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
 import com.github.laxika.magicalvibes.model.filter.AttackingOrBlockingTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AttackingTargetFilter;
@@ -617,6 +618,8 @@ public class GameService {
                 resolveMillByHandSize(gameData, entry);
             } else if (effect instanceof MillTargetPlayerEffect mill) {
                 resolveMillTargetPlayer(gameData, entry, mill);
+            } else if (effect instanceof LookAtHandEffect) {
+                resolveLookAtHand(gameData, entry);
             } else if (effect instanceof RevealTopCardOfLibraryEffect) {
                 resolveRevealTopCardOfLibrary(gameData, entry);
             } else if (effect instanceof GainControlOfTargetAuraEffect) {
@@ -2450,6 +2453,24 @@ public class GameService {
         broadcastDeckSizes(gameData);
         broadcastGraveyards(gameData);
         log.info("Game {} - {} mills {} cards", gameData.id, playerName, cardsToMill);
+    }
+
+    private void resolveLookAtHand(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        String casterName = gameData.playerIdToName.get(entry.getControllerId());
+
+        if (hand.isEmpty()) {
+            String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
+            logAndBroadcast(gameData, logEntry);
+        } else {
+            String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
+            String logEntry = casterName + " looks at " + targetName + "'s hand: " + cardNames + ".";
+            logAndBroadcast(gameData, logEntry);
+        }
+
+        log.info("Game {} - {} looks at {}'s hand", gameData.id, casterName, targetName);
     }
 
     private void resolveRevealTopCardOfLibrary(GameData gameData, StackEntry entry) {

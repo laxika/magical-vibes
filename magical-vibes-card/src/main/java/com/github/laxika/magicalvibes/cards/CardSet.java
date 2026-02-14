@@ -74,6 +74,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
 import com.github.laxika.magicalvibes.cards.p.Pariah;
+import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.ReyaDawnbringer;
 import com.github.laxika.magicalvibes.cards.r.RevivingDose;
@@ -213,6 +214,7 @@ public enum CardSet {
             new CardPrinting("10E", "90", MahamotiDjinn::new, "\"Of royal blood among the spirits of the air, the Mahamoti djinn rides on the wings of the winds. As dangerous in the gambling hall as he is in battle, he is a master of trickery and misdirection.\"", "Greg Staples", RARE),
             new CardPrinting("10E", "91", MarchOfTheMachines::new, "Ben Thompson", RARE),
             new CardPrinting("10E", "92", MerfolkLooter::new, "\"It belongs to the merfolk now.\"\n\u2014Shipwreck prayer", "Tristan Elwell", COMMON),
+            new CardPrinting("10E", "94", Peek::new, "\"Sometimes you have to read between the minds.\"", "Adam Rex", COMMON),
             new CardPrinting("10E", "77", CraftyPathmage::new, "\"Follow the pathmage\"\n\u2014Otarian expression meaning \"escape quickly\"", "Jim Murray", COMMON),
             new CardPrinting("10E", "380", Forest::new, "Anthony S. Waters", COMMON),
             new CardPrinting("10E", "381", Forest::new, "John Avon", COMMON),
