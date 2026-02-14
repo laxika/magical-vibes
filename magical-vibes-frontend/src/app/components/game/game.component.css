@@ -747,13 +747,13 @@
 }
 
 .card.attacking {
-  outline: 2px solid #e74c3c;
-  box-shadow: 0 0 12px rgba(231, 76, 60, 0.6);
+  outline: 2px solid #c04040;
+  box-shadow: 0 0 12px rgba(192, 64, 64, 0.5);
 }
 
 .card.blocking {
-  outline: 2px solid #4a90d9;
-  box-shadow: 0 0 12px rgba(74, 144, 217, 0.6);
+  outline: 2px solid #5878a0;
+  box-shadow: 0 0 12px rgba(88, 120, 160, 0.5);
 }
 
 .card.can-attack {
@@ -775,19 +775,19 @@
 }
 
 .card.selected-blocker {
-  outline: 2px solid #7b2d8e;
-  box-shadow: 0 0 16px rgba(123, 45, 142, 0.7);
+  outline: 2px solid #7040a0;
+  box-shadow: 0 0 16px rgba(112, 64, 160, 0.6);
   cursor: pointer;
 }
 
 .card.assigned-blocker {
-  outline: 2px solid #4a90d9;
-  box-shadow: 0 0 12px rgba(74, 144, 217, 0.5);
+  outline: 2px solid #5878a0;
+  box-shadow: 0 0 12px rgba(88, 120, 160, 0.5);
 }
 
 .card.block-target {
-  outline: 2px dashed #e74c3c;
-  box-shadow: 0 0 16px rgba(231, 76, 60, 0.6);
+  outline: 2px dashed #c04040;
+  box-shadow: 0 0 16px rgba(192, 64, 64, 0.5);
   cursor: pointer;
 }
 
@@ -1080,14 +1080,14 @@
 }
 
 .card.choosable-card {
-  outline: 2px solid #7b2d8e;
-  box-shadow: 0 0 12px rgba(123, 45, 142, 0.6);
+  outline: 2px solid #7040a0;
+  box-shadow: 0 0 12px rgba(112, 64, 160, 0.5);
   cursor: pointer;
 }
 
 .card.choosable-permanent {
-  outline: 2px dashed #e67e22;
-  box-shadow: 0 0 12px rgba(230, 126, 34, 0.6);
+  outline: 2px dashed #c08040;
+  box-shadow: 0 0 12px rgba(192, 128, 64, 0.5);
   cursor: pointer;
 }
 
