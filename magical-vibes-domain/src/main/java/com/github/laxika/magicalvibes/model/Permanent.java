@@ -13,7 +13,8 @@ import java.util.UUID;
 public class Permanent {
 
     private final UUID id;
-    private final Card card;
+    private Card card;
+    private final Card originalCard;
     private boolean tapped;
     private boolean attacking;
     private boolean blocking;
@@ -30,8 +31,17 @@ public class Permanent {
     public Permanent(Card card) {
         this.id = UUID.randomUUID();
         this.card = card;
+        this.originalCard = card;
         this.tapped = false;
         this.summoningSick = true;
+    }
+
+    public Card getOriginalCard() {
+        return originalCard;
+    }
+
+    public void setCard(Card card) {
+        this.card = card;
     }
 
     public void tap() {
