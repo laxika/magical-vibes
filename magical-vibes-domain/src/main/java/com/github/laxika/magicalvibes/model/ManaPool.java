@@ -1,66 +1,50 @@
 package com.github.laxika.magicalvibes.model;
 
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ManaPool {
 
-    private int white;
-    private int blue;
-    private int black;
-    private int red;
-    private int green;
+    private final EnumMap<ManaColor, Integer> pool = new EnumMap<>(ManaColor.class);
 
-    public void add(String color) {
-        switch (color) {
-            case "W" -> white++;
-            case "U" -> blue++;
-            case "B" -> black++;
-            case "R" -> red++;
-            case "G" -> green++;
+    public ManaPool() {
+        for (ManaColor color : ManaColor.values()) {
+            pool.put(color, 0);
         }
+    }
+
+    public void add(ManaColor color) {
+        pool.merge(color, 1, Integer::sum);
     }
 
     public void clear() {
-        white = 0;
-        blue = 0;
-        black = 0;
-        red = 0;
-        green = 0;
+        for (ManaColor color : ManaColor.values()) {
+            pool.put(color, 0);
+        }
     }
 
-    public int get(String color) {
-        return switch (color) {
-            case "W" -> white;
-            case "U" -> blue;
-            case "B" -> black;
-            case "R" -> red;
-            case "G" -> green;
-            default -> 0;
-        };
+    public int get(ManaColor color) {
+        return pool.getOrDefault(color, 0);
     }
 
     public int getTotal() {
-        return white + blue + black + red + green;
+        int total = 0;
+        for (int value : pool.values()) {
+            total += value;
+        }
+        return total;
     }
 
-    public void remove(String color) {
-        switch (color) {
-            case "W" -> white--;
-            case "U" -> blue--;
-            case "B" -> black--;
-            case "R" -> red--;
-            case "G" -> green--;
-        }
+    public void remove(ManaColor color) {
+        pool.merge(color, -1, Integer::sum);
     }
 
     public Map<String, Integer> toMap() {
         Map<String, Integer> map = new LinkedHashMap<>();
-        map.put("W", white);
-        map.put("U", blue);
-        map.put("B", black);
-        map.put("R", red);
-        map.put("G", green);
+        for (ManaColor color : ManaColor.values()) {
+            map.put(color.getCode(), pool.getOrDefault(color, 0));
+        }
         return map;
     }
 }

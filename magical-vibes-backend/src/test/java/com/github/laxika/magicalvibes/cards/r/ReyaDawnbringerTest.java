@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -87,7 +88,7 @@ class ReyaDawnbringerTest {
     @DisplayName("Casting Reya Dawnbringer puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new ReyaDawnbringer()));
-        harness.addMana(player1, "W", 9);
+        harness.addMana(player1, ManaColor.WHITE, 9);
 
         harness.castCreature(player1, 0);
 
@@ -100,7 +101,7 @@ class ReyaDawnbringerTest {
     @DisplayName("Cannot cast Reya Dawnbringer without enough mana")
     void cannotCastWithoutMana() {
         harness.setHand(player1, List.of(new ReyaDawnbringer()));
-        harness.addMana(player1, "W", 5);
+        harness.addMana(player1, ManaColor.WHITE, 5);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -113,7 +114,7 @@ class ReyaDawnbringerTest {
     @DisplayName("Resolving puts Reya Dawnbringer on the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new ReyaDawnbringer()));
-        harness.addMana(player1, "W", 9);
+        harness.addMana(player1, ManaColor.WHITE, 9);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

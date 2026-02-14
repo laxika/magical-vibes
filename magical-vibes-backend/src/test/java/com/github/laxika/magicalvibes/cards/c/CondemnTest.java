@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -69,7 +70,7 @@ class CondemnTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Condemn()));
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
 
         harness.castInstant(player2, 0, attacker.getId());
@@ -91,7 +92,7 @@ class CondemnTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Condemn()));
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, targetId))
@@ -105,7 +106,7 @@ class CondemnTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Condemn()));
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
@@ -129,7 +130,7 @@ class CondemnTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Condemn()));
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
 
         harness.castInstant(player2, 0, attacker.getId());
@@ -162,7 +163,7 @@ class CondemnTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Condemn()));
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
 
         harness.castInstant(player2, 0, attacker.getId());
@@ -187,7 +188,7 @@ class CondemnTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Condemn()));
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
 
         harness.castInstant(player2, 0, attacker.getId());
@@ -209,7 +210,7 @@ class CondemnTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Condemn()));
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
 
         harness.castInstant(player2, 0, attacker.getId());
@@ -237,7 +238,7 @@ class CondemnTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Condemn()));
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
 
         harness.castInstant(player2, 0, attacker.getId());

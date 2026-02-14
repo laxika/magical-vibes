@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -64,7 +65,7 @@ class MindBendTest {
     void castingPutsOnStack() {
         harness.addToBattlefield(player2, new PaladinEnVec());
         harness.setHand(player1, List.of(new MindBend()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Paladin en-Vec");
         harness.castInstant(player1, 0, targetId);
@@ -84,7 +85,7 @@ class MindBendTest {
     void resolvingPromptsForFirstChoice() {
         harness.addToBattlefield(player2, new PaladinEnVec());
         harness.setHand(player1, List.of(new MindBend()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Paladin en-Vec");
         harness.castInstant(player1, 0, targetId);
@@ -101,7 +102,7 @@ class MindBendTest {
     void firstChoicePromptsForSecond() {
         harness.addToBattlefield(player2, new PaladinEnVec());
         harness.setHand(player1, List.of(new MindBend()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Paladin en-Vec");
         harness.castInstant(player1, 0, targetId);
@@ -122,7 +123,7 @@ class MindBendTest {
     void replacingColorWordAddsTextReplacement() {
         harness.addToBattlefield(player2, new PaladinEnVec());
         harness.setHand(player1, List.of(new MindBend()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Paladin en-Vec");
         harness.castInstant(player1, 0, targetId);
@@ -147,7 +148,7 @@ class MindBendTest {
     void replacingColorWordLogsChange() {
         harness.addToBattlefield(player2, new PaladinEnVec());
         harness.setHand(player1, List.of(new MindBend()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Paladin en-Vec");
         harness.castInstant(player1, 0, targetId);
@@ -167,7 +168,7 @@ class MindBendTest {
     void replacingLandTypeAddsTextReplacement() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new MindBend()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);
@@ -191,7 +192,7 @@ class MindBendTest {
     void landTypeFirstChoiceRestrictsSecondToLandTypes() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new MindBend()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);
@@ -218,7 +219,7 @@ class MindBendTest {
         voiceOfAll.setChosenColor(CardColor.BLACK);
 
         harness.setHand(player1, List.of(new MindBend()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Voice of All");
         harness.castInstant(player1, 0, targetId);
@@ -240,7 +241,7 @@ class MindBendTest {
         voiceOfAll.setChosenColor(CardColor.BLACK);
 
         harness.setHand(player1, List.of(new MindBend()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Voice of All");
         harness.castInstant(player1, 0, targetId);
@@ -259,7 +260,7 @@ class MindBendTest {
     void mindBendGoesToGraveyardAfterResolving() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new MindBend()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);
@@ -279,7 +280,7 @@ class MindBendTest {
     void fizzlesIfTargetRemoved() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new MindBend()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);
@@ -301,7 +302,7 @@ class MindBendTest {
     void multipleReplacementsStack() {
         harness.addToBattlefield(player2, new PaladinEnVec());
         harness.setHand(player1, List.of(new MindBend()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Paladin en-Vec");
         harness.castInstant(player1, 0, targetId);
@@ -313,7 +314,7 @@ class MindBendTest {
 
         // Cast a second Mind Bend
         harness.setHand(player1, List.of(new MindBend()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
@@ -334,7 +335,7 @@ class MindBendTest {
     void canTargetOwnPermanents() {
         harness.addToBattlefield(player1, new PaladinEnVec());
         harness.setHand(player1, List.of(new MindBend()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player1, "Paladin en-Vec");
         harness.castInstant(player1, 0, targetId);
@@ -357,7 +358,7 @@ class MindBendTest {
     void cannotChooseInvalidFirstChoice() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new MindBend()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);
@@ -372,7 +373,7 @@ class MindBendTest {
     void cannotMixColorAndLandType() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new MindBend()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);

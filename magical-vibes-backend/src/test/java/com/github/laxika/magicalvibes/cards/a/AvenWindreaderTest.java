@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
@@ -64,8 +65,8 @@ class AvenWindreaderTest {
     @DisplayName("Casting Aven Windreader puts it on the stack and resolves to battlefield")
     void castAndResolve() {
         harness.setHand(player1, List.of(new AvenWindreader()));
-        harness.addMana(player1, "U", 2);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
 
@@ -87,8 +88,8 @@ class AvenWindreaderTest {
     @DisplayName("Activating ability targeting opponent reveals top card of their library in game log")
     void revealOpponentTopCard() {
         harness.addToBattlefield(player1, new AvenWindreader());
-        harness.addMana(player1, "U", 1);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         // Note the top card of player2's deck
         GameData gd = harness.getGameData();
@@ -113,8 +114,8 @@ class AvenWindreaderTest {
     @DisplayName("Activating ability targeting self reveals top card of own library in game log")
     void revealOwnTopCard() {
         harness.addToBattlefield(player1, new AvenWindreader());
-        harness.addMana(player1, "U", 1);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         GameData gd = harness.getGameData();
         String topCardName = gd.playerDecks.get(player1.getId()).getFirst().getName();
@@ -131,8 +132,8 @@ class AvenWindreaderTest {
     @DisplayName("Revealing top card when target player's library is empty logs appropriate message")
     void revealEmptyLibrary() {
         harness.addToBattlefield(player1, new AvenWindreader());
-        harness.addMana(player1, "U", 1);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         // Empty player2's deck
         GameData gd = harness.getGameData();
@@ -148,8 +149,8 @@ class AvenWindreaderTest {
     @DisplayName("Ability can be activated multiple times per turn (no tap required)")
     void activateMultipleTimes() {
         harness.addToBattlefield(player1, new AvenWindreader());
-        harness.addMana(player1, "U", 2);
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         // First activation
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -173,8 +174,8 @@ class AvenWindreaderTest {
     @DisplayName("Activating ability without a target throws exception")
     void activateWithoutTarget() {
         harness.addToBattlefield(player1, new AvenWindreader());
-        harness.addMana(player1, "U", 1);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -186,8 +187,8 @@ class AvenWindreaderTest {
     void activateTargetingPermanent() {
         harness.addToBattlefield(player1, new AvenWindreader());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addMana(player1, "U", 1);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 

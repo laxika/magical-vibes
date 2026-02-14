@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -59,7 +60,7 @@ class StarlightInvokerTest {
     @DisplayName("Activating ability puts it on the stack")
     void activatingPutsOnStack() {
         addReadyInvoker(player1);
-        harness.addMana(player1, "W", 8);
+        harness.addMana(player1, ManaColor.WHITE, 8);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -74,7 +75,7 @@ class StarlightInvokerTest {
     @DisplayName("Activating ability does not tap Starlight Invoker")
     void activatingDoesNotTap() {
         Permanent invoker = addReadyInvoker(player1);
-        harness.addMana(player1, "W", 8);
+        harness.addMana(player1, ManaColor.WHITE, 8);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -85,7 +86,7 @@ class StarlightInvokerTest {
     @DisplayName("Mana is consumed when activating ability")
     void manaIsConsumedWhenActivating() {
         addReadyInvoker(player1);
-        harness.addMana(player1, "W", 10);
+        harness.addMana(player1, ManaColor.WHITE, 10);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -100,7 +101,7 @@ class StarlightInvokerTest {
     void resolvingGainsFiveLife() {
         harness.setLife(player1, 20);
         addReadyInvoker(player1);
-        harness.addMana(player1, "W", 8);
+        harness.addMana(player1, ManaColor.WHITE, 8);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -115,7 +116,7 @@ class StarlightInvokerTest {
     void canActivateMultipleTimes() {
         harness.setLife(player1, 20);
         addReadyInvoker(player1);
-        harness.addMana(player1, "W", 16);
+        harness.addMana(player1, ManaColor.WHITE, 16);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -131,7 +132,7 @@ class StarlightInvokerTest {
     void resolvingLogsLifeGain() {
         harness.setLife(player1, 20);
         addReadyInvoker(player1);
-        harness.addMana(player1, "W", 8);
+        harness.addMana(player1, ManaColor.WHITE, 8);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -146,7 +147,7 @@ class StarlightInvokerTest {
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
         addReadyInvoker(player1);
-        harness.addMana(player1, "W", 7);
+        harness.addMana(player1, ManaColor.WHITE, 7);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

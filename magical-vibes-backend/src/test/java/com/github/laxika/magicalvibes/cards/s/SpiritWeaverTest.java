@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -66,7 +67,7 @@ class SpiritWeaverTest {
     void activatingPutsOnStackWithTarget() {
         addReadyWeaver(player1);
         Permanent target = addReadyBears(player1);
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -83,7 +84,7 @@ class SpiritWeaverTest {
     void activatingDoesNotTap() {
         Permanent weaver = addReadyWeaver(player1);
         addReadyBears(player1);
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, weaver.getId());
 
@@ -95,7 +96,7 @@ class SpiritWeaverTest {
     void manaIsConsumedWhenActivating() {
         addReadyWeaver(player1);
         Permanent target = addReadyBears(player1);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -110,7 +111,7 @@ class SpiritWeaverTest {
     void resolvingBoostsTargetToughness() {
         addReadyWeaver(player1);
         Permanent target = addReadyBears(player1);
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -128,7 +129,7 @@ class SpiritWeaverTest {
     void canActivateMultipleTimes() {
         addReadyWeaver(player1);
         Permanent target = addReadyBears(player1);
-        harness.addMana(player1, "W", 6);
+        harness.addMana(player1, ManaColor.WHITE, 6);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -149,7 +150,7 @@ class SpiritWeaverTest {
     void boostResetsAtEndOfTurn() {
         addReadyWeaver(player1);
         Permanent target = addReadyBears(player1);
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -173,7 +174,7 @@ class SpiritWeaverTest {
     void cannotActivateWithoutEnoughMana() {
         addReadyWeaver(player1);
         Permanent target = addReadyBears(player1);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -66,8 +67,8 @@ class AvenFisherTest {
     @DisplayName("Casting Aven Fisher puts it on the stack and resolves to battlefield")
     void castAndResolve() {
         harness.setHand(player1, List.of(new AvenFisher()));
-        harness.addMana(player1, "U", 1);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
 
@@ -238,7 +239,7 @@ class AvenFisherTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         int handSizeBefore = harness.getGameData().playerHands.get(player1.getId()).size();
 
@@ -274,7 +275,7 @@ class AvenFisherTest {
         harness.addToBattlefield(player1, new AvenFisher());
 
         harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         int handSizeBefore = harness.getGameData().playerHands.get(player1.getId()).size();
 

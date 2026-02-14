@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -88,7 +89,7 @@ class PaladinEnVecTest {
     @DisplayName("Casting Paladin en-Vec puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new PaladinEnVec()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
 
@@ -101,7 +102,7 @@ class PaladinEnVecTest {
     @DisplayName("Cannot cast Paladin en-Vec without enough mana")
     void cannotCastWithoutMana() {
         harness.setHand(player1, List.of(new PaladinEnVec()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -114,7 +115,7 @@ class PaladinEnVecTest {
     @DisplayName("Resolving puts Paladin en-Vec on the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new PaladinEnVec()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -128,7 +129,7 @@ class PaladinEnVecTest {
     @DisplayName("Paladin en-Vec enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
         harness.setHand(player1, List.of(new PaladinEnVec()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -339,7 +340,7 @@ class PaladinEnVecTest {
         gd.playerBattlefields.get(player2.getId()).add(paladin);
 
         harness.setHand(player1, List.of(createTargetedInstant("Dark Banishing", CardColor.BLACK, "{B}")));
-        harness.addMana(player1, "B", 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, paladin.getId(), null))
                 .isInstanceOf(IllegalStateException.class)
@@ -354,7 +355,7 @@ class PaladinEnVecTest {
         gd.playerBattlefields.get(player2.getId()).add(paladin);
 
         harness.setHand(player1, List.of(createTargetedInstant("Lightning Bolt", CardColor.RED, "{R}")));
-        harness.addMana(player1, "R", 1);
+        harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, paladin.getId(), null))
                 .isInstanceOf(IllegalStateException.class)
@@ -369,7 +370,7 @@ class PaladinEnVecTest {
         gd.playerBattlefields.get(player1.getId()).add(paladin);
 
         harness.setHand(player1, List.of(new Bandage()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castInstant(player1, 0, paladin.getId());
 
@@ -390,7 +391,7 @@ class PaladinEnVecTest {
         blackAura.setSubtypes(List.of(CardSubtype.AURA));
         blackAura.setNeedsTarget(true);
         harness.setHand(player1, List.of(blackAura));
-        harness.addMana(player1, "B", 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, paladin.getId(), null))
                 .isInstanceOf(IllegalStateException.class)
@@ -405,7 +406,7 @@ class PaladinEnVecTest {
         gd.playerBattlefields.get(player1.getId()).add(paladin);
 
         harness.setHand(player1, List.of(new HolyStrength()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         gs.playCard(gd, player1, 0, 0, paladin.getId(), null);
 

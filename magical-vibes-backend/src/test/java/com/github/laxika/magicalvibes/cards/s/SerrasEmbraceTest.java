@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -73,7 +74,7 @@ class SerrasEmbraceTest {
         gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new SerrasEmbrace()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
 
@@ -90,7 +91,7 @@ class SerrasEmbraceTest {
         gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new SerrasEmbrace()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
         harness.passBothPriorities();

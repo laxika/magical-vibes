@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -59,7 +60,7 @@ class BenalishKnightTest {
     @DisplayName("Can cast during main phase like a normal creature")
     void canCastDuringMainPhase() {
         harness.setHand(player1, List.of(new BenalishKnight()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
 
@@ -74,7 +75,7 @@ class BenalishKnightTest {
     @DisplayName("Cannot cast without enough mana")
     void cannotCastWithoutEnoughMana() {
         harness.setHand(player1, List.of(new BenalishKnight()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -91,7 +92,7 @@ class BenalishKnightTest {
         harness.clearPriorityPassed();
 
         harness.setHand(player1, List.of(new BenalishKnight()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         // Player2 passes priority, giving player1 priority
         harness.getGameService().passPriority(harness.getGameData(), player2);
@@ -111,7 +112,7 @@ class BenalishKnightTest {
         harness.clearPriorityPassed();
 
         harness.setHand(player1, List.of(new BenalishKnight()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
 
@@ -127,7 +128,7 @@ class BenalishKnightTest {
         harness.clearPriorityPassed();
 
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -140,7 +141,7 @@ class BenalishKnightTest {
     @DisplayName("Resolving puts Benalish Knight onto the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new BenalishKnight()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -240,7 +241,7 @@ class BenalishKnightTest {
     @DisplayName("Benalish Knight enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
         harness.setHand(player1, List.of(new BenalishKnight()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -71,7 +72,7 @@ class DehydrationTest {
         gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new Dehydration()));
-        harness.addMana(player1, "U", 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
 
@@ -89,7 +90,7 @@ class DehydrationTest {
         gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new Dehydration()));
-        harness.addMana(player1, "U", 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
         harness.passBothPriorities();
@@ -109,7 +110,7 @@ class DehydrationTest {
         gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new Dehydration()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null))
                 .isInstanceOf(IllegalStateException.class)
@@ -277,7 +278,7 @@ class DehydrationTest {
         gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new Dehydration()));
-        harness.addMana(player1, "U", 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
         harness.passBothPriorities();
@@ -318,7 +319,7 @@ class DehydrationTest {
         gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new Dehydration()));
-        harness.addMana(player1, "U", 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
 
@@ -347,7 +348,7 @@ class DehydrationTest {
 
         // Player1 casts Dehydration on it
         harness.setHand(player1, List.of(new Dehydration()));
-        harness.addMana(player1, "U", 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
         harness.passBothPriorities();

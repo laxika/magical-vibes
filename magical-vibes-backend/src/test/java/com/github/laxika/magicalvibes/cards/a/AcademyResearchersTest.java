@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -67,7 +68,7 @@ class AcademyResearchersTest {
     @DisplayName("Casting Academy Researchers puts it on the stack")
     void castingPutsItOnStack() {
         harness.setHand(player1, List.of(new AcademyResearchers()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0);
 
@@ -83,7 +84,7 @@ class AcademyResearchersTest {
     @DisplayName("Resolving Academy Researchers puts it on the battlefield with may prompt, then ETB on stack")
     void resolvingPutsItOnBattlefieldWithEtb() {
         harness.setHand(player1, List.of(new AcademyResearchers()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -325,7 +326,7 @@ class AcademyResearchersTest {
 
     private void setupAndCast() {
         harness.setHand(player1, List.of(new AcademyResearchers()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
         harness.castCreature(player1, 0);
     }
 }

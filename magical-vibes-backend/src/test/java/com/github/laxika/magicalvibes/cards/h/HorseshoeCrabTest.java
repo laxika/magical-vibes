@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -65,7 +66,7 @@ class HorseshoeCrabTest {
     @DisplayName("Casting Horseshoe Crab puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new HorseshoeCrab()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0);
 
@@ -78,7 +79,7 @@ class HorseshoeCrabTest {
     @DisplayName("Resolving puts Horseshoe Crab onto the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new HorseshoeCrab()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -92,7 +93,7 @@ class HorseshoeCrabTest {
     @DisplayName("Cannot cast without enough mana")
     void cannotCastWithoutEnoughMana() {
         harness.setHand(player1, List.of(new HorseshoeCrab()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -105,7 +106,7 @@ class HorseshoeCrabTest {
     @DisplayName("Activating ability puts UntapSelf on the stack")
     void activatingAbilityPutsOnStack() {
         addCrabReady(player1);
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -122,7 +123,7 @@ class HorseshoeCrabTest {
         crabPerm.tap();
         assertThat(crabPerm.isTapped()).isTrue();
 
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -135,7 +136,7 @@ class HorseshoeCrabTest {
     @DisplayName("Can activate ability when already untapped")
     void canActivateWhenAlreadyUntapped() {
         addCrabReady(player1);
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -149,7 +150,7 @@ class HorseshoeCrabTest {
     void canActivateMultipleTimes() {
         Permanent crabPerm = addCrabReady(player1);
         crabPerm.tap();
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -168,7 +169,7 @@ class HorseshoeCrabTest {
     @DisplayName("Activating ability does NOT tap the permanent")
     void activatingAbilityDoesNotTap() {
         addCrabReady(player1);
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -180,7 +181,7 @@ class HorseshoeCrabTest {
     @DisplayName("Mana is consumed when activating ability")
     void manaIsConsumedWhenActivating() {
         addCrabReady(player1);
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -202,7 +203,7 @@ class HorseshoeCrabTest {
     @DisplayName("Ability fizzles if Horseshoe Crab is removed before resolution")
     void abilityFizzlesIfSourceRemoved() {
         addCrabReady(player1);
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -218,7 +219,7 @@ class HorseshoeCrabTest {
     @DisplayName("Activating ability logs the activation")
     void activatingAbilityLogsActivation() {
         addCrabReady(player1);
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -230,7 +231,7 @@ class HorseshoeCrabTest {
     void resolvingAbilityLogsUntap() {
         Permanent crabPerm = addCrabReady(player1);
         crabPerm.tap();
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

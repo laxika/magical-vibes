@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -63,7 +64,7 @@ class MarchOfTheMachinesTest {
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new MarchOfTheMachines()));
-        harness.addMana(player1, "U", 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castEnchantment(player1, 0);
 
@@ -76,7 +77,7 @@ class MarchOfTheMachinesTest {
     @DisplayName("Resolving puts March of the Machines onto the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new MarchOfTheMachines()));
-        harness.addMana(player1, "U", 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();

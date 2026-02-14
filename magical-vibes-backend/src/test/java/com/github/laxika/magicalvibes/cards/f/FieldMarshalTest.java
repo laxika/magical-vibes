@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -67,7 +68,7 @@ class FieldMarshalTest {
     @DisplayName("Casting Field Marshal puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new FieldMarshal()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
 
@@ -81,7 +82,7 @@ class FieldMarshalTest {
     @DisplayName("Resolving puts Field Marshal onto the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new FieldMarshal()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -95,7 +96,7 @@ class FieldMarshalTest {
     @DisplayName("Field Marshal enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
         harness.setHand(player1, List.of(new FieldMarshal()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -238,7 +239,7 @@ class FieldMarshalTest {
     void bonusAppliesOnResolve() {
         harness.addToBattlefield(player1, new AvenCloudchaser());
         harness.setHand(player1, List.of(new FieldMarshal()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         Permanent cloudchaser = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Aven Cloudchaser"))

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -60,7 +61,7 @@ class HurkylsRecallTest {
     @DisplayName("Casting puts it on the stack as INSTANT_SPELL")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new HurkylsRecall()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, player2.getId());
 
@@ -79,7 +80,7 @@ class HurkylsRecallTest {
         harness.addToBattlefield(player2, new AngelsFeather());
         harness.addToBattlefield(player2, new IcyManipulator());
         harness.setHand(player1, List.of(new HurkylsRecall()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
@@ -99,7 +100,7 @@ class HurkylsRecallTest {
     void canTargetSelf() {
         harness.addToBattlefield(player1, new AngelsFeather());
         harness.setHand(player1, List.of(new HurkylsRecall()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
@@ -118,7 +119,7 @@ class HurkylsRecallTest {
         harness.addToBattlefield(player2, new AngelsFeather());
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new HurkylsRecall()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
@@ -139,7 +140,7 @@ class HurkylsRecallTest {
         harness.addToBattlefield(player1, new AngelsFeather());
         harness.addToBattlefield(player2, new IcyManipulator());
         harness.setHand(player1, List.of(new HurkylsRecall()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
@@ -159,7 +160,7 @@ class HurkylsRecallTest {
     void worksWithNoArtifacts() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new HurkylsRecall()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
@@ -176,7 +177,7 @@ class HurkylsRecallTest {
     void goesToGraveyardAfterResolving() {
         harness.addToBattlefield(player2, new AngelsFeather());
         harness.setHand(player1, List.of(new HurkylsRecall()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();

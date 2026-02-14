@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -54,7 +55,7 @@ class AngelicChorusTest {
     @DisplayName("Casting Angelic Chorus puts it on the stack as an enchantment spell")
     void castingAngelicChorusPutsItOnStack() {
         harness.setHand(player1, List.of(new AngelicChorus()));
-        harness.addMana(player1, "W", 5);
+        harness.addMana(player1, ManaColor.WHITE, 5);
 
         harness.castEnchantment(player1, 0);
 
@@ -67,14 +68,14 @@ class AngelicChorusTest {
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerManaPools.get(player1.getId()).get("W")).isEqualTo(0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(0);
     }
 
     @Test
     @DisplayName("Angelic Chorus resolves onto the battlefield")
     void angelicChorusResolvesOntoBattlefield() {
         harness.setHand(player1, List.of(new AngelicChorus()));
-        harness.addMana(player1, "W", 5);
+        harness.addMana(player1, ManaColor.WHITE, 5);
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
@@ -92,7 +93,7 @@ class AngelicChorusTest {
         harness.addToBattlefield(player1, new AngelicChorus());
 
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
 
         // Resolve creature spell → Angelic Chorus trigger goes on stack
@@ -116,7 +117,7 @@ class AngelicChorusTest {
 
         // Cast Grizzly Bears (2/2)
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
 
         // Resolve creature spell → triggered ability on stack
@@ -138,7 +139,7 @@ class AngelicChorusTest {
 
         // Cast Giant Spider (2/4)
         harness.setHand(player1, List.of(new GiantSpider()));
-        harness.addMana(player1, "G", 4);
+        harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castCreature(player1, 0);
 
         // Resolve creature spell → triggered ability
@@ -160,7 +161,7 @@ class AngelicChorusTest {
 
         // Player1 casts a creature — player2's Angelic Chorus should not trigger
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
 
         // Resolve creature spell
@@ -183,7 +184,7 @@ class AngelicChorusTest {
 
         // Cast Grizzly Bears (2/2)
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
 
         // Resolve creature spell → two triggered abilities on stack
@@ -209,7 +210,7 @@ class AngelicChorusTest {
 
         // Cast Hunted Wumpus (6/4)
         harness.setHand(player1, List.of(new HuntedWumpus()));
-        harness.addMana(player1, "G", 4);
+        harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castCreature(player1, 0);
 
         // Resolve creature spell → Wumpus enters → both ETB and Angelic Chorus trigger

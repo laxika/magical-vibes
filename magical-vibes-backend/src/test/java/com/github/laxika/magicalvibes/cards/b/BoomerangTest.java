@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -59,7 +60,7 @@ class BoomerangTest {
     void castingPutsOnStack() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Boomerang()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);
@@ -79,7 +80,7 @@ class BoomerangTest {
     void resolvingReturnsCreatureToHand() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Boomerang()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);
@@ -97,7 +98,7 @@ class BoomerangTest {
     void resolvingReturnsEnchantmentToHand() {
         harness.addToBattlefield(player2, new AngelicChorus());
         harness.setHand(player1, List.of(new Boomerang()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
         harness.castInstant(player1, 0, targetId);
@@ -115,7 +116,7 @@ class BoomerangTest {
     void resolvingReturnsLandToHand() {
         harness.addToBattlefield(player2, new Island());
         harness.setHand(player1, List.of(new Boomerang()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Island");
         harness.castInstant(player1, 0, targetId);
@@ -133,7 +134,7 @@ class BoomerangTest {
     void canBounceOwnPermanent() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Boomerang()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);
@@ -151,7 +152,7 @@ class BoomerangTest {
     void boomerangGoesToGraveyardAfterResolving() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Boomerang()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);
@@ -168,7 +169,7 @@ class BoomerangTest {
     void fizzlesIfTargetRemoved() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Boomerang()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);
@@ -190,7 +191,7 @@ class BoomerangTest {
     void targetDoesNotGoToGraveyard() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Boomerang()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);

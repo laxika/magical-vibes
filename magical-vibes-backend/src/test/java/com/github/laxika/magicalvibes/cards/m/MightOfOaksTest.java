@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -37,7 +38,7 @@ class MightOfOaksTest {
     private void setupBearAndMight() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new MightOfOaks()));
-        harness.addMana(player1, "G", 4);
+        harness.addMana(player1, ManaColor.GREEN, 4);
     }
 
     @Test
@@ -100,7 +101,7 @@ class MightOfOaksTest {
         harness.forceActivePlayer(player2);
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new MightOfOaks()));
-        harness.addMana(player1, "G", 4);
+        harness.addMana(player1, ManaColor.GREEN, 4);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
@@ -119,7 +120,7 @@ class MightOfOaksTest {
     void canCastWithNonEmptyStack() {
         // Put a creature on the stack first
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
 
         assertThat(harness.getGameData().stack).hasSize(1);
@@ -127,7 +128,7 @@ class MightOfOaksTest {
         // Now player2 should be able to cast Might of Oaks in response
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player2, List.of(new MightOfOaks()));
-        harness.addMana(player2, "G", 4);
+        harness.addMana(player2, ManaColor.GREEN, 4);
 
         UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.passPriority(player1);
@@ -184,7 +185,7 @@ class MightOfOaksTest {
     void multiplePumpsStack() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new MightOfOaks(), new MightOfOaks()));
-        harness.addMana(player1, "G", 8);
+        harness.addMana(player1, ManaColor.GREEN, 8);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
 
@@ -204,7 +205,7 @@ class MightOfOaksTest {
     void cannotCastWithoutEnoughMana() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new MightOfOaks()));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
 
@@ -217,7 +218,7 @@ class MightOfOaksTest {
     @DisplayName("Cannot cast with invalid target permanent ID")
     void cannotCastWithInvalidTarget() {
         harness.setHand(player1, List.of(new MightOfOaks()));
-        harness.addMana(player1, "G", 4);
+        harness.addMana(player1, ManaColor.GREEN, 4);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, UUID.randomUUID()))
                 .isInstanceOf(IllegalStateException.class)

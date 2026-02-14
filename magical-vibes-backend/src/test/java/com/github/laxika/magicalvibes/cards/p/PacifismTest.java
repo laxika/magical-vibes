@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -73,7 +74,7 @@ class PacifismTest {
         gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new Pacifism()));
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
 
@@ -91,7 +92,7 @@ class PacifismTest {
         gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new Pacifism()));
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
         harness.passBothPriorities();
@@ -111,7 +112,7 @@ class PacifismTest {
         gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new Pacifism()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null))
                 .isInstanceOf(IllegalStateException.class)
@@ -331,7 +332,7 @@ class PacifismTest {
         gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new Pacifism()));
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
         harness.passBothPriorities();
@@ -352,7 +353,7 @@ class PacifismTest {
         gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new Pacifism()));
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
 

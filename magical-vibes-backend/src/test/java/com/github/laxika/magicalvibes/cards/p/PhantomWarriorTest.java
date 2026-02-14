@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -68,8 +69,7 @@ class PhantomWarriorTest {
     @DisplayName("Casting Phantom Warrior puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new PhantomWarrior()));
-        harness.addMana(player1, "U", 2);
-        harness.addMana(player1, "1", 1);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0);
 
@@ -83,8 +83,7 @@ class PhantomWarriorTest {
     @DisplayName("Resolving puts Phantom Warrior onto the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new PhantomWarrior()));
-        harness.addMana(player1, "U", 2);
-        harness.addMana(player1, "1", 1);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -108,8 +107,7 @@ class PhantomWarriorTest {
     @DisplayName("Phantom Warrior enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
         harness.setHand(player1, List.of(new PhantomWarrior()));
-        harness.addMana(player1, "U", 2);
-        harness.addMana(player1, "1", 1);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

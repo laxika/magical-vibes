@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -68,7 +69,7 @@ class LuminesceTest {
     @DisplayName("Casting Luminesce puts it on the stack")
     void castingPutsItOnStack() {
         harness.setHand(player1, List.of(new Luminesce()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castInstant(player1, 0, null);
 
@@ -94,7 +95,7 @@ class LuminesceTest {
     @DisplayName("Resolving Luminesce adds black and red to prevented colors")
     void resolvingAddsPreventedColors() {
         harness.setHand(player1, List.of(new Luminesce()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castInstant(player1, 0, null);
         harness.passBothPriorities();
@@ -107,7 +108,7 @@ class LuminesceTest {
     @DisplayName("Luminesce goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
         harness.setHand(player1, List.of(new Luminesce()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castInstant(player1, 0, null);
         harness.passBothPriorities();
@@ -287,7 +288,7 @@ class LuminesceTest {
         harness.getGameData().preventDamageFromColors.add(CardColor.RED);
 
         harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.h.Hurricane()));
-        harness.addMana(player1, "G", 3);
+        harness.addMana(player1, ManaColor.GREEN, 3);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.castSorcery(player1, 0, 2);

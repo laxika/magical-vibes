@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -40,7 +41,7 @@ class HuntedWumpusTest {
      */
     private void setupAndCastWumpus() {
         harness.setHand(player1, List.of(new HuntedWumpus()));
-        harness.addMana(player1, "G", 4);
+        harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castCreature(player1, 0);
     }
 
@@ -48,7 +49,7 @@ class HuntedWumpusTest {
     @DisplayName("Casting Hunted Wumpus puts it on the stack as a creature spell")
     void castingWumpusPutsItOnStack() {
         harness.setHand(player1, List.of(new HuntedWumpus()));
-        harness.addMana(player1, "G", 4);
+        harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castCreature(player1, 0);
 
@@ -69,7 +70,7 @@ class HuntedWumpusTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
         // Mana was spent ({3}{G} = 4 green total)
-        assertThat(gd.playerManaPools.get(player1.getId()).get("G")).isEqualTo(0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
     }
 
     @Test
@@ -281,7 +282,7 @@ class HuntedWumpusTest {
 
         // Give player1 another creature + mana to try casting it
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         // Attempting to play while stack is non-empty should fail
         assertThatThrownBy(() -> harness.castCreature(player1, 0))

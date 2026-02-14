@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -59,7 +60,7 @@ class TempestOfLightTest {
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new TempestOfLight()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castInstant(player1, 0, null);
 
@@ -77,7 +78,7 @@ class TempestOfLightTest {
     void destroysSingleEnchantment() {
         harness.addToBattlefield(player1, new RuleOfLaw());
         harness.setHand(player1, List.of(new TempestOfLight()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castInstant(player1, 0, null);
         harness.passBothPriorities();
@@ -95,7 +96,7 @@ class TempestOfLightTest {
         harness.addToBattlefield(player1, new RuleOfLaw());
         harness.addToBattlefield(player2, new AngelicChorus());
         harness.setHand(player1, List.of(new TempestOfLight()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castInstant(player1, 0, null);
         harness.passBothPriorities();
@@ -125,7 +126,7 @@ class TempestOfLightTest {
         harness.getGameData().playerBattlefields.get(player1.getId()).add(auraPerm);
 
         harness.setHand(player1, List.of(new TempestOfLight()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castInstant(player1, 0, null);
         harness.passBothPriorities();
@@ -147,7 +148,7 @@ class TempestOfLightTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new TempestOfLight()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castInstant(player1, 0, null);
         harness.passBothPriorities();
@@ -164,7 +165,7 @@ class TempestOfLightTest {
     void doesNothingWhenNoEnchantments() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new TempestOfLight()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castInstant(player1, 0, null);
         harness.passBothPriorities();
@@ -179,7 +180,7 @@ class TempestOfLightTest {
     @DisplayName("Tempest of Light goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
         harness.setHand(player1, List.of(new TempestOfLight()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castInstant(player1, 0, null);
         harness.passBothPriorities();
@@ -194,7 +195,7 @@ class TempestOfLightTest {
     void resolvingLogsDestroyedEnchantments() {
         harness.addToBattlefield(player1, new RuleOfLaw());
         harness.setHand(player1, List.of(new TempestOfLight()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castInstant(player1, 0, null);
         harness.passBothPriorities();

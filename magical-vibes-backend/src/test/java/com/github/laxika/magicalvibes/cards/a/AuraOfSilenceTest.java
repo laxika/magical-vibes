@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -62,7 +63,7 @@ class AuraOfSilenceTest {
     @DisplayName("Casting Aura of Silence puts it on the stack as an enchantment spell")
     void castingPutsItOnStack() {
         harness.setHand(player1, List.of(new AuraOfSilence()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castEnchantment(player1, 0);
 
@@ -79,7 +80,7 @@ class AuraOfSilenceTest {
     @DisplayName("Aura of Silence resolves onto the battlefield")
     void resolvesOntoBattlefield() {
         harness.setHand(player1, List.of(new AuraOfSilence()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
@@ -102,7 +103,7 @@ class AuraOfSilenceTest {
         harness.forceStep(harness.getGameData().currentStep);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new AngelicChorus()));
-        harness.addMana(player2, "W", 5);
+        harness.addMana(player2, ManaColor.WHITE, 5);
 
         // 5 mana is not enough (needs 5 + 2 = 7)
         assertThatThrownBy(() -> harness.castEnchantment(player2, 0))
@@ -119,7 +120,7 @@ class AuraOfSilenceTest {
         harness.forceStep(harness.getGameData().currentStep);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new AngelicChorus()));
-        harness.addMana(player2, "W", 7);
+        harness.addMana(player2, ManaColor.WHITE, 7);
 
         // 7 mana is enough (5 + 2 = 7)
         harness.castEnchantment(player2, 0);
@@ -136,7 +137,7 @@ class AuraOfSilenceTest {
         harness.addToBattlefield(player1, new AuraOfSilence());
 
         harness.setHand(player1, List.of(new AngelicChorus()));
-        harness.addMana(player1, "W", 5);
+        harness.addMana(player1, ManaColor.WHITE, 5);
 
         // Player1 can cast their own enchantment for normal cost
         harness.castEnchantment(player1, 0);
@@ -154,7 +155,7 @@ class AuraOfSilenceTest {
         harness.forceStep(harness.getGameData().currentStep);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, "G", 2);
+        harness.addMana(player2, ManaColor.GREEN, 2);
 
         // Grizzly Bears costs {1}{G} = 2 mana, no increase for creatures
         harness.castCreature(player2, 0);
@@ -174,7 +175,7 @@ class AuraOfSilenceTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new AuraOfSilence()));
         // Aura costs {1}{W}{W} = 3, plus {4} from two opposing Auras = 7 total
-        harness.addMana(player2, "W", 6);
+        harness.addMana(player2, ManaColor.WHITE, 6);
 
         // 6 mana is not enough (needs 3 + 4 = 7)
         assertThatThrownBy(() -> harness.castEnchantment(player2, 0))
@@ -324,7 +325,7 @@ class AuraOfSilenceTest {
         harness.forceStep(harness.getGameData().currentStep);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new AuraOfSilence()));
-        harness.addMana(player2, "W", 3);
+        harness.addMana(player2, ManaColor.WHITE, 3);
 
         // 3 mana is enough (no more cost increase)
         harness.castEnchantment(player2, 0);
@@ -344,7 +345,7 @@ class AuraOfSilenceTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new AngelsFeather()));
-        harness.addMana(player2, "W", 2);
+        harness.addMana(player2, ManaColor.WHITE, 2);
 
         // 2 mana is not enough (needs 2 + 2 = 4)
         assertThatThrownBy(() -> harness.castArtifact(player2, 0))
@@ -361,7 +362,7 @@ class AuraOfSilenceTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new AngelsFeather()));
-        harness.addMana(player2, "W", 4);
+        harness.addMana(player2, ManaColor.WHITE, 4);
 
         harness.castArtifact(player2, 0);
 

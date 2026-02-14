@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -61,7 +62,7 @@ class PeekTest {
     @DisplayName("Casting Peek puts it on the stack targeting a player")
     void castingPutsItOnStack() {
         harness.setHand(player1, List.of(new Peek()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, player2.getId());
 
@@ -92,7 +93,7 @@ class PeekTest {
         harness.setHand(player2, List.of(cardInHand1, cardInHand2));
 
         harness.setHand(player1, List.of(new Peek()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
@@ -106,7 +107,7 @@ class PeekTest {
     void emptyHandLogged() {
         harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new Peek()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
@@ -118,7 +119,7 @@ class PeekTest {
     @DisplayName("Can target self to look at own hand")
     void canTargetSelf() {
         harness.setHand(player1, List.of(new Peek()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
@@ -133,7 +134,7 @@ class PeekTest {
     void drawsACard() {
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
         harness.setHand(player1, List.of(new Peek()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
@@ -149,7 +150,7 @@ class PeekTest {
     @DisplayName("Peek goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
         harness.setHand(player1, List.of(new Peek()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();

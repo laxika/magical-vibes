@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -63,7 +64,7 @@ class AngelsFeatherTest {
     @DisplayName("Casting Angel's Feather puts it on the stack as an artifact spell")
     void castingPutsItOnStack() {
         harness.setHand(player1, List.of(new AngelsFeather()));
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castArtifact(player1, 0);
 
@@ -80,7 +81,7 @@ class AngelsFeatherTest {
     @DisplayName("Angel's Feather resolves onto the battlefield")
     void resolvesOntoBattlefield() {
         harness.setHand(player1, List.of(new AngelsFeather()));
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
@@ -98,7 +99,7 @@ class AngelsFeatherTest {
     void controllerCastsWhiteSpellAndAccepts() {
         harness.addToBattlefield(player1, new AngelsFeather());
         harness.setHand(player1, List.of(new SuntailHawk()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
@@ -125,7 +126,7 @@ class AngelsFeatherTest {
     void controllerCastsWhiteSpellAndDeclines() {
         harness.addToBattlefield(player1, new AngelsFeather());
         harness.setHand(player1, List.of(new SuntailHawk()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
@@ -156,7 +157,7 @@ class AngelsFeatherTest {
         harness.clearPriorityPassed();
 
         harness.setHand(player2, List.of(new SuntailHawk()));
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
@@ -182,7 +183,7 @@ class AngelsFeatherTest {
     void nonWhiteSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new AngelsFeather());
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
 
@@ -202,7 +203,7 @@ class AngelsFeatherTest {
         harness.addToBattlefield(player1, new AngelsFeather());
         harness.addToBattlefield(player1, new AngelsFeather());
         harness.setHand(player1, List.of(new SuntailHawk()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
@@ -235,7 +236,7 @@ class AngelsFeatherTest {
     void doesNotTriggerWhenNotOnBattlefield() {
         // Angel's Feather is in the hand, not on the battlefield
         harness.setHand(player1, List.of(new SuntailHawk()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castCreature(player1, 0);
 

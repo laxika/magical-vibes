@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -61,7 +62,7 @@ class MahamotiDjinnTest {
     @DisplayName("Casting Mahamoti Djinn puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new MahamotiDjinn()));
-        harness.addMana(player1, "U", 6);
+        harness.addMana(player1, ManaColor.BLUE, 6);
 
         harness.castCreature(player1, 0);
 
@@ -74,7 +75,7 @@ class MahamotiDjinnTest {
     @DisplayName("Resolving puts Mahamoti Djinn onto the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new MahamotiDjinn()));
-        harness.addMana(player1, "U", 6);
+        harness.addMana(player1, ManaColor.BLUE, 6);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -88,7 +89,7 @@ class MahamotiDjinnTest {
     @DisplayName("Cannot cast without enough mana")
     void cannotCastWithoutEnoughMana() {
         harness.setHand(player1, List.of(new MahamotiDjinn()));
-        harness.addMana(player1, "U", 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -99,7 +100,7 @@ class MahamotiDjinnTest {
     @DisplayName("Mahamoti Djinn enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
         harness.setHand(player1, List.of(new MahamotiDjinn()));
-        harness.addMana(player1, "U", 6);
+        harness.addMana(player1, ManaColor.BLUE, 6);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

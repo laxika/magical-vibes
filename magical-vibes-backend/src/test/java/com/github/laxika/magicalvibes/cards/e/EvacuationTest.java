@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -60,7 +61,7 @@ class EvacuationTest {
     @DisplayName("Casting puts it on the stack as INSTANT_SPELL")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new Evacuation()));
-        harness.addMana(player1, "U", 5);
+        harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castInstant(player1, 0, null);
 
@@ -79,7 +80,7 @@ class EvacuationTest {
         harness.addToBattlefield(player1, new SerraAngel());
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Evacuation()));
-        harness.addMana(player1, "U", 5);
+        harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castInstant(player1, 0, null);
         harness.passBothPriorities();
@@ -107,7 +108,7 @@ class EvacuationTest {
         harness.addToBattlefield(player1, new GloriousAnthem());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Evacuation()));
-        harness.addMana(player1, "U", 5);
+        harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castInstant(player1, 0, null);
         harness.passBothPriorities();
@@ -126,7 +127,7 @@ class EvacuationTest {
     @DisplayName("Works with empty battlefields (no crash)")
     void worksWithEmptyBattlefield() {
         harness.setHand(player1, List.of(new Evacuation()));
-        harness.addMana(player1, "U", 5);
+        harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castInstant(player1, 0, null);
         harness.passBothPriorities();
@@ -138,7 +139,7 @@ class EvacuationTest {
     @DisplayName("Evacuation goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
         harness.setHand(player1, List.of(new Evacuation()));
-        harness.addMana(player1, "U", 5);
+        harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castInstant(player1, 0, null);
         harness.passBothPriorities();
@@ -154,7 +155,7 @@ class EvacuationTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new SerraAngel());
         harness.setHand(player1, List.of(new Evacuation()));
-        harness.addMana(player1, "U", 5);
+        harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castInstant(player1, 0, null);
         harness.passBothPriorities();

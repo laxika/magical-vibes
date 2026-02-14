@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -66,7 +67,7 @@ class IcatianPriestTest {
     void activatingPutsOnStackWithTarget() {
         addReadyPriest(player1);
         Permanent target = addReadyBears(player1);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -83,7 +84,7 @@ class IcatianPriestTest {
     void activatingDoesNotTap() {
         Permanent priest = addReadyPriest(player1);
         addReadyBears(player1);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, priest.getId());
 
@@ -95,7 +96,7 @@ class IcatianPriestTest {
     void manaIsConsumedWhenActivating() {
         addReadyPriest(player1);
         Permanent target = addReadyBears(player1);
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -110,7 +111,7 @@ class IcatianPriestTest {
     void resolvingBoostsTarget() {
         addReadyPriest(player1);
         Permanent target = addReadyBears(player1);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -128,7 +129,7 @@ class IcatianPriestTest {
     void canActivateMultipleTimes() {
         addReadyPriest(player1);
         Permanent target = addReadyBears(player1);
-        harness.addMana(player1, "W", 9);
+        harness.addMana(player1, ManaColor.WHITE, 9);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -150,7 +151,7 @@ class IcatianPriestTest {
     void boostResetsAtEndOfTurn() {
         addReadyPriest(player1);
         Permanent target = addReadyBears(player1);
-        harness.addMana(player1, "W", 6);
+        harness.addMana(player1, ManaColor.WHITE, 6);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -177,7 +178,7 @@ class IcatianPriestTest {
     void cannotActivateWithoutEnoughMana() {
         addReadyPriest(player1);
         Permanent target = addReadyBears(player1);
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -191,7 +192,7 @@ class IcatianPriestTest {
     void canTargetOpponentCreature() {
         addReadyPriest(player1);
         Permanent opponentBears = addReadyBears(player2);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, opponentBears.getId());
         harness.passBothPriorities();

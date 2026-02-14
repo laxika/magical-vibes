@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -65,7 +66,7 @@ class AvenCloudchaserTest {
     void castingPutsItOnStackWithTarget() {
         harness.addToBattlefield(player2, new AngelicChorus());
         harness.setHand(player1, List.of(new AvenCloudchaser()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
         harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
@@ -84,7 +85,7 @@ class AvenCloudchaserTest {
     void resolvingEntersBattlefieldAndTriggersEtb() {
         harness.addToBattlefield(player2, new AngelicChorus());
         harness.setHand(player1, List.of(new AvenCloudchaser()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
         harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
@@ -109,7 +110,7 @@ class AvenCloudchaserTest {
     void etbDestroysTargetEnchantment() {
         harness.addToBattlefield(player2, new AngelicChorus());
         harness.setHand(player1, List.of(new AvenCloudchaser()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
         harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
@@ -132,7 +133,7 @@ class AvenCloudchaserTest {
     void canDestroyOwnEnchantment() {
         harness.addToBattlefield(player1, new AngelicChorus());
         harness.setHand(player1, List.of(new AvenCloudchaser()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         UUID targetId = harness.getPermanentId(player1, "Angelic Chorus");
         harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
@@ -153,7 +154,7 @@ class AvenCloudchaserTest {
     void etbFizzlesIfTargetRemoved() {
         harness.addToBattlefield(player2, new AngelicChorus());
         harness.setHand(player1, List.of(new AvenCloudchaser()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
         harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
@@ -178,7 +179,7 @@ class AvenCloudchaserTest {
     @DisplayName("Can cast without a target when no enchantments on battlefield")
     void canCastWithoutTargetWhenNoEnchantments() {
         harness.setHand(player1, List.of(new AvenCloudchaser()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
 
@@ -191,7 +192,7 @@ class AvenCloudchaserTest {
     @DisplayName("ETB does not trigger when cast without a target")
     void etbDoesNotTriggerWithoutTarget() {
         harness.setHand(player1, List.of(new AvenCloudchaser()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
 
@@ -220,7 +221,7 @@ class AvenCloudchaserTest {
     void cannotCastWithoutEnoughMana() {
         harness.addToBattlefield(player2, new AngelicChorus());
         harness.setHand(player1, List.of(new AvenCloudchaser()));
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
 

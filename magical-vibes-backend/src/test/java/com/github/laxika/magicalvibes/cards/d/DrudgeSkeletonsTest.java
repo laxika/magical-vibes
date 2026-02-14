@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -65,7 +66,7 @@ class DrudgeSkeletonsTest {
     @DisplayName("Casting Drudge Skeletons puts it on the stack")
     void castingPutsItOnStack() {
         harness.setHand(player1, List.of(new DrudgeSkeletons()));
-        harness.addMana(player1, "B", 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castCreature(player1, 0);
 
@@ -79,7 +80,7 @@ class DrudgeSkeletonsTest {
     @DisplayName("Resolving Drudge Skeletons puts it on the battlefield")
     void resolvingPutsItOnBattlefield() {
         harness.setHand(player1, List.of(new DrudgeSkeletons()));
-        harness.addMana(player1, "B", 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -95,7 +96,7 @@ class DrudgeSkeletonsTest {
     @DisplayName("Activating regeneration ability puts it on the stack with self as target")
     void activatingAbilityPutsOnStack() {
         Permanent skelePerm = addDrudgeSkeletonsReady(player1);
-        harness.addMana(player1, "B", 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -111,7 +112,7 @@ class DrudgeSkeletonsTest {
     @DisplayName("Activating regeneration ability does NOT tap the permanent")
     void activatingAbilityDoesNotTap() {
         addDrudgeSkeletonsReady(player1);
-        harness.addMana(player1, "B", 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -123,7 +124,7 @@ class DrudgeSkeletonsTest {
     @DisplayName("Resolving regeneration ability grants a regeneration shield")
     void resolvingAbilityGrantsRegenerationShield() {
         addDrudgeSkeletonsReady(player1);
-        harness.addMana(player1, "B", 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -138,7 +139,7 @@ class DrudgeSkeletonsTest {
     @DisplayName("Can stack multiple regeneration shields")
     void canStackMultipleRegenerationShields() {
         addDrudgeSkeletonsReady(player1);
-        harness.addMana(player1, "B", 3);
+        harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -156,7 +157,7 @@ class DrudgeSkeletonsTest {
     void canActivateWhenTapped() {
         Permanent skelePerm = addDrudgeSkeletonsReady(player1);
         skelePerm.tap();
-        harness.addMana(player1, "B", 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -172,7 +173,7 @@ class DrudgeSkeletonsTest {
         Permanent skelePerm = new Permanent(card);
         // summoningSick is true by default
         harness.getGameData().playerBattlefields.get(player1.getId()).add(skelePerm);
-        harness.addMana(player1, "B", 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -185,7 +186,7 @@ class DrudgeSkeletonsTest {
     @DisplayName("Mana is consumed when activating regeneration ability")
     void manaIsConsumedWhenActivating() {
         addDrudgeSkeletonsReady(player1);
-        harness.addMana(player1, "B", 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -208,7 +209,7 @@ class DrudgeSkeletonsTest {
     @DisplayName("Activating regeneration ability logs the activation")
     void activatingAbilityLogsActivation() {
         addDrudgeSkeletonsReady(player1);
-        harness.addMana(player1, "B", 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -220,7 +221,7 @@ class DrudgeSkeletonsTest {
     @DisplayName("Resolving regeneration ability logs the shield")
     void resolvingAbilityLogsShield() {
         addDrudgeSkeletonsReady(player1);
-        harness.addMana(player1, "B", 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -233,7 +234,7 @@ class DrudgeSkeletonsTest {
     @DisplayName("Ability fizzles if Drudge Skeletons is removed before resolution")
     void abilityFizzlesIfSourceRemoved() {
         addDrudgeSkeletonsReady(player1);
-        harness.addMana(player1, "B", 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -381,7 +382,7 @@ class DrudgeSkeletonsTest {
         // Use Demystify-like instant that destroys target creature
         // We'll use a direct approach: cast a destroy spell targeting it
         harness.setHand(player2, List.of(new Demystify()));
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
 
         // Demystify targets enchantments, not creatures. Let's instead directly test via
         // Ballista Squad dealing lethal damage
@@ -393,7 +394,7 @@ class DrudgeSkeletonsTest {
         skelePerm2.setAttacking(true);
 
         Permanent ballistaPerm = addBallistaReady(player2);
-        harness.addMana(player2, "W", 2); // X=1, {W}=1
+        harness.addMana(player2, ManaColor.WHITE, 2); // X=1, {W}=1
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -417,7 +418,7 @@ class DrudgeSkeletonsTest {
         skelePerm.setAttacking(true);
 
         Permanent ballistaPerm = addBallistaReady(player2);
-        harness.addMana(player2, "W", 2); // X=1, {W}=1
+        harness.addMana(player2, ManaColor.WHITE, 2); // X=1, {W}=1
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -442,7 +443,7 @@ class DrudgeSkeletonsTest {
         skelePerm.setRegenerationShield(2);
 
         harness.setHand(player2, List.of(new WrathOfGod()));
-        harness.addMana(player2, "W", 4);
+        harness.addMana(player2, ManaColor.WHITE, 4);
 
         // Need to pass priority to player2 so they can cast
         harness.forceActivePlayer(player2);
@@ -465,7 +466,7 @@ class DrudgeSkeletonsTest {
     @DisplayName("Regeneration shield clears at end of turn cleanup")
     void regenerationShieldClearsAtEndOfTurn() {
         Permanent skelePerm = addDrudgeSkeletonsReady(player1);
-        harness.addMana(player1, "B", 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
 
         // Activate twice and resolve
         harness.activateAbility(player1, 0, null, null);

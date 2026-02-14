@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -76,7 +77,7 @@ class StoryCircleTest {
     @DisplayName("Casting Story Circle puts it on the stack as enchantment spell")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new StoryCircle()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castEnchantment(player1, 0);
 
@@ -92,7 +93,7 @@ class StoryCircleTest {
     @DisplayName("Resolving Story Circle enters battlefield and awaits color choice")
     void resolvingTriggersColorChoice() {
         harness.setHand(player1, List.of(new StoryCircle()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
@@ -107,7 +108,7 @@ class StoryCircleTest {
     @DisplayName("Choosing a color sets chosenColor on the permanent")
     void choosingColorSetsOnPermanent() {
         harness.setHand(player1, List.of(new StoryCircle()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
@@ -123,7 +124,7 @@ class StoryCircleTest {
     @DisplayName("Color choice clears awaiting state")
     void colorChoiceClearsAwaitingState() {
         harness.setHand(player1, List.of(new StoryCircle()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
@@ -138,7 +139,7 @@ class StoryCircleTest {
     @DisplayName("Color choice is logged")
     void colorChoiceIsLogged() {
         harness.setHand(player1, List.of(new StoryCircle()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
@@ -153,7 +154,7 @@ class StoryCircleTest {
     @DisplayName("Activating ability with {W} puts prevention on stack")
     void activatingAbilityPutsOnStack() {
         Permanent storyCircle = addReadyStoryCircle(player1, CardColor.RED);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -167,7 +168,7 @@ class StoryCircleTest {
     @DisplayName("Resolving ability adds prevention count for chosen color")
     void resolvingAbilityAddsPreventionCount() {
         Permanent storyCircle = addReadyStoryCircle(player1, CardColor.RED);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -183,7 +184,7 @@ class StoryCircleTest {
     @DisplayName("Prevents combat damage from creature of chosen color")
     void preventsCombatDamageFromChosenColor() {
         addReadyStoryCircle(player2, CardColor.RED);
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
 
         // Activate Story Circle
         harness.activateAbility(player2, 0, null, null);
@@ -211,7 +212,7 @@ class StoryCircleTest {
     @DisplayName("Does NOT prevent combat damage from non-chosen color")
     void doesNotPreventDamageFromNonChosenColor() {
         addReadyStoryCircle(player2, CardColor.RED);
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
 
         // Activate Story Circle (prevents red)
         harness.activateAbility(player2, 0, null, null);
@@ -241,7 +242,7 @@ class StoryCircleTest {
     @DisplayName("Multiple activations prevent multiple damage instances")
     void multipleActivationsPreventMultipleInstances() {
         addReadyStoryCircle(player2, CardColor.RED);
-        harness.addMana(player2, "W", 2);
+        harness.addMana(player2, ManaColor.WHITE, 2);
 
         // Activate twice
         harness.activateAbility(player2, 0, null, null);
@@ -281,7 +282,7 @@ class StoryCircleTest {
     @DisplayName("Prevention count resets at end of turn")
     void preventionResetsAtEndOfTurn() {
         addReadyStoryCircle(player1, CardColor.RED);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -303,7 +304,7 @@ class StoryCircleTest {
     @DisplayName("Ability still resolves after Story Circle is destroyed")
     void abilityResolvesAfterSourceDestroyed() {
         Permanent storyCircle = addReadyStoryCircle(player1, CardColor.RED);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
 

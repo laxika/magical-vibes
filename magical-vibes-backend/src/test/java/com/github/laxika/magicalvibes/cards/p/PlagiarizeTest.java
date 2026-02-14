@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -58,7 +59,7 @@ class PlagiarizeTest {
     @DisplayName("Casting Plagiarize puts it on the stack targeting a player")
     void castingPutsItOnStack() {
         harness.setHand(player1, List.of(new Plagiarize()));
-        harness.addMana(player1, "U", 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castInstant(player1, 0, player2.getId());
 
@@ -75,7 +76,7 @@ class PlagiarizeTest {
     @DisplayName("Resolving Plagiarize sets up draw replacement for target player")
     void resolvingSetsUpDrawReplacement() {
         harness.setHand(player1, List.of(new Plagiarize()));
-        harness.addMana(player1, "U", 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
@@ -87,7 +88,7 @@ class PlagiarizeTest {
     @DisplayName("Plagiarize goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
         harness.setHand(player1, List.of(new Plagiarize()));
-        harness.addMana(player1, "U", 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
@@ -103,7 +104,7 @@ class PlagiarizeTest {
     @DisplayName("Plagiarize replaces opponent's draw step draw — controller draws instead")
     void replacesDrawStepDraw() {
         harness.setHand(player1, List.of(new Plagiarize()));
-        harness.addMana(player1, "U", 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
@@ -138,7 +139,7 @@ class PlagiarizeTest {
     void replacesEffectDraws() {
         // Cast Plagiarize targeting player2
         harness.setHand(player1, List.of(new Plagiarize()));
-        harness.addMana(player1, "U", 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
@@ -150,7 +151,7 @@ class PlagiarizeTest {
         // Now have player2 cast a draw spell (Peek targeting player1 to look at hand, also draws a card)
         Peek peek = new Peek();
         harness.setHand(player2, List.of(peek));
-        harness.addMana(player2, "U", 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
 
         int player1HandBefore = gd.playerHands.get(player1.getId()).size();
         int player2DeckBefore = gd.playerDecks.get(player2.getId()).size();
@@ -172,7 +173,7 @@ class PlagiarizeTest {
     @DisplayName("Plagiarize replacement effect is cleared at cleanup step")
     void replacementClearedAtCleanup() {
         harness.setHand(player1, List.of(new Plagiarize()));
-        harness.addMana(player1, "U", 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
@@ -193,7 +194,7 @@ class PlagiarizeTest {
     @DisplayName("Can target self with Plagiarize")
     void canTargetSelf() {
         harness.setHand(player1, List.of(new Plagiarize()));
-        harness.addMana(player1, "U", 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
@@ -205,7 +206,7 @@ class PlagiarizeTest {
     @DisplayName("Targeting self with Plagiarize still allows own draws (controller draws)")
     void targetingSelfStillAllowsOwnDraws() {
         harness.setHand(player1, List.of(new Plagiarize()));
-        harness.addMana(player1, "U", 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
@@ -231,7 +232,7 @@ class PlagiarizeTest {
     @DisplayName("Resolving Plagiarize logs the replacement setup")
     void logsReplacementSetup() {
         harness.setHand(player1, List.of(new Plagiarize()));
-        harness.addMana(player1, "U", 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
