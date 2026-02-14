@@ -1105,3 +1105,21 @@ h1 {
   transform: scale(0.85);
   filter: grayscale(40%);
 }
+
+/* Aura attachment stacking */
+
+.permanent-stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.permanent-stack > .card.attached-aura {
+  margin-bottom: -200px;
+  margin-left: 60px;
+  z-index: 0;
+}
+
+.permanent-stack > .card:last-child {
+  z-index: 1;
+}

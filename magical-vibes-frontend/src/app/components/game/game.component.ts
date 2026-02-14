@@ -24,6 +24,12 @@ export interface CombatGroup {
   blockers: CombatBlocker[];
 }
 
+export interface AttachedAura {
+  perm: Permanent;
+  originalIndex: number;
+  isMine: boolean;
+}
+
 @Component({
   selector: 'app-game',
   standalone: true,
@@ -1205,6 +1211,7 @@ export class GameComponent implements OnInit, OnDestroy {
     const lands: IndexedPermanent[] = [];
     const creatures: IndexedPermanent[] = [];
     battlefield.forEach((perm, idx) => {
+      if (perm.attachedTo != null) return; // Auras rendered with their host
       const entry: IndexedPermanent = { perm, originalIndex: idx };
       if (perm.card.type === 'CREATURE') {
         creatures.push(entry);
@@ -1213,6 +1220,29 @@ export class GameComponent implements OnInit, OnDestroy {
       }
     });
     return { lands, creatures };
+  }
+
+  getAttachedAuras(permanentId: string): AttachedAura[] {
+    const auras: AttachedAura[] = [];
+    this.myBattlefield.forEach((perm, idx) => {
+      if (perm.attachedTo === permanentId) {
+        auras.push({ perm, originalIndex: idx, isMine: true });
+      }
+    });
+    this.opponentBattlefield.forEach((perm, idx) => {
+      if (perm.attachedTo === permanentId) {
+        auras.push({ perm, originalIndex: idx, isMine: false });
+      }
+    });
+    return auras;
+  }
+
+  onAuraClick(aura: AttachedAura): void {
+    if (aura.isMine) {
+      this.onMyBattlefieldCardClick(aura.originalIndex);
+    } else {
+      this.onOpponentBattlefieldCardClick(aura.originalIndex);
+    }
   }
 
   get myLands(): IndexedPermanent[] {
