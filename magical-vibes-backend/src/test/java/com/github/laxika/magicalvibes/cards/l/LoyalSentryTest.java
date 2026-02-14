@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -68,7 +69,7 @@ class LoyalSentryTest {
     @DisplayName("Casting Loyal Sentry puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new LoyalSentry()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castCreature(player1, 0);
 
@@ -82,7 +83,7 @@ class LoyalSentryTest {
     @DisplayName("Resolving puts Loyal Sentry onto the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new LoyalSentry()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -356,7 +357,7 @@ class LoyalSentryTest {
     @DisplayName("Loyal Sentry enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
         harness.setHand(player1, List.of(new LoyalSentry()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

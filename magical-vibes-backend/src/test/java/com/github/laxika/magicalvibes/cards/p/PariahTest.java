@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -71,7 +72,7 @@ class PariahTest {
         gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new Pariah()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
 
@@ -89,7 +90,7 @@ class PariahTest {
         gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new Pariah()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
         harness.passBothPriorities();
@@ -220,7 +221,7 @@ class PariahTest {
 
         // Cast Hurricane for X=1
         harness.setHand(player1, List.of(new Hurricane()));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castSorcery(player1, 0, 1);
         harness.passBothPriorities();

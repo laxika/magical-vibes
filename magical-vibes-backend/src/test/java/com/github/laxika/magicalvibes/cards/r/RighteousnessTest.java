@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -73,7 +74,7 @@ class RighteousnessTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Righteousness()));
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
 
         harness.castInstant(player2, 0, blockerPerm.getId());
@@ -95,7 +96,7 @@ class RighteousnessTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new Righteousness()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, bearsPerm.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -108,7 +109,7 @@ class RighteousnessTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new Righteousness()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -143,7 +144,7 @@ class RighteousnessTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Righteousness()));
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
 
         harness.castInstant(player2, 0, blockerPerm.getId());
@@ -166,7 +167,7 @@ class RighteousnessTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Righteousness()));
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
 
         harness.castInstant(player2, 0, blockerPerm.getId());
@@ -194,7 +195,7 @@ class RighteousnessTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Righteousness()));
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
 
         harness.castInstant(player2, 0, blockerPerm.getId());
@@ -218,7 +219,7 @@ class RighteousnessTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Righteousness()));
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
 
         harness.castInstant(player2, 0, blockerPerm.getId());
@@ -260,7 +261,7 @@ class RighteousnessTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Righteousness()));
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
 
         harness.castInstant(player2, 0, blockerPerm.getId());
@@ -298,7 +299,7 @@ class RighteousnessTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new Righteousness()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castInstant(player1, 0, blockerPerm.getId());
         harness.passBothPriorities();

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -63,7 +64,7 @@ class HonorGuardTest {
     @DisplayName("Casting Honor Guard puts it on the stack")
     void castingPutsItOnStack() {
         harness.setHand(player1, List.of(new HonorGuard()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castCreature(player1, 0);
 
@@ -77,7 +78,7 @@ class HonorGuardTest {
     @DisplayName("Resolving Honor Guard puts it on the battlefield")
     void resolvingPutsItOnBattlefield() {
         harness.setHand(player1, List.of(new HonorGuard()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -93,7 +94,7 @@ class HonorGuardTest {
     @DisplayName("Activating ability puts BoostSelf on the stack with self as target")
     void activatingAbilityPutsOnStack() {
         Permanent guardPerm = addHonorGuardReady(player1);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -109,7 +110,7 @@ class HonorGuardTest {
     @DisplayName("Activating ability does NOT tap the permanent")
     void activatingAbilityDoesNotTap() {
         addHonorGuardReady(player1);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -121,7 +122,7 @@ class HonorGuardTest {
     @DisplayName("Resolving ability gives +0/+1 to Honor Guard")
     void resolvingAbilityBoostsToughness() {
         addHonorGuardReady(player1);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -139,7 +140,7 @@ class HonorGuardTest {
     @DisplayName("Can activate ability multiple times if mana allows")
     void canActivateMultipleTimes() {
         addHonorGuardReady(player1);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         // Activate and resolve three times
         harness.activateAbility(player1, 0, null, null);
@@ -160,7 +161,7 @@ class HonorGuardTest {
     void canActivateWhenTapped() {
         Permanent guardPerm = addHonorGuardReady(player1);
         guardPerm.tap();
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -176,7 +177,7 @@ class HonorGuardTest {
         Permanent guardPerm = new Permanent(card);
         // summoningSick is true by default
         harness.getGameData().playerBattlefields.get(player1.getId()).add(guardPerm);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -189,7 +190,7 @@ class HonorGuardTest {
     @DisplayName("Mana is consumed when activating ability")
     void manaIsConsumedWhenActivating() {
         addHonorGuardReady(player1);
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -201,7 +202,7 @@ class HonorGuardTest {
     @DisplayName("Boost resets at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
         addHonorGuardReady(player1);
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         // Activate twice and resolve
         harness.activateAbility(player1, 0, null, null);
@@ -225,7 +226,7 @@ class HonorGuardTest {
     @DisplayName("Ability fizzles if Honor Guard is removed before resolution")
     void abilityFizzlesIfSourceRemoved() {
         addHonorGuardReady(player1);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -258,7 +259,7 @@ class HonorGuardTest {
         Permanent bearPerm = new Permanent(bear);
         bearPerm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player1.getId()).add(bearPerm);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -269,7 +270,7 @@ class HonorGuardTest {
     @DisplayName("Activating ability logs the activation")
     void activatingAbilityLogsActivation() {
         addHonorGuardReady(player1);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -281,7 +282,7 @@ class HonorGuardTest {
     @DisplayName("Resolving ability logs the boost")
     void resolvingAbilityLogsBoost() {
         addHonorGuardReady(player1);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

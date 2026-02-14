@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.testutil;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -66,7 +67,7 @@ public class GameTestHarness {
         gameData.playerHands.put(player.getId(), new ArrayList<>(cards));
     }
 
-    public void addMana(Player player, String color, int amount) {
+    public void addMana(Player player, ManaColor color, int amount) {
         ManaPool pool = gameData.playerManaPools.get(player.getId());
         for (int i = 0; i < amount; i++) {
             pool.add(color);

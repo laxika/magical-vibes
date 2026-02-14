@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -63,7 +64,7 @@ class PersuasionTest {
         Permanent creature = addCreatureReady(player2);
 
         harness.setHand(player1, List.of(new Persuasion()));
-        harness.addMana(player1, "U", 5);
+        harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castEnchantment(player1, 0, creature.getId());
 
@@ -82,7 +83,7 @@ class PersuasionTest {
         Permanent creature = addCreatureReady(player2);
 
         harness.setHand(player1, List.of(new Persuasion()));
-        harness.addMana(player1, "U", 5);
+        harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
@@ -112,7 +113,7 @@ class PersuasionTest {
         Permanent creature = addCreatureReady(player2);
 
         harness.setHand(player1, List.of(new Persuasion()));
-        harness.addMana(player1, "U", 5);
+        harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castEnchantment(player1, 0, creature.getId());
 
@@ -132,7 +133,7 @@ class PersuasionTest {
         Permanent creature = addCreatureReady(player2);
 
         harness.setHand(player1, List.of(new Persuasion()));
-        harness.addMana(player1, "U", 5);
+        harness.addMana(player1, ManaColor.BLUE, 5);
 
         // Player1 casts Persuasion, resolve it
         harness.castEnchantment(player1, 0, creature.getId());
@@ -151,7 +152,7 @@ class PersuasionTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Demystify()));
-        harness.addMana(player2, "W", 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
 
         // Player1 passes, player2 casts Demystify targeting Persuasion
         harness.passPriority(player1);

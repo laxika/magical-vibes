@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -72,7 +73,7 @@ class CloudSpriteTest {
     @DisplayName("Casting Cloud Sprite puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new CloudSprite()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castCreature(player1, 0);
 
@@ -86,7 +87,7 @@ class CloudSpriteTest {
     @DisplayName("Resolving puts Cloud Sprite onto the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new CloudSprite()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -110,7 +111,7 @@ class CloudSpriteTest {
     @DisplayName("Cloud Sprite enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
         harness.setHand(player1, List.of(new CloudSprite()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -68,7 +69,7 @@ class AuraGraftTest {
         Permanent aura = addAuraAttachedTo(player2, new HolyStrength(), creature);
 
         harness.setHand(player1, List.of(new AuraGraft()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, aura.getId());
 
@@ -87,7 +88,7 @@ class AuraGraftTest {
         Permanent creature = addCreatureReady(player2);
 
         harness.setHand(player1, List.of(new AuraGraft()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -103,7 +104,7 @@ class AuraGraftTest {
         gd.playerBattlefields.get(player2.getId()).add(anthemPerm);
 
         harness.setHand(player1, List.of(new AuraGraft()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, anthemPerm.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -118,7 +119,7 @@ class AuraGraftTest {
         gd.playerBattlefields.get(player2.getId()).add(aura);
 
         harness.setHand(player1, List.of(new AuraGraft()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, aura.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -135,7 +136,7 @@ class AuraGraftTest {
         Permanent myCreature = addCreatureReady(player1);
 
         harness.setHand(player1, List.of(new AuraGraft()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, aura.getId());
         harness.passBothPriorities();
@@ -159,7 +160,7 @@ class AuraGraftTest {
         Permanent myCreature = addCreatureReady(player1);
 
         harness.setHand(player1, List.of(new AuraGraft()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, aura.getId());
         harness.passBothPriorities();
@@ -180,7 +181,7 @@ class AuraGraftTest {
         Permanent aura = addAuraAttachedTo(player2, new Pacifism(), opponentCreature1);
 
         harness.setHand(player1, List.of(new AuraGraft()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, aura.getId());
         harness.passBothPriorities();
@@ -199,7 +200,7 @@ class AuraGraftTest {
         Permanent myCreature = addCreatureReady(player1);
 
         harness.setHand(player1, List.of(new AuraGraft()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, aura.getId());
         harness.passBothPriorities();
@@ -218,7 +219,7 @@ class AuraGraftTest {
         Permanent myCreature = addCreatureReady(player1); // GrizzlyBears 2/2
 
         harness.setHand(player1, List.of(new AuraGraft()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, aura.getId());
         harness.passBothPriorities();
@@ -243,7 +244,7 @@ class AuraGraftTest {
         Permanent aura = addAuraAttachedTo(player1, new HolyStrength(), myCreature1);
 
         harness.setHand(player1, List.of(new AuraGraft()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, aura.getId());
         harness.passBothPriorities();
@@ -268,7 +269,7 @@ class AuraGraftTest {
         Permanent aura = addAuraAttachedTo(player2, new HolyStrength(), opponentCreature);
 
         harness.setHand(player1, List.of(new AuraGraft()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, aura.getId());
         harness.passBothPriorities();
@@ -296,7 +297,7 @@ class AuraGraftTest {
         Permanent aura = addAuraAttachedTo(player2, new HolyStrength(), opponentCreature);
 
         harness.setHand(player1, List.of(new AuraGraft()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, aura.getId());
 
@@ -320,7 +321,7 @@ class AuraGraftTest {
         Permanent myCreature = addCreatureReady(player1);
 
         harness.setHand(player1, List.of(new AuraGraft()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, aura.getId());
         harness.passBothPriorities();
@@ -340,7 +341,7 @@ class AuraGraftTest {
         Permanent myCreature = addCreatureReady(player1);
 
         harness.setHand(player1, List.of(new AuraGraft()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, aura.getId());
         harness.passBothPriorities();
@@ -358,7 +359,7 @@ class AuraGraftTest {
         Permanent myCreature = addCreatureReady(player1);
 
         harness.setHand(player1, List.of(new AuraGraft()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, aura.getId());
         harness.passBothPriorities();
@@ -378,7 +379,7 @@ class AuraGraftTest {
         Permanent myCreature2 = addCreatureReady(player1);
 
         harness.setHand(player1, List.of(new AuraGraft()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, aura.getId());
         harness.passBothPriorities();
@@ -398,7 +399,7 @@ class AuraGraftTest {
         Permanent myCreature = addCreatureReady(player1);
 
         harness.setHand(player1, List.of(new AuraGraft()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, aura.getId());
         harness.passBothPriorities();

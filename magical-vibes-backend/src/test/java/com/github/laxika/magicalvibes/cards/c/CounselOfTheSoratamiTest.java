@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -58,7 +59,7 @@ class CounselOfTheSoratamiTest {
     @DisplayName("Casting Counsel of the Soratami puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new CounselOfTheSoratami()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castSorcery(player1, 0, 0);
 
@@ -73,7 +74,7 @@ class CounselOfTheSoratamiTest {
     @DisplayName("Cannot cast without enough mana")
     void cannotCastWithoutEnoughMana() {
         harness.setHand(player1, List.of(new CounselOfTheSoratami()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -89,7 +90,7 @@ class CounselOfTheSoratamiTest {
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
         harness.setHand(player1, List.of(new CounselOfTheSoratami()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
@@ -104,7 +105,7 @@ class CounselOfTheSoratamiTest {
     @DisplayName("Counsel of the Soratami goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
         harness.setHand(player1, List.of(new CounselOfTheSoratami()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
@@ -126,7 +127,7 @@ class CounselOfTheSoratamiTest {
         assertThat(deckSizeBefore).isEqualTo(1);
 
         harness.setHand(player1, List.of(new CounselOfTheSoratami()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();

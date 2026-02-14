@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -3478,12 +3479,11 @@ public class GameService {
     }
 
     private void payGenericMana(ManaPool pool, int amount) {
-        List<String> colors = List.of("W", "U", "B", "R", "G");
         int remaining = amount;
         while (remaining > 0) {
-            String highestColor = null;
+            ManaColor highestColor = null;
             int highestAmount = 0;
-            for (String color : colors) {
+            for (ManaColor color : ManaColor.values()) {
                 int available = pool.get(color);
                 if (available > highestAmount) {
                     highestAmount = available;
@@ -4739,10 +4739,10 @@ public class GameService {
 
     private Map<String, Integer> getManaPool(GameData data, UUID playerId) {
         if (playerId == null) {
-            return Map.of("W", 0, "U", 0, "B", 0, "R", 0, "G", 0);
+            return new ManaPool().toMap();
         }
         ManaPool pool = data.playerManaPools.get(playerId);
-        return pool != null ? pool.toMap() : Map.of("W", 0, "U", 0, "B", 0, "R", 0, "G", 0);
+        return pool != null ? pool.toMap() : new ManaPool().toMap();
     }
 
     private List<Integer> getPlayableCardIndices(GameData gameData, UUID playerId) {

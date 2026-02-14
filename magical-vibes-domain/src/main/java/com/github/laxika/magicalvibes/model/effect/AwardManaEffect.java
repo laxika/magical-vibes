@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-public record AwardManaEffect(String color) implements CardEffect {
+import com.github.laxika.magicalvibes.model.ManaColor;
+
+public record AwardManaEffect(ManaColor color) implements CardEffect {
 }

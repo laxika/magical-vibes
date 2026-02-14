@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -67,7 +68,7 @@ class IcyManipulatorTest {
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new IcyManipulator()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castArtifact(player1, 0);
 
@@ -82,7 +83,7 @@ class IcyManipulatorTest {
     @DisplayName("Resolving puts it on the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new IcyManipulator()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
@@ -100,7 +101,7 @@ class IcyManipulatorTest {
     void activatingTargetingCreaturePutsOnStack() {
         Permanent icy = addReadyIcy(player1);
         Permanent target = addReadyCreature(player2);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -117,7 +118,7 @@ class IcyManipulatorTest {
     void activatingTapsIcy() {
         Permanent icy = addReadyIcy(player1);
         Permanent target = addReadyCreature(player2);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -129,7 +130,7 @@ class IcyManipulatorTest {
     void resolvingTapsTargetCreature() {
         addReadyIcy(player1);
         Permanent target = addReadyCreature(player2);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -144,7 +145,7 @@ class IcyManipulatorTest {
     void canTapTargetLand() {
         addReadyIcy(player1);
         Permanent targetLand = addReadyLand(player2);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, targetLand.getId());
         harness.passBothPriorities();
@@ -157,7 +158,7 @@ class IcyManipulatorTest {
     void canTapOwnLand() {
         Permanent icy = addReadyIcy(player1);
         Permanent ownLand = addReadyLand(player1);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         // Icy is at index 0, land is at index 1
         harness.activateAbility(player1, 0, null, ownLand.getId());
@@ -173,7 +174,7 @@ class IcyManipulatorTest {
     void canTapTargetArtifact() {
         addReadyIcy(player1);
         Permanent targetArtifact = addReadyArtifact(player2);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, targetArtifact.getId());
         harness.passBothPriorities();
@@ -188,7 +189,7 @@ class IcyManipulatorTest {
     void cannotTargetEnchantment() {
         addReadyIcy(player1);
         Permanent enchantment = addReadyEnchantment(player2);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, enchantment.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -207,7 +208,7 @@ class IcyManipulatorTest {
         harness.getGameData().playerBattlefields.get(player1.getId()).add(icy);
 
         Permanent target = addReadyCreature(player2);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         // Should not throw — artifacts ignore summoning sickness
         harness.activateAbility(player1, 0, null, target.getId());
@@ -222,7 +223,7 @@ class IcyManipulatorTest {
     void manaIsConsumed() {
         addReadyIcy(player1);
         Permanent target = addReadyCreature(player2);
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -249,7 +250,7 @@ class IcyManipulatorTest {
         Permanent icy = addReadyIcy(player1);
         icy.tap();
         Permanent target = addReadyCreature(player2);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -263,7 +264,7 @@ class IcyManipulatorTest {
     void fizzlesIfTargetRemoved() {
         addReadyIcy(player1);
         Permanent target = addReadyCreature(player2);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -284,7 +285,7 @@ class IcyManipulatorTest {
     void canTapOwnCreature() {
         addReadyIcy(player1);
         Permanent ownCreature = addReadyCreature(player1);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, ownCreature.getId());
         harness.passBothPriorities();
@@ -299,7 +300,7 @@ class IcyManipulatorTest {
     void resolvingAddsToGameLog() {
         addReadyIcy(player1);
         Permanent target = addReadyCreature(player2);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();

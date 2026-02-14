@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -82,7 +83,7 @@ class MobilizationTest {
     @DisplayName("Casting Mobilization puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new Mobilization()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castEnchantment(player1, 0);
 
@@ -96,7 +97,7 @@ class MobilizationTest {
     @DisplayName("Resolving puts Mobilization onto the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new Mobilization()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
@@ -112,7 +113,7 @@ class MobilizationTest {
     @DisplayName("Activating ability puts token creation on the stack")
     void activatingAbilityPutsOnStack() {
         addMobilizationReady(player1);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -126,7 +127,7 @@ class MobilizationTest {
     @DisplayName("Resolving ability creates a 1/1 Soldier token")
     void resolvingAbilityCreatesToken() {
         addMobilizationReady(player1);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -147,7 +148,7 @@ class MobilizationTest {
     @DisplayName("Token enters with summoning sickness")
     void tokenEntersWithSummoningSickness() {
         addMobilizationReady(player1);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -162,7 +163,7 @@ class MobilizationTest {
     @DisplayName("Can create multiple tokens")
     void canCreateMultipleTokens() {
         addMobilizationReady(player1);
-        harness.addMana(player1, "W", 9);
+        harness.addMana(player1, ManaColor.WHITE, 9);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -209,7 +210,7 @@ class MobilizationTest {
     @DisplayName("Token Soldier also gets vigilance from Mobilization")
     void tokenGetsVigilance() {
         addMobilizationReady(player1);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

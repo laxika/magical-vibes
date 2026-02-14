@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -67,7 +68,7 @@ class HighGroundTest {
     @DisplayName("Casting High Ground puts it on the stack as an enchantment spell")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new HighGround()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castEnchantment(player1, 0);
 
@@ -81,7 +82,7 @@ class HighGroundTest {
     @DisplayName("Resolving puts High Ground onto the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new HighGround()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();

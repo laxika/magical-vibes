@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -63,7 +64,7 @@ class BallistaSquadTest {
     @DisplayName("Casting Ballista Squad puts it on the stack")
     void castingPutsItOnStack() {
         harness.setHand(player1, List.of(new BallistaSquad()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
 
@@ -77,7 +78,7 @@ class BallistaSquadTest {
     @DisplayName("Resolving Ballista Squad puts it on the battlefield")
     void resolvingPutsItOnBattlefield() {
         harness.setHand(player1, List.of(new BallistaSquad()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -94,7 +95,7 @@ class BallistaSquadTest {
     void canActivateAbilityOnAttackingCreature() {
         Permanent ballistaPerm = addBallistaReadyToCombat(player1);
         Permanent targetPerm = addAttackingCreature(player2);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
 
@@ -114,7 +115,7 @@ class BallistaSquadTest {
     void activatingAbilityTapsPermanent() {
         Permanent ballistaPerm = addBallistaReadyToCombat(player1);
         Permanent targetPerm = addAttackingCreature(player2);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         harness.activateAbility(player1, 0, 0, targetPerm.getId());
@@ -127,7 +128,7 @@ class BallistaSquadTest {
     void resolvingAbilityDealsXDamageAndDestroysCreature() {
         addBallistaReadyToCombat(player1);
         Permanent targetPerm = addAttackingCreature(player2);
-        harness.addMana(player1, "W", 3); // X=2, W=1 → 3 white mana needed
+        harness.addMana(player1, ManaColor.WHITE, 3); // X=2, W=1 → 3 white mana needed
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         harness.activateAbility(player1, 0, 2, targetPerm.getId());
@@ -149,7 +150,7 @@ class BallistaSquadTest {
     void resolvingAbilityWithLowXDoesNotDestroy() {
         addBallistaReadyToCombat(player1);
         Permanent targetPerm = addAttackingCreature(player2);
-        harness.addMana(player1, "W", 2); // X=1, W=1
+        harness.addMana(player1, ManaColor.WHITE, 2); // X=1, W=1
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         harness.activateAbility(player1, 0, 1, targetPerm.getId());
@@ -174,7 +175,7 @@ class BallistaSquadTest {
         blockerPerm.setSummoningSick(false);
         blockerPerm.setBlocking(true);
         harness.getGameData().playerBattlefields.get(player2.getId()).add(blockerPerm);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
 
         harness.activateAbility(player1, 0, 2, blockerPerm.getId());
@@ -189,7 +190,7 @@ class BallistaSquadTest {
     void abilityFizzlesIfTargetRemoved() {
         addBallistaReadyToCombat(player1);
         Permanent targetPerm = addAttackingCreature(player2);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         harness.activateAbility(player1, 0, 2, targetPerm.getId());
@@ -214,7 +215,7 @@ class BallistaSquadTest {
         Permanent nonCombatPerm = new Permanent(bear);
         nonCombatPerm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player2.getId()).add(nonCombatPerm);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, nonCombatPerm.getId()))
@@ -226,7 +227,7 @@ class BallistaSquadTest {
     @DisplayName("Cannot activate ability without a target")
     void cannotActivateAbilityWithoutTarget() {
         addBallistaReadyToCombat(player1);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null))
@@ -240,7 +241,7 @@ class BallistaSquadTest {
         Permanent ballistaPerm = addBallistaReadyToCombat(player1);
         ballistaPerm.tap();
         Permanent targetPerm = addAttackingCreature(player2);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, targetPerm.getId()))
@@ -256,7 +257,7 @@ class BallistaSquadTest {
         // summoningSick is true by default
         harness.getGameData().playerBattlefields.get(player1.getId()).add(ballistaPerm);
         Permanent targetPerm = addAttackingCreature(player2);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, targetPerm.getId()))
@@ -282,7 +283,7 @@ class BallistaSquadTest {
     void manaIsConsumedWhenActivating() {
         addBallistaReadyToCombat(player1);
         Permanent targetPerm = addAttackingCreature(player2);
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         harness.activateAbility(player1, 0, 3, targetPerm.getId());
@@ -297,7 +298,7 @@ class BallistaSquadTest {
     void activatingWithXZeroStillCostsW() {
         addBallistaReadyToCombat(player1);
         Permanent targetPerm = addAttackingCreature(player2);
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         harness.activateAbility(player1, 0, 0, targetPerm.getId());

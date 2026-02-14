@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -51,7 +52,7 @@ class HurricaneTest {
     @DisplayName("Casting Hurricane puts it on the stack as a sorcery spell")
     void castingHurricanePutsItOnStack() {
         harness.setHand(player1, List.of(new Hurricane()));
-        harness.addMana(player1, "G", 4);
+        harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castSorcery(player1, 0, 3);
 
@@ -69,14 +70,14 @@ class HurricaneTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
         // Mana was spent ({X}{G} with X=3 → 4G total)
-        assertThat(gd.playerManaPools.get(player1.getId()).get("G")).isEqualTo(0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
     }
 
     @Test
     @DisplayName("Hurricane resolves dealing X damage to all players")
     void hurricaneResolvesDealsXDamageToPlayers() {
         harness.setHand(player1, List.of(new Hurricane()));
-        harness.addMana(player1, "G", 4);
+        harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castSorcery(player1, 0, 3);
 
         harness.passBothPriorities();
@@ -98,7 +99,7 @@ class HurricaneTest {
         harness.addToBattlefield(player2, flyingCreature());
 
         harness.setHand(player1, List.of(new Hurricane()));
-        harness.addMana(player1, "G", 3);
+        harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castSorcery(player1, 0, 2);
 
         harness.passBothPriorities();
@@ -117,7 +118,7 @@ class HurricaneTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Hurricane()));
-        harness.addMana(player1, "G", 4);
+        harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castSorcery(player1, 0, 3);
 
         harness.passBothPriorities();
@@ -133,7 +134,7 @@ class HurricaneTest {
     @DisplayName("Hurricane with X=0 deals no damage")
     void hurricaneWithXZeroDealsNoDamage() {
         harness.setHand(player1, List.of(new Hurricane()));
-        harness.addMana(player1, "G", 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castSorcery(player1, 0, 0);
 
         harness.passBothPriorities();
@@ -149,7 +150,7 @@ class HurricaneTest {
     @DisplayName("Cannot cast Hurricane without enough mana for X + colored cost")
     void cannotCastHurricaneWithoutEnoughMana() {
         harness.setHand(player1, List.of(new Hurricane()));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 3))
                 .isInstanceOf(IllegalStateException.class)
@@ -161,7 +162,7 @@ class HurricaneTest {
     void hurricaneCanKillCaster() {
         harness.setLife(player1, 3);
         harness.setHand(player1, List.of(new Hurricane()));
-        harness.addMana(player1, "G", 4);
+        harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castSorcery(player1, 0, 3);
 
         harness.passBothPriorities();

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -69,7 +70,7 @@ class RootwaterCommandoTest {
     @DisplayName("Casting Rootwater Commando puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new RootwaterCommando()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0);
 
@@ -83,7 +84,7 @@ class RootwaterCommandoTest {
     @DisplayName("Resolving puts Rootwater Commando onto the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new RootwaterCommando()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -107,7 +108,7 @@ class RootwaterCommandoTest {
     @DisplayName("Rootwater Commando enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
         harness.setHand(player1, List.of(new RootwaterCommando()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

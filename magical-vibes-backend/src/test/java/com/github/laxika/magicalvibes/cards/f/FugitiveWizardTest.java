@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -58,7 +59,7 @@ class FugitiveWizardTest {
     @DisplayName("Casting Fugitive Wizard puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new FugitiveWizard()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castCreature(player1, 0);
 
@@ -71,7 +72,7 @@ class FugitiveWizardTest {
     @DisplayName("Resolving puts Fugitive Wizard onto the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new FugitiveWizard()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -96,7 +97,7 @@ class FugitiveWizardTest {
     @DisplayName("Fugitive Wizard enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
         harness.setHand(player1, List.of(new FugitiveWizard()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

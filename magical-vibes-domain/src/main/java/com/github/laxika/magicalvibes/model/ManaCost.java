@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
-import java.util.HashMap;
-import java.util.List;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -9,26 +8,28 @@ import java.util.regex.Pattern;
 public class ManaCost {
 
     private static final Pattern MANA_SYMBOL = Pattern.compile("\\{([^}]+)}");
-    private static final List<String> COLORS = List.of("W", "U", "B", "R", "G");
 
     private final int genericCost;
-    private final Map<String, Integer> coloredCosts;
+    private final Map<ManaColor, Integer> coloredCosts;
     private final boolean hasX;
 
     public ManaCost(String manaCostString) {
         int generic = 0;
         boolean foundX = false;
-        Map<String, Integer> colored = new HashMap<>();
+        Map<ManaColor, Integer> colored = new EnumMap<>(ManaColor.class);
 
         Matcher matcher = MANA_SYMBOL.matcher(manaCostString);
         while (matcher.find()) {
             String symbol = matcher.group(1);
             if (symbol.equals("X")) {
                 foundX = true;
-            } else if (COLORS.contains(symbol)) {
-                colored.merge(symbol, 1, Integer::sum);
             } else {
-                generic += Integer.parseInt(symbol);
+                try {
+                    ManaColor color = ManaColor.fromCode(symbol);
+                    colored.merge(color, 1, Integer::sum);
+                } catch (IllegalArgumentException e) {
+                    generic += Integer.parseInt(symbol);
+                }
             }
         }
 
@@ -54,14 +55,14 @@ public class ManaCost {
     }
 
     public boolean canPay(ManaPool pool, int xValue) {
-        for (Map.Entry<String, Integer> entry : coloredCosts.entrySet()) {
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             if (pool.get(entry.getKey()) < entry.getValue()) {
                 return false;
             }
         }
 
         int remaining = pool.getTotal();
-        for (Map.Entry<String, Integer> entry : coloredCosts.entrySet()) {
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             remaining -= entry.getValue();
         }
 
@@ -73,7 +74,7 @@ public class ManaCost {
     }
 
     public void pay(ManaPool pool, int xValue) {
-        for (Map.Entry<String, Integer> entry : coloredCosts.entrySet()) {
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
                 pool.remove(entry.getKey());
             }
@@ -81,9 +82,9 @@ public class ManaCost {
 
         int remainingGeneric = genericCost + xValue;
         while (remainingGeneric > 0) {
-            String highestColor = null;
+            ManaColor highestColor = null;
             int highestAmount = 0;
-            for (String color : COLORS) {
+            for (ManaColor color : ManaColor.values()) {
                 int amount = pool.get(color);
                 if (amount > highestAmount) {
                     highestAmount = amount;

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -66,7 +67,7 @@ class RuleOfLawTest {
     void allowsFirstSpell() {
         harness.addToBattlefield(player1, new RuleOfLaw());
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -86,7 +87,7 @@ class RuleOfLawTest {
         GrizzlyBears bear1 = new GrizzlyBears();
         GrizzlyBears bear2 = new GrizzlyBears();
         harness.setHand(player1, List.of(bear1, bear2));
-        harness.addMana(player1, "G", 4);
+        harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -109,7 +110,7 @@ class RuleOfLawTest {
 
         // Player2 casts one spell
         harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.addMana(player2, "G", 4);
+        harness.addMana(player2, ManaColor.GREEN, 4);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -132,7 +133,7 @@ class RuleOfLawTest {
         GrizzlyBears bear1 = new GrizzlyBears();
         GrizzlyBears bear2 = new GrizzlyBears();
         harness.setHand(player1, List.of(bear1, bear2));
-        harness.addMana(player1, "G", 4);
+        harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -162,7 +163,7 @@ class RuleOfLawTest {
         GrizzlyBears bear = new GrizzlyBears();
         Plains plains = new Plains();
         harness.setHand(player1, List.of(bear, plains));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

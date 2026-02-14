@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -59,7 +60,7 @@ class YouthfulKnightTest {
     @DisplayName("Casting puts it on the stack as CREATURE_SPELL")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new YouthfulKnight()));
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
 
@@ -86,7 +87,7 @@ class YouthfulKnightTest {
     @DisplayName("Resolving puts Youthful Knight onto the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new YouthfulKnight()));
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -110,7 +111,7 @@ class YouthfulKnightTest {
     @DisplayName("Enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
         harness.setHand(player1, List.of(new YouthfulKnight()));
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

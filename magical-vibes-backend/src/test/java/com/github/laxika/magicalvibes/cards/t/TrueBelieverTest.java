@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -60,7 +61,7 @@ class TrueBelieverTest {
     @DisplayName("Casting True Believer puts it on the stack")
     void castingPutsItOnStack() {
         harness.setHand(player1, List.of(new TrueBeliever()));
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
 
@@ -75,7 +76,7 @@ class TrueBelieverTest {
     @DisplayName("Cannot cast without enough mana")
     void cannotCastWithoutEnoughMana() {
         harness.setHand(player1, List.of(new TrueBeliever()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -88,7 +89,7 @@ class TrueBelieverTest {
     @DisplayName("Resolving puts True Believer onto the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new TrueBeliever()));
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -112,7 +113,7 @@ class TrueBelieverTest {
     @DisplayName("True Believer enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
         harness.setHand(player1, List.of(new TrueBeliever()));
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -134,7 +135,7 @@ class TrueBelieverTest {
         harness.clearPriorityPassed();
 
         harness.setHand(player2, List.of(new BeaconOfImmortality()));
-        harness.addMana(player2, "W", 6);
+        harness.addMana(player2, ManaColor.WHITE, 6);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -147,7 +148,7 @@ class TrueBelieverTest {
         harness.addToBattlefield(player2, new TrueBeliever());
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new BeaconOfImmortality()));
-        harness.addMana(player1, "W", 6);
+        harness.addMana(player1, ManaColor.WHITE, 6);
 
         harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
@@ -160,7 +161,7 @@ class TrueBelieverTest {
     void cannotTargetSelfWithSpellWhenOwnTrueBelieverOnField() {
         harness.addToBattlefield(player1, new TrueBeliever());
         harness.setHand(player1, List.of(new BeaconOfImmortality()));
-        harness.addMana(player1, "W", 6);
+        harness.addMana(player1, ManaColor.WHITE, 6);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -190,7 +191,7 @@ class TrueBelieverTest {
 
         harness.setLife(player1, 20);
         harness.setHand(player2, List.of(new BeaconOfImmortality()));
-        harness.addMana(player2, "W", 6);
+        harness.addMana(player2, ManaColor.WHITE, 6);
 
         harness.castInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
@@ -225,7 +226,7 @@ class TrueBelieverTest {
         harness.clearPriorityPassed();
 
         harness.setHand(player2, List.of(new BeaconOfImmortality()));
-        harness.addMana(player2, "W", 6);
+        harness.addMana(player2, ManaColor.WHITE, 6);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -251,7 +252,7 @@ class TrueBelieverTest {
         harness.clearPriorityPassed();
 
         harness.setHand(player2, List.of(new BeaconOfImmortality()));
-        harness.addMana(player2, "W", 6);
+        harness.addMana(player2, ManaColor.WHITE, 6);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)

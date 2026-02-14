@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -63,7 +64,7 @@ class GloriousAnthemTest {
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new GloriousAnthem()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
 
@@ -77,7 +78,7 @@ class GloriousAnthemTest {
     @DisplayName("Resolving puts Glorious Anthem onto the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new GloriousAnthem()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -180,7 +181,7 @@ class GloriousAnthemTest {
     void bonusAppliesOnResolve() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new GloriousAnthem()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))

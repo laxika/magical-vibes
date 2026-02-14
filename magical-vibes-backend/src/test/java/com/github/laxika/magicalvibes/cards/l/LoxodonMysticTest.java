@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -63,7 +64,7 @@ class LoxodonMysticTest {
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new LoxodonMystic()));
-        harness.addMana(player1, "W", 5);
+        harness.addMana(player1, ManaColor.WHITE, 5);
 
         harness.castCreature(player1, 0);
 
@@ -78,7 +79,7 @@ class LoxodonMysticTest {
     @DisplayName("Resolving puts it on the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new LoxodonMystic()));
-        harness.addMana(player1, "W", 5);
+        harness.addMana(player1, ManaColor.WHITE, 5);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -96,7 +97,7 @@ class LoxodonMysticTest {
     void activatingPutsOnStack() {
         Permanent mystic = addReadyMystic(player1);
         Permanent target = addReadyBears(player2);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -113,7 +114,7 @@ class LoxodonMysticTest {
     void activatingTapsMystic() {
         Permanent mystic = addReadyMystic(player1);
         Permanent target = addReadyBears(player2);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -125,7 +126,7 @@ class LoxodonMysticTest {
     void resolvingTapsTarget() {
         addReadyMystic(player1);
         Permanent target = addReadyBears(player2);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -138,7 +139,7 @@ class LoxodonMysticTest {
     void canTapOwnCreature() {
         addReadyMystic(player1);
         Permanent ownBears = addReadyBears(player1);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, ownBears.getId());
         harness.passBothPriorities();
@@ -151,7 +152,7 @@ class LoxodonMysticTest {
     void manaIsConsumed() {
         addReadyMystic(player1);
         Permanent target = addReadyBears(player2);
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -179,7 +180,7 @@ class LoxodonMysticTest {
     void fizzlesIfTargetRemoved() {
         addReadyMystic(player1);
         Permanent target = addReadyBears(player2);
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
 

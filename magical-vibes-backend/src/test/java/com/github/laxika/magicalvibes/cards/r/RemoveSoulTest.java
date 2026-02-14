@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -61,10 +62,10 @@ class RemoveSoulTest {
     void castingPutsOnStackTargetingCreatureSpell() {
         LlanowarElves elves = new LlanowarElves();
         harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, "G", 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.setHand(player2, List.of(new RemoveSoul()));
-        harness.addMana(player2, "U", 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
@@ -86,10 +87,10 @@ class RemoveSoulTest {
 
         MightOfOaks might = new MightOfOaks();
         harness.setHand(player1, List.of(might));
-        harness.addMana(player1, "G", 4);
+        harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.setHand(player2, List.of(new RemoveSoul()));
-        harness.addMana(player2, "U", 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passPriority(player1);
@@ -105,10 +106,10 @@ class RemoveSoulTest {
     void countersCreatureSpell() {
         LlanowarElves elves = new LlanowarElves();
         harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, "G", 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.setHand(player2, List.of(new RemoveSoul()));
-        harness.addMana(player2, "U", 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
@@ -129,10 +130,10 @@ class RemoveSoulTest {
     void goesToGraveyardAfterResolving() {
         LlanowarElves elves = new LlanowarElves();
         harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, "G", 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.setHand(player2, List.of(new RemoveSoul()));
-        harness.addMana(player2, "U", 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
@@ -152,10 +153,10 @@ class RemoveSoulTest {
     void fizzlesIfTargetSpellRemoved() {
         LlanowarElves elves = new LlanowarElves();
         harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, "G", 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.setHand(player2, List.of(new RemoveSoul()));
-        harness.addMana(player2, "U", 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -65,8 +66,8 @@ class CloneTest {
     void copiesPowerAndToughness() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Clone()));
-        harness.addMana(player1, "U", 1);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
 
@@ -102,8 +103,8 @@ class CloneTest {
     void copiesKeywords() {
         harness.addToBattlefield(player2, new AirElemental());
         harness.setHand(player1, List.of(new Clone()));
-        harness.addMana(player1, "U", 1);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -128,8 +129,8 @@ class CloneTest {
     void copiesSubtypes() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Clone()));
-        harness.addMana(player1, "U", 1);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -155,8 +156,8 @@ class CloneTest {
     void goesToGraveyardAsClone() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Clone()));
-        harness.addMana(player1, "U", 1);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -190,8 +191,8 @@ class CloneTest {
     void returnsToHandAsClone() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Clone()));
-        harness.addMana(player1, "U", 1);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -225,8 +226,8 @@ class CloneTest {
         ChoMannoRevolutionary choManno = new ChoMannoRevolutionary();
         harness.addToBattlefield(player1, choManno);
         harness.setHand(player1, List.of(new Clone()));
-        harness.addMana(player1, "U", 1);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -253,8 +254,8 @@ class CloneTest {
     void diesWhenPlayerDeclines() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Clone()));
-        harness.addMana(player1, "U", 1);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -278,8 +279,8 @@ class CloneTest {
     void diesWhenNoCreatures() {
         // No creatures on any battlefield
         harness.setHand(player1, List.of(new Clone()));
-        harness.addMana(player1, "U", 1);
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

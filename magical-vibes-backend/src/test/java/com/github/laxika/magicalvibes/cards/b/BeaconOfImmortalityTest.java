@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -57,7 +58,7 @@ class BeaconOfImmortalityTest {
     @DisplayName("Casting Beacon of Immortality puts it on the stack")
     void castingPutsItOnStack() {
         harness.setHand(player1, List.of(new BeaconOfImmortality()));
-        harness.addMana(player1, "W", 6);
+        harness.addMana(player1, ManaColor.WHITE, 6);
 
         harness.castInstant(player1, 0, player1.getId());
 
@@ -73,7 +74,7 @@ class BeaconOfImmortalityTest {
     @DisplayName("Cannot cast without enough mana")
     void cannotCastWithoutEnoughMana() {
         harness.setHand(player1, List.of(new BeaconOfImmortality()));
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -87,7 +88,7 @@ class BeaconOfImmortalityTest {
     void doublesLifeFrom20To40() {
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new BeaconOfImmortality()));
-        harness.addMana(player1, "W", 6);
+        harness.addMana(player1, ManaColor.WHITE, 6);
 
         harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
@@ -101,7 +102,7 @@ class BeaconOfImmortalityTest {
     void canTargetOpponent() {
         harness.setLife(player2, 10);
         harness.setHand(player1, List.of(new BeaconOfImmortality()));
-        harness.addMana(player1, "W", 6);
+        harness.addMana(player1, ManaColor.WHITE, 6);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
@@ -114,7 +115,7 @@ class BeaconOfImmortalityTest {
     void doublesLowLifeTotal() {
         harness.setLife(player1, 3);
         harness.setHand(player1, List.of(new BeaconOfImmortality()));
-        harness.addMana(player1, "W", 6);
+        harness.addMana(player1, ManaColor.WHITE, 6);
 
         harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
@@ -129,7 +130,7 @@ class BeaconOfImmortalityTest {
     void shuffledIntoLibraryNotGraveyard() {
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new BeaconOfImmortality()));
-        harness.addMana(player1, "W", 6);
+        harness.addMana(player1, ManaColor.WHITE, 6);
 
         int deckSizeBefore = harness.getGameData().playerDecks.get(player1.getId()).size();
 
@@ -154,7 +155,7 @@ class BeaconOfImmortalityTest {
     void stackIsEmptyAfterResolution() {
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new BeaconOfImmortality()));
-        harness.addMana(player1, "W", 6);
+        harness.addMana(player1, ManaColor.WHITE, 6);
 
         harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();

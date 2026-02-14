@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Player;
@@ -62,10 +63,10 @@ class DiscombobulateTest {
     void castingPutsOnStackTargetingSpell() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(new Discombobulate()));
-        harness.addMana(player2, "U", 4);
+        harness.addMana(player2, ManaColor.BLUE, 4);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
@@ -88,10 +89,10 @@ class DiscombobulateTest {
     void resolvingCountersTargetSpell() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(new Discombobulate()));
-        harness.addMana(player2, "U", 4);
+        harness.addMana(player2, ManaColor.BLUE, 4);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
@@ -112,10 +113,10 @@ class DiscombobulateTest {
     void resolvingEntersLibraryReorderState() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(new Discombobulate()));
-        harness.addMana(player2, "U", 4);
+        harness.addMana(player2, ManaColor.BLUE, 4);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
@@ -133,10 +134,10 @@ class DiscombobulateTest {
     void discombobulateGoesToGraveyard() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(new Discombobulate()));
-        harness.addMana(player2, "U", 4);
+        harness.addMana(player2, ManaColor.BLUE, 4);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
@@ -156,10 +157,10 @@ class DiscombobulateTest {
     void libraryReorderChangesTopCards() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(new Discombobulate()));
-        harness.addMana(player2, "U", 4);
+        harness.addMana(player2, ManaColor.BLUE, 4);
 
         GameData gd = harness.getGameData();
         List<Card> deck = gd.playerDecks.get(player2.getId());
@@ -187,10 +188,10 @@ class DiscombobulateTest {
     void libraryReorderClearsAwaitingState() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(new Discombobulate()));
-        harness.addMana(player2, "U", 4);
+        harness.addMana(player2, ManaColor.BLUE, 4);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
@@ -212,10 +213,10 @@ class DiscombobulateTest {
     void fizzlesIfTargetSpellRemoved() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(new Discombobulate()));
-        harness.addMana(player2, "U", 4);
+        harness.addMana(player2, ManaColor.BLUE, 4);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
@@ -242,10 +243,10 @@ class DiscombobulateTest {
     void libraryWithFewerThanFourCards() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(new Discombobulate()));
-        harness.addMana(player2, "U", 4);
+        harness.addMana(player2, ManaColor.BLUE, 4);
 
         GameData gd = harness.getGameData();
         List<Card> deck = gd.playerDecks.get(player2.getId());
@@ -275,10 +276,10 @@ class DiscombobulateTest {
     void libraryWithOneCardSkipsReorder() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(new Discombobulate()));
-        harness.addMana(player2, "U", 4);
+        harness.addMana(player2, ManaColor.BLUE, 4);
 
         GameData gd = harness.getGameData();
         gd.playerDecks.get(player2.getId()).clear();
@@ -298,10 +299,10 @@ class DiscombobulateTest {
     void emptyLibrarySkipsReorder() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(new Discombobulate()));
-        harness.addMana(player2, "U", 4);
+        harness.addMana(player2, ManaColor.BLUE, 4);
 
         GameData gd = harness.getGameData();
         gd.playerDecks.get(player2.getId()).clear();
@@ -322,10 +323,10 @@ class DiscombobulateTest {
     void reorderRejectsWrongCount() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(new Discombobulate()));
-        harness.addMana(player2, "U", 4);
+        harness.addMana(player2, ManaColor.BLUE, 4);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
@@ -344,10 +345,10 @@ class DiscombobulateTest {
     void reorderRejectsDuplicateIndices() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(new Discombobulate()));
-        harness.addMana(player2, "U", 4);
+        harness.addMana(player2, ManaColor.BLUE, 4);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
@@ -366,10 +367,10 @@ class DiscombobulateTest {
     void reorderRejectsWrongPlayer() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(new Discombobulate()));
-        harness.addMana(player2, "U", 4);
+        harness.addMana(player2, ManaColor.BLUE, 4);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
@@ -390,10 +391,10 @@ class DiscombobulateTest {
     void gameLogRecordsActions() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, "G", 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(new Discombobulate()));
-        harness.addMana(player2, "U", 4);
+        harness.addMana(player2, ManaColor.BLUE, 4);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);

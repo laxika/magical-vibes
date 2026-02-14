@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -61,7 +62,7 @@ class ChoMannoRevolutionaryTest {
     @DisplayName("Casting puts Cho-Manno on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new ChoMannoRevolutionary()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
 
@@ -76,7 +77,7 @@ class ChoMannoRevolutionaryTest {
     @DisplayName("Resolving puts Cho-Manno onto the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new ChoMannoRevolutionary()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -91,7 +92,7 @@ class ChoMannoRevolutionaryTest {
     @DisplayName("Cannot cast without enough mana")
     void cannotCastWithoutEnoughMana() {
         harness.setHand(player1, List.of(new ChoMannoRevolutionary()));
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -264,7 +265,7 @@ class ChoMannoRevolutionaryTest {
     @DisplayName("Cho-Manno enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
         harness.setHand(player1, List.of(new ChoMannoRevolutionary()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

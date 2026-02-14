@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -62,7 +63,7 @@ class DelugeTest {
     @DisplayName("Casting puts it on the stack as INSTANT_SPELL")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new Deluge()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castInstant(player1, 0, null);
 
@@ -80,7 +81,7 @@ class DelugeTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Deluge()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castInstant(player1, 0, null);
         harness.passBothPriorities();
@@ -106,7 +107,7 @@ class DelugeTest {
         harness.addToBattlefield(player1, new AirElemental());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Deluge()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castInstant(player1, 0, null);
         harness.passBothPriorities();
@@ -127,7 +128,7 @@ class DelugeTest {
     @DisplayName("Works with empty battlefield (no crash)")
     void worksWithEmptyBattlefield() {
         harness.setHand(player1, List.of(new Deluge()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castInstant(player1, 0, null);
         harness.passBothPriorities();
@@ -139,7 +140,7 @@ class DelugeTest {
     @DisplayName("Deluge goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
         harness.setHand(player1, List.of(new Deluge()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castInstant(player1, 0, null);
         harness.passBothPriorities();
@@ -155,7 +156,7 @@ class DelugeTest {
         harness.addToBattlefield(player2, new AirElemental());
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Deluge()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castInstant(player1, 0, null);
         harness.passBothPriorities();

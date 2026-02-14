@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -58,7 +59,7 @@ class DemystifyTest {
     void castingPutsOnStack() {
         harness.addToBattlefield(player2, new AngelicChorus());
         harness.setHand(player1, List.of(new Demystify()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
         harness.castInstant(player1, 0, targetId);
@@ -78,7 +79,7 @@ class DemystifyTest {
     void resolvingDestroysTargetEnchantment() {
         harness.addToBattlefield(player2, new AngelicChorus());
         harness.setHand(player1, List.of(new Demystify()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
         harness.castInstant(player1, 0, targetId);
@@ -96,7 +97,7 @@ class DemystifyTest {
     void canDestroyOwnEnchantment() {
         harness.addToBattlefield(player1, new AngelicChorus());
         harness.setHand(player1, List.of(new Demystify()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID targetId = harness.getPermanentId(player1, "Angelic Chorus");
         harness.castInstant(player1, 0, targetId);
@@ -114,7 +115,7 @@ class DemystifyTest {
     void demystifyGoesToGraveyardAfterResolving() {
         harness.addToBattlefield(player2, new AngelicChorus());
         harness.setHand(player1, List.of(new Demystify()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
         harness.castInstant(player1, 0, targetId);
@@ -131,7 +132,7 @@ class DemystifyTest {
     void fizzlesIfTargetRemoved() {
         harness.addToBattlefield(player2, new AngelicChorus());
         harness.setHand(player1, List.of(new Demystify()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
         harness.castInstant(player1, 0, targetId);
@@ -154,7 +155,7 @@ class DemystifyTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new AngelicChorus());
         harness.setHand(player1, List.of(new Demystify()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castInstant(player1, 0, creatureId);

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -62,7 +63,7 @@ class BandageTest {
     void castingPutsItOnStack() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Bandage()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);
@@ -95,7 +96,7 @@ class BandageTest {
     void resolvingAddsPrevention() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Bandage()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         // Ensure player1 has a card to draw
         harness.getGameData().playerDecks.get(player1.getId()).add(new GrizzlyBears());
@@ -190,7 +191,7 @@ class BandageTest {
     @DisplayName("Resolving Bandage targeting a player adds prevention shield")
     void resolvingAddsPlayerPrevention() {
         harness.setHand(player1, List.of(new Bandage()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
         harness.getGameData().playerDecks.get(player1.getId()).add(new GrizzlyBears());
 
         // Target player2 with Bandage (using player UUID as target)
@@ -237,7 +238,7 @@ class BandageTest {
         harness.getGameData().playerDecks.get(player1.getId()).add(deckCard);
 
         harness.setHand(player1, List.of(new Bandage()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         int handSizeBefore = harness.getGameData().playerHands.get(player1.getId()).size();
 
@@ -261,7 +262,7 @@ class BandageTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.getGameData().playerDecks.get(player1.getId()).add(new GrizzlyBears());
         harness.setHand(player1, List.of(new Bandage()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);
@@ -291,7 +292,7 @@ class BandageTest {
         ballistaPerm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player1.getId()).add(ballistaPerm);
 
-        harness.addMana(player1, "W", 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         // Activate ability with X=2, targeting the shielded creature
@@ -312,7 +313,7 @@ class BandageTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.getGameData().playerDecks.get(player1.getId()).add(new GrizzlyBears());
         harness.setHand(player1, List.of(new Bandage()));
-        harness.addMana(player1, "W", 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);

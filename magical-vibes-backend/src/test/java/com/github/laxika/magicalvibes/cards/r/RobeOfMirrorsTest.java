@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -75,7 +76,7 @@ class RobeOfMirrorsTest {
         gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new RobeOfMirrors()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
 
@@ -92,7 +93,7 @@ class RobeOfMirrorsTest {
         gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new RobeOfMirrors()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
         harness.passBothPriorities();
@@ -120,7 +121,7 @@ class RobeOfMirrorsTest {
 
         // Controller tries to target own creature with Boomerang
         harness.setHand(player1, List.of(new Boomerang()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null))
                 .isInstanceOf(IllegalStateException.class)
@@ -144,7 +145,7 @@ class RobeOfMirrorsTest {
         // Player2 passes priority so player1 gets it
         harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new Boomerang()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
         harness.passPriority(player2);
 
         assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null))
@@ -166,7 +167,7 @@ class RobeOfMirrorsTest {
 
         // Controller tries to target the creature with Pacifism
         harness.setHand(player1, List.of(new Pacifism()));
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null))
                 .isInstanceOf(IllegalStateException.class)
@@ -198,7 +199,7 @@ class RobeOfMirrorsTest {
 
         // Now creature can be targeted — cast Boomerang on it
         harness.setHand(player1, List.of(new Boomerang()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
 
@@ -216,7 +217,7 @@ class RobeOfMirrorsTest {
         gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new RobeOfMirrors()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
 
@@ -241,7 +242,7 @@ class RobeOfMirrorsTest {
         gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new RobeOfMirrors()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
         harness.passBothPriorities();

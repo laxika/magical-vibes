@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -73,7 +74,7 @@ class FogElementalTest {
     @DisplayName("Casting Fog Elemental puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new FogElemental()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0);
 
@@ -87,7 +88,7 @@ class FogElementalTest {
     @DisplayName("Resolving puts Fog Elemental onto the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new FogElemental()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -101,7 +102,7 @@ class FogElementalTest {
     @DisplayName("Cannot cast without enough mana")
     void cannotCastWithoutEnoughMana() {
         harness.setHand(player1, List.of(new FogElemental()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -112,7 +113,7 @@ class FogElementalTest {
     @DisplayName("Fog Elemental enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
         harness.setHand(player1, List.of(new FogElemental()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

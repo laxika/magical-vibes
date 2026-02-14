@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -62,7 +63,7 @@ class DenizenOfTheDeepTest {
     void etbTriggersOnEnter() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new DenizenOfTheDeep()));
-        harness.addMana(player1, "U", 8);
+        harness.addMana(player1, ManaColor.BLUE, 8);
 
         harness.castCreature(player1, 0);
 
@@ -86,7 +87,7 @@ class DenizenOfTheDeepTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new SerraAngel());
         harness.setHand(player1, List.of(new DenizenOfTheDeep()));
-        harness.addMana(player1, "U", 8);
+        harness.addMana(player1, ManaColor.BLUE, 8);
 
         harness.castCreature(player1, 0);
 
@@ -115,7 +116,7 @@ class DenizenOfTheDeepTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new SerraAngel());
         harness.setHand(player1, List.of(new DenizenOfTheDeep()));
-        harness.addMana(player1, "U", 8);
+        harness.addMana(player1, ManaColor.BLUE, 8);
 
         harness.castCreature(player1, 0);
 
@@ -140,7 +141,7 @@ class DenizenOfTheDeepTest {
     @DisplayName("ETB with no other creatures does nothing")
     void etbWithNoOtherCreaturesDoesNothing() {
         harness.setHand(player1, List.of(new DenizenOfTheDeep()));
-        harness.addMana(player1, "U", 8);
+        harness.addMana(player1, ManaColor.BLUE, 8);
 
         harness.castCreature(player1, 0);
 

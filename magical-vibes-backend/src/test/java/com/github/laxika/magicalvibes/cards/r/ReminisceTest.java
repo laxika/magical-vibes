@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -59,7 +60,7 @@ class ReminisceTest {
     @DisplayName("Casting Reminisce puts it on the stack")
     void castingPutsItOnStack() {
         harness.setHand(player1, List.of(new Reminisce()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castSorcery(player1, 0, player1.getId());
 
@@ -75,7 +76,7 @@ class ReminisceTest {
     @DisplayName("Cannot cast without enough mana")
     void cannotCastWithoutEnoughMana() {
         harness.setHand(player1, List.of(new Reminisce()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -91,7 +92,7 @@ class ReminisceTest {
         Card bear2 = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(bear1, bear2));
         harness.setHand(player1, List.of(new Reminisce()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         int deckSizeBefore = harness.getGameData().playerDecks.get(player1.getId()).size();
 
@@ -119,7 +120,7 @@ class ReminisceTest {
         Card giant = new GiantSpider();
         harness.setGraveyard(player2, List.of(bear, giant));
         harness.setHand(player1, List.of(new Reminisce()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         int deckSizeBefore = harness.getGameData().playerDecks.get(player2.getId()).size();
 
@@ -141,7 +142,7 @@ class ReminisceTest {
     void emptyGraveyardStillShufflesLibrary() {
         harness.setGraveyard(player1, new ArrayList<>());
         harness.setHand(player1, List.of(new Reminisce()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         int deckSizeBefore = harness.getGameData().playerDecks.get(player1.getId()).size();
 
@@ -160,7 +161,7 @@ class ReminisceTest {
     void reminisceGoesToGraveyardAfterResolution() {
         harness.setGraveyard(player1, new ArrayList<>());
         harness.setHand(player1, List.of(new Reminisce()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
@@ -176,7 +177,7 @@ class ReminisceTest {
     void stackIsEmptyAfterResolution() {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new Reminisce()));
-        harness.addMana(player1, "U", 3);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();

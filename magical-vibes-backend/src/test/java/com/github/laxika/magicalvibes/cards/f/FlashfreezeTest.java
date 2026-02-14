@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -62,10 +63,10 @@ class FlashfreezeTest {
     void castingPutsOnStackTargetingGreenSpell() {
         LlanowarElves elves = new LlanowarElves();
         harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, "G", 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.setHand(player2, List.of(new Flashfreeze()));
-        harness.addMana(player2, "U", 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
@@ -84,10 +85,10 @@ class FlashfreezeTest {
     void cannotTargetBlueSpell() {
         AirElemental airElemental = new AirElemental();
         harness.setHand(player1, List.of(airElemental));
-        harness.addMana(player1, "U", 5);
+        harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.setHand(player2, List.of(new Flashfreeze()));
-        harness.addMana(player2, "U", 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
@@ -103,10 +104,10 @@ class FlashfreezeTest {
     void countersGreenCreatureSpell() {
         LlanowarElves elves = new LlanowarElves();
         harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, "G", 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.setHand(player2, List.of(new Flashfreeze()));
-        harness.addMana(player2, "U", 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
@@ -130,10 +131,10 @@ class FlashfreezeTest {
 
         MightOfOaks might = new MightOfOaks();
         harness.setHand(player1, List.of(might));
-        harness.addMana(player1, "G", 4);
+        harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.setHand(player2, List.of(new Flashfreeze()));
-        harness.addMana(player2, "U", 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passPriority(player1);
@@ -151,10 +152,10 @@ class FlashfreezeTest {
     void goesToGraveyardAfterResolving() {
         LlanowarElves elves = new LlanowarElves();
         harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, "G", 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.setHand(player2, List.of(new Flashfreeze()));
-        harness.addMana(player2, "U", 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
@@ -174,10 +175,10 @@ class FlashfreezeTest {
     void fizzlesIfTargetSpellRemoved() {
         LlanowarElves elves = new LlanowarElves();
         harness.setHand(player1, List.of(elves));
-        harness.addMana(player1, "G", 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.setHand(player2, List.of(new Flashfreeze()));
-        harness.addMana(player2, "U", 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);

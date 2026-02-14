@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -81,7 +82,7 @@ class MerfolkLooterTest {
     @DisplayName("Casting Merfolk Looter puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new MerfolkLooter()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
 
@@ -94,7 +95,7 @@ class MerfolkLooterTest {
     @DisplayName("Resolving puts Merfolk Looter onto the battlefield")
     void resolvingPutsOnBattlefield() {
         harness.setHand(player1, List.of(new MerfolkLooter()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -108,7 +109,7 @@ class MerfolkLooterTest {
     @DisplayName("Cannot cast without enough mana")
     void cannotCastWithoutEnoughMana() {
         harness.setHand(player1, List.of(new MerfolkLooter()));
-        harness.addMana(player1, "U", 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -119,7 +120,7 @@ class MerfolkLooterTest {
     @DisplayName("Enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
         harness.setHand(player1, List.of(new MerfolkLooter()));
-        harness.addMana(player1, "U", 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

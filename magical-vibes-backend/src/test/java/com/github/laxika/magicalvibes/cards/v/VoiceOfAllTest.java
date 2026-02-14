@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -92,7 +93,7 @@ class VoiceOfAllTest {
     @DisplayName("Casting Voice of All puts it on the stack")
     void castingPutsOnStack() {
         harness.setHand(player1, List.of(new VoiceOfAll()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
 
@@ -106,7 +107,7 @@ class VoiceOfAllTest {
     @DisplayName("Cannot cast Voice of All without enough mana")
     void cannotCastWithoutEnoughMana() {
         harness.setHand(player1, List.of(new VoiceOfAll()));
-        harness.addMana(player1, "W", 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -119,7 +120,7 @@ class VoiceOfAllTest {
     @DisplayName("Resolving Voice of All enters battlefield and awaits color choice")
     void resolvingTriggersColorChoice() {
         harness.setHand(player1, List.of(new VoiceOfAll()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -134,7 +135,7 @@ class VoiceOfAllTest {
     @DisplayName("Choosing a color sets chosenColor on the permanent")
     void choosingColorSetsOnPermanent() {
         harness.setHand(player1, List.of(new VoiceOfAll()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -150,7 +151,7 @@ class VoiceOfAllTest {
     @DisplayName("Color choice clears awaiting state")
     void colorChoiceClearsAwaitingState() {
         harness.setHand(player1, List.of(new VoiceOfAll()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -165,7 +166,7 @@ class VoiceOfAllTest {
     @DisplayName("Color choice is logged")
     void colorChoiceIsLogged() {
         harness.setHand(player1, List.of(new VoiceOfAll()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -178,7 +179,7 @@ class VoiceOfAllTest {
     @DisplayName("Voice of All enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
         harness.setHand(player1, List.of(new VoiceOfAll()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -205,7 +206,7 @@ class VoiceOfAllTest {
     @DisplayName("Wrong player cannot choose color")
     void wrongPlayerCannotChooseColor() {
         harness.setHand(player1, List.of(new VoiceOfAll()));
-        harness.addMana(player1, "W", 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -343,7 +344,7 @@ class VoiceOfAllTest {
         gd.playerBattlefields.get(player2.getId()).add(voiceOfAll);
 
         harness.setHand(player1, List.of(createTargetedInstant("Dark Banishing", CardColor.BLACK, "{B}")));
-        harness.addMana(player1, "B", 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, voiceOfAll.getId(), null))
                 .isInstanceOf(IllegalStateException.class)
@@ -359,7 +360,7 @@ class VoiceOfAllTest {
         gd.playerBattlefields.get(player1.getId()).add(voiceOfAll);
 
         harness.setHand(player1, List.of(createTargetedInstant("Lightning Bolt", CardColor.RED, "{R}")));
-        harness.addMana(player1, "R", 1);
+        harness.addMana(player1, ManaColor.RED, 1);
 
         gs.playCard(gd, player1, 0, 0, voiceOfAll.getId(), null);
 
@@ -381,7 +382,7 @@ class VoiceOfAllTest {
         blackAura.setSubtypes(List.of(CardSubtype.AURA));
         blackAura.setNeedsTarget(true);
         harness.setHand(player1, List.of(blackAura));
-        harness.addMana(player1, "B", 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, voiceOfAll.getId(), null))
                 .isInstanceOf(IllegalStateException.class)
@@ -399,7 +400,7 @@ class VoiceOfAllTest {
             h.skipMulligan();
 
             h.setHand(p1, List.of(new VoiceOfAll()));
-            h.addMana(p1, "W", 4);
+            h.addMana(p1, ManaColor.WHITE, 4);
 
             h.castCreature(p1, 0);
             h.passBothPriorities();
