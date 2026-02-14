@@ -39,6 +39,8 @@ export interface AttachedAura {
 })
 export class GameComponent implements OnInit, OnDestroy {
   game = signal<Game | null>(null);
+  hoveredCard = signal<Card | null>(null);
+  hoveredPermanent = signal<Permanent | null>(null);
   private subscriptions: Subscription[] = [];
 
   constructor(
@@ -1203,6 +1205,16 @@ export class GameComponent implements OnInit, OnDestroy {
 
   backToLobby(): void {
     this.router.navigate(['/home']);
+  }
+
+  onCardHover(card: Card, permanent: Permanent | null = null): void {
+    this.hoveredCard.set(card);
+    this.hoveredPermanent.set(permanent);
+  }
+
+  onCardHoverEnd(): void {
+    this.hoveredCard.set(null);
+    this.hoveredPermanent.set(null);
   }
 
   // Battlefield splitting: lands (back row) vs creatures (front row)

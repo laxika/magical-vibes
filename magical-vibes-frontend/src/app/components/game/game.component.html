@@ -28,7 +28,9 @@
                 [card]="card"
                 class="selectable"
                 [class.selected]="isCardSelected($index)"
-                (click)="toggleCardSelection($index)">
+                (click)="toggleCardSelection($index)"
+                (mouseenter)="onCardHover(card)"
+                (mouseleave)="onCardHoverEnd()">
                 @if (isCardSelected($index)) {
                   <div class="card-selected-badge">Bottom</div>
                 }
@@ -44,7 +46,7 @@
           <div class="hand-label">Your Hand ({{ hand.length }} cards)</div>
           <div class="hand-cards">
             @for (card of hand; track $index) {
-              <app-card-display [card]="card" />
+              <app-card-display [card]="card" (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
             }
           </div>
         </div>
@@ -231,14 +233,18 @@
                   [permanent]="aura.perm"
                   class="attached-aura"
                   [class.targetable]="targeting && isValidTarget(aura.perm)"
-                  (click)="onAuraClick(aura)" />
+                  (click)="onAuraClick(aura)"
+                  (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                  (mouseleave)="onCardHoverEnd()" />
               }
               <app-card-display
                 [card]="ip.perm.card"
                 [permanent]="ip.perm"
                 [class.tapped]="ip.perm.tapped"
                 [class.targetable]="targeting && isValidTarget(ip.perm)"
-                (click)="onOpponentBattlefieldCardClick(ip.originalIndex)" />
+                (click)="onOpponentBattlefieldCardClick(ip.originalIndex)"
+                (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
+                (mouseleave)="onCardHoverEnd()" />
             </div>
           }
         </div>
@@ -251,7 +257,9 @@
                   [permanent]="aura.perm"
                   class="attached-aura"
                   [class.targetable]="targeting && isValidTarget(aura.perm)"
-                  (click)="onAuraClick(aura)" />
+                  (click)="onAuraClick(aura)"
+                  (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                  (mouseleave)="onCardHoverEnd()" />
               }
               <app-card-display
                 [card]="ip.perm.card"
@@ -260,7 +268,9 @@
                 [class.summoning-sick]="ip.perm.summoningSick"
                 [class.block-target]="isBlockTarget(ip.originalIndex)"
                 [class.targetable]="targeting && isValidTarget(ip.perm)"
-                (click)="onOpponentBattlefieldCardClick(ip.originalIndex)" />
+                (click)="onOpponentBattlefieldCardClick(ip.originalIndex)"
+                (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
+                (mouseleave)="onCardHoverEnd()" />
             </div>
           }
         </div>
@@ -272,7 +282,7 @@
             <div class="graveyard-label">Graveyard ({{ opponentGraveyard.length }})</div>
             <div class="graveyard-cards">
               @for (card of opponentGraveyard; track $index) {
-                <app-card-display [card]="card" class="graveyard-card" />
+                <app-card-display [card]="card" class="graveyard-card" (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
               }
             </div>
           </div>
@@ -293,7 +303,9 @@
                         [permanent]="aura.perm"
                         class="attached-aura"
                         [class.targetable]="targeting && isValidTarget(aura.perm)"
-                        (click)="onAuraClick(aura)" />
+                        (click)="onAuraClick(aura)"
+                        (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                        (mouseleave)="onCardHoverEnd()" />
                     }
                     <app-card-display
                       [card]="group.attacker.card"
@@ -303,7 +315,9 @@
                       [class.block-target]="declaringBlockers && selectedBlockerIndex !== null && !group.attackerIsMine"
                       [class.targetable]="distributingDamage || (targeting && isValidTarget(group.attacker))"
                       (click)="onCombatAttackerClick(group)"
-                      (contextmenu)="$event.preventDefault(); unassignDamage(group.attacker.id)">
+                      (contextmenu)="$event.preventDefault(); unassignDamage(group.attacker.id)"
+                      (mouseenter)="onCardHover(group.attacker.card, group.attacker)"
+                      (mouseleave)="onCardHoverEnd()">
                       <div class="card-combat-badge attacking-badge">Attacking</div>
                       @if (distributingDamage && getDamageAssigned(group.attacker.id) > 0) {
                         <div class="card-combat-badge damage-badge">{{ getDamageAssigned(group.attacker.id) }} dmg</div>
@@ -321,13 +335,17 @@
                             [permanent]="aura.perm"
                             class="attached-aura"
                             [class.targetable]="targeting && isValidTarget(aura.perm)"
-                            (click)="onAuraClick(aura)" />
+                            (click)="onAuraClick(aura)"
+                            (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                            (mouseleave)="onCardHoverEnd()" />
                         }
                         <app-card-display
                           [card]="blocker.perm.card"
                           [permanent]="blocker.perm"
                           class="blocking"
-                          (click)="onCombatBlockerClick(blocker)">
+                          (click)="onCombatBlockerClick(blocker)"
+                          (mouseenter)="onCardHover(blocker.perm.card, blocker.perm)"
+                          (mouseleave)="onCardHoverEnd()">
                           <div class="card-combat-badge blocking-badge">Blocking</div>
                         </app-card-display>
                       </div>
@@ -353,7 +371,9 @@
                   [permanent]="aura.perm"
                   class="attached-aura"
                   [class.targetable]="targeting && isValidTarget(aura.perm)"
-                  (click)="onAuraClick(aura)" />
+                  (click)="onAuraClick(aura)"
+                  (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                  (mouseleave)="onCardHoverEnd()" />
               }
               <app-card-display
                 [card]="ip.perm.card"
@@ -367,7 +387,9 @@
                 [class.assigned-blocker]="isAssignedBlocker(ip.originalIndex)"
                 [class.targetable]="targeting && isValidTarget(ip.perm)"
                 [class.choosable-permanent]="choosingPermanent && choosablePermanentIds().has(ip.perm.id)"
-                (click)="onMyBattlefieldCardClick(ip.originalIndex)" />
+                (click)="onMyBattlefieldCardClick(ip.originalIndex)"
+                (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
+                (mouseleave)="onCardHoverEnd()" />
             </div>
           }
         </div>
@@ -380,7 +402,9 @@
                   [permanent]="aura.perm"
                   class="attached-aura"
                   [class.targetable]="targeting && isValidTarget(aura.perm)"
-                  (click)="onAuraClick(aura)" />
+                  (click)="onAuraClick(aura)"
+                  (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                  (mouseleave)="onCardHoverEnd()" />
               }
               <app-card-display
                 [card]="ip.perm.card"
@@ -389,7 +413,9 @@
                 [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
                 [class.targetable]="targeting && isValidTarget(ip.perm)"
                 [class.choosable-permanent]="choosingPermanent && choosablePermanentIds().has(ip.perm.id)"
-                (click)="onMyBattlefieldCardClick(ip.originalIndex)" />
+                (click)="onMyBattlefieldCardClick(ip.originalIndex)"
+                (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
+                (mouseleave)="onCardHoverEnd()" />
             </div>
           }
         </div>
@@ -401,7 +427,7 @@
             <div class="graveyard-label">Graveyard ({{ myGraveyard.length }})</div>
             <div class="graveyard-cards">
               @for (card of myGraveyard; track $index) {
-                <app-card-display [card]="card" class="graveyard-card" />
+                <app-card-display [card]="card" class="graveyard-card" (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
               }
             </div>
           </div>
@@ -461,7 +487,9 @@
             [card]="card"
             [class.playable]="isCardPlayable($index)"
             [class.choosable-card]="choosingFromHand && isChoosableCard($index)"
-            (click)="choosingFromHand ? chooseCardFromHand($index) : playCard($index)" />
+            (click)="choosingFromHand ? chooseCardFromHand($index) : playCard($index)"
+            (mouseenter)="onCardHover(card)"
+            (mouseleave)="onCardHoverEnd()" />
         }
       </div>
     </div>
@@ -499,16 +527,26 @@
   }
     </div>
 
-    <div class="log-panel">
-      <div class="log-header">Game Log</div>
-      <div class="log-entries">
-        @if (gameLog.length === 0) {
-          <div class="log-entry empty">Waiting for game to start...</div>
+    <div class="side-panel">
+      <div class="card-preview-panel">
+        @if (hoveredCard()) {
+          <app-card-display [card]="hoveredCard()!" [permanent]="hoveredPermanent()" class="preview-card" />
         } @else {
-          @for (entry of gameLog; track $index) {
-            <div class="log-entry">{{ entry }}</div>
-          }
+          <div class="card-preview-empty"></div>
         }
+      </div>
+
+      <div class="log-panel">
+        <div class="log-header">Game Log</div>
+        <div class="log-entries">
+          @if (gameLog.length === 0) {
+            <div class="log-entry empty">Waiting for game to start...</div>
+          } @else {
+            @for (entry of gameLog; track $index) {
+              <div class="log-entry">{{ entry }}</div>
+            }
+          }
+        </div>
       </div>
     </div>
   </div>

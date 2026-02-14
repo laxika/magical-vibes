@@ -69,15 +69,44 @@
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
-.log-panel {
+.side-panel {
   width: 300px;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(100vh - 60px);
+}
+
+.card-preview-panel {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.card-preview-panel .preview-card {
+  pointer-events: none;
+  transform: scale(1.6);
+  transform-origin: top center;
+  margin-bottom: 80px;
+}
+
+.card-preview-empty {
+  width: 192px;
+  height: 280px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #3a3a3a 0%, #5a5a5a 100%);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.log-panel {
+  flex: 1;
+  min-height: 0;
   background: white;
   border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 60px);
 }
 
 .log-header {
