@@ -134,6 +134,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
@@ -602,6 +603,8 @@ public class GameService {
 
                 String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
                 logAndBroadcast(gameData, shuffleLog);
+            } else if (effect instanceof ShuffleGraveyardIntoLibraryEffect) {
+                resolveShuffleGraveyardIntoLibrary(gameData, entry);
             } else if (effect instanceof GainLifeEqualToTargetToughnessEffect) {
                 resolveGainLifeEqualToTargetToughness(gameData, entry);
             } else if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
@@ -2629,6 +2632,32 @@ public class GameService {
         broadcastDeckSizes(gameData);
         broadcastGraveyards(gameData);
         log.info("Game {} - {} mills {} cards", gameData.id, playerName, cardsToMill);
+    }
+
+    private void resolveShuffleGraveyardIntoLibrary(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+
+        if (graveyard.isEmpty()) {
+            String logEntry = playerName + "'s graveyard is empty. Library is shuffled.";
+            logAndBroadcast(gameData, logEntry);
+            Collections.shuffle(deck);
+            broadcastDeckSizes(gameData);
+            return;
+        }
+
+        int count = graveyard.size();
+        deck.addAll(graveyard);
+        graveyard.clear();
+        Collections.shuffle(deck);
+
+        String logEntry = playerName + " shuffles their graveyard (" + count + " card" + (count != 1 ? "s" : "") + ") into their library.";
+        logAndBroadcast(gameData, logEntry);
+        broadcastDeckSizes(gameData);
+        broadcastGraveyards(gameData);
+        log.info("Game {} - {} shuffles graveyard ({} cards) into library", gameData.id, playerName, count);
     }
 
     private void resolveLookAtHand(GameData gameData, StackEntry entry) {
