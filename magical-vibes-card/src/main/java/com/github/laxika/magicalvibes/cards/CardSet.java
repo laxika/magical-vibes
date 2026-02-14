@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.cards.c.Condemn;
 import com.github.laxika.magicalvibes.cards.c.CraftyPathmage;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.d.Dehydration;
+import com.github.laxika.magicalvibes.cards.d.Deluge;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.FieldMarshal;
@@ -185,6 +186,7 @@ public enum CardSet {
             new CardPrinting("10E", "75", CloudSprite::new, "Randy Gallegos", COMMON),
             new CardPrinting("10E", "76", CounselOfTheSoratami::new, "Taguchi", COMMON),
             new CardPrinting("10E", "78", Dehydration::new, "Paolo Parente", COMMON),
+            new CardPrinting("10E", "79", Deluge::new, "\"From the sea came all life, and to the sea it will return. The sooner the better.\"\n\u2014Emperor Aboshan", "Mark Tedin", UNCOMMON),
             new CardPrinting("10E", "77", CraftyPathmage::new, "\"Follow the pathmage\"\n\u2014Otarian expression meaning \"escape quickly\"", "Jim Murray", COMMON),
             new CardPrinting("10E", "380", Forest::new, "Anthony S. Waters", COMMON),
             new CardPrinting("10E", "381", Forest::new, "John Avon", COMMON),

@@ -107,6 +107,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBatt
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.TapAllCreaturesWithoutFlyingEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesEffect;
@@ -549,6 +550,8 @@ public class GameService {
                 resolveReturnArtifactFromGraveyardToHand(gameData, entry);
             } else if (effect instanceof RegenerateEffect) {
                 resolveRegenerate(gameData, entry);
+            } else if (effect instanceof TapAllCreaturesWithoutFlyingEffect) {
+                resolveTapAllCreaturesWithoutFlying(gameData, entry);
             } else if (effect instanceof TapTargetCreatureEffect) {
                 resolveTapTargetCreature(gameData, entry);
             } else if (effect instanceof TapTargetPermanentEffect) {
@@ -2796,6 +2799,26 @@ public class GameService {
         gameData.graveyardChoiceDestination = GraveyardChoiceDestination.HAND;
         beginGraveyardChoice(gameData, controllerId, artifactIndices,
                 "You may return an artifact card from your graveyard to your hand.");
+    }
+
+    private void resolveTapAllCreaturesWithoutFlying(GameData gameData, StackEntry entry) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+
+            for (Permanent p : battlefield) {
+                if (p.getCard().getType() == CardType.CREATURE && !hasKeyword(gameData, p, Keyword.FLYING)) {
+                    p.tap();
+
+                    String logMsg = entry.getCard().getName() + " taps " + p.getCard().getName() + ".";
+                    gameData.gameLog.add(logMsg);
+                    broadcastLogEntry(gameData, logMsg);
+                }
+            }
+        }
+
+        broadcastBattlefields(gameData);
+        log.info("Game {} - {} taps all creatures without flying", gameData.id, entry.getCard().getName());
     }
 
     private void resolveTapTargetCreature(GameData gameData, StackEntry entry) {
