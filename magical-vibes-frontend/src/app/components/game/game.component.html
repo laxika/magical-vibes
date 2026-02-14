@@ -80,29 +80,6 @@
   }
 
   @if (game()?.status === GameStatus.RUNNING || game()?.status === GameStatus.FINISHED) {
-    <div class="turn-info">
-      <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)" [class.targetable]="targetingForPlayer" (click)="selectPlayerTarget(0)">
-        {{ player1Name }}
-        <span class="life-total">Life: {{ getLifeTotal(0) }}</span>
-        <span class="deck-size">Deck: {{ player1DeckSize }}</span>
-        @if (holdsPriority(0)) {
-          <span class="priority-indicator">Priority</span>
-        }
-      </div>
-      <div class="turn-center">
-        <span class="turn-number">Turn {{ game()?.turnNumber }}</span>
-        <span class="vs-label">VS</span>
-      </div>
-      <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)" [class.targetable]="targetingForPlayer" (click)="selectPlayerTarget(1)">
-        {{ player2Name }}
-        <span class="life-total">Life: {{ getLifeTotal(1) }}</span>
-        <span class="deck-size">Deck: {{ player2DeckSize }}</span>
-        @if (holdsPriority(1)) {
-          <span class="priority-indicator">Priority</span>
-        }
-      </div>
-    </div>
-
     <div class="phase-tracker">
       @for (group of phaseGroups; track group.phaseName) {
         <div class="phase-group">
@@ -534,6 +511,29 @@
         } @else {
           <div class="card-preview-empty"></div>
         }
+      </div>
+
+      <div class="turn-info">
+        <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)" [class.targetable]="targetingForPlayer" (click)="selectPlayerTarget(0)">
+          {{ player1Name }}
+          <span class="life-total">Life: {{ getLifeTotal(0) }}</span>
+          <span class="deck-size">Deck: {{ player1DeckSize }}</span>
+          @if (holdsPriority(0)) {
+            <span class="priority-indicator">Priority</span>
+          }
+        </div>
+        <div class="turn-center">
+          <span class="turn-number">Turn {{ game()?.turnNumber }}</span>
+          <span class="vs-label">VS</span>
+        </div>
+        <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)" [class.targetable]="targetingForPlayer" (click)="selectPlayerTarget(1)">
+          {{ player2Name }}
+          <span class="life-total">Life: {{ getLifeTotal(1) }}</span>
+          <span class="deck-size">Deck: {{ player2DeckSize }}</span>
+          @if (holdsPriority(1)) {
+            <span class="priority-indicator">Priority</span>
+          }
+        </div>
       </div>
 
       <div class="log-panel">

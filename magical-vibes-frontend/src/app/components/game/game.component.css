@@ -150,13 +150,11 @@
 
 .turn-info {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 20px;
+  align-items: stretch;
+  gap: 8px;
   background: white;
-  padding: 12px 24px;
+  padding: 10px;
   border-radius: 10px;
-  margin-bottom: 10px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
@@ -164,11 +162,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  justify-content: center;
+  gap: 1px;
+  padding: 0 4px;
 }
 
 .turn-number {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
   color: #999;
   text-transform: uppercase;
@@ -176,16 +176,18 @@
 }
 
 .vs-label {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 800;
   color: #ccc;
 }
 
 .player-badge {
-  padding: 10px 24px;
+  flex: 1;
+  padding: 8px 10px;
   border-radius: 8px;
-  font-size: 18px;
+  font-size: 13px;
   font-weight: 700;
+  text-align: center;
   transition: all 0.3s;
 }
 
@@ -213,9 +215,9 @@
 
 .life-total {
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  margin-top: 4px;
+  margin-top: 3px;
   color: #e74c3c;
 }
 
@@ -225,19 +227,19 @@
 
 .deck-size {
   display: block;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
-  margin-top: 4px;
+  margin-top: 2px;
   opacity: 0.8;
 }
 
 .priority-indicator {
   display: block;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-top: 4px;
+  margin-top: 3px;
   color: #f6c343;
 }
 
