@@ -570,7 +570,7 @@
 }
 
 .card.tapped {
-  opacity: 0.5;
+  /* Rotation handled by card-display component via :host(.tapped) */
 }
 
 .card.tappable {
@@ -1017,10 +1017,6 @@
   flex-wrap: wrap;
 }
 
-/* Override tapped opacity in combat zone — attacking creatures are tapped but should appear at full opacity */
-.combat-zone .card.tapped {
-  opacity: 1;
-}
 
 .combat-zone .card {
   cursor: pointer;

@@ -530,7 +530,7 @@
     <div class="side-panel">
       <div class="card-preview-panel">
         @if (hoveredCard()) {
-          <app-card-display [card]="hoveredCard()!" [permanent]="hoveredPermanent()" class="preview-card" />
+          <app-card-display [card]="hoveredCard()!" [permanent]="hoveredPermanent()" [preview]="true" class="preview-card" />
         } @else {
           <div class="card-preview-empty"></div>
         }
