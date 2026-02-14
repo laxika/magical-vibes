@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
@@ -56,7 +57,7 @@ public class CardViewFactory {
 
     private ActivatedAbilityView createAbilityView(ActivatedAbility ability) {
         boolean targetsPlayer = ability.getEffects().stream()
-                .anyMatch(e -> e instanceof MillTargetPlayerEffect);
+                .anyMatch(e -> e instanceof MillTargetPlayerEffect || e instanceof RevealTopCardOfLibraryEffect);
 
         List<String> allowedTargetTypes = new ArrayList<>();
         for (CardEffect effect : ability.getEffects()) {

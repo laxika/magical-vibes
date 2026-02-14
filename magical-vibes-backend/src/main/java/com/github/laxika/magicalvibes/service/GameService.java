@@ -77,6 +77,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -540,6 +541,8 @@ public class GameService {
                 resolvePutAuraFromHandOntoSelf(gameData, entry);
             } else if (effect instanceof MillTargetPlayerEffect mill) {
                 resolveMillTargetPlayer(gameData, entry, mill);
+            } else if (effect instanceof RevealTopCardOfLibraryEffect) {
+                resolveRevealTopCardOfLibrary(gameData, entry);
             } else if (effect instanceof GainControlOfTargetAuraEffect) {
                 resolveGainControlOfTargetAura(gameData, entry);
             }
@@ -1268,6 +1271,14 @@ public class GameService {
                     }
                 }
                 if (effect instanceof MillTargetPlayerEffect) {
+                    if (targetPermanentId == null) {
+                        throw new IllegalStateException("Ability requires a target player");
+                    }
+                    if (!gameData.playerIds.contains(targetPermanentId)) {
+                        throw new IllegalStateException("Target must be a player");
+                    }
+                }
+                if (effect instanceof RevealTopCardOfLibraryEffect) {
                     if (targetPermanentId == null) {
                         throw new IllegalStateException("Ability requires a target player");
                     }
@@ -2220,6 +2231,25 @@ public class GameService {
         broadcastDeckSizes(gameData);
         broadcastGraveyards(gameData);
         log.info("Game {} - {} mills {} cards", gameData.id, playerName, cardsToMill);
+    }
+
+    private void resolveRevealTopCardOfLibrary(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+
+        if (deck.isEmpty()) {
+            String logEntry = playerName + "'s library is empty.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+        } else {
+            Card topCard = deck.getFirst();
+            String logEntry = playerName + " reveals " + topCard.getName() + " from the top of their library.";
+            gameData.gameLog.add(logEntry);
+            broadcastLogEntry(gameData, logEntry);
+        }
+
+        log.info("Game {} - {} reveals top card of library", gameData.id, playerName);
     }
 
     private void resolveGainControlOfTargetAura(GameData gameData, StackEntry entry) {
