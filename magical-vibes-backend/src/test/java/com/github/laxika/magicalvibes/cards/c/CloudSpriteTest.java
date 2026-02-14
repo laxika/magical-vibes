@@ -195,7 +195,7 @@ class CloudSpriteTest {
         gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
@@ -222,7 +222,7 @@ class CloudSpriteTest {
         gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 

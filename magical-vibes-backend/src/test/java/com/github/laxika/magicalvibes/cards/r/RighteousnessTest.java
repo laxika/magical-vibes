@@ -271,7 +271,7 @@ class RighteousnessTest {
         assertThat(blockerPerm.getEffectiveToughness()).isEqualTo(9);
 
         // Advance to combat damage
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
