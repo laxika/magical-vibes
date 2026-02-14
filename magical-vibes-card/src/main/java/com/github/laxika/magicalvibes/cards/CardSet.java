@@ -19,11 +19,16 @@ import com.github.laxika.magicalvibes.cards.b.BallistaSquad;
 import com.github.laxika.magicalvibes.cards.b.Bandage;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfImmortality;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
+import com.github.laxika.magicalvibes.cards.c.CephalidConstable;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.ChoMannoRevolutionary;
+import com.github.laxika.magicalvibes.cards.c.CloudElemental;
+import com.github.laxika.magicalvibes.cards.c.CloudSprite;
 import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.c.Condemn;
 import com.github.laxika.magicalvibes.cards.c.CraftyPathmage;
+import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.d.Dehydration;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.FieldMarshal;
@@ -174,7 +179,12 @@ public enum CardSet {
             new CardPrinting("10E", "68", AvenFisher::new, "\"The same spears that catch their food today will defend their homes tomorrow.\"", "Christopher Moeller", COMMON),
             new CardPrinting("10E", "69", AvenWindreader::new, "\"The tiniest ripple tells a story ten fathoms deep.\"", "Greg Staples", COMMON),
             new CardPrinting("10E", "70", Boomerang::new, "\"Early Jamuraan hunters devised a weapon that would return to its source. Tolarian Aethermancers developed a spell that skipped the weapon entirely.\"", "Zoltan Boros & Gabor Szikszai", COMMON),
+            new CardPrinting("10E", "72", CephalidConstable::new, "\"Cephalids don't police people. They police loyalties.\"", "Doug Chaffee", RARE),
             new CardPrinting("10E", "73", Clone::new, "Kev Walker", RARE),
+            new CardPrinting("10E", "74", CloudElemental::new, "Sam Wood", COMMON),
+            new CardPrinting("10E", "75", CloudSprite::new, "Randy Gallegos", COMMON),
+            new CardPrinting("10E", "76", CounselOfTheSoratami::new, "Taguchi", COMMON),
+            new CardPrinting("10E", "78", Dehydration::new, "Paolo Parente", COMMON),
             new CardPrinting("10E", "77", CraftyPathmage::new, "\"Follow the pathmage\"\n\u2014Otarian expression meaning \"escape quickly\"", "Jim Murray", COMMON),
             new CardPrinting("10E", "380", Forest::new, "Anthony S. Waters", COMMON),
             new CardPrinting("10E", "381", Forest::new, "John Avon", COMMON),

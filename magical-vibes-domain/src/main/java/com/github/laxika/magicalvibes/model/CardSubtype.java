@@ -36,7 +36,9 @@ public enum CardSubtype {
     SKELETON("Skeleton"),
     ELEPHANT("Elephant"),
     ELEMENTAL("Elemental"),
+    FAERIE("Faerie"),
     MERFOLK("Merfolk"),
+    OCTOPUS("Octopus"),
     SHAPESHIFTER("Shapeshifter");
 
     @Getter

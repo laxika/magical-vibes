@@ -49,6 +49,8 @@ export enum MessageType {
   ACTIVATE_ABILITY = 'ACTIVATE_ABILITY',
   CHOOSE_PERMANENT = 'CHOOSE_PERMANENT',
   PERMANENT_CHOSEN = 'PERMANENT_CHOSEN',
+  CHOOSE_MULTIPLE_PERMANENTS = 'CHOOSE_MULTIPLE_PERMANENTS',
+  MULTIPLE_PERMANENTS_CHOSEN = 'MULTIPLE_PERMANENTS_CHOSEN',
   ERROR = 'ERROR'
 }
 
@@ -328,6 +330,13 @@ export interface ChoosePermanentNotification {
   prompt: string;
 }
 
+export interface ChooseMultiplePermanentsNotification {
+  type: MessageType;
+  permanentIds: string[];
+  maxCount: number;
+  prompt: string;
+}
+
 export interface StackUpdatedNotification {
   type: MessageType;
   stack: StackEntry[];
@@ -338,7 +347,7 @@ export interface GraveyardUpdatedNotification {
   graveyards: Card[][];
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | StackUpdatedNotification | GraveyardUpdatedNotification;
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | StackUpdatedNotification | GraveyardUpdatedNotification;
 
 export interface User {
   userId: string;

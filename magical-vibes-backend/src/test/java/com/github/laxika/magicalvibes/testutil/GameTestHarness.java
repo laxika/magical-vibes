@@ -125,6 +125,10 @@ public class GameTestHarness {
         gameService.handlePermanentChosen(gameData, player, permanentId);
     }
 
+    public void handleMultiplePermanentsChosen(Player player, List<UUID> permanentIds) {
+        gameService.handleMultiplePermanentsChosen(gameData, player, permanentIds);
+    }
+
     public UUID getPermanentId(Player player, String cardName) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(player.getId());
         for (Permanent p : battlefield) {

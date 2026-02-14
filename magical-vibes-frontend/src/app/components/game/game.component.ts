@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, StackEntry, StackUpdatedNotification, GraveyardUpdatedNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, StackEntry, StackUpdatedNotification, GraveyardUpdatedNotification } from '../../services/websocket.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { Subscription } from 'rxjs';
 
@@ -169,6 +169,11 @@ export class GameComponent implements OnInit, OnDestroy {
         if (message.type === MessageType.CHOOSE_PERMANENT) {
           const permMsg = message as ChoosePermanentNotification;
           this.handleChoosePermanent(permMsg);
+        }
+
+        if (message.type === MessageType.CHOOSE_MULTIPLE_PERMANENTS) {
+          const multiPermMsg = message as ChooseMultiplePermanentsNotification;
+          this.handleChooseMultiplePermanents(multiPermMsg);
         }
 
         const update = message as GameUpdate;
@@ -492,6 +497,39 @@ export class GameComponent implements OnInit, OnDestroy {
     this.choosingPermanent = false;
     this.choosablePermanentIds.set(new Set());
     this.permanentChoicePrompt = '';
+  }
+
+  private handleChooseMultiplePermanents(msg: ChooseMultiplePermanentsNotification): void {
+    this.choosingMultiplePermanents = true;
+    this.multiPermanentChoiceIds.set(new Set(msg.permanentIds));
+    this.multiPermanentSelectedIds.set(new Set());
+    this.multiPermanentMaxCount = msg.maxCount;
+    this.multiPermanentChoicePrompt = msg.prompt;
+  }
+
+  toggleMultiPermanentSelection(permanentId: string): void {
+    if (!this.choosingMultiplePermanents) return;
+    if (!this.multiPermanentChoiceIds().has(permanentId)) return;
+    const selected = new Set(this.multiPermanentSelectedIds());
+    if (selected.has(permanentId)) {
+      selected.delete(permanentId);
+    } else if (selected.size < this.multiPermanentMaxCount) {
+      selected.add(permanentId);
+    }
+    this.multiPermanentSelectedIds.set(selected);
+  }
+
+  confirmMultiPermanentChoice(): void {
+    if (!this.choosingMultiplePermanents) return;
+    this.websocketService.send({
+      type: MessageType.MULTIPLE_PERMANENTS_CHOSEN,
+      permanentIds: Array.from(this.multiPermanentSelectedIds())
+    });
+    this.choosingMultiplePermanents = false;
+    this.multiPermanentChoiceIds.set(new Set());
+    this.multiPermanentSelectedIds.set(new Set());
+    this.multiPermanentMaxCount = 0;
+    this.multiPermanentChoicePrompt = '';
   }
 
   getColorDisplayName(color: string): string {
@@ -973,6 +1011,11 @@ export class GameComponent implements OnInit, OnDestroy {
   choosingPermanent = false;
   choosablePermanentIds = signal(new Set<string>());
   permanentChoicePrompt = '';
+  choosingMultiplePermanents = false;
+  multiPermanentChoiceIds = signal(new Set<string>());
+  multiPermanentSelectedIds = signal(new Set<string>());
+  multiPermanentMaxCount = 0;
+  multiPermanentChoicePrompt = '';
 
   // Ability picker state
   choosingAbility = false;
@@ -1160,6 +1203,13 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return;
     }
+    if (this.choosingMultiplePermanents) {
+      const perm = this.myBattlefield[index];
+      if (perm && this.multiPermanentChoiceIds().has(perm.id)) {
+        this.toggleMultiPermanentSelection(perm.id);
+      }
+      return;
+    }
     if (this.distributingDamage) {
       const perm = this.myBattlefield[index];
       if (perm && perm.card.type === 'CREATURE' && perm.attacking) {
@@ -1184,6 +1234,20 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   onOpponentBattlefieldCardClick(index: number): void {
+    if (this.choosingPermanent) {
+      const perm = this.opponentBattlefield[index];
+      if (perm && this.choosablePermanentIds().has(perm.id)) {
+        this.choosePermanent(perm.id);
+      }
+      return;
+    }
+    if (this.choosingMultiplePermanents) {
+      const perm = this.opponentBattlefield[index];
+      if (perm && this.multiPermanentChoiceIds().has(perm.id)) {
+        this.toggleMultiPermanentSelection(perm.id);
+      }
+      return;
+    }
     if (this.distributingDamage) {
       const perm = this.opponentBattlefield[index];
       if (perm && perm.card.type === 'CREATURE' && perm.attacking) {

@@ -1,7 +1,7 @@
 <div class="title-bar">
   <span class="card-name">{{ card.name }}</span>
   @if (card.manaCost) {
-    <span class="card-mana-cost">{{ card.manaCost }}</span>
+    <span class="card-mana-cost" [innerHTML]="formattedManaCost"></span>
   }
 </div>
 @if (artUrl()) {
@@ -17,7 +17,7 @@
 </div>
 <div class="text-box" [style.font-size]="textBoxFontSize">
   @if (card.cardText) {
-    <div class="card-text">{{ card.cardText }}</div>
+    <div class="card-text" [innerHTML]="formattedCardText"></div>
   }
   @if (effectiveKeywords.length > 0) {
     <div class="card-keywords">{{ formatKeywords(effectiveKeywords) }}</div>

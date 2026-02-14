@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -146,7 +147,8 @@ class AuraGraftTest {
         // Should prompt for permanent choice to reattach
         assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
         assertThat(gd.awaitingPermanentChoicePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.pendingAuraGraftPermanentId).isEqualTo(aura.getId());
+        assertThat(gd.permanentChoiceContext).isInstanceOf(PermanentChoiceContext.AuraGraft.class);
+        assertThat(((PermanentChoiceContext.AuraGraft) gd.permanentChoiceContext).auraPermanentId()).isEqualTo(aura.getId());
     }
 
     @Test
@@ -166,7 +168,7 @@ class AuraGraftTest {
         harness.handlePermanentChosen(player1, myCreature.getId());
 
         assertThat(aura.getAttachedTo()).isEqualTo(myCreature.getId());
-        assertThat(gd.pendingAuraGraftPermanentId).isNull();
+        assertThat(gd.permanentChoiceContext).isNull();
         assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
     }
 
@@ -276,7 +278,7 @@ class AuraGraftTest {
 
         // No permanent choice should be prompted (only creature is the current target)
         assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.pendingAuraGraftPermanentId).isNull();
+        assertThat(gd.permanentChoiceContext).isNull();
 
         // Aura stays attached to the same creature
         assertThat(aura.getAttachedTo()).isEqualTo(opponentCreature.getId());

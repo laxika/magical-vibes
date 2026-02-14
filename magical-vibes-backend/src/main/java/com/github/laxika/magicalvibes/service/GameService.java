@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessa
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
@@ -54,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.BlockOnlyFlyersEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
@@ -89,6 +91,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
@@ -109,7 +112,9 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -286,11 +291,15 @@ public class GameService {
 
         drainManaPools(gameData);
 
-        // Untap all permanents for the new active player
+        // Untap all permanents for the new active player (skip those with "doesn't untap" effects)
         List<Permanent> battlefield = gameData.playerBattlefields.get(nextActive);
         if (battlefield != null) {
-            battlefield.forEach(Permanent::untap);
-            battlefield.forEach(p -> p.setSummoningSick(false));
+            battlefield.forEach(p -> {
+                if (!hasAuraPreventingUntap(gameData, p)) {
+                    p.untap();
+                }
+                p.setSummoningSick(false);
+            });
         }
         broadcastBattlefields(gameData);
 
@@ -1515,7 +1524,7 @@ public class GameService {
         if (needsCopyChoice) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent clonePerm = bf.get(bf.size() - 1);
-            gameData.pendingClonePermanentId = clonePerm.getId();
+            gameData.permanentChoiceContext = new PermanentChoiceContext.CloneCopy(clonePerm.getId());
 
             // Collect all creatures on all battlefields (excluding Clone itself)
             List<UUID> creatureIds = new ArrayList<>();
@@ -1540,7 +1549,7 @@ public class GameService {
                 return;
             } else {
                 // No creatures to copy — Clone stays as 0/0
-                gameData.pendingClonePermanentId = null;
+                gameData.permanentChoiceContext = null;
                 performStateBasedActions(gameData);
                 return;
             }
@@ -2387,7 +2396,7 @@ public class GameService {
         }
 
         if (!validCreatureIds.isEmpty()) {
-            gameData.pendingAuraGraftPermanentId = aura.getId();
+            gameData.permanentChoiceContext = new PermanentChoiceContext.AuraGraft(aura.getId());
             beginPermanentChoice(gameData, casterId, validCreatureIds,
                     "Attach " + aura.getCard().getName() + " to another permanent it can enchant.");
         } else {
@@ -2579,7 +2588,7 @@ public class GameService {
         // Find the first name with duplicates
         for (Map.Entry<String, List<UUID>> entry : legendaryByName.entrySet()) {
             if (entry.getValue().size() >= 2) {
-                gameData.pendingLegendRuleCardName = entry.getKey();
+                gameData.permanentChoiceContext = new PermanentChoiceContext.LegendRule(entry.getKey());
                 beginPermanentChoice(gameData, controllerId, entry.getValue(),
                         "You control multiple legendary permanents named " + entry.getKey() + ". Choose one to keep.");
                 return true;
@@ -2618,11 +2627,11 @@ public class GameService {
                 throw new IllegalStateException("Invalid permanent: " + permanentId);
             }
 
-            if (gameData.pendingClonePermanentId != null) {
-                UUID cloneId = gameData.pendingClonePermanentId;
-                gameData.pendingClonePermanentId = null;
+            PermanentChoiceContext context = gameData.permanentChoiceContext;
+            gameData.permanentChoiceContext = null;
 
-                Permanent clonePerm = findPermanentById(gameData, cloneId);
+            if (context instanceof PermanentChoiceContext.CloneCopy cloneCopy) {
+                Permanent clonePerm = findPermanentById(gameData, cloneCopy.clonePermanentId());
                 if (clonePerm == null) {
                     throw new IllegalStateException("Clone permanent no longer exists");
                 }
@@ -2647,11 +2656,8 @@ public class GameService {
                     broadcastPlayableCards(gameData);
                     resolveAutoPass(gameData);
                 }
-            } else if (gameData.pendingAuraGraftPermanentId != null) {
-                UUID auraId = gameData.pendingAuraGraftPermanentId;
-                gameData.pendingAuraGraftPermanentId = null;
-
-                Permanent aura = findPermanentById(gameData, auraId);
+            } else if (context instanceof PermanentChoiceContext.AuraGraft auraGraft) {
+                Permanent aura = findPermanentById(gameData, auraGraft.auraPermanentId());
                 if (aura == null) {
                     throw new IllegalStateException("Aura permanent no longer exists");
                 }
@@ -2672,15 +2678,12 @@ public class GameService {
                 broadcastPlayableCards(gameData);
 
                 resolveAutoPass(gameData);
-            } else if (gameData.pendingLegendRuleCardName != null) {
+            } else if (context instanceof PermanentChoiceContext.LegendRule legendRule) {
                 // Legend rule: keep chosen permanent, move all others with the same name to graveyard
-                String legendName = gameData.pendingLegendRuleCardName;
-                gameData.pendingLegendRuleCardName = null;
-
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 List<Permanent> toRemove = new ArrayList<>();
                 for (Permanent perm : battlefield) {
-                    if (perm.getCard().getName().equals(legendName) && !perm.getId().equals(permanentId)) {
+                    if (perm.getCard().getName().equals(legendRule.cardName()) && !perm.getId().equals(permanentId)) {
                         toRemove.add(perm);
                     }
                 }
@@ -2943,6 +2946,23 @@ public class GameService {
                 if (p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())) {
                     for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                         if (effect instanceof PreventAllDamageToAndByEnchantedCreatureEffect) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasAuraPreventingUntap(GameData gameData, Permanent creature) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                if (p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())) {
+                    for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                        if (effect instanceof EnchantedCreatureDoesntUntapEffect) {
                             return true;
                         }
                     }
@@ -3643,6 +3663,11 @@ public class GameService {
                         && !hasKeyword(gameData, blocker, Keyword.REACH)) {
                     throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (flying)");
                 }
+                boolean blockOnlyFlyers = blocker.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof BlockOnlyFlyersEffect);
+                if (blockOnlyFlyers && !hasKeyword(gameData, attacker, Keyword.FLYING)) {
+                    throw new IllegalStateException(blocker.getCard().getName() + " can only block creatures with flying");
+                }
                 if (hasProtectionFrom(gameData, attacker, blocker.getCard().getColor())) {
                     throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (protection)");
                 }
@@ -3763,6 +3788,7 @@ public class GameService {
         Map<Integer, Integer> atkDamageTaken = new HashMap<>();
         Map<Integer, Integer> defDamageTaken = new HashMap<>();
         Map<Permanent, Integer> combatDamageDealt = new HashMap<>();
+        Map<Permanent, Integer> combatDamageDealtToPlayer = new HashMap<>();
 
         // Phase 1: First strike damage
         if (anyFirstStrike) {
@@ -3776,12 +3802,14 @@ public class GameService {
                 if (blkIndices.isEmpty()) {
                     // Unblocked first striker deals damage to player (or redirect target)
                     if (atkHasFS && !isPreventedFromDealingDamage(gameData, atk)) {
+                        int power = getEffectivePower(gameData, atk);
                         if (redirectTarget != null) {
-                            damageRedirectedToGuard += getEffectivePower(gameData, atk);
+                            damageRedirectedToGuard += power;
                         } else if (!applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
-                            damageToDefendingPlayer += getEffectivePower(gameData, atk);
+                            damageToDefendingPlayer += power;
                         }
-                        combatDamageDealt.merge(atk, getEffectivePower(gameData, atk), Integer::sum);
+                        combatDamageDealt.merge(atk, power, Integer::sum);
+                        combatDamageDealtToPlayer.merge(atk, power, Integer::sum);
                     }
                 } else {
                     // First strike attacker deals damage to blockers
@@ -3846,12 +3874,14 @@ public class GameService {
             if (blkIndices.isEmpty()) {
                 // Unblocked regular attacker deals damage to player (or redirect target)
                 if (!atkSkipPhase2 && !isPreventedFromDealingDamage(gameData, atk)) {
+                    int power = getEffectivePower(gameData, atk);
                     if (redirectTarget != null) {
-                        damageRedirectedToGuard += getEffectivePower(gameData, atk);
+                        damageRedirectedToGuard += power;
                     } else if (!applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
-                        damageToDefendingPlayer += getEffectivePower(gameData, atk);
+                        damageToDefendingPlayer += power;
                     }
-                    combatDamageDealt.merge(atk, getEffectivePower(gameData, atk), Integer::sum);
+                    combatDamageDealt.merge(atk, power, Integer::sum);
+                    combatDamageDealtToPlayer.merge(atk, power, Integer::sum);
                 }
             } else {
                 // Attacker deals damage to surviving blockers (skip first-strike-only, allow double strike)
@@ -3991,6 +4021,12 @@ public class GameService {
             return;
         }
 
+        // Process combat damage to player triggers (e.g. Cephalid Constable) after all combat is resolved
+        processCombatDamageToPlayerTriggers(gameData, combatDamageDealtToPlayer, activeId, defenderId);
+        if (gameData.awaitingInput != null) {
+            return;
+        }
+
         if (!gameData.pendingMayAbilities.isEmpty()) {
             processNextMayAbility(gameData);
             return;
@@ -4020,6 +4056,144 @@ public class GameService {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    private void processCombatDamageToPlayerTriggers(GameData gameData, Map<Permanent, Integer> combatDamageDealtToPlayer, UUID attackerId, UUID defenderId) {
+        for (var entry : combatDamageDealtToPlayer.entrySet()) {
+            Permanent creature = entry.getKey();
+            int damageDealt = entry.getValue();
+            if (damageDealt <= 0) continue;
+
+            for (CardEffect effect : creature.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)) {
+                if (effect instanceof ReturnPermanentsOnCombatDamageToPlayerEffect) {
+                    // Collect valid permanents the damaged player controls
+                    List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+                    List<UUID> validIds = new ArrayList<>();
+                    for (Permanent perm : defenderBattlefield) {
+                        validIds.add(perm.getId());
+                    }
+
+                    if (validIds.isEmpty()) {
+                        String logEntry = creature.getCard().getName() + "'s ability triggers, but " + gameData.playerIdToName.get(defenderId) + " has no permanents.";
+                        gameData.gameLog.add(logEntry);
+                        broadcastLogEntry(gameData, logEntry);
+                        continue;
+                    }
+
+                    String logEntry = creature.getCard().getName() + "'s ability triggers — " + gameData.playerIdToName.get(attackerId) + " may return up to " + damageDealt + " permanent" + (damageDealt > 1 ? "s" : "") + ".";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                    log.info("Game {} - {} combat damage trigger: {} damage, {} valid targets", gameData.id, creature.getCard().getName(), damageDealt, validIds.size());
+
+                    gameData.pendingCombatDamageBounceTargetPlayerId = defenderId;
+                    int maxCount = Math.min(damageDealt, validIds.size());
+                    beginMultiPermanentChoice(gameData, attackerId, validIds, maxCount, "Return up to " + damageDealt + " permanent" + (damageDealt > 1 ? "s" : "") + " to their owner's hand.");
+                    return;
+                }
+            }
+        }
+    }
+
+    private void beginMultiPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, int maxCount, String prompt) {
+        gameData.awaitingInput = AwaitingInput.MULTI_PERMANENT_CHOICE;
+        gameData.awaitingMultiPermanentChoicePlayerId = playerId;
+        gameData.awaitingMultiPermanentChoiceValidIds = new HashSet<>(validIds);
+        gameData.awaitingMultiPermanentChoiceMaxCount = maxCount;
+        sessionManager.sendToPlayer(playerId, new ChooseMultiplePermanentsMessage(validIds, maxCount, prompt));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose up to {} permanents", gameData.id, playerName, maxCount);
+    }
+
+    public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
+        synchronized (gameData) {
+            if (gameData.awaitingInput != AwaitingInput.MULTI_PERMANENT_CHOICE) {
+                throw new IllegalStateException("Not awaiting multi-permanent choice");
+            }
+            if (!player.getId().equals(gameData.awaitingMultiPermanentChoicePlayerId)) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+
+            UUID playerId = player.getId();
+            Set<UUID> validIds = gameData.awaitingMultiPermanentChoiceValidIds;
+            int maxCount = gameData.awaitingMultiPermanentChoiceMaxCount;
+
+            gameData.awaitingInput = null;
+            gameData.awaitingMultiPermanentChoicePlayerId = null;
+            gameData.awaitingMultiPermanentChoiceValidIds = null;
+            gameData.awaitingMultiPermanentChoiceMaxCount = 0;
+
+            if (permanentIds == null) {
+                permanentIds = List.of();
+            }
+
+            if (permanentIds.size() > maxCount) {
+                throw new IllegalStateException("Too many permanents selected: " + permanentIds.size() + " > " + maxCount);
+            }
+
+            // Validate no duplicates
+            Set<UUID> uniqueIds = new HashSet<>(permanentIds);
+            if (uniqueIds.size() != permanentIds.size()) {
+                throw new IllegalStateException("Duplicate permanent IDs in selection");
+            }
+
+            for (UUID permId : permanentIds) {
+                if (!validIds.contains(permId)) {
+                    throw new IllegalStateException("Invalid permanent: " + permId);
+                }
+            }
+
+            if (gameData.pendingCombatDamageBounceTargetPlayerId != null) {
+                UUID targetPlayerId = gameData.pendingCombatDamageBounceTargetPlayerId;
+                gameData.pendingCombatDamageBounceTargetPlayerId = null;
+
+                if (permanentIds.isEmpty()) {
+                    String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to return any permanents.";
+                    gameData.gameLog.add(logEntry);
+                    broadcastLogEntry(gameData, logEntry);
+                } else {
+                    List<Permanent> targetBattlefield = gameData.playerBattlefields.get(targetPlayerId);
+                    List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
+                    List<String> bouncedNames = new ArrayList<>();
+
+                    for (UUID permId : permanentIds) {
+                        Permanent toReturn = null;
+                        for (Permanent p : targetBattlefield) {
+                            if (p.getId().equals(permId)) {
+                                toReturn = p;
+                                break;
+                            }
+                        }
+                        if (toReturn != null) {
+                            targetBattlefield.remove(toReturn);
+                            targetHand.add(toReturn.getCard());
+                            bouncedNames.add(toReturn.getCard().getName());
+                        }
+                    }
+
+                    if (!bouncedNames.isEmpty()) {
+                        removeOrphanedAuras(gameData);
+                        String logEntry = String.join(", ", bouncedNames) + (bouncedNames.size() == 1 ? " is" : " are") + " returned to " + gameData.playerIdToName.get(targetPlayerId) + "'s hand.";
+                        gameData.gameLog.add(logEntry);
+                        broadcastLogEntry(gameData, logEntry);
+                        log.info("Game {} - {} bounced {} permanents", gameData.id, gameData.playerIdToName.get(playerId), bouncedNames.size());
+
+                        broadcastBattlefields(gameData);
+                        sessionManager.sendToPlayer(targetPlayerId, new HandDrawnMessage(targetHand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(targetPlayerId, 0)));
+                    }
+                }
+
+                if (!gameData.pendingMayAbilities.isEmpty()) {
+                    processNextMayAbility(gameData);
+                    return;
+                }
+
+                advanceStep(gameData);
+                resolveAutoPass(gameData);
+            } else {
+                throw new IllegalStateException("No pending multi-permanent choice context");
             }
         }
     }
@@ -4265,7 +4439,8 @@ public class GameService {
             if (isCloneCopy) {
                 if (accepted) {
                     // Collect valid creature targets
-                    UUID cloneId = gameData.pendingClonePermanentId;
+                    UUID cloneId = gameData.permanentChoiceContext instanceof PermanentChoiceContext.CloneCopy cloneCopy
+                            ? cloneCopy.clonePermanentId() : null;
                     List<UUID> creatureIds = new ArrayList<>();
                     for (UUID pid : gameData.orderedPlayerIds) {
                         List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
@@ -4283,7 +4458,7 @@ public class GameService {
                     broadcastLogEntry(gameData, logEntry);
                     log.info("Game {} - {} accepts clone copy", gameData.id, player.getUsername());
                 } else {
-                    gameData.pendingClonePermanentId = null;
+                    gameData.permanentChoiceContext = null;
                     String logEntry = player.getUsername() + " declines to copy a creature. Clone enters as 0/0.";
                     gameData.gameLog.add(logEntry);
                     broadcastLogEntry(gameData, logEntry);
