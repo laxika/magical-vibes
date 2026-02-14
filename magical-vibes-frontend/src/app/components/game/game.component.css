@@ -1229,7 +1229,7 @@
 }
 
 .land-stack:has(.tapped) .land-stack-item:not(:first-child) {
-  margin-left: -180px;
+  margin-left: -200px;
 }
 
 .land-stack .land-stack-item:hover {
