@@ -1,4 +1,6 @@
 <div class="game-container">
+  <div class="game-layout">
+    <div class="game-area">
   @if (game()?.status === GameStatus.MULLIGAN) {
     <div class="mulligan-section">
       <div class="turn-info">
@@ -475,28 +477,26 @@
     </div>
   }
 
-  <div class="game-layout">
-    <div class="game-area">
-      @if (game()?.status === GameStatus.WAITING) {
-        <div class="players-area">
-          <div class="game-title">{{ game()?.gameName }}</div>
-          <div class="player-card">
-            <div class="player-label">Player 1</div>
-            <div class="player-name">{{ player1Name }}</div>
-          </div>
+  @if (game()?.status === GameStatus.WAITING) {
+    <div class="players-area">
+      <div class="game-title">{{ game()?.gameName }}</div>
+      <div class="player-card">
+        <div class="player-label">Player 1</div>
+        <div class="player-name">{{ player1Name }}</div>
+      </div>
 
-          <div class="vs-divider">VS</div>
+      <div class="vs-divider">VS</div>
 
-          <div class="player-card">
-            <div class="player-label">Player 2</div>
-            @if (isWaitingForOpponent) {
-              <div class="player-name waiting">Waiting for an opponent</div>
-            } @else {
-              <div class="player-name">{{ player2Name }}</div>
-            }
-          </div>
-        </div>
-      }
+      <div class="player-card">
+        <div class="player-label">Player 2</div>
+        @if (isWaitingForOpponent) {
+          <div class="player-name waiting">Waiting for an opponent</div>
+        } @else {
+          <div class="player-name">{{ player2Name }}</div>
+        }
+      </div>
+    </div>
+  }
     </div>
 
     <div class="log-panel">
