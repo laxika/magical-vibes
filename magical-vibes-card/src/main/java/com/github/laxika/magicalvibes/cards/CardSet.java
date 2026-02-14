@@ -85,6 +85,7 @@ import com.github.laxika.magicalvibes.cards.r.ReyaDawnbringer;
 import com.github.laxika.magicalvibes.cards.r.RevivingDose;
 import com.github.laxika.magicalvibes.cards.r.Righteousness;
 import com.github.laxika.magicalvibes.cards.r.RobeOfMirrors;
+import com.github.laxika.magicalvibes.cards.r.RootwaterMatriarch;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 import com.github.laxika.magicalvibes.cards.s.SamiteHealer;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -226,6 +227,7 @@ public enum CardSet {
             new CardPrinting("10E", "97", Plagiarize::new, "\"Are you thinking what I'm thinking?\"", "Jeremy Jarvis", RARE),
             new CardPrinting("10E", "99", Reminisce::new, "\"Leave the door to the past even slightly ajar and it could be blown off its hinges.\"", "Ralph Horsley", UNCOMMON),
             new CardPrinting("10E", "101", RobeOfMirrors::new, "Christopher Moeller", COMMON),
+            new CardPrinting("10E", "103", RootwaterMatriarch::new, "In the harsh depths of Rootwater, the charms of surface dwellers are quite useless . . . except as lures.", "Kev Walker", RARE),
             new CardPrinting("10E", "96", PhantomWarrior::new, "\"There are as many pillows of illusion as flakes in a snow-storm. We wake from one dream into another dream.\"\n\u2014Ralph Waldo Emerson, \"Illusions\"", "Greg Staples", UNCOMMON),
             new CardPrinting("10E", "77", CraftyPathmage::new, "\"Follow the pathmage\"\n\u2014Otarian expression meaning \"escape quickly\"", "Jim Murray", COMMON),
             new CardPrinting("10E", "380", Forest::new, "Anthony S. Waters", COMMON),

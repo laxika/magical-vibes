@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
@@ -653,6 +654,8 @@ public class GameService {
                 resolveLookAtHand(gameData, entry);
             } else if (effect instanceof RevealTopCardOfLibraryEffect) {
                 resolveRevealTopCardOfLibrary(gameData, entry);
+            } else if (effect instanceof GainControlOfEnchantedTargetEffect) {
+                resolveGainControlOfEnchantedTarget(gameData, entry);
             } else if (effect instanceof GainControlOfTargetAuraEffect) {
                 resolveGainControlOfTargetAura(gameData, entry);
             } else if (effect instanceof ReturnTargetPermanentToHandEffect) {
@@ -1372,6 +1375,18 @@ public class GameService {
                     }
                     if (!gameData.playerIds.contains(targetPermanentId)) {
                         throw new IllegalStateException("Target must be a player");
+                    }
+                }
+                if (effect instanceof GainControlOfEnchantedTargetEffect) {
+                    if (targetPermanentId == null) {
+                        throw new IllegalStateException("Ability requires a target");
+                    }
+                    Permanent target = findPermanentById(gameData, targetPermanentId);
+                    if (target == null) {
+                        throw new IllegalStateException("Invalid target permanent");
+                    }
+                    if (!isCreature(gameData, target)) {
+                        throw new IllegalStateException("Target must be a creature");
                     }
                 }
                 if (effect instanceof ReturnAuraFromGraveyardToBattlefieldEffect) {
@@ -2789,6 +2804,35 @@ public class GameService {
         log.info("Game {} - {} gains control of {}", gameData.id, newControllerName, creature.getCard().getName());
     }
 
+    private void resolveGainControlOfEnchantedTarget(GameData gameData, StackEntry entry) {
+        Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) return;
+
+        // "for as long as that creature is enchanted" — if not enchanted at resolution, do nothing
+        if (!isEnchanted(gameData, target)) {
+            String logEntry = entry.getCard().getName() + "'s ability has no effect (" + target.getCard().getName() + " is not enchanted).";
+            logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        stealCreature(gameData, entry.getControllerId(), target);
+        gameData.enchantmentDependentStolenCreatures.add(target.getId());
+    }
+
+    private boolean isEnchanted(GameData gameData, Permanent creature) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                if (p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())
+                        && p.getCard().isAura()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private void returnStolenCreatures(GameData gameData) {
         if (gameData.stolenCreatures.isEmpty()) return;
 
@@ -2803,6 +2847,7 @@ public class GameService {
             if (creature == null) {
                 // Creature left the battlefield, clean up
                 it.remove();
+                gameData.enchantmentDependentStolenCreatures.remove(creatureId);
                 continue;
             }
 
@@ -2811,7 +2856,14 @@ public class GameService {
                 continue;
             }
 
-            // No control aura attached — return creature to its owner
+            // Check if creature is still enchanted (for Rootwater Matriarch-style effects)
+            if (gameData.enchantmentDependentStolenCreatures.contains(creatureId)
+                    && isEnchanted(gameData, creature)) {
+                continue;
+            }
+            gameData.enchantmentDependentStolenCreatures.remove(creatureId);
+
+            // No control effect active — return creature to its owner
             for (UUID pid : gameData.orderedPlayerIds) {
                 List<Permanent> bf = gameData.playerBattlefields.get(pid);
                 if (bf != null && bf.remove(creature)) {
