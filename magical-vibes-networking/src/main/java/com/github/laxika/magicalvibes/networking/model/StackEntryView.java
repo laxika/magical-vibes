@@ -10,6 +10,7 @@ public record StackEntryView(
         UUID controllerId,
         String description,
         UUID cardId,
-        boolean isSpell
+        boolean isSpell,
+        UUID targetPermanentId
 ) {
 }

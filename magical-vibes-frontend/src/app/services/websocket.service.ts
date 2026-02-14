@@ -173,6 +173,7 @@ export interface StackEntry {
   description: string;
   cardId: string;
   isSpell: boolean;
+  targetPermanentId: string | null;
 }
 
 export interface Game {

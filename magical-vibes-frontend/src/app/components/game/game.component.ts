@@ -46,6 +46,7 @@ export class GameComponent implements OnInit, OnDestroy {
   game = signal<Game | null>(null);
   hoveredCard = signal<Card | null>(null);
   hoveredPermanent = signal<Permanent | null>(null);
+  stackTargetId = signal<string | null>(null);
   private subscriptions: Subscription[] = [];
 
   constructor(
@@ -1369,6 +1370,44 @@ export class GameComponent implements OnInit, OnDestroy {
   onCardHoverEnd(): void {
     this.hoveredCard.set(null);
     this.hoveredPermanent.set(null);
+  }
+
+  onStackEntryHover(entry: StackEntry): void {
+    this.stackTargetId.set(entry.targetPermanentId);
+  }
+
+  onStackEntryHoverEnd(): void {
+    this.stackTargetId.set(null);
+  }
+
+  isStackTargetPlayer(playerIndex: number): boolean {
+    const g = this.game();
+    if (!g) return false;
+    return this.stackTargetId() === g.playerIds[playerIndex];
+  }
+
+  isStackTargetSpell(entry: StackEntry): boolean {
+    return this.stackTargetId() === entry.cardId;
+  }
+
+  getStackEntryTargetName(entry: StackEntry): string | null {
+    if (!entry.targetPermanentId) return null;
+    const g = this.game();
+    if (!g) return null;
+    // Check if targeting a player
+    const playerIdx = g.playerIds.indexOf(entry.targetPermanentId);
+    if (playerIdx >= 0) return g.playerNames[playerIdx];
+    // Check if targeting a permanent on battlefield
+    for (const bf of g.battlefields) {
+      for (const perm of bf) {
+        if (perm.id === entry.targetPermanentId) return perm.card.name;
+      }
+    }
+    // Check if targeting a spell on the stack
+    for (const se of g.stack) {
+      if (se.cardId === entry.targetPermanentId) return se.card.name;
+    }
+    return null;
   }
 
   // Battlefield splitting: lands (back row) vs creatures (front row)

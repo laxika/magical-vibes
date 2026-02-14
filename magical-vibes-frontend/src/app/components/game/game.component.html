@@ -87,9 +87,10 @@
           @for (entry of stackEntries; track $index) {
             <div class="stack-entry-wrapper"
                  [class.spell-targetable]="targetingSpell && entry.isSpell"
+                 [class.stack-targeted]="isStackTargetSpell(entry)"
                  (click)="targetingSpell && entry.isSpell ? selectSpellTarget(entry) : null"
-                 (mouseenter)="onCardHover(entry.card)"
-                 (mouseleave)="onCardHoverEnd()">
+                 (mouseenter)="onStackEntryHover(entry); onCardHover(entry.card)"
+                 (mouseleave)="onStackEntryHoverEnd(); onCardHoverEnd()">
               <app-card-display
                 [card]="entry.card"
                 [attr.data-entry-type]="entry.entryType" />
@@ -97,6 +98,11 @@
                 <div class="stack-entry-controller">
                   ({{ getPlayerName(entry.controllerId) }})
                 </div>
+                @if (entry.targetPermanentId) {
+                  <div class="stack-entry-target">
+                    Target: {{ getStackEntryTargetName(entry) ?? entry.targetPermanentId }}
+                  </div>
+                }
               </div>
               @if ($index === 0) {
                 <div class="stack-top-badge">Next to resolve</div>
@@ -234,6 +240,7 @@
                         [permanent]="ip.perm"
                         [class.tapped]="ip.perm.tapped"
                         [class.targetable]="targeting && isValidTarget(ip.perm)"
+                        [class.stack-targeted]="stackTargetId() === ip.perm.id"
                         [class.choosable-permanent]="(choosingPermanent && choosablePermanentIds().has(ip.perm.id)) || (choosingMultiplePermanents && multiPermanentChoiceIds().has(ip.perm.id))"
                         [class.selected-multi-permanent]="choosingMultiplePermanents && multiPermanentSelectedIds().has(ip.perm.id)"
                         (click)="onOpponentBattlefieldCardClick(ip.originalIndex)"
@@ -260,6 +267,7 @@
                   [permanent]="item.perm"
                   [class.tapped]="item.perm.tapped"
                   [class.targetable]="targeting && isValidTarget(item.perm)"
+                  [class.stack-targeted]="stackTargetId() === item.perm.id"
                   [class.choosable-permanent]="(choosingPermanent && choosablePermanentIds().has(item.perm.id)) || (choosingMultiplePermanents && multiPermanentChoiceIds().has(item.perm.id))"
                   [class.selected-multi-permanent]="choosingMultiplePermanents && multiPermanentSelectedIds().has(item.perm.id)"
                   (click)="onOpponentBattlefieldCardClick(item.originalIndex)"
@@ -289,6 +297,7 @@
                 [class.summoning-sick]="ip.perm.summoningSick"
                 [class.block-target]="isBlockTarget(ip.originalIndex)"
                 [class.targetable]="targeting && isValidTarget(ip.perm)"
+                [class.stack-targeted]="stackTargetId() === ip.perm.id"
                 [class.choosable-permanent]="(choosingPermanent && choosablePermanentIds().has(ip.perm.id)) || (choosingMultiplePermanents && multiPermanentChoiceIds().has(ip.perm.id))"
                 [class.selected-multi-permanent]="choosingMultiplePermanents && multiPermanentSelectedIds().has(ip.perm.id)"
                 (click)="onOpponentBattlefieldCardClick(ip.originalIndex)"
@@ -337,6 +346,7 @@
                       [class.selected-attacker]="declaringAttackers && isSelectedAttacker(group.attackerIndex)"
                       [class.block-target]="declaringBlockers && selectedBlockerIndex !== null && !group.attackerIsMine"
                       [class.targetable]="distributingDamage || (targeting && isValidTarget(group.attacker))"
+                      [class.stack-targeted]="stackTargetId() === group.attacker.id"
                       (click)="onCombatAttackerClick(group)"
                       (contextmenu)="$event.preventDefault(); unassignDamage(group.attacker.id)"
                       (mouseenter)="onCardHover(group.attacker.card, group.attacker)"
@@ -366,6 +376,7 @@
                           [card]="blocker.perm.card"
                           [permanent]="blocker.perm"
                           class="blocking"
+                          [class.stack-targeted]="stackTargetId() === blocker.perm.id"
                           (click)="onCombatBlockerClick(blocker)"
                           (mouseenter)="onCardHover(blocker.perm.card, blocker.perm)"
                           (mouseleave)="onCardHoverEnd()">
@@ -409,6 +420,7 @@
                 [class.selected-blocker]="selectedBlockerIndex === ip.originalIndex"
                 [class.assigned-blocker]="isAssignedBlocker(ip.originalIndex)"
                 [class.targetable]="targeting && isValidTarget(ip.perm)"
+                [class.stack-targeted]="stackTargetId() === ip.perm.id"
                 [class.choosable-permanent]="(choosingPermanent && choosablePermanentIds().has(ip.perm.id)) || (choosingMultiplePermanents && multiPermanentChoiceIds().has(ip.perm.id))"
                 [class.selected-multi-permanent]="choosingMultiplePermanents && multiPermanentSelectedIds().has(ip.perm.id)"
                 (click)="onMyBattlefieldCardClick(ip.originalIndex)"
@@ -440,6 +452,7 @@
                         [class.tapped]="ip.perm.tapped"
                         [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
                         [class.targetable]="targeting && isValidTarget(ip.perm)"
+                        [class.stack-targeted]="stackTargetId() === ip.perm.id"
                         [class.choosable-permanent]="(choosingPermanent && choosablePermanentIds().has(ip.perm.id)) || (choosingMultiplePermanents && multiPermanentChoiceIds().has(ip.perm.id))"
                         [class.selected-multi-permanent]="choosingMultiplePermanents && multiPermanentSelectedIds().has(ip.perm.id)"
                         (click)="onMyBattlefieldCardClick(ip.originalIndex)"
@@ -467,6 +480,7 @@
                   [class.tapped]="item.perm.tapped"
                   [class.tappable]="canTapPermanent(item.originalIndex) && !declaringAttackers && !declaringBlockers"
                   [class.targetable]="targeting && isValidTarget(item.perm)"
+                  [class.stack-targeted]="stackTargetId() === item.perm.id"
                   [class.choosable-permanent]="(choosingPermanent && choosablePermanentIds().has(item.perm.id)) || (choosingMultiplePermanents && multiPermanentChoiceIds().has(item.perm.id))"
                   [class.selected-multi-permanent]="choosingMultiplePermanents && multiPermanentSelectedIds().has(item.perm.id)"
                   (click)="onMyBattlefieldCardClick(item.originalIndex)"
@@ -625,7 +639,7 @@
       </div>
 
       <div class="turn-info">
-        <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)" [class.targetable]="targetingForPlayer" (click)="selectPlayerTarget(0)">
+        <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)" [class.targetable]="targetingForPlayer" [class.stack-targeted]="isStackTargetPlayer(0)" (click)="selectPlayerTarget(0)">
           {{ player1Name }}
           <span class="life-total">Life: {{ getLifeTotal(0) }}</span>
           <span class="deck-size">Deck: {{ player1DeckSize }}</span>
@@ -637,7 +651,7 @@
           <span class="turn-number">Turn {{ game()?.turnNumber }}</span>
           <span class="vs-label">VS</span>
         </div>
-        <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)" [class.targetable]="targetingForPlayer" (click)="selectPlayerTarget(1)">
+        <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)" [class.targetable]="targetingForPlayer" [class.stack-targeted]="isStackTargetPlayer(1)" (click)="selectPlayerTarget(1)">
           {{ player2Name }}
           <span class="life-total">Life: {{ getLifeTotal(1) }}</span>
           <span class="deck-size">Deck: {{ player2DeckSize }}</span>

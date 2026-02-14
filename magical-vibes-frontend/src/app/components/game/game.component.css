@@ -1209,6 +1209,43 @@
   z-index: 10;
 }
 
+/* Stack target highlight (hover over stack entry to show its target) */
+
+.card.stack-targeted {
+  outline: 2px solid #c04040;
+  outline-offset: 1px;
+  box-shadow: 0 0 12px rgba(192, 64, 64, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5);
+  animation: stack-target-highlight 2s ease-in-out infinite;
+  z-index: 10;
+}
+
+.stack-entry-wrapper.stack-targeted .card {
+  outline: 2px solid #c04040;
+  outline-offset: 1px;
+  box-shadow: 0 0 12px rgba(192, 64, 64, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5);
+  animation: stack-target-highlight 2s ease-in-out infinite;
+}
+
+.player-badge.stack-targeted {
+  outline: 2px solid #c04040;
+  outline-offset: 1px;
+  box-shadow: 0 0 12px rgba(192, 64, 64, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5);
+  animation: stack-target-highlight 2s ease-in-out infinite;
+}
+
+.stack-entry-target {
+  font-size: 10px;
+  color: #c04040;
+  font-weight: 600;
+  font-family: 'Cinzel', Georgia, serif;
+  white-space: nowrap;
+}
+
+@keyframes stack-target-highlight {
+  0%, 100% { box-shadow: 0 0 10px rgba(192, 64, 64, 0.4), 2px 3px 8px rgba(0, 0, 0, 0.5); }
+  50% { box-shadow: 0 0 18px rgba(192, 64, 64, 0.7), 2px 3px 10px rgba(0, 0, 0, 0.6); }
+}
+
 /* Spell targeting styles */
 
 .spell-targeting-banner {
