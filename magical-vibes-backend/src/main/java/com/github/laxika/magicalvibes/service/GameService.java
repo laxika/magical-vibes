@@ -1711,13 +1711,13 @@ public class GameService {
                 throw new IllegalStateException("Not your turn to choose");
             }
 
-            // Mind Bend two-step color choice
-            if (gameData.colorChoiceContext instanceof ColorChoiceContext.MindBendFromWord ctx) {
-                handleMindBendFromWordChosen(gameData, player, colorName, ctx);
+            // Text-changing effects (Mind Bend, etc.) — two-step color/land-type choice
+            if (gameData.colorChoiceContext instanceof ColorChoiceContext.TextChangeFromWord ctx) {
+                handleTextChangeFromWordChosen(gameData, player, colorName, ctx);
                 return;
             }
-            if (gameData.colorChoiceContext instanceof ColorChoiceContext.MindBendToWord ctx) {
-                handleMindBendToWordChosen(gameData, player, colorName, ctx);
+            if (gameData.colorChoiceContext instanceof ColorChoiceContext.TextChangeToWord ctx) {
+                handleTextChangeToWordChosen(gameData, player, colorName, ctx);
                 return;
             }
 
@@ -1752,8 +1752,8 @@ public class GameService {
         }
     }
 
-    private static final List<String> MIND_BEND_COLOR_WORDS = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-    private static final List<String> MIND_BEND_LAND_TYPES = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
+    private static final List<String> TEXT_CHANGE_COLOR_WORDS = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+    private static final List<String> TEXT_CHANGE_LAND_TYPES = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
 
     private void resolveChangeColorText(GameData gameData, StackEntry entry) {
         UUID targetPermanentId = entry.getTargetPermanentId();
@@ -1762,49 +1762,49 @@ public class GameService {
             return;
         }
 
-        gameData.colorChoiceContext = new ColorChoiceContext.MindBendFromWord(targetPermanentId);
+        gameData.colorChoiceContext = new ColorChoiceContext.TextChangeFromWord(targetPermanentId);
         gameData.awaitingInput = AwaitingInput.COLOR_CHOICE;
         gameData.awaitingColorChoicePlayerId = entry.getControllerId();
 
         List<String> options = new ArrayList<>();
-        options.addAll(MIND_BEND_COLOR_WORDS);
-        options.addAll(MIND_BEND_LAND_TYPES);
+        options.addAll(TEXT_CHANGE_COLOR_WORDS);
+        options.addAll(TEXT_CHANGE_LAND_TYPES);
         sessionManager.sendToPlayer(entry.getControllerId(), new ChooseColorMessage(options, "Choose a color word or basic land type to replace."));
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
-        log.info("Game {} - Awaiting {} to choose a color word or basic land type for Mind Bend", gameData.id, playerName);
+        log.info("Game {} - Awaiting {} to choose a color word or basic land type for text change", gameData.id, playerName);
     }
 
-    private void handleMindBendFromWordChosen(GameData gameData, Player player, String chosenWord, ColorChoiceContext.MindBendFromWord ctx) {
-        boolean isColor = MIND_BEND_COLOR_WORDS.contains(chosenWord);
-        boolean isLandType = MIND_BEND_LAND_TYPES.contains(chosenWord);
+    private void handleTextChangeFromWordChosen(GameData gameData, Player player, String chosenWord, ColorChoiceContext.TextChangeFromWord ctx) {
+        boolean isColor = TEXT_CHANGE_COLOR_WORDS.contains(chosenWord);
+        boolean isLandType = TEXT_CHANGE_LAND_TYPES.contains(chosenWord);
         if (!isColor && !isLandType) {
             throw new IllegalArgumentException("Invalid choice: " + chosenWord);
         }
 
-        gameData.colorChoiceContext = new ColorChoiceContext.MindBendToWord(ctx.targetPermanentId(), chosenWord, isColor);
+        gameData.colorChoiceContext = new ColorChoiceContext.TextChangeToWord(ctx.targetPermanentId(), chosenWord, isColor);
 
         List<String> remainingOptions;
         String promptType;
         if (isColor) {
-            remainingOptions = MIND_BEND_COLOR_WORDS.stream().filter(c -> !c.equals(chosenWord)).toList();
+            remainingOptions = TEXT_CHANGE_COLOR_WORDS.stream().filter(c -> !c.equals(chosenWord)).toList();
             promptType = "color word";
         } else {
-            remainingOptions = MIND_BEND_LAND_TYPES.stream().filter(t -> !t.equals(chosenWord)).toList();
+            remainingOptions = TEXT_CHANGE_LAND_TYPES.stream().filter(t -> !t.equals(chosenWord)).toList();
             promptType = "basic land type";
         }
 
         sessionManager.sendToPlayer(player.getId(), new ChooseColorMessage(remainingOptions, "Choose the replacement " + promptType + "."));
-        log.info("Game {} - Awaiting {} to choose replacement word for Mind Bend", gameData.id, player.getUsername());
+        log.info("Game {} - Awaiting {} to choose replacement word for text change", gameData.id, player.getUsername());
     }
 
-    private void handleMindBendToWordChosen(GameData gameData, Player player, String chosenWord, ColorChoiceContext.MindBendToWord ctx) {
+    private void handleTextChangeToWordChosen(GameData gameData, Player player, String chosenWord, ColorChoiceContext.TextChangeToWord ctx) {
         if (ctx.isColor()) {
-            if (!MIND_BEND_COLOR_WORDS.contains(chosenWord)) {
+            if (!TEXT_CHANGE_COLOR_WORDS.contains(chosenWord)) {
                 throw new IllegalArgumentException("Invalid color choice: " + chosenWord);
             }
         } else {
-            if (!MIND_BEND_LAND_TYPES.contains(chosenWord)) {
+            if (!TEXT_CHANGE_LAND_TYPES.contains(chosenWord)) {
                 throw new IllegalArgumentException("Invalid land type choice: " + chosenWord);
             }
         }
@@ -1815,8 +1815,8 @@ public class GameService {
 
         Permanent target = findPermanentById(gameData, ctx.targetPermanentId());
         if (target != null) {
-            String fromText = mindBendChoiceToTextWord(ctx.fromWord());
-            String toText = mindBendChoiceToTextWord(chosenWord);
+            String fromText = textChangeChoiceToWord(ctx.fromWord());
+            String toText = textChangeChoiceToWord(chosenWord);
             target.getTextReplacements().add(new TextReplacement(fromText, toText));
 
             // If the permanent has a chosenColor matching the from-color, update it
@@ -1841,7 +1841,7 @@ public class GameService {
         resolveAutoPass(gameData);
     }
 
-    private String mindBendChoiceToTextWord(String choice) {
+    private String textChangeChoiceToWord(String choice) {
         return switch (choice) {
             case "WHITE" -> "white";
             case "BLUE" -> "blue";

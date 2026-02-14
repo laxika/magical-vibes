@@ -93,7 +93,7 @@ class MindBendTest {
         GameData gd = harness.getGameData();
         assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.COLOR_CHOICE);
         assertThat(gd.awaitingColorChoicePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.colorChoiceContext).isInstanceOf(ColorChoiceContext.MindBendFromWord.class);
+        assertThat(gd.colorChoiceContext).isInstanceOf(ColorChoiceContext.TextChangeFromWord.class);
     }
 
     @Test
@@ -111,8 +111,8 @@ class MindBendTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.colorChoiceContext).isInstanceOf(ColorChoiceContext.MindBendToWord.class);
-        ColorChoiceContext.MindBendToWord ctx = (ColorChoiceContext.MindBendToWord) gd.colorChoiceContext;
+        assertThat(gd.colorChoiceContext).isInstanceOf(ColorChoiceContext.TextChangeToWord.class);
+        ColorChoiceContext.TextChangeToWord ctx = (ColorChoiceContext.TextChangeToWord) gd.colorChoiceContext;
         assertThat(ctx.fromWord()).isEqualTo("BLACK");
         assertThat(ctx.isColor()).isTrue();
     }
@@ -200,7 +200,7 @@ class MindBendTest {
         harness.handleColorChosen(player1, "ISLAND");
 
         GameData gd = harness.getGameData();
-        ColorChoiceContext.MindBendToWord ctx = (ColorChoiceContext.MindBendToWord) gd.colorChoiceContext;
+        ColorChoiceContext.TextChangeToWord ctx = (ColorChoiceContext.TextChangeToWord) gd.colorChoiceContext;
         assertThat(ctx.isColor()).isFalse();
         assertThat(ctx.fromWord()).isEqualTo("ISLAND");
     }

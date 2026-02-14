@@ -4,7 +4,7 @@ import java.util.UUID;
 
 public sealed interface ColorChoiceContext {
 
-    record MindBendFromWord(UUID targetPermanentId) implements ColorChoiceContext {}
+    record TextChangeFromWord(UUID targetPermanentId) implements ColorChoiceContext {}
 
-    record MindBendToWord(UUID targetPermanentId, String fromWord, boolean isColor) implements ColorChoiceContext {}
+    record TextChangeToWord(UUID targetPermanentId, String fromWord, boolean isColor) implements ColorChoiceContext {}
 }
