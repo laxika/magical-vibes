@@ -82,20 +82,25 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  width: 208px;
+  height: 291px;
+  margin: 0 auto;
+  flex-shrink: 0;
 }
 
 .card-preview-panel .preview-card {
   pointer-events: none;
   transform: scale(1.6);
   transform-origin: top center;
-  margin-bottom: 110px;
 }
 
 .card-preview-empty {
   width: 208px;
   height: 291px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #3a3a3a 0%, #5a5a5a 100%);
+  background: linear-gradient(180deg, #3a3a3a 0%, #5a5a5a 100%);
+  border: 3px solid #555;
+  box-sizing: border-box;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
 }
 
