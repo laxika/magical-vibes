@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.BlockOnlyFlyersEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
@@ -3600,6 +3601,11 @@ public class GameService {
                         && !hasKeyword(gameData, blocker, Keyword.FLYING)
                         && !hasKeyword(gameData, blocker, Keyword.REACH)) {
                     throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (flying)");
+                }
+                boolean blockOnlyFlyers = blocker.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof BlockOnlyFlyersEffect);
+                if (blockOnlyFlyers && !hasKeyword(gameData, attacker, Keyword.FLYING)) {
+                    throw new IllegalStateException(blocker.getCard().getName() + " can only block creatures with flying");
                 }
                 if (hasProtectionFrom(gameData, attacker, blocker.getCard().getColor())) {
                     throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (protection)");
