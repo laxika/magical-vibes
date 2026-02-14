@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.a.AngelicWall;
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.a.AuraOfSilence;
 import com.github.laxika.magicalvibes.cards.a.AvenCloudchaser;
+import com.github.laxika.magicalvibes.cards.a.AvenFisher;
 import com.github.laxika.magicalvibes.cards.b.BallistaSquad;
 import com.github.laxika.magicalvibes.cards.b.Bandage;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfImmortality;
@@ -166,6 +167,7 @@ public enum CardSet {
             new CardPrinting("10E", "65", AmbassadorLaquatus::new, "Jim Murray", RARE),
             new CardPrinting("10E", "66", ArcanisTheOmnipotent::new, "\"Do not concern yourself with my origin, my race, or my ancestry. Seek my record in the pits, and then make your wager.\"", "Justin Sweet", RARE),
             new CardPrinting("10E", "67", AuraGraft::new, "\"It's not really stealing. It's more like extended borrowing.\"", "Ray Lago", UNCOMMON),
+            new CardPrinting("10E", "68", AvenFisher::new, "\"The same spears that catch their food today will defend their homes tomorrow.\"", "Christopher Moeller", COMMON),
             new CardPrinting("10E", "380", Forest::new, "Anthony S. Waters", COMMON),
             new CardPrinting("10E", "381", Forest::new, "John Avon", COMMON),
             new CardPrinting("10E", "382", Forest::new, "Rob Alexander", COMMON),

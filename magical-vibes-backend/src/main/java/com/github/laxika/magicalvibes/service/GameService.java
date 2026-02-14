@@ -79,6 +79,7 @@ import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
@@ -431,6 +432,12 @@ public class GameService {
                     }
                 }
             }
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            broadcastStackUpdate(gameData);
+            processNextMayAbility(gameData);
+            return;
         }
 
         broadcastStackUpdate(gameData);
@@ -1120,6 +1127,7 @@ public class GameService {
             // Sacrifice: remove from battlefield, add to graveyard
             battlefield.remove(permanentIndex);
             gameData.playerGraveyards.get(playerId).add(permanent.getCard());
+            collectDeathTrigger(gameData, permanent.getCard(), playerId);
             removeOrphanedAuras(gameData);
 
             String logEntry = player.getUsername() + " sacrifices " + permanent.getCard().getName() + ".";
@@ -1143,7 +1151,12 @@ public class GameService {
             broadcastBattlefields(gameData);
             broadcastGraveyards(gameData);
             broadcastStackUpdate(gameData);
-            sessionManager.sendToPlayers(gameData.orderedPlayerIds, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+
+            if (!gameData.pendingMayAbilities.isEmpty()) {
+                processNextMayAbility(gameData);
+            } else {
+                sessionManager.sendToPlayers(gameData.orderedPlayerIds, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+            }
 
             broadcastPlayableCards(gameData);
         }
@@ -1813,6 +1826,7 @@ public class GameService {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                     if (battlefield != null && battlefield.remove(target)) {
                         gameData.playerGraveyards.get(playerId).add(target.getCard());
+                        collectDeathTrigger(gameData, target.getCard(), playerId);
 
                         String destroyLog = target.getCard().getName() + " is destroyed.";
                         gameData.gameLog.add(destroyLog);
@@ -1870,6 +1884,7 @@ public class GameService {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 if (battlefield != null && battlefield.remove(target)) {
                     gameData.playerGraveyards.get(playerId).add(target.getCard());
+                    collectDeathTrigger(gameData, target.getCard(), playerId);
 
                     String destroyLog = target.getCard().getName() + " is destroyed.";
                     gameData.gameLog.add(destroyLog);
@@ -1908,6 +1923,7 @@ public class GameService {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 if (battlefield != null && battlefield.remove(perm)) {
                     gameData.playerGraveyards.get(playerId).add(perm.getCard());
+                    collectDeathTrigger(gameData, perm.getCard(), playerId);
 
                     String logEntry = perm.getCard().getName() + " is destroyed.";
                     gameData.gameLog.add(logEntry);
@@ -1981,6 +1997,7 @@ public class GameService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
                 gameData.playerGraveyards.get(playerId).add(target.getCard());
+                collectDeathTrigger(gameData, target.getCard(), playerId);
 
                 String logEntry = target.getCard().getName() + " is destroyed.";
                 gameData.gameLog.add(logEntry);
@@ -2004,6 +2021,7 @@ public class GameService {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 if (battlefield != null && battlefield.remove(attacker)) {
                     gameData.playerGraveyards.get(playerId).add(attacker.getCard());
+                    collectDeathTrigger(gameData, attacker.getCard(), playerId);
                     String logEntry = attacker.getCard().getName() + " is destroyed by " + entry.getCard().getName() + ".";
                     gameData.gameLog.add(logEntry);
                     broadcastLogEntry(gameData, logEntry);
@@ -2020,6 +2038,7 @@ public class GameService {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 if (battlefield != null && battlefield.remove(self)) {
                     gameData.playerGraveyards.get(playerId).add(self.getCard());
+                    collectDeathTrigger(gameData, self.getCard(), playerId);
                     String logEntry = entry.getCard().getName() + " is destroyed.";
                     gameData.gameLog.add(logEntry);
                     broadcastLogEntry(gameData, logEntry);
@@ -2484,6 +2503,7 @@ public class GameService {
                 for (Permanent perm : toRemove) {
                     battlefield.remove(perm);
                     gameData.playerGraveyards.get(playerId).add(perm.getCard());
+                    collectDeathTrigger(gameData, perm.getCard(), playerId);
                     String logEntry = perm.getCard().getName() + " is put into the graveyard (legend rule).";
                     gameData.gameLog.add(logEntry);
                     broadcastLogEntry(gameData, logEntry);
@@ -2809,6 +2829,7 @@ public class GameService {
                 List<Permanent> bf = gameData.playerBattlefields.get(pid);
                 if (bf != null && bf.remove(target)) {
                     gameData.playerGraveyards.get(pid).add(target.getCard());
+                    collectDeathTrigger(gameData, target.getCard(), pid);
                     String deathLog = target.getCard().getName() + " is destroyed by redirected " + sourceName + " damage.";
                     gameData.gameLog.add(deathLog);
                     broadcastLogEntry(gameData, deathLog);
@@ -3123,6 +3144,7 @@ public class GameService {
                 gameData.gameLog.add(logEntry);
                 broadcastLogEntry(gameData, logEntry);
                 graveyard.add(dead.getCard());
+                collectDeathTrigger(gameData, dead.getCard(), playerId);
                 battlefield.remove(idx);
             }
         }
@@ -3655,6 +3677,7 @@ public class GameService {
                     List<Permanent> bf = gameData.playerBattlefields.get(pid);
                     if (bf != null && bf.remove(redirectTarget)) {
                         gameData.playerGraveyards.get(pid).add(redirectTarget.getCard());
+                        collectDeathTrigger(gameData, redirectTarget.getCard(), pid);
                         String deathLog = redirectTarget.getCard().getName() + " is destroyed by redirected combat damage.";
                         gameData.gameLog.add(deathLog);
                         broadcastLogEntry(gameData, deathLog);
@@ -3674,6 +3697,7 @@ public class GameService {
             Permanent dead = atkBf.get(idx);
             deadCreatureNames.add(gameData.playerIdToName.get(activeId) + "'s " + dead.getCard().getName());
             attackerGraveyard.add(dead.getCard());
+            collectDeathTrigger(gameData, dead.getCard(), activeId);
             atkBf.remove(idx);
         }
         List<Card> defenderGraveyard = gameData.playerGraveyards.get(defenderId);
@@ -3681,6 +3705,7 @@ public class GameService {
             Permanent dead = defBf.get(idx);
             deadCreatureNames.add(gameData.playerIdToName.get(defenderId) + "'s " + dead.getCard().getName());
             defenderGraveyard.add(dead.getCard());
+            collectDeathTrigger(gameData, dead.getCard(), defenderId);
             defBf.remove(idx);
         }
         if (!deadAttackerIndices.isEmpty() || !deadDefenderIndices.isEmpty()) {
@@ -3718,6 +3743,11 @@ public class GameService {
 
         // Check win condition
         if (checkWinCondition(gameData)) {
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            processNextMayAbility(gameData);
             return;
         }
 
@@ -3888,6 +3918,32 @@ public class GameService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Integer> playable = getPlayableCardIndices(gameData, playerId);
             sessionManager.sendToPlayer(playerId, new PlayableCardsMessage(playable));
+        }
+    }
+
+    private void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId) {
+        if (dyingCard.getType() != CardType.CREATURE) return;
+
+        List<CardEffect> deathEffects = dyingCard.getEffects(EffectSlot.ON_DEATH);
+        if (deathEffects.isEmpty()) return;
+
+        for (CardEffect effect : deathEffects) {
+            if (effect instanceof MayEffect may) {
+                gameData.pendingMayAbilities.add(new PendingMayAbility(
+                        dyingCard,
+                        controllerId,
+                        List.of(may.wrapped()),
+                        dyingCard.getName() + " — " + may.prompt()
+                ));
+            } else {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        dyingCard,
+                        controllerId,
+                        dyingCard.getName() + "'s ability",
+                        new ArrayList<>(List.of(effect))
+                ));
+            }
         }
     }
 
