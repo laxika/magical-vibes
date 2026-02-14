@@ -3,32 +3,55 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 52px,
+      rgba(0, 0, 0, 0.08) 52px,
+      rgba(0, 0, 0, 0.08) 54px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 78px,
+      rgba(0, 0, 0, 0.05) 78px,
+      rgba(0, 0, 0, 0.05) 80px
+    ),
+    linear-gradient(180deg, #1a1210 0%, #2b1b17 30%, #1a1210 60%, #0d0a07 100%);
   padding: 20px;
 }
 
 .login-card {
-  background: white;
+  background: linear-gradient(180deg, #f5e6c8 0%, #ecd9b0 100%);
   padding: 40px;
-  border-radius: 10px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  border: 3px solid #8b1a1a;
+  box-shadow:
+    0 0 20px rgba(139, 26, 26, 0.3),
+    0 10px 30px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
   width: 100%;
   max-width: 400px;
 }
 
 h1 {
   margin: 0 0 10px;
-  color: #667eea;
-  font-size: 28px;
+  color: #8b1a1a;
+  font-size: 32px;
   text-align: center;
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 h2 {
   margin: 0 0 30px;
-  color: #333;
-  font-size: 20px;
+  color: #5c3a2e;
+  font-size: 18px;
   text-align: center;
   font-weight: normal;
+  font-style: italic;
 }
 
 .form-group {
@@ -38,81 +61,90 @@ h2 {
 label {
   display: block;
   margin-bottom: 8px;
-  color: #555;
-  font-weight: 500;
+  color: #5c3a2e;
+  font-weight: 600;
+  font-size: 15px;
 }
 
 input {
   width: 100%;
   padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 5px;
+  border: 2px solid #c4a882;
+  border-radius: 3px;
   font-size: 16px;
+  font-family: 'Crimson Text', Georgia, serif;
   transition: border-color 0.3s;
   box-sizing: border-box;
+  background: #faf3e5;
+  color: #2b1b17;
 }
 
 input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #8b1a1a;
+  box-shadow: 0 0 6px rgba(139, 26, 26, 0.3);
 }
 
 input:disabled {
-  background-color: #f5f5f5;
+  background-color: #e8d5a3;
   cursor: not-allowed;
 }
 
 .btn-primary {
   width: 100%;
   padding: 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 5px;
+  background: linear-gradient(180deg, #b22222 0%, #8b1a1a 100%);
+  color: #f5e6c8;
+  border: 2px solid #6b1010;
+  border-radius: 3px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
+  font-family: 'Cinzel', Georgia, serif;
   cursor: pointer;
-  transition: transform 0.2s, opacity 0.3s;
+  transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  letter-spacing: 1px;
 }
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 5px 15px rgba(139, 26, 26, 0.5);
+  background: linear-gradient(180deg, #cc2929 0%, #a01e1e 100%);
 }
 
 .btn-primary:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .alert {
   padding: 12px;
-  border-radius: 5px;
+  border-radius: 3px;
   margin-bottom: 20px;
   font-size: 14px;
 }
 
 .alert-error {
-  background-color: #fee;
-  color: #c33;
-  border: 1px solid #fcc;
+  background-color: #f5d0d0;
+  color: #8b1a1a;
+  border: 1px solid #c47070;
 }
 
 .alert-success {
-  background-color: #efe;
-  color: #3c3;
-  border: 1px solid #cfc;
+  background-color: #d8e8c8;
+  color: #2d5016;
+  border: 1px solid #8bb070;
 }
 
 .spinner {
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
+  border: 2px solid rgba(245, 230, 200, 0.3);
+  border-top-color: #f5e6c8;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -126,13 +158,13 @@ input:disabled {
 .test-credentials {
   margin-top: 30px;
   padding-top: 20px;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid #c4a882;
   text-align: center;
 }
 
 .test-credentials p {
   margin: 0 0 10px;
-  color: #777;
+  color: #5c3a2e;
   font-size: 14px;
 }
 
@@ -143,7 +175,7 @@ input:disabled {
 }
 
 .test-credentials li {
-  color: #555;
+  color: #5c3a2e;
   font-size: 13px;
   font-family: 'Courier New', monospace;
   margin: 5px 0;

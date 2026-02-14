@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.d.Dehydration;
 import com.github.laxika.magicalvibes.cards.d.DenizenOfTheDeep;
 import com.github.laxika.magicalvibes.cards.d.Deluge;
+import com.github.laxika.magicalvibes.cards.d.DreambornMuse;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.d.Discombobulate;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
@@ -191,6 +192,7 @@ public enum CardSet {
             new CardPrinting("10E", "79", Deluge::new, "\"From the sea came all life, and to the sea it will return. The sooner the better.\"\n\u2014Emperor Aboshan", "Mark Tedin", UNCOMMON),
             new CardPrinting("10E", "80", DenizenOfTheDeep::new, "According to merfolk legend, a denizen of the deep swallows the horizon at the end of each day, bringing on the cold blanket of night.", "Greg Staples", RARE),
             new CardPrinting("10E", "81", Discombobulate::new, "The pain isn't the worst part. The worst part is the tickling.", "Wayne England", UNCOMMON),
+            new CardPrinting("10E", "82", DreambornMuse::new, "\"Her voice is insight, piercing and true.\"\n\u2014Ixidor, reality sculptor", "Kev Walker", RARE),
             new CardPrinting("10E", "77", CraftyPathmage::new, "\"Follow the pathmage\"\n\u2014Otarian expression meaning \"escape quickly\"", "Jim Murray", COMMON),
             new CardPrinting("10E", "380", Forest::new, "Anthony S. Waters", COMMON),
             new CardPrinting("10E", "381", Forest::new, "John Avon", COMMON),

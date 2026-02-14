@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.TapAllCreaturesWithoutFlyingEffect;
+import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,7 +53,7 @@ class DelugeTest {
         assertThat(card.getColor()).isEqualTo(CardColor.BLUE);
         assertThat(card.isNeedsTarget()).isFalse();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(TapAllCreaturesWithoutFlyingEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(TapCreaturesEffect.class);
     }
 
     // ===== Casting =====
