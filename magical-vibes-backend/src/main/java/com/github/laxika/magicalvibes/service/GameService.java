@@ -110,7 +110,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardTo
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.TapAllCreaturesWithoutFlyingEffect;
+import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
+import com.github.laxika.magicalvibes.model.filter.WithoutKeywordTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesEffect;
@@ -553,8 +554,8 @@ public class GameService {
                 resolveReturnArtifactFromGraveyardToHand(gameData, entry);
             } else if (effect instanceof RegenerateEffect) {
                 resolveRegenerate(gameData, entry);
-            } else if (effect instanceof TapAllCreaturesWithoutFlyingEffect) {
-                resolveTapAllCreaturesWithoutFlying(gameData, entry);
+            } else if (effect instanceof TapCreaturesEffect tap) {
+                resolveTapCreatures(gameData, entry, tap);
             } else if (effect instanceof TapTargetCreatureEffect) {
                 resolveTapTargetCreature(gameData, entry);
             } else if (effect instanceof TapTargetPermanentEffect) {
@@ -2851,24 +2852,42 @@ public class GameService {
                 "You may return an artifact card from your graveyard to your hand.");
     }
 
-    private void resolveTapAllCreaturesWithoutFlying(GameData gameData, StackEntry entry) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
+    private void resolveTapCreatures(GameData gameData, StackEntry entry, TapCreaturesEffect tap) {
+        boolean controllerOnly = tap.filters().stream().anyMatch(f -> f instanceof ControllerOnlyTargetFilter);
+
+        List<UUID> playerIds = controllerOnly
+                ? List.of(entry.getControllerId())
+                : gameData.orderedPlayerIds;
+
+        for (UUID playerId : playerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
 
             for (Permanent p : battlefield) {
-                if (p.getCard().getType() == CardType.CREATURE && !hasKeyword(gameData, p, Keyword.FLYING)) {
-                    p.tap();
+                if (p.getCard().getType() != CardType.CREATURE) continue;
+                if (!matchesFilters(gameData, p, tap.filters())) continue;
 
-                    String logMsg = entry.getCard().getName() + " taps " + p.getCard().getName() + ".";
-                    gameData.gameLog.add(logMsg);
-                    broadcastLogEntry(gameData, logMsg);
-                }
+                p.tap();
+
+                String logMsg = entry.getCard().getName() + " taps " + p.getCard().getName() + ".";
+                gameData.gameLog.add(logMsg);
+                broadcastLogEntry(gameData, logMsg);
             }
         }
 
         broadcastBattlefields(gameData);
-        log.info("Game {} - {} taps all creatures without flying", gameData.id, entry.getCard().getName());
+        log.info("Game {} - {} taps creatures matching filters", gameData.id, entry.getCard().getName());
+    }
+
+    private boolean matchesFilters(GameData gameData, Permanent permanent, Set<TargetFilter> filters) {
+        for (TargetFilter filter : filters) {
+            if (filter instanceof WithoutKeywordTargetFilter f) {
+                if (hasKeyword(gameData, permanent, f.keyword())) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     private void resolveTapTargetCreature(GameData gameData, StackEntry entry) {
