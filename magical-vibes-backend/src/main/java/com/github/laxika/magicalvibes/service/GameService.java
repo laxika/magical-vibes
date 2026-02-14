@@ -75,6 +75,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffec
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
@@ -554,6 +555,11 @@ public class GameService {
                 resolvePreventNextDamage(gameData, prevent);
             } else if (effect instanceof DrawCardEffect drawCard) {
                 resolveDrawCards(gameData, entry.getControllerId(), drawCard.amount());
+            } else if (effect instanceof DiscardCardEffect discard) {
+                resolveDiscardCards(gameData, entry.getControllerId(), discard.amount());
+                if (gameData.awaitingInput == AwaitingInput.DISCARD_CHOICE) {
+                    break;
+                }
             } else if (effect instanceof ReturnSelfToHandEffect) {
                 resolveReturnSelfToHand(gameData, entry);
             } else if (effect instanceof DoubleTargetPlayerLifeEffect) {
@@ -1755,6 +1761,11 @@ public class GameService {
 
     public void handleCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
+            if (gameData.awaitingInput == AwaitingInput.DISCARD_CHOICE) {
+                handleDiscardCardChosen(gameData, player, cardIndex);
+                return;
+            }
+
             if (gameData.awaitingInput != AwaitingInput.CARD_CHOICE && gameData.awaitingInput != AwaitingInput.TARGETED_CARD_CHOICE) {
                 throw new IllegalStateException("Not awaiting card choice");
             }
@@ -1792,6 +1803,42 @@ public class GameService {
                 }
             }
 
+            resolveAutoPass(gameData);
+        }
+    }
+
+    private void handleDiscardCardChosen(GameData gameData, Player player, int cardIndex) {
+        if (!player.getId().equals(gameData.awaitingCardChoicePlayerId)) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+
+        Set<Integer> validIndices = gameData.awaitingCardChoiceValidIndices;
+        if (!validIndices.contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        Card card = hand.remove(cardIndex);
+
+        gameData.playerGraveyards.get(playerId).add(card);
+
+        sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+        broadcastGraveyards(gameData);
+
+        String logEntry = player.getUsername() + " discards " + card.getName() + ".";
+        logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} discards {}", gameData.id, player.getUsername(), card.getName());
+
+        gameData.awaitingDiscardRemainingCount--;
+
+        if (gameData.awaitingDiscardRemainingCount > 0 && !hand.isEmpty()) {
+            beginDiscardChoice(gameData, playerId);
+        } else {
+            gameData.awaitingInput = null;
+            gameData.awaitingCardChoicePlayerId = null;
+            gameData.awaitingCardChoiceValidIndices = null;
+            gameData.awaitingDiscardRemainingCount = 0;
             resolveAutoPass(gameData);
         }
     }
@@ -2178,6 +2225,34 @@ public class GameService {
         for (int i = 0; i < amount; i++) {
             resolveDrawCard(gameData, playerId);
         }
+    }
+
+    private void resolveDiscardCards(GameData gameData, UUID playerId, int amount) {
+        List<Card> hand = gameData.playerHands.get(playerId);
+        if (hand == null || hand.isEmpty()) {
+            String logEntry = gameData.playerIdToName.get(playerId) + " has no cards to discard.";
+            logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        gameData.awaitingDiscardRemainingCount = amount;
+        beginDiscardChoice(gameData, playerId);
+    }
+
+    private void beginDiscardChoice(GameData gameData, UUID playerId) {
+        List<Card> hand = gameData.playerHands.get(playerId);
+        List<Integer> validIndices = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            validIndices.add(i);
+        }
+
+        gameData.awaitingInput = AwaitingInput.DISCARD_CHOICE;
+        gameData.awaitingCardChoicePlayerId = playerId;
+        gameData.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
+        sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(validIndices, "Choose a card to discard."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a card to discard", gameData.id, playerName);
     }
 
     private void resolveReturnSelfToHand(GameData gameData, StackEntry entry) {
