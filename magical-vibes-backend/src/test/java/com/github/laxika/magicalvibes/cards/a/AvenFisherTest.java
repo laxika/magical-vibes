@@ -113,8 +113,7 @@ class AvenFisherTest {
         harness.clearPriorityPassed();
 
         // Both pass priority — advances to combat damage step
-        harness.getGameService().passPriority(harness.getGameData(), player2);
-        harness.getGameService().passPriority(harness.getGameData(), player1);
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
 
@@ -165,8 +164,7 @@ class AvenFisherTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.getGameService().passPriority(harness.getGameData(), player2);
-        harness.getGameService().passPriority(harness.getGameData(), player1);
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
 
@@ -212,8 +210,7 @@ class AvenFisherTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.getGameService().passPriority(harness.getGameData(), player1);
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
 
@@ -319,8 +316,7 @@ class AvenFisherTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.getGameService().passPriority(harness.getGameData(), player2);
-        harness.getGameService().passPriority(harness.getGameData(), player1);
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
 

@@ -139,8 +139,7 @@ class SamiteHealerTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.getGameService().passPriority(harness.getGameData(), player1);
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         // Attacker takes 2 damage, global shield prevents 1 → 1 effective damage < 2 toughness → survives
@@ -173,8 +172,7 @@ class SamiteHealerTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.getGameService().passPriority(harness.getGameData(), player1);
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passBothPriorities();
 
         assertThat(harness.getGameData().globalDamagePreventionShield).isEqualTo(0);
     }
@@ -197,8 +195,7 @@ class SamiteHealerTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.getGameService().passPriority(harness.getGameData(), player1);
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         // 2 damage - 1 prevented = 1 effective damage → 20 - 1 = 19
@@ -244,8 +241,7 @@ class SamiteHealerTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.getGameService().passPriority(harness.getGameData(), player1);
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         // 2 damage - 1 global prevention = 1 effective → 20 - 1 = 19

@@ -123,8 +123,7 @@ class ChoMannoRevolutionaryTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.getGameService().passPriority(harness.getGameData(), player1);
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         // Cho-Manno survives — all damage prevented
@@ -156,8 +155,7 @@ class ChoMannoRevolutionaryTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.getGameService().passPriority(harness.getGameData(), player1);
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         // Cho-Manno survives (all damage prevented)
@@ -185,8 +183,7 @@ class ChoMannoRevolutionaryTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.getGameService().passPriority(harness.getGameData(), player1);
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passBothPriorities();
 
         assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -231,8 +228,7 @@ class ChoMannoRevolutionaryTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        harness.getGameService().passPriority(harness.getGameData(), player1);
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passBothPriorities();
 
         // Cho-Manno survived, Bears died
         assertThat(harness.getGameData().playerBattlefields.get(player2.getId()))
@@ -252,8 +248,7 @@ class ChoMannoRevolutionaryTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        harness.getGameService().passPriority(harness.getGameData(), player1);
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passBothPriorities();
 
         // Cho-Manno still survives second combat
         assertThat(harness.getGameData().playerBattlefields.get(player2.getId()))

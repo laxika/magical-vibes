@@ -201,8 +201,7 @@ class StoryCircleTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        gs.passPriority(gd, player1);
-        gs.passPriority(gd, player2);
+        harness.passBothPriorities();
 
         // Player2 takes no damage — red damage prevented
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
@@ -230,8 +229,7 @@ class StoryCircleTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        gs.passPriority(gd, player1);
-        gs.passPriority(gd, player2);
+        harness.passBothPriorities();
 
         // Player2 takes 3 damage — green is not the chosen color
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
@@ -271,8 +269,7 @@ class StoryCircleTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        gs.passPriority(gd, player1);
-        gs.passPriority(gd, player2);
+        harness.passBothPriorities();
 
         // Both prevented — life unchanged
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);

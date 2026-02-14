@@ -135,8 +135,7 @@ class BandageTest {
         harness.clearPriorityPassed();
 
         // Passing priorities advances from DECLARE_BLOCKERS → COMBAT_DAMAGE, triggering resolveCombatDamage
-        harness.getGameService().passPriority(harness.getGameData(), player1);
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         // Attacker dealt 2 damage, but defender has 1 prevention → 1 effective damage
@@ -174,8 +173,7 @@ class BandageTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.getGameService().passPriority(harness.getGameData(), player1);
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passBothPriorities();
 
         // After combat, shield should be consumed
         Permanent surviving = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
@@ -218,8 +216,7 @@ class BandageTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.getGameService().passPriority(harness.getGameData(), player1);
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         // 2 damage - 1 prevented = 1 effective damage → 20 - 1 = 19

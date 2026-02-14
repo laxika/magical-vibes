@@ -285,8 +285,7 @@ class FieldMarshalTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        gs.passPriority(gd, player1);
-        gs.passPriority(gd, player2);
+        harness.passBothPriorities();
 
         // Cloudchaser (3/3 with first strike) deals 3 first strike damage → kills 3/3 blocker
         // Blocker dies before dealing regular damage → Cloudchaser survives

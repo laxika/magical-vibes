@@ -293,9 +293,9 @@ class KjeldoranRoyalGuardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        // Do NOT activate ability — just go to combat
+        // Do NOT activate ability — just pass player1's priority;
+        // auto-pass handles player2 and cascades through COMBAT_DAMAGE
         harness.getGameService().passPriority(gd, player1);
-        harness.getGameService().passPriority(gd, player2);
 
         // Player takes the damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -340,7 +340,9 @@ class KjeldoranRoyalGuardTest {
         gd.combatDamageRedirectTarget = guard.getId();
         gd.playerBattlefields.get(player2.getId()).remove(guard);
 
-        harness.passBothPriorities(); // advances to COMBAT_DAMAGE, resolves combat
+        // Pass player1's priority; auto-pass handles player2 (no playable cards since guard was removed)
+        // and cascades through COMBAT_DAMAGE resolution
+        harness.getGameService().passPriority(gd, player1);
 
         // Redirect target gone → damage goes to player
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);

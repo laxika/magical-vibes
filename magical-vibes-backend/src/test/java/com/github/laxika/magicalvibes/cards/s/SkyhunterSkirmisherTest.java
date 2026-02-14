@@ -204,7 +204,6 @@ class SkyhunterSkirmisherTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        harness.getGameService().passPriority(harness.getGameData(), player1);
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passBothPriorities();
     }
 }

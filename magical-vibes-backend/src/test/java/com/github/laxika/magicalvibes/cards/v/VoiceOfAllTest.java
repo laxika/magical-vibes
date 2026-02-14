@@ -244,8 +244,7 @@ class VoiceOfAllTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        gs.passPriority(gd, player1);
-        gs.passPriority(gd, player2);
+        harness.passBothPriorities();
 
         // Voice of All survives — red damage prevented (protection from red)
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -274,8 +273,7 @@ class VoiceOfAllTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        gs.passPriority(gd, player1);
-        gs.passPriority(gd, player2);
+        harness.passBothPriorities();
 
         // Voice of All dies — green is not the chosen color, 3 >= 2 toughness
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -434,8 +432,7 @@ class VoiceOfAllTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        gs.passPriority(gd, player1);
-        gs.passPriority(gd, player2);
+        harness.passBothPriorities();
 
         // Voice of All survives — white damage prevented
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -463,8 +460,7 @@ class VoiceOfAllTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        gs.passPriority(gd, player1);
-        gs.passPriority(gd, player2);
+        harness.passBothPriorities();
 
         // Voice of All dies — no protection without choosing a color (3 >= 2)
         assertThat(gd.playerBattlefields.get(player2.getId()))

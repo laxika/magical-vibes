@@ -159,8 +159,7 @@ class PaladinEnVecTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        gs.passPriority(gd, player1);
-        gs.passPriority(gd, player2);
+        harness.passBothPriorities();
 
         // First strike kills Bears before it deals damage; Paladin survives
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -260,8 +259,7 @@ class PaladinEnVecTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        gs.passPriority(gd, player1);
-        gs.passPriority(gd, player2);
+        harness.passBothPriorities();
 
         // Paladin has first strike: deals 2 to Black Knight (3/3 survives)
         // Black Knight's 3 regular damage to Paladin is prevented (protection)
@@ -291,8 +289,7 @@ class PaladinEnVecTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        gs.passPriority(gd, player1);
-        gs.passPriority(gd, player2);
+        harness.passBothPriorities();
 
         // Both survive: Paladin deals 2 first strike (2 < 3), red creature's 3 damage is prevented
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -320,8 +317,7 @@ class PaladinEnVecTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        gs.passPriority(gd, player1);
-        gs.passPriority(gd, player2);
+        harness.passBothPriorities();
 
         // Paladin deals 2 first strike (2 < 3, green survives)
         // Green deals 3 regular damage (3 >= 2, Paladin dies — no protection from green)

@@ -49,8 +49,7 @@ class CephalidConstableTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        harness.passPriority(player1);
-        harness.passPriority(player2);
+        harness.passBothPriorities();
     }
 
     // ===== Card properties =====

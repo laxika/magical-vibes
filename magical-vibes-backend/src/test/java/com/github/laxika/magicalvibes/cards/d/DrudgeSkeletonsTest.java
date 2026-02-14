@@ -267,8 +267,7 @@ class DrudgeSkeletonsTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.getGameService().passPriority(harness.getGameData(), player2);
-        harness.getGameService().passPriority(harness.getGameData(), player1);
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         // Drudge Skeletons should survive via regeneration
@@ -304,8 +303,7 @@ class DrudgeSkeletonsTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.getGameService().passPriority(harness.getGameData(), player2);
-        harness.getGameService().passPriority(harness.getGameData(), player1);
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         // Drudge Skeletons should be dead
@@ -334,8 +332,7 @@ class DrudgeSkeletonsTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.getGameService().passPriority(harness.getGameData(), player1);
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         // Drudge Skeletons survives via regeneration
@@ -367,8 +364,7 @@ class DrudgeSkeletonsTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.getGameService().passPriority(harness.getGameData(), player2);
-        harness.getGameService().passPriority(harness.getGameData(), player1);
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("Drudge Skeletons regenerates"));
@@ -508,8 +504,7 @@ class DrudgeSkeletonsTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.getGameService().passPriority(harness.getGameData(), player2);
-        harness.getGameService().passPriority(harness.getGameData(), player1);
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         Permanent skele = gd.playerBattlefields.get(player1.getId()).stream()
@@ -539,8 +534,7 @@ class DrudgeSkeletonsTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.getGameService().passPriority(harness.getGameData(), player2);
-        harness.getGameService().passPriority(harness.getGameData(), player1);
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         Permanent skele = gd.playerBattlefields.get(player1.getId()).stream()

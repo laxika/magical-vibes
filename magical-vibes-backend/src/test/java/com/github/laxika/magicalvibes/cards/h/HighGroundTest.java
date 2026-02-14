@@ -301,8 +301,7 @@ class HighGroundTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        gs.passPriority(gd, player1);
-        gs.passPriority(gd, player2);
+        harness.passBothPriorities();
 
         // 4/4 blocker deals 4 damage to first attacker (kills 2/2), remaining to second (kills 2/2)
         // Both 2/2 attackers deal 2+2=4 damage to blocker → 4/4 blocker dies
@@ -347,8 +346,7 @@ class HighGroundTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        gs.passPriority(gd, player1);
-        gs.passPriority(gd, player2);
+        harness.passBothPriorities();
 
         // Both 1/1 attackers should be dead
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
@@ -387,8 +385,7 @@ class HighGroundTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        gs.passPriority(gd, player1);
-        gs.passPriority(gd, player2);
+        harness.passBothPriorities();
 
         // Only unblocked attacker deals damage to player
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);

@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.github.laxika.magicalvibes.model.TurnStep;
+
 public class GameTestHarness {
 
     private final GameRegistry gameRegistry;
@@ -152,8 +154,29 @@ public class GameTestHarness {
     }
 
     public void passBothPriorities() {
-        gameService.passPriority(gameData, player1);
-        gameService.passPriority(gameData, player2);
+        // Determine priority order based on active player
+        Player first, second;
+        if (gameData.activePlayerId != null && gameData.activePlayerId.equals(player2.getId())) {
+            first = player2;
+            second = player1;
+        } else {
+            first = player1;
+            second = player2;
+        }
+
+        TurnStep stepBefore = gameData.currentStep;
+        int stackSizeBefore = gameData.stack.size();
+
+        gameService.passPriority(gameData, first);
+
+        // After auto-pass rework, the first pass may trigger an auto-pass cascade
+        // that handles the second player too (advancing the step or resolving the stack).
+        // Only pass for the second player if the game state hasn't changed.
+        if (gameData.currentStep != stepBefore || gameData.stack.size() != stackSizeBefore) {
+            return;
+        }
+
+        gameService.passPriority(gameData, second);
     }
 
     public void handleCardChosen(Player player, int cardIndex) {
