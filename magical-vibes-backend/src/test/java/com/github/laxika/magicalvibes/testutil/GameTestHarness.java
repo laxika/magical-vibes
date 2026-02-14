@@ -93,6 +93,10 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }
 
+    public void castEnchantment(Player player, int cardIndex, UUID targetPermanentId) {
+        gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null);
+    }
+
     public void castArtifact(Player player, int cardIndex) {
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }

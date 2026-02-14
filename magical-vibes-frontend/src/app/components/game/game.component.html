@@ -607,6 +607,26 @@
     </div>
   }
 
+  @if (revealingHand) {
+    <div class="reveal-hand-overlay">
+      <div class="reveal-hand-card">
+        <h2>{{ revealedHandPlayerName }}'s Hand</h2>
+        @if (revealedHandCards.length === 0) {
+          <p class="reveal-hand-empty">Hand is empty.</p>
+        } @else {
+          <div class="reveal-hand-cards">
+            @for (card of revealedHandCards; track $index) {
+              <app-card-display [card]="card"
+                (mouseenter)="onCardHover(card)"
+                (mouseleave)="onCardHoverEnd()" />
+            }
+          </div>
+        }
+        <button class="btn-keep" (click)="closeRevealHand()">Close</button>
+      </div>
+    </div>
+  }
+
   @if (game()?.status === GameStatus.WAITING) {
     <div class="players-area">
       <div class="game-title">{{ game()?.gameName }}</div>
