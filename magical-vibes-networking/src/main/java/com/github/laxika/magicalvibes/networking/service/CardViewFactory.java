@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -27,6 +28,7 @@ public class CardViewFactory {
                 .toList();
 
         List<String> spellAllowedTargetTypes = computeSpellAllowedTargetTypes(card);
+        boolean requiresAttackingTarget = computeRequiresAttackingTarget(card);
 
         return new CardView(
                 card.getName(),
@@ -46,6 +48,7 @@ public class CardViewFactory {
                 card.getRarity(),
                 card.getColor(),
                 card.isNeedsTarget(),
+                requiresAttackingTarget,
                 spellAllowedTargetTypes,
                 abilityViews
         );
@@ -70,6 +73,15 @@ public class CardViewFactory {
                 allowedTargetTypes,
                 ability.getManaCost()
         );
+    }
+
+    private boolean computeRequiresAttackingTarget(Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private List<String> computeSpellAllowedTargetTypes(Card card) {

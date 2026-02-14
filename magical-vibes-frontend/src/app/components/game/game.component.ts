@@ -547,6 +547,7 @@ export class GameComponent implements OnInit, OnDestroy {
         this.targetingCardName = card.name;
         this.targetingForAbility = false;
         this.targetingForPlayer = false;
+        this.targetingRequiresAttacking = card.requiresAttackingTarget ?? false;
         this.targetingAbilityIndex = -1;
         this.pendingAbilityXValue = null;
         this.targetingAllowedTypes = card.allowedTargetTypes?.length > 0 ? card.allowedTargetTypes : [];
@@ -676,6 +677,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.targetingCardIndex = -1;
     this.targetingCardName = '';
     this.targetingForAbility = false;
+    this.targetingRequiresAttacking = false;
     this.targetingAbilityIndex = -1;
     this.targetingAllowedTypes = [];
     this.pendingAbilityXValue = null;
@@ -705,6 +707,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.targetingCardName = '';
     this.targetingForAbility = false;
     this.targetingForPlayer = false;
+    this.targetingRequiresAttacking = false;
     this.targetingAbilityIndex = -1;
     this.targetingAllowedTypes = [];
     this.pendingAbilityXValue = null;
@@ -716,12 +719,16 @@ export class GameComponent implements OnInit, OnDestroy {
     this.targetingCardName = '';
     this.targetingForAbility = false;
     this.targetingForPlayer = false;
+    this.targetingRequiresAttacking = false;
     this.targetingAbilityIndex = -1;
     this.targetingAllowedTypes = [];
     this.pendingAbilityXValue = null;
   }
 
   isValidTarget(perm: Permanent): boolean {
+    if (this.targetingRequiresAttacking) {
+      return perm.card.type === 'CREATURE' && perm.attacking;
+    }
     if (this.targetingAllowedTypes.length > 0) {
       if (!this.targetingAllowedTypes.some(t => t.toUpperCase() === perm.card.type.toUpperCase())) {
         return false;
@@ -971,6 +978,7 @@ export class GameComponent implements OnInit, OnDestroy {
   targetingForAbility = false;
   targetingForPlayer = false;
   targetingAllowedTypes: string[] = [];
+  targetingRequiresAttacking = false;
   targetingAbilityIndex = -1;
   pendingAbilityXValue: number | null = null;
 
@@ -1328,6 +1336,12 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   onCombatAttackerClick(group: CombatGroup): void {
+    if (this.targeting) {
+      if (this.isValidTarget(group.attacker)) {
+        this.selectTarget(group.attacker.id);
+      }
+      return;
+    }
     if (this.distributingDamage) {
       this.assignDamage(group.attacker.id);
       return;

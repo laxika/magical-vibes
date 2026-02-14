@@ -200,6 +200,8 @@
           <span>Select a target player for {{ targetingCardName }}</span>
         } @else if (targetingAllowedTypes.includes('Enchantment')) {
           <span>Select a target Aura for {{ targetingCardName }}</span>
+        } @else if (targetingRequiresAttacking) {
+          <span>Select a target attacking creature for {{ targetingCardName }}</span>
         } @else {
           <span>Select a target creature for {{ targetingCardName }}</span>
         }
@@ -277,7 +279,7 @@
                     [class.attacking]="group.attacker.attacking"
                     [class.selected-attacker]="declaringAttackers && isSelectedAttacker(group.attackerIndex)"
                     [class.block-target]="declaringBlockers && selectedBlockerIndex !== null && !group.attackerIsMine"
-                    [class.targetable]="distributingDamage"
+                    [class.targetable]="distributingDamage || (targeting && isValidTarget(group.attacker))"
                     (click)="onCombatAttackerClick(group)"
                     (contextmenu)="$event.preventDefault(); unassignDamage(group.attacker.id)">
                     <div class="card-combat-badge attacking-badge">Attacking</div>
