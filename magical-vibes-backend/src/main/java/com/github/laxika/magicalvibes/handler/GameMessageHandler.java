@@ -97,8 +97,12 @@ public class GameMessageHandler implements MessageHandler {
         if (response.getType() == MessageType.LOGIN_SUCCESS) {
             sessionManager.registerPlayer(connection, response.getUserId(), response.getUsername());
             if (response.getActiveGame() != null) {
+                GameData activeGame = gameRegistry.getGameForPlayer(response.getUserId());
                 sessionManager.setInGame(connection.getId());
                 log.info("Connection {} registered for user {} ({}) - rejoining active game {}", connection.getId(), response.getUserId(), response.getUsername(), response.getActiveGame().id());
+                if (activeGame != null) {
+                    gameService.resendAwaitingInput(activeGame, response.getUserId());
+                }
             } else {
                 log.info("Connection {} registered for user {} ({}) - connection staying open", connection.getId(), response.getUserId(), response.getUsername());
             }

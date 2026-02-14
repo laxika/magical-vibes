@@ -172,6 +172,15 @@ public class GameService {
         }
 
         synchronized (gameData) {
+            if (gameData.awaitingInput != null) {
+                throw new IllegalStateException("Cannot pass priority while awaiting input");
+            }
+
+            UUID priorityHolder = getPriorityPlayerId(gameData);
+            if (priorityHolder == null || !priorityHolder.equals(player.getId())) {
+                throw new IllegalStateException("You do not have priority");
+            }
+
             gameData.priorityPassedBy.add(player.getId());
             log.info("Game {} - {} passed priority on step {} (passed: {}/2)",
                     gameData.id, player.getUsername(), gameData.currentStep, gameData.priorityPassedBy.size());
@@ -199,6 +208,7 @@ public class GameService {
         }
 
         gameData.priorityPassedBy.clear();
+        gameData.awaitingInput = null;
         TurnStep next = gameData.currentStep.next();
 
         drainManaPools(gameData);
@@ -353,6 +363,7 @@ public class GameService {
         gameData.activePlayerId = nextActive;
         gameData.turnNumber++;
         gameData.currentStep = TurnStep.first();
+        gameData.awaitingInput = null;
         gameData.priorityPassedBy.clear();
         gameData.landsPlayedThisTurn.clear();
         gameData.spellsCastThisTurn.clear();
@@ -694,6 +705,107 @@ public class GameService {
 
     public JoinGame getJoinGame(GameData data, UUID playerId) {
         return toJoinGame(data, playerId);
+    }
+
+    /**
+     * Re-sends the awaiting input prompt to a reconnecting player so they can respond to it.
+     * Called after a player rejoins an active game via login.
+     */
+    public void resendAwaitingInput(GameData gameData, UUID playerId) {
+        synchronized (gameData) {
+            if (gameData.awaitingInput == null) return;
+
+            switch (gameData.awaitingInput) {
+                case ATTACKER_DECLARATION -> {
+                    if (playerId.equals(gameData.activePlayerId)) {
+                        List<Integer> attackable = getAttackableCreatureIndices(gameData, playerId);
+                        sessionManager.sendToPlayer(playerId, new AvailableAttackersMessage(attackable));
+                    }
+                }
+                case BLOCKER_DECLARATION -> {
+                    UUID defenderId = getOpponentId(gameData, gameData.activePlayerId);
+                    if (playerId.equals(defenderId)) {
+                        List<Integer> blockable = getBlockableCreatureIndices(gameData, defenderId);
+                        List<Integer> attackerIndices = getAttackingCreatureIndices(gameData, gameData.activePlayerId);
+                        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(gameData.activePlayerId);
+                        attackerIndices = attackerIndices.stream()
+                                .filter(idx -> !attackerBattlefield.get(idx).isCantBeBlocked()
+                                        && attackerBattlefield.get(idx).getCard().getEffects(EffectSlot.STATIC).stream()
+                                                .noneMatch(e -> e instanceof CantBeBlockedEffect))
+                                .toList();
+                        sessionManager.sendToPlayer(defenderId, new AvailableBlockersMessage(blockable, attackerIndices));
+                    }
+                }
+                case CARD_CHOICE, TARGETED_CARD_CHOICE -> {
+                    if (playerId.equals(gameData.awaitingCardChoicePlayerId)) {
+                        sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(
+                                new ArrayList<>(gameData.awaitingCardChoiceValidIndices), "Choose a card from your hand."));
+                    }
+                }
+                case DISCARD_CHOICE -> {
+                    if (playerId.equals(gameData.awaitingCardChoicePlayerId)) {
+                        sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(
+                                new ArrayList<>(gameData.awaitingCardChoiceValidIndices), "Choose a card to discard."));
+                    }
+                }
+                case PERMANENT_CHOICE -> {
+                    if (playerId.equals(gameData.awaitingPermanentChoicePlayerId)) {
+                        sessionManager.sendToPlayer(playerId, new ChoosePermanentMessage(
+                                new ArrayList<>(gameData.awaitingPermanentChoiceValidIds), "Choose a permanent."));
+                    }
+                }
+                case GRAVEYARD_CHOICE -> {
+                    if (playerId.equals(gameData.awaitingGraveyardChoicePlayerId)) {
+                        sessionManager.sendToPlayer(playerId, new ChooseCardFromGraveyardMessage(
+                                new ArrayList<>(gameData.awaitingGraveyardChoiceValidIndices), "Choose a card from the graveyard."));
+                    }
+                }
+                case COLOR_CHOICE -> {
+                    if (playerId.equals(gameData.awaitingColorChoicePlayerId)) {
+                        List<String> options;
+                        String prompt;
+                        if (gameData.colorChoiceContext instanceof ColorChoiceContext.TextChangeFromWord) {
+                            options = new ArrayList<>();
+                            options.addAll(TEXT_CHANGE_COLOR_WORDS);
+                            options.addAll(TEXT_CHANGE_LAND_TYPES);
+                            prompt = "Choose a color word or basic land type to replace.";
+                        } else if (gameData.colorChoiceContext instanceof ColorChoiceContext.TextChangeToWord ctx) {
+                            if (ctx.isColor()) {
+                                options = TEXT_CHANGE_COLOR_WORDS.stream().filter(c -> !c.equals(ctx.fromWord())).toList();
+                                prompt = "Choose the replacement color word.";
+                            } else {
+                                options = TEXT_CHANGE_LAND_TYPES.stream().filter(t -> !t.equals(ctx.fromWord())).toList();
+                                prompt = "Choose the replacement basic land type.";
+                            }
+                        } else {
+                            options = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+                            prompt = "Choose a color.";
+                        }
+                        sessionManager.sendToPlayer(playerId, new ChooseColorMessage(options, prompt));
+                    }
+                }
+                case MAY_ABILITY_CHOICE -> {
+                    if (playerId.equals(gameData.awaitingMayAbilityPlayerId) && !gameData.pendingMayAbilities.isEmpty()) {
+                        PendingMayAbility next = gameData.pendingMayAbilities.getFirst();
+                        sessionManager.sendToPlayer(playerId, new MayAbilityMessage(next.description()));
+                    }
+                }
+                case MULTI_PERMANENT_CHOICE -> {
+                    if (playerId.equals(gameData.awaitingMultiPermanentChoicePlayerId)) {
+                        sessionManager.sendToPlayer(playerId, new ChooseMultiplePermanentsMessage(
+                                new ArrayList<>(gameData.awaitingMultiPermanentChoiceValidIds),
+                                gameData.awaitingMultiPermanentChoiceMaxCount, "Choose permanents."));
+                    }
+                }
+                case LIBRARY_REORDER -> {
+                    if (playerId.equals(gameData.awaitingLibraryReorderPlayerId) && gameData.awaitingLibraryReorderCards != null) {
+                        List<CardView> cardViews = gameData.awaitingLibraryReorderCards.stream().map(cardViewFactory::create).toList();
+                        sessionManager.sendToPlayer(playerId, new ReorderLibraryCardsMessage(
+                                cardViews, "Put these cards back on top of your library in any order (top to bottom)."));
+                    }
+                }
+            }
+        }
     }
 
     public void keepHand(GameData gameData, Player player) {
@@ -3896,6 +4008,7 @@ public class GameService {
 
     private void skipToEndOfCombat(GameData gameData) {
         gameData.currentStep = TurnStep.END_OF_COMBAT;
+        gameData.awaitingInput = null;
         clearCombatState(gameData);
 
         String logEntry = "Step: " + TurnStep.END_OF_COMBAT.getDisplayName();
