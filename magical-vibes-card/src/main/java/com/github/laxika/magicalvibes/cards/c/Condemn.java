@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
-
-import java.util.List;
+import com.github.laxika.magicalvibes.model.filter.AttackingTargetFilter;
 
 public class Condemn extends Card {
 
@@ -16,6 +15,7 @@ public class Condemn extends Card {
 
         setCardText("Put target attacking creature on the bottom of its owner's library. Its controller gains life equal to its toughness.");
         setNeedsTarget(true);
+        setTargetFilter(new AttackingTargetFilter());
         addEffect(EffectSlot.SPELL, new GainLifeEqualToTargetToughnessEffect());
         addEffect(EffectSlot.SPELL, new PutTargetOnBottomOfLibraryEffect());
     }

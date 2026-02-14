@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
@@ -79,6 +80,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
+import com.github.laxika.magicalvibes.model.filter.AttackingOrBlockingTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.AttackingTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.MaxPowerTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
@@ -871,11 +874,16 @@ public class GameService {
                     throw new IllegalStateException(gameData.playerIdToName.get(targetPermanentId) + " has shroud and can't be targeted");
                 }
 
+                // Generic target filter validation for spells
+                if (card.getTargetFilter() != null && target != null) {
+                    validateTargetFilter(card.getTargetFilter(), target);
+                }
+
                 // Effect-specific target validation
                 for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
                     if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
-                        if (target == null || target.getCard().getType() != CardType.CREATURE || !target.isAttacking()) {
-                            throw new IllegalStateException("Target must be an attacking creature");
+                        if (target == null || target.getCard().getType() != CardType.CREATURE) {
+                            throw new IllegalStateException("Target must be a creature");
                         }
                     }
                     if (effect instanceof BoostTargetBlockingCreatureEffect) {
@@ -1268,9 +1276,6 @@ public class GameService {
                     if (target.getCard().getType() != CardType.CREATURE) {
                         throw new IllegalStateException("Target must be a creature");
                     }
-                    if (!target.isAttacking() && !target.isBlocking()) {
-                        throw new IllegalStateException("Target must be an attacking or blocking creature");
-                    }
                     if (hasProtectionFrom(gameData, target, permanent.getCard().getColor())) {
                         throw new IllegalStateException(target.getCard().getName() + " has protection from " + permanent.getCard().getColor().name().toLowerCase());
                     }
@@ -1323,10 +1328,8 @@ public class GameService {
             // Generic target filter validation
             if (ability.getTargetFilter() != null && targetPermanentId != null) {
                 Permanent target = findPermanentById(gameData, targetPermanentId);
-                if (target != null && ability.getTargetFilter() instanceof MaxPowerTargetFilter f) {
-                    if (target.getEffectivePower() > f.maxPower()) {
-                        throw new IllegalStateException("Target creature's power must be " + f.maxPower() + " or less");
-                    }
+                if (target != null) {
+                    validateTargetFilter(ability.getTargetFilter(), target);
                 }
             }
 
@@ -3191,6 +3194,22 @@ public class GameService {
             removeOrphanedAuras(gameData);
             broadcastBattlefields(gameData);
             broadcastGraveyards(gameData);
+        }
+    }
+
+    private void validateTargetFilter(TargetFilter filter, Permanent target) {
+        if (filter instanceof MaxPowerTargetFilter f) {
+            if (target.getEffectivePower() > f.maxPower()) {
+                throw new IllegalStateException("Target creature's power must be " + f.maxPower() + " or less");
+            }
+        } else if (filter instanceof AttackingOrBlockingTargetFilter) {
+            if (!target.isAttacking() && !target.isBlocking()) {
+                throw new IllegalStateException("Target must be an attacking or blocking creature");
+            }
+        } else if (filter instanceof AttackingTargetFilter) {
+            if (!target.isAttacking()) {
+                throw new IllegalStateException("Target must be an attacking creature");
+            }
         }
     }
 
