@@ -110,7 +110,7 @@ class CondemnTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("attacking creature");
+                .hasMessageContaining("Target must be a creature");
     }
 
     // ===== Resolving =====
