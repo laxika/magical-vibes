@@ -12,6 +12,7 @@ import { ScryfallImageService } from '../../../services/scryfall-image.service';
 export class CardDisplayComponent implements OnInit, OnChanges {
   @Input({ required: true }) card!: Card;
   @Input() permanent: Permanent | null = null;
+  @Input() preview = false;
 
   artUrl = signal<string | null>(null);
 
@@ -47,6 +48,16 @@ export class CardDisplayComponent implements OnInit, OnChanges {
   @HostBinding('attr.data-card-color')
   get cardColor(): string | null {
     return this.card.color;
+  }
+
+  @HostBinding('style.transform')
+  get tappedTransform(): string | null {
+    return !this.preview && this.permanent?.tapped ? 'rotate(90deg)' : null;
+  }
+
+  @HostBinding('style.margin')
+  get tappedMargin(): string | null {
+    return !this.preview && this.permanent?.tapped ? '-26px 26px' : null;
   }
 
   get effectiveKeywords(): string[] {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
@@ -89,6 +90,14 @@ public class CardViewFactory {
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             if (effect instanceof GainControlOfTargetAuraEffect) {
                 return List.of(CardType.ENCHANTMENT.getDisplayName());
+            }
+            if (effect instanceof ReturnTargetPermanentToHandEffect) {
+                return List.of(
+                        CardType.CREATURE.getDisplayName(),
+                        CardType.ENCHANTMENT.getDisplayName(),
+                        CardType.ARTIFACT.getDisplayName(),
+                        CardType.BASIC_LAND.getDisplayName()
+                );
             }
         }
         return List.of();
