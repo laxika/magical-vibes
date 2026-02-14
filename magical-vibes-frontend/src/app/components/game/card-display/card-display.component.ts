@@ -1,6 +1,8 @@
 import { Component, Input, HostBinding, OnInit, OnChanges, SimpleChanges, inject, signal } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Card, Permanent } from '../../../services/websocket.service';
 import { ScryfallImageService } from '../../../services/scryfall-image.service';
+import { ManaSymbolService } from '../../../services/mana-symbol.service';
 
 @Component({
   selector: 'app-card-display',
@@ -17,6 +19,8 @@ export class CardDisplayComponent implements OnInit, OnChanges {
   artUrl = signal<string | null>(null);
 
   private scryfallImageService = inject(ScryfallImageService);
+  private manaSymbolService = inject(ManaSymbolService);
+  private sanitizer = inject(DomSanitizer);
 
   ngOnInit(): void {
     this.fetchCardArt();
@@ -107,6 +111,20 @@ export class CardDisplayComponent implements OnInit, OnChanges {
     if (len <= 140) return '7px';
     if (len <= 200) return '6.5px';
     return '6px';
+  }
+
+  get formattedManaCost(): SafeHtml {
+    if (!this.card.manaCost) return '';
+    return this.sanitizer.bypassSecurityTrustHtml(
+      this.manaSymbolService.replaceSymbols(this.card.manaCost)
+    );
+  }
+
+  get formattedCardText(): SafeHtml {
+    if (!this.card.cardText) return '';
+    return this.sanitizer.bypassSecurityTrustHtml(
+      this.manaSymbolService.replaceSymbols(this.card.cardText)
+    );
   }
 
   formatKeywords(keywords: string[]): string {
