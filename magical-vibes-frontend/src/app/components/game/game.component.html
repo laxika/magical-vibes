@@ -255,29 +255,60 @@
       <div class="battlefield-row">
         <div class="battlefield-label">{{ game()?.playerNames?.[opponentPlayerIndex] }}'s Battlefield</div>
         <div class="battlefield-sub-row lands-row">
-          @for (ip of opponentLands; track ip.originalIndex) {
-            <div class="permanent-stack">
-              @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
+          @for (item of opponentLandStacks; track $index) {
+            @if (isLandStack(item)) {
+              <div class="land-stack" [attr.data-stack-size]="item.lands.length">
+                @for (ip of item.lands; track ip.originalIndex) {
+                  <div class="land-stack-item">
+                    <div class="permanent-stack">
+                      @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
+                        <app-card-display
+                          [card]="aura.perm.card"
+                          [permanent]="aura.perm"
+                          class="attached-aura"
+                          [class.targetable]="targeting && isValidTarget(aura.perm)"
+                          (click)="onAuraClick(aura)"
+                          (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                          (mouseleave)="onCardHoverEnd()" />
+                      }
+                      <app-card-display
+                        [card]="ip.perm.card"
+                        [permanent]="ip.perm"
+                        [class.tapped]="ip.perm.tapped"
+                        [class.targetable]="targeting && isValidTarget(ip.perm)"
+                        [class.choosable-permanent]="(choosingPermanent && choosablePermanentIds().has(ip.perm.id)) || (choosingMultiplePermanents && multiPermanentChoiceIds().has(ip.perm.id))"
+                        [class.selected-multi-permanent]="choosingMultiplePermanents && multiPermanentSelectedIds().has(ip.perm.id)"
+                        (click)="onOpponentBattlefieldCardClick(ip.originalIndex)"
+                        (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
+                        (mouseleave)="onCardHoverEnd()" />
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="permanent-stack">
+                @for (aura of getAttachedAuras(item.perm.id); track aura.perm.id) {
+                  <app-card-display
+                    [card]="aura.perm.card"
+                    [permanent]="aura.perm"
+                    class="attached-aura"
+                    [class.targetable]="targeting && isValidTarget(aura.perm)"
+                    (click)="onAuraClick(aura)"
+                    (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                    (mouseleave)="onCardHoverEnd()" />
+                }
                 <app-card-display
-                  [card]="aura.perm.card"
-                  [permanent]="aura.perm"
-                  class="attached-aura"
-                  [class.targetable]="targeting && isValidTarget(aura.perm)"
-                  (click)="onAuraClick(aura)"
-                  (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                  [card]="item.perm.card"
+                  [permanent]="item.perm"
+                  [class.tapped]="item.perm.tapped"
+                  [class.targetable]="targeting && isValidTarget(item.perm)"
+                  [class.choosable-permanent]="(choosingPermanent && choosablePermanentIds().has(item.perm.id)) || (choosingMultiplePermanents && multiPermanentChoiceIds().has(item.perm.id))"
+                  [class.selected-multi-permanent]="choosingMultiplePermanents && multiPermanentSelectedIds().has(item.perm.id)"
+                  (click)="onOpponentBattlefieldCardClick(item.originalIndex)"
+                  (mouseenter)="onCardHover(item.perm.card, item.perm)"
                   (mouseleave)="onCardHoverEnd()" />
-              }
-              <app-card-display
-                [card]="ip.perm.card"
-                [permanent]="ip.perm"
-                [class.tapped]="ip.perm.tapped"
-                [class.targetable]="targeting && isValidTarget(ip.perm)"
-                [class.choosable-permanent]="(choosingPermanent && choosablePermanentIds().has(ip.perm.id)) || (choosingMultiplePermanents && multiPermanentChoiceIds().has(ip.perm.id))"
-                [class.selected-multi-permanent]="choosingMultiplePermanents && multiPermanentSelectedIds().has(ip.perm.id)"
-                (click)="onOpponentBattlefieldCardClick(ip.originalIndex)"
-                (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
-                (mouseleave)="onCardHoverEnd()" />
-            </div>
+              </div>
+            }
           }
         </div>
         <div class="battlefield-sub-row creatures-row">
@@ -429,30 +460,62 @@
           }
         </div>
         <div class="battlefield-sub-row lands-row">
-          @for (ip of myLands; track ip.originalIndex) {
-            <div class="permanent-stack">
-              @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
+          @for (item of myLandStacks; track $index) {
+            @if (isLandStack(item)) {
+              <div class="land-stack" [attr.data-stack-size]="item.lands.length">
+                @for (ip of item.lands; track ip.originalIndex) {
+                  <div class="land-stack-item">
+                    <div class="permanent-stack">
+                      @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
+                        <app-card-display
+                          [card]="aura.perm.card"
+                          [permanent]="aura.perm"
+                          class="attached-aura"
+                          [class.targetable]="targeting && isValidTarget(aura.perm)"
+                          (click)="onAuraClick(aura)"
+                          (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                          (mouseleave)="onCardHoverEnd()" />
+                      }
+                      <app-card-display
+                        [card]="ip.perm.card"
+                        [permanent]="ip.perm"
+                        [class.tapped]="ip.perm.tapped"
+                        [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
+                        [class.targetable]="targeting && isValidTarget(ip.perm)"
+                        [class.choosable-permanent]="(choosingPermanent && choosablePermanentIds().has(ip.perm.id)) || (choosingMultiplePermanents && multiPermanentChoiceIds().has(ip.perm.id))"
+                        [class.selected-multi-permanent]="choosingMultiplePermanents && multiPermanentSelectedIds().has(ip.perm.id)"
+                        (click)="onMyBattlefieldCardClick(ip.originalIndex)"
+                        (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
+                        (mouseleave)="onCardHoverEnd()" />
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="permanent-stack">
+                @for (aura of getAttachedAuras(item.perm.id); track aura.perm.id) {
+                  <app-card-display
+                    [card]="aura.perm.card"
+                    [permanent]="aura.perm"
+                    class="attached-aura"
+                    [class.targetable]="targeting && isValidTarget(aura.perm)"
+                    (click)="onAuraClick(aura)"
+                    (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                    (mouseleave)="onCardHoverEnd()" />
+                }
                 <app-card-display
-                  [card]="aura.perm.card"
-                  [permanent]="aura.perm"
-                  class="attached-aura"
-                  [class.targetable]="targeting && isValidTarget(aura.perm)"
-                  (click)="onAuraClick(aura)"
-                  (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                  [card]="item.perm.card"
+                  [permanent]="item.perm"
+                  [class.tapped]="item.perm.tapped"
+                  [class.tappable]="canTapPermanent(item.originalIndex) && !declaringAttackers && !declaringBlockers"
+                  [class.targetable]="targeting && isValidTarget(item.perm)"
+                  [class.choosable-permanent]="(choosingPermanent && choosablePermanentIds().has(item.perm.id)) || (choosingMultiplePermanents && multiPermanentChoiceIds().has(item.perm.id))"
+                  [class.selected-multi-permanent]="choosingMultiplePermanents && multiPermanentSelectedIds().has(item.perm.id)"
+                  (click)="onMyBattlefieldCardClick(item.originalIndex)"
+                  (mouseenter)="onCardHover(item.perm.card, item.perm)"
                   (mouseleave)="onCardHoverEnd()" />
-              }
-              <app-card-display
-                [card]="ip.perm.card"
-                [permanent]="ip.perm"
-                [class.tapped]="ip.perm.tapped"
-                [class.tappable]="canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
-                [class.targetable]="targeting && isValidTarget(ip.perm)"
-                [class.choosable-permanent]="(choosingPermanent && choosablePermanentIds().has(ip.perm.id)) || (choosingMultiplePermanents && multiPermanentChoiceIds().has(ip.perm.id))"
-                [class.selected-multi-permanent]="choosingMultiplePermanents && multiPermanentSelectedIds().has(ip.perm.id)"
-                (click)="onMyBattlefieldCardClick(ip.originalIndex)"
-                (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
-                (mouseleave)="onCardHoverEnd()" />
-            </div>
+              </div>
+            }
           }
         </div>
         @if (myBattlefield.length === 0) {
