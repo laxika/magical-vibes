@@ -86,6 +86,7 @@ import com.github.laxika.magicalvibes.model.filter.AttackingTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ExcludeSelfTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.MaxPowerTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.SpellColorTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.MillByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
@@ -923,6 +924,17 @@ public class GameService {
                                 && se.getEntryType() != StackEntryType.ACTIVATED_ABILITY);
                 if (!validSpellTarget) {
                     throw new IllegalStateException("Target must be a spell on the stack");
+                }
+
+                // Validate spell color filter (e.g., "Counter target red or green spell")
+                if (card.getTargetFilter() instanceof SpellColorTargetFilter colorFilter) {
+                    StackEntry targetSpell = gameData.stack.stream()
+                            .filter(se -> se.getCard().getId().equals(targetPermanentId))
+                            .findFirst().orElse(null);
+                    if (targetSpell != null && !colorFilter.colors().contains(targetSpell.getCard().getColor())) {
+                        throw new IllegalStateException("Target spell must be " +
+                                colorFilter.colors().stream().map(c -> c.name().toLowerCase()).reduce((a, b) -> a + " or " + b).orElse("") + ".");
+                    }
                 }
             }
 

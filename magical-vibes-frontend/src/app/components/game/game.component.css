@@ -1212,6 +1212,30 @@
   z-index: 1;
 }
 
+/* Basic land stacking (MTGO style) */
+
+.land-stack {
+  display: inline-flex;
+  position: relative;
+  align-items: center;
+}
+
+.land-stack .land-stack-item {
+  position: relative;
+}
+
+.land-stack .land-stack-item:not(:first-child) {
+  margin-left: -120px;
+}
+
+.land-stack:has(.tapped) .land-stack-item:not(:first-child) {
+  margin-left: -200px;
+}
+
+.land-stack .land-stack-item:hover {
+  z-index: 10;
+}
+
 /* Spell targeting styles */
 
 .spell-targeting-banner {
