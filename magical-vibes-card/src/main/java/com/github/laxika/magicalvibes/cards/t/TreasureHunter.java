@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactFromGraveyardToHandEffect;
 
 import java.util.List;
@@ -18,6 +19,6 @@ public class TreasureHunter extends Card {
         setCardText("When Treasure Hunter enters, you may return target artifact card from your graveyard to your hand.");
         setPower(2);
         setToughness(2);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReturnArtifactFromGraveyardToHandEffect());
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(new ReturnArtifactFromGraveyardToHandEffect(), "Return an artifact from your graveyard to your hand?"));
     }
 }

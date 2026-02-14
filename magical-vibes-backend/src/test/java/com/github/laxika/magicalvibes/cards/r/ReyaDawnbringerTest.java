@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -48,13 +49,14 @@ class ReyaDawnbringerTest {
 
     /**
      * Advances from UNTAP to UPKEEP, triggering upkeep abilities.
-     * After this call, Reya's triggered ability is on the stack.
+     * Accepts the may ability prompt so Reya's triggered ability is on the stack.
      */
     private void advanceToUpkeepAndTrigger() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP → triggers fire
+        harness.passBothPriorities(); // advances to UPKEEP → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → ability on stack
     }
 
     // ===== Card properties =====
@@ -74,7 +76,9 @@ class ReyaDawnbringerTest {
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.ANGEL);
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ReturnCreatureFromGraveyardToBattlefieldEffect.class);
+                .isInstanceOf(MayEffect.class);
+        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
+        assertThat(mayEffect.wrapped()).isInstanceOf(ReturnCreatureFromGraveyardToBattlefieldEffect.class);
     }
 
     // ===== Casting =====
