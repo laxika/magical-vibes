@@ -1,15 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { ScryfallFetchQueue } from './scryfall-fetch-queue.service';
 
 const DB_NAME = 'scryfall-cache';
 const STORE_NAME = 'art-crops';
 const DB_VERSION = 1;
-
-interface QueueEntry {
-  url: string;
-  cacheKey: string;
-  resolve: (objectUrl: string) => void;
-  reject: (err: unknown) => void;
-}
 
 @Injectable({ providedIn: 'root' })
 export class ScryfallImageService {
@@ -17,8 +11,7 @@ export class ScryfallImageService {
   private dbPromise: Promise<IDBDatabase>;
   private objectUrls = new Map<string, string>();
   private inFlight = new Map<string, Promise<string>>();
-  private queue: QueueEntry[] = [];
-  private draining = false;
+  private fetchQueue = inject(ScryfallFetchQueue);
 
   constructor() {
     this.dbPromise = this.openDb();
@@ -47,9 +40,9 @@ export class ScryfallImageService {
       if (blob) {
         return this.toObjectUrl(cacheKey, blob);
       }
-      return new Promise<string>((resolve, reject) => {
-        this.queue.push({ url, cacheKey, resolve, reject });
-        this.startDrain();
+      return this.fetchQueue.enqueue(url).then(fetchedBlob => {
+        this.putInDb(cacheKey, fetchedBlob).catch(() => {});
+        return this.toObjectUrl(cacheKey, fetchedBlob);
       });
     });
 
@@ -94,31 +87,5 @@ export class ScryfallImageService {
     const objectUrl = URL.createObjectURL(blob);
     this.objectUrls.set(cacheKey, objectUrl);
     return objectUrl;
-  }
-
-  private startDrain(): void {
-    if (this.draining) return;
-    this.draining = true;
-    this.drainNext();
-  }
-
-  private drainNext(): void {
-    const entry = this.queue.shift();
-    if (!entry) {
-      this.draining = false;
-      return;
-    }
-
-    fetch(entry.url)
-      .then(res => {
-        if (!res.ok) throw new Error(`Scryfall returned ${res.status}`);
-        return res.blob();
-      })
-      .then(blob => {
-        this.putInDb(entry.cacheKey, blob).catch(() => { /* storage error */ });
-        entry.resolve(this.toObjectUrl(entry.cacheKey, blob));
-      })
-      .catch(err => entry.reject(err))
-      .finally(() => setTimeout(() => this.drainNext(), 100));
   }
 }
