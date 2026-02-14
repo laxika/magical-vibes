@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnes
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockOnlyFlyersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.IslandwalkEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
@@ -4096,6 +4097,15 @@ public class GameService {
                         .anyMatch(e -> e instanceof BlockOnlyFlyersEffect);
                 if (blockOnlyFlyers && !hasKeyword(gameData, attacker, Keyword.FLYING)) {
                     throw new IllegalStateException(blocker.getCard().getName() + " can only block creatures with flying");
+                }
+                boolean hasIslandwalk = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof IslandwalkEffect);
+                if (hasIslandwalk) {
+                    boolean defenderControlsIsland = defenderBattlefield.stream()
+                            .anyMatch(p -> p.getCard().getSubtypes().contains(CardSubtype.ISLAND));
+                    if (defenderControlsIsland) {
+                        throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked (islandwalk)");
+                    }
                 }
                 if (hasProtectionFrom(gameData, attacker, blocker.getCard().getColor())) {
                     throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (protection)");
