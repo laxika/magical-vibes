@@ -71,6 +71,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
@@ -2787,6 +2788,61 @@ public class GameService {
         log.info("Game {} - {} mills {} cards", gameData.id, playerName, cardsToMill);
     }
 
+    private void resolveExileTopCardsRepeatOnDuplicate(GameData gameData, Permanent creature, UUID targetPlayerId, ExileTopCardsRepeatOnDuplicateEffect effect) {
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        List<Card> exiled = gameData.playerExiledCards.get(targetPlayerId);
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+        String creatureName = creature.getCard().getName();
+
+        String triggerLog = creatureName + "'s ability triggers — " + playerName + " exiles cards from the top of their library.";
+        logAndBroadcast(gameData, triggerLog);
+
+        boolean repeat = true;
+        while (repeat) {
+            repeat = false;
+
+            if (deck.isEmpty()) {
+                String logEntry = playerName + "'s library is empty. No cards to exile.";
+                logAndBroadcast(gameData, logEntry);
+                break;
+            }
+
+            int cardsToExile = Math.min(effect.count(), deck.size());
+            List<Card> exiledThisRound = new ArrayList<>();
+            for (int i = 0; i < cardsToExile; i++) {
+                Card card = deck.removeFirst();
+                exiled.add(card);
+                exiledThisRound.add(card);
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(playerName).append(" exiles ");
+            for (int i = 0; i < exiledThisRound.size(); i++) {
+                if (i > 0) sb.append(", ");
+                sb.append(exiledThisRound.get(i).getName());
+            }
+            sb.append(".");
+            logAndBroadcast(gameData, sb.toString());
+
+            // Check if two or more exiled cards share the same name
+            Set<String> seen = new HashSet<>();
+            for (Card card : exiledThisRound) {
+                if (!seen.add(card.getName())) {
+                    repeat = true;
+                    break;
+                }
+            }
+
+            if (repeat) {
+                String repeatLog = "Two or more exiled cards share the same name — repeating the process.";
+                logAndBroadcast(gameData, repeatLog);
+            }
+        }
+
+        broadcastDeckSizes(gameData);
+        log.info("Game {} - {} exile trigger resolved for {}", gameData.id, creatureName, playerName);
+    }
+
     private void resolveShuffleGraveyardIntoLibrary(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
@@ -4704,7 +4760,9 @@ public class GameService {
             if (damageDealt <= 0) continue;
 
             for (CardEffect effect : creature.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)) {
-                if (effect instanceof ReturnPermanentsOnCombatDamageToPlayerEffect) {
+                if (effect instanceof ExileTopCardsRepeatOnDuplicateEffect exileEffect) {
+                    resolveExileTopCardsRepeatOnDuplicate(gameData, creature, defenderId, exileEffect);
+                } else if (effect instanceof ReturnPermanentsOnCombatDamageToPlayerEffect) {
                     // Collect valid permanents the damaged player controls
                     List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
                     List<UUID> validIds = new ArrayList<>();
