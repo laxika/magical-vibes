@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessa
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
@@ -1503,7 +1504,7 @@ public class GameService {
         if (needsCopyChoice) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent clonePerm = bf.get(bf.size() - 1);
-            gameData.pendingClonePermanentId = clonePerm.getId();
+            gameData.permanentChoiceContext = new PermanentChoiceContext.CloneCopy(clonePerm.getId());
 
             // Collect all creatures on all battlefields (excluding Clone itself)
             List<UUID> creatureIds = new ArrayList<>();
@@ -1528,7 +1529,7 @@ public class GameService {
                 return;
             } else {
                 // No creatures to copy — Clone stays as 0/0
-                gameData.pendingClonePermanentId = null;
+                gameData.permanentChoiceContext = null;
                 performStateBasedActions(gameData);
                 return;
             }
@@ -2359,7 +2360,7 @@ public class GameService {
         }
 
         if (!validCreatureIds.isEmpty()) {
-            gameData.pendingAuraGraftPermanentId = aura.getId();
+            gameData.permanentChoiceContext = new PermanentChoiceContext.AuraGraft(aura.getId());
             beginPermanentChoice(gameData, casterId, validCreatureIds,
                     "Attach " + aura.getCard().getName() + " to another permanent it can enchant.");
         } else {
@@ -2551,7 +2552,7 @@ public class GameService {
         // Find the first name with duplicates
         for (Map.Entry<String, List<UUID>> entry : legendaryByName.entrySet()) {
             if (entry.getValue().size() >= 2) {
-                gameData.pendingLegendRuleCardName = entry.getKey();
+                gameData.permanentChoiceContext = new PermanentChoiceContext.LegendRule(entry.getKey());
                 beginPermanentChoice(gameData, controllerId, entry.getValue(),
                         "You control multiple legendary permanents named " + entry.getKey() + ". Choose one to keep.");
                 return true;
@@ -2590,11 +2591,11 @@ public class GameService {
                 throw new IllegalStateException("Invalid permanent: " + permanentId);
             }
 
-            if (gameData.pendingClonePermanentId != null) {
-                UUID cloneId = gameData.pendingClonePermanentId;
-                gameData.pendingClonePermanentId = null;
+            PermanentChoiceContext context = gameData.permanentChoiceContext;
+            gameData.permanentChoiceContext = null;
 
-                Permanent clonePerm = findPermanentById(gameData, cloneId);
+            if (context instanceof PermanentChoiceContext.CloneCopy cloneCopy) {
+                Permanent clonePerm = findPermanentById(gameData, cloneCopy.clonePermanentId());
                 if (clonePerm == null) {
                     throw new IllegalStateException("Clone permanent no longer exists");
                 }
@@ -2619,11 +2620,8 @@ public class GameService {
                     broadcastPlayableCards(gameData);
                     resolveAutoPass(gameData);
                 }
-            } else if (gameData.pendingAuraGraftPermanentId != null) {
-                UUID auraId = gameData.pendingAuraGraftPermanentId;
-                gameData.pendingAuraGraftPermanentId = null;
-
-                Permanent aura = findPermanentById(gameData, auraId);
+            } else if (context instanceof PermanentChoiceContext.AuraGraft auraGraft) {
+                Permanent aura = findPermanentById(gameData, auraGraft.auraPermanentId());
                 if (aura == null) {
                     throw new IllegalStateException("Aura permanent no longer exists");
                 }
@@ -2644,15 +2642,12 @@ public class GameService {
                 broadcastPlayableCards(gameData);
 
                 resolveAutoPass(gameData);
-            } else if (gameData.pendingLegendRuleCardName != null) {
+            } else if (context instanceof PermanentChoiceContext.LegendRule legendRule) {
                 // Legend rule: keep chosen permanent, move all others with the same name to graveyard
-                String legendName = gameData.pendingLegendRuleCardName;
-                gameData.pendingLegendRuleCardName = null;
-
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 List<Permanent> toRemove = new ArrayList<>();
                 for (Permanent perm : battlefield) {
-                    if (perm.getCard().getName().equals(legendName) && !perm.getId().equals(permanentId)) {
+                    if (perm.getCard().getName().equals(legendRule.cardName()) && !perm.getId().equals(permanentId)) {
                         toRemove.add(perm);
                     }
                 }
@@ -4377,7 +4372,8 @@ public class GameService {
             if (isCloneCopy) {
                 if (accepted) {
                     // Collect valid creature targets
-                    UUID cloneId = gameData.pendingClonePermanentId;
+                    UUID cloneId = gameData.permanentChoiceContext instanceof PermanentChoiceContext.CloneCopy cloneCopy
+                            ? cloneCopy.clonePermanentId() : null;
                     List<UUID> creatureIds = new ArrayList<>();
                     for (UUID pid : gameData.orderedPlayerIds) {
                         List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
@@ -4395,7 +4391,7 @@ public class GameService {
                     broadcastLogEntry(gameData, logEntry);
                     log.info("Game {} - {} accepts clone copy", gameData.id, player.getUsername());
                 } else {
-                    gameData.pendingClonePermanentId = null;
+                    gameData.permanentChoiceContext = null;
                     String logEntry = player.getUsername() + " declines to copy a creature. Clone enters as 0/0.";
                     gameData.gameLog.add(logEntry);
                     broadcastLogEntry(gameData, logEntry);

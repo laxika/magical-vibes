@@ -52,8 +52,7 @@ public class GameData {
     public UUID awaitingPermanentChoicePlayerId;
     public Set<UUID> awaitingPermanentChoiceValidIds;
     public Card pendingAuraCard;
-    public UUID pendingAuraGraftPermanentId;
-    public String pendingLegendRuleCardName;
+    public PermanentChoiceContext permanentChoiceContext;
     public UUID pendingCardChoiceTargetPermanentId;
     public UUID awaitingGraveyardChoicePlayerId;
     public Set<Integer> awaitingGraveyardChoiceValidIndices;
@@ -68,7 +67,6 @@ public class GameData {
     public Set<UUID> awaitingMultiPermanentChoiceValidIds;
     public int awaitingMultiPermanentChoiceMaxCount;
     public UUID pendingCombatDamageBounceTargetPlayerId;
-    public UUID pendingClonePermanentId;
 
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {
         this.id = id;
