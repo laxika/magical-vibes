@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.h.HonorGuard;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.h.HorseshoeCrab;
+import com.github.laxika.magicalvibes.cards.h.HurkylsRecall;
 import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
@@ -206,6 +207,7 @@ public enum CardSet {
             new CardPrinting("10E", "85", FogElemental::new, "\"It's the perfect sentry. Those who should pass can go right through it.\"\n\u2014Teferi", "Scott Kirschner", UNCOMMON),
             new CardPrinting("10E", "86", FugitiveWizard::new, "\"The law has its place\u2014as a footnote in my spellbook.\"\n\u2014Siyani, fugitive mage", "Mark Zug", COMMON),
             new CardPrinting("10E", "87", HorseshoeCrab::new, "\"Hmm . . . It looks kinda like a bug. Let's crack it open an' see if it tastes like one!\"\n\u2014Squee, goblin cabin hand", "Scott Kirschner", COMMON),
+            new CardPrinting("10E", "88", HurkylsRecall::new, "Hurkyl's research at the College of Lat-Nam wasn't enough to stop the two brothers, but for centuries thereafter her spellcraft taught artificers restraint.", "Ralph Horsley", RARE),
             new CardPrinting("10E", "89", LumengridWarden::new, "\"The wardens keep watch over an endless sea of progress.\"", "Wayne England", COMMON),
             new CardPrinting("10E", "90", MahamotiDjinn::new, "\"Of royal blood among the spirits of the air, the Mahamoti djinn rides on the wings of the winds. As dangerous in the gambling hall as he is in battle, he is a master of trickery and misdirection.\"", "Greg Staples", RARE),
             new CardPrinting("10E", "91", MarchOfTheMachines::new, "Ben Thompson", RARE),

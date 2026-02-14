@@ -142,6 +142,7 @@ export interface Card {
   color: string | null;
   needsTarget: boolean;
   needsSpellTarget: boolean;
+  targetsPlayer: boolean;
   requiresAttackingTarget: boolean;
   allowedTargetTypes: string[];
   activatedAbilities: ActivatedAbilityView[];

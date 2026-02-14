@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
@@ -31,6 +33,7 @@ public class CardViewFactory {
 
         List<String> spellAllowedTargetTypes = computeSpellAllowedTargetTypes(card);
         boolean requiresAttackingTarget = computeRequiresAttackingTarget(card);
+        boolean targetsPlayer = computeSpellTargetsPlayer(card);
 
         return new CardView(
                 card.getName(),
@@ -51,6 +54,7 @@ public class CardViewFactory {
                 card.getColor(),
                 card.isNeedsTarget(),
                 card.isNeedsSpellTarget(),
+                targetsPlayer,
                 requiresAttackingTarget,
                 spellAllowedTargetTypes,
                 abilityViews
@@ -81,6 +85,17 @@ public class CardViewFactory {
     private boolean computeRequiresAttackingTarget(Card card) {
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean computeSpellTargetsPlayer(Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof DoubleTargetPlayerLifeEffect
+                    || effect instanceof MillTargetPlayerEffect
+                    || effect instanceof ReturnArtifactsTargetPlayerOwnsToHandEffect) {
                 return true;
             }
         }

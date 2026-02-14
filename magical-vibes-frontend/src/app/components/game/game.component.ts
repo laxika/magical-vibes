@@ -608,7 +608,7 @@ export class GameComponent implements OnInit, OnDestroy {
         this.targetingCardIndex = index;
         this.targetingCardName = card.name;
         this.targetingForAbility = false;
-        this.targetingForPlayer = false;
+        this.targetingForPlayer = card.targetsPlayer ?? false;
         this.targetingRequiresAttacking = card.requiresAttackingTarget ?? false;
         this.targetingAbilityIndex = -1;
         this.pendingAbilityXValue = null;
