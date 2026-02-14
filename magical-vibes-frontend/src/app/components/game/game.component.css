@@ -85,8 +85,8 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  width: 208px;
-  height: 291px;
+  width: 264px;
+  height: 370px;
   margin: 0 auto;
   flex-shrink: 0;
 }
@@ -98,8 +98,8 @@
 }
 
 .card-preview-empty {
-  width: 208px;
-  height: 291px;
+  width: 264px;
+  height: 370px;
   border-radius: 6px;
   background: linear-gradient(180deg, #3a3a3a 0%, #5a5a5a 100%);
   border: 3px solid #555;
@@ -133,7 +133,7 @@
 
 .log-entry {
   padding: 4px 0;
-  font-size: 12px;
+  font-size: 15px;
   color: #333;
   border-bottom: 1px solid #f0f0f0;
 }
@@ -1107,7 +1107,7 @@
 }
 
 .permanent-stack > .card.attached-aura {
-  margin-bottom: -150px;
+  margin-bottom: -190px;
   margin-left: 50px;
   z-index: 0;
 }
