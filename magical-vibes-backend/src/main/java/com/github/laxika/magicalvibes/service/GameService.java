@@ -97,6 +97,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchant
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesEffect;
@@ -545,6 +546,8 @@ public class GameService {
                 resolveRevealTopCardOfLibrary(gameData, entry);
             } else if (effect instanceof GainControlOfTargetAuraEffect) {
                 resolveGainControlOfTargetAura(gameData, entry);
+            } else if (effect instanceof ReturnTargetPermanentToHandEffect) {
+                resolveReturnTargetPermanentToHand(gameData, entry);
             }
         }
         removeOrphanedAuras(gameData);
@@ -2196,6 +2199,31 @@ public class GameService {
 
         broadcastBattlefields(gameData);
         sessionManager.sendToPlayer(controllerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(controllerId, 0)));
+    }
+
+    private void resolveReturnTargetPermanentToHand(GameData gameData, StackEntry entry) {
+        Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null && battlefield.remove(target)) {
+                removeOrphanedAuras(gameData);
+                List<Card> hand = gameData.playerHands.get(playerId);
+                hand.add(target.getCard());
+
+                String logEntry = target.getCard().getName() + " is returned to its owner's hand.";
+                gameData.gameLog.add(logEntry);
+                broadcastLogEntry(gameData, logEntry);
+                log.info("Game {} - {} returned to owner's hand by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
+
+                broadcastBattlefields(gameData);
+                sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+                break;
+            }
+        }
     }
 
     private void resolveDoubleTargetPlayerLife(GameData gameData, StackEntry entry) {

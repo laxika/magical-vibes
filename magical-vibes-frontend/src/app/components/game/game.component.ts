@@ -741,8 +741,8 @@ export class GameComponent implements OnInit, OnDestroy {
       if (!this.targetingAllowedTypes.some(t => t.toUpperCase() === perm.card.type.toUpperCase())) {
         return false;
       }
-      // For enchantment targeting, only allow auras that are attached to a permanent
-      if (perm.card.type === 'ENCHANTMENT' && perm.attachedTo == null) {
+      // For enchantment-only targeting (e.g., Aura Graft), only allow auras that are attached
+      if (this.targetingAllowedTypes.length === 1 && perm.card.type === 'ENCHANTMENT' && perm.attachedTo == null) {
         return false;
       }
       return true;
