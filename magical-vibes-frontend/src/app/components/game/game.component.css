@@ -880,8 +880,9 @@
 }
 
 .stack-entry-controller {
-  font-size: 10px;
-  color: #a89070;
+  font-size: 12px;
+  color: #5a3e2b;
+  font-weight: 700;
 }
 
 .stack-top-badge {
