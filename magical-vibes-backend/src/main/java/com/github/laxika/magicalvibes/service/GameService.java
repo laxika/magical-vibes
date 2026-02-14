@@ -76,6 +76,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
+import com.github.laxika.magicalvibes.model.filter.MaxPowerTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
@@ -492,6 +494,8 @@ public class GameService {
                 resolveBoostAllOwnCreatures(gameData, entry, boost);
             } else if (effect instanceof GrantKeywordToTargetEffect grant) {
                 resolveGrantKeywordToTarget(gameData, entry, grant);
+            } else if (effect instanceof MakeTargetUnblockableEffect) {
+                resolveMakeTargetUnblockable(gameData, entry);
             } else if (effect instanceof PreventDamageToTargetEffect prevent) {
                 resolvePreventDamageToTarget(gameData, entry, prevent);
             } else if (effect instanceof PreventNextDamageEffect prevent) {
@@ -1307,6 +1311,16 @@ public class GameService {
                 }
             }
 
+            // Generic target filter validation
+            if (ability.getTargetFilter() != null && targetPermanentId != null) {
+                Permanent target = findPermanentById(gameData, targetPermanentId);
+                if (target != null && ability.getTargetFilter() instanceof MaxPowerTargetFilter f) {
+                    if (target.getEffectivePower() > f.maxPower()) {
+                        throw new IllegalStateException("Target creature's power must be " + f.maxPower() + " or less");
+                    }
+                }
+            }
+
             // Player shroud validation for abilities
             if (targetPermanentId != null && gameData.playerIds.contains(targetPermanentId)
                     && playerHasShroud(gameData, targetPermanentId)) {
@@ -1876,6 +1890,22 @@ public class GameService {
         broadcastBattlefields(gameData);
 
         log.info("Game {} - {} gains {}", gameData.id, target.getCard().getName(), grant.keyword());
+    }
+
+    private void resolveMakeTargetUnblockable(GameData gameData, StackEntry entry) {
+        Permanent target = findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        target.setCantBeBlocked(true);
+
+        String logEntry = target.getCard().getName() + " can't be blocked this turn.";
+        gameData.gameLog.add(logEntry);
+        broadcastLogEntry(gameData, logEntry);
+        broadcastBattlefields(gameData);
+
+        log.info("Game {} - {} can't be blocked this turn", gameData.id, target.getCard().getName());
     }
 
     private void resolveDealXDamageToTargetCreature(GameData gameData, StackEntry entry) {
@@ -3189,7 +3219,7 @@ public class GameService {
             if (battlefield == null) continue;
             for (Permanent p : battlefield) {
                 if (p.getPowerModifier() != 0 || p.getToughnessModifier() != 0 || !p.getGrantedKeywords().isEmpty()
-                        || p.getDamagePreventionShield() != 0 || p.getRegenerationShield() != 0) {
+                        || p.getDamagePreventionShield() != 0 || p.getRegenerationShield() != 0 || p.isCantBeBlocked()) {
                     p.resetModifiers();
                     p.setDamagePreventionShield(0);
                     p.setRegenerationShield(0);
@@ -3538,8 +3568,14 @@ public class GameService {
         List<Integer> blockable = getBlockableCreatureIndices(gameData, defenderId);
         List<Integer> attackerIndices = getAttackingCreatureIndices(gameData, activeId);
 
-        if (blockable.isEmpty()) {
-            log.info("Game {} - Defending player has no creatures that can block", gameData.id);
+        // Filter out attackers that can't be blocked
+        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
+        attackerIndices = attackerIndices.stream()
+                .filter(idx -> !attackerBattlefield.get(idx).isCantBeBlocked())
+                .toList();
+
+        if (blockable.isEmpty() || attackerIndices.isEmpty()) {
+            log.info("Game {} - Defending player has no creatures that can block or no blockable attackers", gameData.id);
             advanceStep(gameData);
             return;
         }
@@ -3599,6 +3635,9 @@ public class GameService {
 
                 Permanent attacker = attackerBattlefield.get(attackerIdx);
                 Permanent blocker = defenderBattlefield.get(blockerIdx);
+                if (attacker.isCantBeBlocked()) {
+                    throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked this turn");
+                }
                 if (hasKeyword(gameData, attacker, Keyword.FLYING)
                         && !hasKeyword(gameData, blocker, Keyword.FLYING)
                         && !hasKeyword(gameData, blocker, Keyword.REACH)) {

@@ -16,5 +16,6 @@ public record PermanentView(
         int effectivePower, int effectiveToughness,
         UUID attachedTo,
         CardColor chosenColor,
-        int regenerationShield
+        int regenerationShield,
+        boolean cantBeBlocked
 ) {}

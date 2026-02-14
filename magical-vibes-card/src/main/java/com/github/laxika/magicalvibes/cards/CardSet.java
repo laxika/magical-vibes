@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.ChoMannoRevolutionary;
 import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.c.Condemn;
+import com.github.laxika.magicalvibes.cards.c.CraftyPathmage;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.FieldMarshal;
@@ -174,6 +175,7 @@ public enum CardSet {
             new CardPrinting("10E", "69", AvenWindreader::new, "\"The tiniest ripple tells a story ten fathoms deep.\"", "Greg Staples", COMMON),
             new CardPrinting("10E", "70", Boomerang::new, "\"Early Jamuraan hunters devised a weapon that would return to its source. Tolarian Aethermancers developed a spell that skipped the weapon entirely.\"", "Zoltan Boros & Gabor Szikszai", COMMON),
             new CardPrinting("10E", "73", Clone::new, "Kev Walker", RARE),
+            new CardPrinting("10E", "77", CraftyPathmage::new, "\"Follow the pathmage\"\n\u2014Otarian expression meaning \"escape quickly\"", "Jim Murray", COMMON),
             new CardPrinting("10E", "380", Forest::new, "Anthony S. Waters", COMMON),
             new CardPrinting("10E", "381", Forest::new, "John Avon", COMMON),
             new CardPrinting("10E", "382", Forest::new, "Rob Alexander", COMMON),

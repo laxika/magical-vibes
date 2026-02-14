@@ -158,6 +158,7 @@ export interface Permanent {
   chosenColor: string | null;
   regenerationShield: number;
   attachedTo: string | null;
+  cantBeBlocked: boolean;
 }
 
 export interface StackEntry {

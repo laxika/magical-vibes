@@ -26,6 +26,7 @@ public class Permanent {
     @Setter private int regenerationShield;
     @Setter private UUID attachedTo;
     @Setter private CardColor chosenColor;
+    @Setter private boolean cantBeBlocked;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
 
     public Permanent(Card card) {
@@ -89,6 +90,7 @@ public class Permanent {
     public void resetModifiers() {
         this.powerModifier = 0;
         this.toughnessModifier = 0;
+        this.cantBeBlocked = false;
         this.grantedKeywords.clear();
     }
 }
