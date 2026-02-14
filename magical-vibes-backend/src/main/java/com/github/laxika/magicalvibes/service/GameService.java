@@ -89,6 +89,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
@@ -288,11 +289,15 @@ public class GameService {
 
         drainManaPools(gameData);
 
-        // Untap all permanents for the new active player
+        // Untap all permanents for the new active player (skip those with "doesn't untap" effects)
         List<Permanent> battlefield = gameData.playerBattlefields.get(nextActive);
         if (battlefield != null) {
-            battlefield.forEach(Permanent::untap);
-            battlefield.forEach(p -> p.setSummoningSick(false));
+            battlefield.forEach(p -> {
+                if (!hasAuraPreventingUntap(gameData, p)) {
+                    p.untap();
+                }
+                p.setSummoningSick(false);
+            });
         }
         broadcastBattlefields(gameData);
 
@@ -2911,6 +2916,23 @@ public class GameService {
                 if (p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())) {
                     for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                         if (effect instanceof PreventAllDamageToAndByEnchantedCreatureEffect) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasAuraPreventingUntap(GameData gameData, Permanent creature) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                if (p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())) {
+                    for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                        if (effect instanceof EnchantedCreatureDoesntUntapEffect) {
                             return true;
                         }
                     }

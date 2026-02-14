@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.cards.c.CloudSprite;
 import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.c.Condemn;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.d.Dehydration;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.FieldMarshal;
@@ -182,6 +183,7 @@ public enum CardSet {
             new CardPrinting("10E", "74", CloudElemental::new, "Sam Wood", COMMON),
             new CardPrinting("10E", "75", CloudSprite::new, "Randy Gallegos", COMMON),
             new CardPrinting("10E", "76", CounselOfTheSoratami::new, "Taguchi", COMMON),
+            new CardPrinting("10E", "78", Dehydration::new, "Paolo Parente", COMMON),
             new CardPrinting("10E", "380", Forest::new, "Anthony S. Waters", COMMON),
             new CardPrinting("10E", "381", Forest::new, "John Avon", COMMON),
             new CardPrinting("10E", "382", Forest::new, "Rob Alexander", COMMON),
