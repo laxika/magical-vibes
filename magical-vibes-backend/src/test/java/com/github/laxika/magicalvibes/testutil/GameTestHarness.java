@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
 import com.github.laxika.magicalvibes.networking.service.StackEntryViewFactory;
+import com.github.laxika.magicalvibes.service.CombatService;
+import com.github.laxika.magicalvibes.service.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.LobbyService;
@@ -39,7 +42,12 @@ public class GameTestHarness {
         gameRegistry = new GameRegistry();
         sessionManager = new WebSocketSessionManager(new JacksonConfig().objectMapper());
         CardViewFactory cardViewFactory = new CardViewFactory();
-        gameService = new GameService(sessionManager, gameRegistry, cardViewFactory, new PermanentViewFactory(cardViewFactory), new StackEntryViewFactory(cardViewFactory));
+        PermanentViewFactory permanentViewFactory = new PermanentViewFactory(cardViewFactory);
+        StackEntryViewFactory stackEntryViewFactory = new StackEntryViewFactory(cardViewFactory);
+        GameHelper gameHelper = new GameHelper(sessionManager, gameRegistry, cardViewFactory, permanentViewFactory, stackEntryViewFactory);
+        EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper);
+        CombatService combatService = new CombatService(gameHelper);
+        gameService = new GameService(sessionManager, gameRegistry, gameHelper, effectResolutionService, combatService);
         lobbyService = new LobbyService(gameRegistry, gameService);
 
         player1 = new Player(UUID.randomUUID(), "Alice");
