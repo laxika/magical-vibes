@@ -486,6 +486,7 @@ public class CombatService {
                 dmg = gameHelper.applyCreaturePreventionShield(gameData, atkBf.get(atkIdx), dmg);
                 atkDamageTaken.put(atkIdx, dmg);
                 if (dmg >= gameHelper.getEffectiveToughness(gameData, atkBf.get(atkIdx))
+                        && !gameHelper.hasKeyword(gameData, atkBf.get(atkIdx), Keyword.INDESTRUCTIBLE)
                         && !gameHelper.tryRegenerate(gameData, atkBf.get(atkIdx))) {
                     deadAttackerIndices.add(atkIdx);
                 }
@@ -496,6 +497,7 @@ public class CombatService {
                     dmg = gameHelper.applyCreaturePreventionShield(gameData, defBf.get(blkIdx), dmg);
                     defDamageTaken.put(blkIdx, dmg);
                     if (dmg >= gameHelper.getEffectiveToughness(gameData, defBf.get(blkIdx))
+                            && !gameHelper.hasKeyword(gameData, defBf.get(blkIdx), Keyword.INDESTRUCTIBLE)
                             && !gameHelper.tryRegenerate(gameData, defBf.get(blkIdx))) {
                         deadDefenderIndices.add(blkIdx);
                     }
@@ -563,6 +565,7 @@ public class CombatService {
             dmg = gameHelper.applyCreaturePreventionShield(gameData, atkBf.get(atkIdx), dmg);
             atkDamageTaken.put(atkIdx, dmg);
             if (dmg >= gameHelper.getEffectiveToughness(gameData, atkBf.get(atkIdx))
+                    && !gameHelper.hasKeyword(gameData, atkBf.get(atkIdx), Keyword.INDESTRUCTIBLE)
                     && !gameHelper.tryRegenerate(gameData, atkBf.get(atkIdx))) {
                 deadAttackerIndices.add(atkIdx);
             }
@@ -574,6 +577,7 @@ public class CombatService {
                 dmg = gameHelper.applyCreaturePreventionShield(gameData, defBf.get(blkIdx), dmg);
                 defDamageTaken.put(blkIdx, dmg);
                 if (dmg >= gameHelper.getEffectiveToughness(gameData, defBf.get(blkIdx))
+                        && !gameHelper.hasKeyword(gameData, defBf.get(blkIdx), Keyword.INDESTRUCTIBLE)
                         && !gameHelper.tryRegenerate(gameData, defBf.get(blkIdx))) {
                     deadDefenderIndices.add(blkIdx);
                 }
@@ -587,6 +591,7 @@ public class CombatService {
             gameHelper.logAndBroadcast(gameData, redirectLog);
 
             if (damageRedirectedToGuard >= gameHelper.getEffectiveToughness(gameData, redirectTarget)
+                    && !gameHelper.hasKeyword(gameData, redirectTarget, Keyword.INDESTRUCTIBLE)
                     && !gameHelper.tryRegenerate(gameData, redirectTarget)) {
                 gameHelper.removePermanentToGraveyard(gameData, redirectTarget);
                 String deathLog = redirectTarget.getCard().getName() + " is destroyed by redirected combat damage.";

@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostNonColorCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOtherCreaturesByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnTappedCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
 import com.github.laxika.magicalvibes.model.filter.AttackingOrBlockingTargetFilter;
@@ -227,6 +228,11 @@ public class GameHelper {
                             && target.getCard().getColor() != boost.excludedColor()) {
                         power += boost.powerBoost();
                         toughness += boost.toughnessBoost();
+                    }
+                    if (effect instanceof GrantKeywordToOwnTappedCreaturesEffect grant
+                            && bf.contains(target)
+                            && target.isTapped()) {
+                        keywords.add(grant.keyword());
                     }
                 }
             }
@@ -1299,10 +1305,15 @@ public class GameHelper {
         logAndBroadcast(gameData, logEntry);
 
         if (effectiveDamage >= getEffectiveToughness(gameData, target)) {
-            removePermanentToGraveyard(gameData, target);
-            String deathLog = target.getCard().getName() + " is destroyed by redirected " + sourceName + " damage.";
-            logAndBroadcast(gameData, deathLog);
-            removeOrphanedAuras(gameData);
+            if (hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
+                String indestructibleLog = target.getCard().getName() + " is indestructible and survives.";
+                logAndBroadcast(gameData, indestructibleLog);
+            } else {
+                removePermanentToGraveyard(gameData, target);
+                String deathLog = target.getCard().getName() + " is destroyed by redirected " + sourceName + " damage.";
+                logAndBroadcast(gameData, deathLog);
+                removeOrphanedAuras(gameData);
+            }
         }
 
         return 0;

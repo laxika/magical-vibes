@@ -444,7 +444,10 @@ public class EffectResolutionService {
         log.info("Game {} - {} deals {} damage to {}", gameData.id, entry.getCard().getName(), damage, target.getCard().getName());
 
         if (damage >= gameHelper.getEffectiveToughness(gameData, target)) {
-            if (gameHelper.tryRegenerate(gameData, target)) {
+            if (gameHelper.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
+                String indestructibleLog = target.getCard().getName() + " is indestructible and survives.";
+                gameHelper.logAndBroadcast(gameData, indestructibleLog);
+            } else if (gameHelper.tryRegenerate(gameData, target)) {
 
             } else {
                 gameHelper.removePermanentToGraveyard(gameData, target);
@@ -485,7 +488,10 @@ public class EffectResolutionService {
             log.info("Game {} - {} deals {} damage to {}", gameData.id, entry.getCard().getName(), damage, target.getCard().getName());
 
             if (damage >= target.getEffectiveToughness()) {
-                if (!gameHelper.tryRegenerate(gameData, target)) {
+                if (gameHelper.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
+                    String indestructibleLog = target.getCard().getName() + " is indestructible and survives.";
+                    gameHelper.logAndBroadcast(gameData, indestructibleLog);
+                } else if (!gameHelper.tryRegenerate(gameData, target)) {
                     destroyed.add(target);
                 }
             }
@@ -514,7 +520,20 @@ public class EffectResolutionService {
             }
         }
 
+        // Snapshot indestructible status before any removals (MTG rules: "destroy all" is simultaneous)
+        Set<Permanent> indestructible = new HashSet<>();
         for (Permanent perm : toDestroy) {
+            if (gameHelper.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
+                indestructible.add(perm);
+            }
+        }
+
+        for (Permanent perm : toDestroy) {
+            if (indestructible.contains(perm)) {
+                String logEntry = perm.getCard().getName() + " is indestructible.";
+                gameHelper.logAndBroadcast(gameData, logEntry);
+                continue;
+            }
             if (!cannotBeRegenerated && gameHelper.tryRegenerate(gameData, perm)) {
                 continue;
             }
@@ -536,7 +555,20 @@ public class EffectResolutionService {
             }
         }
 
+        // Snapshot indestructible status before any removals (MTG rules: "destroy all" is simultaneous)
+        Set<Permanent> indestructible = new HashSet<>();
         for (Permanent perm : toDestroy) {
+            if (gameHelper.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
+                indestructible.add(perm);
+            }
+        }
+
+        for (Permanent perm : toDestroy) {
+            if (indestructible.contains(perm)) {
+                String logEntry = perm.getCard().getName() + " is indestructible.";
+                gameHelper.logAndBroadcast(gameData, logEntry);
+                continue;
+            }
             gameHelper.removePermanentToGraveyard(gameData, perm);
             String logEntry = perm.getCard().getName() + " is destroyed.";
             gameHelper.logAndBroadcast(gameData, logEntry);
@@ -557,6 +589,13 @@ public class EffectResolutionService {
             return;
         }
 
+        if (gameHelper.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
+            String logEntry = target.getCard().getName() + " is indestructible.";
+            gameHelper.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} is indestructible, destroy prevented", gameData.id, target.getCard().getName());
+            return;
+        }
+
         if (gameHelper.isCreature(gameData, target) && gameHelper.tryRegenerate(gameData, target)) {
             return;
         }
@@ -572,19 +611,29 @@ public class EffectResolutionService {
 
     private void resolveDestroyBlockedCreatureAndSelf(GameData gameData, StackEntry entry) {
         Permanent attacker = gameHelper.findPermanentById(gameData, entry.getTargetPermanentId());
-        if (attacker != null && !gameHelper.tryRegenerate(gameData, attacker)) {
-            gameHelper.removePermanentToGraveyard(gameData, attacker);
-            String logEntry = attacker.getCard().getName() + " is destroyed by " + entry.getCard().getName() + ".";
-            gameHelper.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} destroyed by {}'s block trigger", gameData.id, attacker.getCard().getName(), entry.getCard().getName());
+        if (attacker != null) {
+            if (gameHelper.hasKeyword(gameData, attacker, Keyword.INDESTRUCTIBLE)) {
+                String logEntry = attacker.getCard().getName() + " is indestructible.";
+                gameHelper.logAndBroadcast(gameData, logEntry);
+            } else if (!gameHelper.tryRegenerate(gameData, attacker)) {
+                gameHelper.removePermanentToGraveyard(gameData, attacker);
+                String logEntry = attacker.getCard().getName() + " is destroyed by " + entry.getCard().getName() + ".";
+                gameHelper.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} destroyed by {}'s block trigger", gameData.id, attacker.getCard().getName(), entry.getCard().getName());
+            }
         }
 
         Permanent self = gameHelper.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (self != null && !gameHelper.tryRegenerate(gameData, self)) {
-            gameHelper.removePermanentToGraveyard(gameData, self);
-            String logEntry = entry.getCard().getName() + " is destroyed.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} destroyed (self-destruct from block trigger)", gameData.id, entry.getCard().getName());
+        if (self != null) {
+            if (gameHelper.hasKeyword(gameData, self, Keyword.INDESTRUCTIBLE)) {
+                String logEntry = entry.getCard().getName() + " is indestructible.";
+                gameHelper.logAndBroadcast(gameData, logEntry);
+            } else if (!gameHelper.tryRegenerate(gameData, self)) {
+                gameHelper.removePermanentToGraveyard(gameData, self);
+                String logEntry = entry.getCard().getName() + " is destroyed.";
+                gameHelper.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} destroyed (self-destruct from block trigger)", gameData.id, entry.getCard().getName());
+            }
         }
     }
 
@@ -1408,7 +1457,9 @@ public class EffectResolutionService {
                     }
                     int effectiveDamage = gameHelper.applyCreaturePreventionShield(gameData, p, damage);
                     int toughness = gameHelper.getEffectiveToughness(gameData, p);
-                    if (effectiveDamage >= toughness && !gameHelper.tryRegenerate(gameData, p)) {
+                    if (effectiveDamage >= toughness
+                            && !gameHelper.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)
+                            && !gameHelper.tryRegenerate(gameData, p)) {
                         deadIndices.add(i);
                     }
                 }

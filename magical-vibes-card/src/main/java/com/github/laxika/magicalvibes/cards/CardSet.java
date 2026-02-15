@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards;
 
+import com.github.laxika.magicalvibes.cards.a.AdeptWatershaper;
 import com.github.laxika.magicalvibes.cards.a.Afflict;
 import com.github.laxika.magicalvibes.cards.a.AgonizingMemories;
 import com.github.laxika.magicalvibes.cards.a.Assassinate;
@@ -294,7 +295,8 @@ public enum CardSet {
 
     LORWYN_ECLIPSED("ECL", "Lorwyn Eclipsed", List.of(
             new CardPrinting("ECL", "1", ChangelingWayfinder::new, "No map. No complaints.", "Quintin Gleim", COMMON),
-            new CardPrinting("ECL", "2", RooftopPercher::new, "Nils Hamm", COMMON)
+            new CardPrinting("ECL", "2", RooftopPercher::new, "Nils Hamm", COMMON),
+            new CardPrinting("ECL", "3", AdeptWatershaper::new, "Pauline Voss", RARE)
     ));
 
     private final String code;

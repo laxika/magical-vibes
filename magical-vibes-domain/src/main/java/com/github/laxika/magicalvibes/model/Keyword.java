@@ -10,5 +10,6 @@ public enum Keyword {
     FLASH,
     VIGILANCE,
     SHROUD,
-    CHANGELING
+    CHANGELING,
+    INDESTRUCTIBLE
 }
