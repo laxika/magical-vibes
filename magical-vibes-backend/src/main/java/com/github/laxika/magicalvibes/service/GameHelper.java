@@ -369,7 +369,7 @@ public class GameHelper {
         List<Integer> deckSizes = getDeckSizes(gameData);
         List<Integer> handSizes = getHandSizes(gameData);
         List<Integer> lifeTotals = getLifeTotals(gameData);
-        UUID priorityPlayerId = getPriorityPlayerId(gameData);
+        UUID priorityPlayerId = gameData.awaitingInput != null ? null : getPriorityPlayerId(gameData);
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<CardView> hand = gameData.playerHands.getOrDefault(playerId, List.of())
@@ -457,7 +457,7 @@ public class GameHelper {
 
     List<Integer> getPlayableCardIndices(GameData gameData, UUID playerId) {
         List<Integer> playable = new ArrayList<>();
-        if (gameData.status != GameStatus.RUNNING) {
+        if (gameData.status != GameStatus.RUNNING || gameData.awaitingInput != null) {
             return playable;
         }
 
