@@ -195,47 +195,18 @@ public class GameBroadcastService {
             if (card.getType() == CardType.BASIC_LAND && isActivePlayer && isMainPhase && landsPlayed < 1 && stackEmpty) {
                 playable.add(i);
             }
-            if (card.getType() == CardType.CREATURE && card.getManaCost() != null && !spellLimitReached) {
-                boolean hasFlash = card.getKeywords().contains(Keyword.FLASH);
-                if (hasFlash || (isActivePlayer && isMainPhase && stackEmpty)) {
+            if (card.getManaCost() != null && !spellLimitReached) {
+                boolean isInstantSpeed = card.getType() == CardType.INSTANT
+                        || (card.getType() == CardType.CREATURE && card.getKeywords().contains(Keyword.FLASH));
+                boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
+
+                if (canCastTiming) {
                     ManaCost cost = new ManaCost(card.getManaCost());
                     ManaPool pool = gameData.playerManaPools.get(playerId);
-                    int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.CREATURE);
+                    int additionalCost = getOpponentCostIncrease(gameData, playerId, card.getType());
                     if (cost.canPay(pool, additionalCost)) {
                         playable.add(i);
                     }
-                }
-            }
-            if (card.getType() == CardType.ENCHANTMENT && isActivePlayer && isMainPhase && stackEmpty && card.getManaCost() != null && !spellLimitReached) {
-                ManaCost cost = new ManaCost(card.getManaCost());
-                ManaPool pool = gameData.playerManaPools.get(playerId);
-                int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.ENCHANTMENT);
-                if (cost.canPay(pool, additionalCost)) {
-                    playable.add(i);
-                }
-            }
-            if (card.getType() == CardType.ARTIFACT && isActivePlayer && isMainPhase && stackEmpty && card.getManaCost() != null && !spellLimitReached) {
-                ManaCost cost = new ManaCost(card.getManaCost());
-                ManaPool pool = gameData.playerManaPools.get(playerId);
-                int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.ARTIFACT);
-                if (cost.canPay(pool, additionalCost)) {
-                    playable.add(i);
-                }
-            }
-            if (card.getType() == CardType.SORCERY && isActivePlayer && isMainPhase && stackEmpty && card.getManaCost() != null && !spellLimitReached) {
-                ManaCost cost = new ManaCost(card.getManaCost());
-                ManaPool pool = gameData.playerManaPools.get(playerId);
-                int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.SORCERY);
-                if (cost.canPay(pool, additionalCost)) {
-                    playable.add(i);
-                }
-            }
-            if (card.getType() == CardType.INSTANT && card.getManaCost() != null && !spellLimitReached) {
-                ManaCost cost = new ManaCost(card.getManaCost());
-                ManaPool pool = gameData.playerManaPools.get(playerId);
-                int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.INSTANT);
-                if (cost.canPay(pool, additionalCost)) {
-                    playable.add(i);
                 }
             }
         }
