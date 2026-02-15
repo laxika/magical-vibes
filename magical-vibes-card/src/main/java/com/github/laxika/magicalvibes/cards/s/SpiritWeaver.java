@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.filter.CreatureColorTargetFilter;
 
 import java.util.List;
+import java.util.Set;
 
 public class SpiritWeaver extends Card {
 
@@ -18,6 +20,6 @@ public class SpiritWeaver extends Card {
         setCardText("{2}: Target green or blue creature gets +0/+1 until end of turn.");
         setPower(2);
         setToughness(1);
-        addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(new BoostTargetCreatureEffect(0, 1)), true, "{2}: Target green or blue creature gets +0/+1 until end of turn."));
+        addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(new BoostTargetCreatureEffect(0, 1)), true, "{2}: Target green or blue creature gets +0/+1 until end of turn.", new CreatureColorTargetFilter(Set.of(CardColor.GREEN, CardColor.BLUE))));
     }
 }

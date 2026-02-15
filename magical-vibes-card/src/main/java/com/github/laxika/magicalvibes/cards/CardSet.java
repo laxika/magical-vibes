@@ -102,6 +102,7 @@ import com.github.laxika.magicalvibes.cards.s.SkyhunterProwler;
 import com.github.laxika.magicalvibes.cards.s.SkyhunterSkirmisher;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import com.github.laxika.magicalvibes.cards.s.SpiritLink;
+import com.github.laxika.magicalvibes.cards.s.SkyWeaver;
 import com.github.laxika.magicalvibes.cards.s.SpiritWeaver;
 import com.github.laxika.magicalvibes.cards.s.StarlightInvoker;
 import com.github.laxika.magicalvibes.cards.s.SteadfastGuard;
@@ -242,6 +243,7 @@ public enum CardSet {
             new CardPrinting("10E", "105", Scalpelexis::new, "Mark Tedin", RARE),
             new CardPrinting("10E", "106", SeaMonster::new, "\"It's easy to believe the monster is a myth—until you feel three hundred thousand pounds of myth crashing down on your ship.\"", "Mark Tedin", COMMON),
             new CardPrinting("10E", "108", Sift::new, "\"Dwell longest on the thoughts that shine brightest.\"", "Jeremy Jarvis", COMMON),
+            new CardPrinting("10E", "109", SkyWeaver::new, "\"Let my wisdom give you wings.\"", "Christopher Moeller", UNCOMMON),
             new CardPrinting("10E", "107", ShimmeringWings::new, "Rebecca Guay", COMMON),
             new CardPrinting("10E", "110", SnappingDrake::new, "The irritable drakes are solitary nesters. Even brooding females barely contain the urge to attack their own young.", "Dave Dorman", COMMON),
             new CardPrinting("10E", "96", PhantomWarrior::new, "\"There are as many pillows of illusion as flakes in a snow-storm. We wake from one dream into another dream.\"\n\u2014Ralph Waldo Emerson, \"Illusions\"", "Greg Staples", UNCOMMON),
