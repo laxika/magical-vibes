@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.effect.BounceOwnCreatureOnUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
@@ -194,6 +195,11 @@ public class EffectResolutionService {
                 resolvePutAuraFromHandOntoSelf(gameData, entry);
             } else if (effect instanceof MillByHandSizeEffect) {
                 resolveMillByHandSize(gameData, entry);
+            } else if (effect instanceof BounceOwnCreatureOnUpkeepEffect) {
+                resolveBounceOwnCreatureOnUpkeep(gameData, entry);
+                if (gameData.awaitingInput == AwaitingInput.PERMANENT_CHOICE) {
+                    break;
+                }
             } else if (effect instanceof MillTargetPlayerEffect mill) {
                 resolveMillTargetPlayer(gameData, entry, mill);
             } else if (effect instanceof LookAtHandEffect) {
@@ -795,6 +801,31 @@ public class EffectResolutionService {
         gameHelper.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} mills {} cards (hand size)", gameData.id, playerName, cardsToMill);
+    }
+
+    private void resolveBounceOwnCreatureOnUpkeep(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+        List<UUID> creatureIds = new ArrayList<>();
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (gameHelper.isCreature(gameData, p)) {
+                    creatureIds.add(p.getId());
+                }
+            }
+        }
+
+        if (creatureIds.isEmpty()) {
+            String logEntry = playerName + " controls no creatures — nothing to return.";
+            gameHelper.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        gameData.permanentChoiceContext = new PermanentChoiceContext.BounceCreature(targetPlayerId);
+        gameHelper.beginPermanentChoice(gameData, targetPlayerId, creatureIds,
+                "Choose a creature you control to return to its owner's hand.");
     }
 
     private void resolveMillTargetPlayer(GameData gameData, StackEntry entry, MillTargetPlayerEffect mill) {
