@@ -39,6 +39,8 @@ export enum MessageType {
   PERMANENT_CHOSEN = 'PERMANENT_CHOSEN',
   CHOOSE_MULTIPLE_PERMANENTS = 'CHOOSE_MULTIPLE_PERMANENTS',
   MULTIPLE_PERMANENTS_CHOSEN = 'MULTIPLE_PERMANENTS_CHOSEN',
+  CHOOSE_MULTIPLE_CARDS_FROM_GRAVEYARDS = 'CHOOSE_MULTIPLE_CARDS_FROM_GRAVEYARDS',
+  MULTIPLE_GRAVEYARD_CARDS_CHOSEN = 'MULTIPLE_GRAVEYARD_CARDS_CHOSEN',
   REORDER_LIBRARY_CARDS = 'REORDER_LIBRARY_CARDS',
   LIBRARY_CARDS_REORDERED = 'LIBRARY_CARDS_REORDERED',
   CHOOSE_CARD_FROM_LIBRARY = 'CHOOSE_CARD_FROM_LIBRARY',
@@ -313,6 +315,14 @@ export interface ChooseMultiplePermanentsNotification {
   prompt: string;
 }
 
+export interface ChooseMultipleCardsFromGraveyardsNotification {
+  type: MessageType;
+  cardIds: string[];
+  cards: Card[];
+  maxCount: number;
+  prompt: string;
+}
+
 export interface ReorderLibraryCardsNotification {
   type: MessageType;
   cards: Card[];
@@ -344,7 +354,7 @@ export interface ChooseHandTopBottomNotification {
   prompt: string;
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameStateNotification | MulliganResolvedNotification | SelectCardsToBottomNotification | AvailableAttackersNotification | AvailableBlockersNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | ReorderLibraryCardsNotification | ChooseCardFromLibraryNotification | RevealHandNotification | ChooseFromRevealedHandNotification | ChooseHandTopBottomNotification;
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameStateNotification | MulliganResolvedNotification | SelectCardsToBottomNotification | AvailableAttackersNotification | AvailableBlockersNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | ChooseMultipleCardsFromGraveyardsNotification | ReorderLibraryCardsNotification | ChooseCardFromLibraryNotification | RevealHandNotification | ChooseFromRevealedHandNotification | ChooseHandTopBottomNotification;
 
 export interface User {
   userId: string;
