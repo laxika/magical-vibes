@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.networking.message.GraveyardUpdatedMessage
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
 import com.github.laxika.magicalvibes.networking.message.GameStartedMessage;
 import com.github.laxika.magicalvibes.networking.message.HandDrawnMessage;
+import com.github.laxika.magicalvibes.networking.message.HandSizesUpdatedMessage;
 import com.github.laxika.magicalvibes.networking.message.JoinGame;
 import com.github.laxika.magicalvibes.networking.message.LifeUpdatedMessage;
 import com.github.laxika.magicalvibes.networking.message.ManaUpdatedMessage;
@@ -354,6 +355,7 @@ public class GameService {
 
         sessionManager.sendToPlayer(activePlayerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(activePlayerId, 0)));
         broadcastDeckSizes(gameData);
+        broadcastHandSizes(gameData);
 
         String playerName = gameData.playerIdToName.get(activePlayerId);
         String logEntry = playerName + " draws a card.";
@@ -902,6 +904,7 @@ public class GameService {
             log.info("Game {} - {} bottomed {} cards, hand size now {}", gameData.id, player.getUsername(), bottomCards.size(), hand.size());
 
             broadcastDeckSizes(gameData);
+            broadcastHandSizes(gameData);
             checkStartGame(gameData);
         }
     }
@@ -940,6 +943,7 @@ public class GameService {
 
             sessionManager.sendToPlayer(player.getId(), new HandDrawnMessage(newHand.stream().map(cardViewFactory::create).toList(), newMulliganCount));
             sessionManager.sendToPlayers(gameData.orderedPlayerIds,new MulliganResolvedMessage(player.getUsername(), false, newMulliganCount));
+            broadcastHandSizes(gameData);
 
             String logEntry = player.getUsername() + " takes a mulligan (mulligan #" + newMulliganCount + ").";
             logAndBroadcast(gameData, logEntry);
@@ -993,6 +997,7 @@ public class GameService {
                 hand,
                 mulliganCount,
                 getDeckSizes(data),
+                getHandSizes(data),
                 getBattlefields(data),
                 manaPool,
                 autoStopSteps,
@@ -1013,6 +1018,19 @@ public class GameService {
 
     private void broadcastDeckSizes(GameData data) {
         sessionManager.sendToPlayers(data.orderedPlayerIds, new DeckSizesUpdatedMessage(getDeckSizes(data)));
+    }
+
+    private List<Integer> getHandSizes(GameData data) {
+        List<Integer> sizes = new ArrayList<>();
+        for (UUID pid : data.orderedPlayerIds) {
+            List<Card> hand = data.playerHands.get(pid);
+            sizes.add(hand != null ? hand.size() : 0);
+        }
+        return sizes;
+    }
+
+    private void broadcastHandSizes(GameData data) {
+        sessionManager.sendToPlayers(data.orderedPlayerIds, new HandSizesUpdatedMessage(getHandSizes(data)));
     }
 
     private List<List<PermanentView>> getBattlefields(GameData data) {
@@ -1175,6 +1193,7 @@ public class GameService {
 
                 sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
                 broadcastBattlefields(gameData);
+                broadcastHandSizes(gameData);
 
                 String logEntry = player.getUsername() + " plays " + card.getName() + ".";
                 logAndBroadcast(gameData, logEntry);
@@ -1270,6 +1289,7 @@ public class GameService {
         gameData.priorityPassedBy.clear();
 
         sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+        broadcastHandSizes(gameData);
         broadcastStackUpdate(gameData);
         sessionManager.sendToPlayers(gameData.orderedPlayerIds, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
 
@@ -2139,6 +2159,7 @@ public class GameService {
 
         sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
         broadcastGraveyards(gameData);
+        broadcastHandSizes(gameData);
 
         String logEntry = player.getUsername() + " discards " + card.getName() + ".";
         logAndBroadcast(gameData, logEntry);
@@ -2166,6 +2187,7 @@ public class GameService {
 
             sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
             broadcastBattlefields(gameData);
+            broadcastHandSizes(gameData);
 
             String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield attached to " + target.getCard().getName() + ".";
             logAndBroadcast(gameData, logEntry);
@@ -2183,6 +2205,7 @@ public class GameService {
 
         sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
         broadcastBattlefields(gameData);
+        broadcastHandSizes(gameData);
 
         String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield.";
         logAndBroadcast(gameData, logEntry);
@@ -2549,6 +2572,7 @@ public class GameService {
 
         sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
         broadcastDeckSizes(gameData);
+        broadcastHandSizes(gameData);
 
         String logEntry = gameData.playerIdToName.get(playerId) + " draws a card.";
         logAndBroadcast(gameData, logEntry);
@@ -2618,6 +2642,7 @@ public class GameService {
 
         broadcastBattlefields(gameData);
         sessionManager.sendToPlayer(controllerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(controllerId, 0)));
+        broadcastHandSizes(gameData);
     }
 
     private void resolveReturnTargetPermanentToHand(GameData gameData, StackEntry entry) {
@@ -2642,6 +2667,7 @@ public class GameService {
 
                 broadcastBattlefields(gameData);
                 sessionManager.sendToPlayer(ownerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(ownerId, 0)));
+                broadcastHandSizes(gameData);
                 break;
             }
         }
@@ -2691,6 +2717,7 @@ public class GameService {
                 List<Card> hand = gameData.playerHands.get(playerId);
                 sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
             }
+            broadcastHandSizes(gameData);
         }
     }
 
@@ -2727,6 +2754,7 @@ public class GameService {
         broadcastBattlefields(gameData);
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         sessionManager.sendToPlayer(targetPlayerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(targetPlayerId, 0)));
+        broadcastHandSizes(gameData);
     }
 
     private void resolveDoubleTargetPlayerLife(GameData gameData, StackEntry entry) {
@@ -3530,6 +3558,7 @@ public class GameService {
 
                         broadcastGraveyards(gameData);
                         sessionManager.sendToPlayer(playerId, new HandDrawnMessage(gameData.playerHands.get(playerId).stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+                        broadcastHandSizes(gameData);
                     }
                     case BATTLEFIELD -> {
                         Permanent perm = new Permanent(card);
@@ -4901,6 +4930,7 @@ public class GameService {
 
                         broadcastBattlefields(gameData);
                         sessionManager.sendToPlayer(targetPlayerId, new HandDrawnMessage(targetHand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(targetPlayerId, 0)));
+                        broadcastHandSizes(gameData);
                     }
                 }
 

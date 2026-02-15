@@ -25,6 +25,7 @@ export enum MessageType {
   SELECT_CARDS_TO_BOTTOM = 'SELECT_CARDS_TO_BOTTOM',
   BOTTOM_CARDS = 'BOTTOM_CARDS',
   DECK_SIZES_UPDATED = 'DECK_SIZES_UPDATED',
+  HAND_SIZES_UPDATED = 'HAND_SIZES_UPDATED',
   PLAYABLE_CARDS_UPDATED = 'PLAYABLE_CARDS_UPDATED',
   PLAY_CARD = 'PLAY_CARD',
   BATTLEFIELD_UPDATED = 'BATTLEFIELD_UPDATED',
@@ -194,6 +195,7 @@ export interface Game {
   hand: Card[];
   mulliganCount: number;
   deckSizes: number[];
+  handSizes: number[];
   battlefields: Permanent[][];
   manaPool: Record<string, number>;
   autoStopSteps: string[];
@@ -273,6 +275,11 @@ export interface SelectCardsToBottomNotification {
 export interface DeckSizesUpdatedNotification {
   type: MessageType;
   deckSizes: number[];
+}
+
+export interface HandSizesUpdatedNotification {
+  type: MessageType;
+  handSizes: number[];
 }
 
 export interface PlayableCardsNotification {
