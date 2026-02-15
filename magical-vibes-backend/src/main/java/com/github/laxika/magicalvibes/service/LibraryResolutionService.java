@@ -1,0 +1,241 @@
+package com.github.laxika.magicalvibes.service;
+
+import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
+import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
+import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
+import com.github.laxika.magicalvibes.networking.model.CardView;
+import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+class LibraryResolutionService {
+
+    private final GameBroadcastService gameBroadcastService;
+    private final SessionManager sessionManager;
+    private final CardViewFactory cardViewFactory;
+
+    void resolveShuffleIntoLibrary(GameData gameData, StackEntry entry) {
+        List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
+        deck.add(entry.getCard());
+        Collections.shuffle(deck);
+
+        String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
+        gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
+    }
+
+    void resolveMillByHandSize(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        int handSize = hand != null ? hand.size() : 0;
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+
+        if (handSize == 0) {
+            String logEntry = playerName + " has no cards in hand — mills nothing.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+
+        int cardsToMill = Math.min(handSize, deck.size());
+        for (int i = 0; i < cardsToMill; i++) {
+            Card card = deck.removeFirst();
+            graveyard.add(card);
+        }
+
+        String logEntry = playerName + " mills " + cardsToMill + " card" + (cardsToMill != 1 ? "s" : "") + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} mills {} cards (hand size)", gameData.id, playerName, cardsToMill);
+    }
+
+    void resolveMillTargetPlayer(GameData gameData, StackEntry entry, MillTargetPlayerEffect mill) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+
+        int cardsToMill = Math.min(mill.count(), deck.size());
+        for (int i = 0; i < cardsToMill; i++) {
+            Card card = deck.removeFirst();
+            graveyard.add(card);
+        }
+
+        String logEntry = playerName + " mills " + cardsToMill + " card" + (cardsToMill != 1 ? "s" : "") + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} mills {} cards", gameData.id, playerName, cardsToMill);
+    }
+
+    void resolveShuffleGraveyardIntoLibrary(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+
+        if (graveyard.isEmpty()) {
+            String logEntry = playerName + "'s graveyard is empty. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            Collections.shuffle(deck);
+            return;
+        }
+
+        int count = graveyard.size();
+        deck.addAll(graveyard);
+        graveyard.clear();
+        Collections.shuffle(deck);
+
+        String logEntry = playerName + " shuffles their graveyard (" + count + " card" + (count != 1 ? "s" : "") + ") into their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} shuffles graveyard ({} cards) into library", gameData.id, playerName, count);
+    }
+
+    void resolveRevealTopCardOfLibrary(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+
+        if (deck.isEmpty()) {
+            String logEntry = playerName + "'s library is empty.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else {
+            Card topCard = deck.getFirst();
+            String logEntry = playerName + " reveals " + topCard.getName() + " from the top of their library.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        }
+
+        log.info("Game {} - {} reveals top card of library", gameData.id, playerName);
+    }
+
+    void resolveReorderTopCardsOfLibrary(GameData gameData, StackEntry entry, ReorderTopCardsOfLibraryEffect reorder) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+
+        int count = Math.min(reorder.count(), deck.size());
+        if (count == 0) {
+            String logMsg = entry.getCard().getName() + ": library is empty, nothing to reorder.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        if (count == 1) {
+            String logMsg = gameData.playerIdToName.get(controllerId) + " looks at the top card of their library.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> topCards = new ArrayList<>(deck.subList(0, count));
+
+        gameData.awaitingLibraryReorderPlayerId = controllerId;
+        gameData.awaitingLibraryReorderCards = topCards;
+        gameData.awaitingInput = AwaitingInput.LIBRARY_REORDER;
+
+        List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ReorderLibraryCardsMessage(
+                cardViews,
+                "Put these cards back on top of your library in any order (top to bottom)."
+        ));
+
+        String logMsg = gameData.playerIdToName.get(controllerId) + " looks at the top " + count + " cards of their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} reordering top {} cards of library", gameData.id, gameData.playerIdToName.get(controllerId), count);
+    }
+
+    void resolveSearchLibraryForBasicLandToHand(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        if (deck == null || deck.isEmpty()) {
+            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> basicLands = new ArrayList<>();
+        for (Card card : deck) {
+            if (card.getType() == CardType.BASIC_LAND) {
+                basicLands.add(card);
+            }
+        }
+
+        if (basicLands.isEmpty()) {
+            Collections.shuffle(deck);
+            String logMsg = playerName + " searches their library but finds no basic land cards. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - {} searches library, no basic lands found", gameData.id, playerName);
+            return;
+        }
+
+        gameData.awaitingLibrarySearchPlayerId = controllerId;
+        gameData.awaitingLibrarySearchCards = basicLands;
+        gameData.awaitingInput = AwaitingInput.LIBRARY_SEARCH;
+
+        List<CardView> cardViews = basicLands.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
+                cardViews,
+                "Search your library for a basic land card to put into your hand."
+        ));
+
+        String logMsg = playerName + " searches their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} searching library for a basic land ({} found)", gameData.id, playerName, basicLands.size());
+    }
+
+    void resolveLookAtTopCardsHandTopBottom(GameData gameData, StackEntry entry, LookAtTopCardsHandTopBottomEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        int count = Math.min(effect.count(), deck.size());
+        if (count == 0) {
+            String logMsg = entry.getCard().getName() + ": " + playerName + "'s library is empty, nothing to look at.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        if (count == 1) {
+            // Only 1 card: it goes to hand
+            Card card = deck.remove(0);
+            gameData.playerHands.get(controllerId).add(card);
+            String logMsg = playerName + " looks at the top card of their library and puts it into their hand.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> topCards = new ArrayList<>(deck.subList(0, count));
+        // Remove the top cards from the deck temporarily
+        deck.subList(0, count).clear();
+
+        gameData.awaitingHandTopBottomPlayerId = controllerId;
+        gameData.awaitingHandTopBottomCards = topCards;
+        gameData.awaitingInput = AwaitingInput.HAND_TOP_BOTTOM_CHOICE;
+
+        List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseHandTopBottomMessage(
+                cardViews,
+                "Look at the top " + count + " cards of your library. Choose one to put into your hand."
+        ));
+
+        String logMsg = playerName + " looks at the top " + count + " cards of their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} resolving {} with {} cards", gameData.id, playerName, entry.getCard().getName(), count);
+    }
+}
