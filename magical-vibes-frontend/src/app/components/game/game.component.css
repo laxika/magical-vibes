@@ -432,6 +432,28 @@
   margin-bottom: 6px;
 }
 
+.btn-pass.btn-pass-orange {
+  background: linear-gradient(180deg, #c47a20 0%, #8a5515 100%);
+  border-color: #6b4010;
+  box-shadow: 0 4px 12px rgba(196, 122, 32, 0.4);
+}
+
+.btn-pass.btn-pass-orange:hover:not(:disabled) {
+  background: linear-gradient(180deg, #d98e2e 0%, #a0661a 100%);
+  box-shadow: 0 6px 16px rgba(196, 122, 32, 0.5);
+}
+
+.btn-pass.btn-pass-blue {
+  background: linear-gradient(180deg, #2c5ea2 0%, #1a3a5c 100%);
+  border-color: #143050;
+  box-shadow: 0 4px 12px rgba(44, 94, 162, 0.4);
+}
+
+.btn-pass.btn-pass-blue:hover:not(:disabled) {
+  background: linear-gradient(180deg, #3570b8 0%, #224a72 100%);
+  box-shadow: 0 6px 16px rgba(44, 94, 162, 0.5);
+}
+
 .btn-pass:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(139, 26, 26, 0.5);
