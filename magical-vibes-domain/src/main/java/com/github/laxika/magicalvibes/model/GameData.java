@@ -60,6 +60,7 @@ public class GameData {
     public UUID awaitingGraveyardChoicePlayerId;
     public Set<Integer> awaitingGraveyardChoiceValidIndices;
     public GraveyardChoiceDestination graveyardChoiceDestination;
+    public List<Card> graveyardChoiceCardPool;
     public UUID awaitingColorChoicePlayerId;
     public UUID awaitingColorChoicePermanentId;
     public UUID pendingColorChoiceETBTargetId;
@@ -86,6 +87,8 @@ public class GameData {
     public UUID awaitingRevealedHandChoiceTargetPlayerId;
     public int awaitingRevealedHandChoiceRemainingCount;
     public final List<Card> awaitingRevealedHandChosenCards = new ArrayList<>();
+    public UUID awaitingHandTopBottomPlayerId;
+    public List<Card> awaitingHandTopBottomCards;
     public final Map<UUID, UUID> drawReplacementTargetToController = new ConcurrentHashMap<>();
     public final Map<UUID, UUID> stolenCreatures = new ConcurrentHashMap<>();
     public final Set<UUID> enchantmentDependentStolenCreatures = ConcurrentHashMap.newKeySet();

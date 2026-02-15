@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, ChooseMultipleCardsFromGraveyardsNotification, StackEntry, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification, ChooseFromRevealedHandNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, ChooseMultipleCardsFromGraveyardsNotification, StackEntry, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification, ChooseFromRevealedHandNotification, ChooseCardFromGraveyardNotification, ChooseHandTopBottomNotification } from '../../services/websocket.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { Subscription } from 'rxjs';
 
@@ -136,6 +136,10 @@ export class GameComponent implements OnInit, OnDestroy {
           this.handleChooseCardFromLibrary(message as ChooseCardFromLibraryNotification);
         }
 
+        if (message.type === MessageType.CHOOSE_HAND_TOP_BOTTOM) {
+          this.handleChooseHandTopBottom(message as ChooseHandTopBottomNotification);
+        }
+
         if (message.type === MessageType.REVEAL_HAND) {
           const revealMsg = message as RevealHandNotification;
           this.revealingHand = true;
@@ -145,6 +149,10 @@ export class GameComponent implements OnInit, OnDestroy {
 
         if (message.type === MessageType.CHOOSE_FROM_REVEALED_HAND) {
           this.handleChooseFromRevealedHand(message as ChooseFromRevealedHandNotification);
+        }
+
+        if (message.type === MessageType.CHOOSE_CARD_FROM_GRAVEYARD) {
+          this.handleChooseCardFromGraveyard(message as ChooseCardFromGraveyardNotification);
         }
       })
     );
@@ -831,10 +839,109 @@ export class GameComponent implements OnInit, OnDestroy {
     this.reorderPrompt = '';
   }
 
+  handleChooseHandTopBottom(msg: ChooseHandTopBottomNotification): void {
+    this.choosingHandTopBottom= true;
+    this.handTopBottomCards = msg.cards;
+    this.handTopBottomHandIndex = null;
+    this.handTopBottomTopIndex = null;
+  }
+
+  get handTopBottomStep(): number {
+    if (this.handTopBottomHandIndex === null) return 0;
+    if (this.handTopBottomTopIndex === null) return 1;
+    return 2;
+  }
+
+  get handTopBottomPrompt(): string {
+    if (this.handTopBottomStep === 0) return 'Choose a card to put into your hand:';
+    if (this.handTopBottomStep === 1) return 'Choose a card to put on top of your library:';
+    return 'Confirm your choices:';
+  }
+
+  get handTopBottomAvailableCards(): { card: Card; originalIndex: number }[] {
+    return this.handTopBottomCards
+      .map((card, i) => ({ card, originalIndex: i }))
+      .filter(item => item.originalIndex !== this.handTopBottomHandIndex && item.originalIndex !== this.handTopBottomTopIndex);
+  }
+
+  selectHandTopBottomCard(originalIndex: number): void {
+    if (this.handTopBottomHandIndex === null) {
+      this.handTopBottomHandIndex = originalIndex;
+      // If only 2 cards total, auto-select the remaining one for top
+      const remaining = this.handTopBottomCards
+        .map((_, i) => i)
+        .filter(i => i !== this.handTopBottomHandIndex);
+      if (remaining.length === 1) {
+        this.handTopBottomTopIndex = remaining[0];
+      }
+    } else if (this.handTopBottomTopIndex === null) {
+      this.handTopBottomTopIndex = originalIndex;
+    }
+  }
+
+  undoHandTopBottom(): void {
+    if (this.handTopBottomTopIndex !== null) {
+      this.handTopBottomTopIndex = null;
+    } else if (this.handTopBottomHandIndex !== null) {
+      this.handTopBottomHandIndex = null;
+    }
+  }
+
+  confirmHandTopBottom(): void {
+    if (this.handTopBottomHandIndex === null || this.handTopBottomTopIndex === null) return;
+    this.websocketService.send({
+      type: MessageType.HAND_TOP_BOTTOM_CHOSEN,
+      handCardIndex: this.handTopBottomHandIndex,
+      topCardIndex: this.handTopBottomTopIndex
+    });
+    this.choosingHandTopBottom= false;
+    this.handTopBottomCards = [];
+    this.handTopBottomHandIndex = null;
+    this.handTopBottomTopIndex = null;
+  }
+
   closeRevealHand(): void {
     this.revealingHand = false;
     this.revealedHandCards = [];
     this.revealedHandPlayerName = '';
+  }
+
+  private handleChooseCardFromGraveyard(msg: ChooseCardFromGraveyardNotification): void {
+    this.choosingFromGraveyard = true;
+    this.graveyardChoiceIndices = msg.cardIndices;
+    this.graveyardChoicePrompt = msg.prompt;
+  }
+
+  get graveyardChoiceCards(): { card: Card; index: number; owner: string }[] {
+    const g = this.game();
+    if (!g) return [];
+    const allGraveyardCards: { card: Card; index: number; owner: string }[] = [];
+    const validIndices = new Set(this.graveyardChoiceIndices);
+    let poolIndex = 0;
+    for (let playerIdx = 0; playerIdx < g.graveyards.length; playerIdx++) {
+      const graveyard = g.graveyards[playerIdx];
+      const ownerName = g.playerNames[playerIdx] ?? 'Unknown';
+      for (const card of graveyard) {
+        if (card.type === 'CREATURE' || card.type === 'ARTIFACT') {
+          if (validIndices.has(poolIndex)) {
+            allGraveyardCards.push({ card, index: poolIndex, owner: ownerName });
+          }
+          poolIndex++;
+        }
+      }
+    }
+    return allGraveyardCards;
+  }
+
+  chooseGraveyardCard(index: number): void {
+    if (!this.choosingFromGraveyard) return;
+    this.websocketService.send({
+      type: MessageType.GRAVEYARD_CARD_CHOSEN,
+      cardIndex: index
+    });
+    this.choosingFromGraveyard = false;
+    this.graveyardChoiceIndices = [];
+    this.graveyardChoicePrompt = '';
   }
 
   private handleChooseFromRevealedHand(msg: ChooseFromRevealedHandNotification): void {
@@ -1179,6 +1286,12 @@ export class GameComponent implements OnInit, OnDestroy {
   reorderOriginalIndices: number[] = [];
   reorderPrompt = '';
 
+  // Telling Time state
+  choosingHandTopBottom = false;
+  handTopBottomCards: Card[] = [];
+  handTopBottomHandIndex: number | null = null;
+  handTopBottomTopIndex: number | null = null;
+
   // Reveal hand state
   revealingHand = false;
   revealedHandCards: Card[] = [];
@@ -1188,6 +1301,11 @@ export class GameComponent implements OnInit, OnDestroy {
   choosingFromRevealedHand = false;
   revealedHandChoosableIndices = new Set<number>();
   revealedHandChoicePrompt = '';
+
+  // Choose from graveyard state
+  choosingFromGraveyard = false;
+  graveyardChoiceIndices: number[] = [];
+  graveyardChoicePrompt = '';
 
   // X cost prompt state
   choosingXValue = false;

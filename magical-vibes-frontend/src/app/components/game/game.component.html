@@ -148,6 +148,86 @@
       </div>
     }
 
+    @if (choosingHandTopBottom) {
+      <div class="combat-banner reorder-banner">
+        <span>{{ choosingHandTopBottomPrompt }}</span>
+      </div>
+      <div class="reorder-zone">
+        @if (choosingHandTopBottomAvailableCards.length > 0) {
+          <div class="reorder-section">
+            <div class="reorder-label">
+              @if (choosingHandTopBottomStep === 0) {
+                Click a card to put into your hand:
+              } @else {
+                Click a card to put on top of your library:
+              }
+            </div>
+            <div class="reorder-cards">
+              @for (item of choosingHandTopBottomAvailableCards; track item.originalIndex) {
+                <app-card-display
+                  [card]="item.card"
+                  class="reorder-card available"
+                  (click)="selectHandTopBottomCard(item.originalIndex)"
+                  (mouseenter)="onCardHover(item.card)"
+                  (mouseleave)="onCardHoverEnd()" />
+              }
+            </div>
+          </div>
+        }
+        @if (choosingHandTopBottomHandIndex !== null) {
+          <div class="reorder-section">
+            <div class="reorder-label">Hand:</div>
+            <div class="reorder-cards">
+              <div class="reorder-card-wrapper">
+                <div class="reorder-position-badge">H</div>
+                <app-card-display
+                  [card]="choosingHandTopBottomCards[choosingHandTopBottomHandIndex]"
+                  class="reorder-card placed"
+                  (mouseenter)="onCardHover(choosingHandTopBottomCards[choosingHandTopBottomHandIndex])"
+                  (mouseleave)="onCardHoverEnd()" />
+              </div>
+            </div>
+          </div>
+        }
+        @if (choosingHandTopBottomTopIndex !== null) {
+          <div class="reorder-section">
+            <div class="reorder-label">Top of library:</div>
+            <div class="reorder-cards">
+              <div class="reorder-card-wrapper">
+                <div class="reorder-position-badge">T</div>
+                <app-card-display
+                  [card]="choosingHandTopBottomCards[choosingHandTopBottomTopIndex]"
+                  class="reorder-card placed"
+                  (mouseenter)="onCardHover(choosingHandTopBottomCards[choosingHandTopBottomTopIndex])"
+                  (mouseleave)="onCardHoverEnd()" />
+              </div>
+            </div>
+          </div>
+        }
+        @if (choosingHandTopBottomStep === 2 && choosingHandTopBottomAvailableCards.length > 0) {
+          <div class="reorder-section">
+            <div class="reorder-label">Bottom of library:</div>
+            <div class="reorder-cards">
+              @for (item of choosingHandTopBottomAvailableCards; track item.originalIndex) {
+                <div class="reorder-card-wrapper">
+                  <div class="reorder-position-badge">B</div>
+                  <app-card-display
+                    [card]="item.card"
+                    class="reorder-card placed"
+                    (mouseenter)="onCardHover(item.card)"
+                    (mouseleave)="onCardHoverEnd()" />
+                </div>
+              }
+            </div>
+          </div>
+        }
+        <div class="reorder-actions">
+          <button class="btn-confirm-combat" (click)="undoHandTopBottom()" [disabled]="choosingHandTopBottomHandIndex === null">Undo</button>
+          <button class="btn-confirm-combat" (click)="confirmHandTopBottom()" [disabled]="choosingHandTopBottomStep !== 2">Confirm</button>
+        </div>
+      </div>
+    }
+
     @if (searchingLibrary) {
       <div class="reveal-hand-overlay">
         <div class="reveal-hand-card">
@@ -601,6 +681,26 @@
         <h2>Game Over</h2>
         <p class="winner-text">{{ gameOverWinner }} wins!</p>
         <button class="btn-keep" (click)="backToLobby()">Back to Lobby</button>
+      </div>
+    </div>
+  }
+
+  @if (choosingFromGraveyard) {
+    <div class="reveal-hand-overlay">
+      <div class="reveal-hand-card">
+        <h2>{{ graveyardChoicePrompt }}</h2>
+        <div class="reveal-hand-cards">
+          @for (entry of graveyardChoiceCards; track entry.index) {
+            <div class="graveyard-choice-entry">
+              <app-card-display [card]="entry.card"
+                class="choosable-card"
+                (click)="chooseGraveyardCard(entry.index)"
+                (mouseenter)="onCardHover(entry.card)"
+                (mouseleave)="onCardHoverEnd()" />
+              <div class="graveyard-choice-owner">{{ entry.owner }}</div>
+            </div>
+          }
+        </div>
       </div>
     </div>
   }

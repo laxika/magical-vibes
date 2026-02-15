@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ColorChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.GraveyardCardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MultipleGraveyardCardsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
@@ -22,6 +23,7 @@ import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenReques
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsRequest;
 import com.github.laxika.magicalvibes.networking.message.SacrificePermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
+import com.github.laxika.magicalvibes.networking.message.HandTopBottomChosenRequest;
 
 public interface MessageHandler {
 
@@ -55,6 +57,8 @@ public interface MessageHandler {
 
     void handleCardChosen(Connection connection, CardChosenRequest request) throws Exception;
 
+    void handleGraveyardCardChosen(Connection connection, GraveyardCardChosenRequest request) throws Exception;
+
     void handlePermanentChosen(Connection connection, PermanentChosenRequest request) throws Exception;
 
     void handleMultiplePermanentsChosen(Connection connection, MultiplePermanentsChosenRequest request) throws Exception;
@@ -68,6 +72,8 @@ public interface MessageHandler {
     void handleLibraryCardsReordered(Connection connection, ReorderLibraryCardsRequest request) throws Exception;
 
     void handleLibraryCardChosen(Connection connection, LibraryCardChosenRequest request) throws Exception;
+
+    void handleHandTopBottomChosen(Connection connection, HandTopBottomChosenRequest request) throws Exception;
 
     void handleTimeout(Connection connection);
 

@@ -80,6 +80,7 @@ import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFrom
 import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -617,6 +618,14 @@ public class GameService {
                         List<CardView> cardViews = gameData.awaitingLibrarySearchCards.stream().map(gameHelper.getCardViewFactory()::create).toList();
                         sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(
                                 cardViews, "Search your library for a basic land card to put into your hand."));
+                    }
+                }
+                case HAND_TOP_BOTTOM_CHOICE -> {
+                    if (playerId.equals(gameData.awaitingHandTopBottomPlayerId) && gameData.awaitingHandTopBottomCards != null) {
+                        List<CardView> cardViews = gameData.awaitingHandTopBottomCards.stream().map(gameHelper.getCardViewFactory()::create).toList();
+                        int count = gameData.awaitingHandTopBottomCards.size();
+                        sessionManager.sendToPlayer(playerId, new ChooseHandTopBottomMessage(
+                                cardViews, "Look at the top " + count + " cards of your library. Choose one to put into your hand."));
                     }
                 }
                 case REVEALED_HAND_CHOICE -> {
@@ -1881,12 +1890,14 @@ public class GameService {
 
             UUID playerId = player.getId();
             Set<Integer> validIndices = gameData.awaitingGraveyardChoiceValidIndices;
+            List<Card> cardPool = gameData.graveyardChoiceCardPool;
 
             gameData.awaitingInput = null;
             gameData.awaitingGraveyardChoicePlayerId = null;
             gameData.awaitingGraveyardChoiceValidIndices = null;
             GraveyardChoiceDestination destination = gameData.graveyardChoiceDestination;
             gameData.graveyardChoiceDestination = null;
+            gameData.graveyardChoiceCardPool = null;
 
             if (cardIndex == -1) {
                 // Player declined
@@ -1898,8 +1909,16 @@ public class GameService {
                     throw new IllegalStateException("Invalid card index: " + cardIndex);
                 }
 
-                List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-                Card card = graveyard.remove(cardIndex);
+                Card card;
+                if (cardPool != null) {
+                    // Cross-graveyard choice: card pool contains cards from any graveyard
+                    card = cardPool.get(cardIndex);
+                    gameHelper.removeCardFromGraveyardById(gameData, card.getId());
+                } else {
+                    // Standard choice: indices into the player's own graveyard
+                    List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+                    card = graveyard.remove(cardIndex);
+                }
 
                 switch (destination) {
                     case HAND -> {
@@ -1908,23 +1927,18 @@ public class GameService {
                         String logEntry = player.getUsername() + " returns " + card.getName() + " from graveyard to hand.";
                         gameHelper.logAndBroadcast(gameData, logEntry);
                         log.info("Game {} - {} returns {} from graveyard to hand", gameData.id, player.getUsername(), card.getName());
-
-            
-
-            
                     }
                     case BATTLEFIELD -> {
                         Permanent perm = new Permanent(card);
                         gameData.playerBattlefields.get(playerId).add(perm);
 
-                        String logEntry = player.getUsername() + " returns " + card.getName() + " from graveyard to the battlefield.";
+                        String logEntry = player.getUsername() + " puts " + card.getName() + " from a graveyard onto the battlefield.";
                         gameHelper.logAndBroadcast(gameData, logEntry);
-                        log.info("Game {} - {} returns {} from graveyard to battlefield", gameData.id, player.getUsername(), card.getName());
+                        log.info("Game {} - {} puts {} from graveyard onto battlefield", gameData.id, player.getUsername(), card.getName());
 
-            
-            
-
-                        gameHelper.handleCreatureEnteredBattlefield(gameData, playerId, card, null);
+                        if (card.getType() == CardType.CREATURE) {
+                            gameHelper.handleCreatureEnteredBattlefield(gameData, playerId, card, null);
+                        }
                         if (gameData.awaitingInput == null) {
                             gameHelper.checkLegendRule(gameData, playerId);
                         }
@@ -2346,6 +2360,64 @@ public class GameService {
         }
     }
 
+
+    public void handleHandTopBottomChosen(GameData gameData, Player player, int handCardIndex, int topCardIndex) {
+        synchronized (gameData) {
+            if (gameData.awaitingInput != AwaitingInput.HAND_TOP_BOTTOM_CHOICE) {
+                throw new IllegalStateException("Not awaiting hand/top/bottom choice");
+            }
+            if (!player.getId().equals(gameData.awaitingHandTopBottomPlayerId)) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+
+            List<Card> handTopBottomCards = gameData.awaitingHandTopBottomCards;
+            int count = handTopBottomCards.size();
+
+            if (handCardIndex < 0 || handCardIndex >= count) {
+                throw new IllegalStateException("Invalid hand card index: " + handCardIndex);
+            }
+            if (topCardIndex < 0 || topCardIndex >= count) {
+                throw new IllegalStateException("Invalid top card index: " + topCardIndex);
+            }
+            if (handCardIndex == topCardIndex) {
+                throw new IllegalStateException("Hand and top card indices must be different");
+            }
+
+            UUID playerId = player.getId();
+            List<Card> deck = gameData.playerDecks.get(playerId);
+
+            // Put the chosen card into hand
+            Card handCard = handTopBottomCards.get(handCardIndex);
+            gameData.playerHands.get(playerId).add(handCard);
+
+            // Put the chosen card on top of library
+            Card topCard = handTopBottomCards.get(topCardIndex);
+            deck.add(0, topCard);
+
+            // Put the remaining card on the bottom of library
+            for (int i = 0; i < count; i++) {
+                if (i != handCardIndex && i != topCardIndex) {
+                    deck.add(handTopBottomCards.get(i));
+                }
+            }
+
+            // Clear awaiting state
+            gameData.awaitingInput = null;
+            gameData.awaitingHandTopBottomPlayerId = null;
+            gameData.awaitingHandTopBottomCards = null;
+
+            String logMsg;
+            if (count == 2) {
+                logMsg = player.getUsername() + " puts one card into their hand and one on top of their library.";
+            } else {
+                logMsg = player.getUsername() + " puts one card into their hand, one on top of their library, and one on the bottom.";
+            }
+            gameHelper.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - {} completed hand/top/bottom choice", gameData.id, player.getUsername());
+
+            resolveAutoPass(gameData);
+        }
+    }
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
