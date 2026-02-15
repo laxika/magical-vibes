@@ -76,9 +76,11 @@ import com.github.laxika.magicalvibes.model.filter.SpellColorTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.SpellTypeTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.WithoutKeywordTargetFilter;
 import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFromGraveyardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -443,6 +445,19 @@ public class GameService {
                     }
                 }
             }
+            // Check multi-target graveyard fizzle: if ALL targeted cards are gone, fizzle
+            if (!targetFizzled && entry.getTargetCardIds() != null && !entry.getTargetCardIds().isEmpty()) {
+                boolean allGone = true;
+                for (UUID cardId : entry.getTargetCardIds()) {
+                    if (gameHelper.findCardInGraveyardById(gameData, cardId) != null) {
+                        allGone = false;
+                        break;
+                    }
+                }
+                if (allGone) {
+                    targetFizzled = true;
+                }
+            }
             if (targetFizzled) {
                 String fizzleLog = entry.getDescription() + " fizzles (illegal target).";
                 gameHelper.logAndBroadcast(gameData, fizzleLog);
@@ -573,6 +588,24 @@ public class GameService {
                                 gameData.awaitingMultiPermanentChoiceMaxCount, "Choose permanents."));
                     }
                 }
+                case MULTI_GRAVEYARD_CHOICE -> {
+                    if (playerId.equals(gameData.awaitingMultiGraveyardChoicePlayerId)) {
+                        List<UUID> validCardIds = new ArrayList<>(gameData.awaitingMultiGraveyardChoiceValidCardIds);
+                        List<CardView> cardViews = new ArrayList<>();
+                        for (UUID pid : gameData.orderedPlayerIds) {
+                            List<Card> graveyard = gameData.playerGraveyards.get(pid);
+                            if (graveyard == null) continue;
+                            for (Card card : graveyard) {
+                                if (gameData.awaitingMultiGraveyardChoiceValidCardIds.contains(card.getId())) {
+                                    cardViews.add(gameHelper.getCardViewFactory().create(card));
+                                }
+                            }
+                        }
+                        sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsFromGraveyardsMessage(
+                                validCardIds, cardViews, gameData.awaitingMultiGraveyardChoiceMaxCount,
+                                "Exile up to " + gameData.awaitingMultiGraveyardChoiceMaxCount + " cards from graveyards."));
+                    }
+                }
                 case LIBRARY_REORDER -> {
                     if (playerId.equals(gameData.awaitingLibraryReorderPlayerId) && gameData.awaitingLibraryReorderCards != null) {
                         List<CardView> cardViews = gameData.awaitingLibraryReorderCards.stream().map(gameHelper.getCardViewFactory()::create).toList();
@@ -585,6 +618,14 @@ public class GameService {
                         List<CardView> cardViews = gameData.awaitingLibrarySearchCards.stream().map(gameHelper.getCardViewFactory()::create).toList();
                         sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(
                                 cardViews, "Search your library for a basic land card to put into your hand."));
+                    }
+                }
+                case HAND_TOP_BOTTOM_CHOICE -> {
+                    if (playerId.equals(gameData.awaitingHandTopBottomPlayerId) && gameData.awaitingHandTopBottomCards != null) {
+                        List<CardView> cardViews = gameData.awaitingHandTopBottomCards.stream().map(gameHelper.getCardViewFactory()::create).toList();
+                        int count = gameData.awaitingHandTopBottomCards.size();
+                        sessionManager.sendToPlayer(playerId, new ChooseHandTopBottomMessage(
+                                cardViews, "Look at the top " + count + " cards of your library. Choose one to put into your hand."));
                     }
                 }
                 case REVEALED_HAND_CHOICE -> {
@@ -1999,6 +2040,81 @@ public class GameService {
         }
     }
 
+    public void handleMultipleGraveyardCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
+        synchronized (gameData) {
+            if (gameData.awaitingInput != AwaitingInput.MULTI_GRAVEYARD_CHOICE) {
+                throw new IllegalStateException("Not awaiting multi-graveyard choice");
+            }
+            if (!player.getId().equals(gameData.awaitingMultiGraveyardChoicePlayerId)) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+
+            Set<UUID> validIds = gameData.awaitingMultiGraveyardChoiceValidCardIds;
+            int maxCount = gameData.awaitingMultiGraveyardChoiceMaxCount;
+
+            if (cardIds == null) {
+                cardIds = List.of();
+            }
+
+            if (cardIds.size() > maxCount) {
+                throw new IllegalStateException("Too many cards selected: " + cardIds.size() + " > " + maxCount);
+            }
+
+            Set<UUID> uniqueIds = new HashSet<>(cardIds);
+            if (uniqueIds.size() != cardIds.size()) {
+                throw new IllegalStateException("Duplicate card IDs in selection");
+            }
+
+            for (UUID cardId : cardIds) {
+                if (!validIds.contains(cardId)) {
+                    throw new IllegalStateException("Invalid card: " + cardId);
+                }
+            }
+
+            // Retrieve the pending ETB info
+            Card pendingCard = gameData.pendingGraveyardTargetCard;
+            UUID controllerId = gameData.pendingGraveyardTargetControllerId;
+            List<CardEffect> pendingEffects = gameData.pendingGraveyardTargetEffects;
+
+            // Clear awaiting state
+            gameData.awaitingInput = null;
+            gameData.awaitingMultiGraveyardChoicePlayerId = null;
+            gameData.awaitingMultiGraveyardChoiceValidCardIds = null;
+            gameData.awaitingMultiGraveyardChoiceMaxCount = 0;
+            gameData.pendingGraveyardTargetCard = null;
+            gameData.pendingGraveyardTargetControllerId = null;
+            gameData.pendingGraveyardTargetEffects = null;
+
+            // Put the ETB ability on the stack with the chosen targets
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    pendingCard,
+                    controllerId,
+                    pendingCard.getName() + "'s ETB ability",
+                    new ArrayList<>(pendingEffects),
+                    new ArrayList<>(cardIds)
+            ));
+
+            if (cardIds.isEmpty()) {
+                String etbLog = pendingCard.getName() + "'s enter-the-battlefield ability triggers targeting no cards.";
+                gameHelper.logAndBroadcast(gameData, etbLog);
+            } else {
+                List<String> targetNames = new ArrayList<>();
+                for (UUID cardId : cardIds) {
+                    Card card = gameHelper.findCardInGraveyardById(gameData, cardId);
+                    if (card != null) {
+                        targetNames.add(card.getName());
+                    }
+                }
+                String etbLog = pendingCard.getName() + "'s enter-the-battlefield ability triggers targeting " + String.join(", ", targetNames) + ".";
+                gameHelper.logAndBroadcast(gameData, etbLog);
+            }
+            log.info("Game {} - {} ETB ability pushed onto stack with {} graveyard targets", gameData.id, pendingCard.getName(), cardIds.size());
+
+            resolveAutoPass(gameData);
+        }
+    }
+
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
         synchronized (gameData) {
             if (gameData.awaitingInput != AwaitingInput.MAY_ABILITY_CHOICE) {
@@ -2244,6 +2360,64 @@ public class GameService {
         }
     }
 
+
+    public void handleHandTopBottomChosen(GameData gameData, Player player, int handCardIndex, int topCardIndex) {
+        synchronized (gameData) {
+            if (gameData.awaitingInput != AwaitingInput.HAND_TOP_BOTTOM_CHOICE) {
+                throw new IllegalStateException("Not awaiting hand/top/bottom choice");
+            }
+            if (!player.getId().equals(gameData.awaitingHandTopBottomPlayerId)) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+
+            List<Card> handTopBottomCards = gameData.awaitingHandTopBottomCards;
+            int count = handTopBottomCards.size();
+
+            if (handCardIndex < 0 || handCardIndex >= count) {
+                throw new IllegalStateException("Invalid hand card index: " + handCardIndex);
+            }
+            if (topCardIndex < 0 || topCardIndex >= count) {
+                throw new IllegalStateException("Invalid top card index: " + topCardIndex);
+            }
+            if (handCardIndex == topCardIndex) {
+                throw new IllegalStateException("Hand and top card indices must be different");
+            }
+
+            UUID playerId = player.getId();
+            List<Card> deck = gameData.playerDecks.get(playerId);
+
+            // Put the chosen card into hand
+            Card handCard = handTopBottomCards.get(handCardIndex);
+            gameData.playerHands.get(playerId).add(handCard);
+
+            // Put the chosen card on top of library
+            Card topCard = handTopBottomCards.get(topCardIndex);
+            deck.add(0, topCard);
+
+            // Put the remaining card on the bottom of library
+            for (int i = 0; i < count; i++) {
+                if (i != handCardIndex && i != topCardIndex) {
+                    deck.add(handTopBottomCards.get(i));
+                }
+            }
+
+            // Clear awaiting state
+            gameData.awaitingInput = null;
+            gameData.awaitingHandTopBottomPlayerId = null;
+            gameData.awaitingHandTopBottomCards = null;
+
+            String logMsg;
+            if (count == 2) {
+                logMsg = player.getUsername() + " puts one card into their hand and one on top of their library.";
+            } else {
+                logMsg = player.getUsername() + " puts one card into their hand, one on top of their library, and one on the bottom.";
+            }
+            gameHelper.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - {} completed hand/top/bottom choice", gameData.id, player.getUsername());
+
+            resolveAutoPass(gameData);
+        }
+    }
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {

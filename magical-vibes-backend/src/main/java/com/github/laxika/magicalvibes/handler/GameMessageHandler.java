@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.MultipleGraveyardCardsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenRequest;
@@ -32,6 +33,7 @@ import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsRequ
 import com.github.laxika.magicalvibes.networking.message.SacrificePermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
+import com.github.laxika.magicalvibes.networking.message.HandTopBottomChosenRequest;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
@@ -497,6 +499,27 @@ public class GameMessageHandler implements MessageHandler {
     }
 
     @Override
+    public void handleMultipleGraveyardCardsChosen(Connection connection, MultipleGraveyardCardsChosenRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
+        try {
+            gameService.handleMultipleGraveyardCardsChosen(gameData, player, request.cardIds());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            handleError(connection, e.getMessage());
+        }
+    }
+
+    @Override
     public void handleColorChosen(Connection connection, ColorChosenRequest request) throws Exception {
         Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
@@ -575,6 +598,27 @@ public class GameMessageHandler implements MessageHandler {
 
         try {
             gameService.handleLibraryCardChosen(gameData, player, request.cardIndex());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            handleError(connection, e.getMessage());
+        }
+    }
+
+    @Override
+    public void handleHandTopBottomChosen(Connection connection, HandTopBottomChosenRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
+        try {
+            gameService.handleHandTopBottomChosen(gameData, player, request.handCardIndex(), request.topCardIndex());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

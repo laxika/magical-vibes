@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,6 +71,12 @@ public class GameData {
     public UUID awaitingMultiPermanentChoicePlayerId;
     public Set<UUID> awaitingMultiPermanentChoiceValidIds;
     public int awaitingMultiPermanentChoiceMaxCount;
+    public UUID awaitingMultiGraveyardChoicePlayerId;
+    public Set<UUID> awaitingMultiGraveyardChoiceValidCardIds;
+    public int awaitingMultiGraveyardChoiceMaxCount;
+    public Card pendingGraveyardTargetCard;
+    public UUID pendingGraveyardTargetControllerId;
+    public List<CardEffect> pendingGraveyardTargetEffects;
     public UUID pendingCombatDamageBounceTargetPlayerId;
     public UUID awaitingLibraryReorderPlayerId;
     public List<Card> awaitingLibraryReorderCards;
@@ -79,6 +87,8 @@ public class GameData {
     public UUID awaitingRevealedHandChoiceTargetPlayerId;
     public int awaitingRevealedHandChoiceRemainingCount;
     public final List<Card> awaitingRevealedHandChosenCards = new ArrayList<>();
+    public UUID awaitingHandTopBottomPlayerId;
+    public List<Card> awaitingHandTopBottomCards;
     public final Map<UUID, UUID> drawReplacementTargetToController = new ConcurrentHashMap<>();
     public final Map<UUID, UUID> stolenCreatures = new ConcurrentHashMap<>();
     public final Set<UUID> enchantmentDependentStolenCreatures = ConcurrentHashMap.newKeySet();

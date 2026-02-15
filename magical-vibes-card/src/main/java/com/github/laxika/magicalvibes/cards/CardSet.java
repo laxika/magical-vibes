@@ -90,6 +90,7 @@ import com.github.laxika.magicalvibes.cards.r.Reminisce;
 import com.github.laxika.magicalvibes.cards.r.RemoveSoul;
 import com.github.laxika.magicalvibes.cards.r.ReyaDawnbringer;
 import com.github.laxika.magicalvibes.cards.r.RevivingDose;
+import com.github.laxika.magicalvibes.cards.r.RooftopPercher;
 import com.github.laxika.magicalvibes.cards.r.RootwaterCommando;
 import com.github.laxika.magicalvibes.cards.r.Righteousness;
 import com.github.laxika.magicalvibes.cards.r.RobeOfMirrors;
@@ -118,6 +119,7 @@ import com.github.laxika.magicalvibes.cards.s.SunkenHope;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.cards.s.SerrasEmbrace;
 import com.github.laxika.magicalvibes.cards.t.Telepathy;
+import com.github.laxika.magicalvibes.cards.t.TellingTime;
 import com.github.laxika.magicalvibes.cards.t.TempestOfLight;
 import com.github.laxika.magicalvibes.cards.t.TreasureHunter;
 import com.github.laxika.magicalvibes.cards.t.TrueBeliever;
@@ -263,6 +265,7 @@ public enum CardSet {
             new CardPrinting("10E", "111", SpiketailHatchling::new, "It dodges waves of water to prepare for waves of magic.", "Greg Staples", UNCOMMON),
             new CardPrinting("10E", "112", SunkenHope::new, "\"I don't concern myself with my enemy's hopes. Hopes follow the tides. They will retreat soon enough.\"\n\u2014Ambassador Laquatus", "Volkan Ba\u011fa", RARE),
             new CardPrinting("10E", "113", Telepathy::new, "\"The question isn't whether I can read minds. It's whether I have yet to find a mind worth reading.\"\n\u2014Ambassador Laquatus", "Matthew D. Wilson", UNCOMMON),
+            new CardPrinting("10E", "114", TellingTime::new, "\"Mastery is achieved when 'telling time' becomes 'telling time what to do.'\"", "Scott M. Fischer", UNCOMMON),
             new CardPrinting("10E", "96", PhantomWarrior::new, "\"There are as many pillows of illusion as flakes in a snow-storm. We wake from one dream into another dream.\"\n\u2014Ralph Waldo Emerson, \"Illusions\"", "Greg Staples", UNCOMMON),
             new CardPrinting("10E", "77", CraftyPathmage::new, "\"Follow the pathmage\"\n\u2014Otarian expression meaning \"escape quickly\"", "Jim Murray", COMMON),
             new CardPrinting("10E", "380", Forest::new, "Anthony S. Waters", COMMON),
@@ -294,7 +297,8 @@ public enum CardSet {
     )),
 
     LORWYN_ECLIPSED("ECL", "Lorwyn Eclipsed", List.of(
-            new CardPrinting("ECL", "1", ChangelingWayfinder::new, "No map. No complaints.", "Quintin Gleim", COMMON)
+            new CardPrinting("ECL", "1", ChangelingWayfinder::new, "No map. No complaints.", "Quintin Gleim", COMMON),
+            new CardPrinting("ECL", "2", RooftopPercher::new, "Nils Hamm", COMMON)
     ));
 
     private final String code;

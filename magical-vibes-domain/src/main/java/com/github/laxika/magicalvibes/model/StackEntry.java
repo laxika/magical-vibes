@@ -20,6 +20,7 @@ public class StackEntry {
     private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
     private final TargetZone targetZone;
+    private final List<UUID> targetCardIds;
 
     // Creature spell constructor
     public StackEntry(Card card, UUID controllerId) {
@@ -33,6 +34,7 @@ public class StackEntry {
         this.sourcePermanentId = null;
         this.damageAssignments = Map.of();
         this.targetZone = null;
+        this.targetCardIds = List.of();
     }
 
     // Triggered ability constructor
@@ -47,6 +49,7 @@ public class StackEntry {
         this.sourcePermanentId = null;
         this.damageAssignments = Map.of();
         this.targetZone = null;
+        this.targetCardIds = List.of();
     }
 
     // General constructor with xValue (for sorcery spells)
@@ -61,6 +64,7 @@ public class StackEntry {
         this.sourcePermanentId = null;
         this.damageAssignments = Map.of();
         this.targetZone = null;
+        this.targetCardIds = List.of();
     }
 
     // Targeted or damage distribution spell constructor
@@ -75,6 +79,7 @@ public class StackEntry {
         this.sourcePermanentId = null;
         this.damageAssignments = damageAssignments != null ? damageAssignments : Map.of();
         this.targetZone = null;
+        this.targetCardIds = List.of();
     }
 
     // Triggered ability with source and target permanent constructor
@@ -89,6 +94,7 @@ public class StackEntry {
         this.sourcePermanentId = sourcePermanentId;
         this.damageAssignments = Map.of();
         this.targetZone = null;
+        this.targetCardIds = List.of();
     }
 
     // Zone-aware targeted ability constructor (e.g. target a card in graveyard)
@@ -103,5 +109,21 @@ public class StackEntry {
         this.sourcePermanentId = null;
         this.damageAssignments = Map.of();
         this.targetZone = targetZone;
+        this.targetCardIds = List.of();
+    }
+
+    // Multi-target triggered ability constructor (e.g. exile up to N cards from graveyards)
+    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, List<UUID> targetCardIds) {
+        this.entryType = entryType;
+        this.card = card;
+        this.controllerId = controllerId;
+        this.description = description;
+        this.effectsToResolve = effectsToResolve;
+        this.xValue = 0;
+        this.targetPermanentId = null;
+        this.sourcePermanentId = null;
+        this.damageAssignments = Map.of();
+        this.targetZone = null;
+        this.targetCardIds = targetCardIds != null ? targetCardIds : List.of();
     }
 }

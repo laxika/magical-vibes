@@ -1527,3 +1527,35 @@
   justify-content: center;
   margin-top: 8px;
 }
+
+.graveyard-choice-overlay {
+  background: linear-gradient(135deg, rgba(44, 62, 80, 0.08), rgba(52, 73, 94, 0.12));
+  border: 1px dashed rgba(192, 128, 64, 0.4);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 6px;
+}
+
+.graveyard-choice-cards {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.graveyard-choice-card {
+  cursor: pointer;
+  outline: 2px dashed rgba(192, 128, 64, 0.5);
+  box-shadow: 0 0 8px rgba(192, 128, 64, 0.3);
+}
+
+.graveyard-choice-card:hover {
+  outline: 2px solid #c9854a;
+  box-shadow: 0 0 16px rgba(201, 133, 74, 0.6);
+  transform: translateY(-4px);
+}
+
+.selected-graveyard-card {
+  outline: 3px solid #2d7a50;
+  box-shadow: 0 0 16px rgba(45, 122, 80, 0.8);
+}

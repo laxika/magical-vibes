@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFromGraveyardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
@@ -37,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
@@ -971,26 +973,79 @@ public class GameHelper {
             }
 
             if (!mandatoryEffects.isEmpty()) {
-                if (!card.isNeedsTarget() || targetPermanentId != null) {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            card,
-                            controllerId,
-                            card.getName() + "'s ETB ability",
-                            new ArrayList<>(mandatoryEffects),
-                            0,
-                            targetPermanentId,
-                            Map.of()
-                    ));
-                    String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
-                    logAndBroadcast(gameData, etbLog);
-                    log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
+                // Separate graveyard exile effects (need multi-target selection at trigger time)
+                List<CardEffect> graveyardExileEffects = mandatoryEffects.stream()
+                        .filter(e -> e instanceof ExileCardsFromGraveyardEffect).toList();
+                List<CardEffect> otherEffects = mandatoryEffects.stream()
+                        .filter(e -> !(e instanceof ExileCardsFromGraveyardEffect)).toList();
+
+                // Put non-graveyard-exile effects on the stack as before
+                if (!otherEffects.isEmpty()) {
+                    if (!card.isNeedsTarget() || targetPermanentId != null) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                card,
+                                controllerId,
+                                card.getName() + "'s ETB ability",
+                                new ArrayList<>(otherEffects),
+                                0,
+                                targetPermanentId,
+                                Map.of()
+                        ));
+                        String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
+                        logAndBroadcast(gameData, etbLog);
+                        log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
+                    }
+                }
+
+                // Handle graveyard exile effects: targets must be chosen at trigger time
+                for (CardEffect effect : graveyardExileEffects) {
+                    ExileCardsFromGraveyardEffect exile = (ExileCardsFromGraveyardEffect) effect;
+                    handleGraveyardExileETBTargeting(gameData, controllerId, card, mandatoryEffects, exile);
                 }
             }
         }
 
         checkAllyCreatureEntersTriggers(gameData, controllerId, card);
         checkAnyCreatureEntersTriggers(gameData, controllerId, card);
+    }
+
+    private void handleGraveyardExileETBTargeting(GameData gameData, UUID controllerId, Card card,
+                                                   List<CardEffect> allEffects, ExileCardsFromGraveyardEffect exile) {
+        // Collect all cards from all graveyards
+        List<UUID> allCardIds = new ArrayList<>();
+        List<CardView> allCardViews = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card graveyardCard : graveyard) {
+                allCardIds.add(graveyardCard.getId());
+                allCardViews.add(getCardViewFactory().create(graveyardCard));
+            }
+        }
+
+        if (allCardIds.isEmpty()) {
+            // No graveyard cards: put ability on stack with 0 targets (just gains life on resolution)
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    controllerId,
+                    card.getName() + "'s ETB ability",
+                    new ArrayList<>(allEffects),
+                    List.of()
+            ));
+            String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
+            logAndBroadcast(gameData, etbLog);
+            log.info("Game {} - {} ETB ability pushed onto stack with 0 targets (no graveyard cards)", gameData.id, card.getName());
+        } else {
+            // Prompt player to choose targets before putting ability on the stack
+            int maxTargets = Math.min(exile.maxTargets(), allCardIds.size());
+            gameData.pendingGraveyardTargetCard = card;
+            gameData.pendingGraveyardTargetControllerId = controllerId;
+            gameData.pendingGraveyardTargetEffects = new ArrayList<>(allEffects);
+            beginMultiGraveyardChoice(gameData, controllerId, allCardIds, allCardViews, maxTargets,
+                    "Choose up to " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "") + " from graveyards to exile.");
+        }
     }
 
     void checkAllyCreatureEntersTriggers(GameData gameData, UUID controllerId, Card enteringCreature) {
@@ -1103,6 +1158,17 @@ public class GameHelper {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose up to {} permanents", gameData.id, playerName, maxCount);
+    }
+
+    void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<UUID> validCardIds, List<CardView> cardViews, int maxCount, String prompt) {
+        gameData.awaitingInput = AwaitingInput.MULTI_GRAVEYARD_CHOICE;
+        gameData.awaitingMultiGraveyardChoicePlayerId = playerId;
+        gameData.awaitingMultiGraveyardChoiceValidCardIds = new HashSet<>(validCardIds);
+        gameData.awaitingMultiGraveyardChoiceMaxCount = maxCount;
+        sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsFromGraveyardsMessage(validCardIds, cardViews, maxCount, prompt));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose up to {} cards from graveyards", gameData.id, playerName, maxCount);
     }
 
     void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetPermanentId) {
