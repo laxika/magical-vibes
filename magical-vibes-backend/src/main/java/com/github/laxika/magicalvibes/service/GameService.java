@@ -86,7 +86,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class GameService implements TurnProgressionCallback {
+public class GameService {
 
     private final Random random = new Random();
 
@@ -129,7 +129,6 @@ public class GameService implements TurnProgressionCallback {
         }
     }
 
-    @Override
     public void advanceStep(GameData gameData) {
         // Process end-of-combat sacrifices when leaving END_OF_COMBAT
         if (gameData.currentStep == TurnStep.END_OF_COMBAT && !gameData.permanentsToSacrificeAtEndOfCombat.isEmpty()) {
@@ -160,9 +159,9 @@ public class GameService implements TurnProgressionCallback {
             } else if (next == TurnStep.DECLARE_ATTACKERS) {
                 combatService.handleDeclareAttackersStep(gameData);
             } else if (next == TurnStep.DECLARE_BLOCKERS) {
-                combatService.handleDeclareBlockersStep(gameData, this);
+                handleCombatResult(combatService.handleDeclareBlockersStep(gameData), gameData);
             } else if (next == TurnStep.COMBAT_DAMAGE) {
-                combatService.resolveCombatDamage(gameData, this);
+                handleCombatResult(combatService.resolveCombatDamage(gameData), gameData);
             } else if (next == TurnStep.END_OF_COMBAT) {
                 combatService.clearCombatState(gameData);
             } else if (next == TurnStep.CLEANUP) {
@@ -1928,7 +1927,6 @@ public class GameService implements TurnProgressionCallback {
         }
     }
 
-    @Override
     public void resolveAutoPass(GameData gameData) {
         for (int safety = 0; safety < 100; safety++) {
             if (gameData.awaitingInput != null) {
@@ -2031,17 +2029,26 @@ public class GameService implements TurnProgressionCallback {
     }
 
 
+    private void handleCombatResult(CombatResult result, GameData gameData) {
+        if (result == CombatResult.ADVANCE_AND_AUTO_PASS || result == CombatResult.ADVANCE_ONLY) {
+            advanceStep(gameData);
+        }
+        if (result == CombatResult.ADVANCE_AND_AUTO_PASS || result == CombatResult.AUTO_PASS_ONLY) {
+            resolveAutoPass(gameData);
+        }
+    }
+
     // ===== Combat wrapper methods =====
 
     public void declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices) {
         synchronized (gameData) {
-            combatService.declareAttackers(gameData, player, attackerIndices, this);
+            handleCombatResult(combatService.declareAttackers(gameData, player, attackerIndices), gameData);
         }
     }
 
     public void declareBlockers(GameData gameData, Player player, List<BlockerAssignment> blockerAssignments) {
         synchronized (gameData) {
-            combatService.declareBlockers(gameData, player, blockerAssignments, this);
+            handleCombatResult(combatService.declareBlockers(gameData, player, blockerAssignments), gameData);
         }
     }
 

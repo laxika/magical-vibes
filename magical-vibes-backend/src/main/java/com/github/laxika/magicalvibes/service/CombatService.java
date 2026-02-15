@@ -126,7 +126,7 @@ public class CombatService {
         gameHelper.broadcastGameState(gameData);
     }
 
-    void declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices, TurnProgressionCallback callback) {
+    CombatResult declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices) {
         if (gameData.awaitingInput != AwaitingInput.ATTACKER_DECLARATION) {
             throw new IllegalStateException("Not awaiting attacker declaration");
         }
@@ -154,8 +154,7 @@ public class CombatService {
         if (attackerIndices.isEmpty()) {
             log.info("Game {} - {} declares no attackers", gameData.id, player.getUsername());
             skipToEndOfCombat(gameData);
-            callback.resolveAutoPass(gameData);
-            return;
+            return CombatResult.AUTO_PASS_ONLY;
         }
 
         // Check attack tax (e.g. Windborn Muse / Ghostly Prison)
@@ -209,11 +208,10 @@ public class CombatService {
 
         log.info("Game {} - {} declares {} attackers", gameData.id, player.getUsername(), attackerIndices.size());
 
-        callback.advanceStep(gameData);
-        callback.resolveAutoPass(gameData);
+        return CombatResult.ADVANCE_AND_AUTO_PASS;
     }
 
-    void handleDeclareBlockersStep(GameData gameData, TurnProgressionCallback callback) {
+    CombatResult handleDeclareBlockersStep(GameData gameData) {
         UUID activeId = gameData.activePlayerId;
         UUID defenderId = gameHelper.getOpponentId(gameData, activeId);
         List<Integer> blockable = getBlockableCreatureIndices(gameData, defenderId);
@@ -229,15 +227,15 @@ public class CombatService {
 
         if (blockable.isEmpty() || attackerIndices.isEmpty()) {
             log.info("Game {} - Defending player has no creatures that can block or no blockable attackers", gameData.id);
-            callback.advanceStep(gameData);
-            return;
+            return CombatResult.ADVANCE_ONLY;
         }
 
         gameData.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
         gameHelper.getSessionManager().sendToPlayer(defenderId, new AvailableBlockersMessage(blockable, attackerIndices));
+        return CombatResult.DONE;
     }
 
-    void declareBlockers(GameData gameData, Player player, List<BlockerAssignment> blockerAssignments, TurnProgressionCallback callback) {
+    CombatResult declareBlockers(GameData gameData, Player player, List<BlockerAssignment> blockerAssignments) {
         if (gameData.awaitingInput != AwaitingInput.BLOCKER_DECLARATION) {
             throw new IllegalStateException("Not awaiting blocker declaration");
         }
@@ -364,20 +362,17 @@ public class CombatService {
 
         log.info("Game {} - {} declares {} blockers", gameData.id, player.getUsername(), blockerAssignments.size());
 
-        callback.advanceStep(gameData);
-        callback.resolveAutoPass(gameData);
+        return CombatResult.ADVANCE_AND_AUTO_PASS;
     }
 
     // ===== Combat damage resolution =====
 
-    void resolveCombatDamage(GameData gameData, TurnProgressionCallback callback) {
+    CombatResult resolveCombatDamage(GameData gameData) {
         if (gameData.preventAllCombatDamage) {
             String logEntry = "All combat damage is prevented.";
             gameHelper.logAndBroadcast(gameData, logEntry);
 
-            callback.advanceStep(gameData);
-            callback.resolveAutoPass(gameData);
-            return;
+            return CombatResult.ADVANCE_AND_AUTO_PASS;
         }
 
         UUID activeId = gameData.activePlayerId;
@@ -657,22 +652,21 @@ public class CombatService {
 
         // Check win condition
         if (gameHelper.checkWinCondition(gameData)) {
-            return;
+            return CombatResult.DONE;
         }
 
         // Process combat damage to player triggers (e.g. Cephalid Constable) after all combat is resolved
         processCombatDamageToPlayerTriggers(gameData, combatDamageDealtToPlayer, activeId, defenderId);
         if (gameData.awaitingInput != null) {
-            return;
+            return CombatResult.DONE;
         }
 
         if (!gameData.pendingMayAbilities.isEmpty()) {
             gameHelper.processNextMayAbility(gameData);
-            return;
+            return CombatResult.DONE;
         }
 
-        callback.advanceStep(gameData);
-        callback.resolveAutoPass(gameData);
+        return CombatResult.ADVANCE_AND_AUTO_PASS;
     }
 
     private void processGainLifeEqualToDamageDealt(GameData gameData, Map<Permanent, Integer> combatDamageDealt) {
