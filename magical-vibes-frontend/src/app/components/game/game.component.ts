@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, StackEntry, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, StackEntry, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification, ChooseFromRevealedHandNotification } from '../../services/websocket.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { Subscription } from 'rxjs';
 
@@ -137,6 +137,10 @@ export class GameComponent implements OnInit, OnDestroy {
           this.revealingHand = true;
           this.revealedHandCards = revealMsg.cards;
           this.revealedHandPlayerName = revealMsg.playerName;
+        }
+
+        if (message.type === MessageType.CHOOSE_FROM_REVEALED_HAND) {
+          this.handleChooseFromRevealedHand(message as ChooseFromRevealedHandNotification);
         }
       })
     );
@@ -681,20 +685,33 @@ export class GameComponent implements OnInit, OnDestroy {
 
   selectSpellTarget(entry: StackEntry): void {
     if (!this.targetingSpell || !entry.isSpell) return;
-    this.websocketService.send({
-      type: MessageType.PLAY_CARD,
-      cardIndex: this.targetingSpellCardIndex,
-      targetPermanentId: entry.cardId
-    });
+    if (this.targetingForAbility) {
+      this.websocketService.send({
+        type: MessageType.ACTIVATE_ABILITY,
+        permanentIndex: this.targetingSpellCardIndex,
+        abilityIndex: this.targetingAbilityIndex,
+        targetPermanentId: entry.cardId
+      });
+    } else {
+      this.websocketService.send({
+        type: MessageType.PLAY_CARD,
+        cardIndex: this.targetingSpellCardIndex,
+        targetPermanentId: entry.cardId
+      });
+    }
     this.targetingSpell = false;
     this.targetingSpellCardIndex = -1;
     this.targetingSpellCardName = '';
+    this.targetingForAbility = false;
+    this.targetingAbilityIndex = -1;
   }
 
   cancelSpellTargeting(): void {
     this.targetingSpell = false;
     this.targetingSpellCardIndex = -1;
     this.targetingSpellCardName = '';
+    this.targetingForAbility = false;
+    this.targetingAbilityIndex = -1;
   }
 
   private handleChooseCardFromLibrary(msg: ChooseCardFromLibraryNotification): void {
@@ -773,6 +790,33 @@ export class GameComponent implements OnInit, OnDestroy {
     this.revealingHand = false;
     this.revealedHandCards = [];
     this.revealedHandPlayerName = '';
+  }
+
+  private handleChooseFromRevealedHand(msg: ChooseFromRevealedHandNotification): void {
+    this.revealingHand = true;
+    this.choosingFromRevealedHand = true;
+    this.revealedHandCards = msg.cards;
+    this.revealedHandChoosableIndices = new Set(msg.validIndices);
+    this.revealedHandChoicePrompt = msg.prompt;
+    this.revealedHandPlayerName = '';
+  }
+
+  chooseFromRevealedHand(index: number): void {
+    if (!this.choosingFromRevealedHand) return;
+    if (!this.revealedHandChoosableIndices.has(index)) return;
+    this.websocketService.send({
+      type: MessageType.CARD_CHOSEN,
+      cardIndex: index
+    });
+    this.choosingFromRevealedHand = false;
+    this.revealingHand = false;
+    this.revealedHandCards = [];
+    this.revealedHandChoosableIndices = new Set();
+    this.revealedHandChoicePrompt = '';
+  }
+
+  isRevealedHandCardChoosable(index: number): boolean {
+    return this.choosingFromRevealedHand && this.revealedHandChoosableIndices.has(index);
   }
 
   isValidTarget(perm: Permanent): boolean {
@@ -939,6 +983,16 @@ export class GameComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Check for spell targeting (counter spells from abilities)
+    if (ability.needsSpellTarget) {
+      this.targetingSpell = true;
+      this.targetingSpellCardIndex = permanentIndex;
+      this.targetingSpellCardName = perm.card.name;
+      this.targetingForAbility = true;
+      this.targetingAbilityIndex = abilityIndex;
+      return;
+    }
+
     // Check for targeting
     if (ability.needsTarget) {
       this.targeting = true;
@@ -1076,6 +1130,11 @@ export class GameComponent implements OnInit, OnDestroy {
   revealingHand = false;
   revealedHandCards: Card[] = [];
   revealedHandPlayerName = '';
+
+  // Choose from revealed hand state
+  choosingFromRevealedHand = false;
+  revealedHandChoosableIndices = new Set<number>();
+  revealedHandChoicePrompt = '';
 
   // X cost prompt state
   choosingXValue = false;

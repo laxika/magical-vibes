@@ -75,6 +75,9 @@ public class GameData {
     public List<Card> awaitingLibrarySearchCards;
     public final Set<UUID> permanentsToSacrificeAtEndOfCombat = ConcurrentHashMap.newKeySet();
     public int awaitingDiscardRemainingCount;
+    public UUID awaitingRevealedHandChoiceTargetPlayerId;
+    public int awaitingRevealedHandChoiceRemainingCount;
+    public final List<Card> awaitingRevealedHandChosenCards = new ArrayList<>();
     public final Map<UUID, UUID> drawReplacementTargetToController = new ConcurrentHashMap<>();
     public final Map<UUID, UUID> stolenCreatures = new ConcurrentHashMap<>();
     public final Set<UUID> enchantmentDependentStolenCreatures = ConcurrentHashMap.newKeySet();

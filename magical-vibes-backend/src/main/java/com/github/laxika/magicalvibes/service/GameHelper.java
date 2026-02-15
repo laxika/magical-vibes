@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
@@ -50,6 +51,8 @@ import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchant
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostNonColorCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostOtherCreaturesByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDoesntUntapEffect;
@@ -208,6 +211,16 @@ public class GameHelper {
                     }
                     if (effect instanceof BoostOwnCreaturesEffect boost
                             && bf.contains(target)) {
+                        power += boost.powerBoost();
+                        toughness += boost.toughnessBoost();
+                    }
+                    if (effect instanceof BoostOtherCreaturesByColorEffect boost
+                            && target.getCard().getColor() == boost.color()) {
+                        power += boost.powerBoost();
+                        toughness += boost.toughnessBoost();
+                    }
+                    if (effect instanceof BoostNonColorCreaturesEffect boost
+                            && target.getCard().getColor() != boost.excludedColor()) {
                         power += boost.powerBoost();
                         toughness += boost.toughnessBoost();
                     }
@@ -1088,6 +1101,19 @@ public class GameHelper {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a card to discard", gameData.id, playerName);
+    }
+
+    void beginRevealedHandChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId, List<Integer> validIndices, String prompt) {
+        gameData.awaitingInput = AwaitingInput.REVEALED_HAND_CHOICE;
+        gameData.awaitingCardChoicePlayerId = choosingPlayerId;
+        gameData.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
+
+        List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
+        List<CardView> cardViews = targetHand.stream().map(getCardViewFactory()::create).toList();
+        sessionManager.sendToPlayer(choosingPlayerId, new ChooseFromRevealedHandMessage(cardViews, validIndices, prompt));
+
+        String playerName = gameData.playerIdToName.get(choosingPlayerId);
+        log.info("Game {} - Awaiting {} to choose a card from revealed hand", gameData.id, playerName);
     }
 
     // ===== Control =====

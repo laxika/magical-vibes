@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
 import com.github.laxika.magicalvibes.networking.message.JoinGame;
@@ -47,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDoesntUntapEffect;
@@ -58,6 +60,7 @@ import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
@@ -574,6 +577,17 @@ public class GameService {
                         List<CardView> cardViews = gameData.awaitingLibrarySearchCards.stream().map(gameHelper.getCardViewFactory()::create).toList();
                         sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(
                                 cardViews, "Search your library for a basic land card to put into your hand."));
+                    }
+                }
+                case REVEALED_HAND_CHOICE -> {
+                    if (playerId.equals(gameData.awaitingCardChoicePlayerId) && gameData.awaitingRevealedHandChoiceTargetPlayerId != null) {
+                        UUID targetPlayerId = gameData.awaitingRevealedHandChoiceTargetPlayerId;
+                        List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
+                        String targetName = gameData.playerIdToName.get(targetPlayerId);
+                        List<CardView> cardViews = targetHand.stream().map(gameHelper.getCardViewFactory()::create).toList();
+                        List<Integer> validIndices = new ArrayList<>(gameData.awaitingCardChoiceValidIndices);
+                        sessionManager.sendToPlayer(playerId, new ChooseFromRevealedHandMessage(
+                                cardViews, validIndices, "Choose a card to put on top of " + targetName + "'s library."));
                     }
                 }
             }
@@ -1147,6 +1161,20 @@ public class GameService {
                 }
             }
 
+            // Validate spell target for abilities that counter spells
+            if (ability.isNeedsSpellTarget()) {
+                if (targetPermanentId == null) {
+                    throw new IllegalStateException("Ability requires a spell target");
+                }
+                boolean foundSpellOnStack = gameData.stack.stream()
+                        .anyMatch(se -> se.getCard().getId().equals(targetPermanentId)
+                                && se.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                                && se.getEntryType() != StackEntryType.ACTIVATED_ABILITY);
+                if (!foundSpellOnStack) {
+                    throw new IllegalStateException("Target must be a spell on the stack");
+                }
+            }
+
             // Pay mana cost
             if (abilityCost != null) {
                 ManaCost cost = new ManaCost(abilityCost);
@@ -1279,13 +1307,24 @@ public class GameService {
                 permanent.tap();
             }
 
+            // Sacrifice the permanent (for sacrifice-as-cost abilities)
+            boolean shouldSacrifice = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeSelfCost);
+            if (shouldSacrifice) {
+                battlefield.remove(permanent);
+                gameData.playerGraveyards.get(playerId).add(permanent.getCard());
+            }
+
             String logEntry = player.getUsername() + " activates " + permanent.getCard().getName() + "'s ability.";
             gameHelper.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} activates {}'s ability", gameData.id, player.getUsername(), permanent.getCard().getName());
 
             // Snapshot permanent state into effects so the ability resolves independently of its source
+            // Filter out SacrificeSelfCost since it's already been paid as a cost
             List<CardEffect> snapshotEffects = new ArrayList<>();
             for (CardEffect effect : abilityEffects) {
+                if (effect instanceof SacrificeSelfCost) {
+                    continue;
+                }
                 if (effect instanceof PreventNextColorDamageToControllerEffect && permanent.getChosenColor() != null) {
                     snapshotEffects.add(new PreventNextColorDamageToControllerEffect(permanent.getChosenColor()));
                 } else {
@@ -1294,7 +1333,11 @@ public class GameService {
             }
 
             // Push activated ability on stack
-            if (targetZone != null && targetZone != TargetZone.BATTLEFIELD) {
+            TargetZone effectiveTargetZone = targetZone;
+            if (ability.isNeedsSpellTarget()) {
+                effectiveTargetZone = TargetZone.STACK;
+            }
+            if (effectiveTargetZone != null && effectiveTargetZone != TargetZone.BATTLEFIELD) {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.ACTIVATED_ABILITY,
                         permanent.getCard(),
@@ -1302,7 +1345,7 @@ public class GameService {
                         permanent.getCard().getName() + "'s ability",
                         snapshotEffects,
                         effectiveTargetId,
-                        targetZone
+                        effectiveTargetZone
                 ));
             } else {
                 gameData.stack.add(new StackEntry(
@@ -1469,6 +1512,11 @@ public class GameService {
                 return;
             }
 
+            if (gameData.awaitingInput == AwaitingInput.REVEALED_HAND_CHOICE) {
+                handleRevealedHandCardChosen(gameData, player, cardIndex);
+                return;
+            }
+
             if (gameData.awaitingInput != AwaitingInput.CARD_CHOICE && gameData.awaitingInput != AwaitingInput.TARGETED_CARD_CHOICE) {
                 throw new IllegalStateException("Not awaiting card choice");
             }
@@ -1543,6 +1591,65 @@ public class GameService {
             gameData.awaitingCardChoicePlayerId = null;
             gameData.awaitingCardChoiceValidIndices = null;
             gameData.awaitingDiscardRemainingCount = 0;
+            resolveAutoPass(gameData);
+        }
+    }
+
+    private void handleRevealedHandCardChosen(GameData gameData, Player player, int cardIndex) {
+        if (!player.getId().equals(gameData.awaitingCardChoicePlayerId)) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+
+        Set<Integer> validIndices = gameData.awaitingCardChoiceValidIndices;
+        if (!validIndices.contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        UUID targetPlayerId = gameData.awaitingRevealedHandChoiceTargetPlayerId;
+        List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        Card chosenCard = targetHand.remove(cardIndex);
+        gameData.awaitingRevealedHandChosenCards.add(chosenCard);
+
+        String logEntry = player.getUsername() + " chooses " + chosenCard.getName() + " from " + targetName + "'s hand.";
+        gameHelper.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} chooses {} from {}'s hand", gameData.id, player.getUsername(), chosenCard.getName(), targetName);
+
+        gameData.awaitingRevealedHandChoiceRemainingCount--;
+
+        if (gameData.awaitingRevealedHandChoiceRemainingCount > 0 && !targetHand.isEmpty()) {
+            // More cards to choose — update valid indices and prompt again
+            List<Integer> newValidIndices = new ArrayList<>();
+            for (int i = 0; i < targetHand.size(); i++) {
+                newValidIndices.add(i);
+            }
+
+            gameHelper.beginRevealedHandChoice(gameData, player.getId(), targetPlayerId, newValidIndices,
+                    "Choose another card to put on top of " + targetName + "'s library.");
+        } else {
+            // All cards chosen — put them on top of library
+            gameData.awaitingInput = null;
+            gameData.awaitingCardChoicePlayerId = null;
+            gameData.awaitingCardChoiceValidIndices = null;
+
+            List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+            List<Card> chosenCards = new ArrayList<>(gameData.awaitingRevealedHandChosenCards);
+
+            // Insert in reverse order so first chosen ends up on top
+            for (int i = chosenCards.size() - 1; i >= 0; i--) {
+                deck.addFirst(chosenCards.get(i));
+            }
+
+            String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
+            String putLog = player.getUsername() + " puts " + cardNames + " on top of " + targetName + "'s library.";
+            gameHelper.logAndBroadcast(gameData, putLog);
+            log.info("Game {} - {} puts {} on top of {}'s library", gameData.id, player.getUsername(), cardNames, targetName);
+
+            gameData.awaitingRevealedHandChoiceTargetPlayerId = null;
+            gameData.awaitingRevealedHandChoiceRemainingCount = 0;
+            gameData.awaitingRevealedHandChosenCards.clear();
+
             resolveAutoPass(gameData);
         }
     }
@@ -1667,6 +1774,29 @@ public class GameService {
     
     
     
+
+                resolveAutoPass(gameData);
+            } else if (context instanceof PermanentChoiceContext.BounceCreature bounceCreature) {
+                Permanent target = gameHelper.findPermanentById(gameData, permanentId);
+                if (target == null) {
+                    throw new IllegalStateException("Target creature no longer exists");
+                }
+
+                UUID bouncingPlayerId = bounceCreature.bouncingPlayerId();
+                List<Permanent> battlefield = gameData.playerBattlefields.get(bouncingPlayerId);
+                if (battlefield != null && battlefield.remove(target)) {
+                    gameHelper.removeOrphanedAuras(gameData);
+                    UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), bouncingPlayerId);
+                    gameData.stolenCreatures.remove(target.getId());
+                    List<Card> hand = gameData.playerHands.get(ownerId);
+                    hand.add(target.getOriginalCard());
+
+                    String logEntry = target.getCard().getName() + " is returned to its owner's hand.";
+                    gameHelper.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} returned to owner's hand by Sunken Hope", gameData.id, target.getCard().getName());
+                }
+
+                gameHelper.performStateBasedActions(gameData);
 
                 resolveAutoPass(gameData);
             } else if (gameData.pendingAuraCard != null) {
@@ -1869,6 +1999,13 @@ public class GameService {
             gameData.awaitingInput = null;
             gameData.awaitingMayAbilityPlayerId = null;
 
+            // Counter-unless-pays — handled via the may ability system
+            boolean isCounterUnlessPays = ability.effects().stream().anyMatch(e -> e instanceof CounterUnlessPaysEffect);
+            if (isCounterUnlessPays) {
+                handleCounterUnlessPaysChoice(gameData, player, accepted, ability);
+                return;
+            }
+
             // Clone copy creature effect — handled separately (not via the stack)
             boolean isCloneCopy = ability.effects().stream().anyMatch(e -> e instanceof CopyCreatureOnEnterEffect);
             if (isCloneCopy) {
@@ -1932,6 +2069,64 @@ public class GameService {
                 gameHelper.broadcastGameState(gameData);
                 resolveAutoPass(gameData);
             }
+        }
+    }
+
+    private void handleCounterUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        int amount = ability.effects().stream()
+                .filter(e -> e instanceof CounterUnlessPaysEffect)
+                .map(e -> ((CounterUnlessPaysEffect) e).amount())
+                .findFirst().orElse(0);
+        UUID targetCardId = ability.targetCardId();
+
+        StackEntry targetEntry = null;
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(targetCardId)) {
+                targetEntry = se;
+                break;
+            }
+        }
+
+        if (targetEntry == null) {
+            log.info("Game {} - Counter-unless-pays target no longer on stack", gameData.id);
+            gameHelper.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && gameData.awaitingInput == null) {
+                gameData.priorityPassedBy.clear();
+                gameHelper.broadcastGameState(gameData);
+                resolveAutoPass(gameData);
+            }
+            return;
+        }
+
+        if (accepted) {
+            ManaCost cost = new ManaCost("{" + amount + "}");
+            ManaPool pool = gameData.playerManaPools.get(player.getId());
+            if (cost.canPay(pool)) {
+                cost.pay(pool);
+                String logEntry = player.getUsername() + " pays {" + amount + "}. " + targetEntry.getCard().getName() + " is not countered.";
+                gameHelper.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} pays {} to avoid counter", gameData.id, player.getUsername(), amount);
+            } else {
+                gameData.stack.remove(targetEntry);
+                gameData.playerGraveyards.get(targetEntry.getControllerId()).add(targetEntry.getCard());
+                String logEntry = player.getUsername() + " can't pay {" + amount + "}. " + targetEntry.getCard().getName() + " is countered.";
+                gameHelper.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} can't pay {} — spell countered", gameData.id, player.getUsername(), amount);
+            }
+        } else {
+            gameData.stack.remove(targetEntry);
+            gameData.playerGraveyards.get(targetEntry.getControllerId()).add(targetEntry.getCard());
+            String logEntry = player.getUsername() + " declines to pay {" + amount + "}. " + targetEntry.getCard().getName() + " is countered.";
+            gameHelper.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines to pay {} — spell countered", gameData.id, player.getUsername(), amount);
+        }
+
+        gameHelper.performStateBasedActions(gameData);
+        gameHelper.processNextMayAbility(gameData);
+        if (gameData.pendingMayAbilities.isEmpty() && gameData.awaitingInput == null) {
+            gameData.priorityPassedBy.clear();
+            gameHelper.broadcastGameState(gameData);
+            resolveAutoPass(gameData);
         }
     }
 

@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -14,14 +17,17 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.effect.BounceOwnCreatureOnUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
@@ -75,6 +81,7 @@ import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ExcludeSelfTargetFilter;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -190,10 +197,20 @@ public class EffectResolutionService {
                 resolvePutAuraFromHandOntoSelf(gameData, entry);
             } else if (effect instanceof MillByHandSizeEffect) {
                 resolveMillByHandSize(gameData, entry);
+            } else if (effect instanceof BounceOwnCreatureOnUpkeepEffect) {
+                resolveBounceOwnCreatureOnUpkeep(gameData, entry);
+                if (gameData.awaitingInput == AwaitingInput.PERMANENT_CHOICE) {
+                    break;
+                }
             } else if (effect instanceof MillTargetPlayerEffect mill) {
                 resolveMillTargetPlayer(gameData, entry, mill);
             } else if (effect instanceof LookAtHandEffect) {
                 resolveLookAtHand(gameData, entry);
+            } else if (effect instanceof ChooseCardsFromTargetHandToTopOfLibraryEffect choose) {
+                resolveChooseCardsFromTargetHandToTopOfLibrary(gameData, entry, choose);
+                if (gameData.awaitingInput == AwaitingInput.REVEALED_HAND_CHOICE) {
+                    break;
+                }
             } else if (effect instanceof RevealTopCardOfLibraryEffect) {
                 resolveRevealTopCardOfLibrary(gameData, entry);
             } else if (effect instanceof GainControlOfEnchantedTargetEffect) {
@@ -213,6 +230,11 @@ public class EffectResolutionService {
                 }
             } else if (effect instanceof CounterSpellEffect) {
                 resolveCounterSpell(gameData, entry);
+            } else if (effect instanceof CounterUnlessPaysEffect counterUnless) {
+                resolveCounterUnlessPays(gameData, entry, counterUnless);
+                if (!gameData.pendingMayAbilities.isEmpty()) {
+                    break;
+                }
             } else if (effect instanceof PlagiarizeEffect) {
                 resolvePlagiarize(gameData, entry);
             } else if (effect instanceof ReorderTopCardsOfLibraryEffect reorder) {
@@ -788,6 +810,31 @@ public class EffectResolutionService {
         log.info("Game {} - {} mills {} cards (hand size)", gameData.id, playerName, cardsToMill);
     }
 
+    private void resolveBounceOwnCreatureOnUpkeep(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+        List<UUID> creatureIds = new ArrayList<>();
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (gameHelper.isCreature(gameData, p)) {
+                    creatureIds.add(p.getId());
+                }
+            }
+        }
+
+        if (creatureIds.isEmpty()) {
+            String logEntry = playerName + " controls no creatures — nothing to return.";
+            gameHelper.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        gameData.permanentChoiceContext = new PermanentChoiceContext.BounceCreature(targetPlayerId);
+        gameHelper.beginPermanentChoice(gameData, targetPlayerId, creatureIds,
+                "Choose a creature you control to return to its owner's hand.");
+    }
+
     private void resolveMillTargetPlayer(GameData gameData, StackEntry entry, MillTargetPlayerEffect mill) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
@@ -1085,6 +1132,44 @@ public class EffectResolutionService {
         log.info("Game {} - {} looks at {}'s hand", gameData.id, casterName, targetName);
     }
 
+    private void resolveChooseCardsFromTargetHandToTopOfLibrary(GameData gameData, StackEntry entry, ChooseCardsFromTargetHandToTopOfLibraryEffect choose) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID casterId = entry.getControllerId();
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        String casterName = gameData.playerIdToName.get(casterId);
+
+        if (hand.isEmpty()) {
+            String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
+            gameHelper.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} looks at {}'s empty hand", gameData.id, casterName, targetName);
+            return;
+        }
+
+        // Log and reveal hand to caster
+        String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
+        String logEntry = casterName + " looks at " + targetName + "'s hand: " + cardNames + ".";
+        gameHelper.logAndBroadcast(gameData, logEntry);
+
+        int cardsToChoose = Math.min(choose.count(), hand.size());
+
+        // Build valid indices (all cards in hand)
+        List<Integer> validIndices = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            validIndices.add(i);
+        }
+
+        gameData.awaitingRevealedHandChoiceTargetPlayerId = targetPlayerId;
+        gameData.awaitingRevealedHandChoiceRemainingCount = cardsToChoose;
+        gameData.awaitingRevealedHandChosenCards.clear();
+
+        gameHelper.beginRevealedHandChoice(gameData, casterId, targetPlayerId, validIndices,
+                "Choose a card to put on top of " + targetName + "'s library.");
+
+        log.info("Game {} - {} choosing {} card(s) from {}'s hand to put on top of library",
+                gameData.id, casterName, cardsToChoose, targetName);
+    }
+
     private void resolveRevealTopCardOfLibrary(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
@@ -1204,6 +1289,45 @@ public class EffectResolutionService {
         String logMsg = targetEntry.getCard().getName() + " is countered.";
         gameHelper.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} countered {}", gameData.id, entry.getCard().getName(), targetEntry.getCard().getName());
+    }
+
+    private void resolveCounterUnlessPays(GameData gameData, StackEntry entry, CounterUnlessPaysEffect effect) {
+        UUID targetCardId = entry.getTargetPermanentId();
+        if (targetCardId == null) return;
+
+        StackEntry targetEntry = null;
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(targetCardId)) {
+                targetEntry = se;
+                break;
+            }
+        }
+
+        if (targetEntry == null) {
+            log.info("Game {} - Counter-unless-pays target no longer on stack", gameData.id);
+            return;
+        }
+
+        UUID targetControllerId = targetEntry.getControllerId();
+        ManaPool pool = gameData.playerManaPools.get(targetControllerId);
+        ManaCost cost = new ManaCost("{" + effect.amount() + "}");
+
+        if (!cost.canPay(pool)) {
+            // Can't pay — counter immediately
+            gameData.stack.remove(targetEntry);
+            gameData.playerGraveyards.get(targetControllerId).add(targetEntry.getCard());
+
+            String logMsg = targetEntry.getCard().getName() + " is countered.";
+            gameHelper.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - {} countered {} (can't pay {})", gameData.id, entry.getCard().getName(), targetEntry.getCard().getName(), effect.amount());
+        } else {
+            // Can pay — ask the opponent via the may ability system
+            String prompt = "Pay {" + effect.amount() + "} to prevent " + targetEntry.getCard().getName() + " from being countered?";
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    entry.getCard(), targetControllerId, List.of(effect), prompt, targetCardId
+            ));
+            // processNextMayAbility (called by resolveTopOfStack) will set awaitingInput and send the message
+        }
     }
 
     private void resolvePlagiarize(GameData gameData, StackEntry entry) {

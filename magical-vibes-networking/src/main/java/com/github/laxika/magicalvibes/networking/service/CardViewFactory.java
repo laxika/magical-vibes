@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
@@ -84,6 +85,7 @@ public class CardViewFactory {
                 ability.getDescription(),
                 ability.isRequiresTap(),
                 ability.isNeedsTarget(),
+                ability.isNeedsSpellTarget(),
                 targetsPlayer,
                 allowedTargetTypes,
                 allowedTargetColors,
@@ -102,7 +104,8 @@ public class CardViewFactory {
 
     private boolean computeSpellTargetsPlayer(Card card) {
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof DoubleTargetPlayerLifeEffect
+            if (effect instanceof ChooseCardsFromTargetHandToTopOfLibraryEffect
+                    || effect instanceof DoubleTargetPlayerLifeEffect
                     || effect instanceof LookAtHandEffect
                     || effect instanceof MillTargetPlayerEffect
                     || effect instanceof ReturnArtifactsTargetPlayerOwnsToHandEffect
