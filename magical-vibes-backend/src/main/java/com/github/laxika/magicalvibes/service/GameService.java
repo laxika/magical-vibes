@@ -1849,12 +1849,14 @@ public class GameService {
 
             UUID playerId = player.getId();
             Set<Integer> validIndices = gameData.awaitingGraveyardChoiceValidIndices;
+            List<Card> cardPool = gameData.graveyardChoiceCardPool;
 
             gameData.awaitingInput = null;
             gameData.awaitingGraveyardChoicePlayerId = null;
             gameData.awaitingGraveyardChoiceValidIndices = null;
             GraveyardChoiceDestination destination = gameData.graveyardChoiceDestination;
             gameData.graveyardChoiceDestination = null;
+            gameData.graveyardChoiceCardPool = null;
 
             if (cardIndex == -1) {
                 // Player declined
@@ -1866,8 +1868,16 @@ public class GameService {
                     throw new IllegalStateException("Invalid card index: " + cardIndex);
                 }
 
-                List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-                Card card = graveyard.remove(cardIndex);
+                Card card;
+                if (cardPool != null) {
+                    // Cross-graveyard choice: card pool contains cards from any graveyard
+                    card = cardPool.get(cardIndex);
+                    gameHelper.removeCardFromGraveyardById(gameData, card.getId());
+                } else {
+                    // Standard choice: indices into the player's own graveyard
+                    List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+                    card = graveyard.remove(cardIndex);
+                }
 
                 switch (destination) {
                     case HAND -> {
@@ -1876,23 +1886,18 @@ public class GameService {
                         String logEntry = player.getUsername() + " returns " + card.getName() + " from graveyard to hand.";
                         gameHelper.logAndBroadcast(gameData, logEntry);
                         log.info("Game {} - {} returns {} from graveyard to hand", gameData.id, player.getUsername(), card.getName());
-
-            
-
-            
                     }
                     case BATTLEFIELD -> {
                         Permanent perm = new Permanent(card);
                         gameData.playerBattlefields.get(playerId).add(perm);
 
-                        String logEntry = player.getUsername() + " returns " + card.getName() + " from graveyard to the battlefield.";
+                        String logEntry = player.getUsername() + " puts " + card.getName() + " from a graveyard onto the battlefield.";
                         gameHelper.logAndBroadcast(gameData, logEntry);
-                        log.info("Game {} - {} returns {} from graveyard to battlefield", gameData.id, player.getUsername(), card.getName());
+                        log.info("Game {} - {} puts {} from graveyard onto battlefield", gameData.id, player.getUsername(), card.getName());
 
-            
-            
-
-                        gameHelper.handleCreatureEnteredBattlefield(gameData, playerId, card, null);
+                        if (card.getType() == CardType.CREATURE) {
+                            gameHelper.handleCreatureEnteredBattlefield(gameData, playerId, card, null);
+                        }
                         if (gameData.awaitingInput == null) {
                             gameHelper.checkLegendRule(gameData, playerId);
                         }

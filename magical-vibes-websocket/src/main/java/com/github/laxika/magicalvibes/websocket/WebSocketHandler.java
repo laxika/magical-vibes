@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
 import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.GraveyardCardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.ColorChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.CreateGameRequest;
@@ -99,6 +100,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 case DECLARE_ATTACKERS -> messageHandler.handleDeclareAttackers(connection, objectMapper.treeToValue(jsonNode, DeclareAttackersRequest.class));
                 case DECLARE_BLOCKERS -> messageHandler.handleDeclareBlockers(connection, objectMapper.treeToValue(jsonNode, DeclareBlockersRequest.class));
                 case CARD_CHOSEN -> messageHandler.handleCardChosen(connection, objectMapper.treeToValue(jsonNode, CardChosenRequest.class));
+                case GRAVEYARD_CARD_CHOSEN -> messageHandler.handleGraveyardCardChosen(connection, objectMapper.treeToValue(jsonNode, GraveyardCardChosenRequest.class));
                 case PERMANENT_CHOSEN -> messageHandler.handlePermanentChosen(connection, objectMapper.treeToValue(jsonNode, PermanentChosenRequest.class));
                 case MULTIPLE_PERMANENTS_CHOSEN -> messageHandler.handleMultiplePermanentsChosen(connection, objectMapper.treeToValue(jsonNode, MultiplePermanentsChosenRequest.class));
                 case COLOR_CHOSEN -> messageHandler.handleColorChosen(connection, objectMapper.treeToValue(jsonNode, ColorChosenRequest.class));

@@ -58,6 +58,7 @@ public class GameData {
     public UUID awaitingGraveyardChoicePlayerId;
     public Set<Integer> awaitingGraveyardChoiceValidIndices;
     public GraveyardChoiceDestination graveyardChoiceDestination;
+    public List<Card> graveyardChoiceCardPool;
     public UUID awaitingColorChoicePlayerId;
     public UUID awaitingColorChoicePermanentId;
     public UUID pendingColorChoiceETBTargetId;

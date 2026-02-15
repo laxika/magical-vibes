@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, StackEntry, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification, ChooseFromRevealedHandNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, StackEntry, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification, ChooseFromRevealedHandNotification, ChooseCardFromGraveyardNotification } from '../../services/websocket.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { Subscription } from 'rxjs';
 
@@ -141,6 +141,10 @@ export class GameComponent implements OnInit, OnDestroy {
 
         if (message.type === MessageType.CHOOSE_FROM_REVEALED_HAND) {
           this.handleChooseFromRevealedHand(message as ChooseFromRevealedHandNotification);
+        }
+
+        if (message.type === MessageType.CHOOSE_CARD_FROM_GRAVEYARD) {
+          this.handleChooseCardFromGraveyard(message as ChooseCardFromGraveyardNotification);
         }
       })
     );
@@ -797,6 +801,44 @@ export class GameComponent implements OnInit, OnDestroy {
     this.revealedHandPlayerName = '';
   }
 
+  private handleChooseCardFromGraveyard(msg: ChooseCardFromGraveyardNotification): void {
+    this.choosingFromGraveyard = true;
+    this.graveyardChoiceIndices = msg.cardIndices;
+    this.graveyardChoicePrompt = msg.prompt;
+  }
+
+  get graveyardChoiceCards(): { card: Card; index: number; owner: string }[] {
+    const g = this.game();
+    if (!g) return [];
+    const allGraveyardCards: { card: Card; index: number; owner: string }[] = [];
+    const validIndices = new Set(this.graveyardChoiceIndices);
+    let poolIndex = 0;
+    for (let playerIdx = 0; playerIdx < g.graveyards.length; playerIdx++) {
+      const graveyard = g.graveyards[playerIdx];
+      const ownerName = g.playerNames[playerIdx] ?? 'Unknown';
+      for (const card of graveyard) {
+        if (card.type === 'CREATURE' || card.type === 'ARTIFACT') {
+          if (validIndices.has(poolIndex)) {
+            allGraveyardCards.push({ card, index: poolIndex, owner: ownerName });
+          }
+          poolIndex++;
+        }
+      }
+    }
+    return allGraveyardCards;
+  }
+
+  chooseGraveyardCard(index: number): void {
+    if (!this.choosingFromGraveyard) return;
+    this.websocketService.send({
+      type: MessageType.GRAVEYARD_CARD_CHOSEN,
+      cardIndex: index
+    });
+    this.choosingFromGraveyard = false;
+    this.graveyardChoiceIndices = [];
+    this.graveyardChoicePrompt = '';
+  }
+
   private handleChooseFromRevealedHand(msg: ChooseFromRevealedHandNotification): void {
     this.revealingHand = true;
     this.choosingFromRevealedHand = true;
@@ -1140,6 +1182,11 @@ export class GameComponent implements OnInit, OnDestroy {
   choosingFromRevealedHand = false;
   revealedHandChoosableIndices = new Set<number>();
   revealedHandChoicePrompt = '';
+
+  // Choose from graveyard state
+  choosingFromGraveyard = false;
+  graveyardChoiceIndices: number[] = [];
+  graveyardChoicePrompt = '';
 
   // X cost prompt state
   choosingXValue = false;

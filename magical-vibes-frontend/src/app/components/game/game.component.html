@@ -585,6 +585,26 @@
     </div>
   }
 
+  @if (choosingFromGraveyard) {
+    <div class="reveal-hand-overlay">
+      <div class="reveal-hand-card">
+        <h2>{{ graveyardChoicePrompt }}</h2>
+        <div class="reveal-hand-cards">
+          @for (entry of graveyardChoiceCards; track entry.index) {
+            <div class="graveyard-choice-entry">
+              <app-card-display [card]="entry.card"
+                class="choosable-card"
+                (click)="chooseGraveyardCard(entry.index)"
+                (mouseenter)="onCardHover(entry.card)"
+                (mouseleave)="onCardHoverEnd()" />
+              <div class="graveyard-choice-owner">{{ entry.owner }}</div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
   @if (revealingHand) {
     <div class="reveal-hand-overlay">
       <div class="reveal-hand-card">

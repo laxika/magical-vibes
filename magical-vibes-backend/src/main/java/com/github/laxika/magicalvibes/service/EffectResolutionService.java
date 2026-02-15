@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamage
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
@@ -100,7 +101,9 @@ public class EffectResolutionService {
     private final GameHelper gameHelper;
 
     void resolveEffects(GameData gameData, StackEntry entry) {
-        for (CardEffect effect : entry.getEffectsToResolve()) {
+        List<CardEffect> effects = entry.getEffectsToResolve();
+        for (int i = 0; i < effects.size(); i++) {
+            CardEffect effect = effects.get(i);
             if (effect instanceof OpponentMayPlayCreatureEffect) {
                 resolveOpponentMayPlayCreature(gameData, entry.getControllerId());
             } else if (effect instanceof GainLifeEffect gainLife) {
@@ -181,6 +184,8 @@ public class EffectResolutionService {
                 resolveReturnCardFromGraveyardToZone(gameData, entry, CardType.ARTIFACT,
                         GraveyardChoiceDestination.HAND,
                         "You may return an artifact card from your graveyard to your hand.");
+            } else if (effect instanceof ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect) {
+                resolveReturnArtifactOrCreatureFromAnyGraveyardToBattlefield(gameData, entry);
             } else if (effect instanceof RegenerateEffect) {
                 resolveRegenerate(gameData, entry);
             } else if (effect instanceof TapCreaturesEffect tap) {
@@ -1015,6 +1020,40 @@ public class EffectResolutionService {
         }
 
         log.info("Game {} - {} token created for player {}", gameData.id, token.tokenName(), controllerId);
+    }
+
+    private void resolveReturnArtifactOrCreatureFromAnyGraveyardToBattlefield(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> cardPool = new ArrayList<>();
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card card : graveyard) {
+                if (card.getType() == CardType.CREATURE || card.getType() == CardType.ARTIFACT) {
+                    cardPool.add(card);
+                }
+            }
+        }
+
+        if (cardPool.isEmpty()) {
+            String logEntry = entry.getDescription() + " — no artifact or creature cards in any graveyard.";
+            gameHelper.logAndBroadcast(gameData, logEntry);
+            // Per Magic rules: spell fizzles when it has no legal targets at resolution.
+            // Remove ShuffleIntoLibraryEffect so the card goes to graveyard instead of being shuffled.
+            entry.getEffectsToResolve().removeIf(e -> e instanceof ShuffleIntoLibraryEffect);
+            return;
+        }
+
+        List<Integer> indices = new ArrayList<>();
+        for (int i = 0; i < cardPool.size(); i++) {
+            indices.add(i);
+        }
+
+        gameData.graveyardChoiceCardPool = cardPool;
+        gameData.graveyardChoiceDestination = GraveyardChoiceDestination.BATTLEFIELD;
+        gameHelper.beginGraveyardChoice(gameData, controllerId, indices,
+                "Choose an artifact or creature card from a graveyard to put onto the battlefield under your control.");
     }
 
     private void resolveReturnCardFromGraveyardToZone(GameData gameData, StackEntry entry,

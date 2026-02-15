@@ -45,6 +45,8 @@ export enum MessageType {
   LIBRARY_CARD_CHOSEN = 'LIBRARY_CARD_CHOSEN',
   REVEAL_HAND = 'REVEAL_HAND',
   CHOOSE_FROM_REVEALED_HAND = 'CHOOSE_FROM_REVEALED_HAND',
+  CHOOSE_CARD_FROM_GRAVEYARD = 'CHOOSE_CARD_FROM_GRAVEYARD',
+  GRAVEYARD_CARD_CHOSEN = 'GRAVEYARD_CARD_CHOSEN',
   ERROR = 'ERROR'
 }
 
@@ -336,7 +338,13 @@ export interface ChooseFromRevealedHandNotification {
   prompt: string;
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameStateNotification | MulliganResolvedNotification | SelectCardsToBottomNotification | AvailableAttackersNotification | AvailableBlockersNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | ReorderLibraryCardsNotification | ChooseCardFromLibraryNotification | RevealHandNotification | ChooseFromRevealedHandNotification;
+export interface ChooseCardFromGraveyardNotification {
+  type: MessageType;
+  cardIndices: number[];
+  prompt: string;
+}
+
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameStateNotification | MulliganResolvedNotification | SelectCardsToBottomNotification | AvailableAttackersNotification | AvailableBlockersNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | ReorderLibraryCardsNotification | ChooseCardFromLibraryNotification | RevealHandNotification | ChooseFromRevealedHandNotification | ChooseCardFromGraveyardNotification;
 
 export interface User {
   userId: string;
