@@ -559,6 +559,26 @@
       </div>
     }
 
+    @if (choosingGraveyardCards) {
+      <div class="combat-banner permanent-choice-banner">
+        <span>{{ graveyardChoicePrompt }} ({{ graveyardChoiceSelectedIds().size }}/{{ graveyardChoiceMaxCount }} selected)</span>
+        <button class="btn-confirm-combat" (click)="confirmGraveyardCardChoice()">Confirm</button>
+      </div>
+      <div class="graveyard-choice-overlay">
+        <div class="graveyard-choice-cards">
+          @for (card of graveyardChoiceCards; track $index) {
+            <app-card-display
+              [card]="card"
+              class="graveyard-choice-card"
+              [class.selected-graveyard-card]="graveyardChoiceSelectedIds().has(graveyardChoiceCardIds[$index])"
+              (click)="toggleGraveyardCardSelection($index)"
+              (mouseenter)="onCardHover(card)"
+              (mouseleave)="onCardHoverEnd()" />
+          }
+        </div>
+      </div>
+    }
+
     <div class="hand-area">
       <div class="hand-label">Your Hand ({{ hand.length }} cards)</div>
       <div class="hand-cards">

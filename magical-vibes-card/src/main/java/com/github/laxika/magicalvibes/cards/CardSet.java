@@ -89,6 +89,7 @@ import com.github.laxika.magicalvibes.cards.r.Reminisce;
 import com.github.laxika.magicalvibes.cards.r.RemoveSoul;
 import com.github.laxika.magicalvibes.cards.r.ReyaDawnbringer;
 import com.github.laxika.magicalvibes.cards.r.RevivingDose;
+import com.github.laxika.magicalvibes.cards.r.RooftopPercher;
 import com.github.laxika.magicalvibes.cards.r.RootwaterCommando;
 import com.github.laxika.magicalvibes.cards.r.Righteousness;
 import com.github.laxika.magicalvibes.cards.r.RobeOfMirrors;
@@ -292,7 +293,8 @@ public enum CardSet {
     )),
 
     LORWYN_ECLIPSED("ECL", "Lorwyn Eclipsed", List.of(
-            new CardPrinting("ECL", "1", ChangelingWayfinder::new, "No map. No complaints.", "Quintin Gleim", COMMON)
+            new CardPrinting("ECL", "1", ChangelingWayfinder::new, "No map. No complaints.", "Quintin Gleim", COMMON),
+            new CardPrinting("ECL", "2", RooftopPercher::new, "Nils Hamm", COMMON)
     ));
 
     private final String code;

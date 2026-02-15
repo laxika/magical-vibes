@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, StackEntry, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification, ChooseFromRevealedHandNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, ChooseMultipleCardsFromGraveyardsNotification, StackEntry, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification, ChooseFromRevealedHandNotification } from '../../services/websocket.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { Subscription } from 'rxjs';
 
@@ -122,6 +122,10 @@ export class GameComponent implements OnInit, OnDestroy {
 
         if (message.type === MessageType.CHOOSE_MULTIPLE_PERMANENTS) {
           this.handleChooseMultiplePermanents(message as ChooseMultiplePermanentsNotification);
+        }
+
+        if (message.type === MessageType.CHOOSE_MULTIPLE_CARDS_FROM_GRAVEYARDS) {
+          this.handleChooseMultipleCardsFromGraveyards(message as ChooseMultipleCardsFromGraveyardsNotification);
         }
 
         if (message.type === MessageType.REORDER_LIBRARY_CARDS) {
@@ -428,6 +432,42 @@ export class GameComponent implements OnInit, OnDestroy {
     this.multiPermanentSelectedIds.set(new Set());
     this.multiPermanentMaxCount = 0;
     this.multiPermanentChoicePrompt = '';
+  }
+
+  private handleChooseMultipleCardsFromGraveyards(msg: ChooseMultipleCardsFromGraveyardsNotification): void {
+    this.choosingGraveyardCards = true;
+    this.graveyardChoiceCards = msg.cards;
+    this.graveyardChoiceCardIds = msg.cardIds;
+    this.graveyardChoiceSelectedIds.set(new Set());
+    this.graveyardChoiceMaxCount = msg.maxCount;
+    this.graveyardChoicePrompt = msg.prompt;
+  }
+
+  toggleGraveyardCardSelection(index: number): void {
+    if (!this.choosingGraveyardCards) return;
+    const cardId = this.graveyardChoiceCardIds[index];
+    if (!cardId) return;
+    const selected = new Set(this.graveyardChoiceSelectedIds());
+    if (selected.has(cardId)) {
+      selected.delete(cardId);
+    } else if (selected.size < this.graveyardChoiceMaxCount) {
+      selected.add(cardId);
+    }
+    this.graveyardChoiceSelectedIds.set(selected);
+  }
+
+  confirmGraveyardCardChoice(): void {
+    if (!this.choosingGraveyardCards) return;
+    this.websocketService.send({
+      type: MessageType.MULTIPLE_GRAVEYARD_CARDS_CHOSEN,
+      cardIds: Array.from(this.graveyardChoiceSelectedIds())
+    });
+    this.choosingGraveyardCards = false;
+    this.graveyardChoiceCards = [];
+    this.graveyardChoiceCardIds = [];
+    this.graveyardChoiceSelectedIds.set(new Set());
+    this.graveyardChoiceMaxCount = 0;
+    this.graveyardChoicePrompt = '';
   }
 
   getColorDisplayName(color: string): string {
@@ -1096,6 +1136,14 @@ export class GameComponent implements OnInit, OnDestroy {
   multiPermanentSelectedIds = signal(new Set<string>());
   multiPermanentMaxCount = 0;
   multiPermanentChoicePrompt = '';
+
+  // Multi-graveyard choice state
+  choosingGraveyardCards = false;
+  graveyardChoiceCards: Card[] = [];
+  graveyardChoiceCardIds: string[] = [];
+  graveyardChoiceSelectedIds = signal(new Set<string>());
+  graveyardChoiceMaxCount = 0;
+  graveyardChoicePrompt = '';
 
   // Ability picker state
   choosingAbility = false;

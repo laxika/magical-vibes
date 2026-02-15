@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
@@ -247,6 +248,8 @@ public class EffectResolutionService {
                 if (gameData.awaitingInput == AwaitingInput.LIBRARY_SEARCH) {
                     break;
                 }
+            } else if (effect instanceof ExileCardsFromGraveyardEffect exile) {
+                resolveExileCardsFromGraveyard(gameData, entry, exile);
             }
         }
         gameHelper.removeOrphanedAuras(gameData);
@@ -1484,5 +1487,39 @@ public class EffectResolutionService {
         String logMsg = playerName + " searches their library.";
         gameHelper.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} searching library for a basic land ({} found)", gameData.id, playerName, basicLands.size());
+    }
+
+    private void resolveExileCardsFromGraveyard(GameData gameData, StackEntry entry, ExileCardsFromGraveyardEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<UUID> targetCardIds = entry.getTargetCardIds();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        // Exile targeted cards that are still in graveyards
+        if (targetCardIds != null && !targetCardIds.isEmpty()) {
+            List<String> exiledNames = new ArrayList<>();
+            for (UUID cardId : targetCardIds) {
+                Card card = gameHelper.findCardInGraveyardById(gameData, cardId);
+                if (card != null) {
+                    exiledNames.add(card.getName());
+                    for (UUID pid : gameData.orderedPlayerIds) {
+                        List<Card> graveyard = gameData.playerGraveyards.get(pid);
+                        if (graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
+                            gameData.playerExiledCards.get(pid).add(card);
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!exiledNames.isEmpty()) {
+                String logEntry = playerName + " exiles " + String.join(", ", exiledNames) + " from graveyard.";
+                gameHelper.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} exiled {} cards from graveyards", gameData.id, playerName, exiledNames.size());
+            }
+        }
+
+        // Gain life after exile
+        if (effect.lifeGain() > 0) {
+            resolveGainLife(gameData, controllerId, effect.lifeGain());
+        }
     }
 }

@@ -76,6 +76,7 @@ import com.github.laxika.magicalvibes.model.filter.SpellColorTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.SpellTypeTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.WithoutKeywordTargetFilter;
 import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFromGraveyardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
@@ -443,6 +444,19 @@ public class GameService {
                     }
                 }
             }
+            // Check multi-target graveyard fizzle: if ALL targeted cards are gone, fizzle
+            if (!targetFizzled && entry.getTargetCardIds() != null && !entry.getTargetCardIds().isEmpty()) {
+                boolean allGone = true;
+                for (UUID cardId : entry.getTargetCardIds()) {
+                    if (gameHelper.findCardInGraveyardById(gameData, cardId) != null) {
+                        allGone = false;
+                        break;
+                    }
+                }
+                if (allGone) {
+                    targetFizzled = true;
+                }
+            }
             if (targetFizzled) {
                 String fizzleLog = entry.getDescription() + " fizzles (illegal target).";
                 gameHelper.logAndBroadcast(gameData, fizzleLog);
@@ -571,6 +585,24 @@ public class GameService {
                         sessionManager.sendToPlayer(playerId, new ChooseMultiplePermanentsMessage(
                                 new ArrayList<>(gameData.awaitingMultiPermanentChoiceValidIds),
                                 gameData.awaitingMultiPermanentChoiceMaxCount, "Choose permanents."));
+                    }
+                }
+                case MULTI_GRAVEYARD_CHOICE -> {
+                    if (playerId.equals(gameData.awaitingMultiGraveyardChoicePlayerId)) {
+                        List<UUID> validCardIds = new ArrayList<>(gameData.awaitingMultiGraveyardChoiceValidCardIds);
+                        List<CardView> cardViews = new ArrayList<>();
+                        for (UUID pid : gameData.orderedPlayerIds) {
+                            List<Card> graveyard = gameData.playerGraveyards.get(pid);
+                            if (graveyard == null) continue;
+                            for (Card card : graveyard) {
+                                if (gameData.awaitingMultiGraveyardChoiceValidCardIds.contains(card.getId())) {
+                                    cardViews.add(gameHelper.getCardViewFactory().create(card));
+                                }
+                            }
+                        }
+                        sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsFromGraveyardsMessage(
+                                validCardIds, cardViews, gameData.awaitingMultiGraveyardChoiceMaxCount,
+                                "Exile up to " + gameData.awaitingMultiGraveyardChoiceMaxCount + " cards from graveyards."));
                     }
                 }
                 case LIBRARY_REORDER -> {
@@ -1991,6 +2023,81 @@ public class GameService {
             } else {
                 throw new IllegalStateException("No pending multi-permanent choice context");
             }
+        }
+    }
+
+    public void handleMultipleGraveyardCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
+        synchronized (gameData) {
+            if (gameData.awaitingInput != AwaitingInput.MULTI_GRAVEYARD_CHOICE) {
+                throw new IllegalStateException("Not awaiting multi-graveyard choice");
+            }
+            if (!player.getId().equals(gameData.awaitingMultiGraveyardChoicePlayerId)) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+
+            Set<UUID> validIds = gameData.awaitingMultiGraveyardChoiceValidCardIds;
+            int maxCount = gameData.awaitingMultiGraveyardChoiceMaxCount;
+
+            if (cardIds == null) {
+                cardIds = List.of();
+            }
+
+            if (cardIds.size() > maxCount) {
+                throw new IllegalStateException("Too many cards selected: " + cardIds.size() + " > " + maxCount);
+            }
+
+            Set<UUID> uniqueIds = new HashSet<>(cardIds);
+            if (uniqueIds.size() != cardIds.size()) {
+                throw new IllegalStateException("Duplicate card IDs in selection");
+            }
+
+            for (UUID cardId : cardIds) {
+                if (!validIds.contains(cardId)) {
+                    throw new IllegalStateException("Invalid card: " + cardId);
+                }
+            }
+
+            // Retrieve the pending ETB info
+            Card pendingCard = gameData.pendingGraveyardTargetCard;
+            UUID controllerId = gameData.pendingGraveyardTargetControllerId;
+            List<CardEffect> pendingEffects = gameData.pendingGraveyardTargetEffects;
+
+            // Clear awaiting state
+            gameData.awaitingInput = null;
+            gameData.awaitingMultiGraveyardChoicePlayerId = null;
+            gameData.awaitingMultiGraveyardChoiceValidCardIds = null;
+            gameData.awaitingMultiGraveyardChoiceMaxCount = 0;
+            gameData.pendingGraveyardTargetCard = null;
+            gameData.pendingGraveyardTargetControllerId = null;
+            gameData.pendingGraveyardTargetEffects = null;
+
+            // Put the ETB ability on the stack with the chosen targets
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    pendingCard,
+                    controllerId,
+                    pendingCard.getName() + "'s ETB ability",
+                    new ArrayList<>(pendingEffects),
+                    new ArrayList<>(cardIds)
+            ));
+
+            if (cardIds.isEmpty()) {
+                String etbLog = pendingCard.getName() + "'s enter-the-battlefield ability triggers targeting no cards.";
+                gameHelper.logAndBroadcast(gameData, etbLog);
+            } else {
+                List<String> targetNames = new ArrayList<>();
+                for (UUID cardId : cardIds) {
+                    Card card = gameHelper.findCardInGraveyardById(gameData, cardId);
+                    if (card != null) {
+                        targetNames.add(card.getName());
+                    }
+                }
+                String etbLog = pendingCard.getName() + "'s enter-the-battlefield ability triggers targeting " + String.join(", ", targetNames) + ".";
+                gameHelper.logAndBroadcast(gameData, etbLog);
+            }
+            log.info("Game {} - {} ETB ability pushed onto stack with {} graveyard targets", gameData.id, pendingCard.getName(), cardIds.size());
+
+            resolveAutoPass(gameData);
         }
     }
 
