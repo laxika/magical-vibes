@@ -51,6 +51,8 @@ import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchant
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostNonColorCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostOtherCreaturesByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDoesntUntapEffect;
@@ -208,6 +210,16 @@ public class GameHelper {
                     }
                     if (effect instanceof BoostOwnCreaturesEffect boost
                             && bf.contains(target)) {
+                        power += boost.powerBoost();
+                        toughness += boost.toughnessBoost();
+                    }
+                    if (effect instanceof BoostOtherCreaturesByColorEffect boost
+                            && target.getCard().getColor() == boost.color()) {
+                        power += boost.powerBoost();
+                        toughness += boost.toughnessBoost();
+                    }
+                    if (effect instanceof BoostNonColorCreaturesEffect boost
+                            && target.getCard().getColor() != boost.excludedColor()) {
                         power += boost.powerBoost();
                         toughness += boost.toughnessBoost();
                     }
