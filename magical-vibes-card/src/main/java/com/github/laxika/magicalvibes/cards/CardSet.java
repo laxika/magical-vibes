@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards;
 
 import com.github.laxika.magicalvibes.cards.a.Afflict;
+import com.github.laxika.magicalvibes.cards.a.AgonizingMemories;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AmbassadorLaquatus;
 import com.github.laxika.magicalvibes.cards.a.ArcanisTheOmnipotent;
@@ -155,6 +156,7 @@ public enum CardSet {
             new CardPrinting("10E", "13", Condemn::new, "Daren Bader", UNCOMMON),
             new CardPrinting("10E", "14", Demystify::new, "Christopher Rush", COMMON),
             new CardPrinting("10E", "125", Afflict::new, "\"One rarely notices a heartbeat, save when it is stolen.\"", "Roger Raupp", COMMON),
+            new CardPrinting("10E", "126", AgonizingMemories::new, "\"In the aftermath of war, when the slaying is long done, the greatest miseries come home to roost.\"", "John Matson", UNCOMMON),
             new CardPrinting("10E", "139", DrudgeSkeletons::new, "\"The dead make good soldiers. They obey without question, never surrender, and don't stop fighting when a limb is cut off.\"\n\u2014Nevinyrral, Necromancer's Handbook", "Jim Nelson", UNCOMMON),
             new CardPrinting("10E", "15", FieldMarshal::new, "Stephen Tappin", RARE),
             new CardPrinting("10E", "16", GhostWarden::new, "\"I thought of fate as an iron lattice, intricate but rigidly unchangeable. That was until some force bent fate's bars to spare my life.\"\n\u2014Ilromov, traveling storyteller", "Ittoku", COMMON),

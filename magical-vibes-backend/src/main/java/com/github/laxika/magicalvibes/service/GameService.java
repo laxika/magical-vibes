@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
 import com.github.laxika.magicalvibes.networking.message.JoinGame;
@@ -566,6 +567,17 @@ public class GameService {
                         List<CardView> cardViews = gameData.awaitingLibraryReorderCards.stream().map(gameHelper.getCardViewFactory()::create).toList();
                         sessionManager.sendToPlayer(playerId, new ReorderLibraryCardsMessage(
                                 cardViews, "Put these cards back on top of your library in any order (top to bottom)."));
+                    }
+                }
+                case REVEALED_HAND_CHOICE -> {
+                    if (playerId.equals(gameData.awaitingCardChoicePlayerId) && gameData.awaitingRevealedHandChoiceTargetPlayerId != null) {
+                        UUID targetPlayerId = gameData.awaitingRevealedHandChoiceTargetPlayerId;
+                        List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
+                        String targetName = gameData.playerIdToName.get(targetPlayerId);
+                        List<CardView> cardViews = targetHand.stream().map(gameHelper.getCardViewFactory()::create).toList();
+                        List<Integer> validIndices = new ArrayList<>(gameData.awaitingCardChoiceValidIndices);
+                        sessionManager.sendToPlayer(playerId, new ChooseFromRevealedHandMessage(
+                                cardViews, validIndices, "Choose a card to put on top of " + targetName + "'s library."));
                     }
                 }
             }
@@ -1461,6 +1473,11 @@ public class GameService {
                 return;
             }
 
+            if (gameData.awaitingInput == AwaitingInput.REVEALED_HAND_CHOICE) {
+                handleRevealedHandCardChosen(gameData, player, cardIndex);
+                return;
+            }
+
             if (gameData.awaitingInput != AwaitingInput.CARD_CHOICE && gameData.awaitingInput != AwaitingInput.TARGETED_CARD_CHOICE) {
                 throw new IllegalStateException("Not awaiting card choice");
             }
@@ -1535,6 +1552,65 @@ public class GameService {
             gameData.awaitingCardChoicePlayerId = null;
             gameData.awaitingCardChoiceValidIndices = null;
             gameData.awaitingDiscardRemainingCount = 0;
+            resolveAutoPass(gameData);
+        }
+    }
+
+    private void handleRevealedHandCardChosen(GameData gameData, Player player, int cardIndex) {
+        if (!player.getId().equals(gameData.awaitingCardChoicePlayerId)) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+
+        Set<Integer> validIndices = gameData.awaitingCardChoiceValidIndices;
+        if (!validIndices.contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        UUID targetPlayerId = gameData.awaitingRevealedHandChoiceTargetPlayerId;
+        List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        Card chosenCard = targetHand.remove(cardIndex);
+        gameData.awaitingRevealedHandChosenCards.add(chosenCard);
+
+        String logEntry = player.getUsername() + " chooses " + chosenCard.getName() + " from " + targetName + "'s hand.";
+        gameHelper.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} chooses {} from {}'s hand", gameData.id, player.getUsername(), chosenCard.getName(), targetName);
+
+        gameData.awaitingRevealedHandChoiceRemainingCount--;
+
+        if (gameData.awaitingRevealedHandChoiceRemainingCount > 0 && !targetHand.isEmpty()) {
+            // More cards to choose — update valid indices and prompt again
+            List<Integer> newValidIndices = new ArrayList<>();
+            for (int i = 0; i < targetHand.size(); i++) {
+                newValidIndices.add(i);
+            }
+
+            gameHelper.beginRevealedHandChoice(gameData, player.getId(), targetPlayerId, newValidIndices,
+                    "Choose another card to put on top of " + targetName + "'s library.");
+        } else {
+            // All cards chosen — put them on top of library
+            gameData.awaitingInput = null;
+            gameData.awaitingCardChoicePlayerId = null;
+            gameData.awaitingCardChoiceValidIndices = null;
+
+            List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+            List<Card> chosenCards = new ArrayList<>(gameData.awaitingRevealedHandChosenCards);
+
+            // Insert in reverse order so first chosen ends up on top
+            for (int i = chosenCards.size() - 1; i >= 0; i--) {
+                deck.addFirst(chosenCards.get(i));
+            }
+
+            String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
+            String putLog = player.getUsername() + " puts " + cardNames + " on top of " + targetName + "'s library.";
+            gameHelper.logAndBroadcast(gameData, putLog);
+            log.info("Game {} - {} puts {} on top of {}'s library", gameData.id, player.getUsername(), cardNames, targetName);
+
+            gameData.awaitingRevealedHandChoiceTargetPlayerId = null;
+            gameData.awaitingRevealedHandChoiceRemainingCount = 0;
+            gameData.awaitingRevealedHandChosenCards.clear();
+
             resolveAutoPass(gameData);
         }
     }

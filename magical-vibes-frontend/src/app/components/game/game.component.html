@@ -560,19 +560,27 @@
   @if (revealingHand) {
     <div class="reveal-hand-overlay">
       <div class="reveal-hand-card">
-        <h2>{{ revealedHandPlayerName }}'s Hand</h2>
+        @if (choosingFromRevealedHand) {
+          <h2>{{ revealedHandChoicePrompt }}</h2>
+        } @else {
+          <h2>{{ revealedHandPlayerName }}'s Hand</h2>
+        }
         @if (revealedHandCards.length === 0) {
           <p class="reveal-hand-empty">Hand is empty.</p>
         } @else {
           <div class="reveal-hand-cards">
             @for (card of revealedHandCards; track $index) {
               <app-card-display [card]="card"
+                [class.choosable-card]="isRevealedHandCardChoosable($index)"
+                (click)="choosingFromRevealedHand ? chooseFromRevealedHand($index) : null"
                 (mouseenter)="onCardHover(card)"
                 (mouseleave)="onCardHoverEnd()" />
             }
           </div>
         }
-        <button class="btn-keep" (click)="closeRevealHand()">Close</button>
+        @if (!choosingFromRevealedHand) {
+          <button class="btn-keep" (click)="closeRevealHand()">Close</button>
+        }
       </div>
     </div>
   }

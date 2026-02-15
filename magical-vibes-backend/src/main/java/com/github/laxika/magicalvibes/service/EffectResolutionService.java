@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEf
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
@@ -73,6 +74,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ExcludeSelfTargetFilter;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -192,6 +194,11 @@ public class EffectResolutionService {
                 resolveMillTargetPlayer(gameData, entry, mill);
             } else if (effect instanceof LookAtHandEffect) {
                 resolveLookAtHand(gameData, entry);
+            } else if (effect instanceof ChooseCardsFromTargetHandToTopOfLibraryEffect choose) {
+                resolveChooseCardsFromTargetHandToTopOfLibrary(gameData, entry, choose);
+                if (gameData.awaitingInput == AwaitingInput.REVEALED_HAND_CHOICE) {
+                    break;
+                }
             } else if (effect instanceof RevealTopCardOfLibraryEffect) {
                 resolveRevealTopCardOfLibrary(gameData, entry);
             } else if (effect instanceof GainControlOfEnchantedTargetEffect) {
@@ -1076,6 +1083,44 @@ public class EffectResolutionService {
         gameHelper.getSessionManager().sendToPlayer(entry.getControllerId(), new RevealHandMessage(cardViews, targetName));
 
         log.info("Game {} - {} looks at {}'s hand", gameData.id, casterName, targetName);
+    }
+
+    private void resolveChooseCardsFromTargetHandToTopOfLibrary(GameData gameData, StackEntry entry, ChooseCardsFromTargetHandToTopOfLibraryEffect choose) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID casterId = entry.getControllerId();
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        String casterName = gameData.playerIdToName.get(casterId);
+
+        if (hand.isEmpty()) {
+            String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
+            gameHelper.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} looks at {}'s empty hand", gameData.id, casterName, targetName);
+            return;
+        }
+
+        // Log and reveal hand to caster
+        String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
+        String logEntry = casterName + " looks at " + targetName + "'s hand: " + cardNames + ".";
+        gameHelper.logAndBroadcast(gameData, logEntry);
+
+        int cardsToChoose = Math.min(choose.count(), hand.size());
+
+        // Build valid indices (all cards in hand)
+        List<Integer> validIndices = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            validIndices.add(i);
+        }
+
+        gameData.awaitingRevealedHandChoiceTargetPlayerId = targetPlayerId;
+        gameData.awaitingRevealedHandChoiceRemainingCount = cardsToChoose;
+        gameData.awaitingRevealedHandChosenCards.clear();
+
+        gameHelper.beginRevealedHandChoice(gameData, casterId, targetPlayerId, validIndices,
+                "Choose a card to put on top of " + targetName + "'s library.");
+
+        log.info("Game {} - {} choosing {} card(s) from {}'s hand to put on top of library",
+                gameData.id, casterName, cardsToChoose, targetName);
     }
 
     private void resolveRevealTopCardOfLibrary(GameData gameData, StackEntry entry) {

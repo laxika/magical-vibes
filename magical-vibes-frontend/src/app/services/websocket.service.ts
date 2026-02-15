@@ -42,6 +42,7 @@ export enum MessageType {
   REORDER_LIBRARY_CARDS = 'REORDER_LIBRARY_CARDS',
   LIBRARY_CARDS_REORDERED = 'LIBRARY_CARDS_REORDERED',
   REVEAL_HAND = 'REVEAL_HAND',
+  CHOOSE_FROM_REVEALED_HAND = 'CHOOSE_FROM_REVEALED_HAND',
   ERROR = 'ERROR'
 }
 
@@ -317,7 +318,14 @@ export interface RevealHandNotification {
   playerName: string;
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameStateNotification | MulliganResolvedNotification | SelectCardsToBottomNotification | AvailableAttackersNotification | AvailableBlockersNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | ReorderLibraryCardsNotification | RevealHandNotification;
+export interface ChooseFromRevealedHandNotification {
+  type: MessageType;
+  cards: Card[];
+  validIndices: number[];
+  prompt: string;
+}
+
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameStateNotification | MulliganResolvedNotification | SelectCardsToBottomNotification | AvailableAttackersNotification | AvailableBlockersNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | ReorderLibraryCardsNotification | RevealHandNotification | ChooseFromRevealedHandNotification;
 
 export interface User {
   userId: string;
