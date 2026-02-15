@@ -681,20 +681,33 @@ export class GameComponent implements OnInit, OnDestroy {
 
   selectSpellTarget(entry: StackEntry): void {
     if (!this.targetingSpell || !entry.isSpell) return;
-    this.websocketService.send({
-      type: MessageType.PLAY_CARD,
-      cardIndex: this.targetingSpellCardIndex,
-      targetPermanentId: entry.cardId
-    });
+    if (this.targetingForAbility) {
+      this.websocketService.send({
+        type: MessageType.ACTIVATE_ABILITY,
+        permanentIndex: this.targetingSpellCardIndex,
+        abilityIndex: this.targetingAbilityIndex,
+        targetPermanentId: entry.cardId
+      });
+    } else {
+      this.websocketService.send({
+        type: MessageType.PLAY_CARD,
+        cardIndex: this.targetingSpellCardIndex,
+        targetPermanentId: entry.cardId
+      });
+    }
     this.targetingSpell = false;
     this.targetingSpellCardIndex = -1;
     this.targetingSpellCardName = '';
+    this.targetingForAbility = false;
+    this.targetingAbilityIndex = -1;
   }
 
   cancelSpellTargeting(): void {
     this.targetingSpell = false;
     this.targetingSpellCardIndex = -1;
     this.targetingSpellCardName = '';
+    this.targetingForAbility = false;
+    this.targetingAbilityIndex = -1;
   }
 
   handleReorderLibraryCards(msg: ReorderLibraryCardsNotification): void {
@@ -933,6 +946,16 @@ export class GameComponent implements OnInit, OnDestroy {
       this.xValueCardName = perm.card.name;
       this.xValueInput = 0;
       this.xValueMaximum = this.totalMana - base;
+      this.targetingForAbility = true;
+      this.targetingAbilityIndex = abilityIndex;
+      return;
+    }
+
+    // Check for spell targeting (counter spells from abilities)
+    if (ability.needsSpellTarget) {
+      this.targetingSpell = true;
+      this.targetingSpellCardIndex = permanentIndex;
+      this.targetingSpellCardName = perm.card.name;
       this.targetingForAbility = true;
       this.targetingAbilityIndex = abilityIndex;
       return;

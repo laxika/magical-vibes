@@ -85,6 +85,7 @@ public class CardViewFactory {
                 ability.getDescription(),
                 ability.isRequiresTap(),
                 ability.isNeedsTarget(),
+                ability.isNeedsSpellTarget(),
                 targetsPlayer,
                 allowedTargetTypes,
                 allowedTargetColors,

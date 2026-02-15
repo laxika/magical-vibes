@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDoesntUntapEffect;
@@ -58,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
@@ -1151,6 +1153,20 @@ public class GameService {
                 }
             }
 
+            // Validate spell target for abilities that counter spells
+            if (ability.isNeedsSpellTarget()) {
+                if (targetPermanentId == null) {
+                    throw new IllegalStateException("Ability requires a spell target");
+                }
+                boolean foundSpellOnStack = gameData.stack.stream()
+                        .anyMatch(se -> se.getCard().getId().equals(targetPermanentId)
+                                && se.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                                && se.getEntryType() != StackEntryType.ACTIVATED_ABILITY);
+                if (!foundSpellOnStack) {
+                    throw new IllegalStateException("Target must be a spell on the stack");
+                }
+            }
+
             // Pay mana cost
             if (abilityCost != null) {
                 ManaCost cost = new ManaCost(abilityCost);
@@ -1283,13 +1299,24 @@ public class GameService {
                 permanent.tap();
             }
 
+            // Sacrifice the permanent (for sacrifice-as-cost abilities)
+            boolean shouldSacrifice = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeSelfCost);
+            if (shouldSacrifice) {
+                battlefield.remove(permanent);
+                gameData.playerGraveyards.get(playerId).add(permanent.getCard());
+            }
+
             String logEntry = player.getUsername() + " activates " + permanent.getCard().getName() + "'s ability.";
             gameHelper.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} activates {}'s ability", gameData.id, player.getUsername(), permanent.getCard().getName());
 
             // Snapshot permanent state into effects so the ability resolves independently of its source
+            // Filter out SacrificeSelfCost since it's already been paid as a cost
             List<CardEffect> snapshotEffects = new ArrayList<>();
             for (CardEffect effect : abilityEffects) {
+                if (effect instanceof SacrificeSelfCost) {
+                    continue;
+                }
                 if (effect instanceof PreventNextColorDamageToControllerEffect && permanent.getChosenColor() != null) {
                     snapshotEffects.add(new PreventNextColorDamageToControllerEffect(permanent.getChosenColor()));
                 } else {
@@ -1298,7 +1325,11 @@ public class GameService {
             }
 
             // Push activated ability on stack
-            if (targetZone != null && targetZone != TargetZone.BATTLEFIELD) {
+            TargetZone effectiveTargetZone = targetZone;
+            if (ability.isNeedsSpellTarget()) {
+                effectiveTargetZone = TargetZone.STACK;
+            }
+            if (effectiveTargetZone != null && effectiveTargetZone != TargetZone.BATTLEFIELD) {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.ACTIVATED_ABILITY,
                         permanent.getCard(),
@@ -1306,7 +1337,7 @@ public class GameService {
                         permanent.getCard().getName() + "'s ability",
                         snapshotEffects,
                         effectiveTargetId,
-                        targetZone
+                        effectiveTargetZone
                 ));
             } else {
                 gameData.stack.add(new StackEntry(
@@ -1937,6 +1968,13 @@ public class GameService {
             gameData.awaitingInput = null;
             gameData.awaitingMayAbilityPlayerId = null;
 
+            // Counter-unless-pays — handled via the may ability system
+            boolean isCounterUnlessPays = ability.effects().stream().anyMatch(e -> e instanceof CounterUnlessPaysEffect);
+            if (isCounterUnlessPays) {
+                handleCounterUnlessPaysChoice(gameData, player, accepted, ability);
+                return;
+            }
+
             // Clone copy creature effect — handled separately (not via the stack)
             boolean isCloneCopy = ability.effects().stream().anyMatch(e -> e instanceof CopyCreatureOnEnterEffect);
             if (isCloneCopy) {
@@ -2000,6 +2038,64 @@ public class GameService {
                 gameHelper.broadcastGameState(gameData);
                 resolveAutoPass(gameData);
             }
+        }
+    }
+
+    private void handleCounterUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        int amount = ability.effects().stream()
+                .filter(e -> e instanceof CounterUnlessPaysEffect)
+                .map(e -> ((CounterUnlessPaysEffect) e).amount())
+                .findFirst().orElse(0);
+        UUID targetCardId = ability.targetCardId();
+
+        StackEntry targetEntry = null;
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(targetCardId)) {
+                targetEntry = se;
+                break;
+            }
+        }
+
+        if (targetEntry == null) {
+            log.info("Game {} - Counter-unless-pays target no longer on stack", gameData.id);
+            gameHelper.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && gameData.awaitingInput == null) {
+                gameData.priorityPassedBy.clear();
+                gameHelper.broadcastGameState(gameData);
+                resolveAutoPass(gameData);
+            }
+            return;
+        }
+
+        if (accepted) {
+            ManaCost cost = new ManaCost("{" + amount + "}");
+            ManaPool pool = gameData.playerManaPools.get(player.getId());
+            if (cost.canPay(pool)) {
+                cost.pay(pool);
+                String logEntry = player.getUsername() + " pays {" + amount + "}. " + targetEntry.getCard().getName() + " is not countered.";
+                gameHelper.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} pays {} to avoid counter", gameData.id, player.getUsername(), amount);
+            } else {
+                gameData.stack.remove(targetEntry);
+                gameData.playerGraveyards.get(targetEntry.getControllerId()).add(targetEntry.getCard());
+                String logEntry = player.getUsername() + " can't pay {" + amount + "}. " + targetEntry.getCard().getName() + " is countered.";
+                gameHelper.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} can't pay {} — spell countered", gameData.id, player.getUsername(), amount);
+            }
+        } else {
+            gameData.stack.remove(targetEntry);
+            gameData.playerGraveyards.get(targetEntry.getControllerId()).add(targetEntry.getCard());
+            String logEntry = player.getUsername() + " declines to pay {" + amount + "}. " + targetEntry.getCard().getName() + " is countered.";
+            gameHelper.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines to pay {} — spell countered", gameData.id, player.getUsername(), amount);
+        }
+
+        gameHelper.performStateBasedActions(gameData);
+        gameHelper.processNextMayAbility(gameData);
+        if (gameData.pendingMayAbilities.isEmpty() && gameData.awaitingInput == null) {
+            gameData.priorityPassedBy.clear();
+            gameHelper.broadcastGameState(gameData);
+            resolveAutoPass(gameData);
         }
     }
 
