@@ -111,6 +111,7 @@ import com.github.laxika.magicalvibes.cards.s.SpiritWeaver;
 import com.github.laxika.magicalvibes.cards.s.StarlightInvoker;
 import com.github.laxika.magicalvibes.cards.s.SteadfastGuard;
 import com.github.laxika.magicalvibes.cards.s.StoryCircle;
+import com.github.laxika.magicalvibes.cards.s.SunkenHope;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.cards.s.SerrasEmbrace;
 import com.github.laxika.magicalvibes.cards.t.TempestOfLight;
@@ -254,6 +255,7 @@ public enum CardSet {
             new CardPrinting("10E", "107", ShimmeringWings::new, "Rebecca Guay", COMMON),
             new CardPrinting("10E", "110", SnappingDrake::new, "The irritable drakes are solitary nesters. Even brooding females barely contain the urge to attack their own young.", "Dave Dorman", COMMON),
             new CardPrinting("10E", "111", SpiketailHatchling::new, "It dodges waves of water to prepare for waves of magic.", "Greg Staples", UNCOMMON),
+            new CardPrinting("10E", "112", SunkenHope::new, "\"I don't concern myself with my enemy's hopes. Hopes follow the tides. They will retreat soon enough.\"\n\u2014Ambassador Laquatus", "Volkan Ba\u011fa", RARE),
             new CardPrinting("10E", "96", PhantomWarrior::new, "\"There are as many pillows of illusion as flakes in a snow-storm. We wake from one dream into another dream.\"\n\u2014Ralph Waldo Emerson, \"Illusions\"", "Greg Staples", UNCOMMON),
             new CardPrinting("10E", "77", CraftyPathmage::new, "\"Follow the pathmage\"\n\u2014Otarian expression meaning \"escape quickly\"", "Jim Murray", COMMON),
             new CardPrinting("10E", "380", Forest::new, "Anthony S. Waters", COMMON),

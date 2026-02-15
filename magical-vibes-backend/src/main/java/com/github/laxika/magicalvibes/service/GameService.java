@@ -1768,6 +1768,29 @@ public class GameService {
     
 
                 resolveAutoPass(gameData);
+            } else if (context instanceof PermanentChoiceContext.BounceCreature bounceCreature) {
+                Permanent target = gameHelper.findPermanentById(gameData, permanentId);
+                if (target == null) {
+                    throw new IllegalStateException("Target creature no longer exists");
+                }
+
+                UUID bouncingPlayerId = bounceCreature.bouncingPlayerId();
+                List<Permanent> battlefield = gameData.playerBattlefields.get(bouncingPlayerId);
+                if (battlefield != null && battlefield.remove(target)) {
+                    gameHelper.removeOrphanedAuras(gameData);
+                    UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), bouncingPlayerId);
+                    gameData.stolenCreatures.remove(target.getId());
+                    List<Card> hand = gameData.playerHands.get(ownerId);
+                    hand.add(target.getOriginalCard());
+
+                    String logEntry = target.getCard().getName() + " is returned to its owner's hand.";
+                    gameHelper.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} returned to owner's hand by Sunken Hope", gameData.id, target.getCard().getName());
+                }
+
+                gameHelper.performStateBasedActions(gameData);
+
+                resolveAutoPass(gameData);
             } else if (gameData.pendingAuraCard != null) {
                 Card auraCard = gameData.pendingAuraCard;
                 gameData.pendingAuraCard = null;

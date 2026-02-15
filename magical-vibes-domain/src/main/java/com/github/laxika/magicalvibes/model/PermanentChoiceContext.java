@@ -9,4 +9,6 @@ public sealed interface PermanentChoiceContext {
     record AuraGraft(UUID auraPermanentId) implements PermanentChoiceContext {}
 
     record LegendRule(String cardName) implements PermanentChoiceContext {}
+
+    record BounceCreature(UUID bouncingPlayerId) implements PermanentChoiceContext {}
 }
