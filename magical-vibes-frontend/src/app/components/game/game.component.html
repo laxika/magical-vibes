@@ -82,25 +82,6 @@
   }
 
   @if (game()?.status === GameStatus.RUNNING || game()?.status === GameStatus.FINISHED) {
-    @if (declaringAttackers) {
-      <div class="combat-banner attackers-banner">
-        <span>Declare Attackers — select creatures to attack, then confirm</span>
-        <button class="btn-confirm-combat" (click)="confirmAttackers()">Confirm Attackers</button>
-      </div>
-    }
-
-    @if (declaringBlockers) {
-      <div class="combat-banner blockers-banner">
-        <span>Assign Blockers — click your creature, then click an attacking creature to block it</span>
-        <div class="combat-banner-actions">
-          @if (selectedBlockerIndex !== null) {
-            <button class="btn-confirm-combat" (click)="cancelBlockerSelection()">Cancel Selection</button>
-          }
-          <button class="btn-confirm-combat" (click)="confirmBlockers()">Confirm Blockers</button>
-        </div>
-      </div>
-    }
-
     @if (targeting) {
       <div class="combat-banner targeting-banner">
         @if (targetingForPlayer) {
@@ -653,7 +634,13 @@
       </div>
 
       <div class="action-bar">
-        <button class="btn-pass" (click)="passPriority()" [disabled]="!hasPriority || declaringAttackers || declaringBlockers">Pass Priority</button>
+        @if (declaringAttackers) {
+          <button class="btn-pass btn-pass-orange" (click)="confirmAttackers()">Confirm Attackers</button>
+        } @else if (declaringBlockers) {
+          <button class="btn-pass btn-pass-blue" (click)="confirmBlockers()">Confirm Blockers</button>
+        } @else {
+          <button class="btn-pass" (click)="passPriority()" [disabled]="!hasPriority">Pass Priority</button>
+        }
       </div>
 
       @if (awaitingMayAbility) {
