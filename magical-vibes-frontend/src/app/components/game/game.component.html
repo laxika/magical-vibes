@@ -6,6 +6,7 @@
       <div class="turn-info">
         <div class="player-badge active">
           {{ player1Name }}
+          <span class="hand-size">Hand: {{ player1HandSize }}</span>
           <span class="deck-size">Deck: {{ player1DeckSize }}</span>
         </div>
         <div class="turn-center">
@@ -14,6 +15,7 @@
         </div>
         <div class="player-badge active">
           {{ player2Name }}
+          <span class="hand-size">Hand: {{ player2HandSize }}</span>
           <span class="deck-size">Deck: {{ player2DeckSize }}</span>
         </div>
       </div>
@@ -629,6 +631,7 @@
         <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)" [class.targetable]="targetingForPlayer" [class.stack-targeted]="isStackTargetPlayer(0)" (click)="selectPlayerTarget(0)">
           {{ player1Name }}
           <span class="life-total">Life: {{ getLifeTotal(0) }}</span>
+          <span class="hand-size">Hand: {{ player1HandSize }}</span>
           <span class="deck-size">Deck: {{ player1DeckSize }}</span>
           @if (holdsPriority(0)) {
             <span class="priority-indicator">Priority</span>
@@ -641,6 +644,7 @@
         <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)" [class.targetable]="targetingForPlayer" [class.stack-targeted]="isStackTargetPlayer(1)" (click)="selectPlayerTarget(1)">
           {{ player2Name }}
           <span class="life-total">Life: {{ getLifeTotal(1) }}</span>
+          <span class="hand-size">Hand: {{ player2HandSize }}</span>
           <span class="deck-size">Deck: {{ player2DeckSize }}</span>
           @if (holdsPriority(1)) {
             <span class="priority-indicator">Priority</span>

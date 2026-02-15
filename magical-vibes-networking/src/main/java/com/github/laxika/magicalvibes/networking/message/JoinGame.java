@@ -13,7 +13,7 @@ import java.util.UUID;
 public record JoinGame(UUID id, String gameName, GameStatus status,
                        List<String> playerNames, List<UUID> playerIds, List<String> gameLog,
                        TurnStep currentStep, UUID activePlayerId, int turnNumber, UUID priorityPlayerId,
-                       List<CardView> hand, int mulliganCount, List<Integer> deckSizes,
+                       List<CardView> hand, int mulliganCount, List<Integer> deckSizes, List<Integer> handSizes,
                        List<List<PermanentView>> battlefields, Map<String, Integer> manaPool,
                        List<TurnStep> autoStopSteps, List<Integer> lifeTotals,
                        List<StackEntryView> stack, List<List<CardView>> graveyards) {
