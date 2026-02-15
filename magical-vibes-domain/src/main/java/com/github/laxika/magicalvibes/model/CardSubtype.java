@@ -45,6 +45,7 @@ public enum CardSubtype {
     DJINN("Djinn"),
     ROGUE("Rogue"),
     ILLUSION("Illusion"),
+    DRAKE("Drake"),
     WARRIOR("Warrior");
 
     @Getter
