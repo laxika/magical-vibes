@@ -107,6 +107,7 @@ export interface ActivatedAbilityView {
   description: string;
   requiresTap: boolean;
   needsTarget: boolean;
+  needsSpellTarget: boolean;
   targetsPlayer: boolean;
   allowedTargetTypes: string[];
   allowedTargetColors: string[];

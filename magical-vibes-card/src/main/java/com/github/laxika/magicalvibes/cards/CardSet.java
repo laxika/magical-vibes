@@ -97,6 +97,7 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Sift;
 import com.github.laxika.magicalvibes.cards.s.ShimmeringWings;
 import com.github.laxika.magicalvibes.cards.s.SnappingDrake;
+import com.github.laxika.magicalvibes.cards.s.SpiketailHatchling;
 import com.github.laxika.magicalvibes.cards.s.SkyhunterPatrol;
 import com.github.laxika.magicalvibes.cards.s.SkyhunterProwler;
 import com.github.laxika.magicalvibes.cards.s.SkyhunterSkirmisher;
@@ -246,6 +247,7 @@ public enum CardSet {
             new CardPrinting("10E", "109", SkyWeaver::new, "\"Let my wisdom give you wings.\"", "Christopher Moeller", UNCOMMON),
             new CardPrinting("10E", "107", ShimmeringWings::new, "Rebecca Guay", COMMON),
             new CardPrinting("10E", "110", SnappingDrake::new, "The irritable drakes are solitary nesters. Even brooding females barely contain the urge to attack their own young.", "Dave Dorman", COMMON),
+            new CardPrinting("10E", "111", SpiketailHatchling::new, "It dodges waves of water to prepare for waves of magic.", "Greg Staples", UNCOMMON),
             new CardPrinting("10E", "96", PhantomWarrior::new, "\"There are as many pillows of illusion as flakes in a snow-storm. We wake from one dream into another dream.\"\n\u2014Ralph Waldo Emerson, \"Illusions\"", "Greg Staples", UNCOMMON),
             new CardPrinting("10E", "77", CraftyPathmage::new, "\"Follow the pathmage\"\n\u2014Otarian expression meaning \"escape quickly\"", "Jim Murray", COMMON),
             new CardPrinting("10E", "380", Forest::new, "Anthony S. Waters", COMMON),

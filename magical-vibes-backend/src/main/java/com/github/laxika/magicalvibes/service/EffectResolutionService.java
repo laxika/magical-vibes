@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -22,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
@@ -211,6 +215,11 @@ public class EffectResolutionService {
                 }
             } else if (effect instanceof CounterSpellEffect) {
                 resolveCounterSpell(gameData, entry);
+            } else if (effect instanceof CounterUnlessPaysEffect counterUnless) {
+                resolveCounterUnlessPays(gameData, entry, counterUnless);
+                if (!gameData.pendingMayAbilities.isEmpty()) {
+                    break;
+                }
             } else if (effect instanceof PlagiarizeEffect) {
                 resolvePlagiarize(gameData, entry);
             } else if (effect instanceof ReorderTopCardsOfLibraryEffect reorder) {
@@ -1197,6 +1206,45 @@ public class EffectResolutionService {
         String logMsg = targetEntry.getCard().getName() + " is countered.";
         gameHelper.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} countered {}", gameData.id, entry.getCard().getName(), targetEntry.getCard().getName());
+    }
+
+    private void resolveCounterUnlessPays(GameData gameData, StackEntry entry, CounterUnlessPaysEffect effect) {
+        UUID targetCardId = entry.getTargetPermanentId();
+        if (targetCardId == null) return;
+
+        StackEntry targetEntry = null;
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(targetCardId)) {
+                targetEntry = se;
+                break;
+            }
+        }
+
+        if (targetEntry == null) {
+            log.info("Game {} - Counter-unless-pays target no longer on stack", gameData.id);
+            return;
+        }
+
+        UUID targetControllerId = targetEntry.getControllerId();
+        ManaPool pool = gameData.playerManaPools.get(targetControllerId);
+        ManaCost cost = new ManaCost("{" + effect.amount() + "}");
+
+        if (!cost.canPay(pool)) {
+            // Can't pay — counter immediately
+            gameData.stack.remove(targetEntry);
+            gameData.playerGraveyards.get(targetControllerId).add(targetEntry.getCard());
+
+            String logMsg = targetEntry.getCard().getName() + " is countered.";
+            gameHelper.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - {} countered {} (can't pay {})", gameData.id, entry.getCard().getName(), targetEntry.getCard().getName(), effect.amount());
+        } else {
+            // Can pay — ask the opponent via the may ability system
+            String prompt = "Pay {" + effect.amount() + "} to prevent " + targetEntry.getCard().getName() + " from being countered?";
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    entry.getCard(), targetControllerId, List.of(effect), prompt, targetCardId
+            ));
+            // processNextMayAbility (called by resolveTopOfStack) will set awaitingInput and send the message
+        }
     }
 
     private void resolvePlagiarize(GameData gameData, StackEntry entry) {
