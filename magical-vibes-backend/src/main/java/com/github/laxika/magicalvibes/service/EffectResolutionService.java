@@ -76,6 +76,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ExcludeSelfTargetFilter;
@@ -83,6 +84,7 @@ import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMe
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import lombok.RequiredArgsConstructor;
@@ -245,6 +247,11 @@ public class EffectResolutionService {
             } else if (effect instanceof SearchLibraryForBasicLandToHandEffect) {
                 resolveSearchLibraryForBasicLandToHand(gameData, entry);
                 if (gameData.awaitingInput == AwaitingInput.LIBRARY_SEARCH) {
+                    break;
+                }
+            } else if (effect instanceof LookAtTopCardsHandTopBottomEffect lookAtTop) {
+                resolveLookAtTopCardsHandTopBottom(gameData, entry, lookAtTop);
+                if (gameData.awaitingInput == AwaitingInput.HAND_TOP_BOTTOM_CHOICE) {
                     break;
                 }
             }
@@ -1443,6 +1450,46 @@ public class EffectResolutionService {
         }
 
         gameHelper.checkWinCondition(gameData);
+    }
+
+    private void resolveLookAtTopCardsHandTopBottom(GameData gameData, StackEntry entry, LookAtTopCardsHandTopBottomEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        int count = Math.min(effect.count(), deck.size());
+        if (count == 0) {
+            String logMsg = entry.getCard().getName() + ": " + playerName + "'s library is empty, nothing to look at.";
+            gameHelper.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        if (count == 1) {
+            // Only 1 card: it goes to hand
+            Card card = deck.remove(0);
+            gameData.playerHands.get(controllerId).add(card);
+            String logMsg = playerName + " looks at the top card of their library and puts it into their hand.";
+            gameHelper.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> topCards = new ArrayList<>(deck.subList(0, count));
+        // Remove the top cards from the deck temporarily
+        deck.subList(0, count).clear();
+
+        gameData.awaitingHandTopBottomPlayerId = controllerId;
+        gameData.awaitingHandTopBottomCards = topCards;
+        gameData.awaitingInput = AwaitingInput.HAND_TOP_BOTTOM_CHOICE;
+
+        List<CardView> cardViews = topCards.stream().map(gameHelper.getCardViewFactory()::create).toList();
+        gameHelper.getSessionManager().sendToPlayer(controllerId, new ChooseHandTopBottomMessage(
+                cardViews,
+                "Look at the top " + count + " cards of your library. Choose one to put into your hand."
+        ));
+
+        String logMsg = playerName + " looks at the top " + count + " cards of their library.";
+        gameHelper.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} resolving {} with {} cards", gameData.id, playerName, entry.getCard().getName(), count);
     }
 
     private void resolveSearchLibraryForBasicLandToHand(GameData gameData, StackEntry entry) {

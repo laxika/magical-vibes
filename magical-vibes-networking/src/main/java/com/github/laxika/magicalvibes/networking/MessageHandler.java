@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenReques
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsRequest;
 import com.github.laxika.magicalvibes.networking.message.SacrificePermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
+import com.github.laxika.magicalvibes.networking.message.HandTopBottomChosenRequest;
 
 public interface MessageHandler {
 
@@ -65,6 +66,8 @@ public interface MessageHandler {
     void handleLibraryCardsReordered(Connection connection, ReorderLibraryCardsRequest request) throws Exception;
 
     void handleLibraryCardChosen(Connection connection, LibraryCardChosenRequest request) throws Exception;
+
+    void handleHandTopBottomChosen(Connection connection, HandTopBottomChosenRequest request) throws Exception;
 
     void handleTimeout(Connection connection);
 

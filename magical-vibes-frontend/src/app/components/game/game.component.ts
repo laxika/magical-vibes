@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, StackEntry, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification, ChooseFromRevealedHandNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, StackEntry, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification, ChooseFromRevealedHandNotification, ChooseHandTopBottomNotification } from '../../services/websocket.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { Subscription } from 'rxjs';
 
@@ -130,6 +130,10 @@ export class GameComponent implements OnInit, OnDestroy {
 
         if (message.type === MessageType.CHOOSE_CARD_FROM_LIBRARY) {
           this.handleChooseCardFromLibrary(message as ChooseCardFromLibraryNotification);
+        }
+
+        if (message.type === MessageType.CHOOSE_HAND_TOP_BOTTOM) {
+          this.handleChooseHandTopBottom(message as ChooseHandTopBottomNotification);
         }
 
         if (message.type === MessageType.REVEAL_HAND) {
@@ -791,6 +795,67 @@ export class GameComponent implements OnInit, OnDestroy {
     this.reorderPrompt = '';
   }
 
+  handleChooseHandTopBottom(msg: ChooseHandTopBottomNotification): void {
+    this.choosingHandTopBottom= true;
+    this.handTopBottomCards = msg.cards;
+    this.handTopBottomHandIndex = null;
+    this.handTopBottomTopIndex = null;
+  }
+
+  get handTopBottomStep(): number {
+    if (this.handTopBottomHandIndex === null) return 0;
+    if (this.handTopBottomTopIndex === null) return 1;
+    return 2;
+  }
+
+  get handTopBottomPrompt(): string {
+    if (this.handTopBottomStep === 0) return 'Choose a card to put into your hand:';
+    if (this.handTopBottomStep === 1) return 'Choose a card to put on top of your library:';
+    return 'Confirm your choices:';
+  }
+
+  get handTopBottomAvailableCards(): { card: Card; originalIndex: number }[] {
+    return this.handTopBottomCards
+      .map((card, i) => ({ card, originalIndex: i }))
+      .filter(item => item.originalIndex !== this.handTopBottomHandIndex && item.originalIndex !== this.handTopBottomTopIndex);
+  }
+
+  selectHandTopBottomCard(originalIndex: number): void {
+    if (this.handTopBottomHandIndex === null) {
+      this.handTopBottomHandIndex = originalIndex;
+      // If only 2 cards total, auto-select the remaining one for top
+      const remaining = this.handTopBottomCards
+        .map((_, i) => i)
+        .filter(i => i !== this.handTopBottomHandIndex);
+      if (remaining.length === 1) {
+        this.handTopBottomTopIndex = remaining[0];
+      }
+    } else if (this.handTopBottomTopIndex === null) {
+      this.handTopBottomTopIndex = originalIndex;
+    }
+  }
+
+  undoHandTopBottom(): void {
+    if (this.handTopBottomTopIndex !== null) {
+      this.handTopBottomTopIndex = null;
+    } else if (this.handTopBottomHandIndex !== null) {
+      this.handTopBottomHandIndex = null;
+    }
+  }
+
+  confirmHandTopBottom(): void {
+    if (this.handTopBottomHandIndex === null || this.handTopBottomTopIndex === null) return;
+    this.websocketService.send({
+      type: MessageType.HAND_TOP_BOTTOM_CHOSEN,
+      handCardIndex: this.handTopBottomHandIndex,
+      topCardIndex: this.handTopBottomTopIndex
+    });
+    this.choosingHandTopBottom= false;
+    this.handTopBottomCards = [];
+    this.handTopBottomHandIndex = null;
+    this.handTopBottomTopIndex = null;
+  }
+
   closeRevealHand(): void {
     this.revealingHand = false;
     this.revealedHandCards = [];
@@ -1130,6 +1195,12 @@ export class GameComponent implements OnInit, OnDestroy {
   reorderAvailableIndices: number[] = [];
   reorderOriginalIndices: number[] = [];
   reorderPrompt = '';
+
+  // Telling Time state
+  choosingHandTopBottom = false;
+  handTopBottomCards: Card[] = [];
+  handTopBottomHandIndex: number | null = null;
+  handTopBottomTopIndex: number | null = null;
 
   // Reveal hand state
   revealingHand = false;

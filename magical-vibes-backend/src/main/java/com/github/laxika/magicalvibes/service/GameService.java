@@ -79,6 +79,7 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -577,6 +578,14 @@ public class GameService {
                         List<CardView> cardViews = gameData.awaitingLibrarySearchCards.stream().map(gameHelper.getCardViewFactory()::create).toList();
                         sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(
                                 cardViews, "Search your library for a basic land card to put into your hand."));
+                    }
+                }
+                case HAND_TOP_BOTTOM_CHOICE -> {
+                    if (playerId.equals(gameData.awaitingHandTopBottomPlayerId) && gameData.awaitingHandTopBottomCards != null) {
+                        List<CardView> cardViews = gameData.awaitingHandTopBottomCards.stream().map(gameHelper.getCardViewFactory()::create).toList();
+                        int count = gameData.awaitingHandTopBottomCards.size();
+                        sessionManager.sendToPlayer(playerId, new ChooseHandTopBottomMessage(
+                                cardViews, "Look at the top " + count + " cards of your library. Choose one to put into your hand."));
                     }
                 }
                 case REVEALED_HAND_CHOICE -> {
@@ -2231,6 +2240,64 @@ public class GameService {
         }
     }
 
+
+    public void handleHandTopBottomChosen(GameData gameData, Player player, int handCardIndex, int topCardIndex) {
+        synchronized (gameData) {
+            if (gameData.awaitingInput != AwaitingInput.HAND_TOP_BOTTOM_CHOICE) {
+                throw new IllegalStateException("Not awaiting hand/top/bottom choice");
+            }
+            if (!player.getId().equals(gameData.awaitingHandTopBottomPlayerId)) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+
+            List<Card> handTopBottomCards = gameData.awaitingHandTopBottomCards;
+            int count = handTopBottomCards.size();
+
+            if (handCardIndex < 0 || handCardIndex >= count) {
+                throw new IllegalStateException("Invalid hand card index: " + handCardIndex);
+            }
+            if (topCardIndex < 0 || topCardIndex >= count) {
+                throw new IllegalStateException("Invalid top card index: " + topCardIndex);
+            }
+            if (handCardIndex == topCardIndex) {
+                throw new IllegalStateException("Hand and top card indices must be different");
+            }
+
+            UUID playerId = player.getId();
+            List<Card> deck = gameData.playerDecks.get(playerId);
+
+            // Put the chosen card into hand
+            Card handCard = handTopBottomCards.get(handCardIndex);
+            gameData.playerHands.get(playerId).add(handCard);
+
+            // Put the chosen card on top of library
+            Card topCard = handTopBottomCards.get(topCardIndex);
+            deck.add(0, topCard);
+
+            // Put the remaining card on the bottom of library
+            for (int i = 0; i < count; i++) {
+                if (i != handCardIndex && i != topCardIndex) {
+                    deck.add(handTopBottomCards.get(i));
+                }
+            }
+
+            // Clear awaiting state
+            gameData.awaitingInput = null;
+            gameData.awaitingHandTopBottomPlayerId = null;
+            gameData.awaitingHandTopBottomCards = null;
+
+            String logMsg;
+            if (count == 2) {
+                logMsg = player.getUsername() + " puts one card into their hand and one on top of their library.";
+            } else {
+                logMsg = player.getUsername() + " puts one card into their hand, one on top of their library, and one on the bottom.";
+            }
+            gameHelper.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - {} completed hand/top/bottom choice", gameData.id, player.getUsername());
+
+            resolveAutoPass(gameData);
+        }
+    }
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
