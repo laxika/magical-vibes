@@ -184,6 +184,7 @@ export interface Game {
   turnNumber: number;
   priorityPlayerId: string | null;
   hand: Card[];
+  opponentHand: Card[];
   mulliganCount: number;
   deckSizes: number[];
   handSizes: number[];
@@ -243,6 +244,7 @@ export interface GameStateNotification {
   handSizes: number[];
   lifeTotals: number[];
   hand: Card[];
+  opponentHand: Card[];
   mulliganCount: number;
   manaPool: Record<string, number>;
   autoStopSteps: string[];

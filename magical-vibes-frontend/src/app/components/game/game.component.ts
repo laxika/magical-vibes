@@ -222,6 +222,7 @@ export class GameComponent implements OnInit, OnDestroy {
       handSizes: state.handSizes,
       lifeTotals: state.lifeTotals,
       hand: state.hand,
+      opponentHand: state.opponentHand ?? [],
       mulliganCount: state.mulliganCount,
       manaPool: state.manaPool,
       autoStopSteps: state.autoStopSteps,
@@ -473,6 +474,10 @@ export class GameComponent implements OnInit, OnDestroy {
 
   get opponentGraveyard(): Card[] {
     return this.game()?.graveyards?.[this.opponentPlayerIndex] ?? [];
+  }
+
+  get opponentHand(): Card[] {
+    return this.game()?.opponentHand ?? [];
   }
 
   playCard(index: number): void {

@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostOtherCreaturesByColorEff
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
 import com.github.laxika.magicalvibes.model.filter.AttackingOrBlockingTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AttackingTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CreatureColorTargetFilter;
@@ -393,6 +394,7 @@ public class GameHelper {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<CardView> hand = gameData.playerHands.getOrDefault(playerId, List.of())
                     .stream().map(cardViewFactory::create).toList();
+            List<CardView> opponentHand = getRevealedOpponentHand(gameData, playerId);
             int mulliganCount = gameData.mulliganCounts.getOrDefault(playerId, 0);
             Map<String, Integer> manaPool = getManaPool(gameData, playerId);
             List<TurnStep> autoStopSteps = gameData.playerAutoStopSteps.containsKey(playerId)
@@ -404,7 +406,7 @@ public class GameHelper {
                     gameData.status, gameData.activePlayerId, gameData.turnNumber,
                     gameData.currentStep, priorityPlayerId,
                     battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals,
-                    hand, mulliganCount, manaPool, autoStopSteps, playableCardIndices, newLogEntries
+                    hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices, newLogEntries
             ));
         }
     }
@@ -447,6 +449,29 @@ public class GameHelper {
             sizes.add(hand != null ? hand.size() : 0);
         }
         return sizes;
+    }
+
+    List<CardView> getRevealedOpponentHand(GameData gameData, UUID playerId) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return List.of();
+        boolean reveals = false;
+        for (Permanent perm : bf) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof RevealOpponentHandsEffect) {
+                    reveals = true;
+                    break;
+                }
+            }
+            if (reveals) break;
+        }
+        if (!reveals) return List.of();
+        for (UUID opponentId : gameData.orderedPlayerIds) {
+            if (!opponentId.equals(playerId)) {
+                return gameData.playerHands.getOrDefault(opponentId, List.of())
+                        .stream().map(cardViewFactory::create).toList();
+            }
+        }
+        return List.of();
     }
 
     List<Integer> getDeckSizes(GameData data) {
