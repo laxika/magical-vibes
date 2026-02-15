@@ -1,40 +1,21 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
-import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
-import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
-import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFromGraveyardsMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
-import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
-import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TargetFilter;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
-import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureOnEnterEffect;
@@ -43,37 +24,14 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicat
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeOnColorSpellCastEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
-import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostNonColorCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostOtherCreaturesByColorEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnTappedCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
-import com.github.laxika.magicalvibes.model.filter.AttackingOrBlockingTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.AttackingTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.CreatureColorTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.MaxPowerTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.TappedTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.WithoutKeywordTargetFilter;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.model.PermanentView;
-import com.github.laxika.magicalvibes.networking.model.StackEntryView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
-import com.github.laxika.magicalvibes.networking.service.StackEntryViewFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -88,557 +46,14 @@ public class GameHelper {
     private final SessionManager sessionManager;
     private final GameRegistry gameRegistry;
     private final CardViewFactory cardViewFactory;
-    private final PermanentViewFactory permanentViewFactory;
-    private final StackEntryViewFactory stackEntryViewFactory;
-
-    static final List<String> TEXT_CHANGE_COLOR_WORDS = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-    static final List<String> TEXT_CHANGE_LAND_TYPES = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
-
-    // ===== Package-private accessors for sibling services =====
-
-    SessionManager getSessionManager() {
-        return sessionManager;
-    }
-
-    CardViewFactory getCardViewFactory() {
-        return cardViewFactory;
-    }
-
-    StackEntryViewFactory getStackEntryViewFactory() {
-        return stackEntryViewFactory;
-    }
-
-    // ===== Query methods =====
-
-    Permanent findPermanentById(GameData gameData, UUID permanentId) {
-        if (permanentId == null) return null;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-            for (Permanent p : battlefield) {
-                if (p.getId().equals(permanentId)) {
-                    return p;
-                }
-            }
-        }
-        return null;
-    }
-
-    Card findCardInGraveyardById(GameData gameData, UUID cardId) {
-        if (cardId == null) return null;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard == null) continue;
-            for (Card c : graveyard) {
-                if (c.getId().equals(cardId)) {
-                    return c;
-                }
-            }
-        }
-        return null;
-    }
-
-    UUID getOpponentId(GameData gameData, UUID playerId) {
-        List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);
-        return ids.get(0).equals(playerId) ? ids.get(1) : ids.get(0);
-    }
-
-    UUID getPriorityPlayerId(GameData data) {
-        if (data.activePlayerId == null) {
-            return null;
-        }
-        if (!data.priorityPassedBy.contains(data.activePlayerId)) {
-            return data.activePlayerId;
-        }
-        List<UUID> ids = new ArrayList<>(data.orderedPlayerIds);
-        UUID nonActive = ids.get(0).equals(data.activePlayerId) ? ids.get(1) : ids.get(0);
-        if (!data.priorityPassedBy.contains(nonActive)) {
-            return nonActive;
-        }
-        return null;
-    }
-
-    public boolean isCreature(GameData gameData, Permanent permanent) {
-        if (permanent.getCard().getType() == CardType.CREATURE) return true;
-        if (permanent.getCard().getType() != CardType.ARTIFACT) return false;
-        return hasAnimateArtifactEffect(gameData);
-    }
-
-    public boolean hasKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
-        return permanent.hasKeyword(keyword) || computeStaticBonus(gameData, permanent).keywords().contains(keyword);
-    }
-
-    public int getEffectivePower(GameData gameData, Permanent permanent) {
-        return permanent.getEffectivePower() + computeStaticBonus(gameData, permanent).power();
-    }
-
-    public int getEffectiveToughness(GameData gameData, Permanent permanent) {
-        return permanent.getEffectiveToughness() + computeStaticBonus(gameData, permanent).toughness();
-    }
-
-    record StaticBonus(int power, int toughness, Set<Keyword> keywords, boolean animatedCreature) {
-        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), false);
-    }
-
-    StaticBonus computeStaticBonus(GameData gameData, Permanent target) {
-        boolean isNaturalCreature = target.getCard().getType() == CardType.CREATURE;
-        boolean isArtifact = target.getCard().getType() == CardType.ARTIFACT;
-        boolean animatedCreature = false;
-        int power = 0;
-        int toughness = 0;
-        Set<Keyword> keywords = new HashSet<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent source : bf) {
-                if (source == target) continue;
-                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof AnimateNoncreatureArtifactsEffect && isArtifact) {
-                        animatedCreature = true;
-                    }
-                    if (effect instanceof BoostCreaturesBySubtypeEffect boost
-                            && (target.hasKeyword(Keyword.CHANGELING)
-                                || target.getCard().getSubtypes().stream().anyMatch(boost.affectedSubtypes()::contains))) {
-                        power += boost.powerBoost();
-                        toughness += boost.toughnessBoost();
-                        keywords.addAll(boost.grantedKeywords());
-                    }
-                    if (effect instanceof BoostEnchantedCreatureEffect boost
-                            && source.getAttachedTo() != null
-                            && source.getAttachedTo().equals(target.getId())) {
-                        power += boost.powerBoost();
-                        toughness += boost.toughnessBoost();
-                    }
-                    if (effect instanceof GrantKeywordToEnchantedCreatureEffect grant
-                            && source.getAttachedTo() != null
-                            && source.getAttachedTo().equals(target.getId())) {
-                        keywords.add(grant.keyword());
-                    }
-                    if (effect instanceof BoostOwnCreaturesEffect boost
-                            && bf.contains(target)) {
-                        power += boost.powerBoost();
-                        toughness += boost.toughnessBoost();
-                    }
-                    if (effect instanceof BoostOtherCreaturesByColorEffect boost
-                            && target.getCard().getColor() == boost.color()) {
-                        power += boost.powerBoost();
-                        toughness += boost.toughnessBoost();
-                    }
-                    if (effect instanceof BoostNonColorCreaturesEffect boost
-                            && target.getCard().getColor() != boost.excludedColor()) {
-                        power += boost.powerBoost();
-                        toughness += boost.toughnessBoost();
-                    }
-                    if (effect instanceof GrantKeywordToOwnTappedCreaturesEffect grant
-                            && bf.contains(target)
-                            && target.isTapped()) {
-                        keywords.add(grant.keyword());
-                    }
-                }
-            }
-        }
-        if (!isNaturalCreature && !animatedCreature) return StaticBonus.NONE;
-
-        if (animatedCreature) {
-            int manaValue = target.getCard().getManaValue();
-            power += manaValue;
-            toughness += manaValue;
-        }
-
-        return new StaticBonus(power, toughness, keywords, animatedCreature);
-    }
-
-    boolean hasProtectionFrom(GameData gameData, Permanent target, CardColor sourceColor) {
-        if (sourceColor == null) return false;
-        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof ProtectionFromColorsEffect protection && protection.colors().contains(sourceColor)) {
-                return true;
-            }
-        }
-        if (target.getChosenColor() != null && target.getChosenColor() == sourceColor) {
-            return true;
-        }
-        return false;
-    }
-
-    boolean playerHasShroud(GameData gameData, UUID playerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
-        for (Permanent source : battlefield) {
-            if (source.getCard().getKeywords().contains(Keyword.SHROUD)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    boolean hasAnimateArtifactEffect(GameData gameData) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent source : bf) {
-                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof AnimateNoncreatureArtifactsEffect) return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    boolean hasAuraWithEffect(GameData gameData, Permanent creature, Class<? extends CardEffect> effectClass) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent p : bf) {
-                if (p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())) {
-                    for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                        if (effectClass.isInstance(effect)) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    boolean isEnchanted(GameData gameData, Permanent creature) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent p : bf) {
-                if (p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())
-                        && p.getCard().isAura()) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    Permanent findEnchantedCreatureByAuraEffect(GameData gameData, UUID playerId, Class<? extends CardEffect> effectClass) {
-        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null) return null;
-        for (Permanent p : bf) {
-            if (p.getAttachedTo() != null) {
-                for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effectClass.isInstance(effect)) {
-                        return findPermanentById(gameData, p.getAttachedTo());
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    boolean matchesFilters(GameData gameData, Permanent permanent, Set<TargetFilter> filters) {
-        for (TargetFilter filter : filters) {
-            if (filter instanceof WithoutKeywordTargetFilter f) {
-                if (hasKeyword(gameData, permanent, f.keyword())) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    void validateTargetFilter(TargetFilter filter, Permanent target) {
-        if (filter instanceof MaxPowerTargetFilter f) {
-            if (target.getEffectivePower() > f.maxPower()) {
-                throw new IllegalStateException("Target creature's power must be " + f.maxPower() + " or less");
-            }
-        } else if (filter instanceof AttackingOrBlockingTargetFilter) {
-            if (!target.isAttacking() && !target.isBlocking()) {
-                throw new IllegalStateException("Target must be an attacking or blocking creature");
-            }
-        } else if (filter instanceof AttackingTargetFilter) {
-            if (!target.isAttacking()) {
-                throw new IllegalStateException("Target must be an attacking creature");
-            }
-        } else if (filter instanceof CreatureColorTargetFilter f) {
-            if (!f.colors().contains(target.getCard().getColor())) {
-                String colorNames = f.colors().stream()
-                        .map(c -> c.name().toLowerCase())
-                        .reduce((a, b) -> a + " or " + b)
-                        .orElse("");
-                throw new IllegalStateException("Target must be a " + colorNames + " creature");
-            }
-        } else if (filter instanceof TappedTargetFilter) {
-            if (!target.isTapped()) {
-                throw new IllegalStateException("Target must be a tapped creature");
-            }
-        }
-    }
-
-    boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature) {
-        return hasAuraWithEffect(gameData, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)
-                || isDamageFromSourcePrevented(gameData, creature.getCard().getColor());
-    }
-
-    boolean isDamageFromSourcePrevented(GameData gameData, CardColor sourceColor) {
-        return sourceColor != null && gameData.preventDamageFromColors.contains(sourceColor);
-    }
-
-    // ===== State view methods =====
-
-    void broadcastGameState(GameData gameData) {
-        List<String> newLogEntries;
-        int logSize = gameData.gameLog.size();
-        if (logSize > gameData.lastBroadcastedLogSize) {
-            newLogEntries = new ArrayList<>(gameData.gameLog.subList(gameData.lastBroadcastedLogSize, logSize));
-        } else {
-            newLogEntries = List.of();
-        }
-        gameData.lastBroadcastedLogSize = logSize;
-
-        List<List<PermanentView>> battlefields = getBattlefields(gameData);
-        List<StackEntryView> stack = getStackViews(gameData);
-        List<List<CardView>> graveyards = getGraveyardViews(gameData);
-        List<Integer> deckSizes = getDeckSizes(gameData);
-        List<Integer> handSizes = getHandSizes(gameData);
-        List<Integer> lifeTotals = getLifeTotals(gameData);
-        UUID priorityPlayerId = gameData.awaitingInput != null ? null : getPriorityPlayerId(gameData);
-
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<CardView> hand = gameData.playerHands.getOrDefault(playerId, List.of())
-                    .stream().map(cardViewFactory::create).toList();
-            List<CardView> opponentHand = getRevealedOpponentHand(gameData, playerId);
-            int mulliganCount = gameData.mulliganCounts.getOrDefault(playerId, 0);
-            Map<String, Integer> manaPool = getManaPool(gameData, playerId);
-            List<TurnStep> autoStopSteps = gameData.playerAutoStopSteps.containsKey(playerId)
-                    ? new ArrayList<>(gameData.playerAutoStopSteps.get(playerId))
-                    : List.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN);
-            List<Integer> playableCardIndices = getPlayableCardIndices(gameData, playerId);
-
-            sessionManager.sendToPlayer(playerId, new GameStateMessage(
-                    gameData.status, gameData.activePlayerId, gameData.turnNumber,
-                    gameData.currentStep, priorityPlayerId,
-                    battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals,
-                    hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices, newLogEntries
-            ));
-        }
-    }
-
-    List<StackEntryView> getStackViews(GameData gameData) {
-        return gameData.stack.stream().map(stackEntryViewFactory::create).toList();
-    }
-
-    List<List<PermanentView>> getBattlefields(GameData data) {
-        List<List<PermanentView>> battlefields = new ArrayList<>();
-        for (UUID pid : data.orderedPlayerIds) {
-            List<Permanent> bf = data.playerBattlefields.get(pid);
-            if (bf == null) {
-                battlefields.add(new ArrayList<>());
-            } else {
-                List<PermanentView> views = new ArrayList<>();
-                for (Permanent p : bf) {
-                    StaticBonus bonus = computeStaticBonus(data, p);
-                    views.add(permanentViewFactory.create(p, bonus.power(), bonus.toughness(), bonus.keywords(), bonus.animatedCreature()));
-                }
-                battlefields.add(views);
-            }
-        }
-        return battlefields;
-    }
-
-    List<List<CardView>> getGraveyardViews(GameData data) {
-        List<List<CardView>> graveyards = new ArrayList<>();
-        for (UUID pid : data.orderedPlayerIds) {
-            List<Card> gy = data.playerGraveyards.get(pid);
-            graveyards.add(gy != null ? gy.stream().map(cardViewFactory::create).toList() : new ArrayList<>());
-        }
-        return graveyards;
-    }
-
-    List<Integer> getHandSizes(GameData data) {
-        List<Integer> sizes = new ArrayList<>();
-        for (UUID pid : data.orderedPlayerIds) {
-            List<Card> hand = data.playerHands.get(pid);
-            sizes.add(hand != null ? hand.size() : 0);
-        }
-        return sizes;
-    }
-
-    List<CardView> getRevealedOpponentHand(GameData gameData, UUID playerId) {
-        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null) return List.of();
-        boolean reveals = false;
-        for (Permanent perm : bf) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof RevealOpponentHandsEffect) {
-                    reveals = true;
-                    break;
-                }
-            }
-            if (reveals) break;
-        }
-        if (!reveals) return List.of();
-        for (UUID opponentId : gameData.orderedPlayerIds) {
-            if (!opponentId.equals(playerId)) {
-                return gameData.playerHands.getOrDefault(opponentId, List.of())
-                        .stream().map(cardViewFactory::create).toList();
-            }
-        }
-        return List.of();
-    }
-
-    List<Integer> getDeckSizes(GameData data) {
-        List<Integer> sizes = new ArrayList<>();
-        for (UUID pid : data.orderedPlayerIds) {
-            List<Card> deck = data.playerDecks.get(pid);
-            sizes.add(deck != null ? deck.size() : 0);
-        }
-        return sizes;
-    }
-
-    Map<String, Integer> getManaPool(GameData data, UUID playerId) {
-        if (playerId == null) {
-            return new ManaPool().toMap();
-        }
-        ManaPool pool = data.playerManaPools.get(playerId);
-        return pool != null ? pool.toMap() : new ManaPool().toMap();
-    }
-
-    List<Integer> getLifeTotals(GameData gameData) {
-        List<Integer> totals = new ArrayList<>();
-        for (UUID pid : gameData.orderedPlayerIds) {
-            totals.add(gameData.playerLifeTotals.getOrDefault(pid, 20));
-        }
-        return totals;
-    }
-
-    List<Integer> getPlayableCardIndices(GameData gameData, UUID playerId) {
-        List<Integer> playable = new ArrayList<>();
-        if (gameData.status != GameStatus.RUNNING || gameData.awaitingInput != null) {
-            return playable;
-        }
-
-        UUID priorityHolder = getPriorityPlayerId(gameData);
-        if (!playerId.equals(priorityHolder)) {
-            return playable;
-        }
-
-        List<Card> hand = gameData.playerHands.get(playerId);
-        if (hand == null) {
-            return playable;
-        }
-
-        boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
-        boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
-                || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
-        int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
-        int spellsCast = gameData.spellsCastThisTurn.getOrDefault(playerId, 0);
-        int maxSpells = getMaxSpellsPerTurn(gameData);
-        boolean spellLimitReached = spellsCast >= maxSpells;
-
-        boolean stackEmpty = gameData.stack.isEmpty();
-
-        for (int i = 0; i < hand.size(); i++) {
-            Card card = hand.get(i);
-            if (card.getType() == CardType.BASIC_LAND && isActivePlayer && isMainPhase && landsPlayed < 1 && stackEmpty) {
-                playable.add(i);
-            }
-            if (card.getType() == CardType.CREATURE && card.getManaCost() != null && !spellLimitReached) {
-                boolean hasFlash = card.getKeywords().contains(Keyword.FLASH);
-                if (hasFlash || (isActivePlayer && isMainPhase && stackEmpty)) {
-                    ManaCost cost = new ManaCost(card.getManaCost());
-                    ManaPool pool = gameData.playerManaPools.get(playerId);
-                    int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.CREATURE);
-                    if (cost.canPay(pool, additionalCost)) {
-                        playable.add(i);
-                    }
-                }
-            }
-            if (card.getType() == CardType.ENCHANTMENT && isActivePlayer && isMainPhase && stackEmpty && card.getManaCost() != null && !spellLimitReached) {
-                ManaCost cost = new ManaCost(card.getManaCost());
-                ManaPool pool = gameData.playerManaPools.get(playerId);
-                int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.ENCHANTMENT);
-                if (cost.canPay(pool, additionalCost)) {
-                    playable.add(i);
-                }
-            }
-            if (card.getType() == CardType.ARTIFACT && isActivePlayer && isMainPhase && stackEmpty && card.getManaCost() != null && !spellLimitReached) {
-                ManaCost cost = new ManaCost(card.getManaCost());
-                ManaPool pool = gameData.playerManaPools.get(playerId);
-                int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.ARTIFACT);
-                if (cost.canPay(pool, additionalCost)) {
-                    playable.add(i);
-                }
-            }
-            if (card.getType() == CardType.SORCERY && isActivePlayer && isMainPhase && stackEmpty && card.getManaCost() != null && !spellLimitReached) {
-                ManaCost cost = new ManaCost(card.getManaCost());
-                ManaPool pool = gameData.playerManaPools.get(playerId);
-                int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.SORCERY);
-                if (cost.canPay(pool, additionalCost)) {
-                    playable.add(i);
-                }
-            }
-            if (card.getType() == CardType.INSTANT && card.getManaCost() != null && !spellLimitReached) {
-                ManaCost cost = new ManaCost(card.getManaCost());
-                ManaPool pool = gameData.playerManaPools.get(playerId);
-                int additionalCost = getOpponentCostIncrease(gameData, playerId, CardType.INSTANT);
-                if (cost.canPay(pool, additionalCost)) {
-                    playable.add(i);
-                }
-            }
-        }
-
-        return playable;
-    }
-
-    int getMaxSpellsPerTurn(GameData gameData) {
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof LimitSpellsPerTurnEffect limit) {
-                        return limit.maxSpells();
-                    }
-                }
-            }
-        }
-        return Integer.MAX_VALUE;
-    }
-
-    int getOpponentCostIncrease(GameData gameData, UUID playerId, CardType cardType) {
-        UUID opponentId = getOpponentId(gameData, playerId);
-        List<Permanent> opponentBattlefield = gameData.playerBattlefields.get(opponentId);
-        if (opponentBattlefield == null) return 0;
-
-        int totalIncrease = 0;
-        for (Permanent perm : opponentBattlefield) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof IncreaseOpponentCastCostEffect increase) {
-                    if (increase.affectedTypes().contains(cardType)) {
-                        totalIncrease += increase.amount();
-                    }
-                }
-            }
-        }
-        return totalIncrease;
-    }
-
-    int getAttackPaymentPerCreature(GameData gameData, UUID attackingPlayerId) {
-        UUID defenderId = getOpponentId(gameData, attackingPlayerId);
-        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
-        if (defenderBattlefield == null) return 0;
-
-        int totalTax = 0;
-        for (Permanent perm : defenderBattlefield) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof RequirePaymentToAttackEffect tax) {
-                    totalTax += tax.amountPerAttacker();
-                }
-            }
-        }
-        return totalTax;
-    }
+    private final GameQueryService gameQueryService;
+    private final GameBroadcastService gameBroadcastService;
+    private final PlayerInputService playerInputService;
 
     // ===== Lifecycle methods =====
 
     boolean removePermanentToGraveyard(GameData gameData, Permanent target) {
-        boolean wasCreature = isCreature(gameData, target);
+        boolean wasCreature = gameQueryService.isCreature(gameData, target);
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
@@ -660,11 +75,11 @@ public class GameHelper {
             Iterator<Permanent> it = battlefield.iterator();
             while (it.hasNext()) {
                 Permanent p = it.next();
-                if (p.getAttachedTo() != null && findPermanentById(gameData, p.getAttachedTo()) == null) {
+                if (p.getAttachedTo() != null && gameQueryService.findPermanentById(gameData, p.getAttachedTo()) == null) {
                     it.remove();
                     gameData.playerGraveyards.get(playerId).add(p.getOriginalCard());
                     String logEntry = p.getCard().getName() + " is put into the graveyard (enchanted creature left the battlefield).";
-                    logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} removed (orphaned aura)", gameData.id, p.getCard().getName());
                     anyRemoved = true;
                 }
@@ -716,13 +131,13 @@ public class GameHelper {
         for (UUID playerId : gameData.orderedPlayerIds) {
             int life = gameData.playerLifeTotals.getOrDefault(playerId, 20);
             if (life <= 0) {
-                UUID winnerId = getOpponentId(gameData, playerId);
+                UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
                 String winnerName = gameData.playerIdToName.get(winnerId);
 
                 gameData.status = GameStatus.FINISHED;
 
                 String logEntry = gameData.playerIdToName.get(playerId) + " has been defeated! " + winnerName + " wins!";
-                logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
                 sessionManager.sendToPlayers(gameData.orderedPlayerIds, new GameOverMessage(winnerId, winnerName));
 
@@ -772,14 +187,14 @@ public class GameHelper {
             Iterator<Permanent> it = battlefield.iterator();
             while (it.hasNext()) {
                 Permanent p = it.next();
-                if (isCreature(gameData, p) && getEffectiveToughness(gameData, p) <= 0) {
+                if (gameQueryService.isCreature(gameData, p) && gameQueryService.getEffectiveToughness(gameData, p) <= 0) {
                     it.remove();
                     UUID graveyardOwnerId = gameData.stolenCreatures.getOrDefault(p.getId(), playerId);
                     gameData.stolenCreatures.remove(p.getId());
                     gameData.playerGraveyards.get(graveyardOwnerId).add(p.getOriginalCard());
                     collectDeathTrigger(gameData, p.getCard(), playerId, true);
                     String logEntry = p.getCard().getName() + " is put into the graveyard (0 toughness).";
-                    logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} dies to state-based actions (0 toughness)", gameData.id, p.getCard().getName());
                     anyDied = true;
                 }
@@ -811,7 +226,7 @@ public class GameHelper {
 
     int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage) {
         if (permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
-        if (hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
+        if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
         damage = applyGlobalPreventionShield(gameData, damage);
         int shield = permanent.getDamagePreventionShield();
         if (shield <= 0 || damage <= 0) return damage;
@@ -895,7 +310,7 @@ public class GameHelper {
 
         Map<String, List<UUID>> legendaryByName = new HashMap<>();
         for (Permanent perm : battlefield) {
-            if (perm.getCard().getSupertypes().contains(CardSupertype.LEGENDARY)) {
+            if (perm.getCard().getSupertypes().contains(com.github.laxika.magicalvibes.model.CardSupertype.LEGENDARY)) {
                 legendaryByName.computeIfAbsent(perm.getCard().getName(), k -> new ArrayList<>()).add(perm.getId());
             }
         }
@@ -903,7 +318,7 @@ public class GameHelper {
         for (Map.Entry<String, List<UUID>> entry : legendaryByName.entrySet()) {
             if (entry.getValue().size() >= 2) {
                 gameData.permanentChoiceContext = new PermanentChoiceContext.LegendRule(entry.getKey());
-                beginPermanentChoice(gameData, controllerId, entry.getValue(),
+                playerInputService.beginPermanentChoice(gameData, controllerId, entry.getValue(),
                         "You control multiple legendary permanents named " + entry.getKey() + ". Choose one to keep.");
                 return true;
             }
@@ -926,7 +341,7 @@ public class GameHelper {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
-                    if (isCreature(gameData, p) && !p.getId().equals(clonePerm.getId())) {
+                    if (gameQueryService.isCreature(gameData, p) && !p.getId().equals(clonePerm.getId())) {
                         creatureIds.add(p.getId());
                     }
                 }
@@ -939,7 +354,7 @@ public class GameHelper {
                         List.of(new CopyCreatureOnEnterEffect()),
                         card.getName() + " — You may have it enter as a copy of any creature on the battlefield."
                 ));
-                processNextMayAbility(gameData);
+                playerInputService.processNextMayAbility(gameData);
                 return;
             } else {
                 gameData.permanentChoiceContext = null;
@@ -953,7 +368,7 @@ public class GameHelper {
         if (needsColorChoice) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
-            beginColorChoice(gameData, controllerId, justEntered.getId(), targetPermanentId);
+            playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), targetPermanentId);
             return;
         }
 
@@ -999,7 +414,7 @@ public class GameHelper {
                                 Map.of()
                         ));
                         String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
-                        logAndBroadcast(gameData, etbLog);
+                        gameBroadcastService.logAndBroadcast(gameData, etbLog);
                         log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
                     }
                 }
@@ -1026,7 +441,7 @@ public class GameHelper {
             if (graveyard == null) continue;
             for (Card graveyardCard : graveyard) {
                 allCardIds.add(graveyardCard.getId());
-                allCardViews.add(getCardViewFactory().create(graveyardCard));
+                allCardViews.add(cardViewFactory.create(graveyardCard));
             }
         }
 
@@ -1041,7 +456,7 @@ public class GameHelper {
                     List.of()
             ));
             String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
-            logAndBroadcast(gameData, etbLog);
+            gameBroadcastService.logAndBroadcast(gameData, etbLog);
             log.info("Game {} - {} ETB ability pushed onto stack with 0 targets (no graveyard cards)", gameData.id, card.getName());
         } else {
             // Prompt player to choose targets before putting ability on the stack
@@ -1049,7 +464,7 @@ public class GameHelper {
             gameData.pendingGraveyardTargetCard = card;
             gameData.pendingGraveyardTargetControllerId = controllerId;
             gameData.pendingGraveyardTargetEffects = new ArrayList<>(allEffects);
-            beginMultiGraveyardChoice(gameData, controllerId, allCardIds, allCardViews, maxTargets,
+            playerInputService.beginMultiGraveyardChoice(gameData, controllerId, allCardIds, allCardViews, maxTargets,
                     "Choose up to " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "") + " from graveyards to exile.");
         }
     }
@@ -1074,7 +489,7 @@ public class GameHelper {
                     ));
                     String triggerLog = perm.getCard().getName() + " triggers — " +
                             gameData.playerIdToName.get(controllerId) + " will gain " + toughness + " life.";
-                    logAndBroadcast(gameData, triggerLog);
+                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
                     log.info("Game {} - {} triggers for {} entering (toughness={})",
                             gameData.id, perm.getCard().getName(), enteringCreature.getName(), toughness);
                 }
@@ -1103,119 +518,13 @@ public class GameHelper {
                         ));
                         String triggerLog = perm.getCard().getName() + " triggers — " +
                                 gameData.playerIdToName.get(playerId) + " will gain " + gainLife.amount() + " life.";
-                        logAndBroadcast(gameData, triggerLog);
+                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
                         log.info("Game {} - {} triggers for {} entering (gain {} life)",
                                 gameData.id, perm.getCard().getName(), enteringCreature.getName(), gainLife.amount());
                     }
                 }
             }
         }
-    }
-
-    // ===== Input starters =====
-
-    void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
-        gameData.awaitingInput = AwaitingInput.CARD_CHOICE;
-        gameData.awaitingCardChoicePlayerId = playerId;
-        gameData.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
-        sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(validIndices, prompt));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a card from hand", gameData.id, playerName);
-    }
-
-    void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID targetPermanentId) {
-        gameData.awaitingInput = AwaitingInput.TARGETED_CARD_CHOICE;
-        gameData.awaitingCardChoicePlayerId = playerId;
-        gameData.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
-        gameData.pendingCardChoiceTargetPermanentId = targetPermanentId;
-        sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(validIndices, prompt));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a card from hand (targeted)", gameData.id, playerName);
-    }
-
-    void beginPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, String prompt) {
-        gameData.awaitingInput = AwaitingInput.PERMANENT_CHOICE;
-        gameData.awaitingPermanentChoicePlayerId = playerId;
-        gameData.awaitingPermanentChoiceValidIds = new HashSet<>(validIds);
-        sessionManager.sendToPlayer(playerId, new ChoosePermanentMessage(validIds, prompt));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a permanent", gameData.id, playerName);
-    }
-
-    void beginGraveyardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
-        gameData.awaitingInput = AwaitingInput.GRAVEYARD_CHOICE;
-        gameData.awaitingGraveyardChoicePlayerId = playerId;
-        gameData.awaitingGraveyardChoiceValidIndices = new HashSet<>(validIndices);
-        sessionManager.sendToPlayer(playerId, new ChooseCardFromGraveyardMessage(validIndices, prompt));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a card from graveyard", gameData.id, playerName);
-    }
-
-    void beginMultiPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, int maxCount, String prompt) {
-        gameData.awaitingInput = AwaitingInput.MULTI_PERMANENT_CHOICE;
-        gameData.awaitingMultiPermanentChoicePlayerId = playerId;
-        gameData.awaitingMultiPermanentChoiceValidIds = new HashSet<>(validIds);
-        gameData.awaitingMultiPermanentChoiceMaxCount = maxCount;
-        sessionManager.sendToPlayer(playerId, new ChooseMultiplePermanentsMessage(validIds, maxCount, prompt));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose up to {} permanents", gameData.id, playerName, maxCount);
-    }
-
-    void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<UUID> validCardIds, List<CardView> cardViews, int maxCount, String prompt) {
-        gameData.awaitingInput = AwaitingInput.MULTI_GRAVEYARD_CHOICE;
-        gameData.awaitingMultiGraveyardChoicePlayerId = playerId;
-        gameData.awaitingMultiGraveyardChoiceValidCardIds = new HashSet<>(validCardIds);
-        gameData.awaitingMultiGraveyardChoiceMaxCount = maxCount;
-        sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsFromGraveyardsMessage(validCardIds, cardViews, maxCount, prompt));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose up to {} cards from graveyards", gameData.id, playerName, maxCount);
-    }
-
-    void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetPermanentId) {
-        gameData.awaitingInput = AwaitingInput.COLOR_CHOICE;
-        gameData.awaitingColorChoicePlayerId = playerId;
-        gameData.awaitingColorChoicePermanentId = permanentId;
-        gameData.pendingColorChoiceETBTargetId = etbTargetPermanentId;
-        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-        sessionManager.sendToPlayer(playerId, new ChooseColorMessage(colors, "Choose a color."));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a color", gameData.id, playerName);
-    }
-
-    void beginDiscardChoice(GameData gameData, UUID playerId) {
-        List<Card> hand = gameData.playerHands.get(playerId);
-        List<Integer> validIndices = new ArrayList<>();
-        for (int i = 0; i < hand.size(); i++) {
-            validIndices.add(i);
-        }
-
-        gameData.awaitingInput = AwaitingInput.DISCARD_CHOICE;
-        gameData.awaitingCardChoicePlayerId = playerId;
-        gameData.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
-        sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(validIndices, "Choose a card to discard."));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a card to discard", gameData.id, playerName);
-    }
-
-    void beginRevealedHandChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId, List<Integer> validIndices, String prompt) {
-        gameData.awaitingInput = AwaitingInput.REVEALED_HAND_CHOICE;
-        gameData.awaitingCardChoicePlayerId = choosingPlayerId;
-        gameData.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
-
-        List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
-        List<CardView> cardViews = targetHand.stream().map(getCardViewFactory()::create).toList();
-        sessionManager.sendToPlayer(choosingPlayerId, new ChooseFromRevealedHandMessage(cardViews, validIndices, prompt));
-
-        String playerName = gameData.playerIdToName.get(choosingPlayerId);
-        log.info("Game {} - Awaiting {} to choose a card from revealed hand", gameData.id, playerName);
     }
 
     // ===== Control =====
@@ -1243,7 +552,7 @@ public class GameHelper {
 
         String newControllerName = gameData.playerIdToName.get(newControllerId);
         String logEntry = newControllerName + " gains control of " + creature.getCard().getName() + ".";
-        logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gains control of {}", gameData.id, newControllerName, creature.getCard().getName());
     }
 
@@ -1257,19 +566,19 @@ public class GameHelper {
             UUID creatureId = entry.getKey();
             UUID ownerId = entry.getValue();
 
-            Permanent creature = findPermanentById(gameData, creatureId);
+            Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
             if (creature == null) {
                 it.remove();
                 gameData.enchantmentDependentStolenCreatures.remove(creatureId);
                 continue;
             }
 
-            if (hasAuraWithEffect(gameData, creature, ControlEnchantedCreatureEffect.class)) {
+            if (gameQueryService.hasAuraWithEffect(gameData, creature, ControlEnchantedCreatureEffect.class)) {
                 continue;
             }
 
             if (gameData.enchantmentDependentStolenCreatures.contains(creatureId)
-                    && isEnchanted(gameData, creature)) {
+                    && gameQueryService.isEnchanted(gameData, creature)) {
                 continue;
             }
             gameData.enchantmentDependentStolenCreatures.remove(creatureId);
@@ -1282,7 +591,7 @@ public class GameHelper {
 
                     String ownerName = gameData.playerIdToName.get(ownerId);
                     String logEntry = creature.getCard().getName() + " returns to " + ownerName + "'s control.";
-                    logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} returns to {}'s control", gameData.id, creature.getCard().getName(), ownerName);
                     anyReturned = true;
                     break;
@@ -1297,21 +606,21 @@ public class GameHelper {
 
     int redirectPlayerDamageToEnchantedCreature(GameData gameData, UUID playerId, int damage, String sourceName) {
         if (damage <= 0) return damage;
-        Permanent target = findEnchantedCreatureByAuraEffect(gameData, playerId, RedirectPlayerDamageToEnchantedCreatureEffect.class);
+        Permanent target = gameQueryService.findEnchantedCreatureByAuraEffect(gameData, playerId, RedirectPlayerDamageToEnchantedCreatureEffect.class);
         if (target == null) return damage;
 
         int effectiveDamage = applyCreaturePreventionShield(gameData, target, damage);
         String logEntry = target.getCard().getName() + " absorbs " + effectiveDamage + " redirected " + sourceName + " damage.";
-        logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
-        if (effectiveDamage >= getEffectiveToughness(gameData, target)) {
-            if (hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
+        if (effectiveDamage >= gameQueryService.getEffectiveToughness(gameData, target)) {
+            if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
                 String indestructibleLog = target.getCard().getName() + " is indestructible and survives.";
-                logAndBroadcast(gameData, indestructibleLog);
+                gameBroadcastService.logAndBroadcast(gameData, indestructibleLog);
             } else {
                 removePermanentToGraveyard(gameData, target);
                 String deathLog = target.getCard().getName() + " is destroyed by redirected " + sourceName + " damage.";
-                logAndBroadcast(gameData, deathLog);
+                gameBroadcastService.logAndBroadcast(gameData, deathLog);
                 removeOrphanedAuras(gameData);
             }
         }
@@ -1320,20 +629,6 @@ public class GameHelper {
     }
 
     // ===== Triggers =====
-
-    void processNextMayAbility(GameData gameData) {
-        if (gameData.pendingMayAbilities.isEmpty()) {
-            return;
-        }
-
-        PendingMayAbility next = gameData.pendingMayAbilities.getFirst();
-        gameData.awaitingInput = AwaitingInput.MAY_ABILITY_CHOICE;
-        gameData.awaitingMayAbilityPlayerId = next.controllerId();
-        sessionManager.sendToPlayer(next.controllerId(), new MayAbilityMessage(next.description()));
-
-        String playerName = gameData.playerIdToName.get(next.controllerId());
-        log.info("Game {} - Awaiting {} to decide on may ability: {}", gameData.id, playerName, next.description());
-    }
 
     void checkSpellCastTriggers(GameData gameData, Card spellCard) {
         if (spellCard.getColor() == null) {
@@ -1373,7 +668,7 @@ public class GameHelper {
             }
         }
 
-        processNextMayAbility(gameData);
+        playerInputService.processNextMayAbility(gameData);
     }
 
     // ===== Draw =====
@@ -1384,7 +679,7 @@ public class GameHelper {
             String playerName = gameData.playerIdToName.get(playerId);
             String controllerName = gameData.playerIdToName.get(replacementController);
             String logEntry = playerName + "'s draw is replaced by Plagiarize — " + controllerName + " draws a card instead.";
-            logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - Plagiarize replaces {}'s draw, {} draws instead",
                     gameData.id, playerName, controllerName);
             performDrawCard(gameData, replacementController);
@@ -1400,7 +695,7 @@ public class GameHelper {
 
         if (deck == null || deck.isEmpty()) {
             String logEntry = gameData.playerIdToName.get(playerId) + " has no cards to draw.";
-            logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
         }
 
@@ -1408,14 +703,8 @@ public class GameHelper {
         hand.add(drawn);
 
         String logEntry = gameData.playerIdToName.get(playerId) + " draws a card.";
-        logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} draws a card from effect", gameData.id, gameData.playerIdToName.get(playerId));
-    }
-
-    // ===== Logging =====
-
-    void logAndBroadcast(GameData gameData, String logEntry) {
-        gameData.gameLog.add(logEntry);
     }
 
     // ===== Regeneration =====
@@ -1429,7 +718,7 @@ public class GameHelper {
             perm.getBlockingTargets().clear();
 
             String logEntry = perm.getCard().getName() + " regenerates.";
-            logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} regenerates", gameData.id, perm.getCard().getName());
             return true;
         }
@@ -1445,7 +734,7 @@ public class GameHelper {
         String creatureName = creature.getCard().getName();
 
         String triggerLog = creatureName + "'s ability triggers — " + playerName + " exiles cards from the top of their library.";
-        logAndBroadcast(gameData, triggerLog);
+        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
 
         boolean repeat = true;
         while (repeat) {
@@ -1453,7 +742,7 @@ public class GameHelper {
 
             if (deck.isEmpty()) {
                 String logEntry = playerName + "'s library is empty. No cards to exile.";
-                logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 break;
             }
 
@@ -1472,7 +761,7 @@ public class GameHelper {
                 sb.append(exiledThisRound.get(i).getName());
             }
             sb.append(".");
-            logAndBroadcast(gameData, sb.toString());
+            gameBroadcastService.logAndBroadcast(gameData, sb.toString());
 
             Set<String> seen = new HashSet<>();
             for (Card card : exiledThisRound) {
@@ -1484,7 +773,7 @@ public class GameHelper {
 
             if (repeat) {
                 String repeatLog = "Two or more exiled cards share the same name — repeating the process.";
-                logAndBroadcast(gameData, repeatLog);
+                gameBroadcastService.logAndBroadcast(gameData, repeatLog);
             }
         }
 

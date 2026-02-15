@@ -82,6 +82,7 @@ import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMess
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
+import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -99,6 +100,10 @@ public class GameService {
     private final SessionManager sessionManager;
     private final GameRegistry gameRegistry;
     private final GameHelper gameHelper;
+    private final GameQueryService gameQueryService;
+    private final GameBroadcastService gameBroadcastService;
+    private final PlayerInputService playerInputService;
+    private final CardViewFactory cardViewFactory;
     private final EffectResolutionService effectResolutionService;
     private final CombatService combatService;
 
@@ -112,7 +117,7 @@ public class GameService {
                 throw new IllegalStateException("Cannot pass priority while awaiting input");
             }
 
-            UUID priorityHolder = gameHelper.getPriorityPlayerId(gameData);
+            UUID priorityHolder = gameQueryService.getPriorityPlayerId(gameData);
             if (priorityHolder == null || !priorityHolder.equals(player.getId())) {
                 throw new IllegalStateException("You do not have priority");
             }
@@ -128,7 +133,7 @@ public class GameService {
                     advanceStep(gameData);
                 }
             } else {
-                gameHelper.broadcastGameState(gameData);
+                gameBroadcastService.broadcastGameState(gameData);
             }
 
             resolveAutoPass(gameData);
@@ -152,9 +157,9 @@ public class GameService {
         if (next != null) {
             gameData.currentStep = next;
             String logEntry = "Step: " + next.getDisplayName();
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - Step advanced to {}", gameData.id, next);
-            gameHelper.broadcastGameState(gameData);
+            gameBroadcastService.broadcastGameState(gameData);
 
             if (gameData.status == GameStatus.FINISHED) return;
 
@@ -205,7 +210,7 @@ public class GameService {
                     ));
 
                     String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
-                    gameHelper.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
                 }
             }
@@ -232,7 +237,7 @@ public class GameService {
                     ));
 
                     String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
-                    gameHelper.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} each-upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
                 }
             }
@@ -242,7 +247,7 @@ public class GameService {
 
         }
 
-        gameHelper.processNextMayAbility(gameData);
+        playerInputService.processNextMayAbility(gameData);
     }
 
     private void handleDrawStep(GameData gameData) {
@@ -251,7 +256,7 @@ public class GameService {
         // The starting player skips their draw on turn 1
         if (gameData.turnNumber == 1 && activePlayerId.equals(gameData.startingPlayerId)) {
             String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips the draw (first turn).";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} skips draw on turn 1", gameData.id, gameData.playerIdToName.get(activePlayerId));
             return;
         }
@@ -262,7 +267,7 @@ public class GameService {
             String playerName = gameData.playerIdToName.get(activePlayerId);
             String controllerName = gameData.playerIdToName.get(replacementController);
             String logEntry = playerName + "'s draw is replaced by Plagiarize — " + controllerName + " draws a card instead.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - Plagiarize replaces {}'s draw step draw, {} draws instead",
                     gameData.id, playerName, controllerName);
             gameHelper.resolveDrawCard(gameData, replacementController);
@@ -286,7 +291,7 @@ public class GameService {
 
         String playerName = gameData.playerIdToName.get(activePlayerId);
         String logEntry = playerName + " draws a card.";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} draws a card (hand: {}, deck: {})", gameData.id, playerName, hand.size(), deck.size());
     }
@@ -311,7 +316,7 @@ public class GameService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(nextActive);
         if (battlefield != null) {
             battlefield.forEach(p -> {
-                if (!gameHelper.hasAuraWithEffect(gameData, p, EnchantedCreatureDoesntUntapEffect.class)) {
+                if (!gameQueryService.hasAuraWithEffect(gameData, p, EnchantedCreatureDoesntUntapEffect.class)) {
                     p.untap();
                 }
                 p.setSummoningSick(false);
@@ -320,13 +325,13 @@ public class GameService {
 
 
         String untapLog = nextActiveName + " untaps their permanents.";
-        gameHelper.logAndBroadcast(gameData, untapLog);
+        gameBroadcastService.logAndBroadcast(gameData, untapLog);
         log.info("Game {} - {} untaps their permanents", gameData.id, nextActiveName);
 
         String logEntry = "Turn " + gameData.turnNumber + " begins. " + nextActiveName + "'s turn.";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - Turn {} begins. Active player: {}", gameData.id, gameData.turnNumber, nextActiveName);
-        gameHelper.broadcastGameState(gameData);
+        gameBroadcastService.broadcastGameState(gameData);
     }
 
     private void resolveTopOfStack(GameData gameData) {
@@ -344,7 +349,7 @@ public class GameService {
 
             String playerName = gameData.playerIdToName.get(controllerId);
             String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
             log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
 
@@ -358,10 +363,10 @@ public class GameService {
 
             // Aura fizzles if its target is no longer on the battlefield
             if (card.isAura() && entry.getTargetPermanentId() != null) {
-                Permanent target = gameHelper.findPermanentById(gameData, entry.getTargetPermanentId());
+                Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
                 if (target == null) {
                     String fizzleLog = card.getName() + " fizzles (enchanted creature no longer exists).";
-                    gameHelper.logAndBroadcast(gameData, fizzleLog);
+                    gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
                     gameData.playerGraveyards.get(controllerId).add(card);
         
                     log.info("Game {} - {} fizzles, target {} no longer exists", gameData.id, card.getName(), entry.getTargetPermanentId());
@@ -372,7 +377,7 @@ public class GameService {
 
                     String playerName = gameData.playerIdToName.get(controllerId);
                     String logEntry = card.getName() + " enters the battlefield attached to " + target.getCard().getName() + " under " + playerName + "'s control.";
-                    gameHelper.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} resolves, attached to {} for {}", gameData.id, card.getName(), target.getCard().getName(), playerName);
 
                     // Handle control-changing auras (e.g., Persuasion)
@@ -390,7 +395,7 @@ public class GameService {
 
                 String playerName = gameData.playerIdToName.get(controllerId);
                 String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
 
                 // Check if enchantment has "as enters" color choice
@@ -399,7 +404,7 @@ public class GameService {
                 if (needsColorChoice) {
                     List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                     Permanent justEntered = bf.get(bf.size() - 1);
-                    gameHelper.beginColorChoice(gameData, controllerId, justEntered.getId(), null);
+                    playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), null);
                 }
                 if (gameData.awaitingInput == null) {
                     gameHelper.checkLegendRule(gameData, controllerId);
@@ -414,7 +419,7 @@ public class GameService {
 
             String playerName = gameData.playerIdToName.get(controllerId);
             String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
             log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
             if (gameData.awaitingInput == null) {
@@ -428,17 +433,17 @@ public class GameService {
             boolean targetFizzled = false;
             if (entry.getTargetPermanentId() != null) {
                 if (entry.getTargetZone() == TargetZone.GRAVEYARD) {
-                    targetFizzled = gameHelper.findCardInGraveyardById(gameData, entry.getTargetPermanentId()) == null;
+                    targetFizzled = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetPermanentId()) == null;
                 } else if (entry.getTargetZone() == TargetZone.STACK) {
                     targetFizzled = gameData.stack.stream()
                             .noneMatch(se -> se.getCard().getId().equals(entry.getTargetPermanentId()));
                 } else {
-                    Permanent targetPerm = gameHelper.findPermanentById(gameData, entry.getTargetPermanentId());
+                    Permanent targetPerm = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
                     if (targetPerm == null && !gameData.playerIds.contains(entry.getTargetPermanentId())) {
                         targetFizzled = true;
                     } else if (targetPerm != null && entry.getCard() != null && entry.getCard().getTargetFilter() != null) {
                         try {
-                            gameHelper.validateTargetFilter(entry.getCard().getTargetFilter(), targetPerm);
+                            gameQueryService.validateTargetFilter(entry.getCard().getTargetFilter(), targetPerm);
                         } catch (IllegalStateException e) {
                             targetFizzled = true;
                         }
@@ -449,7 +454,7 @@ public class GameService {
             if (!targetFizzled && entry.getTargetCardIds() != null && !entry.getTargetCardIds().isEmpty()) {
                 boolean allGone = true;
                 for (UUID cardId : entry.getTargetCardIds()) {
-                    if (gameHelper.findCardInGraveyardById(gameData, cardId) != null) {
+                    if (gameQueryService.findCardInGraveyardById(gameData, cardId) != null) {
                         allGone = false;
                         break;
                     }
@@ -460,7 +465,7 @@ public class GameService {
             }
             if (targetFizzled) {
                 String fizzleLog = entry.getDescription() + " fizzles (illegal target).";
-                gameHelper.logAndBroadcast(gameData, fizzleLog);
+                gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
                 log.info("Game {} - {} fizzles, target {} is illegal",
                         gameData.id, entry.getDescription(), entry.getTargetPermanentId());
 
@@ -472,7 +477,7 @@ public class GameService {
                 }
             } else {
                 String logEntry = entry.getDescription() + " resolves.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} resolves", gameData.id, entry.getDescription());
 
                 effectResolutionService.resolveEffects(gameData, entry);
@@ -491,11 +496,11 @@ public class GameService {
 
         if (!gameData.pendingMayAbilities.isEmpty()) {
 
-            gameHelper.processNextMayAbility(gameData);
+            playerInputService.processNextMayAbility(gameData);
             return;
         }
 
-        gameHelper.broadcastGameState(gameData);
+        gameBroadcastService.broadcastGameState(gameData);
     }
 
     public JoinGame getJoinGame(GameData data, UUID playerId) {
@@ -514,7 +519,7 @@ public class GameService {
                     }
                 }
                 case BLOCKER_DECLARATION -> {
-                    UUID defenderId = gameHelper.getOpponentId(gameData, gameData.activePlayerId);
+                    UUID defenderId = gameQueryService.getOpponentId(gameData, gameData.activePlayerId);
                     if (playerId.equals(defenderId)) {
                         List<Integer> blockable = combatService.getBlockableCreatureIndices(gameData, defenderId);
                         List<Integer> attackerIndices = combatService.getAttackingCreatureIndices(gameData, gameData.activePlayerId);
@@ -557,15 +562,15 @@ public class GameService {
                         String prompt;
                         if (gameData.colorChoiceContext instanceof ColorChoiceContext.TextChangeFromWord) {
                             options = new ArrayList<>();
-                            options.addAll(GameHelper.TEXT_CHANGE_COLOR_WORDS);
-                            options.addAll(GameHelper.TEXT_CHANGE_LAND_TYPES);
+                            options.addAll(GameQueryService.TEXT_CHANGE_COLOR_WORDS);
+                            options.addAll(GameQueryService.TEXT_CHANGE_LAND_TYPES);
                             prompt = "Choose a color word or basic land type to replace.";
                         } else if (gameData.colorChoiceContext instanceof ColorChoiceContext.TextChangeToWord ctx) {
                             if (ctx.isColor()) {
-                                options = GameHelper.TEXT_CHANGE_COLOR_WORDS.stream().filter(c -> !c.equals(ctx.fromWord())).toList();
+                                options = GameQueryService.TEXT_CHANGE_COLOR_WORDS.stream().filter(c -> !c.equals(ctx.fromWord())).toList();
                                 prompt = "Choose the replacement color word.";
                             } else {
-                                options = GameHelper.TEXT_CHANGE_LAND_TYPES.stream().filter(t -> !t.equals(ctx.fromWord())).toList();
+                                options = GameQueryService.TEXT_CHANGE_LAND_TYPES.stream().filter(t -> !t.equals(ctx.fromWord())).toList();
                                 prompt = "Choose the replacement basic land type.";
                             }
                         } else {
@@ -597,7 +602,7 @@ public class GameService {
                             if (graveyard == null) continue;
                             for (Card card : graveyard) {
                                 if (gameData.awaitingMultiGraveyardChoiceValidCardIds.contains(card.getId())) {
-                                    cardViews.add(gameHelper.getCardViewFactory().create(card));
+                                    cardViews.add(cardViewFactory.create(card));
                                 }
                             }
                         }
@@ -608,21 +613,21 @@ public class GameService {
                 }
                 case LIBRARY_REORDER -> {
                     if (playerId.equals(gameData.awaitingLibraryReorderPlayerId) && gameData.awaitingLibraryReorderCards != null) {
-                        List<CardView> cardViews = gameData.awaitingLibraryReorderCards.stream().map(gameHelper.getCardViewFactory()::create).toList();
+                        List<CardView> cardViews = gameData.awaitingLibraryReorderCards.stream().map(cardViewFactory::create).toList();
                         sessionManager.sendToPlayer(playerId, new ReorderLibraryCardsMessage(
                                 cardViews, "Put these cards back on top of your library in any order (top to bottom)."));
                     }
                 }
                 case LIBRARY_SEARCH -> {
                     if (playerId.equals(gameData.awaitingLibrarySearchPlayerId) && gameData.awaitingLibrarySearchCards != null) {
-                        List<CardView> cardViews = gameData.awaitingLibrarySearchCards.stream().map(gameHelper.getCardViewFactory()::create).toList();
+                        List<CardView> cardViews = gameData.awaitingLibrarySearchCards.stream().map(cardViewFactory::create).toList();
                         sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(
                                 cardViews, "Search your library for a basic land card to put into your hand."));
                     }
                 }
                 case HAND_TOP_BOTTOM_CHOICE -> {
                     if (playerId.equals(gameData.awaitingHandTopBottomPlayerId) && gameData.awaitingHandTopBottomCards != null) {
-                        List<CardView> cardViews = gameData.awaitingHandTopBottomCards.stream().map(gameHelper.getCardViewFactory()::create).toList();
+                        List<CardView> cardViews = gameData.awaitingHandTopBottomCards.stream().map(cardViewFactory::create).toList();
                         int count = gameData.awaitingHandTopBottomCards.size();
                         sessionManager.sendToPlayer(playerId, new ChooseHandTopBottomMessage(
                                 cardViews, "Look at the top " + count + " cards of your library. Choose one to put into your hand."));
@@ -633,7 +638,7 @@ public class GameService {
                         UUID targetPlayerId = gameData.awaitingRevealedHandChoiceTargetPlayerId;
                         List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
                         String targetName = gameData.playerIdToName.get(targetPlayerId);
-                        List<CardView> cardViews = targetHand.stream().map(gameHelper.getCardViewFactory()::create).toList();
+                        List<CardView> cardViews = targetHand.stream().map(cardViewFactory::create).toList();
                         List<Integer> validIndices = new ArrayList<>(gameData.awaitingCardChoiceValidIndices);
                         sessionManager.sendToPlayer(playerId, new ChooseFromRevealedHandMessage(
                                 cardViews, validIndices, "Choose a card to put on top of " + targetName + "'s library."));
@@ -664,15 +669,15 @@ public class GameService {
 
                 String logEntry = player.getUsername() + " keeps their hand and must put " + cardsToBottom +
                         " card" + (cardsToBottom > 1 ? "s" : "") + " on the bottom of their library.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
                 log.info("Game {} - {} kept hand, needs to bottom {} cards (mulligan count: {})", gameData.id, player.getUsername(), cardsToBottom, mulliganCount);
 
-                gameHelper.broadcastGameState(gameData);
+                gameBroadcastService.broadcastGameState(gameData);
                 sessionManager.sendToPlayer(player.getId(), new SelectCardsToBottomMessage(cardsToBottom));
             } else {
                 String logEntry = player.getUsername() + " keeps their hand.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
                 log.info("Game {} - {} kept hand (no mulligans)", gameData.id, player.getUsername());
 
@@ -722,11 +727,11 @@ public class GameService {
 
             String logEntry = player.getUsername() + " puts " + bottomCards.size() +
                     " card" + (bottomCards.size() > 1 ? "s" : "") + " on the bottom of their library (keeping " + hand.size() + " cards).";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
             log.info("Game {} - {} bottomed {} cards, hand size now {}", gameData.id, player.getUsername(), bottomCards.size(), hand.size());
 
-            gameHelper.broadcastGameState(gameData);
+            gameBroadcastService.broadcastGameState(gameData);
             checkStartGame(gameData);
         }
     }
@@ -768,10 +773,10 @@ public class GameService {
 
 
             String logEntry = player.getUsername() + " takes a mulligan (mulligan #" + newMulliganCount + ").";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
             log.info("Game {} - {} mulliganed (count: {})", gameData.id, player.getUsername(), newMulliganCount);
-            gameHelper.broadcastGameState(gameData);
+            gameBroadcastService.broadcastGameState(gameData);
         }
     }
 
@@ -783,10 +788,10 @@ public class GameService {
 
         String logEntry1 = "Mulligan phase complete!";
         String logEntry2 = "Turn 1 begins. " + gameData.playerIdToName.get(gameData.activePlayerId) + "'s turn.";
-        gameHelper.logAndBroadcast(gameData, logEntry1);
-        gameHelper.logAndBroadcast(gameData, logEntry2);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry1);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry2);
 
-        gameHelper.broadcastGameState(gameData);
+        gameBroadcastService.broadcastGameState(gameData);
 
         log.info("Game {} - Game started! Turn 1 begins. Active player: {}", gameData.id, gameData.playerIdToName.get(gameData.activePlayerId));
 
@@ -795,10 +800,10 @@ public class GameService {
 
     private JoinGame toJoinGame(GameData data, UUID playerId) {
         List<CardView> hand = playerId != null
-                ? data.playerHands.getOrDefault(playerId, List.of()).stream().map(gameHelper.getCardViewFactory()::create).toList()
+                ? data.playerHands.getOrDefault(playerId, List.of()).stream().map(cardViewFactory::create).toList()
                 : List.of();
         int mulliganCount = playerId != null ? data.mulliganCounts.getOrDefault(playerId, 0) : 0;
-        Map<String, Integer> manaPool = gameHelper.getManaPool(data, playerId);
+        Map<String, Integer> manaPool = gameBroadcastService.getManaPool(data, playerId);
         List<TurnStep> autoStopSteps = playerId != null && data.playerAutoStopSteps.containsKey(playerId)
                 ? new ArrayList<>(data.playerAutoStopSteps.get(playerId))
                 : List.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN);
@@ -812,17 +817,17 @@ public class GameService {
                 data.currentStep,
                 data.activePlayerId,
                 data.turnNumber,
-                gameHelper.getPriorityPlayerId(data),
+                gameQueryService.getPriorityPlayerId(data),
                 hand,
                 mulliganCount,
-                gameHelper.getDeckSizes(data),
-                gameHelper.getHandSizes(data),
-                gameHelper.getBattlefields(data),
+                gameBroadcastService.getDeckSizes(data),
+                gameBroadcastService.getHandSizes(data),
+                gameBroadcastService.getBattlefields(data),
                 manaPool,
                 autoStopSteps,
-                gameHelper.getLifeTotals(data),
-                data.stack.stream().map(gameHelper.getStackEntryViewFactory()::create).toList(),
-                gameHelper.getGraveyardViews(data)
+                gameBroadcastService.getLifeTotals(data),
+                gameBroadcastService.getStackViews(data),
+                gameBroadcastService.getGraveyardViews(data)
         );
     }
 
@@ -834,7 +839,7 @@ public class GameService {
 
         synchronized (gameData) {
             UUID playerId = player.getId();
-            List<Integer> playable = gameHelper.getPlayableCardIndices(gameData, playerId);
+            List<Integer> playable = gameBroadcastService.getPlayableCardIndices(gameData, playerId);
             if (!playable.contains(cardIndex)) {
                 throw new IllegalStateException("Card is not playable");
             }
@@ -850,7 +855,7 @@ public class GameService {
                         throw new IllegalStateException("X value cannot be negative");
                     }
                     ManaPool pool = gameData.playerManaPools.get(playerId);
-                    int additionalCost = gameHelper.getOpponentCostIncrease(gameData, playerId, card.getType());
+                    int additionalCost = gameBroadcastService.getOpponentCostIncrease(gameData, playerId, card.getType());
                     if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
                         throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
                     }
@@ -894,13 +899,13 @@ public class GameService {
 
             // Validate target if specified (can be a permanent or a player)
             if (targetPermanentId != null && !card.isNeedsSpellTarget()) {
-                Permanent target = gameHelper.findPermanentById(gameData, targetPermanentId);
+                Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
                 if (target == null && !gameData.playerIds.contains(targetPermanentId)) {
                     throw new IllegalStateException("Invalid target");
                 }
 
                 // Protection validation
-                if (target != null && card.isNeedsTarget() && gameHelper.hasProtectionFrom(gameData, target, card.getColor())) {
+                if (target != null && card.isNeedsTarget() && gameQueryService.hasProtectionFrom(gameData, target, card.getColor())) {
                     throw new IllegalStateException(target.getCard().getName() + " has protection from " + card.getColor().name().toLowerCase());
                 }
 
@@ -911,13 +916,13 @@ public class GameService {
 
                 // Player shroud validation
                 if (target == null && card.isNeedsTarget() && gameData.playerIds.contains(targetPermanentId)
-                        && gameHelper.playerHasShroud(gameData, targetPermanentId)) {
+                        && gameQueryService.playerHasShroud(gameData, targetPermanentId)) {
                     throw new IllegalStateException(gameData.playerIdToName.get(targetPermanentId) + " has shroud and can't be targeted");
                 }
 
                 // Generic target filter validation for spells
                 if (card.getTargetFilter() != null && target != null) {
-                    gameHelper.validateTargetFilter(card.getTargetFilter(), target);
+                    gameQueryService.validateTargetFilter(card.getTargetFilter(), target);
                 }
 
                 // Effect-specific target validation
@@ -954,7 +959,7 @@ public class GameService {
     
 
                 String logEntry = player.getUsername() + " plays " + card.getName() + ".";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
                 log.info("Game {} - {} plays {}", gameData.id, player.getUsername(), card.getName());
 
@@ -1000,7 +1005,7 @@ public class GameService {
                         throw new IllegalStateException("Damage assignments must sum to X (" + effectiveXValue + ")");
                     }
                     for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
-                        Permanent target = gameHelper.findPermanentById(gameData, assignment.getKey());
+                        Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
                         if (target == null || !isCreature(gameData, target) || !target.isAttacking()) {
                             throw new IllegalStateException("All targets must be attacking creatures");
                         }
@@ -1033,7 +1038,7 @@ public class GameService {
         if (card.getManaCost() == null) return;
         ManaCost cost = new ManaCost(card.getManaCost());
         ManaPool pool = gameData.playerManaPools.get(playerId);
-        int additionalCost = gameHelper.getOpponentCostIncrease(gameData, playerId, card.getType());
+        int additionalCost = gameBroadcastService.getOpponentCostIncrease(gameData, playerId, card.getType());
         if (cost.hasX()) {
             cost.pay(pool, effectiveXValue + additionalCost);
         } else {
@@ -1047,12 +1052,12 @@ public class GameService {
         gameData.priorityPassedBy.clear();
 
         String logEntry = player.getUsername() + " casts " + card.getName() + ".";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), card.getName());
 
         gameHelper.checkSpellCastTriggers(gameData, card);
-        gameHelper.broadcastGameState(gameData);
+        gameBroadcastService.broadcastGameState(gameData);
         resolveAutoPass(gameData);
     }
 
@@ -1092,11 +1097,11 @@ public class GameService {
 
 
             String logEntry = player.getUsername() + " taps " + permanent.getCard().getName() + ".";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
             log.info("Game {} - {} taps {}", gameData.id, player.getUsername(), permanent.getCard().getName());
 
-            gameHelper.broadcastGameState(gameData);
+            gameBroadcastService.broadcastGameState(gameData);
         }
     }
 
@@ -1123,14 +1128,14 @@ public class GameService {
                     if (targetPermanentId == null) {
                         throw new IllegalStateException("Sacrifice ability requires a target");
                     }
-                    Permanent target = gameHelper.findPermanentById(gameData, targetPermanentId);
+                    Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
                     if (target == null) {
                         throw new IllegalStateException("Invalid target permanent");
                     }
                     if (!destroy.targetTypes().contains(target.getCard().getType())) {
                         throw new IllegalStateException("Invalid target type for sacrifice ability");
                     }
-                    if (gameHelper.hasProtectionFrom(gameData, target, permanent.getCard().getColor())) {
+                    if (gameQueryService.hasProtectionFrom(gameData, target, permanent.getCard().getColor())) {
                         throw new IllegalStateException(target.getCard().getName() + " has protection from " + permanent.getCard().getColor().name().toLowerCase());
                     }
                 }
@@ -1144,7 +1149,7 @@ public class GameService {
             gameHelper.removeOrphanedAuras(gameData);
 
             String logEntry = player.getUsername() + " sacrifices " + permanent.getCard().getName() + ".";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} sacrifices {}", gameData.id, player.getUsername(), permanent.getCard().getName());
 
             // Put activated ability on stack
@@ -1165,9 +1170,9 @@ public class GameService {
 
 
             if (!gameData.pendingMayAbilities.isEmpty()) {
-                gameHelper.processNextMayAbility(gameData);
+                playerInputService.processNextMayAbility(gameData);
             }
-            gameHelper.broadcastGameState(gameData);
+            gameBroadcastService.broadcastGameState(gameData);
         }
     }
 
@@ -1251,14 +1256,14 @@ public class GameService {
                     if (targetPermanentId == null) {
                         throw new IllegalStateException("Ability requires a target");
                     }
-                    Permanent target = gameHelper.findPermanentById(gameData, targetPermanentId);
+                    Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
                     if (target == null) {
                         throw new IllegalStateException("Invalid target permanent");
                     }
                     if (!isCreature(gameData, target)) {
                         throw new IllegalStateException("Target must be a creature");
                     }
-                    if (gameHelper.hasProtectionFrom(gameData, target, permanent.getCard().getColor())) {
+                    if (gameQueryService.hasProtectionFrom(gameData, target, permanent.getCard().getColor())) {
                         throw new IllegalStateException(target.getCard().getName() + " has protection from " + permanent.getCard().getColor().name().toLowerCase());
                     }
                 }
@@ -1266,7 +1271,7 @@ public class GameService {
                     if (targetPermanentId == null) {
                         throw new IllegalStateException("Ability requires a target");
                     }
-                    Permanent target = gameHelper.findPermanentById(gameData, targetPermanentId);
+                    Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
                     if (target == null) {
                         throw new IllegalStateException("Invalid target permanent");
                     }
@@ -1294,7 +1299,7 @@ public class GameService {
                     if (targetPermanentId == null) {
                         throw new IllegalStateException("Ability requires a target");
                     }
-                    Permanent target = gameHelper.findPermanentById(gameData, targetPermanentId);
+                    Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
                     if (target == null) {
                         throw new IllegalStateException("Invalid target permanent");
                     }
@@ -1309,7 +1314,7 @@ public class GameService {
                     if (targetPermanentId == null) {
                         throw new IllegalStateException("Ability requires a target Aura card");
                     }
-                    Card graveyardCard = gameHelper.findCardInGraveyardById(gameData, targetPermanentId);
+                    Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, targetPermanentId);
                     if (graveyardCard == null) {
                         throw new IllegalStateException("Target card not found in any graveyard");
                     }
@@ -1321,15 +1326,15 @@ public class GameService {
 
             // Generic target filter validation
             if (ability.getTargetFilter() != null && targetPermanentId != null) {
-                Permanent target = gameHelper.findPermanentById(gameData, targetPermanentId);
+                Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
                 if (target != null) {
-                    gameHelper.validateTargetFilter(ability.getTargetFilter(), target);
+                    gameQueryService.validateTargetFilter(ability.getTargetFilter(), target);
                 }
             }
 
             // Creature shroud validation for abilities
             if (targetPermanentId != null) {
-                Permanent shroudTarget = gameHelper.findPermanentById(gameData, targetPermanentId);
+                Permanent shroudTarget = gameQueryService.findPermanentById(gameData, targetPermanentId);
                 if (shroudTarget != null && hasKeyword(gameData, shroudTarget, Keyword.SHROUD)) {
                     throw new IllegalStateException(shroudTarget.getCard().getName() + " has shroud and can't be targeted");
                 }
@@ -1337,7 +1342,7 @@ public class GameService {
 
             // Player shroud validation for abilities
             if (targetPermanentId != null && gameData.playerIds.contains(targetPermanentId)
-                    && gameHelper.playerHasShroud(gameData, targetPermanentId)) {
+                    && gameQueryService.playerHasShroud(gameData, targetPermanentId)) {
                 throw new IllegalStateException(gameData.playerIdToName.get(targetPermanentId) + " has shroud and can't be targeted");
             }
 
@@ -1364,7 +1369,7 @@ public class GameService {
             }
 
             String logEntry = player.getUsername() + " activates " + permanent.getCard().getName() + "'s ability.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} activates {}'s ability", gameData.id, player.getUsername(), permanent.getCard().getName());
 
             // Snapshot permanent state into effects so the ability resolves independently of its source
@@ -1409,7 +1414,7 @@ public class GameService {
                 ));
             }
             gameData.priorityPassedBy.clear();
-            gameHelper.broadcastGameState(gameData);
+            gameBroadcastService.broadcastGameState(gameData);
         }
     }
 
@@ -1424,7 +1429,7 @@ public class GameService {
             stopSet.add(TurnStep.PRECOMBAT_MAIN);
             stopSet.add(TurnStep.POSTCOMBAT_MAIN);
             gameData.playerAutoStopSteps.put(player.getId(), stopSet);
-            gameHelper.broadcastGameState(gameData);
+            gameBroadcastService.broadcastGameState(gameData);
         }
     }
 
@@ -1456,12 +1461,12 @@ public class GameService {
             gameData.awaitingColorChoicePermanentId = null;
             gameData.pendingColorChoiceETBTargetId = null;
 
-            Permanent perm = gameHelper.findPermanentById(gameData, permanentId);
+            Permanent perm = gameQueryService.findPermanentById(gameData, permanentId);
             if (perm != null) {
                 perm.setChosenColor(color);
 
                 String logEntry = player.getUsername() + " chooses " + color.name().toLowerCase() + " for " + perm.getCard().getName() + ".";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), color, perm.getCard().getName());
 
                 if (isCreature(gameData, perm)) {
@@ -1470,14 +1475,14 @@ public class GameService {
             }
 
             gameData.priorityPassedBy.clear();
-            gameHelper.broadcastGameState(gameData);
+            gameBroadcastService.broadcastGameState(gameData);
             resolveAutoPass(gameData);
         }
     }
 
     private void handleTextChangeFromWordChosen(GameData gameData, Player player, String chosenWord, ColorChoiceContext.TextChangeFromWord ctx) {
-        boolean isColor = GameHelper.TEXT_CHANGE_COLOR_WORDS.contains(chosenWord);
-        boolean isLandType = GameHelper.TEXT_CHANGE_LAND_TYPES.contains(chosenWord);
+        boolean isColor = GameQueryService.TEXT_CHANGE_COLOR_WORDS.contains(chosenWord);
+        boolean isLandType = GameQueryService.TEXT_CHANGE_LAND_TYPES.contains(chosenWord);
         if (!isColor && !isLandType) {
             throw new IllegalArgumentException("Invalid choice: " + chosenWord);
         }
@@ -1487,10 +1492,10 @@ public class GameService {
         List<String> remainingOptions;
         String promptType;
         if (isColor) {
-            remainingOptions = GameHelper.TEXT_CHANGE_COLOR_WORDS.stream().filter(c -> !c.equals(chosenWord)).toList();
+            remainingOptions = GameQueryService.TEXT_CHANGE_COLOR_WORDS.stream().filter(c -> !c.equals(chosenWord)).toList();
             promptType = "color word";
         } else {
-            remainingOptions = GameHelper.TEXT_CHANGE_LAND_TYPES.stream().filter(t -> !t.equals(chosenWord)).toList();
+            remainingOptions = GameQueryService.TEXT_CHANGE_LAND_TYPES.stream().filter(t -> !t.equals(chosenWord)).toList();
             promptType = "basic land type";
         }
 
@@ -1500,11 +1505,11 @@ public class GameService {
 
     private void handleTextChangeToWordChosen(GameData gameData, Player player, String chosenWord, ColorChoiceContext.TextChangeToWord ctx) {
         if (ctx.isColor()) {
-            if (!GameHelper.TEXT_CHANGE_COLOR_WORDS.contains(chosenWord)) {
+            if (!GameQueryService.TEXT_CHANGE_COLOR_WORDS.contains(chosenWord)) {
                 throw new IllegalArgumentException("Invalid color choice: " + chosenWord);
             }
         } else {
-            if (!GameHelper.TEXT_CHANGE_LAND_TYPES.contains(chosenWord)) {
+            if (!GameQueryService.TEXT_CHANGE_LAND_TYPES.contains(chosenWord)) {
                 throw new IllegalArgumentException("Invalid land type choice: " + chosenWord);
             }
         }
@@ -1513,7 +1518,7 @@ public class GameService {
         gameData.awaitingColorChoicePlayerId = null;
         gameData.colorChoiceContext = null;
 
-        Permanent target = gameHelper.findPermanentById(gameData, ctx.targetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
         if (target != null) {
             String fromText = textChangeChoiceToWord(ctx.fromWord());
             String toText = textChangeChoiceToWord(chosenWord);
@@ -1529,12 +1534,12 @@ public class GameService {
             }
 
             String logEntry = player.getUsername() + " changes all instances of " + fromText + " to " + toText + " on " + target.getCard().getName() + ".";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} changes {} to {} on {}", gameData.id, player.getUsername(), fromText, toText, target.getCard().getName());
         }
 
         gameData.priorityPassedBy.clear();
-        gameHelper.broadcastGameState(gameData);
+        gameBroadcastService.broadcastGameState(gameData);
         resolveAutoPass(gameData);
     }
 
@@ -1586,7 +1591,7 @@ public class GameService {
 
             if (cardIndex == -1) {
                 String logEntry = player.getUsername() + " chooses not to put a card onto the battlefield.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} declines to put a card onto the battlefield", gameData.id, player.getUsername());
             } else {
                 if (!validIndices.contains(cardIndex)) {
@@ -1628,13 +1633,13 @@ public class GameService {
 
 
         String logEntry = player.getUsername() + " discards " + card.getName() + ".";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} discards {}", gameData.id, player.getUsername(), card.getName());
 
         gameData.awaitingDiscardRemainingCount--;
 
         if (gameData.awaitingDiscardRemainingCount > 0 && !hand.isEmpty()) {
-            gameHelper.beginDiscardChoice(gameData, playerId);
+            playerInputService.beginDiscardChoice(gameData, playerId);
         } else {
             gameData.awaitingInput = null;
             gameData.awaitingCardChoicePlayerId = null;
@@ -1662,7 +1667,7 @@ public class GameService {
         gameData.awaitingRevealedHandChosenCards.add(chosenCard);
 
         String logEntry = player.getUsername() + " chooses " + chosenCard.getName() + " from " + targetName + "'s hand.";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} chooses {} from {}'s hand", gameData.id, player.getUsername(), chosenCard.getName(), targetName);
 
         gameData.awaitingRevealedHandChoiceRemainingCount--;
@@ -1674,7 +1679,7 @@ public class GameService {
                 newValidIndices.add(i);
             }
 
-            gameHelper.beginRevealedHandChoice(gameData, player.getId(), targetPlayerId, newValidIndices,
+            playerInputService.beginRevealedHandChoice(gameData, player.getId(), targetPlayerId, newValidIndices,
                     "Choose another card to put on top of " + targetName + "'s library.");
         } else {
             // All cards chosen — put them on top of library
@@ -1692,7 +1697,7 @@ public class GameService {
 
             String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
             String putLog = player.getUsername() + " puts " + cardNames + " on top of " + targetName + "'s library.";
-            gameHelper.logAndBroadcast(gameData, putLog);
+            gameBroadcastService.logAndBroadcast(gameData, putLog);
             log.info("Game {} - {} puts {} on top of {}'s library", gameData.id, player.getUsername(), cardNames, targetName);
 
             gameData.awaitingRevealedHandChoiceTargetPlayerId = null;
@@ -1704,19 +1709,19 @@ public class GameService {
     }
 
     private void resolveTargetedCardChoice(GameData gameData, Player player, UUID playerId, List<Card> hand, Card card, UUID targetPermanentId) {
-        Permanent target = gameHelper.findPermanentById(gameData, targetPermanentId);
+        Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
         if (target != null) {
             Permanent auraPerm = new Permanent(card);
             auraPerm.setAttachedTo(target.getId());
             gameData.playerBattlefields.get(playerId).add(auraPerm);
 
             String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield attached to " + target.getCard().getName() + ".";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} puts {} onto the battlefield attached to {}", gameData.id, player.getUsername(), card.getName(), target.getCard().getName());
         } else {
             hand.add(card);
             String logEntry = card.getName() + " can't be attached (target left the battlefield).";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - Aura target gone, {} returned to hand", gameData.id, card.getName());
         }
     }
@@ -1725,7 +1730,7 @@ public class GameService {
         gameData.playerBattlefields.get(playerId).add(new Permanent(card));
 
         String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield.";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} puts {} onto the battlefield", gameData.id, player.getUsername(), card.getName());
 
         gameHelper.handleCreatureEnteredBattlefield(gameData, playerId, card, null);
@@ -1755,12 +1760,12 @@ public class GameService {
             gameData.permanentChoiceContext = null;
 
             if (context instanceof PermanentChoiceContext.CloneCopy cloneCopy) {
-                Permanent clonePerm = gameHelper.findPermanentById(gameData, cloneCopy.clonePermanentId());
+                Permanent clonePerm = gameQueryService.findPermanentById(gameData, cloneCopy.clonePermanentId());
                 if (clonePerm == null) {
                     throw new IllegalStateException("Clone permanent no longer exists");
                 }
 
-                Permanent targetPerm = gameHelper.findPermanentById(gameData, permanentId);
+                Permanent targetPerm = gameQueryService.findPermanentById(gameData, permanentId);
                 if (targetPerm == null) {
                     throw new IllegalStateException("Target creature no longer exists");
                 }
@@ -1768,7 +1773,7 @@ public class GameService {
                 gameHelper.applyCloneCopy(clonePerm, targetPerm);
 
                 String logEntry = "Clone enters as a copy of " + targetPerm.getCard().getName() + ".";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - Clone copies {}", gameData.id, targetPerm.getCard().getName());
 
     
@@ -1780,12 +1785,12 @@ public class GameService {
                     resolveAutoPass(gameData);
                 }
             } else if (context instanceof PermanentChoiceContext.AuraGraft auraGraft) {
-                Permanent aura = gameHelper.findPermanentById(gameData, auraGraft.auraPermanentId());
+                Permanent aura = gameQueryService.findPermanentById(gameData, auraGraft.auraPermanentId());
                 if (aura == null) {
                     throw new IllegalStateException("Aura permanent no longer exists");
                 }
 
-                Permanent newTarget = gameHelper.findPermanentById(gameData, permanentId);
+                Permanent newTarget = gameQueryService.findPermanentById(gameData, permanentId);
                 if (newTarget == null) {
                     throw new IllegalStateException("Target permanent no longer exists");
                 }
@@ -1793,7 +1798,7 @@ public class GameService {
                 aura.setAttachedTo(permanentId);
 
                 String logEntry = aura.getCard().getName() + " is now attached to " + newTarget.getCard().getName() + ".";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} reattached to {}", gameData.id, aura.getCard().getName(), newTarget.getCard().getName());
 
     
@@ -1815,7 +1820,7 @@ public class GameService {
                     gameData.playerGraveyards.get(playerId).add(perm.getOriginalCard());
                     gameHelper.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature);
                     String logEntry = perm.getCard().getName() + " is put into the graveyard (legend rule).";
-                    gameHelper.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} sent to graveyard by legend rule", gameData.id, perm.getCard().getName());
                 }
 
@@ -1826,7 +1831,7 @@ public class GameService {
 
                 resolveAutoPass(gameData);
             } else if (context instanceof PermanentChoiceContext.BounceCreature bounceCreature) {
-                Permanent target = gameHelper.findPermanentById(gameData, permanentId);
+                Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
                 if (target == null) {
                     throw new IllegalStateException("Target creature no longer exists");
                 }
@@ -1841,7 +1846,7 @@ public class GameService {
                     hand.add(target.getOriginalCard());
 
                     String logEntry = target.getCard().getName() + " is returned to its owner's hand.";
-                    gameHelper.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} returned to owner's hand by Sunken Hope", gameData.id, target.getCard().getName());
                 }
 
@@ -1852,7 +1857,7 @@ public class GameService {
                 Card auraCard = gameData.pendingAuraCard;
                 gameData.pendingAuraCard = null;
 
-                Permanent creatureTarget = gameHelper.findPermanentById(gameData, permanentId);
+                Permanent creatureTarget = gameQueryService.findPermanentById(gameData, permanentId);
                 if (creatureTarget == null) {
                     throw new IllegalStateException("Target creature no longer exists");
                 }
@@ -1864,7 +1869,7 @@ public class GameService {
 
                 String playerName = gameData.playerIdToName.get(playerId);
                 String logEntry = auraCard.getName() + " enters the battlefield from graveyard attached to " + creatureTarget.getCard().getName() + " under " + playerName + "'s control.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} returned {} from graveyard to battlefield attached to {}",
                         gameData.id, playerName, auraCard.getName(), creatureTarget.getCard().getName());
 
@@ -1902,7 +1907,7 @@ public class GameService {
             if (cardIndex == -1) {
                 // Player declined
                 String logEntry = player.getUsername() + " chooses not to return a card.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} declines to return a card from graveyard", gameData.id, player.getUsername());
             } else {
                 if (!validIndices.contains(cardIndex)) {
@@ -1925,7 +1930,7 @@ public class GameService {
                         gameData.playerHands.get(playerId).add(card);
 
                         String logEntry = player.getUsername() + " returns " + card.getName() + " from graveyard to hand.";
-                        gameHelper.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
                         log.info("Game {} - {} returns {} from graveyard to hand", gameData.id, player.getUsername(), card.getName());
                     }
                     case BATTLEFIELD -> {
@@ -1933,7 +1938,7 @@ public class GameService {
                         gameData.playerBattlefields.get(playerId).add(perm);
 
                         String logEntry = player.getUsername() + " puts " + card.getName() + " from a graveyard onto the battlefield.";
-                        gameHelper.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
                         log.info("Game {} - {} puts {} from graveyard onto battlefield", gameData.id, player.getUsername(), card.getName());
 
                         if (card.getType() == CardType.CREATURE) {
@@ -1994,7 +1999,7 @@ public class GameService {
 
                 if (permanentIds.isEmpty()) {
                     String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to return any permanents.";
-                    gameHelper.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 } else {
                     List<Permanent> targetBattlefield = gameData.playerBattlefields.get(targetPlayerId);
                     List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
@@ -2018,7 +2023,7 @@ public class GameService {
                     if (!bouncedNames.isEmpty()) {
                         gameHelper.removeOrphanedAuras(gameData);
                         String logEntry = String.join(", ", bouncedNames) + (bouncedNames.size() == 1 ? " is" : " are") + " returned to " + gameData.playerIdToName.get(targetPlayerId) + "'s hand.";
-                        gameHelper.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
                         log.info("Game {} - {} bounced {} permanents", gameData.id, gameData.playerIdToName.get(playerId), bouncedNames.size());
 
             
@@ -2028,7 +2033,7 @@ public class GameService {
                 }
 
                 if (!gameData.pendingMayAbilities.isEmpty()) {
-                    gameHelper.processNextMayAbility(gameData);
+                    playerInputService.processNextMayAbility(gameData);
                     return;
                 }
 
@@ -2097,17 +2102,17 @@ public class GameService {
 
             if (cardIds.isEmpty()) {
                 String etbLog = pendingCard.getName() + "'s enter-the-battlefield ability triggers targeting no cards.";
-                gameHelper.logAndBroadcast(gameData, etbLog);
+                gameBroadcastService.logAndBroadcast(gameData, etbLog);
             } else {
                 List<String> targetNames = new ArrayList<>();
                 for (UUID cardId : cardIds) {
-                    Card card = gameHelper.findCardInGraveyardById(gameData, cardId);
+                    Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
                     if (card != null) {
                         targetNames.add(card.getName());
                     }
                 }
                 String etbLog = pendingCard.getName() + "'s enter-the-battlefield ability triggers targeting " + String.join(", ", targetNames) + ".";
-                gameHelper.logAndBroadcast(gameData, etbLog);
+                gameBroadcastService.logAndBroadcast(gameData, etbLog);
             }
             log.info("Game {} - {} ETB ability pushed onto stack with {} graveyard targets", gameData.id, pendingCard.getName(), cardIds.size());
 
@@ -2152,15 +2157,15 @@ public class GameService {
                             }
                         }
                     }
-                    gameHelper.beginPermanentChoice(gameData, ability.controllerId(), creatureIds, "Choose a creature to copy.");
+                    playerInputService.beginPermanentChoice(gameData, ability.controllerId(), creatureIds, "Choose a creature to copy.");
 
                     String logEntry = player.getUsername() + " accepts — choosing a creature to copy.";
-                    gameHelper.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} accepts clone copy", gameData.id, player.getUsername());
                 } else {
                     gameData.permanentChoiceContext = null;
                     String logEntry = player.getUsername() + " declines to copy a creature. Clone enters as 0/0.";
-                    gameHelper.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} declines clone copy", gameData.id, player.getUsername());
 
                     gameHelper.performStateBasedActions(gameData);
@@ -2183,19 +2188,19 @@ public class GameService {
     
 
                 String logEntry = player.getUsername() + " accepts — " + ability.sourceCard().getName() + "'s triggered ability goes on the stack.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} accepts may ability from {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
             } else {
                 String logEntry = player.getUsername() + " declines " + ability.sourceCard().getName() + "'s triggered ability.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} declines may ability from {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
             }
 
-            gameHelper.processNextMayAbility(gameData);
+            playerInputService.processNextMayAbility(gameData);
 
             if (gameData.pendingMayAbilities.isEmpty() && gameData.awaitingInput == null) {
                 gameData.priorityPassedBy.clear();
-                gameHelper.broadcastGameState(gameData);
+                gameBroadcastService.broadcastGameState(gameData);
                 resolveAutoPass(gameData);
             }
         }
@@ -2218,10 +2223,10 @@ public class GameService {
 
         if (targetEntry == null) {
             log.info("Game {} - Counter-unless-pays target no longer on stack", gameData.id);
-            gameHelper.processNextMayAbility(gameData);
+            playerInputService.processNextMayAbility(gameData);
             if (gameData.pendingMayAbilities.isEmpty() && gameData.awaitingInput == null) {
                 gameData.priorityPassedBy.clear();
-                gameHelper.broadcastGameState(gameData);
+                gameBroadcastService.broadcastGameState(gameData);
                 resolveAutoPass(gameData);
             }
             return;
@@ -2233,28 +2238,28 @@ public class GameService {
             if (cost.canPay(pool)) {
                 cost.pay(pool);
                 String logEntry = player.getUsername() + " pays {" + amount + "}. " + targetEntry.getCard().getName() + " is not countered.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} pays {} to avoid counter", gameData.id, player.getUsername(), amount);
             } else {
                 gameData.stack.remove(targetEntry);
                 gameData.playerGraveyards.get(targetEntry.getControllerId()).add(targetEntry.getCard());
                 String logEntry = player.getUsername() + " can't pay {" + amount + "}. " + targetEntry.getCard().getName() + " is countered.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} can't pay {} — spell countered", gameData.id, player.getUsername(), amount);
             }
         } else {
             gameData.stack.remove(targetEntry);
             gameData.playerGraveyards.get(targetEntry.getControllerId()).add(targetEntry.getCard());
             String logEntry = player.getUsername() + " declines to pay {" + amount + "}. " + targetEntry.getCard().getName() + " is countered.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} declines to pay {} — spell countered", gameData.id, player.getUsername(), amount);
         }
 
         gameHelper.performStateBasedActions(gameData);
-        gameHelper.processNextMayAbility(gameData);
+        playerInputService.processNextMayAbility(gameData);
         if (gameData.pendingMayAbilities.isEmpty() && gameData.awaitingInput == null) {
             gameData.priorityPassedBy.clear();
-            gameHelper.broadcastGameState(gameData);
+            gameBroadcastService.broadcastGameState(gameData);
             resolveAutoPass(gameData);
         }
     }
@@ -2262,18 +2267,18 @@ public class GameService {
     public void resolveAutoPass(GameData gameData) {
         for (int safety = 0; safety < 100; safety++) {
             if (gameData.awaitingInput != null) {
-                gameHelper.broadcastGameState(gameData);
+                gameBroadcastService.broadcastGameState(gameData);
                 return;
             }
             if (gameData.status == GameStatus.FINISHED) return;
 
             // When stack is non-empty, never auto-pass — players must explicitly pass
             if (!gameData.stack.isEmpty()) {
-                gameHelper.broadcastGameState(gameData);
+                gameBroadcastService.broadcastGameState(gameData);
                 return;
             }
 
-            UUID priorityHolder = gameHelper.getPriorityPlayerId(gameData);
+            UUID priorityHolder = gameQueryService.getPriorityPlayerId(gameData);
 
             // If no one holds priority (both already passed), advance the step
             if (priorityHolder == null) {
@@ -2281,17 +2286,17 @@ public class GameService {
                 continue;
             }
 
-            List<Integer> playable = gameHelper.getPlayableCardIndices(gameData, priorityHolder);
+            List<Integer> playable = gameBroadcastService.getPlayableCardIndices(gameData, priorityHolder);
             if (!playable.isEmpty()) {
                 // Priority holder can act — stop and let them decide
-                gameHelper.broadcastGameState(gameData);
+                gameBroadcastService.broadcastGameState(gameData);
                 return;
             }
 
             // Check if current step is in the priority holder's auto-stop set
             Set<TurnStep> stopSteps = gameData.playerAutoStopSteps.get(priorityHolder);
             if (stopSteps != null && stopSteps.contains(gameData.currentStep)) {
-                gameHelper.broadcastGameState(gameData);
+                gameBroadcastService.broadcastGameState(gameData);
                 return;
             }
 
@@ -2305,13 +2310,13 @@ public class GameService {
             if (gameData.priorityPassedBy.size() >= 2) {
                 advanceStep(gameData);
             } else {
-                gameHelper.broadcastGameState(gameData);
+                gameBroadcastService.broadcastGameState(gameData);
             }
         }
 
         // Safety: if we somehow looped 100 times, broadcast current state and stop
         log.warn("Game {} - resolveAutoPass hit safety limit", gameData.id);
-        gameHelper.broadcastGameState(gameData);
+        gameBroadcastService.broadcastGameState(gameData);
     }
 
     public void handleLibraryCardsReordered(GameData gameData, Player player, List<Integer> cardOrder) {
@@ -2353,7 +2358,7 @@ public class GameService {
             gameData.awaitingLibraryReorderCards = null;
 
             String logMsg = player.getUsername() + " puts " + count + " cards back on top of their library.";
-            gameHelper.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
             log.info("Game {} - {} reordered top {} cards", gameData.id, player.getUsername(), count);
 
             resolveAutoPass(gameData);
@@ -2412,7 +2417,7 @@ public class GameService {
             } else {
                 logMsg = player.getUsername() + " puts one card into their hand, one on top of their library, and one on the bottom.";
             }
-            gameHelper.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
             log.info("Game {} - {} completed hand/top/bottom choice", gameData.id, player.getUsername());
 
             resolveAutoPass(gameData);
@@ -2441,7 +2446,7 @@ public class GameService {
                 // Player declined (fail to find)
                 Collections.shuffle(deck);
                 String logEntry = player.getUsername() + " chooses not to take a card. Library is shuffled.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} declines to take a basic land from library", gameData.id, player.getUsername());
             } else {
                 if (cardIndex < 0 || cardIndex >= searchCards.size()) {
@@ -2468,7 +2473,7 @@ public class GameService {
                 Collections.shuffle(deck);
 
                 String logEntry = player.getUsername() + " reveals " + chosenCard.getName() + " and puts it into their hand. Library is shuffled.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} searches library and puts {} into hand", gameData.id, player.getUsername(), chosenCard.getName());
             }
 
@@ -2502,18 +2507,18 @@ public class GameService {
     // ===== Thin delegates for test API =====
 
     public boolean isCreature(GameData gameData, Permanent permanent) {
-        return gameHelper.isCreature(gameData, permanent);
+        return gameQueryService.isCreature(gameData, permanent);
     }
 
     public int getEffectivePower(GameData gameData, Permanent permanent) {
-        return gameHelper.getEffectivePower(gameData, permanent);
+        return gameQueryService.getEffectivePower(gameData, permanent);
     }
 
     public int getEffectiveToughness(GameData gameData, Permanent permanent) {
-        return gameHelper.getEffectiveToughness(gameData, permanent);
+        return gameQueryService.getEffectiveToughness(gameData, permanent);
     }
 
     public boolean hasKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
-        return gameHelper.hasKeyword(gameData, permanent, keyword);
+        return gameQueryService.hasKeyword(gameData, permanent, keyword);
     }
 }

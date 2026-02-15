@@ -13,9 +13,12 @@ import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
 import com.github.laxika.magicalvibes.networking.service.StackEntryViewFactory;
 import com.github.laxika.magicalvibes.service.CombatService;
 import com.github.laxika.magicalvibes.service.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
+import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.LobbyService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import com.github.laxika.magicalvibes.config.JacksonConfig;
@@ -44,10 +47,19 @@ public class GameTestHarness {
         CardViewFactory cardViewFactory = new CardViewFactory();
         PermanentViewFactory permanentViewFactory = new PermanentViewFactory(cardViewFactory);
         StackEntryViewFactory stackEntryViewFactory = new StackEntryViewFactory(cardViewFactory);
-        GameHelper gameHelper = new GameHelper(sessionManager, gameRegistry, cardViewFactory, permanentViewFactory, stackEntryViewFactory);
-        EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper);
-        CombatService combatService = new CombatService(gameHelper);
-        gameService = new GameService(sessionManager, gameRegistry, gameHelper, effectResolutionService, combatService);
+        GameQueryService gameQueryService = new GameQueryService();
+        PlayerInputService playerInputService = new PlayerInputService(sessionManager, cardViewFactory);
+        GameBroadcastService gameBroadcastService = new GameBroadcastService(
+                sessionManager, cardViewFactory, permanentViewFactory, stackEntryViewFactory, gameQueryService);
+        GameHelper gameHelper = new GameHelper(
+                sessionManager, gameRegistry, cardViewFactory, gameQueryService, gameBroadcastService, playerInputService);
+        EffectResolutionService effectResolutionService = new EffectResolutionService(
+                gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager, cardViewFactory);
+        CombatService combatService = new CombatService(
+                gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager);
+        gameService = new GameService(
+                sessionManager, gameRegistry, gameHelper, gameQueryService, gameBroadcastService,
+                playerInputService, cardViewFactory, effectResolutionService, combatService);
         lobbyService = new LobbyService(gameRegistry, gameService);
 
         player1 = new Player(UUID.randomUUID(), "Alice");

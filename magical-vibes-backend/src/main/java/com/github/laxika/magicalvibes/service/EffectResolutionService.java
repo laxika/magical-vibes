@@ -88,7 +88,9 @@ import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandM
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
+import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
+import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -102,6 +104,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class EffectResolutionService {
 
     private final GameHelper gameHelper;
+    private final GameQueryService gameQueryService;
+    private final GameBroadcastService gameBroadcastService;
+    private final PlayerInputService playerInputService;
+    private final SessionManager sessionManager;
+    private final CardViewFactory cardViewFactory;
 
     void resolveEffects(GameData gameData, StackEntry entry) {
         List<CardEffect> effects = entry.getEffectsToResolve();
@@ -158,7 +165,7 @@ public class EffectResolutionService {
                 Collections.shuffle(deck);
 
                 String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
-                gameHelper.logAndBroadcast(gameData, shuffleLog);
+                gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
             } else if (effect instanceof ShuffleGraveyardIntoLibraryEffect) {
                 resolveShuffleGraveyardIntoLibrary(gameData, entry);
             } else if (effect instanceof GainLifeEqualToTargetToughnessEffect) {
@@ -270,7 +277,7 @@ public class EffectResolutionService {
     // ===== Effect resolution methods =====
 
     private void resolveOpponentMayPlayCreature(GameData gameData, UUID controllerId) {
-        UUID opponentId = gameHelper.getOpponentId(gameData, controllerId);
+        UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
         List<Card> opponentHand = gameData.playerHands.get(opponentId);
 
         List<Integer> creatureIndices = new ArrayList<>();
@@ -285,13 +292,13 @@ public class EffectResolutionService {
         if (creatureIndices.isEmpty()) {
             String opponentName = gameData.playerIdToName.get(opponentId);
             String logEntry = opponentName + " has no creature cards in hand.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} has no creatures in hand for ETB effect", gameData.id, opponentName);
             return;
         }
 
         String prompt = "You may put a creature card from your hand onto the battlefield.";
-        gameHelper.beginCardChoice(gameData, opponentId, creatureIndices, prompt);
+        playerInputService.beginCardChoice(gameData, opponentId, creatureIndices, prompt);
     }
 
     private void resolvePutAuraFromHandOntoSelf(GameData gameData, StackEntry entry) {
@@ -310,7 +317,7 @@ public class EffectResolutionService {
 
         if (self == null) {
             String fizzleLog = entry.getCard().getName() + "'s ability fizzles (no longer on the battlefield).";
-            gameHelper.logAndBroadcast(gameData, fizzleLog);
+            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
             log.info("Game {} - {} ETB fizzles, creature left battlefield", gameData.id, entry.getCard().getName());
             return;
         }
@@ -328,13 +335,13 @@ public class EffectResolutionService {
         if (auraIndices.isEmpty()) {
             String playerName = gameData.playerIdToName.get(controllerId);
             String logEntry = playerName + " has no Aura cards in hand.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} has no Auras in hand for {} ETB", gameData.id, playerName, entry.getCard().getName());
             return;
         }
 
         String prompt = "You may put an Aura card from your hand onto the battlefield attached to " + entry.getCard().getName() + ".";
-        gameHelper.beginTargetedCardChoice(gameData, controllerId, auraIndices, prompt, self.getId());
+        playerInputService.beginTargetedCardChoice(gameData, controllerId, auraIndices, prompt, self.getId());
     }
 
     private void resolveGainLife(GameData gameData, UUID controllerId, int amount) {
@@ -343,7 +350,7 @@ public class EffectResolutionService {
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = playerName + " gains " + amount + " life.";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gains {} life", gameData.id, playerName, amount);
     }
@@ -354,7 +361,7 @@ public class EffectResolutionService {
         if (amount == 0) {
             String playerName = gameData.playerIdToName.get(controllerId);
             String logEntry = playerName + " has no cards in their graveyard.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} has no graveyard cards for life gain", gameData.id, playerName);
             return;
         }
@@ -362,7 +369,7 @@ public class EffectResolutionService {
     }
 
     private void resolveBoostSelf(GameData gameData, StackEntry entry, BoostSelfEffect boost) {
-        Permanent self = gameHelper.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (self == null) {
             return;
         }
@@ -371,13 +378,13 @@ public class EffectResolutionService {
         self.setToughnessModifier(self.getToughnessModifier() + boost.toughnessBoost());
 
         String logEntry = self.getCard().getName() + " gets +" + boost.powerBoost() + "/+" + boost.toughnessBoost() + " until end of turn.";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gets +{}/+{}", gameData.id, self.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
     }
 
     private void resolveBoostTargetCreature(GameData gameData, StackEntry entry, BoostTargetCreatureEffect boost) {
-        Permanent target = gameHelper.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
             return;
         }
@@ -386,7 +393,7 @@ public class EffectResolutionService {
         target.setToughnessModifier(target.getToughnessModifier() + boost.toughnessBoost());
 
         String logEntry = target.getCard().getName() + " gets +" + boost.powerBoost() + "/+" + boost.toughnessBoost() + " until end of turn.";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gets +{}/+{}", gameData.id, target.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
     }
@@ -395,7 +402,7 @@ public class EffectResolutionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (gameHelper.isCreature(gameData, permanent)) {
+            if (gameQueryService.isCreature(gameData, permanent)) {
                 permanent.setPowerModifier(permanent.getPowerModifier() + boost.powerBoost());
                 permanent.setToughnessModifier(permanent.getToughnessModifier() + boost.toughnessBoost());
                 count++;
@@ -403,13 +410,13 @@ public class EffectResolutionService {
         }
 
         String logEntry = entry.getCard().getName() + " gives +" + boost.powerBoost() + "/+" + boost.toughnessBoost() + " to " + count + " creature(s) until end of turn.";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} boosts {} creatures +{}/+{}", gameData.id, entry.getCard().getName(), count, boost.powerBoost(), boost.toughnessBoost());
     }
 
     private void resolveGrantKeywordToTarget(GameData gameData, StackEntry entry, GrantKeywordToTargetEffect grant) {
-        Permanent target = gameHelper.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
             return;
         }
@@ -418,13 +425,13 @@ public class EffectResolutionService {
 
         String keywordName = grant.keyword().name().charAt(0) + grant.keyword().name().substring(1).toLowerCase().replace('_', ' ');
         String logEntry = target.getCard().getName() + " gains " + keywordName + " until end of turn.";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gains {}", gameData.id, target.getCard().getName(), grant.keyword());
     }
 
     private void resolveMakeTargetUnblockable(GameData gameData, StackEntry entry) {
-        Permanent target = gameHelper.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
             return;
         }
@@ -432,39 +439,39 @@ public class EffectResolutionService {
         target.setCantBeBlocked(true);
 
         String logEntry = target.getCard().getName() + " can't be blocked this turn.";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} can't be blocked this turn", gameData.id, target.getCard().getName());
     }
 
     private void resolveDealXDamageToTargetCreature(GameData gameData, StackEntry entry) {
-        Permanent target = gameHelper.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
             return;
         }
 
-        if (gameHelper.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())
-                || gameHelper.hasProtectionFrom(gameData, target, entry.getCard().getColor())) {
+        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())
+                || gameQueryService.hasProtectionFrom(gameData, target, entry.getCard().getColor())) {
             String logEntry = entry.getCard().getName() + "'s damage is prevented.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
         }
 
         int damage = gameHelper.applyCreaturePreventionShield(gameData, target, entry.getXValue());
         String logEntry = entry.getCard().getName() + " deals " + damage + " damage to " + target.getCard().getName() + ".";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} deals {} damage to {}", gameData.id, entry.getCard().getName(), damage, target.getCard().getName());
 
-        if (damage >= gameHelper.getEffectiveToughness(gameData, target)) {
-            if (gameHelper.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
+        if (damage >= gameQueryService.getEffectiveToughness(gameData, target)) {
+            if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
                 String indestructibleLog = target.getCard().getName() + " is indestructible and survives.";
-                gameHelper.logAndBroadcast(gameData, indestructibleLog);
+                gameBroadcastService.logAndBroadcast(gameData, indestructibleLog);
             } else if (gameHelper.tryRegenerate(gameData, target)) {
 
             } else {
                 gameHelper.removePermanentToGraveyard(gameData, target);
                 String destroyLog = target.getCard().getName() + " is destroyed.";
-                gameHelper.logAndBroadcast(gameData, destroyLog);
+                gameBroadcastService.logAndBroadcast(gameData, destroyLog);
                 log.info("Game {} - {} is destroyed", gameData.id, target.getCard().getName());
                 gameHelper.removeOrphanedAuras(gameData);
             }
@@ -477,32 +484,32 @@ public class EffectResolutionService {
             return;
         }
 
-        if (gameHelper.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
             String logEntry = entry.getCard().getName() + "'s damage is prevented.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
         }
 
         List<Permanent> destroyed = new ArrayList<>();
 
         for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
-            Permanent target = gameHelper.findPermanentById(gameData, assignment.getKey());
+            Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
             if (target == null) {
                 continue;
             }
-            if (gameHelper.hasProtectionFrom(gameData, target, entry.getCard().getColor())) {
+            if (gameQueryService.hasProtectionFrom(gameData, target, entry.getCard().getColor())) {
                 continue;
             }
 
             int damage = gameHelper.applyCreaturePreventionShield(gameData, target, assignment.getValue());
             String logEntry = entry.getCard().getName() + " deals " + damage + " damage to " + target.getCard().getName() + ".";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} deals {} damage to {}", gameData.id, entry.getCard().getName(), damage, target.getCard().getName());
 
             if (damage >= target.getEffectiveToughness()) {
-                if (gameHelper.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
+                if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
                     String indestructibleLog = target.getCard().getName() + " is indestructible and survives.";
-                    gameHelper.logAndBroadcast(gameData, indestructibleLog);
+                    gameBroadcastService.logAndBroadcast(gameData, indestructibleLog);
                 } else if (!gameHelper.tryRegenerate(gameData, target)) {
                     destroyed.add(target);
                 }
@@ -512,7 +519,7 @@ public class EffectResolutionService {
         for (Permanent target : destroyed) {
             gameHelper.removePermanentToGraveyard(gameData, target);
             String destroyLog = target.getCard().getName() + " is destroyed.";
-            gameHelper.logAndBroadcast(gameData, destroyLog);
+            gameBroadcastService.logAndBroadcast(gameData, destroyLog);
             log.info("Game {} - {} is destroyed", gameData.id, target.getCard().getName());
         }
 
@@ -526,7 +533,7 @@ public class EffectResolutionService {
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             for (Permanent perm : gameData.playerBattlefields.get(playerId)) {
-                if (gameHelper.isCreature(gameData, perm)) {
+                if (gameQueryService.isCreature(gameData, perm)) {
                     toDestroy.add(perm);
                 }
             }
@@ -535,7 +542,7 @@ public class EffectResolutionService {
         // Snapshot indestructible status before any removals (MTG rules: "destroy all" is simultaneous)
         Set<Permanent> indestructible = new HashSet<>();
         for (Permanent perm : toDestroy) {
-            if (gameHelper.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
+            if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
                 indestructible.add(perm);
             }
         }
@@ -543,7 +550,7 @@ public class EffectResolutionService {
         for (Permanent perm : toDestroy) {
             if (indestructible.contains(perm)) {
                 String logEntry = perm.getCard().getName() + " is indestructible.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 continue;
             }
             if (!cannotBeRegenerated && gameHelper.tryRegenerate(gameData, perm)) {
@@ -551,7 +558,7 @@ public class EffectResolutionService {
             }
             gameHelper.removePermanentToGraveyard(gameData, perm);
             String logEntry = perm.getCard().getName() + " is destroyed.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} is destroyed", gameData.id, perm.getCard().getName());
         }
     }
@@ -570,7 +577,7 @@ public class EffectResolutionService {
         // Snapshot indestructible status before any removals (MTG rules: "destroy all" is simultaneous)
         Set<Permanent> indestructible = new HashSet<>();
         for (Permanent perm : toDestroy) {
-            if (gameHelper.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
+            if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
                 indestructible.add(perm);
             }
         }
@@ -578,43 +585,43 @@ public class EffectResolutionService {
         for (Permanent perm : toDestroy) {
             if (indestructible.contains(perm)) {
                 String logEntry = perm.getCard().getName() + " is indestructible.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 continue;
             }
             gameHelper.removePermanentToGraveyard(gameData, perm);
             String logEntry = perm.getCard().getName() + " is destroyed.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} is destroyed", gameData.id, perm.getCard().getName());
         }
     }
 
     private void resolveDestroyTargetPermanent(GameData gameData, StackEntry entry, DestroyTargetPermanentEffect destroy) {
-        Permanent target = gameHelper.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
             return;
         }
 
         if (!destroy.targetTypes().contains(target.getCard().getType())) {
             String fizzleLog = entry.getCard().getName() + "'s ability fizzles (invalid target type).";
-            gameHelper.logAndBroadcast(gameData, fizzleLog);
+            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
             log.info("Game {} - {}'s ability fizzles, target type mismatch", gameData.id, entry.getCard().getName());
             return;
         }
 
-        if (gameHelper.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
+        if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
             String logEntry = target.getCard().getName() + " is indestructible.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} is indestructible, destroy prevented", gameData.id, target.getCard().getName());
             return;
         }
 
-        if (gameHelper.isCreature(gameData, target) && gameHelper.tryRegenerate(gameData, target)) {
+        if (gameQueryService.isCreature(gameData, target) && gameHelper.tryRegenerate(gameData, target)) {
             return;
         }
 
         gameHelper.removePermanentToGraveyard(gameData, target);
         String logEntry = target.getCard().getName() + " is destroyed.";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} is destroyed by {}'s ability",
                 gameData.id, target.getCard().getName(), entry.getCard().getName());
 
@@ -622,35 +629,35 @@ public class EffectResolutionService {
     }
 
     private void resolveDestroyBlockedCreatureAndSelf(GameData gameData, StackEntry entry) {
-        Permanent attacker = gameHelper.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent attacker = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (attacker != null) {
-            if (gameHelper.hasKeyword(gameData, attacker, Keyword.INDESTRUCTIBLE)) {
+            if (gameQueryService.hasKeyword(gameData, attacker, Keyword.INDESTRUCTIBLE)) {
                 String logEntry = attacker.getCard().getName() + " is indestructible.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
             } else if (!gameHelper.tryRegenerate(gameData, attacker)) {
                 gameHelper.removePermanentToGraveyard(gameData, attacker);
                 String logEntry = attacker.getCard().getName() + " is destroyed by " + entry.getCard().getName() + ".";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} destroyed by {}'s block trigger", gameData.id, attacker.getCard().getName(), entry.getCard().getName());
             }
         }
 
-        Permanent self = gameHelper.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (self != null) {
-            if (gameHelper.hasKeyword(gameData, self, Keyword.INDESTRUCTIBLE)) {
+            if (gameQueryService.hasKeyword(gameData, self, Keyword.INDESTRUCTIBLE)) {
                 String logEntry = entry.getCard().getName() + " is indestructible.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
             } else if (!gameHelper.tryRegenerate(gameData, self)) {
                 gameHelper.removePermanentToGraveyard(gameData, self);
                 String logEntry = entry.getCard().getName() + " is destroyed.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} destroyed (self-destruct from block trigger)", gameData.id, entry.getCard().getName());
             }
         }
     }
 
     private void resolveSacrificeAtEndOfCombat(GameData gameData, StackEntry entry) {
-        Permanent self = gameHelper.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (self != null) {
             gameData.permanentsToSacrificeAtEndOfCombat.add(self.getId());
             String logEntry = entry.getCard().getName() + " will be sacrificed at end of combat.";
@@ -661,12 +668,12 @@ public class EffectResolutionService {
     private void resolvePreventDamageToTarget(GameData gameData, StackEntry entry, PreventDamageToTargetEffect prevent) {
         UUID targetId = entry.getTargetPermanentId();
 
-        Permanent target = gameHelper.findPermanentById(gameData, targetId);
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target != null) {
             target.setDamagePreventionShield(target.getDamagePreventionShield() + prevent.amount());
 
             String logEntry = "The next " + prevent.amount() + " damage that would be dealt to " + target.getCard().getName() + " is prevented.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - Prevention shield {} added to permanent {}", gameData.id, prevent.amount(), target.getCard().getName());
             return;
         }
@@ -677,7 +684,7 @@ public class EffectResolutionService {
 
             String playerName = gameData.playerIdToName.get(targetId);
             String logEntry = "The next " + prevent.amount() + " damage that would be dealt to " + playerName + " is prevented.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - Prevention shield {} added to player {}", gameData.id, prevent.amount(), playerName);
         }
     }
@@ -686,7 +693,7 @@ public class EffectResolutionService {
         gameData.globalDamagePreventionShield += prevent.amount();
 
         String logEntry = "The next " + prevent.amount() + " damage that would be dealt to any permanent or player is prevented.";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - Global prevention shield increased by {}", gameData.id, prevent.amount());
     }
 
@@ -700,12 +707,12 @@ public class EffectResolutionService {
         List<Card> hand = gameData.playerHands.get(playerId);
         if (hand == null || hand.isEmpty()) {
             String logEntry = gameData.playerIdToName.get(playerId) + " has no cards to discard.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
         }
 
         gameData.awaitingDiscardRemainingCount = amount;
-        gameHelper.beginDiscardChoice(gameData, playerId);
+        playerInputService.beginDiscardChoice(gameData, playerId);
     }
 
     private void resolveReturnSelfToHand(GameData gameData, StackEntry entry) {
@@ -723,7 +730,7 @@ public class EffectResolutionService {
 
         if (toReturn == null) {
             String logEntry = entry.getCard().getName() + " is no longer on the battlefield.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
         }
 
@@ -732,12 +739,12 @@ public class EffectResolutionService {
         hand.add(toReturn.getOriginalCard());
 
         String logEntry = entry.getCard().getName() + " is returned to its owner's hand.";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} returned to hand", gameData.id, entry.getCard().getName());
     }
 
     private void resolveReturnTargetPermanentToHand(GameData gameData, StackEntry entry) {
-        Permanent target = gameHelper.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
             return;
         }
@@ -752,7 +759,7 @@ public class EffectResolutionService {
                 hand.add(target.getOriginalCard());
 
                 String logEntry = target.getCard().getName() + " is returned to its owner's hand.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} returned to owner's hand by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
 
                 break;
@@ -778,7 +785,7 @@ public class EffectResolutionService {
             }
 
             List<Permanent> creaturesToReturn = battlefield.stream()
-                    .filter(p -> gameHelper.isCreature(gameData, p))
+                    .filter(p -> gameQueryService.isCreature(gameData, p))
                     .filter(p -> !excludeSelf || !p.getOriginalCard().getId().equals(entry.getCard().getId()))
                     .toList();
 
@@ -791,7 +798,7 @@ public class EffectResolutionService {
                 affectedPlayers.add(ownerId);
 
                 String logEntry = creature.getCard().getName() + " is returned to its owner's hand.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} returned to owner's hand by {}", gameData.id, creature.getCard().getName(), entry.getCard().getName());
             }
         }
@@ -826,7 +833,7 @@ public class EffectResolutionService {
             hand.add(artifact.getOriginalCard());
 
             String logEntry = artifact.getCard().getName() + " is returned to its owner's hand.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} returned to owner's hand by {}", gameData.id, artifact.getCard().getName(), entry.getCard().getName());
         }
 
@@ -842,7 +849,7 @@ public class EffectResolutionService {
 
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         String logEntry = playerName + "'s life total is doubled from " + currentLife + " to " + newLife + ".";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {}'s life doubled from {} to {}", gameData.id, playerName, currentLife, newLife);
     }
@@ -855,7 +862,7 @@ public class EffectResolutionService {
 
         if (handSize == 0) {
             String logEntry = playerName + " has no cards in hand — mills nothing.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
         }
 
@@ -869,7 +876,7 @@ public class EffectResolutionService {
         }
 
         String logEntry = playerName + " mills " + cardsToMill + " card" + (cardsToMill != 1 ? "s" : "") + ".";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} mills {} cards (hand size)", gameData.id, playerName, cardsToMill);
     }
@@ -882,7 +889,7 @@ public class EffectResolutionService {
         List<UUID> creatureIds = new ArrayList<>();
         if (battlefield != null) {
             for (Permanent p : battlefield) {
-                if (gameHelper.isCreature(gameData, p)) {
+                if (gameQueryService.isCreature(gameData, p)) {
                     creatureIds.add(p.getId());
                 }
             }
@@ -890,12 +897,12 @@ public class EffectResolutionService {
 
         if (creatureIds.isEmpty()) {
             String logEntry = playerName + " controls no creatures — nothing to return.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
         }
 
         gameData.permanentChoiceContext = new PermanentChoiceContext.BounceCreature(targetPlayerId);
-        gameHelper.beginPermanentChoice(gameData, targetPlayerId, creatureIds,
+        playerInputService.beginPermanentChoice(gameData, targetPlayerId, creatureIds,
                 "Choose a creature you control to return to its owner's hand.");
     }
 
@@ -912,7 +919,7 @@ public class EffectResolutionService {
         }
 
         String logEntry = playerName + " mills " + cardsToMill + " card" + (cardsToMill != 1 ? "s" : "") + ".";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} mills {} cards", gameData.id, playerName, cardsToMill);
     }
@@ -925,7 +932,7 @@ public class EffectResolutionService {
 
         if (graveyard.isEmpty()) {
             String logEntry = playerName + "'s graveyard is empty. Library is shuffled.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             Collections.shuffle(deck);
             return;
         }
@@ -936,16 +943,16 @@ public class EffectResolutionService {
         Collections.shuffle(deck);
 
         String logEntry = playerName + " shuffles their graveyard (" + count + " card" + (count != 1 ? "s" : "") + ") into their library.";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} shuffles graveyard ({} cards) into library", gameData.id, playerName, count);
     }
 
     private void resolveGainLifeEqualToTargetToughness(GameData gameData, StackEntry entry) {
-        Permanent target = gameHelper.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) return;
 
-        int toughness = gameHelper.getEffectiveToughness(gameData, target);
+        int toughness = gameQueryService.getEffectiveToughness(gameData, target);
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -954,7 +961,7 @@ public class EffectResolutionService {
                 gameData.playerLifeTotals.put(playerId, currentLife + toughness);
 
                 String logEntry = gameData.playerIdToName.get(playerId) + " gains " + toughness + " life.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
                 log.info("Game {} - {} gains {} life (equal to {}'s toughness)",
                         gameData.id, gameData.playerIdToName.get(playerId), toughness, target.getCard().getName());
@@ -964,7 +971,7 @@ public class EffectResolutionService {
     }
 
     private void resolvePutTargetOnBottomOfLibrary(GameData gameData, StackEntry entry) {
-        Permanent target = gameHelper.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) return;
 
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -974,7 +981,7 @@ public class EffectResolutionService {
 
                 String logEntry = target.getCard().getName() + " is put on the bottom of "
                         + gameData.playerIdToName.get(playerId) + "'s library.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
                 log.info("Game {} - {} put on bottom of {}'s library",
                         gameData.id, target.getCard().getName(), gameData.playerIdToName.get(playerId));
@@ -989,7 +996,7 @@ public class EffectResolutionService {
         gameData.preventAllCombatDamage = true;
 
         String logEntry = "All combat damage will be prevented this turn.";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
     }
 
     private void resolvePreventDamageFromColors(GameData gameData, PreventDamageFromColorsEffect effect) {
@@ -1001,7 +1008,7 @@ public class EffectResolutionService {
                 .reduce((a, b) -> a + " and " + b)
                 .orElse("");
         String logEntry = "All damage from " + colorNames + " sources will be prevented this turn.";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
     }
 
     private void resolvePreventNextColorDamageToController(GameData gameData, StackEntry entry, PreventNextColorDamageToControllerEffect effect) {
@@ -1022,7 +1029,7 @@ public class EffectResolutionService {
                 gameData.combatDamageRedirectTarget = p.getId();
 
                 String logEntry = p.getCard().getName() + "'s ability resolves — unblocked combat damage will be redirected to it this turn.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - Combat damage redirect set to {}", gameData.id, p.getCard().getName());
                 return;
             }
@@ -1032,10 +1039,10 @@ public class EffectResolutionService {
     private void resolveReturnAuraFromGraveyardToBattlefield(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
 
-        Card auraCard = gameHelper.findCardInGraveyardById(gameData, entry.getTargetPermanentId());
+        Card auraCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetPermanentId());
         if (auraCard == null || !auraCard.isAura()) {
             String fizzleLog = entry.getDescription() + " fizzles (target Aura no longer in graveyard).";
-            gameHelper.logAndBroadcast(gameData, fizzleLog);
+            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
             return;
         }
 
@@ -1043,7 +1050,7 @@ public class EffectResolutionService {
         List<UUID> creatureIds = new ArrayList<>();
         if (controllerBf != null) {
             for (Permanent p : controllerBf) {
-                if (gameHelper.isCreature(gameData, p)) {
+                if (gameQueryService.isCreature(gameData, p)) {
                     creatureIds.add(p.getId());
                 }
             }
@@ -1051,14 +1058,14 @@ public class EffectResolutionService {
 
         if (creatureIds.isEmpty()) {
             String fizzleLog = entry.getDescription() + " fizzles (no creatures to attach Aura to).";
-            gameHelper.logAndBroadcast(gameData, fizzleLog);
+            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
             return;
         }
 
         gameHelper.removeCardFromGraveyardById(gameData, auraCard.getId());
         gameData.pendingAuraCard = auraCard;
 
-        gameHelper.beginPermanentChoice(gameData, controllerId, creatureIds, "Choose a creature you control to attach " + auraCard.getName() + " to.");
+        playerInputService.beginPermanentChoice(gameData, controllerId, creatureIds, "Choose a creature you control to attach " + auraCard.getName() + " to.");
     }
 
     private void resolveCreateCreatureToken(GameData gameData, UUID controllerId, CreateCreatureTokenEffect token) {
@@ -1071,7 +1078,7 @@ public class EffectResolutionService {
         gameData.playerBattlefields.get(controllerId).add(tokenPermanent);
 
         String logEntry = "A " + token.power() + "/" + token.toughness() + " " + token.tokenName() + " creature token enters the battlefield.";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
         if (gameData.awaitingInput == null) {
@@ -1097,7 +1104,7 @@ public class EffectResolutionService {
 
         if (cardPool.isEmpty()) {
             String logEntry = entry.getDescription() + " — no artifact or creature cards in any graveyard.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             // Per Magic rules: spell fizzles when it has no legal targets at resolution.
             // Remove ShuffleIntoLibraryEffect so the card goes to graveyard instead of being shuffled.
             entry.getEffectsToResolve().removeIf(e -> e instanceof ShuffleIntoLibraryEffect);
@@ -1111,7 +1118,7 @@ public class EffectResolutionService {
 
         gameData.graveyardChoiceCardPool = cardPool;
         gameData.graveyardChoiceDestination = GraveyardChoiceDestination.BATTLEFIELD;
-        gameHelper.beginGraveyardChoice(gameData, controllerId, indices,
+        playerInputService.beginGraveyardChoice(gameData, controllerId, indices,
                 "Choose an artifact or creature card from a graveyard to put onto the battlefield under your control.");
     }
 
@@ -1123,7 +1130,7 @@ public class EffectResolutionService {
 
         if (graveyard == null || graveyard.isEmpty()) {
             String logEntry = entry.getDescription() + " — no " + typeName + " cards in graveyard.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
         }
 
@@ -1136,23 +1143,23 @@ public class EffectResolutionService {
 
         if (matchingIndices.isEmpty()) {
             String logEntry = entry.getDescription() + " — no " + typeName + " cards in graveyard.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
         }
 
         gameData.graveyardChoiceDestination = destination;
-        gameHelper.beginGraveyardChoice(gameData, controllerId, matchingIndices, prompt);
+        playerInputService.beginGraveyardChoice(gameData, controllerId, matchingIndices, prompt);
     }
 
     private void resolveRegenerate(GameData gameData, StackEntry entry) {
-        Permanent perm = gameHelper.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent perm = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (perm == null) {
             return;
         }
         perm.setRegenerationShield(perm.getRegenerationShield() + 1);
 
         String logEntry = perm.getCard().getName() + " gains a regeneration shield.";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gains a regeneration shield", gameData.id, perm.getCard().getName());
     }
 
@@ -1168,13 +1175,13 @@ public class EffectResolutionService {
             if (battlefield == null) continue;
 
             for (Permanent p : battlefield) {
-                if (!gameHelper.isCreature(gameData, p)) continue;
-                if (!gameHelper.matchesFilters(gameData, p, tap.filters())) continue;
+                if (!gameQueryService.isCreature(gameData, p)) continue;
+                if (!gameQueryService.matchesFilters(gameData, p, tap.filters())) continue;
 
                 p.tap();
 
                 String logMsg = entry.getCard().getName() + " taps " + p.getCard().getName() + ".";
-                gameHelper.logAndBroadcast(gameData, logMsg);
+                gameBroadcastService.logAndBroadcast(gameData, logMsg);
             }
         }
 
@@ -1182,7 +1189,7 @@ public class EffectResolutionService {
     }
 
     private void resolveTapTargetPermanent(GameData gameData, StackEntry entry) {
-        Permanent target = gameHelper.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
             return;
         }
@@ -1190,13 +1197,13 @@ public class EffectResolutionService {
         target.tap();
 
         String logEntry = entry.getCard().getName() + " taps " + target.getCard().getName() + ".";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} taps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
     }
 
     private void resolveUntapSelf(GameData gameData, StackEntry entry) {
-        Permanent self = gameHelper.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (self == null) {
             return;
         }
@@ -1204,7 +1211,7 @@ public class EffectResolutionService {
         self.untap();
 
         String logEntry = entry.getCard().getName() + " untaps.";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} untaps", gameData.id, entry.getCard().getName());
     }
@@ -1217,15 +1224,15 @@ public class EffectResolutionService {
 
         if (hand.isEmpty()) {
             String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else {
             String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
             String logEntry = casterName + " looks at " + targetName + "'s hand: " + cardNames + ".";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
         }
 
-        List<CardView> cardViews = hand.stream().map(gameHelper.getCardViewFactory()::create).toList();
-        gameHelper.getSessionManager().sendToPlayer(entry.getControllerId(), new RevealHandMessage(cardViews, targetName));
+        List<CardView> cardViews = hand.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(entry.getControllerId(), new RevealHandMessage(cardViews, targetName));
 
         log.info("Game {} - {} looks at {}'s hand", gameData.id, casterName, targetName);
     }
@@ -1239,7 +1246,7 @@ public class EffectResolutionService {
 
         if (hand.isEmpty()) {
             String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} looks at {}'s empty hand", gameData.id, casterName, targetName);
             return;
         }
@@ -1247,7 +1254,7 @@ public class EffectResolutionService {
         // Log and reveal hand to caster
         String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
         String logEntry = casterName + " looks at " + targetName + "'s hand: " + cardNames + ".";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         int cardsToChoose = Math.min(choose.count(), hand.size());
 
@@ -1261,7 +1268,7 @@ public class EffectResolutionService {
         gameData.awaitingRevealedHandChoiceRemainingCount = cardsToChoose;
         gameData.awaitingRevealedHandChosenCards.clear();
 
-        gameHelper.beginRevealedHandChoice(gameData, casterId, targetPlayerId, validIndices,
+        playerInputService.beginRevealedHandChoice(gameData, casterId, targetPlayerId, validIndices,
                 "Choose a card to put on top of " + targetName + "'s library.");
 
         log.info("Game {} - {} choosing {} card(s) from {}'s hand to put on top of library",
@@ -1275,11 +1282,11 @@ public class EffectResolutionService {
 
         if (deck.isEmpty()) {
             String logEntry = playerName + "'s library is empty.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else {
             Card topCard = deck.getFirst();
             String logEntry = playerName + " reveals " + topCard.getName() + " from the top of their library.";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
         }
 
         log.info("Game {} - {} reveals top card of library", gameData.id, playerName);
@@ -1287,7 +1294,7 @@ public class EffectResolutionService {
 
     private void resolveGainControlOfTargetAura(GameData gameData, StackEntry entry) {
         UUID casterId = entry.getControllerId();
-        Permanent aura = gameHelper.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (aura == null) return;
 
         UUID currentControllerId = null;
@@ -1303,7 +1310,7 @@ public class EffectResolutionService {
             gameData.playerBattlefields.get(casterId).add(aura);
             String casterName = gameData.playerIdToName.get(casterId);
             String logEntry = casterName + " gains control of " + aura.getCard().getName() + ".";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} gains control of {}", gameData.id, casterName, aura.getCard().getName());
         }
 
@@ -1312,7 +1319,7 @@ public class EffectResolutionService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent p : bf) {
-                if (gameHelper.isCreature(gameData, p) && !p.getId().equals(aura.getAttachedTo())) {
+                if (gameQueryService.isCreature(gameData, p) && !p.getId().equals(aura.getAttachedTo())) {
                     validCreatureIds.add(p.getId());
                 }
             }
@@ -1320,21 +1327,21 @@ public class EffectResolutionService {
 
         if (!validCreatureIds.isEmpty()) {
             gameData.permanentChoiceContext = new PermanentChoiceContext.AuraGraft(aura.getId());
-            gameHelper.beginPermanentChoice(gameData, casterId, validCreatureIds,
+            playerInputService.beginPermanentChoice(gameData, casterId, validCreatureIds,
                     "Attach " + aura.getCard().getName() + " to another permanent it can enchant.");
         } else {
             String logEntry = aura.getCard().getName() + " stays attached to its current target (no other valid permanents).";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
         }
     }
 
     private void resolveGainControlOfEnchantedTarget(GameData gameData, StackEntry entry) {
-        Permanent target = gameHelper.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) return;
 
-        if (!gameHelper.isEnchanted(gameData, target)) {
+        if (!gameQueryService.isEnchanted(gameData, target)) {
             String logEntry = entry.getCard().getName() + "'s ability has no effect (" + target.getCard().getName() + " is not enchanted).";
-            gameHelper.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
         }
 
@@ -1344,7 +1351,7 @@ public class EffectResolutionService {
 
     private void resolveChangeColorText(GameData gameData, StackEntry entry) {
         UUID targetPermanentId = entry.getTargetPermanentId();
-        Permanent target = gameHelper.findPermanentById(gameData, targetPermanentId);
+        Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
         if (target == null) {
             return;
         }
@@ -1354,9 +1361,9 @@ public class EffectResolutionService {
         gameData.awaitingColorChoicePlayerId = entry.getControllerId();
 
         List<String> options = new ArrayList<>();
-        options.addAll(GameHelper.TEXT_CHANGE_COLOR_WORDS);
-        options.addAll(GameHelper.TEXT_CHANGE_LAND_TYPES);
-        gameHelper.getSessionManager().sendToPlayer(entry.getControllerId(), new ChooseColorMessage(options, "Choose a color word or basic land type to replace."));
+        options.addAll(GameQueryService.TEXT_CHANGE_COLOR_WORDS);
+        options.addAll(GameQueryService.TEXT_CHANGE_LAND_TYPES);
+        sessionManager.sendToPlayer(entry.getControllerId(), new ChooseColorMessage(options, "Choose a color word or basic land type to replace."));
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
         log.info("Game {} - Awaiting {} to choose a color word or basic land type for text change", gameData.id, playerName);
@@ -1385,7 +1392,7 @@ public class EffectResolutionService {
         gameData.playerGraveyards.get(ownerId).add(targetEntry.getCard());
 
         String logMsg = targetEntry.getCard().getName() + " is countered.";
-        gameHelper.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} countered {}", gameData.id, entry.getCard().getName(), targetEntry.getCard().getName());
     }
 
@@ -1416,7 +1423,7 @@ public class EffectResolutionService {
             gameData.playerGraveyards.get(targetControllerId).add(targetEntry.getCard());
 
             String logMsg = targetEntry.getCard().getName() + " is countered.";
-            gameHelper.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
             log.info("Game {} - {} countered {} (can't pay {})", gameData.id, entry.getCard().getName(), targetEntry.getCard().getName(), effect.amount());
         } else {
             // Can pay — ask the opponent via the may ability system
@@ -1443,7 +1450,7 @@ public class EffectResolutionService {
         String controllerName = gameData.playerIdToName.get(controllerId);
         String logEntry = "Plagiarize resolves targeting " + targetName
                 + ". Until end of turn, " + targetName + "'s draws are replaced.";
-        gameHelper.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - Plagiarize: {}'s draws replaced by {} until end of turn",
                 gameData.id, targetName, controllerName);
     }
@@ -1455,13 +1462,13 @@ public class EffectResolutionService {
         int count = Math.min(reorder.count(), deck.size());
         if (count == 0) {
             String logMsg = entry.getCard().getName() + ": library is empty, nothing to reorder.";
-            gameHelper.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
             return;
         }
 
         if (count == 1) {
             String logMsg = gameData.playerIdToName.get(controllerId) + " looks at the top card of their library.";
-            gameHelper.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
             return;
         }
 
@@ -1471,21 +1478,21 @@ public class EffectResolutionService {
         gameData.awaitingLibraryReorderCards = topCards;
         gameData.awaitingInput = AwaitingInput.LIBRARY_REORDER;
 
-        List<CardView> cardViews = topCards.stream().map(gameHelper.getCardViewFactory()::create).toList();
-        gameHelper.getSessionManager().sendToPlayer(controllerId, new ReorderLibraryCardsMessage(
+        List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ReorderLibraryCardsMessage(
                 cardViews,
                 "Put these cards back on top of your library in any order (top to bottom)."
         ));
 
         String logMsg = gameData.playerIdToName.get(controllerId) + " looks at the top " + count + " cards of their library.";
-        gameHelper.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} reordering top {} cards of library", gameData.id, gameData.playerIdToName.get(controllerId), count);
     }
 
     private void resolveDealDamageToFlyingAndPlayers(GameData gameData, StackEntry entry) {
-        if (gameHelper.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
             String logMsg = entry.getCard().getName() + "'s damage is prevented.";
-            gameHelper.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
             return;
         }
 
@@ -1497,14 +1504,14 @@ public class EffectResolutionService {
             Set<Integer> deadIndices = new TreeSet<>(Collections.reverseOrder());
             for (int i = 0; i < battlefield.size(); i++) {
                 Permanent p = battlefield.get(i);
-                if (gameHelper.hasKeyword(gameData, p, Keyword.FLYING)) {
-                    if (gameHelper.hasProtectionFrom(gameData, p, entry.getCard().getColor())) {
+                if (gameQueryService.hasKeyword(gameData, p, Keyword.FLYING)) {
+                    if (gameQueryService.hasProtectionFrom(gameData, p, entry.getCard().getColor())) {
                         continue;
                     }
                     int effectiveDamage = gameHelper.applyCreaturePreventionShield(gameData, p, damage);
-                    int toughness = gameHelper.getEffectiveToughness(gameData, p);
+                    int toughness = gameQueryService.getEffectiveToughness(gameData, p);
                     if (effectiveDamage >= toughness
-                            && !gameHelper.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)
+                            && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)
                             && !gameHelper.tryRegenerate(gameData, p)) {
                         deadIndices.add(i);
                     }
@@ -1516,7 +1523,7 @@ public class EffectResolutionService {
                 String playerName = gameData.playerIdToName.get(playerId);
                 Permanent dead = battlefield.get(idx);
                 String logEntry = playerName + "'s " + dead.getCard().getName() + " is destroyed by Hurricane.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 graveyard.add(dead.getOriginalCard());
                 gameHelper.collectDeathTrigger(gameData, dead.getCard(), playerId, true);
                 battlefield.remove(idx);
@@ -1538,7 +1545,7 @@ public class EffectResolutionService {
             if (effectiveDamage > 0) {
                 String playerName = gameData.playerIdToName.get(playerId);
                 String logEntry = playerName + " takes " + effectiveDamage + " damage from " + cardName + ".";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
             }
         }
 
@@ -1553,7 +1560,7 @@ public class EffectResolutionService {
         int count = Math.min(effect.count(), deck.size());
         if (count == 0) {
             String logMsg = entry.getCard().getName() + ": " + playerName + "'s library is empty, nothing to look at.";
-            gameHelper.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
             return;
         }
 
@@ -1562,7 +1569,7 @@ public class EffectResolutionService {
             Card card = deck.remove(0);
             gameData.playerHands.get(controllerId).add(card);
             String logMsg = playerName + " looks at the top card of their library and puts it into their hand.";
-            gameHelper.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
             return;
         }
 
@@ -1574,14 +1581,14 @@ public class EffectResolutionService {
         gameData.awaitingHandTopBottomCards = topCards;
         gameData.awaitingInput = AwaitingInput.HAND_TOP_BOTTOM_CHOICE;
 
-        List<CardView> cardViews = topCards.stream().map(gameHelper.getCardViewFactory()::create).toList();
-        gameHelper.getSessionManager().sendToPlayer(controllerId, new ChooseHandTopBottomMessage(
+        List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseHandTopBottomMessage(
                 cardViews,
                 "Look at the top " + count + " cards of your library. Choose one to put into your hand."
         ));
 
         String logMsg = playerName + " looks at the top " + count + " cards of their library.";
-        gameHelper.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} resolving {} with {} cards", gameData.id, playerName, entry.getCard().getName(), count);
     }
 
@@ -1592,7 +1599,7 @@ public class EffectResolutionService {
 
         if (deck == null || deck.isEmpty()) {
             String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
-            gameHelper.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
             return;
         }
 
@@ -1606,7 +1613,7 @@ public class EffectResolutionService {
         if (basicLands.isEmpty()) {
             Collections.shuffle(deck);
             String logMsg = playerName + " searches their library but finds no basic land cards. Library is shuffled.";
-            gameHelper.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
             log.info("Game {} - {} searches library, no basic lands found", gameData.id, playerName);
             return;
         }
@@ -1615,14 +1622,14 @@ public class EffectResolutionService {
         gameData.awaitingLibrarySearchCards = basicLands;
         gameData.awaitingInput = AwaitingInput.LIBRARY_SEARCH;
 
-        List<CardView> cardViews = basicLands.stream().map(gameHelper.getCardViewFactory()::create).toList();
-        gameHelper.getSessionManager().sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
+        List<CardView> cardViews = basicLands.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
                 cardViews,
                 "Search your library for a basic land card to put into your hand."
         ));
 
         String logMsg = playerName + " searches their library.";
-        gameHelper.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} searching library for a basic land ({} found)", gameData.id, playerName, basicLands.size());
     }
 
@@ -1635,7 +1642,7 @@ public class EffectResolutionService {
         if (targetCardIds != null && !targetCardIds.isEmpty()) {
             List<String> exiledNames = new ArrayList<>();
             for (UUID cardId : targetCardIds) {
-                Card card = gameHelper.findCardInGraveyardById(gameData, cardId);
+                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
                 if (card != null) {
                     exiledNames.add(card.getName());
                     for (UUID pid : gameData.orderedPlayerIds) {
@@ -1649,7 +1656,7 @@ public class EffectResolutionService {
             }
             if (!exiledNames.isEmpty()) {
                 String logEntry = playerName + " exiles " + String.join(", ", exiledNames) + " from graveyard.";
-                gameHelper.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} exiled {} cards from graveyards", gameData.id, playerName, exiledNames.size());
             }
         }
