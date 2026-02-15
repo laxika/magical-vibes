@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.filter.AttackingOrBlockingTargetFilt
 import com.github.laxika.magicalvibes.model.filter.AttackingTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CreatureColorTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.MaxPowerTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TappedTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.WithoutKeywordTargetFilter;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
@@ -352,6 +353,10 @@ public class GameHelper {
                         .reduce((a, b) -> a + " or " + b)
                         .orElse("");
                 throw new IllegalStateException("Target must be a " + colorNames + " creature");
+            }
+        } else if (filter instanceof TappedTargetFilter) {
+            if (!target.isTapped()) {
+                throw new IllegalStateException("Target must be a tapped creature");
             }
         }
     }

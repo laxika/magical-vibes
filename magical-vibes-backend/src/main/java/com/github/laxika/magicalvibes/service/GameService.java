@@ -431,14 +431,22 @@ public class GameService {
                     targetFizzled = gameData.stack.stream()
                             .noneMatch(se -> se.getCard().getId().equals(entry.getTargetPermanentId()));
                 } else {
-                    targetFizzled = gameHelper.findPermanentById(gameData, entry.getTargetPermanentId()) == null
-                            && !gameData.playerIds.contains(entry.getTargetPermanentId());
+                    Permanent targetPerm = gameHelper.findPermanentById(gameData, entry.getTargetPermanentId());
+                    if (targetPerm == null && !gameData.playerIds.contains(entry.getTargetPermanentId())) {
+                        targetFizzled = true;
+                    } else if (targetPerm != null && entry.getCard() != null && entry.getCard().getTargetFilter() != null) {
+                        try {
+                            gameHelper.validateTargetFilter(entry.getCard().getTargetFilter(), targetPerm);
+                        } catch (IllegalStateException e) {
+                            targetFizzled = true;
+                        }
+                    }
                 }
             }
             if (targetFizzled) {
-                String fizzleLog = entry.getDescription() + " fizzles (target no longer exists).";
+                String fizzleLog = entry.getDescription() + " fizzles (illegal target).";
                 gameHelper.logAndBroadcast(gameData, fizzleLog);
-                log.info("Game {} - {} fizzles, target {} no longer exists",
+                log.info("Game {} - {} fizzles, target {} is illegal",
                         gameData.id, entry.getDescription(), entry.getTargetPermanentId());
 
                 // Fizzled spells still go to graveyard
