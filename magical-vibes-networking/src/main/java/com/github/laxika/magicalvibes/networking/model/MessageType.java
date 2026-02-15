@@ -57,5 +57,6 @@ public enum MessageType {
     REORDER_LIBRARY_CARDS,
     LIBRARY_CARDS_REORDERED,
     REVEAL_HAND,
+    GAME_STATE,
     ERROR
 }

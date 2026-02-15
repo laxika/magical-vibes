@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, HandSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, StackEntry, StackUpdatedNotification, GraveyardUpdatedNotification, ReorderLibraryCardsNotification, RevealHandNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, StackEntry, ReorderLibraryCardsNotification, RevealHandNotification } from '../../services/websocket.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { Subscription } from 'rxjs';
 
@@ -70,127 +70,62 @@ export class GameComponent implements OnInit, OnDestroy {
 
     this.subscriptions.push(
       this.websocketService.getMessages().subscribe((message) => {
-        const notification = message as GameNotification;
+        console.log(message);
 
-        console.log(notification);
-
-        if (notification.type === MessageType.OPPONENT_JOINED && notification.game) {
-          this.game.set(notification.game);
-          this.websocketService.currentGame = notification.game;
+        if (message.type === MessageType.OPPONENT_JOINED) {
+          const notification = message as GameNotification;
+          if (notification.game) {
+            this.game.set(notification.game);
+            this.websocketService.currentGame = notification.game;
+          }
         }
 
-        if (message.type === MessageType.GAME_LOG_ENTRY) {
-          this.appendLogEntry((message as GameNotification).message!);
-        }
-
-        if (message.type === MessageType.HAND_DRAWN) {
-          const handDrawn = message as HandDrawnNotification;
-          this.updateHand(handDrawn.hand, handDrawn.mulliganCount);
+        if (message.type === MessageType.GAME_STATE) {
+          this.applyGameState(message as GameStateNotification);
         }
 
         if (message.type === MessageType.MULLIGAN_RESOLVED) {
-          const resolved = message as MulliganResolvedNotification;
-          this.handleMulliganResolved(resolved);
-        }
-
-        if (message.type === MessageType.GAME_STARTED) {
-          const started = message as GameStartedNotification;
-          this.handleGameStarted(started);
+          this.handleMulliganResolved(message as MulliganResolvedNotification);
         }
 
         if (message.type === MessageType.SELECT_CARDS_TO_BOTTOM) {
-          const selectMsg = message as SelectCardsToBottomNotification;
-          this.handleSelectCardsToBottom(selectMsg);
-        }
-
-        if (message.type === MessageType.DECK_SIZES_UPDATED) {
-          const deckMsg = message as DeckSizesUpdatedNotification;
-          this.updateDeckSizes(deckMsg.deckSizes);
-        }
-
-        if (message.type === MessageType.HAND_SIZES_UPDATED) {
-          const handMsg = message as HandSizesUpdatedNotification;
-          this.updateHandSizes(handMsg.handSizes);
-        }
-
-        if (message.type === MessageType.PLAYABLE_CARDS_UPDATED) {
-          const playableMsg = message as PlayableCardsNotification;
-          this.playableCardIndices.set(new Set(playableMsg.playableCardIndices));
-        }
-
-        if (message.type === MessageType.BATTLEFIELD_UPDATED) {
-          const bfMsg = message as BattlefieldUpdatedNotification;
-          this.updateBattlefields(bfMsg.battlefields);
-        }
-
-        if (message.type === MessageType.MANA_UPDATED) {
-          const manaMsg = message as ManaUpdatedNotification;
-          this.updateManaPool(manaMsg.manaPool);
-        }
-
-        if (message.type === MessageType.AUTO_STOPS_UPDATED) {
-          const stopsMsg = message as AutoStopsUpdatedNotification;
-          this.autoStopSteps.set(new Set(stopsMsg.autoStopSteps));
+          this.handleSelectCardsToBottom(message as SelectCardsToBottomNotification);
         }
 
         if (message.type === MessageType.AVAILABLE_ATTACKERS) {
-          const atkMsg = message as AvailableAttackersNotification;
-          this.handleAvailableAttackers(atkMsg);
+          this.handleAvailableAttackers(message as AvailableAttackersNotification);
         }
 
         if (message.type === MessageType.AVAILABLE_BLOCKERS) {
-          const blkMsg = message as AvailableBlockersNotification;
-          this.handleAvailableBlockers(blkMsg);
-        }
-
-        if (message.type === MessageType.LIFE_UPDATED) {
-          const lifeMsg = message as LifeUpdatedNotification;
-          this.updateLifeTotals(lifeMsg.lifeTotals);
+          this.handleAvailableBlockers(message as AvailableBlockersNotification);
         }
 
         if (message.type === MessageType.GAME_OVER) {
-          const goMsg = message as GameOverNotification;
-          this.handleGameOver(goMsg);
+          this.handleGameOver(message as GameOverNotification);
         }
 
         if (message.type === MessageType.CHOOSE_CARD_FROM_HAND) {
-          const chooseMsg = message as ChooseCardFromHandNotification;
-          this.handleChooseCardFromHand(chooseMsg);
+          this.handleChooseCardFromHand(message as ChooseCardFromHandNotification);
         }
 
         if (message.type === MessageType.CHOOSE_COLOR) {
-          const colorMsg = message as ChooseColorNotification;
-          this.handleChooseColor(colorMsg);
+          this.handleChooseColor(message as ChooseColorNotification);
         }
 
         if (message.type === MessageType.MAY_ABILITY_CHOICE) {
-          const mayMsg = message as MayAbilityNotification;
-          this.handleMayAbilityChoice(mayMsg);
-        }
-
-        if (message.type === MessageType.STACK_UPDATED) {
-          const stackMsg = message as StackUpdatedNotification;
-          this.updateStack(stackMsg.stack);
-        }
-
-        if (message.type === MessageType.GRAVEYARD_UPDATED) {
-          const gyMsg = message as GraveyardUpdatedNotification;
-          this.updateGraveyards(gyMsg.graveyards);
+          this.handleMayAbilityChoice(message as MayAbilityNotification);
         }
 
         if (message.type === MessageType.CHOOSE_PERMANENT) {
-          const permMsg = message as ChoosePermanentNotification;
-          this.handleChoosePermanent(permMsg);
+          this.handleChoosePermanent(message as ChoosePermanentNotification);
         }
 
         if (message.type === MessageType.CHOOSE_MULTIPLE_PERMANENTS) {
-          const multiPermMsg = message as ChooseMultiplePermanentsNotification;
-          this.handleChooseMultiplePermanents(multiPermMsg);
+          this.handleChooseMultiplePermanents(message as ChooseMultiplePermanentsNotification);
         }
 
         if (message.type === MessageType.REORDER_LIBRARY_CARDS) {
-          const reorderMsg = message as ReorderLibraryCardsNotification;
-          this.handleReorderLibraryCards(reorderMsg);
+          this.handleReorderLibraryCards(message as ReorderLibraryCardsNotification);
         }
 
         if (message.type === MessageType.REVEAL_HAND) {
@@ -198,13 +133,6 @@ export class GameComponent implements OnInit, OnDestroy {
           this.revealingHand = true;
           this.revealedHandCards = revealMsg.cards;
           this.revealedHandPlayerName = revealMsg.playerName;
-        }
-
-        const update = message as GameUpdate;
-        if (update.type === MessageType.PRIORITY_UPDATED ||
-            update.type === MessageType.STEP_ADVANCED ||
-            update.type === MessageType.TURN_CHANGED) {
-          this.applyGameUpdate(update);
         }
       })
     );
@@ -259,38 +187,58 @@ export class GameComponent implements OnInit, OnDestroy {
     return g !== null && g.priorityPlayerId === this.websocketService.currentUser?.userId;
   }
 
-  private applyGameUpdate(update: GameUpdate): void {
+  private applyGameState(state: GameStateNotification): void {
     const g = this.game();
     if (!g) return;
 
-    // Clear playable highlights immediately on any state change;
-    // the server's PLAYABLE_CARDS_UPDATED message will re-set them if appropriate
-    this.playableCardIndices.set(new Set<number>());
+    // Detect transition to RUNNING to clear mulligan UI state
+    if (state.status === GameStatus.RUNNING && g.status !== GameStatus.RUNNING) {
+      this.opponentKept = false;
+      this.selfKept = false;
+      this.selectingBottomCards = false;
+      this.bottomCardCount = 0;
+      this.selectedCardIndices.clear();
+    }
 
-    const updated = { ...g };
-    if (update.priorityPlayerId !== undefined) {
-      updated.priorityPlayerId = update.priorityPlayerId ?? null;
-    }
-    if (update.currentStep !== undefined) {
-      updated.currentStep = update.currentStep;
-    }
-    if (update.activePlayerId !== undefined) {
-      updated.activePlayerId = update.activePlayerId;
-    }
-    if (update.turnNumber !== undefined) {
-      updated.turnNumber = update.turnNumber;
-    }
+    const updated = {
+      ...g,
+      status: state.status,
+      activePlayerId: state.activePlayerId,
+      turnNumber: state.turnNumber,
+      currentStep: state.currentStep,
+      priorityPlayerId: state.priorityPlayerId,
+      battlefields: state.battlefields,
+      stack: state.stack,
+      graveyards: state.graveyards,
+      deckSizes: state.deckSizes,
+      handSizes: state.handSizes,
+      lifeTotals: state.lifeTotals,
+      hand: state.hand,
+      mulliganCount: state.mulliganCount,
+      manaPool: state.manaPool,
+      autoStopSteps: state.autoStopSteps,
+      gameLog: [...g.gameLog, ...state.newLogEntries]
+    };
     this.game.set(updated);
     this.websocketService.currentGame = updated;
-  }
 
-  private appendLogEntry(entry: string): void {
-    const g = this.game();
-    if (!g) return;
+    this.playableCardIndices.set(new Set(state.playableCardIndices));
+    this.autoStopSteps.set(new Set(state.autoStopSteps));
 
-    const updated = { ...g, gameLog: [...g.gameLog, entry] };
-    this.game.set(updated);
-    this.websocketService.currentGame = updated;
+    // Switch to stack tab when stack is non-empty
+    if (state.stack.length > 0) {
+      this.activeTab.set('stack');
+    } else {
+      this.activeTab.set('log');
+    }
+
+    // Clear pending combat state when server confirms battlefield
+    if (!this.declaringAttackers) {
+      this.selectedAttackerIndices.set(new Set());
+    }
+    if (!this.declaringBlockers) {
+      this.blockerAssignments.set(new Map());
+    }
   }
 
   get isMulliganPhase(): boolean {
@@ -305,14 +253,6 @@ export class GameComponent implements OnInit, OnDestroy {
 
   get hand(): Card[] {
     return this.game()?.hand ?? [];
-  }
-
-  private updateHand(hand: Card[], mulliganCount: number): void {
-    const g = this.game();
-    if (!g) return;
-    const updated = { ...g, hand, mulliganCount };
-    this.game.set(updated);
-    this.websocketService.currentGame = updated;
   }
 
   private handleMulliganResolved(resolved: MulliganResolvedNotification): void {
@@ -331,95 +271,6 @@ export class GameComponent implements OnInit, OnDestroy {
         this.opponentKept = false;
       }
     }
-  }
-
-  private handleGameStarted(started: GameStartedNotification): void {
-    const g = this.game();
-    if (!g) return;
-    const updated = {
-      ...g,
-      status: GameStatus.RUNNING,
-      activePlayerId: started.activePlayerId,
-      turnNumber: started.turnNumber,
-      currentStep: started.currentStep,
-      priorityPlayerId: started.priorityPlayerId
-    };
-    this.game.set(updated);
-    this.websocketService.currentGame = updated;
-    this.opponentKept = false;
-    this.selfKept = false;
-    this.selectingBottomCards = false;
-    this.bottomCardCount = 0;
-    this.selectedCardIndices.clear();
-  }
-
-  private updateDeckSizes(deckSizes: number[]): void {
-    const g = this.game();
-    if (!g) return;
-    const updated = { ...g, deckSizes };
-    this.game.set(updated);
-    this.websocketService.currentGame = updated;
-  }
-
-  private updateHandSizes(handSizes: number[]): void {
-    const g = this.game();
-    if (!g) return;
-    const updated = { ...g, handSizes };
-    this.game.set(updated);
-    this.websocketService.currentGame = updated;
-  }
-
-  private updateBattlefields(battlefields: Permanent[][]): void {
-    const g = this.game();
-    if (!g) return;
-    const updated = { ...g, battlefields };
-    this.game.set(updated);
-    this.websocketService.currentGame = updated;
-    // Clear pending combat state now that server has confirmed the battlefield
-    if (!this.declaringAttackers) {
-      this.selectedAttackerIndices.set(new Set());
-    }
-    if (!this.declaringBlockers) {
-      this.blockerAssignments.set(new Map());
-    }
-  }
-
-  private updateManaPool(manaPool: Record<string, number>): void {
-    const g = this.game();
-    if (!g) return;
-    const updated = { ...g, manaPool };
-    this.game.set(updated);
-    this.websocketService.currentGame = updated;
-  }
-
-  private updateLifeTotals(lifeTotals: number[]): void {
-    const g = this.game();
-    if (!g) return;
-    const updated = { ...g, lifeTotals };
-    this.game.set(updated);
-    this.websocketService.currentGame = updated;
-  }
-
-  private updateStack(stack: StackEntry[]): void {
-    const g = this.game();
-    if (!g) return;
-    const updated = { ...g, stack };
-    this.game.set(updated);
-    this.websocketService.currentGame = updated;
-
-    if (stack.length > 0) {
-      this.activeTab.set('stack');
-    } else {
-      this.activeTab.set('log');
-    }
-  }
-
-  private updateGraveyards(graveyards: Card[][]): void {
-    const g = this.game();
-    if (!g) return;
-    const updated = { ...g, graveyards };
-    this.game.set(updated);
-    this.websocketService.currentGame = updated;
   }
 
   private handleAvailableAttackers(msg: AvailableAttackersNotification): void {

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.networking.message.AutoStopsUpdatedMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -13,24 +12,11 @@ import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
-import com.github.laxika.magicalvibes.networking.message.BattlefieldUpdatedMessage;
-import com.github.laxika.magicalvibes.networking.message.DeckSizesUpdatedMessage;
-import com.github.laxika.magicalvibes.networking.message.GameLogEntryMessage;
-import com.github.laxika.magicalvibes.networking.message.GraveyardUpdatedMessage;
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
-import com.github.laxika.magicalvibes.networking.message.GameStartedMessage;
-import com.github.laxika.magicalvibes.networking.message.HandDrawnMessage;
-import com.github.laxika.magicalvibes.networking.message.HandSizesUpdatedMessage;
+import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
 import com.github.laxika.magicalvibes.networking.message.JoinGame;
-import com.github.laxika.magicalvibes.networking.message.LifeUpdatedMessage;
-import com.github.laxika.magicalvibes.networking.message.ManaUpdatedMessage;
 import com.github.laxika.magicalvibes.networking.message.MulliganResolvedMessage;
-import com.github.laxika.magicalvibes.networking.message.PlayableCardsMessage;
-import com.github.laxika.magicalvibes.networking.message.PriorityUpdatedMessage;
 import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMessage;
-import com.github.laxika.magicalvibes.networking.message.StackUpdatedMessage;
-import com.github.laxika.magicalvibes.networking.message.StepAdvancedMessage;
-import com.github.laxika.magicalvibes.networking.message.TurnChangedMessage;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -152,6 +138,7 @@ import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMess
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
+import com.github.laxika.magicalvibes.networking.model.StackEntryView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
 import com.github.laxika.magicalvibes.networking.service.StackEntryViewFactory;
@@ -201,7 +188,7 @@ public class GameService {
                     advanceStep(gameData);
                 }
             } else {
-                sessionManager.sendToPlayers(gameData.orderedPlayerIds,new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+                broadcastGameState(gameData);
             }
 
             resolveAutoPass(gameData);
@@ -227,7 +214,7 @@ public class GameService {
             String logEntry = "Step: " + next.getDisplayName();
             logAndBroadcast(gameData, logEntry);
             log.info("Game {} - Step advanced to {}", gameData.id, next);
-            sessionManager.sendToPlayers(gameData.orderedPlayerIds,new StepAdvancedMessage(getPriorityPlayerId(gameData), next));
+            broadcastGameState(gameData);
 
             if (gameData.status == GameStatus.FINISHED) return;
 
@@ -312,7 +299,7 @@ public class GameService {
         }
 
         if (!gameData.stack.isEmpty()) {
-            broadcastStackUpdate(gameData);
+
         }
 
         processNextMayAbility(gameData);
@@ -353,9 +340,9 @@ public class GameService {
         Card drawn = deck.removeFirst();
         hand.add(drawn);
 
-        sessionManager.sendToPlayer(activePlayerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(activePlayerId, 0)));
-        broadcastDeckSizes(gameData);
-        broadcastHandSizes(gameData);
+
+
+
 
         String playerName = gameData.playerIdToName.get(activePlayerId);
         String logEntry = playerName + " draws a card.";
@@ -390,7 +377,7 @@ public class GameService {
                 p.setSummoningSick(false);
             });
         }
-        broadcastBattlefields(gameData);
+
 
         String untapLog = nextActiveName + " untaps their permanents.";
         logAndBroadcast(gameData, untapLog);
@@ -399,22 +386,15 @@ public class GameService {
         String logEntry = "Turn " + gameData.turnNumber + " begins. " + nextActiveName + "'s turn.";
         logAndBroadcast(gameData, logEntry);
         log.info("Game {} - Turn {} begins. Active player: {}", gameData.id, gameData.turnNumber, nextActiveName);
-        sessionManager.sendToPlayers(gameData.orderedPlayerIds,new TurnChangedMessage(
-                getPriorityPlayerId(gameData), TurnStep.first(), nextActive, gameData.turnNumber
-        ));
-    }
-
-    private void broadcastLogEntry(GameData gameData, String logEntry) {
-        sessionManager.sendToPlayers(gameData.orderedPlayerIds,new GameLogEntryMessage(logEntry));
+        broadcastGameState(gameData);
     }
 
     private void logAndBroadcast(GameData gameData, String logEntry) {
         gameData.gameLog.add(logEntry);
-        broadcastLogEntry(gameData, logEntry);
     }
 
-    private void broadcastStackUpdate(GameData gameData) {
-        sessionManager.sendToPlayers(gameData.orderedPlayerIds, new StackUpdatedMessage(gameData.stack.stream().map(stackEntryViewFactory::create).toList()));
+    private List<StackEntryView> getStackViews(GameData gameData) {
+        return gameData.stack.stream().map(stackEntryViewFactory::create).toList();
     }
 
     private void resolveTopOfStack(GameData gameData) {
@@ -428,7 +408,7 @@ public class GameService {
             UUID controllerId = entry.getControllerId();
 
             gameData.playerBattlefields.get(controllerId).add(new Permanent(card));
-            broadcastBattlefields(gameData);
+
 
             String playerName = gameData.playerIdToName.get(controllerId);
             String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
@@ -451,7 +431,7 @@ public class GameService {
                     String fizzleLog = card.getName() + " fizzles (enchanted creature no longer exists).";
                     logAndBroadcast(gameData, fizzleLog);
                     gameData.playerGraveyards.get(controllerId).add(card);
-                    broadcastGraveyards(gameData);
+        
                     log.info("Game {} - {} fizzles, target {} no longer exists", gameData.id, card.getName(), entry.getTargetPermanentId());
                 } else {
                     Permanent perm = new Permanent(card);
@@ -470,11 +450,11 @@ public class GameService {
                         stealCreature(gameData, controllerId, target);
                     }
 
-                    broadcastBattlefields(gameData);
+        
                 }
             } else {
                 gameData.playerBattlefields.get(controllerId).add(new Permanent(card));
-                broadcastBattlefields(gameData);
+    
 
                 String playerName = gameData.playerIdToName.get(controllerId);
                 String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
@@ -498,7 +478,7 @@ public class GameService {
             UUID controllerId = entry.getControllerId();
 
             gameData.playerBattlefields.get(controllerId).add(new Permanent(card));
-            broadcastBattlefields(gameData);
+
 
             String playerName = gameData.playerIdToName.get(controllerId);
             String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
@@ -535,7 +515,7 @@ public class GameService {
                 if (entry.getEntryType() == StackEntryType.SORCERY_SPELL
                         || entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
                     gameData.playerGraveyards.get(entry.getControllerId()).add(entry.getCard());
-                    broadcastGraveyards(gameData);
+        
                 }
             } else {
                 String logEntry = entry.getDescription() + " resolves.";
@@ -550,22 +530,19 @@ public class GameService {
                             .anyMatch(e -> e instanceof ShuffleIntoLibraryEffect);
                     if (!shuffled) {
                         gameData.playerGraveyards.get(entry.getControllerId()).add(entry.getCard());
-                        broadcastGraveyards(gameData);
+            
                     }
                 }
             }
         }
 
         if (!gameData.pendingMayAbilities.isEmpty()) {
-            broadcastStackUpdate(gameData);
+
             processNextMayAbility(gameData);
             return;
         }
 
-        broadcastStackUpdate(gameData);
-        if (gameData.awaitingInput == null) {
-            sessionManager.sendToPlayers(gameData.orderedPlayerIds, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
-        }
+        broadcastGameState(gameData);
     }
 
     private void resolveEffects(GameData gameData, StackEntry entry) {
@@ -619,7 +596,7 @@ public class GameService {
                 List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
                 deck.add(entry.getCard());
                 Collections.shuffle(deck);
-                broadcastDeckSizes(gameData);
+    
 
                 String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
                 logAndBroadcast(gameData, shuffleLog);
@@ -840,13 +817,15 @@ public class GameService {
             if (mulliganCount > 0 && !hand.isEmpty()) {
                 int cardsToBottom = Math.min(mulliganCount, hand.size());
                 gameData.playerNeedsToBottom.put(player.getId(), cardsToBottom);
-                sessionManager.sendToPlayer(player.getId(), new SelectCardsToBottomMessage(cardsToBottom));
 
                 String logEntry = player.getUsername() + " keeps their hand and must put " + cardsToBottom +
                         " card" + (cardsToBottom > 1 ? "s" : "") + " on the bottom of their library.";
                 logAndBroadcast(gameData, logEntry);
 
                 log.info("Game {} - {} kept hand, needs to bottom {} cards (mulligan count: {})", gameData.id, player.getUsername(), cardsToBottom, mulliganCount);
+
+                broadcastGameState(gameData);
+                sessionManager.sendToPlayer(player.getId(), new SelectCardsToBottomMessage(cardsToBottom));
             } else {
                 String logEntry = player.getUsername() + " keeps their hand.";
                 logAndBroadcast(gameData, logEntry);
@@ -895,7 +874,7 @@ public class GameService {
 
             gameData.playerNeedsToBottom.remove(player.getId());
 
-            sessionManager.sendToPlayer(player.getId(), new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(player.getId(), 0)));
+
 
             String logEntry = player.getUsername() + " puts " + bottomCards.size() +
                     " card" + (bottomCards.size() > 1 ? "s" : "") + " on the bottom of their library (keeping " + hand.size() + " cards).";
@@ -903,8 +882,7 @@ public class GameService {
 
             log.info("Game {} - {} bottomed {} cards, hand size now {}", gameData.id, player.getUsername(), bottomCards.size(), hand.size());
 
-            broadcastDeckSizes(gameData);
-            broadcastHandSizes(gameData);
+            broadcastGameState(gameData);
             checkStartGame(gameData);
         }
     }
@@ -941,14 +919,15 @@ public class GameService {
             int newMulliganCount = currentMulliganCount + 1;
             gameData.mulliganCounts.put(player.getId(), newMulliganCount);
 
-            sessionManager.sendToPlayer(player.getId(), new HandDrawnMessage(newHand.stream().map(cardViewFactory::create).toList(), newMulliganCount));
+
             sessionManager.sendToPlayers(gameData.orderedPlayerIds,new MulliganResolvedMessage(player.getUsername(), false, newMulliganCount));
-            broadcastHandSizes(gameData);
+
 
             String logEntry = player.getUsername() + " takes a mulligan (mulligan #" + newMulliganCount + ").";
             logAndBroadcast(gameData, logEntry);
 
             log.info("Game {} - {} mulliganed (count: {})", gameData.id, player.getUsername(), newMulliganCount);
+            broadcastGameState(gameData);
         }
     }
 
@@ -963,11 +942,7 @@ public class GameService {
         logAndBroadcast(gameData, logEntry1);
         logAndBroadcast(gameData, logEntry2);
 
-        sessionManager.sendToPlayers(gameData.orderedPlayerIds,new GameStartedMessage(
-                gameData.activePlayerId, gameData.turnNumber, gameData.currentStep, getPriorityPlayerId(gameData)
-        ));
-
-        broadcastLifeTotals(gameData);
+        broadcastGameState(gameData);
 
         log.info("Game {} - Game started! Turn 1 begins. Active player: {}", gameData.id, gameData.playerIdToName.get(gameData.activePlayerId));
 
@@ -1016,8 +991,41 @@ public class GameService {
         return sizes;
     }
 
-    private void broadcastDeckSizes(GameData data) {
-        sessionManager.sendToPlayers(data.orderedPlayerIds, new DeckSizesUpdatedMessage(getDeckSizes(data)));
+    private void broadcastGameState(GameData gameData) {
+        List<String> newLogEntries;
+        int logSize = gameData.gameLog.size();
+        if (logSize > gameData.lastBroadcastedLogSize) {
+            newLogEntries = new ArrayList<>(gameData.gameLog.subList(gameData.lastBroadcastedLogSize, logSize));
+        } else {
+            newLogEntries = List.of();
+        }
+        gameData.lastBroadcastedLogSize = logSize;
+
+        List<List<PermanentView>> battlefields = getBattlefields(gameData);
+        List<StackEntryView> stack = getStackViews(gameData);
+        List<List<CardView>> graveyards = getGraveyardViews(gameData);
+        List<Integer> deckSizes = getDeckSizes(gameData);
+        List<Integer> handSizes = getHandSizes(gameData);
+        List<Integer> lifeTotals = getLifeTotals(gameData);
+        UUID priorityPlayerId = getPriorityPlayerId(gameData);
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<CardView> hand = gameData.playerHands.getOrDefault(playerId, List.of())
+                    .stream().map(cardViewFactory::create).toList();
+            int mulliganCount = gameData.mulliganCounts.getOrDefault(playerId, 0);
+            Map<String, Integer> manaPool = getManaPool(gameData, playerId);
+            List<TurnStep> autoStopSteps = gameData.playerAutoStopSteps.containsKey(playerId)
+                    ? new ArrayList<>(gameData.playerAutoStopSteps.get(playerId))
+                    : List.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN);
+            List<Integer> playableCardIndices = getPlayableCardIndices(gameData, playerId);
+
+            sessionManager.sendToPlayer(playerId, new GameStateMessage(
+                    gameData.status, gameData.activePlayerId, gameData.turnNumber,
+                    gameData.currentStep, priorityPlayerId,
+                    battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals,
+                    hand, mulliganCount, manaPool, autoStopSteps, playableCardIndices, newLogEntries
+            ));
+        }
     }
 
     private List<Integer> getHandSizes(GameData data) {
@@ -1029,9 +1037,6 @@ public class GameService {
         return sizes;
     }
 
-    private void broadcastHandSizes(GameData data) {
-        sessionManager.sendToPlayers(data.orderedPlayerIds, new HandSizesUpdatedMessage(getHandSizes(data)));
-    }
 
     private List<List<PermanentView>> getBattlefields(GameData data) {
         List<List<PermanentView>> battlefields = new ArrayList<>();
@@ -1051,9 +1056,6 @@ public class GameService {
         return battlefields;
     }
 
-    private void broadcastBattlefields(GameData data) {
-        sessionManager.sendToPlayers(data.orderedPlayerIds, new BattlefieldUpdatedMessage(getBattlefields(data)));
-    }
 
     private List<List<CardView>> getGraveyardViews(GameData data) {
         List<List<CardView>> graveyards = new ArrayList<>();
@@ -1064,9 +1066,6 @@ public class GameService {
         return graveyards;
     }
 
-    private void broadcastGraveyards(GameData data) {
-        sessionManager.sendToPlayers(data.orderedPlayerIds, new GraveyardUpdatedMessage(getGraveyardViews(data)));
-    }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments) {
         int effectiveXValue = xValue != null ? xValue : 0;
@@ -1191,9 +1190,9 @@ public class GameService {
                 gameData.playerBattlefields.get(playerId).add(new Permanent(card));
                 gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
 
-                sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
-                broadcastBattlefields(gameData);
-                broadcastHandSizes(gameData);
+
+    
+    
 
                 String logEntry = player.getUsername() + " plays " + card.getName() + ".";
                 logAndBroadcast(gameData, logEntry);
@@ -1281,17 +1280,12 @@ public class GameService {
         } else {
             cost.pay(pool, additionalCost);
         }
-        sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
+
     }
 
     private void finishSpellCast(GameData gameData, UUID playerId, Player player, List<Card> hand, Card card) {
         gameData.spellsCastThisTurn.merge(playerId, 1, Integer::sum);
         gameData.priorityPassedBy.clear();
-
-        sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
-        broadcastHandSizes(gameData);
-        broadcastStackUpdate(gameData);
-        sessionManager.sendToPlayers(gameData.orderedPlayerIds, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
 
         String logEntry = player.getUsername() + " casts " + card.getName() + ".";
         logAndBroadcast(gameData, logEntry);
@@ -1299,6 +1293,7 @@ public class GameService {
         log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), card.getName());
 
         checkSpellCastTriggers(gameData, card);
+        broadcastGameState(gameData);
         resolveAutoPass(gameData);
     }
 
@@ -1334,15 +1329,15 @@ public class GameService {
                 }
             }
 
-            broadcastBattlefields(gameData);
-            sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(manaPool.toMap()));
+
+
 
             String logEntry = player.getUsername() + " taps " + permanent.getCard().getName() + ".";
             logAndBroadcast(gameData, logEntry);
 
             log.info("Game {} - {} taps {}", gameData.id, player.getUsername(), permanent.getCard().getName());
 
-            broadcastPlayableCards(gameData);
+            broadcastGameState(gameData);
         }
     }
 
@@ -1406,17 +1401,14 @@ public class GameService {
             ));
             gameData.priorityPassedBy.clear();
 
-            broadcastBattlefields(gameData);
-            broadcastGraveyards(gameData);
-            broadcastStackUpdate(gameData);
+
+
+
 
             if (!gameData.pendingMayAbilities.isEmpty()) {
                 processNextMayAbility(gameData);
-            } else {
-                sessionManager.sendToPlayers(gameData.orderedPlayerIds, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
             }
-
-            broadcastPlayableCards(gameData);
+            broadcastGameState(gameData);
         }
     }
 
@@ -1477,7 +1469,7 @@ public class GameService {
                     }
                     cost.pay(pool);
                 }
-                sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
+        
             }
 
             // Validate target for effects that need one
@@ -1629,12 +1621,7 @@ public class GameService {
                 ));
             }
             gameData.priorityPassedBy.clear();
-
-            broadcastBattlefields(gameData);
-            broadcastStackUpdate(gameData);
-            sessionManager.sendToPlayers(gameData.orderedPlayerIds, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
-
-            broadcastPlayableCards(gameData);
+            broadcastGameState(gameData);
         }
     }
 
@@ -1649,7 +1636,7 @@ public class GameService {
             stopSet.add(TurnStep.PRECOMBAT_MAIN);
             stopSet.add(TurnStep.POSTCOMBAT_MAIN);
             gameData.playerAutoStopSteps.put(player.getId(), stopSet);
-            sessionManager.sendToPlayer(player.getId(), new AutoStopsUpdatedMessage(new ArrayList<>(stopSet)));
+            broadcastGameState(gameData);
         }
     }
 
@@ -1732,7 +1719,7 @@ public class GameService {
         String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = playerName + " gains " + amount + " life.";
         logAndBroadcast(gameData, logEntry);
-        broadcastLifeTotals(gameData);
+
         log.info("Game {} - {} gains {} life", gameData.id, playerName, amount);
     }
 
@@ -1959,10 +1946,7 @@ public class GameService {
             }
 
             gameData.priorityPassedBy.clear();
-            broadcastBattlefields(gameData);
-            broadcastStackUpdate(gameData);
-            broadcastPlayableCards(gameData);
-            sessionManager.sendToPlayers(gameData.orderedPlayerIds, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+            broadcastGameState(gameData);
             resolveAutoPass(gameData);
         }
     }
@@ -2049,10 +2033,7 @@ public class GameService {
         }
 
         gameData.priorityPassedBy.clear();
-        broadcastBattlefields(gameData);
-        broadcastStackUpdate(gameData);
-        broadcastPlayableCards(gameData);
-        sessionManager.sendToPlayers(gameData.orderedPlayerIds, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+        broadcastGameState(gameData);
         resolveAutoPass(gameData);
     }
 
@@ -2157,9 +2138,9 @@ public class GameService {
 
         gameData.playerGraveyards.get(playerId).add(card);
 
-        sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
-        broadcastGraveyards(gameData);
-        broadcastHandSizes(gameData);
+
+
+
 
         String logEntry = player.getUsername() + " discards " + card.getName() + ".";
         logAndBroadcast(gameData, logEntry);
@@ -2185,9 +2166,9 @@ public class GameService {
             auraPerm.setAttachedTo(target.getId());
             gameData.playerBattlefields.get(playerId).add(auraPerm);
 
-            sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
-            broadcastBattlefields(gameData);
-            broadcastHandSizes(gameData);
+    
+
+
 
             String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield attached to " + target.getCard().getName() + ".";
             logAndBroadcast(gameData, logEntry);
@@ -2203,9 +2184,9 @@ public class GameService {
     private void resolveUntargetedCardChoice(GameData gameData, Player player, UUID playerId, List<Card> hand, Card card) {
         gameData.playerBattlefields.get(playerId).add(new Permanent(card));
 
-        sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
-        broadcastBattlefields(gameData);
-        broadcastHandSizes(gameData);
+
+
+
 
         String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield.";
         logAndBroadcast(gameData, logEntry);
@@ -2227,7 +2208,7 @@ public class GameService {
 
         String logEntry = self.getCard().getName() + " gets +" + boost.powerBoost() + "/+" + boost.toughnessBoost() + " until end of turn.";
         logAndBroadcast(gameData, logEntry);
-        broadcastBattlefields(gameData);
+
 
         log.info("Game {} - {} gets +{}/+{}", gameData.id, self.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
     }
@@ -2243,7 +2224,7 @@ public class GameService {
 
         String logEntry = target.getCard().getName() + " gets +" + boost.powerBoost() + "/+" + boost.toughnessBoost() + " until end of turn.";
         logAndBroadcast(gameData, logEntry);
-        broadcastBattlefields(gameData);
+
 
         log.info("Game {} - {} gets +{}/+{}", gameData.id, target.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
     }
@@ -2261,7 +2242,7 @@ public class GameService {
 
         String logEntry = entry.getCard().getName() + " gives +" + boost.powerBoost() + "/+" + boost.toughnessBoost() + " to " + count + " creature(s) until end of turn.";
         logAndBroadcast(gameData, logEntry);
-        broadcastBattlefields(gameData);
+
 
         log.info("Game {} - {} boosts {} creatures +{}/+{}", gameData.id, entry.getCard().getName(), count, boost.powerBoost(), boost.toughnessBoost());
     }
@@ -2277,7 +2258,7 @@ public class GameService {
         String keywordName = grant.keyword().name().charAt(0) + grant.keyword().name().substring(1).toLowerCase().replace('_', ' ');
         String logEntry = target.getCard().getName() + " gains " + keywordName + " until end of turn.";
         logAndBroadcast(gameData, logEntry);
-        broadcastBattlefields(gameData);
+
 
         log.info("Game {} - {} gains {}", gameData.id, target.getCard().getName(), grant.keyword());
     }
@@ -2292,7 +2273,7 @@ public class GameService {
 
         String logEntry = target.getCard().getName() + " can't be blocked this turn.";
         logAndBroadcast(gameData, logEntry);
-        broadcastBattlefields(gameData);
+
 
         log.info("Game {} - {} can't be blocked this turn", gameData.id, target.getCard().getName());
     }
@@ -2317,15 +2298,15 @@ public class GameService {
 
         if (damage >= getEffectiveToughness(gameData, target)) {
             if (tryRegenerate(gameData, target)) {
-                broadcastBattlefields(gameData);
+    
             } else {
                 removePermanentToGraveyard(gameData, target);
                 String destroyLog = target.getCard().getName() + " is destroyed.";
                 logAndBroadcast(gameData, destroyLog);
                 log.info("Game {} - {} is destroyed", gameData.id, target.getCard().getName());
                 removeOrphanedAuras(gameData);
-                broadcastBattlefields(gameData);
-                broadcastGraveyards(gameData);
+    
+    
             }
         }
     }
@@ -2375,9 +2356,9 @@ public class GameService {
         if (!destroyed.isEmpty()) {
             removeOrphanedAuras(gameData);
         }
-        broadcastBattlefields(gameData);
+
         if (!destroyed.isEmpty()) {
-            broadcastGraveyards(gameData);
+
         }
     }
 
@@ -2403,8 +2384,8 @@ public class GameService {
         }
 
         if (!toDestroy.isEmpty()) {
-            broadcastBattlefields(gameData);
-            broadcastGraveyards(gameData);
+
+
         }
     }
 
@@ -2427,8 +2408,8 @@ public class GameService {
         }
 
         if (!toDestroy.isEmpty()) {
-            broadcastBattlefields(gameData);
-            broadcastGraveyards(gameData);
+
+
         }
     }
 
@@ -2447,7 +2428,7 @@ public class GameService {
 
         // Try regeneration for creatures
         if (isCreature(gameData, target) && tryRegenerate(gameData, target)) {
-            broadcastBattlefields(gameData);
+
             return;
         }
 
@@ -2458,8 +2439,8 @@ public class GameService {
                 gameData.id, target.getCard().getName(), entry.getCard().getName());
 
         removeOrphanedAuras(gameData);
-        broadcastBattlefields(gameData);
-        broadcastGraveyards(gameData);
+
+
     }
 
     private void resolveDestroyBlockedCreatureAndSelf(GameData gameData, StackEntry entry) {
@@ -2481,8 +2462,8 @@ public class GameService {
             log.info("Game {} - {} destroyed (self-destruct from block trigger)", gameData.id, entry.getCard().getName());
         }
 
-        broadcastBattlefields(gameData);
-        broadcastGraveyards(gameData);
+
+
     }
 
     private void resolveSacrificeAtEndOfCombat(GameData gameData, StackEntry entry) {
@@ -2491,7 +2472,6 @@ public class GameService {
             gameData.permanentsToSacrificeAtEndOfCombat.add(self.getId());
             String logEntry = entry.getCard().getName() + " will be sacrificed at end of combat.";
             gameData.gameLog.add(logEntry);
-            broadcastLogEntry(gameData, logEntry);
         }
     }
 
@@ -2570,9 +2550,9 @@ public class GameService {
         Card drawn = deck.removeFirst();
         hand.add(drawn);
 
-        sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
-        broadcastDeckSizes(gameData);
-        broadcastHandSizes(gameData);
+
+
+
 
         String logEntry = gameData.playerIdToName.get(playerId) + " draws a card.";
         logAndBroadcast(gameData, logEntry);
@@ -2640,9 +2620,9 @@ public class GameService {
         logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} returned to hand", gameData.id, entry.getCard().getName());
 
-        broadcastBattlefields(gameData);
-        sessionManager.sendToPlayer(controllerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(controllerId, 0)));
-        broadcastHandSizes(gameData);
+
+
+
     }
 
     private void resolveReturnTargetPermanentToHand(GameData gameData, StackEntry entry) {
@@ -2665,9 +2645,9 @@ public class GameService {
                 logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} returned to owner's hand by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
 
-                broadcastBattlefields(gameData);
-                sessionManager.sendToPlayer(ownerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(ownerId, 0)));
-                broadcastHandSizes(gameData);
+    
+
+    
                 break;
             }
         }
@@ -2712,12 +2692,12 @@ public class GameService {
 
         if (!affectedPlayers.isEmpty()) {
             removeOrphanedAuras(gameData);
-            broadcastBattlefields(gameData);
+
             for (UUID playerId : affectedPlayers) {
                 List<Card> hand = gameData.playerHands.get(playerId);
-                sessionManager.sendToPlayer(playerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
+
             }
-            broadcastHandSizes(gameData);
+
         }
     }
 
@@ -2751,10 +2731,10 @@ public class GameService {
         }
 
         removeOrphanedAuras(gameData);
-        broadcastBattlefields(gameData);
+
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
-        sessionManager.sendToPlayer(targetPlayerId, new HandDrawnMessage(hand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(targetPlayerId, 0)));
-        broadcastHandSizes(gameData);
+
+
     }
 
     private void resolveDoubleTargetPlayerLife(GameData gameData, StackEntry entry) {
@@ -2767,7 +2747,7 @@ public class GameService {
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         String logEntry = playerName + "'s life total is doubled from " + currentLife + " to " + newLife + ".";
         logAndBroadcast(gameData, logEntry);
-        broadcastLifeTotals(gameData);
+
         log.info("Game {} - {}'s life doubled from {} to {}", gameData.id, playerName, currentLife, newLife);
     }
 
@@ -2794,8 +2774,8 @@ public class GameService {
 
         String logEntry = playerName + " mills " + cardsToMill + " card" + (cardsToMill != 1 ? "s" : "") + ".";
         logAndBroadcast(gameData, logEntry);
-        broadcastDeckSizes(gameData);
-        broadcastGraveyards(gameData);
+
+
         log.info("Game {} - {} mills {} cards (hand size)", gameData.id, playerName, cardsToMill);
     }
 
@@ -2813,8 +2793,8 @@ public class GameService {
 
         String logEntry = playerName + " mills " + cardsToMill + " card" + (cardsToMill != 1 ? "s" : "") + ".";
         logAndBroadcast(gameData, logEntry);
-        broadcastDeckSizes(gameData);
-        broadcastGraveyards(gameData);
+
+
         log.info("Game {} - {} mills {} cards", gameData.id, playerName, cardsToMill);
     }
 
@@ -2869,7 +2849,7 @@ public class GameService {
             }
         }
 
-        broadcastDeckSizes(gameData);
+
         log.info("Game {} - {} exile trigger resolved for {}", gameData.id, creatureName, playerName);
     }
 
@@ -2883,7 +2863,7 @@ public class GameService {
             String logEntry = playerName + "'s graveyard is empty. Library is shuffled.";
             logAndBroadcast(gameData, logEntry);
             Collections.shuffle(deck);
-            broadcastDeckSizes(gameData);
+
             return;
         }
 
@@ -2894,8 +2874,8 @@ public class GameService {
 
         String logEntry = playerName + " shuffles their graveyard (" + count + " card" + (count != 1 ? "s" : "") + ") into their library.";
         logAndBroadcast(gameData, logEntry);
-        broadcastDeckSizes(gameData);
-        broadcastGraveyards(gameData);
+
+
         log.info("Game {} - {} shuffles graveyard ({} cards) into library", gameData.id, playerName, count);
     }
 
@@ -2983,8 +2963,8 @@ public class GameService {
             logAndBroadcast(gameData, logEntry);
         }
 
-        broadcastBattlefields(gameData);
-        broadcastPlayableCards(gameData);
+
+
     }
 
     private void stealCreature(GameData gameData, UUID newControllerId, Permanent creature) {
@@ -3092,7 +3072,7 @@ public class GameService {
             it.remove();
         }
         if (anyReturned) {
-            broadcastBattlefields(gameData);
+
         }
     }
 
@@ -3111,7 +3091,7 @@ public class GameService {
 
                 String logEntry = gameData.playerIdToName.get(playerId) + " gains " + toughness + " life.";
                 logAndBroadcast(gameData, logEntry);
-                broadcastLifeTotals(gameData);
+    
 
                 log.info("Game {} - {} gains {} life (equal to {}'s toughness)",
                         gameData.id, gameData.playerIdToName.get(playerId), toughness, target.getCard().getName());
@@ -3140,8 +3120,8 @@ public class GameService {
         }
 
         removeOrphanedAuras(gameData);
-        broadcastBattlefields(gameData);
-        broadcastDeckSizes(gameData);
+
+
     }
 
     private void resolvePreventAllCombatDamage(GameData gameData) {
@@ -3326,12 +3306,12 @@ public class GameService {
                 logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - Clone copies {}", gameData.id, targetPerm.getCard().getName());
 
-                broadcastBattlefields(gameData);
+    
 
                 // Check legend rule (Clone may have copied a legendary creature)
                 if (!checkLegendRule(gameData, playerId)) {
                     performStateBasedActions(gameData);
-                    broadcastPlayableCards(gameData);
+        
                     resolveAutoPass(gameData);
                 }
             } else if (context instanceof PermanentChoiceContext.AuraGraft auraGraft) {
@@ -3351,8 +3331,8 @@ public class GameService {
                 logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} reattached to {}", gameData.id, aura.getCard().getName(), newTarget.getCard().getName());
 
-                broadcastBattlefields(gameData);
-                broadcastPlayableCards(gameData);
+    
+    
 
                 resolveAutoPass(gameData);
             } else if (context instanceof PermanentChoiceContext.LegendRule legendRule) {
@@ -3375,9 +3355,9 @@ public class GameService {
                 }
 
                 removeOrphanedAuras(gameData);
-                broadcastBattlefields(gameData);
-                broadcastGraveyards(gameData);
-                broadcastPlayableCards(gameData);
+    
+    
+    
 
                 resolveAutoPass(gameData);
             } else if (gameData.pendingAuraCard != null) {
@@ -3400,9 +3380,9 @@ public class GameService {
                 log.info("Game {} - {} returned {} from graveyard to battlefield attached to {}",
                         gameData.id, playerName, auraCard.getName(), creatureTarget.getCard().getName());
 
-                broadcastBattlefields(gameData);
-                broadcastGraveyards(gameData);
-                broadcastPlayableCards(gameData);
+    
+    
+    
 
                 resolveAutoPass(gameData);
             } else {
@@ -3462,7 +3442,7 @@ public class GameService {
             }
         }
 
-        broadcastBattlefields(gameData);
+
         log.info("Game {} - {} taps creatures matching filters", gameData.id, entry.getCard().getName());
     }
 
@@ -3487,7 +3467,7 @@ public class GameService {
 
         String logEntry = entry.getCard().getName() + " taps " + target.getCard().getName() + ".";
         logAndBroadcast(gameData, logEntry);
-        broadcastBattlefields(gameData);
+
 
         log.info("Game {} - {} taps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
     }
@@ -3502,7 +3482,7 @@ public class GameService {
 
         String logEntry = entry.getCard().getName() + " untaps.";
         logAndBroadcast(gameData, logEntry);
-        broadcastBattlefields(gameData);
+
 
         log.info("Game {} - {} untaps", gameData.id, entry.getCard().getName());
     }
@@ -3556,9 +3536,9 @@ public class GameService {
                         logAndBroadcast(gameData, logEntry);
                         log.info("Game {} - {} returns {} from graveyard to hand", gameData.id, player.getUsername(), card.getName());
 
-                        broadcastGraveyards(gameData);
-                        sessionManager.sendToPlayer(playerId, new HandDrawnMessage(gameData.playerHands.get(playerId).stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(playerId, 0)));
-                        broadcastHandSizes(gameData);
+            
+
+            
                     }
                     case BATTLEFIELD -> {
                         Permanent perm = new Permanent(card);
@@ -3568,8 +3548,8 @@ public class GameService {
                         logAndBroadcast(gameData, logEntry);
                         log.info("Game {} - {} returns {} from graveyard to battlefield", gameData.id, player.getUsername(), card.getName());
 
-                        broadcastBattlefields(gameData);
-                        broadcastGraveyards(gameData);
+            
+            
 
                         handleCreatureEnteredBattlefield(gameData, playerId, card, null);
                         if (gameData.awaitingInput == null) {
@@ -3594,7 +3574,7 @@ public class GameService {
 
         String logEntry = "A " + token.power() + "/" + token.toughness() + " " + token.tokenName() + " creature token enters the battlefield.";
         logAndBroadcast(gameData, logEntry);
-        broadcastBattlefields(gameData);
+
 
         handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
         if (gameData.awaitingInput == null) {
@@ -3769,8 +3749,8 @@ public class GameService {
             }
         }
         if (anyRemoved) {
-            broadcastBattlefields(gameData);
-            broadcastGraveyards(gameData);
+
+
         }
         returnStolenCreatures(gameData);
     }
@@ -3824,8 +3804,8 @@ public class GameService {
         }
         if (anyDied) {
             removeOrphanedAuras(gameData);
-            broadcastBattlefields(gameData);
-            broadcastGraveyards(gameData);
+
+
         }
     }
 
@@ -3923,7 +3903,7 @@ public class GameService {
             }
         }
         if (anyReset) {
-            broadcastBattlefields(gameData);
+
         }
 
         // Clear player damage prevention shields
@@ -3948,7 +3928,7 @@ public class GameService {
         String logEntry = perm.getCard().getName() + " gains a regeneration shield.";
         logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gains a regeneration shield", gameData.id, perm.getCard().getName());
-        broadcastBattlefields(gameData);
+
     }
 
     private boolean tryRegenerate(GameData gameData, Permanent perm) {
@@ -4110,8 +4090,8 @@ public class GameService {
         }
 
         removeOrphanedAuras(gameData);
-        broadcastBattlefields(gameData);
-        broadcastGraveyards(gameData);
+
+
 
         // Deal damage to each player (with prevention shields and damage redirect)
         String cardName = entry.getCard().getName();
@@ -4131,7 +4111,7 @@ public class GameService {
             }
         }
 
-        broadcastLifeTotals(gameData);
+
         checkWinCondition(gameData);
     }
 
@@ -4206,9 +4186,6 @@ public class GameService {
         return totals;
     }
 
-    private void broadcastLifeTotals(GameData gameData) {
-        sessionManager.sendToPlayers(gameData.orderedPlayerIds,new LifeUpdatedMessage(getLifeTotals(gameData)));
-    }
 
     private void handleDeclareAttackersStep(GameData gameData) {
         UUID activeId = gameData.activePlayerId;
@@ -4232,7 +4209,7 @@ public class GameService {
 
         String logEntry = "Step: " + TurnStep.END_OF_COMBAT.getDisplayName();
         logAndBroadcast(gameData, logEntry);
-        sessionManager.sendToPlayers(gameData.orderedPlayerIds,new StepAdvancedMessage(getPriorityPlayerId(gameData), TurnStep.END_OF_COMBAT));
+        broadcastGameState(gameData);
     }
 
     public void declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices) {
@@ -4277,7 +4254,7 @@ public class GameService {
                     throw new IllegalStateException("Not enough mana to pay attack tax (" + totalTax + " required)");
                 }
                 payGenericMana(pool, totalTax);
-                sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(pool.toMap()));
+        
             }
 
             // Mark creatures as attacking and tap them (vigilance skips tapping)
@@ -4293,7 +4270,7 @@ public class GameService {
                     " attacker" + (attackerIndices.size() > 1 ? "s" : "") + ".";
             logAndBroadcast(gameData, logEntry);
 
-            broadcastBattlefields(gameData);
+
 
             // Check for "when this creature attacks" triggers
             for (int idx : attackerIndices) {
@@ -4310,12 +4287,11 @@ public class GameService {
                     ));
                     String triggerLog = attacker.getCard().getName() + "'s attack ability triggers.";
                     gameData.gameLog.add(triggerLog);
-                    broadcastLogEntry(gameData, triggerLog);
                     log.info("Game {} - {} attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
                 }
             }
             if (!gameData.stack.isEmpty()) {
-                broadcastStackUpdate(gameData);
+    
             }
 
             log.info("Game {} - {} declares {} attackers", gameData.id, player.getUsername(), attackerIndices.size());
@@ -4470,9 +4446,9 @@ public class GameService {
                 }
             }
 
-            broadcastBattlefields(gameData);
+
             if (!gameData.stack.isEmpty()) {
-                broadcastStackUpdate(gameData);
+    
             }
 
             log.info("Game {} - {} declares {} blockers", gameData.id, player.getUsername(), blockerAssignments.size());
@@ -4758,10 +4734,10 @@ public class GameService {
             logAndBroadcast(gameData, logEntry);
         }
 
-        broadcastBattlefields(gameData);
-        broadcastLifeTotals(gameData);
+
+
         if (!deadAttackerIndices.isEmpty() || !deadDefenderIndices.isEmpty()) {
-            broadcastGraveyards(gameData);
+
         }
 
         log.info("Game {} - Combat damage resolved: {} damage to defender, {} creatures died",
@@ -4928,9 +4904,9 @@ public class GameService {
                         logAndBroadcast(gameData, logEntry);
                         log.info("Game {} - {} bounced {} permanents", gameData.id, gameData.playerIdToName.get(playerId), bouncedNames.size());
 
-                        broadcastBattlefields(gameData);
-                        sessionManager.sendToPlayer(targetPlayerId, new HandDrawnMessage(targetHand.stream().map(cardViewFactory::create).toList(), gameData.mulliganCounts.getOrDefault(targetPlayerId, 0)));
-                        broadcastHandSizes(gameData);
+            
+
+            
                     }
                 }
 
@@ -4978,7 +4954,7 @@ public class GameService {
                 battlefield.forEach(Permanent::clearCombatState);
             }
         }
-        broadcastBattlefields(gameData);
+
     }
 
     private void processEndOfCombatSacrifices(GameData gameData) {
@@ -4995,15 +4971,14 @@ public class GameService {
                     collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature);
                     String logEntry = perm.getCard().getName() + " is sacrificed.";
                     gameData.gameLog.add(logEntry);
-                    broadcastLogEntry(gameData, logEntry);
                     log.info("Game {} - {} sacrificed at end of combat", gameData.id, perm.getCard().getName());
                 }
             }
         }
         gameData.permanentsToSacrificeAtEndOfCombat.clear();
         removeOrphanedAuras(gameData);
-        broadcastBattlefields(gameData);
-        broadcastGraveyards(gameData);
+
+
     }
 
     // ===== End combat methods =====
@@ -5013,7 +4988,7 @@ public class GameService {
             ManaPool manaPool = gameData.playerManaPools.get(playerId);
             if (manaPool != null) {
                 manaPool.clear();
-                sessionManager.sendToPlayer(playerId, new ManaUpdatedMessage(manaPool.toMap()));
+    
             }
         }
     }
@@ -5106,12 +5081,6 @@ public class GameService {
         return playable;
     }
 
-    private void broadcastPlayableCards(GameData gameData) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Integer> playable = getPlayableCardIndices(gameData, playerId);
-            sessionManager.sendToPlayer(playerId, new PlayableCardsMessage(playable));
-        }
-    }
 
     private void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature) {
         if (!wasCreature) return;
@@ -5236,9 +5205,9 @@ public class GameService {
                     log.info("Game {} - {} declines clone copy", gameData.id, player.getUsername());
 
                     performStateBasedActions(gameData);
-                    broadcastBattlefields(gameData);
-                    broadcastGraveyards(gameData);
-                    broadcastPlayableCards(gameData);
+        
+        
+        
                     resolveAutoPass(gameData);
                 }
                 return;
@@ -5252,7 +5221,7 @@ public class GameService {
                         ability.sourceCard().getName() + "'s ability",
                         new ArrayList<>(ability.effects())
                 ));
-                broadcastStackUpdate(gameData);
+    
 
                 String logEntry = player.getUsername() + " accepts — " + ability.sourceCard().getName() + "'s triggered ability goes on the stack.";
                 logAndBroadcast(gameData, logEntry);
@@ -5267,10 +5236,7 @@ public class GameService {
 
             if (gameData.pendingMayAbilities.isEmpty() && gameData.awaitingInput == null) {
                 gameData.priorityPassedBy.clear();
-                broadcastBattlefields(gameData);
-                broadcastStackUpdate(gameData);
-                broadcastPlayableCards(gameData);
-                sessionManager.sendToPlayers(gameData.orderedPlayerIds, new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+                broadcastGameState(gameData);
                 resolveAutoPass(gameData);
             }
         }
@@ -5279,14 +5245,14 @@ public class GameService {
     private void resolveAutoPass(GameData gameData) {
         for (int safety = 0; safety < 100; safety++) {
             if (gameData.awaitingInput != null) {
-                broadcastPlayableCards(gameData);
+                broadcastGameState(gameData);
                 return;
             }
             if (gameData.status == GameStatus.FINISHED) return;
 
             // When stack is non-empty, never auto-pass — players must explicitly pass
             if (!gameData.stack.isEmpty()) {
-                broadcastPlayableCards(gameData);
+                broadcastGameState(gameData);
                 return;
             }
 
@@ -5301,14 +5267,14 @@ public class GameService {
             List<Integer> playable = getPlayableCardIndices(gameData, priorityHolder);
             if (!playable.isEmpty()) {
                 // Priority holder can act — stop and let them decide
-                broadcastPlayableCards(gameData);
+                broadcastGameState(gameData);
                 return;
             }
 
             // Check if current step is in the priority holder's auto-stop set
             Set<TurnStep> stopSteps = gameData.playerAutoStopSteps.get(priorityHolder);
             if (stopSteps != null && stopSteps.contains(gameData.currentStep)) {
-                broadcastPlayableCards(gameData);
+                broadcastGameState(gameData);
                 return;
             }
 
@@ -5322,13 +5288,13 @@ public class GameService {
             if (gameData.priorityPassedBy.size() >= 2) {
                 advanceStep(gameData);
             } else {
-                sessionManager.sendToPlayers(gameData.orderedPlayerIds,new PriorityUpdatedMessage(getPriorityPlayerId(gameData)));
+                broadcastGameState(gameData);
             }
         }
 
         // Safety: if we somehow looped 100 times, broadcast current state and stop
         log.warn("Game {} - resolveAutoPass hit safety limit", gameData.id);
-        broadcastPlayableCards(gameData);
+        broadcastGameState(gameData);
     }
 
     private void resolveCounterSpell(GameData gameData, StackEntry entry) {
@@ -5353,8 +5319,8 @@ public class GameService {
         // Countered spells go to their owner's graveyard
         UUID ownerId = targetEntry.getControllerId();
         gameData.playerGraveyards.get(ownerId).add(targetEntry.getCard());
-        broadcastGraveyards(gameData);
-        broadcastStackUpdate(gameData);
+
+
 
         String logMsg = targetEntry.getCard().getName() + " is countered.";
         logAndBroadcast(gameData, logMsg);

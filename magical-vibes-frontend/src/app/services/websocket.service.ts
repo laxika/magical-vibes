@@ -13,36 +13,23 @@ export enum MessageType {
   NEW_GAME = 'NEW_GAME',
   GAME_UPDATED = 'GAME_UPDATED',
   PASS_PRIORITY = 'PASS_PRIORITY',
-  PRIORITY_UPDATED = 'PRIORITY_UPDATED',
-  STEP_ADVANCED = 'STEP_ADVANCED',
-  TURN_CHANGED = 'TURN_CHANGED',
-  GAME_LOG_ENTRY = 'GAME_LOG_ENTRY',
+  GAME_STATE = 'GAME_STATE',
   KEEP_HAND = 'KEEP_HAND',
   TAKE_MULLIGAN = 'TAKE_MULLIGAN',
-  HAND_DRAWN = 'HAND_DRAWN',
   MULLIGAN_RESOLVED = 'MULLIGAN_RESOLVED',
-  GAME_STARTED = 'GAME_STARTED',
   SELECT_CARDS_TO_BOTTOM = 'SELECT_CARDS_TO_BOTTOM',
   BOTTOM_CARDS = 'BOTTOM_CARDS',
-  DECK_SIZES_UPDATED = 'DECK_SIZES_UPDATED',
-  HAND_SIZES_UPDATED = 'HAND_SIZES_UPDATED',
-  PLAYABLE_CARDS_UPDATED = 'PLAYABLE_CARDS_UPDATED',
   PLAY_CARD = 'PLAY_CARD',
-  BATTLEFIELD_UPDATED = 'BATTLEFIELD_UPDATED',
   TAP_PERMANENT = 'TAP_PERMANENT',
-  MANA_UPDATED = 'MANA_UPDATED',
+  SACRIFICE_PERMANENT = 'SACRIFICE_PERMANENT',
   SET_AUTO_STOPS = 'SET_AUTO_STOPS',
-  AUTO_STOPS_UPDATED = 'AUTO_STOPS_UPDATED',
   DECLARE_ATTACKERS = 'DECLARE_ATTACKERS',
   DECLARE_BLOCKERS = 'DECLARE_BLOCKERS',
   AVAILABLE_ATTACKERS = 'AVAILABLE_ATTACKERS',
   AVAILABLE_BLOCKERS = 'AVAILABLE_BLOCKERS',
-  LIFE_UPDATED = 'LIFE_UPDATED',
   GAME_OVER = 'GAME_OVER',
   CHOOSE_CARD_FROM_HAND = 'CHOOSE_CARD_FROM_HAND',
   CARD_CHOSEN = 'CARD_CHOSEN',
-  STACK_UPDATED = 'STACK_UPDATED',
-  GRAVEYARD_UPDATED = 'GRAVEYARD_UPDATED',
   CHOOSE_COLOR = 'CHOOSE_COLOR',
   COLOR_CHOSEN = 'COLOR_CHOSEN',
   MAY_ABILITY_CHOICE = 'MAY_ABILITY_CHOICE',
@@ -238,18 +225,25 @@ export interface LobbyGameNotification {
   game?: LobbyGame;
 }
 
-export interface GameUpdate {
+export interface GameStateNotification {
   type: MessageType;
-  priorityPlayerId?: string;
-  currentStep?: TurnStep;
-  activePlayerId?: string;
-  turnNumber?: number;
-}
-
-export interface HandDrawnNotification {
-  type: MessageType;
+  status: GameStatus;
+  activePlayerId: string;
+  turnNumber: number;
+  currentStep: TurnStep;
+  priorityPlayerId: string;
+  battlefields: Permanent[][];
+  stack: StackEntry[];
+  graveyards: Card[][];
+  deckSizes: number[];
+  handSizes: number[];
+  lifeTotals: number[];
   hand: Card[];
   mulliganCount: number;
+  manaPool: Record<string, number>;
+  autoStopSteps: string[];
+  playableCardIndices: number[];
+  newLogEntries: string[];
 }
 
 export interface MulliganResolvedNotification {
@@ -259,47 +253,9 @@ export interface MulliganResolvedNotification {
   mulliganCount: number;
 }
 
-export interface GameStartedNotification {
-  type: MessageType;
-  activePlayerId: string;
-  turnNumber: number;
-  currentStep: TurnStep;
-  priorityPlayerId: string;
-}
-
 export interface SelectCardsToBottomNotification {
   type: MessageType;
   count: number;
-}
-
-export interface DeckSizesUpdatedNotification {
-  type: MessageType;
-  deckSizes: number[];
-}
-
-export interface HandSizesUpdatedNotification {
-  type: MessageType;
-  handSizes: number[];
-}
-
-export interface PlayableCardsNotification {
-  type: MessageType;
-  playableCardIndices: number[];
-}
-
-export interface BattlefieldUpdatedNotification {
-  type: MessageType;
-  battlefields: Permanent[][];
-}
-
-export interface ManaUpdatedNotification {
-  type: MessageType;
-  manaPool: Record<string, number>;
-}
-
-export interface AutoStopsUpdatedNotification {
-  type: MessageType;
-  autoStopSteps: string[];
 }
 
 export interface AvailableAttackersNotification {
@@ -311,11 +267,6 @@ export interface AvailableBlockersNotification {
   type: MessageType;
   blockerIndices: number[];
   attackerIndices: number[];
-}
-
-export interface LifeUpdatedNotification {
-  type: MessageType;
-  lifeTotals: number[];
 }
 
 export interface GameOverNotification {
@@ -354,16 +305,6 @@ export interface ChooseMultiplePermanentsNotification {
   prompt: string;
 }
 
-export interface StackUpdatedNotification {
-  type: MessageType;
-  stack: StackEntry[];
-}
-
-export interface GraveyardUpdatedNotification {
-  type: MessageType;
-  graveyards: Card[][];
-}
-
 export interface ReorderLibraryCardsNotification {
   type: MessageType;
   cards: Card[];
@@ -376,7 +317,7 @@ export interface RevealHandNotification {
   playerName: string;
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameUpdate | HandDrawnNotification | MulliganResolvedNotification | GameStartedNotification | SelectCardsToBottomNotification | DeckSizesUpdatedNotification | PlayableCardsNotification | BattlefieldUpdatedNotification | ManaUpdatedNotification | AutoStopsUpdatedNotification | AvailableAttackersNotification | AvailableBlockersNotification | LifeUpdatedNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | StackUpdatedNotification | GraveyardUpdatedNotification | ReorderLibraryCardsNotification | RevealHandNotification;
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameStateNotification | MulliganResolvedNotification | SelectCardsToBottomNotification | AvailableAttackersNotification | AvailableBlockersNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | ReorderLibraryCardsNotification | RevealHandNotification;
 
 export interface User {
   userId: string;
