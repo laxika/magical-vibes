@@ -655,6 +655,7 @@ export class GameComponent implements OnInit, OnDestroy {
         this.targetingCardName = this.xValueCardName;
         this.targetingForPlayer = ability.targetsPlayer;
         this.targetingAllowedTypes = ability.allowedTargetTypes ?? [];
+        this.targetingAllowedColors = ability.allowedTargetColors ?? [];
         return;
       }
       // X value only, no target
@@ -762,6 +763,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.targetingRequiresAttacking = false;
     this.targetingAbilityIndex = -1;
     this.targetingAllowedTypes = [];
+    this.targetingAllowedColors = [];
     this.pendingAbilityXValue = null;
   }
 
@@ -792,6 +794,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.targetingRequiresAttacking = false;
     this.targetingAbilityIndex = -1;
     this.targetingAllowedTypes = [];
+    this.targetingAllowedColors = [];
     this.pendingAbilityXValue = null;
   }
 
@@ -804,6 +807,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.targetingRequiresAttacking = false;
     this.targetingAbilityIndex = -1;
     this.targetingAllowedTypes = [];
+    this.targetingAllowedColors = [];
     this.pendingAbilityXValue = null;
   }
 
@@ -888,6 +892,10 @@ export class GameComponent implements OnInit, OnDestroy {
         return false;
       }
       return true;
+    }
+    if (this.targetingAllowedColors.length > 0) {
+      return this.isPermanentCreature(perm) && perm.card.color != null
+        && this.targetingAllowedColors.some(c => c.toUpperCase() === perm.card.color!.toUpperCase());
     }
     return this.isPermanentCreature(perm);
   }
@@ -1036,6 +1044,7 @@ export class GameComponent implements OnInit, OnDestroy {
       this.targetingAbilityIndex = abilityIndex;
       this.targetingForPlayer = ability.targetsPlayer;
       this.targetingAllowedTypes = ability.allowedTargetTypes ?? [];
+      this.targetingAllowedColors = ability.allowedTargetColors ?? [];
       return;
     }
 
@@ -1137,6 +1146,7 @@ export class GameComponent implements OnInit, OnDestroy {
   targetingForAbility = false;
   targetingForPlayer = false;
   targetingAllowedTypes: string[] = [];
+  targetingAllowedColors: string[] = [];
   targetingRequiresAttacking = false;
   targetingAbilityIndex = -1;
   pendingAbilityXValue: number | null = null;

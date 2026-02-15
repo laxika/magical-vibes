@@ -45,7 +45,8 @@ public enum CardSubtype {
     DJINN("Djinn"),
     ROGUE("Rogue"),
     ILLUSION("Illusion"),
-    WARRIOR("Warrior");
+    WARRIOR("Warrior"),
+    METATHRAN("Metathran");
 
     @Getter
     private final String displayName;

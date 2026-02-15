@@ -121,6 +121,7 @@ export interface ActivatedAbilityView {
   needsTarget: boolean;
   targetsPlayer: boolean;
   allowedTargetTypes: string[];
+  allowedTargetColors: string[];
   manaCost: string | null;
 }
 

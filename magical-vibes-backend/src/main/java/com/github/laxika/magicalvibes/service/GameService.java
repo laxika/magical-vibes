@@ -96,6 +96,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
 import com.github.laxika.magicalvibes.model.filter.AttackingOrBlockingTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AttackingTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.CreatureColorTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ExcludeSelfTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.MaxPowerTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.SpellColorTargetFilter;
@@ -3811,6 +3812,14 @@ public class GameService {
         } else if (filter instanceof AttackingTargetFilter) {
             if (!target.isAttacking()) {
                 throw new IllegalStateException("Target must be an attacking creature");
+            }
+        } else if (filter instanceof CreatureColorTargetFilter f) {
+            if (!f.colors().contains(target.getCard().getColor())) {
+                String colorNames = f.colors().stream()
+                        .map(c -> c.name().toLowerCase())
+                        .reduce((a, b) -> a + " or " + b)
+                        .orElse("");
+                throw new IllegalStateException("Target must be a " + colorNames + " creature");
             }
         }
     }

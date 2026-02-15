@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEf
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.CreatureColorTargetFilter;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import org.springframework.stereotype.Service;
@@ -74,12 +75,18 @@ public class CardViewFactory {
             }
         }
 
+        List<String> allowedTargetColors = new ArrayList<>();
+        if (ability.getTargetFilter() instanceof CreatureColorTargetFilter colorFilter) {
+            colorFilter.colors().forEach(c -> allowedTargetColors.add(c.name()));
+        }
+
         return new ActivatedAbilityView(
                 ability.getDescription(),
                 ability.isRequiresTap(),
                 ability.isNeedsTarget(),
                 targetsPlayer,
                 allowedTargetTypes,
+                allowedTargetColors,
                 ability.getManaCost()
         );
     }
