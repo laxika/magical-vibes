@@ -1304,6 +1304,33 @@
   filter: grayscale(40%);
 }
 
+.revealed-hand-row {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #4a7a9b;
+}
+
+.revealed-hand-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #4a7a9b;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+  font-family: 'Cinzel', Georgia, serif;
+}
+
+.revealed-hand-cards {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.card.revealed-hand-card {
+  opacity: 0.85;
+  transform: scale(0.85);
+}
+
 /* Aura attachment stacking */
 
 .permanent-stack {

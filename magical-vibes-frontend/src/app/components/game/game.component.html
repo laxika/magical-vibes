@@ -287,6 +287,16 @@
             </div>
           </div>
         }
+        @if (opponentHand.length > 0) {
+          <div class="revealed-hand-row">
+            <div class="revealed-hand-label">Revealed Hand ({{ opponentHand.length }})</div>
+            <div class="revealed-hand-cards">
+              @for (card of opponentHand; track $index) {
+                <app-card-display [card]="card" class="revealed-hand-card" (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
+              }
+            </div>
+          </div>
+        }
       </div>
 
       @if (showCombatZone) {
