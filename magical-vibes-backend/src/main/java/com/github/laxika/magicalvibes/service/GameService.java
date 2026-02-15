@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockOnlyFlyersEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsLandTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.IslandwalkEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -4130,14 +4131,32 @@ public class GameService {
     private List<Integer> getAttackableCreatureIndices(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
+        UUID defenderId = getOpponentId(gameData, playerId);
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent p = battlefield.get(i);
             if (isCreature(gameData, p) && !p.isTapped() && !p.isSummoningSick() && !hasKeyword(gameData, p, Keyword.DEFENDER) && !hasAuraWithEffect(gameData, p, EnchantedCreatureCantAttackOrBlockEffect.class)) {
+                if (isCantAttackDueToLandRestriction(p, defenderBattlefield)) {
+                    continue;
+                }
                 indices.add(i);
             }
         }
         return indices;
+    }
+
+    private boolean isCantAttackDueToLandRestriction(Permanent attacker, List<Permanent> defenderBattlefield) {
+        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantAttackUnlessDefenderControlsLandTypeEffect restriction) {
+                boolean defenderHasLand = defenderBattlefield != null && defenderBattlefield.stream()
+                        .anyMatch(p -> p.getCard().getSubtypes().contains(restriction.landType()));
+                if (!defenderHasLand) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private List<Integer> getBlockableCreatureIndices(GameData gameData, UUID playerId) {
