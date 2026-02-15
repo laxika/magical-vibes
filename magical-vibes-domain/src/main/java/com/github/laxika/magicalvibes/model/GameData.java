@@ -71,6 +71,8 @@ public class GameData {
     public UUID pendingCombatDamageBounceTargetPlayerId;
     public UUID awaitingLibraryReorderPlayerId;
     public List<Card> awaitingLibraryReorderCards;
+    public UUID awaitingLibrarySearchPlayerId;
+    public List<Card> awaitingLibrarySearchCards;
     public final Set<UUID> permanentsToSacrificeAtEndOfCombat = ConcurrentHashMap.newKeySet();
     public int awaitingDiscardRemainingCount;
     public final Map<UUID, UUID> drawReplacementTargetToController = new ConcurrentHashMap<>();

@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamage
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
@@ -72,6 +73,7 @@ import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ExcludeSelfTargetFilter;
+import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
@@ -216,6 +218,11 @@ public class EffectResolutionService {
             } else if (effect instanceof ReorderTopCardsOfLibraryEffect reorder) {
                 resolveReorderTopCardsOfLibrary(gameData, entry, reorder);
                 if (gameData.awaitingInput == AwaitingInput.LIBRARY_REORDER) {
+                    break;
+                }
+            } else if (effect instanceof SearchLibraryForBasicLandToHandEffect) {
+                resolveSearchLibraryForBasicLandToHand(gameData, entry);
+                if (gameData.awaitingInput == AwaitingInput.LIBRARY_SEARCH) {
                     break;
                 }
             }
@@ -1312,5 +1319,46 @@ public class EffectResolutionService {
         }
 
         gameHelper.checkWinCondition(gameData);
+    }
+
+    private void resolveSearchLibraryForBasicLandToHand(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        if (deck == null || deck.isEmpty()) {
+            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
+            gameHelper.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> basicLands = new ArrayList<>();
+        for (Card card : deck) {
+            if (card.getType() == CardType.BASIC_LAND) {
+                basicLands.add(card);
+            }
+        }
+
+        if (basicLands.isEmpty()) {
+            Collections.shuffle(deck);
+            String logMsg = playerName + " searches their library but finds no basic land cards. Library is shuffled.";
+            gameHelper.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - {} searches library, no basic lands found", gameData.id, playerName);
+            return;
+        }
+
+        gameData.awaitingLibrarySearchPlayerId = controllerId;
+        gameData.awaitingLibrarySearchCards = basicLands;
+        gameData.awaitingInput = AwaitingInput.LIBRARY_SEARCH;
+
+        List<CardView> cardViews = basicLands.stream().map(gameHelper.getCardViewFactory()::create).toList();
+        gameHelper.getSessionManager().sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
+                cardViews,
+                "Search your library for a basic land card to put into your hand."
+        ));
+
+        String logMsg = playerName + " searches their library.";
+        gameHelper.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} searching library for a basic land ({} found)", gameData.id, playerName, basicLands.size());
     }
 }

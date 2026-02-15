@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.networking.message.ColorChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsRequest;
 import com.github.laxika.magicalvibes.networking.message.SacrificePermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
@@ -62,6 +63,8 @@ public interface MessageHandler {
     void handleMayAbilityChosen(Connection connection, MayAbilityChosenRequest request) throws Exception;
 
     void handleLibraryCardsReordered(Connection connection, ReorderLibraryCardsRequest request) throws Exception;
+
+    void handleLibraryCardChosen(Connection connection, LibraryCardChosenRequest request) throws Exception;
 
     void handleTimeout(Connection connection);
 

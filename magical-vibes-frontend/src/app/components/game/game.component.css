@@ -1023,6 +1023,16 @@
   margin-bottom: 24px;
 }
 
+.library-search-card {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.library-search-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 0 12px rgba(44, 94, 162, 0.6);
+}
+
 /* MTGO-style battlefield layout */
 
 .battlefield-sub-row {

@@ -148,6 +148,24 @@
       </div>
     }
 
+    @if (searchingLibrary) {
+      <div class="reveal-hand-overlay">
+        <div class="reveal-hand-card">
+          <h2>{{ librarySearchPrompt }}</h2>
+          <div class="reveal-hand-cards">
+            @for (card of librarySearchCards; track $index) {
+              <app-card-display [card]="card"
+                class="library-search-card"
+                (click)="chooseLibraryCard($index)"
+                (mouseenter)="onCardHover(card)"
+                (mouseleave)="onCardHoverEnd()" />
+            }
+          </div>
+          <button class="btn-keep" (click)="declineLibrarySearch()">Decline</button>
+        </div>
+      </div>
+    }
+
     @if (choosingXValue) {
       <div class="combat-banner targeting-banner">
         <span>Choose X value for {{ xValueCardName }} (max {{ xValueMaximum }}):</span>

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
@@ -566,6 +567,13 @@ public class GameService {
                         List<CardView> cardViews = gameData.awaitingLibraryReorderCards.stream().map(gameHelper.getCardViewFactory()::create).toList();
                         sessionManager.sendToPlayer(playerId, new ReorderLibraryCardsMessage(
                                 cardViews, "Put these cards back on top of your library in any order (top to bottom)."));
+                    }
+                }
+                case LIBRARY_SEARCH -> {
+                    if (playerId.equals(gameData.awaitingLibrarySearchPlayerId) && gameData.awaitingLibrarySearchCards != null) {
+                        List<CardView> cardViews = gameData.awaitingLibrarySearchCards.stream().map(gameHelper.getCardViewFactory()::create).toList();
+                        sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(
+                                cardViews, "Search your library for a basic land card to put into your hand."));
                     }
                 }
             }
@@ -2028,6 +2036,63 @@ public class GameService {
         }
     }
 
+
+    public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
+        synchronized (gameData) {
+            if (gameData.awaitingInput != AwaitingInput.LIBRARY_SEARCH) {
+                throw new IllegalStateException("Not awaiting library search");
+            }
+            if (!player.getId().equals(gameData.awaitingLibrarySearchPlayerId)) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+
+            UUID playerId = player.getId();
+            List<Card> searchCards = gameData.awaitingLibrarySearchCards;
+
+            gameData.awaitingInput = null;
+            gameData.awaitingLibrarySearchPlayerId = null;
+            gameData.awaitingLibrarySearchCards = null;
+
+            List<Card> deck = gameData.playerDecks.get(playerId);
+
+            if (cardIndex == -1) {
+                // Player declined (fail to find)
+                Collections.shuffle(deck);
+                String logEntry = player.getUsername() + " chooses not to take a card. Library is shuffled.";
+                gameHelper.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} declines to take a basic land from library", gameData.id, player.getUsername());
+            } else {
+                if (cardIndex < 0 || cardIndex >= searchCards.size()) {
+                    throw new IllegalStateException("Invalid card index: " + cardIndex);
+                }
+
+                Card chosenCard = searchCards.get(cardIndex);
+
+                // Remove the chosen card from the library by identity
+                boolean removed = false;
+                for (int i = 0; i < deck.size(); i++) {
+                    if (deck.get(i).getId().equals(chosenCard.getId())) {
+                        deck.remove(i);
+                        removed = true;
+                        break;
+                    }
+                }
+
+                if (!removed) {
+                    throw new IllegalStateException("Chosen card not found in library");
+                }
+
+                gameData.playerHands.get(playerId).add(chosenCard);
+                Collections.shuffle(deck);
+
+                String logEntry = player.getUsername() + " reveals " + chosenCard.getName() + " and puts it into their hand. Library is shuffled.";
+                gameHelper.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} searches library and puts {} into hand", gameData.id, player.getUsername(), chosenCard.getName());
+            }
+
+            resolveAutoPass(gameData);
+        }
+    }
 
     private void handleCombatResult(CombatResult result, GameData gameData) {
         if (result == CombatResult.ADVANCE_AND_AUTO_PASS || result == CombatResult.ADVANCE_ONLY) {

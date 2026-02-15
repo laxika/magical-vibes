@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.cards.b.BallistaSquad;
 import com.github.laxika.magicalvibes.cards.b.Bandage;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfImmortality;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
+import com.github.laxika.magicalvibes.cards.c.ChangelingWayfinder;
 import com.github.laxika.magicalvibes.cards.c.CephalidConstable;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.ChoMannoRevolutionary;
@@ -276,6 +277,10 @@ public enum CardSet {
             new CardPrinting("10E", "373", Swamp::new, "Ron Spencer", COMMON),
             new CardPrinting("10E", "374", Swamp::new, "Jim Nelson", COMMON),
             new CardPrinting("10E", "375", Swamp::new, "Richard Wright", COMMON)
+    )),
+
+    LORWYN_ECLIPSED("ECL", "Lorwyn Eclipsed", List.of(
+            new CardPrinting("ECL", "1", ChangelingWayfinder::new, "No map. No complaints.", "Quintin Gleim", COMMON)
     ));
 
     private final String code;

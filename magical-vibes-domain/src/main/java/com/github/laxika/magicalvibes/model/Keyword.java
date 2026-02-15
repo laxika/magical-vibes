@@ -9,5 +9,6 @@ public enum Keyword {
     FIRST_STRIKE,
     FLASH,
     VIGILANCE,
-    SHROUD
+    SHROUD,
+    CHANGELING
 }

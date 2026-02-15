@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, StackEntry, ReorderLibraryCardsNotification, RevealHandNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, StackEntry, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification } from '../../services/websocket.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { Subscription } from 'rxjs';
 
@@ -126,6 +126,10 @@ export class GameComponent implements OnInit, OnDestroy {
 
         if (message.type === MessageType.REORDER_LIBRARY_CARDS) {
           this.handleReorderLibraryCards(message as ReorderLibraryCardsNotification);
+        }
+
+        if (message.type === MessageType.CHOOSE_CARD_FROM_LIBRARY) {
+          this.handleChooseCardFromLibrary(message as ChooseCardFromLibraryNotification);
         }
 
         if (message.type === MessageType.REVEAL_HAND) {
@@ -693,6 +697,34 @@ export class GameComponent implements OnInit, OnDestroy {
     this.targetingSpellCardName = '';
   }
 
+  private handleChooseCardFromLibrary(msg: ChooseCardFromLibraryNotification): void {
+    this.searchingLibrary = true;
+    this.librarySearchCards = msg.cards;
+    this.librarySearchPrompt = msg.prompt;
+  }
+
+  chooseLibraryCard(index: number): void {
+    if (!this.searchingLibrary) return;
+    this.websocketService.send({
+      type: MessageType.LIBRARY_CARD_CHOSEN,
+      cardIndex: index
+    });
+    this.searchingLibrary = false;
+    this.librarySearchCards = [];
+    this.librarySearchPrompt = '';
+  }
+
+  declineLibrarySearch(): void {
+    if (!this.searchingLibrary) return;
+    this.websocketService.send({
+      type: MessageType.LIBRARY_CARD_CHOSEN,
+      cardIndex: -1
+    });
+    this.searchingLibrary = false;
+    this.librarySearchCards = [];
+    this.librarySearchPrompt = '';
+  }
+
   handleReorderLibraryCards(msg: ReorderLibraryCardsNotification): void {
     this.reorderingLibrary = true;
     this.reorderAllCards = msg.cards;
@@ -1027,6 +1059,11 @@ export class GameComponent implements OnInit, OnDestroy {
   targetingSpell = false;
   targetingSpellCardIndex = -1;
   targetingSpellCardName = '';
+
+  // Library search state
+  searchingLibrary = false;
+  librarySearchCards: Card[] = [];
+  librarySearchPrompt = '';
 
   // Library reorder state
   reorderingLibrary = false;

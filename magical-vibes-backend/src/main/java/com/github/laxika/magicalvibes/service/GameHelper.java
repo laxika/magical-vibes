@@ -189,7 +189,8 @@ public class GameHelper {
                         animatedCreature = true;
                     }
                     if (effect instanceof BoostCreaturesBySubtypeEffect boost
-                            && target.getCard().getSubtypes().stream().anyMatch(boost.affectedSubtypes()::contains)) {
+                            && (target.hasKeyword(Keyword.CHANGELING)
+                                || target.getCard().getSubtypes().stream().anyMatch(boost.affectedSubtypes()::contains))) {
                         power += boost.powerBoost();
                         toughness += boost.toughnessBoost();
                         keywords.addAll(boost.grantedKeywords());
