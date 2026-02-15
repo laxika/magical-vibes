@@ -291,6 +291,15 @@
   color: #e8c888;
 }
 
+.hand-size {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  margin-top: 2px;
+  opacity: 0.8;
+  font-family: 'Crimson Text', Georgia, serif;
+}
+
 .deck-size {
   display: block;
   font-size: 10px;

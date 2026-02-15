@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, StackEntry, StackUpdatedNotification, GraveyardUpdatedNotification, ReorderLibraryCardsNotification, RevealHandNotification } from '../../services/websocket.service';
+import { WebsocketService, Game, GameNotification, GameUpdate, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, ActivatedAbilityView, HandDrawnNotification, MulliganResolvedNotification, GameStartedNotification, SelectCardsToBottomNotification, DeckSizesUpdatedNotification, HandSizesUpdatedNotification, PlayableCardsNotification, BattlefieldUpdatedNotification, ManaUpdatedNotification, AutoStopsUpdatedNotification, AvailableAttackersNotification, AvailableBlockersNotification, LifeUpdatedNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, StackEntry, StackUpdatedNotification, GraveyardUpdatedNotification, ReorderLibraryCardsNotification, RevealHandNotification } from '../../services/websocket.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { Subscription } from 'rxjs';
 
@@ -106,6 +106,11 @@ export class GameComponent implements OnInit, OnDestroy {
         if (message.type === MessageType.DECK_SIZES_UPDATED) {
           const deckMsg = message as DeckSizesUpdatedNotification;
           this.updateDeckSizes(deckMsg.deckSizes);
+        }
+
+        if (message.type === MessageType.HAND_SIZES_UPDATED) {
+          const handMsg = message as HandSizesUpdatedNotification;
+          this.updateHandSizes(handMsg.handSizes);
         }
 
         if (message.type === MessageType.PLAYABLE_CARDS_UPDATED) {
@@ -352,6 +357,14 @@ export class GameComponent implements OnInit, OnDestroy {
     const g = this.game();
     if (!g) return;
     const updated = { ...g, deckSizes };
+    this.game.set(updated);
+    this.websocketService.currentGame = updated;
+  }
+
+  private updateHandSizes(handSizes: number[]): void {
+    const g = this.game();
+    if (!g) return;
+    const updated = { ...g, handSizes };
     this.game.set(updated);
     this.websocketService.currentGame = updated;
   }
@@ -898,6 +911,14 @@ export class GameComponent implements OnInit, OnDestroy {
 
   get player2DeckSize(): number {
     return this.game()?.deckSizes?.[1] ?? 0;
+  }
+
+  get player1HandSize(): number {
+    return this.game()?.handSizes?.[0] ?? 0;
+  }
+
+  get player2HandSize(): number {
+    return this.game()?.handSizes?.[1] ?? 0;
   }
 
   private handleSelectCardsToBottom(msg: SelectCardsToBottomNotification): void {
