@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.cards.b.Bandage;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfImmortality;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfUnrest;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
+import com.github.laxika.magicalvibes.cards.b.BogWraith;
 import com.github.laxika.magicalvibes.cards.c.ChangelingWayfinder;
 import com.github.laxika.magicalvibes.cards.c.CephalidConstable;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
@@ -168,6 +169,7 @@ public enum CardSet {
             new CardPrinting("10E", "127", AscendantEvincar::new),
             new CardPrinting("10E", "128", Assassinate::new),
             new CardPrinting("10E", "129", BeaconOfUnrest::new),
+            new CardPrinting("10E", "130", BogWraith::new),
             new CardPrinting("10E", "139", DrudgeSkeletons::new),
             new CardPrinting("10E", "15", FieldMarshal::new),
             new CardPrinting("10E", "16", GhostWarden::new),
