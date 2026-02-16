@@ -225,13 +225,13 @@ class AngelicChorusTest {
         assertThat(gd.stack).anyMatch(e ->
                 e.getCard().getName().equals("Hunted Wumpus"));
 
-        // Angelic Chorus trigger should grant 4 life (Wumpus toughness = 4)
+        // Angelic Chorus trigger should grant 6 life (Wumpus toughness = 6)
         StackEntry chorusTrigger = gd.stack.stream()
                 .filter(e -> e.getCard().getName().equals("Angelic Chorus"))
                 .findFirst().orElseThrow();
         assertThat(chorusTrigger.getEffectsToResolve().getFirst())
                 .isInstanceOf(GainLifeEffect.class);
         assertThat(((GainLifeEffect) chorusTrigger.getEffectsToResolve().getFirst()).amount())
-                .isEqualTo(4);
+                .isEqualTo(6);
     }
 }

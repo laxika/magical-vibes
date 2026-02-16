@@ -189,10 +189,16 @@ public class ScryfallOracleLoader {
         // Color
         CardColor color = parseColor(card);
 
-        // Oracle text
+        // Oracle text (strip reminder text in parentheses)
         String cardText = null;
         if (card.has("oracle_text") && !card.get("oracle_text").asText().isEmpty()) {
-            cardText = card.get("oracle_text").asText();
+            String rawText = card.get("oracle_text").asText()
+                    .replaceAll(" *\\([^)]*\\)", "")
+                    .replaceAll(" +\n", "\n")
+                    .strip();
+            if (!rawText.isEmpty()) {
+                cardText = rawText;
+            }
         }
 
         // Power/toughness (creatures only)

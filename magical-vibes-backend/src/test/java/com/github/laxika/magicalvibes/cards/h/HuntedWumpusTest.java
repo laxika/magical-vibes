@@ -97,7 +97,7 @@ class HuntedWumpusTest {
                 .filter(p -> p.getCard().getName().equals("Hunted Wumpus"))
                 .findFirst().orElseThrow();
         assertThat(wumpus.getCard().getPower()).isEqualTo(6);
-        assertThat(wumpus.getCard().getToughness()).isEqualTo(4);
+        assertThat(wumpus.getCard().getToughness()).isEqualTo(6);
     }
 
     @Test

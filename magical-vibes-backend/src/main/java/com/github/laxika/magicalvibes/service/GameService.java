@@ -272,9 +272,19 @@ public class GameService {
                         || entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
                     boolean shuffled = entry.getEffectsToResolve().stream()
                             .anyMatch(e -> e instanceof ShuffleIntoLibraryEffect);
-                    if (!shuffled) {
+                    if (shuffled) {
+                        // Ensure the card is shuffled into library even when an earlier effect
+                        // required user input and broke the effect resolution loop before
+                        // the ShuffleIntoLibraryEffect handler could run.
+                        List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
+                        if (!deck.contains(entry.getCard())) {
+                            deck.add(entry.getCard());
+                            Collections.shuffle(deck);
+                            String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
+                            gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
+                        }
+                    } else {
                         gameData.playerGraveyards.get(entry.getControllerId()).add(entry.getCard());
-
                     }
                 }
             }
