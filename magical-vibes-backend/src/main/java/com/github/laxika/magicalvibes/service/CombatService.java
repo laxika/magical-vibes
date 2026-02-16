@@ -24,7 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.IslandwalkEffect;
+import com.github.laxika.magicalvibes.model.effect.LandwalkEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
@@ -309,13 +309,13 @@ public class CombatService {
             if (blockOnlyFlyers && !gameQueryService.hasKeyword(gameData, attacker, Keyword.FLYING)) {
                 throw new IllegalStateException(blocker.getCard().getName() + " can only block creatures with flying");
             }
-            boolean hasIslandwalk = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(e -> e instanceof IslandwalkEffect);
-            if (hasIslandwalk) {
-                boolean defenderControlsIsland = defenderBattlefield.stream()
-                        .anyMatch(p -> p.getCard().getSubtypes().contains(CardSubtype.ISLAND));
-                if (defenderControlsIsland) {
-                    throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked (islandwalk)");
+            for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof LandwalkEffect landwalk) {
+                    boolean defenderControlsLand = defenderBattlefield.stream()
+                            .anyMatch(p -> p.getCard().getSubtypes().contains(landwalk.landType()));
+                    if (defenderControlsLand) {
+                        throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked (" + landwalk.landType().getDisplayName().toLowerCase() + "walk)");
+                    }
                 }
             }
             if (gameQueryService.hasProtectionFrom(gameData, attacker, blocker.getCard().getColor())) {
