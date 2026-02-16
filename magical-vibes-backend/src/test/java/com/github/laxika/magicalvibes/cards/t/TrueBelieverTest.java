@@ -5,11 +5,12 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -51,8 +52,10 @@ class TrueBelieverTest {
         assertThat(card.getColor()).isEqualTo(CardColor.WHITE);
         assertThat(card.getPower()).isEqualTo(2);
         assertThat(card.getToughness()).isEqualTo(2);
-        assertThat(card.getKeywords()).containsExactly(Keyword.SHROUD);
+        assertThat(card.getKeywords()).isEmpty();
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.HUMAN, CardSubtype.CLERIC);
+        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantControllerShroudEffect.class);
     }
 
     // ===== Casting =====
@@ -101,12 +104,13 @@ class TrueBelieverTest {
     }
 
     @Test
-    @DisplayName("True Believer has shroud keyword on the battlefield")
-    void hasShroudOnBattlefield() {
+    @DisplayName("True Believer grants its controller shroud via static effect")
+    void grantsControllerShroudOnBattlefield() {
         harness.addToBattlefield(player1, new TrueBeliever());
 
         Permanent perm = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(perm.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(perm.getCard().getEffects(EffectSlot.STATIC))
+                .anyMatch(e -> e instanceof GrantControllerShroudEffect);
     }
 
     @Test

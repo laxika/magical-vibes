@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostNonColorCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOtherCreaturesByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnTappedCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
@@ -190,7 +191,9 @@ public class GameQueryService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent source : battlefield) {
-            if (source.getCard().getKeywords().contains(Keyword.SHROUD)) {
+            boolean grantsControllerShroud = source.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(e -> e instanceof GrantControllerShroudEffect);
+            if (grantsControllerShroud) {
                 return true;
             }
         }
