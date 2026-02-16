@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.service.LobbyService;
 import com.github.laxika.magicalvibes.service.PreventionResolutionService;
 import com.github.laxika.magicalvibes.service.SpellCastingService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.TurnResolutionService;
 import com.github.laxika.magicalvibes.service.UserInputHandlerService;
 import com.github.laxika.magicalvibes.service.effect.CreatureModResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
@@ -78,6 +79,8 @@ public class GameTestHarness {
                 sessionManager, cardViewFactory, permanentViewFactory, stackEntryViewFactory, gameQueryService);
         GameHelper gameHelper = new GameHelper(
                 sessionManager, gameRegistry, cardViewFactory, gameQueryService, gameBroadcastService, playerInputService);
+        CombatService combatService = new CombatService(
+                gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager);
         List<EffectHandlerProvider> providers = List.of(
                 new DamageResolutionService(gameHelper, gameQueryService, gameBroadcastService),
                 new DestructionResolutionService(gameHelper, gameQueryService, gameBroadcastService),
@@ -89,12 +92,11 @@ public class GameTestHarness {
                 new LifeResolutionService(gameQueryService, gameBroadcastService),
                 new CreatureModResolutionService(gameQueryService, gameBroadcastService),
                 new PlayerInteractionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager, cardViewFactory),
-                new PermanentControlResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService)
+                new PermanentControlResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),
+                new TurnResolutionService(gameHelper, combatService, gameBroadcastService)
         );
         EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper, providers);
         effectResolutionService.init();
-        CombatService combatService = new CombatService(
-                gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager);
         TurnProgressionService turnProgressionService = new TurnProgressionService(
                 combatService, gameHelper, gameQueryService, gameBroadcastService, playerInputService);
         TargetValidationService targetValidationService = new TargetValidationService(gameQueryService);
