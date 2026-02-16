@@ -281,7 +281,11 @@ public class GameHelper {
 
     void applyCloneCopy(Permanent clonePerm, Permanent targetPerm) {
         Card target = targetPerm.getCard();
-        Card copy = new Card(target.getName(), target.getType(), target.getManaCost(), target.getColor());
+        Card copy = new Card();
+        copy.setName(target.getName());
+        copy.setType(target.getType());
+        copy.setManaCost(target.getManaCost());
+        copy.setColor(target.getColor());
         copy.setSupertypes(target.getSupertypes());
         copy.setSubtypes(target.getSubtypes());
         copy.setCardText(target.getCardText());

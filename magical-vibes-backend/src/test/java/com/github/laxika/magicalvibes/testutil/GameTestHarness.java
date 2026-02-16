@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.LobbyService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import com.github.laxika.magicalvibes.config.JacksonConfig;
+import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,8 @@ import java.util.UUID;
 import com.github.laxika.magicalvibes.model.TurnStep;
 
 public class GameTestHarness {
+
+    private static boolean oracleLoaded = false;
 
     private final GameRegistry gameRegistry;
     private final WebSocketSessionManager sessionManager;
@@ -42,6 +45,11 @@ public class GameTestHarness {
     private final FakeConnection conn2;
 
     public GameTestHarness() {
+        if (!oracleLoaded) {
+            ScryfallOracleLoader.loadAll("./scryfall-cache");
+            oracleLoaded = true;
+        }
+
         gameRegistry = new GameRegistry();
         sessionManager = new WebSocketSessionManager(new JacksonConfig().objectMapper());
         CardViewFactory cardViewFactory = new CardViewFactory();

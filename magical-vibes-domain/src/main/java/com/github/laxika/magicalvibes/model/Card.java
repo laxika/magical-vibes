@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 import java.util.ArrayList;
@@ -12,16 +11,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
-@RequiredArgsConstructor
 public class Card {
 
+    private static final Map<String, OracleData> oracleRegistry = new ConcurrentHashMap<>();
+
+    public static void registerOracle(String className, OracleData data) {
+        oracleRegistry.put(className, data);
+    }
+
+    public static void clearOracleRegistry() {
+        oracleRegistry.clear();
+    }
+
     private final UUID id = UUID.randomUUID();
-    private final String name;
-    private final CardType type;
-    private final String manaCost;
-    private final CardColor color;
+    @Setter private String name;
+    @Setter private CardType type;
+    @Setter private String manaCost;
+    @Setter private CardColor color;
 
     @Setter private Set<CardSupertype> supertypes = Set.of();
     @Setter private List<CardSubtype> subtypes = List.of();
@@ -37,6 +46,22 @@ public class Card {
 
     private Map<EffectSlot, List<CardEffect>> effects = new EnumMap<>(EffectSlot.class);
     private List<ActivatedAbility> activatedAbilities = new ArrayList<>();
+
+    public Card() {
+        OracleData oracle = oracleRegistry.get(getClass().getSimpleName());
+        if (oracle != null) {
+            this.name = oracle.name();
+            this.type = oracle.type();
+            this.manaCost = oracle.manaCost();
+            this.color = oracle.color();
+            this.supertypes = oracle.supertypes();
+            this.subtypes = oracle.subtypes();
+            this.cardText = oracle.cardText();
+            this.power = oracle.power();
+            this.toughness = oracle.toughness();
+            this.keywords = oracle.keywords();
+        }
+    }
 
     public List<CardEffect> getEffects(EffectSlot slot) {
         return effects.getOrDefault(slot, List.of());

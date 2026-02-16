@@ -8,3 +8,6 @@ nul
 # Database
 magical-vibes.db
 magical-vibes.db-journal
+
+# Scryfall cache
+scryfall-cache/

@@ -532,7 +532,11 @@ public class EffectResolutionService {
     }
 
     private void resolveCreateCreatureToken(GameData gameData, UUID controllerId, CreateCreatureTokenEffect token) {
-        Card tokenCard = new Card(token.tokenName(), CardType.CREATURE, "", token.color());
+        Card tokenCard = new Card();
+        tokenCard.setName(token.tokenName());
+        tokenCard.setType(CardType.CREATURE);
+        tokenCard.setManaCost("");
+        tokenCard.setColor(token.color());
         tokenCard.setPower(token.power());
         tokenCard.setToughness(token.toughness());
         tokenCard.setSubtypes(token.subtypes());

@@ -34,14 +34,19 @@ backend → card → domain
 - **Thread safety**: `GameData` uses `ConcurrentHashMap` + `synchronized(gameData)` blocks in `GameService`. Validation checks must go INSIDE synchronized blocks.
 - **Frontend signals**: `game = signal<Game | null>(null)`, updated via spread + `game.set()`. RxJS Subjects for WebSocket messages.
 
+### Scryfall Oracle Data
+
+All card metadata (name, type, mana cost, color, supertypes, subtypes, card text, power/toughness, keywords) comes from Scryfall via `ScryfallOracleLoader`. On startup, `ScryfallDataService` (`@PostConstruct`) fetches oracle data for each set in `CardSet`, caches it to `./scryfall-cache/`, and populates `Card.oracleRegistry`. Card subclass constructors contain only game-engine logic (effects, abilities, targeting) — metadata is auto-populated from the registry via `Card`'s no-arg constructor. Tests load the registry via `GameTestHarness` (first run requires network; subsequent runs use disk cache).
+
 ### Adding a New Card
 
 1. Create card class in `magical-vibes-card/src/main/java/.../cards/{letter}/CardName.java` extending `Card`.
-2. Constructor: call `super(name, CardType, manaCost, CardColor)`, blank line, then setter calls.
-3. Register in `CardSet` with a `new CardPrinting("SET", "collectorNumber", CardName::new)` (optionally with flavor text).
+2. Constructor: only add game-engine logic — `addEffect()`, `addActivatedAbility()`, `setNeedsTarget()`, `setNeedsSpellTarget()`, `setTargetFilter()`. All metadata (name, type, mana cost, color, subtypes, keywords, power/toughness, card text) is loaded automatically from Scryfall. Cards with no special abilities have an empty class body.
+3. Register in `CardSet` with a `new CardPrinting("SET", "collectorNumber", CardName::new)`.
 4. If the card introduces a new effect, create a record in `magical-vibes-domain/.../model/effect/` implementing `CardEffect`, then add resolution logic in `GameService.resolveStackEntry()`.
-5. Update `CardView`/`CardViewFactory` if the new effect requires a new boolean flag on the view.
-6. Update the frontend `Card` interface in `websocket.service.ts` to match.
+5. If Scryfall returns subtypes or keywords not yet in our enums (`CardSubtype`, `Keyword`), add the new enum values.
+6. Update `CardView`/`CardViewFactory` if the new effect requires a new boolean flag on the view.
+7. Update the frontend `Card` interface in `websocket.service.ts` to match.
 
 ### Testing Cards
 
