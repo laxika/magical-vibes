@@ -36,7 +36,8 @@ public class PermanentViewFactory {
                 p.getChosenColor(),
                 p.getRegenerationShield(),
                 p.isCantBeBlocked(),
-                animatedCreature
+                animatedCreature,
+                p.getLoyaltyCounters()
         );
     }
 
@@ -55,7 +56,7 @@ public class PermanentViewFactory {
                 cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.targetsPlayer(),
                 cardView.requiresAttackingTarget(), cardView.allowedTargetTypes(),
-                cardView.activatedAbilities()
+                cardView.activatedAbilities(), cardView.loyalty()
         );
     }
 }

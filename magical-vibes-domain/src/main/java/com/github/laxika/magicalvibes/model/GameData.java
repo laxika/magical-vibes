@@ -89,6 +89,9 @@ public class GameData {
     public final List<Card> awaitingRevealedHandChosenCards = new ArrayList<>();
     public UUID awaitingHandTopBottomPlayerId;
     public List<Card> awaitingHandTopBottomCards;
+    public UUID awaitingLibraryRevealPlayerId;
+    public List<Card> awaitingLibraryRevealAllCards;
+    public Set<UUID> awaitingLibraryRevealValidCardIds;
     public final Map<UUID, UUID> drawReplacementTargetToController = new ConcurrentHashMap<>();
     public final Map<UUID, UUID> stolenCreatures = new ConcurrentHashMap<>();
     public final Set<UUID> enchantmentDependentStolenCreatures = ConcurrentHashMap.newKeySet();

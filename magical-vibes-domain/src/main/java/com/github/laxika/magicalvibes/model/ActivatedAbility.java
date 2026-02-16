@@ -15,16 +15,31 @@ public class ActivatedAbility {
     private final boolean needsSpellTarget;
     private final String description;
     private final TargetFilter targetFilter;
+    private final Integer loyaltyCost;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, boolean needsTarget, String description) {
-        this(requiresTap, manaCost, effects, needsTarget, false, description, null);
+        this(requiresTap, manaCost, effects, needsTarget, false, description, null, null);
     }
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, boolean needsTarget, String description, TargetFilter targetFilter) {
-        this(requiresTap, manaCost, effects, needsTarget, false, description, targetFilter);
+        this(requiresTap, manaCost, effects, needsTarget, false, description, targetFilter, null);
     }
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, boolean needsTarget, boolean needsSpellTarget, String description, TargetFilter targetFilter) {
+        this(requiresTap, manaCost, effects, needsTarget, needsSpellTarget, description, targetFilter, null);
+    }
+
+    // Loyalty ability constructor
+    public ActivatedAbility(int loyaltyCost, List<CardEffect> effects, boolean needsTarget, String description) {
+        this(false, null, effects, needsTarget, false, description, null, loyaltyCost);
+    }
+
+    // Loyalty ability constructor with target filter
+    public ActivatedAbility(int loyaltyCost, List<CardEffect> effects, boolean needsTarget, String description, TargetFilter targetFilter) {
+        this(false, null, effects, needsTarget, false, description, targetFilter, loyaltyCost);
+    }
+
+    public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, boolean needsTarget, boolean needsSpellTarget, String description, TargetFilter targetFilter, Integer loyaltyCost) {
         this.requiresTap = requiresTap;
         this.manaCost = manaCost;
         this.effects = effects;
@@ -32,5 +47,6 @@ public class ActivatedAbility {
         this.needsSpellTarget = needsSpellTarget;
         this.description = description;
         this.targetFilter = targetFilter;
+        this.loyaltyCost = loyaltyCost;
     }
 }

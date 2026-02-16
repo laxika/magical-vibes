@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,8 @@ public class DamageResolutionService implements EffectHandlerProvider {
     public void registerHandlers(EffectHandlerRegistry registry) {
         registry.register(DealXDamageToTargetCreatureEffect.class,
                 (gd, entry, effect) -> resolveDealXDamageToTargetCreature(gd, entry));
+        registry.register(DealDamageToTargetCreatureEffect.class,
+                (gd, entry, effect) -> resolveDealDamageToTargetCreature(gd, entry, (DealDamageToTargetCreatureEffect) effect));
         registry.register(DealXDamageDividedAmongTargetAttackingCreaturesEffect.class,
                 (gd, entry, effect) -> resolveDealXDamageDividedAmongTargetAttackingCreatures(gd, entry));
         registry.register(DealDamageToFlyingAndPlayersEffect.class,
@@ -49,6 +52,40 @@ public class DamageResolutionService implements EffectHandlerProvider {
         }
 
         int damage = gameHelper.applyCreaturePreventionShield(gameData, target, entry.getXValue());
+        String logEntry = entry.getCard().getName() + " deals " + damage + " damage to " + target.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} deals {} damage to {}", gameData.id, entry.getCard().getName(), damage, target.getCard().getName());
+
+        if (damage >= gameQueryService.getEffectiveToughness(gameData, target)) {
+            if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
+                String indestructibleLog = target.getCard().getName() + " is indestructible and survives.";
+                gameBroadcastService.logAndBroadcast(gameData, indestructibleLog);
+            } else if (gameHelper.tryRegenerate(gameData, target)) {
+
+            } else {
+                gameHelper.removePermanentToGraveyard(gameData, target);
+                String destroyLog = target.getCard().getName() + " is destroyed.";
+                gameBroadcastService.logAndBroadcast(gameData, destroyLog);
+                log.info("Game {} - {} is destroyed", gameData.id, target.getCard().getName());
+                gameHelper.removeOrphanedAuras(gameData);
+            }
+        }
+    }
+
+    void resolveDealDamageToTargetCreature(GameData gameData, StackEntry entry, DealDamageToTargetCreatureEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())
+                || gameQueryService.hasProtectionFrom(gameData, target, entry.getCard().getColor())) {
+            String logEntry = entry.getCard().getName() + "'s damage is prevented.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        int damage = gameHelper.applyCreaturePreventionShield(gameData, target, effect.damage());
         String logEntry = entry.getCard().getName() + " deals " + damage + " damage to " + target.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} deals {} damage to {}", gameData.id, entry.getCard().getName(), damage, target.getCard().getName());

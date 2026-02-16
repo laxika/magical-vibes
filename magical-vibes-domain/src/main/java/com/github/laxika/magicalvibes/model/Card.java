@@ -41,6 +41,7 @@ public class Card {
     @Setter private boolean needsTarget;
     @Setter private boolean needsSpellTarget;
     @Setter private TargetFilter targetFilter;
+    @Setter private Integer loyalty;
     @Setter private String setCode;
     @Setter private String collectorNumber;
 
@@ -60,6 +61,7 @@ public class Card {
             this.power = oracle.power();
             this.toughness = oracle.toughness();
             this.keywords = oracle.keywords();
+            this.loyalty = oracle.loyalty();
         }
     }
 

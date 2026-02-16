@@ -25,7 +25,8 @@ public class ScryfallTypeLineParser {
             "Instant", CardType.INSTANT,
             "Sorcery", CardType.SORCERY,
             "Artifact", CardType.ARTIFACT,
-            "Land", CardType.BASIC_LAND
+            "Land", CardType.BASIC_LAND,
+            "Planeswalker", CardType.PLANESWALKER
     );
 
     private static final Map<String, CardSubtype> SUBTYPE_MAP;

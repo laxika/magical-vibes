@@ -667,6 +667,20 @@ export class GameChoiceService {
   }
 
   canUseAbility(perm: Permanent, ability: ActivatedAbilityView): boolean {
+    if (ability.loyaltyCost != null) {
+      const g = this.gameSignal();
+      if (!g) return false;
+      const myId = this.websocketService.currentUser?.userId;
+      // Sorcery-speed: must be active player
+      if (g.activePlayerId !== myId) return false;
+      // Main phase only
+      if (g.currentStep !== 'PRECOMBAT_MAIN' && g.currentStep !== 'POSTCOMBAT_MAIN') return false;
+      // Stack must be empty
+      if (g.stack.length > 0) return false;
+      // Negative loyalty cost: check sufficient loyalty
+      if (ability.loyaltyCost < 0 && perm.loyaltyCounters < Math.abs(ability.loyaltyCost)) return false;
+      return true;
+    }
     if (ability.requiresTap) {
       if (perm.tapped) return false;
       if (perm.summoningSick && isPermanentCreature(perm)) return false;

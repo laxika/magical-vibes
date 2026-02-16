@@ -31,6 +31,9 @@
   @if (card.power != null && card.toughness != null || permanent?.animatedCreature) {
     <div class="card-pt" [class.buffed]="isBuffed">{{ displayPower }}/{{ displayToughness }}</div>
   }
+  @if (displayLoyalty != null) {
+    <div class="card-loyalty">{{ displayLoyalty }}</div>
+  }
 </div>
 <div class="info-line">
   @if (artist) {

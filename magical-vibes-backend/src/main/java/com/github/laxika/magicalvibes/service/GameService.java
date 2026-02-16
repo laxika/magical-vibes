@@ -208,6 +208,23 @@ public class GameService {
             if (gameData.awaitingInput == null) {
                 gameHelper.checkLegendRule(gameData, controllerId);
             }
+        } else if (entry.getEntryType() == StackEntryType.PLANESWALKER_SPELL) {
+            Card card = entry.getCard();
+            UUID controllerId = entry.getControllerId();
+
+            Permanent perm = new Permanent(card);
+            perm.setLoyaltyCounters(card.getLoyalty() != null ? card.getLoyalty() : 0);
+            perm.setSummoningSick(false);
+            gameData.playerBattlefields.get(controllerId).add(perm);
+
+            String playerName = gameData.playerIdToName.get(controllerId);
+            String logEntry = card.getName() + " enters the battlefield with " + perm.getLoyaltyCounters() + " loyalty under " + playerName + "'s control.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+            log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
+            if (gameData.awaitingInput == null) {
+                gameHelper.checkLegendRule(gameData, controllerId);
+            }
         } else if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 || entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 || entry.getEntryType() == StackEntryType.SORCERY_SPELL
@@ -773,6 +790,32 @@ public class GameService {
             String abilityCost = ability.getManaCost();
             boolean isTapAbility = ability.isRequiresTap();
 
+            // Validate loyalty ability restrictions
+            if (ability.getLoyaltyCost() != null) {
+                // Sorcery-speed timing: must be active player, main phase, stack empty
+                if (!playerId.equals(gameData.activePlayerId)) {
+                    throw new IllegalStateException("Loyalty abilities can only be activated on your turn");
+                }
+                if (gameData.currentStep != TurnStep.PRECOMBAT_MAIN && gameData.currentStep != TurnStep.POSTCOMBAT_MAIN) {
+                    throw new IllegalStateException("Loyalty abilities can only be activated during a main phase");
+                }
+                if (!gameData.stack.isEmpty()) {
+                    throw new IllegalStateException("Loyalty abilities can only be activated when the stack is empty");
+                }
+                // Once per turn
+                if (permanent.isLoyaltyAbilityUsedThisTurn()) {
+                    throw new IllegalStateException("Only one loyalty ability per planeswalker per turn");
+                }
+                // For negative loyalty costs, check sufficient loyalty
+                int loyaltyCost = ability.getLoyaltyCost();
+                if (loyaltyCost < 0 && permanent.getLoyaltyCounters() < Math.abs(loyaltyCost)) {
+                    throw new IllegalStateException("Not enough loyalty counters");
+                }
+                // Pay loyalty cost
+                permanent.setLoyaltyCounters(permanent.getLoyaltyCounters() + loyaltyCost);
+                permanent.setLoyaltyAbilityUsedThisTurn(true);
+            }
+
             // Validate tap requirement
             if (isTapAbility) {
                 if (permanent.isTapped()) {
@@ -911,6 +954,7 @@ public class GameService {
                         Map.of()
                 ));
             }
+            gameHelper.performStateBasedActions(gameData);
             gameData.priorityPassedBy.clear();
             gameBroadcastService.broadcastGameState(gameData);
         }

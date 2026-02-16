@@ -220,6 +220,16 @@ public class ScryfallOracleLoader {
             }
         }
 
+        // Loyalty (planeswalkers only)
+        Integer loyalty = null;
+        if (card.has("loyalty")) {
+            try {
+                loyalty = Integer.parseInt(card.get("loyalty").asText());
+            } catch (NumberFormatException e) {
+                loyalty = 0;
+            }
+        }
+
         // Keywords
         Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
         if (card.has("keywords")) {
@@ -243,7 +253,8 @@ public class ScryfallOracleLoader {
                 cardText,
                 power,
                 toughness,
-                keywords
+                keywords,
+                loyalty
         );
     }
 

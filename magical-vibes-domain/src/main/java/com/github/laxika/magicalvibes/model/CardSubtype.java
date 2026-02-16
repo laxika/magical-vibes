@@ -50,7 +50,9 @@ public enum CardSubtype {
     METATHRAN("Metathran"),
     VAMPIRE("Vampire"),
     NOBLE("Noble"),
-    PHYREXIAN("Phyrexian");
+    PHYREXIAN("Phyrexian"),
+    KITHKIN("Kithkin"),
+    AJANI("Ajani");
 
     @Getter
     private final String displayName;

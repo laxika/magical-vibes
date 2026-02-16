@@ -17,7 +17,8 @@ public class StackEntryViewFactory {
             StackEntryType.ENCHANTMENT_SPELL,
             StackEntryType.SORCERY_SPELL,
             StackEntryType.INSTANT_SPELL,
-            StackEntryType.ARTIFACT_SPELL
+            StackEntryType.ARTIFACT_SPELL,
+            StackEntryType.PLANESWALKER_SPELL
     );
 
     private final CardViewFactory cardViewFactory;

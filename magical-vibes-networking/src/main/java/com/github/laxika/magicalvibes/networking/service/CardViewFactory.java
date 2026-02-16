@@ -58,7 +58,8 @@ public class CardViewFactory {
                 targetsPlayer,
                 requiresAttackingTarget,
                 spellAllowedTargetTypes,
-                abilityViews
+                abilityViews,
+                card.getLoyalty()
         );
     }
 
@@ -86,7 +87,8 @@ public class CardViewFactory {
                 targetsPlayer,
                 allowedTargetTypes,
                 allowedTargetColors,
-                ability.getManaCost()
+                ability.getManaCost(),
+                ability.getLoyaltyCost()
         );
     }
 

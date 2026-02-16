@@ -27,6 +27,8 @@ public class Permanent {
     @Setter private UUID attachedTo;
     @Setter private CardColor chosenColor;
     @Setter private boolean cantBeBlocked;
+    @Setter private int loyaltyCounters;
+    @Setter private boolean loyaltyAbilityUsedThisTurn;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
     private final List<TextReplacement> textReplacements = new ArrayList<>();
 

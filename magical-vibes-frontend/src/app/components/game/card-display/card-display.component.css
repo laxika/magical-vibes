@@ -218,6 +218,20 @@ img.card-art {
   background: rgba(46, 204, 113, 0.3);
 }
 
+/* Loyalty box */
+.card-loyalty {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Cinzel', Georgia, serif;
+  background: rgba(80, 40, 120, 0.6);
+  color: #e0d0f0;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
 /* Info line */
 .info-line {
   display: flex;

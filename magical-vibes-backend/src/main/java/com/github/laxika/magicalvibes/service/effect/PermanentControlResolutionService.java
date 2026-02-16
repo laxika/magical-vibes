@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenWithColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfEffect;
@@ -40,6 +42,8 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
     public void registerHandlers(EffectHandlerRegistry registry) {
         registry.register(CreateCreatureTokenEffect.class,
                 (gd, entry, effect) -> resolveCreateCreatureToken(gd, entry.getControllerId(), (CreateCreatureTokenEffect) effect));
+        registry.register(CreateCreatureTokenWithColorsEffect.class,
+                (gd, entry, effect) -> resolveCreateCreatureTokenWithColors(gd, entry.getControllerId(), (CreateCreatureTokenWithColorsEffect) effect));
         registry.register(PutAuraFromHandOntoSelfEffect.class,
                 (gd, entry, effect) -> resolvePutAuraFromHandOntoSelf(gd, entry));
         registry.register(PutTargetOnBottomOfLibraryEffect.class,
@@ -70,6 +74,33 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         gameData.playerBattlefields.get(controllerId).add(tokenPermanent);
 
         String logEntry = "A " + token.power() + "/" + token.toughness() + " " + token.tokenName() + " creature token enters the battlefield.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
+        if (gameData.awaitingInput == null) {
+            gameHelper.checkLegendRule(gameData, controllerId);
+        }
+
+        log.info("Game {} - {} token created for player {}", gameData.id, token.tokenName(), controllerId);
+    }
+
+    private void resolveCreateCreatureTokenWithColors(GameData gameData, UUID controllerId, CreateCreatureTokenWithColorsEffect token) {
+        Card tokenCard = new Card();
+        tokenCard.setName(token.tokenName());
+        tokenCard.setType(CardType.CREATURE);
+        tokenCard.setManaCost("");
+        tokenCard.setColor(token.primaryColor());
+        tokenCard.setPower(token.power());
+        tokenCard.setToughness(token.toughness());
+        tokenCard.setSubtypes(token.subtypes());
+
+        Permanent tokenPermanent = new Permanent(tokenCard);
+        gameData.playerBattlefields.get(controllerId).add(tokenPermanent);
+
+        String colorNames = token.colors().stream()
+                .map(c -> c.name().charAt(0) + c.name().substring(1).toLowerCase())
+                .reduce((a, b) -> a + " and " + b).orElse("");
+        String logEntry = "A " + token.power() + "/" + token.toughness() + " " + colorNames + " " + token.tokenName() + " creature token enters the battlefield.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);

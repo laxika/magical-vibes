@@ -197,6 +197,13 @@ public class GameHelper {
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} dies to state-based actions (0 toughness)", gameData.id, p.getCard().getName());
                     anyDied = true;
+                } else if (p.getCard().getType() == CardType.PLANESWALKER && p.getLoyaltyCounters() <= 0) {
+                    it.remove();
+                    gameData.playerGraveyards.get(playerId).add(p.getOriginalCard());
+                    String logEntry = p.getCard().getName() + " has no loyalty counters and is put into the graveyard.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} dies to state-based actions (0 loyalty)", gameData.id, p.getCard().getName());
+                    anyDied = true;
                 }
             }
         }

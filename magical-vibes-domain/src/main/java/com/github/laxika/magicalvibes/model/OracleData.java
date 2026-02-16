@@ -13,5 +13,6 @@ public record OracleData(
         String cardText,
         Integer power,
         Integer toughness,
-        Set<Keyword> keywords
+        Set<Keyword> keywords,
+        Integer loyalty
 ) {}

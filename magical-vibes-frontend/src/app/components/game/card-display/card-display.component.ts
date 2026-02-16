@@ -92,6 +92,11 @@ export class CardDisplayComponent implements OnInit, OnChanges {
     return this.permanent ? this.permanent.effectiveToughness : this.card.toughness;
   }
 
+  get displayLoyalty(): number | null {
+    if (this.permanent && this.permanent.loyaltyCounters > 0) return this.permanent.loyaltyCounters;
+    return this.card.loyalty ?? null;
+  }
+
   private formatEnumName(s: string): string {
     return s.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
   }

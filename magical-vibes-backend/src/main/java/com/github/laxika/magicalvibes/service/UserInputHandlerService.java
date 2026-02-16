@@ -625,6 +625,10 @@ public class UserInputHandlerService {
     }
 
     void handleMultipleGraveyardCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
+        if (gameData.awaitingInput == AwaitingInput.LIBRARY_REVEAL_CHOICE) {
+            handleLibraryRevealChoice(gameData, player, cardIds);
+            return;
+        }
         if (gameData.awaitingInput != AwaitingInput.MULTI_GRAVEYARD_CHOICE) {
             throw new IllegalStateException("Not awaiting multi-graveyard choice");
         }
@@ -987,6 +991,90 @@ public class UserInputHandlerService {
             log.info("Game {} - {} searches library and puts {} into hand", gameData.id, player.getUsername(), chosenCard.getName());
         }
 
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleLibraryRevealChoice(GameData gameData, Player player, List<UUID> cardIds) {
+        if (!player.getId().equals(gameData.awaitingLibraryRevealPlayerId)) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+
+        Set<UUID> validIds = gameData.awaitingLibraryRevealValidCardIds;
+        if (cardIds == null) {
+            cardIds = List.of();
+        }
+
+        for (UUID cardId : cardIds) {
+            if (!validIds.contains(cardId)) {
+                throw new IllegalStateException("Invalid card: " + cardId);
+            }
+        }
+
+        Set<UUID> uniqueIds = new HashSet<>(cardIds);
+        if (uniqueIds.size() != cardIds.size()) {
+            throw new IllegalStateException("Duplicate card IDs in selection");
+        }
+
+        UUID controllerId = gameData.awaitingLibraryRevealPlayerId;
+        List<Card> allRevealedCards = gameData.awaitingLibraryRevealAllCards;
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        // Clear awaiting state
+        gameData.awaitingInput = null;
+        gameData.awaitingLibraryRevealPlayerId = null;
+        gameData.awaitingLibraryRevealValidCardIds = null;
+        gameData.awaitingLibraryRevealAllCards = null;
+
+        // Separate selected cards from the rest
+        Set<UUID> selectedIds = new HashSet<>(cardIds);
+        List<Card> selectedCards = new ArrayList<>();
+        List<Card> remainingCards = new ArrayList<>();
+        for (Card card : allRevealedCards) {
+            if (selectedIds.contains(card.getId())) {
+                selectedCards.add(card);
+            } else {
+                remainingCards.add(card);
+            }
+        }
+
+        // Put selected cards onto the battlefield
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        for (Card card : selectedCards) {
+            Permanent perm = new Permanent(card);
+            battlefield.add(perm);
+
+            String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+            if (card.getType() == CardType.CREATURE) {
+                gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, null);
+            }
+            if (card.getType() == CardType.PLANESWALKER && card.getLoyalty() != null) {
+                perm.setLoyaltyCounters(card.getLoyalty());
+                perm.setSummoningSick(false);
+            }
+            if (gameData.awaitingInput == null) {
+                gameHelper.checkLegendRule(gameData, controllerId);
+            }
+        }
+
+        // Shuffle remaining cards back into library
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        deck.addAll(remainingCards);
+        Collections.shuffle(deck);
+
+        if (selectedCards.isEmpty()) {
+            String logEntry = playerName + " puts no cards onto the battlefield. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else {
+            String names = selectedCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
+            String logEntry = playerName + " puts " + names + " onto the battlefield. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        }
+
+        log.info("Game {} - {} resolves library reveal choice, {} cards to battlefield", gameData.id, playerName, selectedCards.size());
+
+        gameHelper.performStateBasedActions(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 }

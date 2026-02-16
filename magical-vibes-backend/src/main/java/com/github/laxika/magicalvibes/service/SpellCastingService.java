@@ -169,6 +169,13 @@ public class SpellCastingService {
                     List.of(), 0, null, null
             ));
             finishSpellCast(gameData, playerId, player, hand, card);
+        } else if (card.getType() == CardType.PLANESWALKER) {
+            paySpellManaCost(gameData, playerId, card, 0);
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.PLANESWALKER_SPELL, card, playerId, card.getName(),
+                    List.of(), 0, null, null
+            ));
+            finishSpellCast(gameData, playerId, player, hand, card);
         } else if (card.getType() == CardType.SORCERY) {
             paySpellManaCost(gameData, playerId, card, effectiveXValue);
             gameData.stack.add(new StackEntry(

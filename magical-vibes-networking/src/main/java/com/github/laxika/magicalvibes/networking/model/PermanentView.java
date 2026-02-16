@@ -18,5 +18,6 @@ public record PermanentView(
         CardColor chosenColor,
         int regenerationShield,
         boolean cantBeBlocked,
-        boolean animatedCreature
+        boolean animatedCreature,
+        int loyaltyCounters
 ) {}

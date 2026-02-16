@@ -207,6 +207,7 @@ public class TurnProgressionService {
                     p.untap();
                 }
                 p.setSummoningSick(false);
+                p.setLoyaltyAbilityUsedThisTurn(false);
             });
         }
 

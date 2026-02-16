@@ -11,7 +11,8 @@ public enum CardType {
     ENCHANTMENT("Enchantment"),
     SORCERY("Sorcery"),
     INSTANT("Instant"),
-    ARTIFACT("Artifact");
+    ARTIFACT("Artifact"),
+    PLANESWALKER("Planeswalker");
 
     @Getter
     private final String displayName;

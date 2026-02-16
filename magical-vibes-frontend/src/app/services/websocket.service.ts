@@ -121,6 +121,7 @@ export interface ActivatedAbilityView {
   allowedTargetTypes: string[];
   allowedTargetColors: string[];
   manaCost: string | null;
+  loyaltyCost: number | null;
 }
 
 export interface Card {
@@ -143,6 +144,7 @@ export interface Card {
   requiresAttackingTarget: boolean;
   allowedTargetTypes: string[];
   activatedAbilities: ActivatedAbilityView[];
+  loyalty: number | null;
 }
 
 export interface Permanent {
@@ -163,6 +165,7 @@ export interface Permanent {
   attachedTo: string | null;
   cantBeBlocked: boolean;
   animatedCreature: boolean;
+  loyaltyCounters: number;
 }
 
 export interface StackEntry {

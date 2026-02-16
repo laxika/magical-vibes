@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.MillByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
@@ -18,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFromGraveyardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -26,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -54,6 +58,8 @@ public class LibraryResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveSearchLibraryForBasicLandToHand(gd, entry));
         registry.register(LookAtTopCardsHandTopBottomEffect.class,
                 (gd, entry, effect) -> resolveLookAtTopCardsHandTopBottom(gd, entry, (LookAtTopCardsHandTopBottomEffect) effect));
+        registry.register(AjaniUltimateEffect.class,
+                (gd, entry, effect) -> resolveAjaniUltimate(gd, entry));
     }
 
     void resolveShuffleIntoLibrary(GameData gameData, StackEntry entry) {
@@ -224,6 +230,69 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         String logMsg = playerName + " searches their library.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} searching library for a basic land ({} found)", gameData.id, playerName, basicLands.size());
+    }
+
+    void resolveAjaniUltimate(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+        int lifeTotal = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+
+        int count = Math.min(lifeTotal, deck.size());
+        if (count <= 0) {
+            String logMsg = playerName + " looks at no cards (library is empty or life total is 0). Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            Collections.shuffle(deck);
+            return;
+        }
+
+        // Take top X cards from library
+        List<Card> revealedCards = new ArrayList<>(deck.subList(0, count));
+        deck.subList(0, count).clear();
+
+        // Filter to nonland permanent cards with MV ≤ 3
+        List<Card> eligibleCards = new ArrayList<>();
+        for (Card card : revealedCards) {
+            if (card.getType() != null
+                    && card.getType() != CardType.BASIC_LAND
+                    && card.getType() != CardType.INSTANT
+                    && card.getType() != CardType.SORCERY
+                    && card.getManaValue() <= 3) {
+                eligibleCards.add(card);
+            }
+        }
+
+        String logMsg = playerName + " looks at the top " + count + " cards of their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+
+        if (eligibleCards.isEmpty()) {
+            // No eligible cards — put all back and shuffle
+            deck.addAll(revealedCards);
+            Collections.shuffle(deck);
+            String shuffleLog = playerName + " finds no eligible cards. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
+            return;
+        }
+
+        // Set up player choice for selecting cards to put onto battlefield
+        Set<UUID> validCardIds = ConcurrentHashMap.newKeySet();
+        for (Card card : eligibleCards) {
+            validCardIds.add(card.getId());
+        }
+
+        gameData.awaitingLibraryRevealPlayerId = controllerId;
+        gameData.awaitingLibraryRevealAllCards = revealedCards;
+        gameData.awaitingLibraryRevealValidCardIds = validCardIds;
+        gameData.awaitingInput = AwaitingInput.LIBRARY_REVEAL_CHOICE;
+
+        List<CardView> cardViews = eligibleCards.stream().map(cardViewFactory::create).toList();
+        List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsFromGraveyardsMessage(
+                cardIds, cardViews, eligibleCards.size(),
+                "Choose any number of nonland permanent cards with mana value 3 or less to put onto the battlefield."
+        ));
+
+        log.info("Game {} - {} resolving Ajani ultimate with {} revealed, {} eligible", gameData.id, playerName, count, eligibleCards.size());
     }
 
     void resolveLookAtTopCardsHandTopBottom(GameData gameData, StackEntry entry, LookAtTopCardsHandTopBottomEffect effect) {
