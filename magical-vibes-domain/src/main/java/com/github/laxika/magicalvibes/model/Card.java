@@ -42,6 +42,7 @@ public class Card {
     @Setter private boolean needsSpellTarget;
     @Setter private TargetFilter targetFilter;
     @Setter private Integer loyalty;
+    @Setter private ManaColor xColorRestriction;
     @Setter private String setCode;
     @Setter private String collectorNumber;
 

@@ -69,6 +69,30 @@ public class ManaCost {
         return remaining >= genericCost + xValue;
     }
 
+    public boolean canPay(ManaPool pool, int xValue, ManaColor xColorRestriction, int additionalGenericCost) {
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            if (pool.get(entry.getKey()) < entry.getValue()) {
+                return false;
+            }
+        }
+
+        int restrictedAvailable = pool.get(xColorRestriction);
+        if (coloredCosts.containsKey(xColorRestriction)) {
+            restrictedAvailable -= coloredCosts.get(xColorRestriction);
+        }
+        if (restrictedAvailable < xValue) {
+            return false;
+        }
+
+        int remaining = pool.getTotal();
+        for (int count : coloredCosts.values()) {
+            remaining -= count;
+        }
+        remaining -= xValue;
+
+        return remaining >= genericCost + additionalGenericCost;
+    }
+
     public void pay(ManaPool pool) {
         pay(pool, 0);
     }
@@ -81,6 +105,37 @@ public class ManaCost {
         }
 
         int remainingGeneric = genericCost + xValue;
+        while (remainingGeneric > 0) {
+            ManaColor highestColor = null;
+            int highestAmount = 0;
+            for (ManaColor color : ManaColor.values()) {
+                int amount = pool.get(color);
+                if (amount > highestAmount) {
+                    highestAmount = amount;
+                    highestColor = color;
+                }
+            }
+            if (highestColor != null) {
+                pool.remove(highestColor);
+                remainingGeneric--;
+            } else {
+                break;
+            }
+        }
+    }
+
+    public void pay(ManaPool pool, int xValue, ManaColor xColorRestriction, int additionalGenericCost) {
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            for (int i = 0; i < entry.getValue(); i++) {
+                pool.remove(entry.getKey());
+            }
+        }
+
+        for (int i = 0; i < xValue; i++) {
+            pool.remove(xColorRestriction);
+        }
+
+        int remainingGeneric = genericCost + additionalGenericCost;
         while (remainingGeneric > 0) {
             ManaColor highestColor = null;
             int highestAmount = 0;
