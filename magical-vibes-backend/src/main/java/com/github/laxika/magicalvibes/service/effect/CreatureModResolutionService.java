@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
@@ -34,6 +35,8 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
 
     @Override
     public void registerHandlers(EffectHandlerRegistry registry) {
+        registry.register(AnimateSelfEffect.class,
+                (gd, entry, effect) -> resolveAnimateSelf(gd, entry, (AnimateSelfEffect) effect));
         registry.register(BoostSelfEffect.class,
                 (gd, entry, effect) -> resolveBoostSelf(gd, entry, (BoostSelfEffect) effect));
         registry.register(BoostTargetCreatureEffect.class,
@@ -58,6 +61,25 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveTapTargetPermanent(gd, entry));
         registry.register(UntapSelfEffect.class,
                 (gd, entry, effect) -> resolveUntapSelf(gd, entry));
+    }
+
+    private void resolveAnimateSelf(GameData gameData, StackEntry entry, AnimateSelfEffect effect) {
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (self == null) {
+            return;
+        }
+
+        int xValue = entry.getXValue();
+        self.setAnimatedUntilEndOfTurn(true);
+        self.setAnimatedPower(xValue);
+        self.setAnimatedToughness(xValue);
+        self.getGrantedSubtypes().clear();
+        self.getGrantedSubtypes().addAll(effect.grantedSubtypes());
+
+        String logEntry = self.getCard().getName() + " becomes a " + xValue + "/" + xValue + " artifact creature until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} becomes a {}/{} creature", gameData.id, self.getCard().getName(), xValue, xValue);
     }
 
     private void resolveBoostSelf(GameData gameData, StackEntry entry, BoostSelfEffect boost) {

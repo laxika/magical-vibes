@@ -55,7 +55,11 @@ public enum CardSubtype {
     AJANI("Ajani"),
     WRAITH("Wraith"),
     GNOME("Gnome"),
-    MERCENARY("Mercenary");
+    MERCENARY("Mercenary"),
+    ZOMBIE("Zombie"),
+    CROCODILE("Crocodile"),
+    CONSTRUCT("Construct"),
+    IMP("Imp");
 
     @Getter
     private final String displayName;
