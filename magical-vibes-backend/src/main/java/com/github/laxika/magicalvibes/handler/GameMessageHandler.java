@@ -282,7 +282,9 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
-            gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetPermanentId(), request.damageAssignments());
+            gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetPermanentId(), request.damageAssignments(),
+                    request.targetPermanentIds() != null ? request.targetPermanentIds() : java.util.List.of(),
+                    request.convokeCreatureIds() != null ? request.convokeCreatureIds() : java.util.List.of());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

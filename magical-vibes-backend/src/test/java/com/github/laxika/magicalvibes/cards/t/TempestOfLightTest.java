@@ -62,7 +62,7 @@ class TempestOfLightTest {
         harness.setHand(player1, List.of(new TempestOfLight()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -80,7 +80,7 @@ class TempestOfLightTest {
         harness.setHand(player1, List.of(new TempestOfLight()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -98,7 +98,7 @@ class TempestOfLightTest {
         harness.setHand(player1, List.of(new TempestOfLight()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -128,7 +128,7 @@ class TempestOfLightTest {
         harness.setHand(player1, List.of(new TempestOfLight()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -150,7 +150,7 @@ class TempestOfLightTest {
         harness.setHand(player1, List.of(new TempestOfLight()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -167,7 +167,7 @@ class TempestOfLightTest {
         harness.setHand(player1, List.of(new TempestOfLight()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -182,7 +182,7 @@ class TempestOfLightTest {
         harness.setHand(player1, List.of(new TempestOfLight()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -197,7 +197,7 @@ class TempestOfLightTest {
         harness.setHand(player1, List.of(new TempestOfLight()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();

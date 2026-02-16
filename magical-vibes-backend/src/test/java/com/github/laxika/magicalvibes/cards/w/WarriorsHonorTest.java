@@ -68,7 +68,7 @@ class WarriorsHonorTest {
         harness.setHand(player1, List.of(new WarriorsHonor()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -86,7 +86,7 @@ class WarriorsHonorTest {
         harness.setHand(player1, List.of(new WarriorsHonor()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
@@ -108,7 +108,7 @@ class WarriorsHonorTest {
         harness.setHand(player1, List.of(new WarriorsHonor()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         // Player1's creature is boosted
@@ -137,7 +137,7 @@ class WarriorsHonorTest {
         harness.setHand(player1, List.of(new WarriorsHonor()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         // Advance to cleanup step
@@ -162,7 +162,7 @@ class WarriorsHonorTest {
         harness.setHand(player1, List.of(new WarriorsHonor()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -174,7 +174,7 @@ class WarriorsHonorTest {
         harness.setHand(player1, List.of(new WarriorsHonor()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();

@@ -133,6 +133,22 @@ export class GameChoiceService {
   graveyardChoiceIndices: number[] = [];
   graveyardChoicePrompt = '';
 
+  // --- Multi-target state (for spells like "one or two target creatures") ---
+  multiTargeting = false;
+  multiTargetCardIndex = -1;
+  multiTargetCardName = '';
+  multiTargetMinCount = 0;
+  multiTargetMaxCount = 0;
+  multiTargetSelectedIds = signal<string[]>([]);
+
+  // --- Convoke state ---
+  convoking = false;
+  convokeCardIndex = -1;
+  convokeCardName = '';
+  convokeSelectedCreatureIds = signal<string[]>([]);
+  private pendingMultiTargetIds: string[] = [];
+  private pendingConvokeCard: Card | null = null;
+
   // --- Damage distribution state ---
   distributingDamage = false;
   damageDistributionCardIndex = -1;
@@ -388,6 +404,17 @@ export class GameChoiceService {
         this.targetingSpellCardName = card.name;
         return;
       }
+      // Multi-target spells (e.g. "one or two target creatures")
+      if (card.maxTargets > 1 && card.needsTarget) {
+        this.multiTargeting = true;
+        this.multiTargetCardIndex = index;
+        this.multiTargetCardName = card.name;
+        this.multiTargetMinCount = card.minTargets;
+        this.multiTargetMaxCount = card.maxTargets;
+        this.multiTargetSelectedIds.set([]);
+        this.pendingConvokeCard = card;
+        return;
+      }
       if (card.needsTarget) {
         this.targeting = true;
         this.targetingCardIndex = index;
@@ -398,6 +425,15 @@ export class GameChoiceService {
         this.targetingAbilityIndex = -1;
         this.pendingAbilityXValue = null;
         this.targetingAllowedTypes = card.allowedTargetTypes?.length > 0 ? card.allowedTargetTypes : [];
+        // If this single-target card has convoke, store it for later
+        this.pendingConvokeCard = card.hasConvoke ? card : null;
+        return;
+      }
+      // No targets needed — check for convoke
+      if (card.hasConvoke) {
+        this.pendingConvokeCard = card;
+        this.pendingMultiTargetIds = [];
+        this.enterConvokeMode(index, card);
         return;
       }
       this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetPermanentId: null });
@@ -501,6 +537,134 @@ export class GameChoiceService {
     this.damageAssignments = new Map();
   }
 
+  // ========== Multi-target selection ==========
+
+  addMultiTarget(permanentId: string): void {
+    if (!this.multiTargeting) return;
+    const current = this.multiTargetSelectedIds();
+    if (current.includes(permanentId)) return; // Already selected
+    if (current.length >= this.multiTargetMaxCount) return;
+    this.multiTargetSelectedIds.set([...current, permanentId]);
+  }
+
+  removeMultiTarget(permanentId: string): void {
+    if (!this.multiTargeting) return;
+    this.multiTargetSelectedIds.set(this.multiTargetSelectedIds().filter(id => id !== permanentId));
+  }
+
+  confirmMultiTargets(): void {
+    if (!this.multiTargeting) return;
+    const selected = this.multiTargetSelectedIds();
+    if (selected.length < this.multiTargetMinCount) return;
+
+    const card = this.pendingConvokeCard;
+    this.pendingMultiTargetIds = [...selected];
+
+    this.multiTargeting = false;
+    this.multiTargetSelectedIds.set([]);
+
+    // If card has convoke, enter convoke mode
+    if (card?.hasConvoke) {
+      this.enterConvokeMode(this.multiTargetCardIndex, card);
+      return;
+    }
+
+    // Send directly
+    this.websocketService.send({
+      type: MessageType.PLAY_CARD,
+      cardIndex: this.multiTargetCardIndex,
+      targetPermanentIds: this.pendingMultiTargetIds
+    });
+    this.resetMultiTargetState();
+  }
+
+  cancelMultiTargeting(): void {
+    this.multiTargeting = false;
+    this.multiTargetCardIndex = -1;
+    this.multiTargetCardName = '';
+    this.multiTargetSelectedIds.set([]);
+    this.pendingConvokeCard = null;
+  }
+
+  isMultiTargetSelected(permanentId: string): boolean {
+    return this.multiTargetSelectedIds().includes(permanentId);
+  }
+
+  private resetMultiTargetState(): void {
+    this.multiTargetCardIndex = -1;
+    this.multiTargetCardName = '';
+    this.multiTargetMinCount = 0;
+    this.multiTargetMaxCount = 0;
+    this.pendingMultiTargetIds = [];
+    this.pendingConvokeCard = null;
+  }
+
+  // ========== Convoke selection ==========
+
+  private enterConvokeMode(cardIndex: number, card: Card): void {
+    this.convoking = true;
+    this.convokeCardIndex = cardIndex;
+    this.convokeCardName = card.name;
+    this.convokeSelectedCreatureIds.set([]);
+  }
+
+  toggleConvokeCreature(permanentId: string): void {
+    if (!this.convoking) return;
+    const current = this.convokeSelectedCreatureIds();
+    if (current.includes(permanentId)) {
+      this.convokeSelectedCreatureIds.set(current.filter(id => id !== permanentId));
+    } else {
+      this.convokeSelectedCreatureIds.set([...current, permanentId]);
+    }
+  }
+
+  isConvokeSelected(permanentId: string): boolean {
+    return this.convokeSelectedCreatureIds().includes(permanentId);
+  }
+
+  confirmConvoke(): void {
+    if (!this.convoking) return;
+    const msg: any = {
+      type: MessageType.PLAY_CARD,
+      cardIndex: this.convokeCardIndex,
+      convokeCreatureIds: this.convokeSelectedCreatureIds()
+    };
+    this.addPendingTargetsToMsg(msg);
+    this.websocketService.send(msg);
+    this.cancelConvoke();
+    this.resetMultiTargetState();
+  }
+
+  skipConvoke(): void {
+    if (!this.convoking) return;
+    const msg: any = {
+      type: MessageType.PLAY_CARD,
+      cardIndex: this.convokeCardIndex
+    };
+    this.addPendingTargetsToMsg(msg);
+    this.websocketService.send(msg);
+    this.cancelConvoke();
+    this.resetMultiTargetState();
+  }
+
+  private addPendingTargetsToMsg(msg: any): void {
+    if (this.pendingMultiTargetIds.length > 0) {
+      if (this.pendingConvokeCard && this.pendingConvokeCard.maxTargets > 1) {
+        msg.targetPermanentIds = this.pendingMultiTargetIds;
+      } else {
+        // Single-target card that went through convoke flow
+        msg.targetPermanentId = this.pendingMultiTargetIds[0];
+      }
+    }
+  }
+
+  cancelConvoke(): void {
+    this.convoking = false;
+    this.convokeCardIndex = -1;
+    this.convokeCardName = '';
+    this.convokeSelectedCreatureIds.set([]);
+  }
+
   selectTarget(permanentId: string): void {
     if (!this.targeting) return;
     if (this.targetingForAbility) {
@@ -514,6 +678,22 @@ export class GameChoiceService {
         msg.xValue = this.pendingAbilityXValue;
       }
       this.websocketService.send(msg);
+    } else if (this.pendingConvokeCard?.hasConvoke) {
+      // Single-target spell with convoke — save target and enter convoke mode
+      const cardIndex = this.targetingCardIndex;
+      const card = this.pendingConvokeCard;
+      this.pendingMultiTargetIds = [permanentId];
+      this.targeting = false;
+      this.targetingCardIndex = -1;
+      this.targetingCardName = '';
+      this.targetingForAbility = false;
+      this.targetingRequiresAttacking = false;
+      this.targetingAbilityIndex = -1;
+      this.targetingAllowedTypes = [];
+      this.targetingAllowedColors = [];
+      this.pendingAbilityXValue = null;
+      this.enterConvokeMode(cardIndex, card);
+      return;
     } else {
       this.websocketService.send({
         type: MessageType.PLAY_CARD,
@@ -530,6 +710,7 @@ export class GameChoiceService {
     this.targetingAllowedTypes = [];
     this.targetingAllowedColors = [];
     this.pendingAbilityXValue = null;
+    this.pendingConvokeCard = null;
   }
 
   selectPlayerTarget(playerIndex: number): void {

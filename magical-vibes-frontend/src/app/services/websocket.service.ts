@@ -145,6 +145,9 @@ export interface Card {
   allowedTargetTypes: string[];
   activatedAbilities: ActivatedAbilityView[];
   loyalty: number | null;
+  minTargets: number;
+  maxTargets: number;
+  hasConvoke: boolean;
 }
 
 export interface Permanent {

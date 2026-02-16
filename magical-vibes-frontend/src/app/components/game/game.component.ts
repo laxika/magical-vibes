@@ -728,6 +728,24 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return;
     }
+    if (this.choice.multiTargeting) {
+      const perm = this.myBattlefield[index];
+      if (perm && isPermanentCreature(perm)) {
+        if (this.choice.isMultiTargetSelected(perm.id)) {
+          this.choice.removeMultiTarget(perm.id);
+        } else {
+          this.choice.addMultiTarget(perm.id);
+        }
+      }
+      return;
+    }
+    if (this.choice.convoking) {
+      const perm = this.myBattlefield[index];
+      if (perm && isPermanentCreature(perm) && !perm.tapped) {
+        this.choice.toggleConvokeCreature(perm.id);
+      }
+      return;
+    }
     if (this.choice.distributingDamage) {
       const perm = this.myBattlefield[index];
       if (perm && isPermanentCreature(perm) && perm.attacking) {
@@ -766,6 +784,17 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return;
     }
+    if (this.choice.multiTargeting) {
+      const perm = this.opponentBattlefield[index];
+      if (perm && isPermanentCreature(perm)) {
+        if (this.choice.isMultiTargetSelected(perm.id)) {
+          this.choice.removeMultiTarget(perm.id);
+        } else {
+          this.choice.addMultiTarget(perm.id);
+        }
+      }
+      return;
+    }
     if (this.choice.distributingDamage) {
       const perm = this.opponentBattlefield[index];
       if (perm && isPermanentCreature(perm) && perm.attacking) {
@@ -786,6 +815,16 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   onCombatAttackerClick(group: CombatGroup): void {
+    if (this.choice.multiTargeting) {
+      if (isPermanentCreature(group.attacker)) {
+        if (this.choice.isMultiTargetSelected(group.attacker.id)) {
+          this.choice.removeMultiTarget(group.attacker.id);
+        } else {
+          this.choice.addMultiTarget(group.attacker.id);
+        }
+      }
+      return;
+    }
     if (this.choice.targeting) {
       if (this.choice.isValidTarget(group.attacker)) {
         this.choice.selectTarget(group.attacker.id);

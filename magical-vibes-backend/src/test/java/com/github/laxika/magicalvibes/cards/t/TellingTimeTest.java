@@ -64,7 +64,7 @@ class TellingTimeTest {
         harness.setHand(player1, List.of(new TellingTime()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -83,7 +83,7 @@ class TellingTimeTest {
         harness.setHand(player1, List.of(new TellingTime()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -98,7 +98,7 @@ class TellingTimeTest {
         harness.setHand(player1, List.of(new TellingTime()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -122,7 +122,7 @@ class TellingTimeTest {
         Card originalTop2 = deck.get(2);
         int originalDeckSize = deck.size();
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         // Choose: card 1 to hand, card 0 to top, card 2 to bottom
@@ -153,7 +153,7 @@ class TellingTimeTest {
         Card originalTop1 = deck.get(1);
         Card originalTop2 = deck.get(2);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         // Choose: card 0 to hand, card 2 to top, card 1 to bottom
@@ -170,7 +170,7 @@ class TellingTimeTest {
         harness.setHand(player1, List.of(new TellingTime()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -197,7 +197,7 @@ class TellingTimeTest {
         deck.add(cardA);
         deck.add(cardB);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
@@ -223,7 +223,7 @@ class TellingTimeTest {
         Card singleCard = new GrizzlyBears();
         gd.playerDecks.get(player1.getId()).add(singleCard);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.awaitingInput).isNull();
@@ -241,7 +241,7 @@ class TellingTimeTest {
         GameData gd = harness.getGameData();
         gd.playerDecks.get(player1.getId()).clear();
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.awaitingInput).isNull();
@@ -257,7 +257,7 @@ class TellingTimeTest {
         harness.setHand(player1, List.of(new TellingTime()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -273,7 +273,7 @@ class TellingTimeTest {
         harness.setHand(player1, List.of(new TellingTime()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -289,7 +289,7 @@ class TellingTimeTest {
         harness.setHand(player1, List.of(new TellingTime()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -305,7 +305,7 @@ class TellingTimeTest {
         harness.setHand(player1, List.of(new TellingTime()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -333,7 +333,7 @@ class TellingTimeTest {
         harness.setHand(player1, List.of(new TellingTime()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -355,7 +355,7 @@ class TellingTimeTest {
         gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
         gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         harness.getGameService().handleHandTopBottomChosen(gd, player1, 0, 1);

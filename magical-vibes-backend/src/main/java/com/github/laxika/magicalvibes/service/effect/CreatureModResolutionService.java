@@ -73,6 +73,25 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
     }
 
     private void resolveBoostTargetCreature(GameData gameData, StackEntry entry, BoostTargetCreatureEffect boost) {
+        // Multi-target: apply boost to each valid target
+        if (entry.getTargetPermanentIds() != null && !entry.getTargetPermanentIds().isEmpty()) {
+            for (UUID targetId : entry.getTargetPermanentIds()) {
+                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                if (target == null) {
+                    continue; // Partially resolves — skip removed targets
+                }
+                target.setPowerModifier(target.getPowerModifier() + boost.powerBoost());
+                target.setToughnessModifier(target.getToughnessModifier() + boost.toughnessBoost());
+
+                String logEntry = target.getCard().getName() + " gets +" + boost.powerBoost() + "/+" + boost.toughnessBoost() + " until end of turn.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+                log.info("Game {} - {} gets +{}/+{}", gameData.id, target.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
+            }
+            return;
+        }
+
+        // Single-target fallback
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
             return;

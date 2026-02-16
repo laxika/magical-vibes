@@ -29,6 +29,9 @@ public record CardView(
         boolean requiresAttackingTarget,
         List<String> allowedTargetTypes,
         List<ActivatedAbilityView> activatedAbilities,
-        Integer loyalty
+        Integer loyalty,
+        int minTargets,
+        int maxTargets,
+        boolean hasConvoke
 ) {
 }

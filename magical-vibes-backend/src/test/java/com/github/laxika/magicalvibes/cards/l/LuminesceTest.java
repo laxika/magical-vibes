@@ -75,7 +75,7 @@ class LuminesceTest {
         harness.setHand(player1, List.of(new Luminesce()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -88,7 +88,7 @@ class LuminesceTest {
     void cannotCastWithoutMana() {
         harness.setHand(player1, List.of(new Luminesce()));
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
@@ -101,7 +101,7 @@ class LuminesceTest {
         harness.setHand(player1, List.of(new Luminesce()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -114,7 +114,7 @@ class LuminesceTest {
         harness.setHand(player1, List.of(new Luminesce()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();

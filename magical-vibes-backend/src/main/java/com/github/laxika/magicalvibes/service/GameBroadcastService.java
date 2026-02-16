@@ -165,6 +165,10 @@ public class GameBroadcastService {
     }
 
     List<Integer> getPlayableCardIndices(GameData gameData, UUID playerId) {
+        return getPlayableCardIndices(gameData, playerId, 0);
+    }
+
+    List<Integer> getPlayableCardIndices(GameData gameData, UUID playerId, int extraConvokeMana) {
         List<Integer> playable = new ArrayList<>();
         if (gameData.status != GameStatus.RUNNING || gameData.awaitingInput != null) {
             return playable;
@@ -190,6 +194,17 @@ public class GameBroadcastService {
 
         boolean stackEmpty = gameData.stack.isEmpty();
 
+        // Count untapped creatures for convoke playability
+        int untappedCreatureCount = 0;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield != null) {
+            for (Permanent perm : battlefield) {
+                if (gameQueryService.isCreature(gameData, perm) && !perm.isTapped()) {
+                    untappedCreatureCount++;
+                }
+            }
+        }
+
         for (int i = 0; i < hand.size(); i++) {
             Card card = hand.get(i);
             if (card.getType() == CardType.BASIC_LAND && isActivePlayer && isMainPhase && landsPlayed < 1 && stackEmpty) {
@@ -206,6 +221,13 @@ public class GameBroadcastService {
                     int additionalCost = getOpponentCostIncrease(gameData, playerId, card.getType());
                     if (cost.canPay(pool, additionalCost)) {
                         playable.add(i);
+                    } else if (card.getKeywords().contains(Keyword.CONVOKE)) {
+                        // Check if castable with convoke: mana pool + untapped creatures >= total cost
+                        int convokeCreatures = extraConvokeMana > 0 ? extraConvokeMana : untappedCreatureCount;
+                        int totalAvailable = pool.getTotal() + convokeCreatures;
+                        if (totalAvailable >= cost.getManaValue() + additionalCost) {
+                            playable.add(i);
+                        }
                     }
                 }
             }

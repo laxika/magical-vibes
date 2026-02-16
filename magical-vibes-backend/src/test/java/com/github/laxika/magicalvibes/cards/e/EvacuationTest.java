@@ -63,7 +63,7 @@ class EvacuationTest {
         harness.setHand(player1, List.of(new Evacuation()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -82,7 +82,7 @@ class EvacuationTest {
         harness.setHand(player1, List.of(new Evacuation()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         // No creatures should remain on either battlefield
@@ -110,7 +110,7 @@ class EvacuationTest {
         harness.setHand(player1, List.of(new Evacuation()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         // Enchantment should still be on battlefield
@@ -129,7 +129,7 @@ class EvacuationTest {
         harness.setHand(player1, List.of(new Evacuation()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -141,7 +141,7 @@ class EvacuationTest {
         harness.setHand(player1, List.of(new Evacuation()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -157,7 +157,7 @@ class EvacuationTest {
         harness.setHand(player1, List.of(new Evacuation()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         // Each player's creature goes back to their own hand

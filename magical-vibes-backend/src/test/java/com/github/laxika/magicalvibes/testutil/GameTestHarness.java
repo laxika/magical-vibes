@@ -189,8 +189,20 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, xValue, targetId, null);
     }
 
+    public void castInstant(Player player, int cardIndex) {
+        gameService.playCard(gameData, player, cardIndex, 0, null, null);
+    }
+
     public void castInstant(Player player, int cardIndex, UUID targetPermanentId) {
         gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null);
+    }
+
+    public void castInstant(Player player, int cardIndex, List<UUID> targetPermanentIds) {
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, targetPermanentIds, List.of());
+    }
+
+    public void castInstantWithConvoke(Player player, int cardIndex, List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds) {
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, targetPermanentIds, convokeCreatureIds);
     }
 
     public void sacrificePermanent(Player player, int permanentIndex, UUID targetPermanentId) {

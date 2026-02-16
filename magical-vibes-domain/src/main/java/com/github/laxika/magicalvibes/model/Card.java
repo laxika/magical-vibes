@@ -43,6 +43,8 @@ public class Card {
     @Setter private TargetFilter targetFilter;
     @Setter private Integer loyalty;
     @Setter private ManaColor xColorRestriction;
+    @Setter private int minTargets;
+    @Setter private int maxTargets;
     @Setter private String setCode;
     @Setter private String collectorNumber;
 

@@ -104,6 +104,23 @@
       </div>
     }
 
+    @if (choice.multiTargeting) {
+      <div class="combat-banner targeting-banner">
+        <span>Select target creatures for {{ choice.multiTargetCardName }} ({{ choice.multiTargetSelectedIds().length }}/{{ choice.multiTargetMaxCount }})</span>
+        <button class="btn-confirm-combat" (click)="choice.confirmMultiTargets()" [disabled]="choice.multiTargetSelectedIds().length < choice.multiTargetMinCount">Confirm</button>
+        <button class="btn-confirm-combat" (click)="choice.cancelMultiTargeting()">Cancel</button>
+      </div>
+    }
+
+    @if (choice.convoking) {
+      <div class="combat-banner targeting-banner">
+        <span>Tap creatures to help cast {{ choice.convokeCardName }} ({{ choice.convokeSelectedCreatureIds().length }} tapped)</span>
+        <button class="btn-confirm-combat" (click)="choice.confirmConvoke()">Cast</button>
+        <button class="btn-confirm-combat" (click)="choice.skipConvoke()">Skip Convoke</button>
+        <button class="btn-confirm-combat" (click)="choice.cancelConvoke()">Cancel</button>
+      </div>
+    }
+
     @if (choice.reorderingLibrary) {
       <div class="combat-banner reorder-banner">
         <span>{{ choice.reorderPrompt }}</span>

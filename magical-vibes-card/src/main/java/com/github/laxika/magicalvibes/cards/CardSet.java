@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards;
 
 import com.github.laxika.magicalvibes.cards.a.AdeptWatershaper;
 import com.github.laxika.magicalvibes.cards.a.AjaniOutlandChaperone;
+import com.github.laxika.magicalvibes.cards.a.AppealToEirdu;
 import com.github.laxika.magicalvibes.cards.a.Afflict;
 import com.github.laxika.magicalvibes.cards.a.AgonizingMemories;
 import com.github.laxika.magicalvibes.cards.a.Assassinate;
@@ -315,7 +316,8 @@ public enum CardSet {
             new CardPrinting("ECL", "1", ChangelingWayfinder::new),
             new CardPrinting("ECL", "2", RooftopPercher::new),
             new CardPrinting("ECL", "3", AdeptWatershaper::new),
-            new CardPrinting("ECL", "4", AjaniOutlandChaperone::new)
+            new CardPrinting("ECL", "4", AjaniOutlandChaperone::new),
+            new CardPrinting("ECL", "5", AppealToEirdu::new)
     ));
 
     private static final Map<String, String> setNameRegistry = new ConcurrentHashMap<>();
