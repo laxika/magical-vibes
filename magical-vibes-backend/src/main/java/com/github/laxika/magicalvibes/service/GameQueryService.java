@@ -2,22 +2,15 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostNonColorCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostOtherCreaturesByColorEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnTappedCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.filter.AttackingOrBlockingTargetFilter;
@@ -26,15 +19,33 @@ import com.github.laxika.magicalvibes.model.filter.CreatureColorTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.MaxPowerTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TappedTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.WithoutKeywordTargetFilter;
+import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
+import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
+import com.github.laxika.magicalvibes.service.effect.StaticEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerProvider;
+import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 
 @Component
+@RequiredArgsConstructor
 public class GameQueryService {
 
     public static final List<String> TEXT_CHANGE_COLOR_WORDS = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
     public static final List<String> TEXT_CHANGE_LAND_TYPES = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
+
+    private final List<StaticEffectHandlerProvider> staticEffectProviders;
+
+    private StaticEffectHandlerRegistry staticEffectRegistry;
+
+    @PostConstruct
+    public void init() {
+        staticEffectRegistry = new StaticEffectHandlerRegistry();
+        staticEffectProviders.forEach(p -> p.registerHandlers(staticEffectRegistry));
+    }
 
     record StaticBonus(int power, int toughness, Set<Keyword> keywords, boolean animatedCreature) {
         static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), false);
@@ -108,70 +119,33 @@ public class GameQueryService {
 
     StaticBonus computeStaticBonus(GameData gameData, Permanent target) {
         boolean isNaturalCreature = target.getCard().getType() == CardType.CREATURE;
-        boolean isArtifact = target.getCard().getType() == CardType.ARTIFACT;
-        boolean animatedCreature = false;
-        int power = 0;
-        int toughness = 0;
-        Set<Keyword> keywords = new HashSet<>();
+        StaticBonusAccumulator accumulator = new StaticBonusAccumulator();
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
+            boolean targetOnSameBattlefield = bf.contains(target);
             for (Permanent source : bf) {
                 if (source == target) continue;
+                StaticEffectContext context = new StaticEffectContext(source, target, targetOnSameBattlefield);
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof AnimateNoncreatureArtifactsEffect && isArtifact) {
-                        animatedCreature = true;
-                    }
-                    if (effect instanceof BoostCreaturesBySubtypeEffect boost
-                            && (target.hasKeyword(Keyword.CHANGELING)
-                                || target.getCard().getSubtypes().stream().anyMatch(boost.affectedSubtypes()::contains))) {
-                        power += boost.powerBoost();
-                        toughness += boost.toughnessBoost();
-                        keywords.addAll(boost.grantedKeywords());
-                    }
-                    if (effect instanceof BoostEnchantedCreatureEffect boost
-                            && source.getAttachedTo() != null
-                            && source.getAttachedTo().equals(target.getId())) {
-                        power += boost.powerBoost();
-                        toughness += boost.toughnessBoost();
-                    }
-                    if (effect instanceof GrantKeywordToEnchantedCreatureEffect grant
-                            && source.getAttachedTo() != null
-                            && source.getAttachedTo().equals(target.getId())) {
-                        keywords.add(grant.keyword());
-                    }
-                    if (effect instanceof BoostOwnCreaturesEffect boost
-                            && bf.contains(target)) {
-                        power += boost.powerBoost();
-                        toughness += boost.toughnessBoost();
-                    }
-                    if (effect instanceof BoostOtherCreaturesByColorEffect boost
-                            && target.getCard().getColor() == boost.color()) {
-                        power += boost.powerBoost();
-                        toughness += boost.toughnessBoost();
-                    }
-                    if (effect instanceof BoostNonColorCreaturesEffect boost
-                            && target.getCard().getColor() != boost.excludedColor()) {
-                        power += boost.powerBoost();
-                        toughness += boost.toughnessBoost();
-                    }
-                    if (effect instanceof GrantKeywordToOwnTappedCreaturesEffect grant
-                            && bf.contains(target)
-                            && target.isTapped()) {
-                        keywords.add(grant.keyword());
+                    StaticEffectHandler handler = staticEffectRegistry.getHandler(effect);
+                    if (handler != null) {
+                        handler.apply(context, effect, accumulator);
                     }
                 }
             }
         }
-        if (!isNaturalCreature && !animatedCreature) return StaticBonus.NONE;
+        if (!isNaturalCreature && !accumulator.isAnimatedCreature()) return StaticBonus.NONE;
 
-        if (animatedCreature) {
+        int power = accumulator.getPower();
+        int toughness = accumulator.getToughness();
+        if (accumulator.isAnimatedCreature()) {
             int manaValue = target.getCard().getManaValue();
             power += manaValue;
             toughness += manaValue;
         }
 
-        return new StaticBonus(power, toughness, keywords, animatedCreature);
+        return new StaticBonus(power, toughness, accumulator.getKeywords(), accumulator.isAnimatedCreature());
     }
 
     boolean hasProtectionFrom(GameData gameData, Permanent target, CardColor sourceColor) {
