@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
 import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
 import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionService;
 import com.github.laxika.magicalvibes.service.effect.PlayerInteractionResolutionService;
+import com.github.laxika.magicalvibes.service.effect.StaticEffectResolutionService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import com.github.laxika.magicalvibes.config.JacksonConfig;
 import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader;
@@ -68,7 +69,9 @@ public class GameTestHarness {
         CardViewFactory cardViewFactory = new CardViewFactory();
         PermanentViewFactory permanentViewFactory = new PermanentViewFactory(cardViewFactory);
         StackEntryViewFactory stackEntryViewFactory = new StackEntryViewFactory(cardViewFactory);
-        GameQueryService gameQueryService = new GameQueryService();
+        GameQueryService gameQueryService = new GameQueryService(
+                List.of(new StaticEffectResolutionService()));
+        gameQueryService.init();
         PlayerInputService playerInputService = new PlayerInputService(sessionManager, cardViewFactory);
         GameBroadcastService gameBroadcastService = new GameBroadcastService(
                 sessionManager, cardViewFactory, permanentViewFactory, stackEntryViewFactory, gameQueryService);
