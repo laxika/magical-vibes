@@ -631,6 +631,7 @@ public class CombatService {
             gameData.stolenCreatures.remove(dead.getId());
             gameData.playerGraveyards.get(atkGraveyardOwner).add(dead.getOriginalCard());
             gameHelper.collectDeathTrigger(gameData, dead.getCard(), activeId, true);
+            gameHelper.checkAllyCreatureDeathTriggers(gameData, activeId);
             atkBf.remove(idx);
         }
         for (int idx : deadDefenderIndices) {
@@ -641,6 +642,7 @@ public class CombatService {
             gameData.stolenCreatures.remove(dead.getId());
             gameData.playerGraveyards.get(defGraveyardOwner).add(dead.getOriginalCard());
             gameHelper.collectDeathTrigger(gameData, dead.getCard(), defenderId, true);
+            gameHelper.checkAllyCreatureDeathTriggers(gameData, defenderId);
             defBf.remove(idx);
         }
         if (!deadAttackerIndices.isEmpty() || !deadDefenderIndices.isEmpty()) {
@@ -831,6 +833,9 @@ public class CombatService {
                     battlefield.remove(perm);
                     gameData.playerGraveyards.get(playerId).add(perm.getOriginalCard());
                     gameHelper.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature);
+                    if (wasCreature) {
+                        gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                    }
                     String logEntry = perm.getCard().getName() + " is sacrificed.";
                     gameData.gameLog.add(logEntry);
                     log.info("Game {} - {} sacrificed at end of combat", gameData.id, perm.getCard().getName());
