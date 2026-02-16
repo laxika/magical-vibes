@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.MillByHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
@@ -50,6 +51,8 @@ public class LibraryResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveMillByHandSize(gd, entry));
         registry.register(MillTargetPlayerEffect.class,
                 (gd, entry, effect) -> resolveMillTargetPlayer(gd, entry, (MillTargetPlayerEffect) effect));
+        registry.register(MillHalfLibraryEffect.class,
+                (gd, entry, effect) -> resolveMillHalfLibrary(gd, entry));
         registry.register(RevealTopCardOfLibraryEffect.class,
                 (gd, entry, effect) -> resolveRevealTopCardOfLibrary(gd, entry));
         registry.register(ReorderTopCardsOfLibraryEffect.class,
@@ -114,6 +117,30 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} mills {} cards", gameData.id, playerName, cardsToMill);
+    }
+
+    void resolveMillHalfLibrary(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+
+        int cardsToMill = deck.size() / 2;
+        if (cardsToMill == 0) {
+            String logEntry = playerName + "'s library has " + deck.size() + " card" + (deck.size() != 1 ? "s" : "") + " — mills nothing.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        for (int i = 0; i < cardsToMill; i++) {
+            Card card = deck.removeFirst();
+            graveyard.add(card);
+        }
+
+        String logEntry = playerName + " mills half their library (" + cardsToMill + " card" + (cardsToMill != 1 ? "s" : "") + ").";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} mills half library ({} cards)", gameData.id, playerName, cardsToMill);
     }
 
     void resolveShuffleGraveyardIntoLibrary(GameData gameData, StackEntry entry) {
