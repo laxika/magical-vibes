@@ -184,9 +184,14 @@ public class TurnProgressionService {
     }
 
     void advanceTurn(GameData gameData) {
-        List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);
-        UUID currentActive = gameData.activePlayerId;
-        UUID nextActive = ids.get(0).equals(currentActive) ? ids.get(1) : ids.get(0);
+        UUID nextActive;
+        if (!gameData.extraTurns.isEmpty()) {
+            nextActive = gameData.extraTurns.pollFirst();
+        } else {
+            List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);
+            UUID currentActive = gameData.activePlayerId;
+            nextActive = ids.get(0).equals(currentActive) ? ids.get(1) : ids.get(0);
+        }
         String nextActiveName = gameData.playerIdToName.get(nextActive);
 
         gameData.activePlayerId = nextActive;

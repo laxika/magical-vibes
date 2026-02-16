@@ -19,7 +19,10 @@
       "WebFetch(domain:mtg.fandom.com)",
       "Bash(git -C */magical-vibes* status*)",
       "Bash(git -C */magical-vibes* add *)",
-      "Bash(git -C */magical-vibes* commit *)"
+      "Bash(git -C */magical-vibes* commit *)",
+      "WebFetch(domain:yawgatog.com)",
+      "WebSearch",
+      "WebFetch(domain:www.mtgassist.com)"
     ]
   }
 }
