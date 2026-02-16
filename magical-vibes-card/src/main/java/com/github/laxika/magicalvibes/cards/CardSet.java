@@ -152,6 +152,7 @@ import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.v.VedalkenMastermind;
 import com.github.laxika.magicalvibes.cards.v.VenerableMonk;
 import com.github.laxika.magicalvibes.cards.v.VoiceOfAll;
+import com.github.laxika.magicalvibes.cards.w.WallOfAir;
 import com.github.laxika.magicalvibes.cards.w.WallOfSwords;
 import com.github.laxika.magicalvibes.cards.w.WildGriffin;
 import com.github.laxika.magicalvibes.cards.w.WarriorsHonor;
@@ -312,6 +313,7 @@ public enum CardSet {
             new CardPrinting("10E", "121", Twitch::new),
             new CardPrinting("10E", "122", Unsummon::new),
             new CardPrinting("10E", "123", VedalkenMastermind::new),
+            new CardPrinting("10E", "124", WallOfAir::new),
             new CardPrinting("10E", "96", PhantomWarrior::new),
             new CardPrinting("10E", "77", CraftyPathmage::new),
             new CardPrinting("10E", "380", Forest::new),
