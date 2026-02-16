@@ -2,6 +2,7 @@ import { Component, Input, HostBinding, OnInit, OnChanges, SimpleChanges, inject
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Card, Permanent } from '../../../services/websocket.service';
 import { ScryfallImageService } from '../../../services/scryfall-image.service';
+import { ScryfallCardDataService } from '../../../services/scryfall-card-data.service';
 import { ManaSymbolService } from '../../../services/mana-symbol.service';
 import { SetSymbolService } from '../../../services/set-symbol.service';
 
@@ -20,6 +21,7 @@ export class CardDisplayComponent implements OnInit, OnChanges {
   artUrl = signal<string | null>(null);
 
   private scryfallImageService = inject(ScryfallImageService);
+  private scryfallCardDataService = inject(ScryfallCardDataService);
   private manaSymbolService = inject(ManaSymbolService);
   private setSymbolService = inject(SetSymbolService);
   private sanitizer = inject(DomSanitizer);
@@ -104,11 +106,28 @@ export class CardDisplayComponent implements OnInit, OnChanges {
     return mainType;
   }
 
+  get scryfallData() {
+    if (!this.card.setCode || !this.card.collectorNumber) return null;
+    return this.scryfallCardDataService.getCardData(this.card.setCode, this.card.collectorNumber);
+  }
+
+  get flavorText(): string | null {
+    return this.scryfallData?.flavorText ?? null;
+  }
+
+  get artist(): string | null {
+    return this.scryfallData?.artist ?? null;
+  }
+
+  get rarity(): string | null {
+    return this.scryfallData?.rarity ?? null;
+  }
+
   get textBoxFontSize(): string {
     let total = '';
     if (this.card.cardText) total += this.card.cardText;
     if (this.effectiveKeywords.length > 0) total += this.formatKeywords(this.effectiveKeywords);
-    if (this.card.flavorText) total += this.card.flavorText;
+    if (this.flavorText) total += this.flavorText;
     const len = total.length;
     if (len <= 50) return '11px';
     if (len <= 90) return '10.5px';

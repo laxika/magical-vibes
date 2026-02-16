@@ -52,8 +52,7 @@ public class PermanentViewFactory {
                 cardView.name(), cardView.type(), cardView.supertypes(), cardView.subtypes(),
                 modifiedText, cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
-                cardView.collectorNumber(), cardView.flavorText(), cardView.artist(),
-                cardView.rarity(), cardView.color(), cardView.needsTarget(),
+                cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.targetsPlayer(),
                 cardView.requiresAttackingTarget(), cardView.allowedTargetTypes(),
                 cardView.activatedAbilities()

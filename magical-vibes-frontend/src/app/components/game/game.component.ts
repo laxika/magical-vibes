@@ -444,11 +444,11 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private handleChooseMultipleCardsFromGraveyards(msg: ChooseMultipleCardsFromGraveyardsNotification): void {
     this.choosingGraveyardCards = true;
-    this.graveyardChoiceCards = msg.cards;
+    this.multiGraveyardCards = msg.cards;
     this.graveyardChoiceCardIds = msg.cardIds;
     this.graveyardChoiceSelectedIds.set(new Set());
     this.graveyardChoiceMaxCount = msg.maxCount;
-    this.graveyardChoicePrompt = msg.prompt;
+    this.multiGraveyardPrompt = msg.prompt;
   }
 
   toggleGraveyardCardSelection(index: number): void {
@@ -471,11 +471,11 @@ export class GameComponent implements OnInit, OnDestroy {
       cardIds: Array.from(this.graveyardChoiceSelectedIds())
     });
     this.choosingGraveyardCards = false;
-    this.graveyardChoiceCards = [];
+    this.multiGraveyardCards = [];
     this.graveyardChoiceCardIds = [];
     this.graveyardChoiceSelectedIds.set(new Set());
     this.graveyardChoiceMaxCount = 0;
-    this.graveyardChoicePrompt = '';
+    this.multiGraveyardPrompt = '';
   }
 
   getColorDisplayName(color: string): string {
@@ -1246,11 +1246,11 @@ export class GameComponent implements OnInit, OnDestroy {
 
   // Multi-graveyard choice state
   choosingGraveyardCards = false;
-  graveyardChoiceCards: Card[] = [];
+  multiGraveyardCards: Card[] = [];
   graveyardChoiceCardIds: string[] = [];
   graveyardChoiceSelectedIds = signal(new Set<string>());
   graveyardChoiceMaxCount = 0;
-  graveyardChoicePrompt = '';
+  multiGraveyardPrompt = '';
 
   // Ability picker state
   choosingAbility = false;

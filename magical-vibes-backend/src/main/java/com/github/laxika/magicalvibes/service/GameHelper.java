@@ -291,8 +291,6 @@ public class GameHelper {
         copy.setNeedsTarget(target.isNeedsTarget());
         copy.setSetCode(target.getSetCode());
         copy.setCollectorNumber(target.getCollectorNumber());
-        copy.setArtist(target.getArtist());
-        copy.setRarity(target.getRarity());
         for (EffectSlot slot : EffectSlot.values()) {
             for (CardEffect effect : target.getEffects(slot)) {
                 copy.addEffect(slot, effect);

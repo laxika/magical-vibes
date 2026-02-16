@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.networking.model;
 
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardRarity;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -23,9 +22,6 @@ public record CardView(
         boolean hasTapAbility,
         String setCode,
         String collectorNumber,
-        String flavorText,
-        String artist,
-        CardRarity rarity,
         CardColor color,
         boolean needsTarget,
         boolean needsSpellTarget,

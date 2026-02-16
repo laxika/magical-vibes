@@ -136,9 +136,6 @@ export interface Card {
   hasTapAbility: boolean;
   setCode: string | null;
   collectorNumber: string | null;
-  flavorText: string | null;
-  artist: string | null;
-  rarity: string | null;
   color: string | null;
   needsTarget: boolean;
   needsSpellTarget: boolean;

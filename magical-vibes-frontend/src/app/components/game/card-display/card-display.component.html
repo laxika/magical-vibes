@@ -12,9 +12,9 @@
 <div class="type-line">
   <span class="card-type">{{ typeLine }}</span>
   @if (setSymbolUrl) {
-    <img class="set-symbol" [src]="setSymbolUrl" [attr.data-rarity]="card.rarity" alt="set symbol" />
-  } @else if (card.rarity) {
-    <span class="rarity-diamond" [attr.data-rarity]="card.rarity">&#9670;</span>
+    <img class="set-symbol" [src]="setSymbolUrl" [attr.data-rarity]="rarity" alt="set symbol" />
+  } @else if (rarity) {
+    <span class="rarity-diamond" [attr.data-rarity]="rarity">&#9670;</span>
   }
 </div>
 <div class="text-box" [style.font-size]="textBoxFontSize">
@@ -24,20 +24,20 @@
   @if (effectiveKeywords.length > 0) {
     <div class="card-keywords">{{ formatKeywords(effectiveKeywords) }}</div>
   }
-  @if (card.flavorText) {
+  @if (flavorText) {
     <div class="flavor-separator"></div>
-    <div class="card-flavor-text">{{ card.flavorText }}</div>
+    <div class="card-flavor-text">{{ flavorText }}</div>
   }
   @if (card.power != null && card.toughness != null || permanent?.animatedCreature) {
     <div class="card-pt" [class.buffed]="isBuffed">{{ displayPower }}/{{ displayToughness }}</div>
   }
 </div>
 <div class="info-line">
-  @if (card.artist) {
-    <span class="card-artist">{{ card.artist }}</span>
+  @if (artist) {
+    <span class="card-artist">{{ artist }}</span>
   }
   @if (card.setCode) {
-    <span class="card-set-badge" [attr.data-rarity]="card.rarity">{{ card.setCode }} #{{ card.collectorNumber }}</span>
+    <span class="card-set-badge" [attr.data-rarity]="rarity">{{ card.setCode }} #{{ card.collectorNumber }}</span>
   }
 </div>
 @if (permanent && permanent.regenerationShield > 0) {

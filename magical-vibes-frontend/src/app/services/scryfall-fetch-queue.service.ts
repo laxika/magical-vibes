@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 
 interface QueueEntry {
   url: string;
-  resolve: (blob: Blob) => void;
+  responseType: 'blob' | 'json';
+  resolve: (value: any) => void;
   reject: (err: unknown) => void;
 }
 
@@ -21,7 +22,17 @@ export class ScryfallFetchQueue {
    */
   enqueue(url: string): Promise<Blob> {
     return new Promise<Blob>((resolve, reject) => {
-      this.queue.push({ url, resolve, reject });
+      this.queue.push({ url, responseType: 'blob', resolve, reject });
+      this.startDrain();
+    });
+  }
+
+  /**
+   * Enqueue a fetch to Scryfall. Returns a promise that resolves with parsed JSON.
+   */
+  enqueueJson<T>(url: string): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      this.queue.push({ url, responseType: 'json', resolve, reject });
       this.startDrain();
     });
   }
@@ -42,9 +53,9 @@ export class ScryfallFetchQueue {
     fetch(entry.url)
       .then(res => {
         if (!res.ok) throw new Error(`Scryfall returned ${res.status}`);
-        return res.blob();
+        return entry.responseType === 'json' ? res.json() : res.blob();
       })
-      .then(blob => entry.resolve(blob))
+      .then(value => entry.resolve(value))
       .catch(err => entry.reject(err))
       .finally(() => setTimeout(() => this.drainNext(), 100));
   }

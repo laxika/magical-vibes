@@ -150,20 +150,20 @@
 
     @if (choosingHandTopBottom) {
       <div class="combat-banner reorder-banner">
-        <span>{{ choosingHandTopBottomPrompt }}</span>
+        <span>{{ handTopBottomPrompt }}</span>
       </div>
       <div class="reorder-zone">
-        @if (choosingHandTopBottomAvailableCards.length > 0) {
+        @if (handTopBottomAvailableCards.length > 0) {
           <div class="reorder-section">
             <div class="reorder-label">
-              @if (choosingHandTopBottomStep === 0) {
+              @if (handTopBottomStep === 0) {
                 Click a card to put into your hand:
               } @else {
                 Click a card to put on top of your library:
               }
             </div>
             <div class="reorder-cards">
-              @for (item of choosingHandTopBottomAvailableCards; track item.originalIndex) {
+              @for (item of handTopBottomAvailableCards; track item.originalIndex) {
                 <app-card-display
                   [card]="item.card"
                   class="reorder-card available"
@@ -174,41 +174,41 @@
             </div>
           </div>
         }
-        @if (choosingHandTopBottomHandIndex !== null) {
+        @if (handTopBottomHandIndex !== null) {
           <div class="reorder-section">
             <div class="reorder-label">Hand:</div>
             <div class="reorder-cards">
               <div class="reorder-card-wrapper">
                 <div class="reorder-position-badge">H</div>
                 <app-card-display
-                  [card]="choosingHandTopBottomCards[choosingHandTopBottomHandIndex]"
+                  [card]="handTopBottomCards[handTopBottomHandIndex]"
                   class="reorder-card placed"
-                  (mouseenter)="onCardHover(choosingHandTopBottomCards[choosingHandTopBottomHandIndex])"
+                  (mouseenter)="onCardHover(handTopBottomCards[handTopBottomHandIndex])"
                   (mouseleave)="onCardHoverEnd()" />
               </div>
             </div>
           </div>
         }
-        @if (choosingHandTopBottomTopIndex !== null) {
+        @if (handTopBottomTopIndex !== null) {
           <div class="reorder-section">
             <div class="reorder-label">Top of library:</div>
             <div class="reorder-cards">
               <div class="reorder-card-wrapper">
                 <div class="reorder-position-badge">T</div>
                 <app-card-display
-                  [card]="choosingHandTopBottomCards[choosingHandTopBottomTopIndex]"
+                  [card]="handTopBottomCards[handTopBottomTopIndex]"
                   class="reorder-card placed"
-                  (mouseenter)="onCardHover(choosingHandTopBottomCards[choosingHandTopBottomTopIndex])"
+                  (mouseenter)="onCardHover(handTopBottomCards[handTopBottomTopIndex])"
                   (mouseleave)="onCardHoverEnd()" />
               </div>
             </div>
           </div>
         }
-        @if (choosingHandTopBottomStep === 2 && choosingHandTopBottomAvailableCards.length > 0) {
+        @if (handTopBottomStep === 2 && handTopBottomAvailableCards.length > 0) {
           <div class="reorder-section">
             <div class="reorder-label">Bottom of library:</div>
             <div class="reorder-cards">
-              @for (item of choosingHandTopBottomAvailableCards; track item.originalIndex) {
+              @for (item of handTopBottomAvailableCards; track item.originalIndex) {
                 <div class="reorder-card-wrapper">
                   <div class="reorder-position-badge">B</div>
                   <app-card-display
@@ -222,8 +222,8 @@
           </div>
         }
         <div class="reorder-actions">
-          <button class="btn-confirm-combat" (click)="undoHandTopBottom()" [disabled]="choosingHandTopBottomHandIndex === null">Undo</button>
-          <button class="btn-confirm-combat" (click)="confirmHandTopBottom()" [disabled]="choosingHandTopBottomStep !== 2">Confirm</button>
+          <button class="btn-confirm-combat" (click)="undoHandTopBottom()" [disabled]="handTopBottomHandIndex === null">Undo</button>
+          <button class="btn-confirm-combat" (click)="confirmHandTopBottom()" [disabled]="handTopBottomStep !== 2">Confirm</button>
         </div>
       </div>
     }
@@ -641,12 +641,12 @@
 
     @if (choosingGraveyardCards) {
       <div class="combat-banner permanent-choice-banner">
-        <span>{{ graveyardChoicePrompt }} ({{ graveyardChoiceSelectedIds().size }}/{{ graveyardChoiceMaxCount }} selected)</span>
+        <span>{{ multiGraveyardPrompt }} ({{ graveyardChoiceSelectedIds().size }}/{{ graveyardChoiceMaxCount }} selected)</span>
         <button class="btn-confirm-combat" (click)="confirmGraveyardCardChoice()">Confirm</button>
       </div>
       <div class="graveyard-choice-overlay">
         <div class="graveyard-choice-cards">
-          @for (card of graveyardChoiceCards; track $index) {
+          @for (card of multiGraveyardCards; track $index) {
             <app-card-display
               [card]="card"
               class="graveyard-choice-card"
