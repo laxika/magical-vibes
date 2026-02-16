@@ -57,7 +57,8 @@ public enum CardSubtype {
     GNOME("Gnome"),
     MERCENARY("Mercenary"),
     ZOMBIE("Zombie"),
-    CROCODILE("Crocodile");
+    CROCODILE("Crocodile"),
+    IMP("Imp");
 
     @Getter
     private final String displayName;
