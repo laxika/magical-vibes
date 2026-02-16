@@ -282,6 +282,17 @@ public class GameService {
 
                 effectResolutionService.resolveEffects(gameData, entry);
 
+                // Rule 723.1b: "End the turn" exiles the resolving spell itself
+                if (gameData.endTurnRequested) {
+                    gameData.endTurnRequested = false;
+                    if (entry.getEntryType() == StackEntryType.SORCERY_SPELL
+                            || entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
+                        gameData.playerExiledCards.get(entry.getControllerId()).add(entry.getCard());
+                    }
+                    gameBroadcastService.broadcastGameState(gameData);
+                    return;
+                }
+
                 if (entry.getEntryType() == StackEntryType.SORCERY_SPELL
                         || entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
                     boolean shuffled = entry.getEffectsToResolve().stream()
