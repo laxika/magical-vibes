@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
@@ -927,7 +928,8 @@ public class GameService {
             UUID effectiveTargetId = targetPermanentId;
             if (effectiveTargetId == null) {
                 boolean needsSelfTarget = abilityEffects.stream().anyMatch(e ->
-                        e instanceof RegenerateEffect || e instanceof BoostSelfEffect || e instanceof UntapSelfEffect);
+                        e instanceof RegenerateEffect || e instanceof BoostSelfEffect || e instanceof UntapSelfEffect
+                                || e instanceof AnimateSelfEffect);
                 if (needsSelfTarget) {
                     effectiveTargetId = permanent.getId();
                 }

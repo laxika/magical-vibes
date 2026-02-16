@@ -58,6 +58,7 @@ public enum CardSubtype {
     MERCENARY("Mercenary"),
     ZOMBIE("Zombie"),
     CROCODILE("Crocodile"),
+    CONSTRUCT("Construct"),
     IMP("Imp");
 
     @Getter
