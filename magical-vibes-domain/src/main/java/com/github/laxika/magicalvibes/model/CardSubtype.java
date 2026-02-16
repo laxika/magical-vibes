@@ -59,7 +59,8 @@ public enum CardSubtype {
     ZOMBIE("Zombie"),
     CROCODILE("Crocodile"),
     CONSTRUCT("Construct"),
-    IMP("Imp");
+    IMP("Imp"),
+    VEDALKEN("Vedalken");
 
     @Getter
     private final String displayName;

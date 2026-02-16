@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -67,6 +68,12 @@ public class UserInputHandlerService {
             throw new IllegalStateException("Not your turn to choose");
         }
 
+        // Mana color choice (Chromatic Star, etc.)
+        if (gameData.colorChoiceContext instanceof ColorChoiceContext.ManaColorChoice ctx) {
+            handleManaColorChosen(gameData, player, colorName, ctx);
+            return;
+        }
+
         // Text-changing effects (Mind Bend, etc.) — two-step color/land-type choice
         if (gameData.colorChoiceContext instanceof ColorChoiceContext.TextChangeFromWord ctx) {
             handleTextChangeFromWordChosen(gameData, player, colorName, ctx);
@@ -100,6 +107,30 @@ public class UserInputHandlerService {
         }
 
         gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    void handleManaColorChosen(GameData gameData, Player player, String colorName, ColorChoiceContext.ManaColorChoice ctx) {
+        ManaColor manaColor = ManaColor.valueOf(colorName);
+
+        gameData.colorChoiceContext = null;
+        gameData.awaitingInput = null;
+        gameData.awaitingColorChoicePlayerId = null;
+
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        manaPool.add(manaColor);
+
+        String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase() + " mana.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} adds one {} mana", gameData.id, player.getUsername(), colorName.toLowerCase());
+
+        gameData.priorityPassedBy.clear();
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            gameBroadcastService.broadcastGameState(gameData);
+            return;
+        }
         gameBroadcastService.broadcastGameState(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }

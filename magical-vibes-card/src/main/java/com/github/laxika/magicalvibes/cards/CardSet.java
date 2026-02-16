@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.a.AscendantEvincar;
 import com.github.laxika.magicalvibes.cards.a.AmbassadorLaquatus;
 import com.github.laxika.magicalvibes.cards.a.ArcanisTheOmnipotent;
 import com.github.laxika.magicalvibes.cards.a.AcademyResearchers;
+import com.github.laxika.magicalvibes.cards.a.AnabaBodyguard;
 import com.github.laxika.magicalvibes.cards.a.AuraGraft;
 import com.github.laxika.magicalvibes.cards.a.AncestorsChosen;
 import com.github.laxika.magicalvibes.cards.a.AngelicBlessing;
@@ -34,6 +35,7 @@ import com.github.laxika.magicalvibes.cards.c.ConsumeSpirit;
 import com.github.laxika.magicalvibes.cards.c.ChangelingWayfinder;
 import com.github.laxika.magicalvibes.cards.c.CephalidConstable;
 import com.github.laxika.magicalvibes.cards.c.ChimericStaff;
+import com.github.laxika.magicalvibes.cards.c.ChromaticStar;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.ChoMannoRevolutionary;
 import com.github.laxika.magicalvibes.cards.c.CloudElemental;
@@ -149,8 +151,10 @@ import com.github.laxika.magicalvibes.cards.t.TreasureHunter;
 import com.github.laxika.magicalvibes.cards.t.TrueBeliever;
 import com.github.laxika.magicalvibes.cards.t.TundraWolves;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.cards.v.VedalkenMastermind;
 import com.github.laxika.magicalvibes.cards.v.VenerableMonk;
 import com.github.laxika.magicalvibes.cards.v.VoiceOfAll;
+import com.github.laxika.magicalvibes.cards.w.WallOfAir;
 import com.github.laxika.magicalvibes.cards.w.WallOfSwords;
 import com.github.laxika.magicalvibes.cards.w.WildGriffin;
 import com.github.laxika.magicalvibes.cards.w.WarriorsHonor;
@@ -178,6 +182,7 @@ public enum CardSet {
             new CardPrinting("10E", "311", AngelsFeather::new),
             new CardPrinting("10E", "312", BottleGnomes::new),
             new CardPrinting("10E", "313", ChimericStaff::new),
+            new CardPrinting("10E", "314", ChromaticStar::new),
             new CardPrinting("10E", "326", IcyManipulator::new),
             new CardPrinting("10E", "6", AuraOfSilence::new),
             new CardPrinting("10E", "7", AvenCloudchaser::new),
@@ -310,6 +315,8 @@ public enum CardSet {
             new CardPrinting("10E", "120", Twincast::new),
             new CardPrinting("10E", "121", Twitch::new),
             new CardPrinting("10E", "122", Unsummon::new),
+            new CardPrinting("10E", "123", VedalkenMastermind::new),
+            new CardPrinting("10E", "124", WallOfAir::new),
             new CardPrinting("10E", "96", PhantomWarrior::new),
             new CardPrinting("10E", "77", CraftyPathmage::new),
             new CardPrinting("10E", "380", Forest::new),
@@ -322,6 +329,7 @@ public enum CardSet {
             new CardPrinting("10E", "270", Hurricane::new),
             new CardPrinting("10E", "274", LlanowarElves::new),
             new CardPrinting("10E", "277", MightOfOaks::new),
+            new CardPrinting("10E", "187", AnabaBodyguard::new),
             new CardPrinting("10E", "376", Mountain::new),
             new CardPrinting("10E", "377", Mountain::new),
             new CardPrinting("10E", "378", Mountain::new),

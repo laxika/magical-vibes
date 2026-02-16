@@ -263,6 +263,7 @@ public class GameQueryService {
             if (!f.colors().contains(target.getCard().getColor())) {
                 String colorNames = f.colors().stream()
                         .map(c -> c.name().toLowerCase())
+                        .sorted()
                         .reduce((a, b) -> a + " or " + b)
                         .orElse("");
                 throw new IllegalStateException("Target must be a " + colorNames + " creature");
