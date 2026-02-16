@@ -485,6 +485,16 @@ public class CombatService {
                             }
                             remaining -= dmg;
                         }
+                        // Trample: excess damage goes to defending player
+                        if (remaining > 0 && gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)) {
+                            if (redirectTarget != null) {
+                                damageRedirectedToGuard += remaining;
+                            } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
+                                damageToDefendingPlayer += remaining;
+                            }
+                            combatDamageDealt.merge(atk, remaining, Integer::sum);
+                            combatDamageDealtToPlayer.merge(atk, remaining, Integer::sum);
+                        }
                     }
                     // First strike / double strike blockers deal damage to attacker
                     for (int blkIdx : blkIndices) {
@@ -560,6 +570,16 @@ public class CombatService {
                             combatDamageDealt.merge(atk, dmg, Integer::sum);
                         }
                         remaining -= dmg;
+                    }
+                    // Trample: excess damage goes to defending player
+                    if (remaining > 0 && gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)) {
+                        if (redirectTarget != null) {
+                            damageRedirectedToGuard += remaining;
+                        } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
+                            damageToDefendingPlayer += remaining;
+                        }
+                        combatDamageDealt.merge(atk, remaining, Integer::sum);
+                        combatDamageDealtToPlayer.merge(atk, remaining, Integer::sum);
                     }
                 }
                 // Surviving blockers deal damage to attacker (skip first-strike-only, allow double strike)
