@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
@@ -207,6 +208,9 @@ public class CombatService {
                 gameData.gameLog.add(triggerLog);
                 log.info("Game {} - {} attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
             }
+
+            // Check for aura-based "when enchanted creature attacks" triggers
+            checkAuraTriggersForCreature(gameData, attacker, EffectSlot.ON_ATTACK);
         }
         if (!gameData.stack.isEmpty()) {
 
@@ -359,6 +363,9 @@ public class CombatService {
                 gameBroadcastService.logAndBroadcast(gameData, triggerLog);
                 log.info("Game {} - {} block trigger pushed onto stack", gameData.id, blocker.getCard().getName());
             }
+
+            // Check for aura-based "when enchanted creature blocks" triggers
+            checkAuraTriggersForCreature(gameData, blocker, EffectSlot.ON_BLOCK);
         }
 
 
@@ -740,6 +747,55 @@ public class CombatService {
                     int maxCount = Math.min(damageDealt, validIds.size());
                     playerInputService.beginMultiPermanentChoice(gameData, attackerId, validIds, maxCount, "Return up to " + damageDealt + " permanent" + (damageDealt > 1 ? "s" : "") + " to their owner's hand.");
                     return;
+                }
+            }
+        }
+    }
+
+    // ===== Aura trigger helpers =====
+
+    private void checkAuraTriggersForCreature(GameData gameData, Permanent creature, EffectSlot slot) {
+        // Find the creature's controller at trigger time
+        UUID creatureControllerId = null;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf != null && bf.contains(creature)) {
+                creatureControllerId = pid;
+                break;
+            }
+        }
+        if (creatureControllerId == null) return;
+
+        for (UUID auraOwnerId : gameData.orderedPlayerIds) {
+            List<Permanent> ownerBattlefield = gameData.playerBattlefields.get(auraOwnerId);
+            if (ownerBattlefield == null) continue;
+            for (Permanent perm : ownerBattlefield) {
+                if (perm.getAttachedTo() != null && perm.getAttachedTo().equals(creature.getId())) {
+                    List<CardEffect> auraEffects = perm.getCard().getEffects(slot);
+                    if (!auraEffects.isEmpty()) {
+                        // Bake the creature's controller into effects that need it
+                        List<CardEffect> effectsForStack = new ArrayList<>();
+                        for (CardEffect effect : auraEffects) {
+                            if (effect instanceof EnchantedCreatureControllerLosesLifeEffect e) {
+                                effectsForStack.add(new EnchantedCreatureControllerLosesLifeEffect(e.amount(), creatureControllerId));
+                            } else {
+                                effectsForStack.add(effect);
+                            }
+                        }
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                auraOwnerId,
+                                perm.getCard().getName() + "'s triggered ability",
+                                effectsForStack,
+                                null,
+                                perm.getId()
+                        ));
+                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                        log.info("Game {} - {} aura trigger pushed onto stack (enchanted creature {})",
+                                gameData.id, perm.getCard().getName(), creature.getCard().getName());
+                    }
                 }
             }
         }

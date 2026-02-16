@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameQueryService;
@@ -35,6 +36,8 @@ public class LifeResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveGainLifeEqualToTargetToughness(gd, entry));
         registry.register(DoubleTargetPlayerLifeEffect.class,
                 (gd, entry, effect) -> resolveDoubleTargetPlayerLife(gd, entry));
+        registry.register(EnchantedCreatureControllerLosesLifeEffect.class,
+                (gd, entry, effect) -> resolveEnchantedCreatureControllerLosesLife(gd, entry, (EnchantedCreatureControllerLosesLifeEffect) effect));
     }
 
     private void resolveGainLife(GameData gameData, UUID controllerId, int amount) {
@@ -95,5 +98,19 @@ public class LifeResolutionService implements EffectHandlerProvider {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {}'s life doubled from {} to {}", gameData.id, playerName, currentLife, newLife);
+    }
+
+    private void resolveEnchantedCreatureControllerLosesLife(GameData gameData, StackEntry entry, EnchantedCreatureControllerLosesLifeEffect effect) {
+        UUID playerId = effect.affectedPlayerId();
+        if (playerId == null) return;
+
+        int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+        gameData.playerLifeTotals.put(playerId, currentLife - effect.amount());
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        String logEntry = playerName + " loses " + effect.amount() + " life (" + entry.getCard().getName() + ").";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, effect.amount(), entry.getCard().getName());
     }
 }
