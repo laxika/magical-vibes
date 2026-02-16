@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetE
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
@@ -108,6 +109,11 @@ public class TargetValidationService {
             if (target == null || !gameQueryService.isCreature(ctx.gameData(), target) || !target.isBlocking()) {
                 throw new IllegalStateException("Target must be a blocking creature");
             }
+        });
+
+        registry.register(ReturnTargetCreatureToHandEffect.class, (ctx, effect) -> {
+            Permanent target = requireBattlefieldTarget(ctx);
+            requireCreature(ctx, target);
         });
 
         registry.register(GainControlOfTargetAuraEffect.class, (ctx, effect) -> {
