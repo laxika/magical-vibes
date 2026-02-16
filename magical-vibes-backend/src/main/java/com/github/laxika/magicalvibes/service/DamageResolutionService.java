@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,8 @@ public class DamageResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveDealXDamageDividedAmongTargetAttackingCreatures(gd, entry));
         registry.register(DealDamageToFlyingAndPlayersEffect.class,
                 (gd, entry, effect) -> resolveDealDamageToFlyingAndPlayers(gd, entry));
+        registry.register(DealXDamageToAnyTargetAndGainXLifeEffect.class,
+                (gd, entry, effect) -> resolveDealXDamageToAnyTargetAndGainXLife(gd, entry));
     }
 
     void resolveDealXDamageToTargetCreature(GameData gameData, StackEntry entry) {
@@ -215,6 +218,71 @@ public class DamageResolutionService implements EffectHandlerProvider {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
             }
         }
+
+        gameHelper.checkWinCondition(gameData);
+    }
+
+    void resolveDealXDamageToAnyTargetAndGainXLife(GameData gameData, StackEntry entry) {
+        UUID targetId = entry.getTargetPermanentId();
+        int xValue = entry.getXValue();
+        UUID controllerId = entry.getControllerId();
+        String cardName = entry.getCard().getName();
+
+        boolean targetIsPlayer = gameData.playerIds.contains(targetId);
+        Permanent targetPermanent = targetIsPlayer ? null : gameQueryService.findPermanentById(gameData, targetId);
+
+        if (!targetIsPlayer && targetPermanent == null) {
+            return;
+        }
+
+        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+            String logEntry = cardName + "'s damage is prevented.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else if (targetIsPlayer) {
+            if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, targetId, entry.getCard().getColor())) {
+                int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, targetId, xValue);
+                effectiveDamage = gameHelper.redirectPlayerDamageToEnchantedCreature(gameData, targetId, effectiveDamage, cardName);
+                int currentLife = gameData.playerLifeTotals.getOrDefault(targetId, 20);
+                gameData.playerLifeTotals.put(targetId, currentLife - effectiveDamage);
+
+                if (effectiveDamage > 0) {
+                    String playerName = gameData.playerIdToName.get(targetId);
+                    String logEntry = playerName + " takes " + effectiveDamage + " damage from " + cardName + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                }
+            }
+        } else {
+            if (!gameQueryService.hasProtectionFrom(gameData, targetPermanent, entry.getCard().getColor())) {
+                int damage = gameHelper.applyCreaturePreventionShield(gameData, targetPermanent, xValue);
+                String logEntry = cardName + " deals " + damage + " damage to " + targetPermanent.getCard().getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} deals {} damage to {}", gameData.id, cardName, damage, targetPermanent.getCard().getName());
+
+                if (damage >= gameQueryService.getEffectiveToughness(gameData, targetPermanent)) {
+                    if (gameQueryService.hasKeyword(gameData, targetPermanent, Keyword.INDESTRUCTIBLE)) {
+                        String indestructibleLog = targetPermanent.getCard().getName() + " is indestructible and survives.";
+                        gameBroadcastService.logAndBroadcast(gameData, indestructibleLog);
+                    } else if (!gameHelper.tryRegenerate(gameData, targetPermanent)) {
+                        gameHelper.removePermanentToGraveyard(gameData, targetPermanent);
+                        String destroyLog = targetPermanent.getCard().getName() + " is destroyed.";
+                        gameBroadcastService.logAndBroadcast(gameData, destroyLog);
+                        log.info("Game {} - {} is destroyed", gameData.id, targetPermanent.getCard().getName());
+                        gameHelper.removeOrphanedAuras(gameData);
+                    }
+                }
+            } else {
+                String logEntry = cardName + "'s damage is prevented.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            }
+        }
+
+        // Life gain is independent of damage prevention — always happens if the spell resolves
+        int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+        gameData.playerLifeTotals.put(controllerId, currentLife + xValue);
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String lifeLog = controllerName + " gains " + xValue + " life.";
+        gameBroadcastService.logAndBroadcast(gameData, lifeLog);
+        log.info("Game {} - {} gains {} life", gameData.id, controllerName, xValue);
 
         gameHelper.checkWinCondition(gameData);
     }
