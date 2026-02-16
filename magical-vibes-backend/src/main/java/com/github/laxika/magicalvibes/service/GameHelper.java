@@ -102,8 +102,6 @@ public class GameHelper {
     }
 
     void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature) {
-        if (!wasCreature) return;
-
         List<CardEffect> deathEffects = dyingCard.getEffects(EffectSlot.ON_DEATH);
         if (deathEffects.isEmpty()) return;
 

@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
@@ -943,8 +944,10 @@ public class GameService {
             // Sacrifice the permanent (for sacrifice-as-cost abilities)
             boolean shouldSacrifice = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeSelfCost);
             if (shouldSacrifice) {
+                boolean wasCreature = isCreature(gameData, permanent);
                 battlefield.remove(permanent);
                 gameData.playerGraveyards.get(playerId).add(permanent.getCard());
+                gameHelper.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature);
             }
 
             String logEntry = player.getUsername() + " activates " + permanent.getCard().getName() + "'s ability.";
@@ -965,36 +968,64 @@ public class GameService {
                 }
             }
 
-            // Push activated ability on stack
-            TargetZone effectiveTargetZone = targetZone;
-            if (ability.isNeedsSpellTarget()) {
-                effectiveTargetZone = TargetZone.STACK;
-            }
-            if (effectiveTargetZone != null && effectiveTargetZone != TargetZone.BATTLEFIELD) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.ACTIVATED_ABILITY,
-                        permanent.getCard(),
-                        playerId,
-                        permanent.getCard().getName() + "'s ability",
-                        snapshotEffects,
-                        effectiveTargetId,
-                        effectiveTargetZone
-                ));
+            // Check if this is a mana ability (CR 605.1a: doesn't target, could produce mana, not loyalty)
+            // Mana abilities resolve immediately without using the stack (CR 605.3a)
+            boolean isManaAbility = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget()
+                    && ability.getLoyaltyCost() == null
+                    && !snapshotEffects.isEmpty()
+                    && snapshotEffects.stream().allMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect);
+
+            if (isManaAbility) {
+                for (CardEffect effect : snapshotEffects) {
+                    if (effect instanceof AwardManaEffect award) {
+                        gameData.playerManaPools.get(playerId).add(award.color());
+                    } else if (effect instanceof AwardAnyColorManaEffect) {
+                        gameData.colorChoiceContext = new ColorChoiceContext.ManaColorChoice(playerId);
+                        gameData.awaitingInput = AwaitingInput.COLOR_CHOICE;
+                        gameData.awaitingColorChoicePlayerId = playerId;
+                        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+                        sessionManager.sendToPlayer(playerId, new ChooseColorMessage(colors, "Choose a color of mana to add."));
+                        log.info("Game {} - Awaiting {} to choose a mana color", gameData.id, player.getUsername());
+                    }
+                }
+                gameHelper.performStateBasedActions(gameData);
+                gameData.priorityPassedBy.clear();
+                if (gameData.awaitingInput == null && !gameData.pendingMayAbilities.isEmpty()) {
+                    playerInputService.processNextMayAbility(gameData);
+                }
+                gameBroadcastService.broadcastGameState(gameData);
             } else {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.ACTIVATED_ABILITY,
-                        permanent.getCard(),
-                        playerId,
-                        permanent.getCard().getName() + "'s ability",
-                        snapshotEffects,
-                        effectiveXValue,
-                        effectiveTargetId,
-                        Map.of()
-                ));
+                // Push activated ability on stack
+                TargetZone effectiveTargetZone = targetZone;
+                if (ability.isNeedsSpellTarget()) {
+                    effectiveTargetZone = TargetZone.STACK;
+                }
+                if (effectiveTargetZone != null && effectiveTargetZone != TargetZone.BATTLEFIELD) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.ACTIVATED_ABILITY,
+                            permanent.getCard(),
+                            playerId,
+                            permanent.getCard().getName() + "'s ability",
+                            snapshotEffects,
+                            effectiveTargetId,
+                            effectiveTargetZone
+                    ));
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.ACTIVATED_ABILITY,
+                            permanent.getCard(),
+                            playerId,
+                            permanent.getCard().getName() + "'s ability",
+                            snapshotEffects,
+                            effectiveXValue,
+                            effectiveTargetId,
+                            Map.of()
+                    ));
+                }
+                gameHelper.performStateBasedActions(gameData);
+                gameData.priorityPassedBy.clear();
+                gameBroadcastService.broadcastGameState(gameData);
             }
-            gameHelper.performStateBasedActions(gameData);
-            gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
         }
     }
 
