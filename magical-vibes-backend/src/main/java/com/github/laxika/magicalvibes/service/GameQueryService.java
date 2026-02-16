@@ -128,7 +128,7 @@ public class GameQueryService {
             boolean targetOnSameBattlefield = bf.contains(target);
             for (Permanent source : bf) {
                 if (source == target) continue;
-                StaticEffectContext context = new StaticEffectContext(source, target, targetOnSameBattlefield);
+                StaticEffectContext context = new StaticEffectContext(source, target, targetOnSameBattlefield, gameData);
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                     StaticEffectHandler handler = staticEffectRegistry.getHandler(effect);
                     if (handler != null) {

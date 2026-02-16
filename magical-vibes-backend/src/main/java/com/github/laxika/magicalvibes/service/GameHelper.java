@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureOnEnterEffect;
@@ -113,6 +114,11 @@ public class GameHelper {
                         List.of(may.wrapped()),
                         dyingCard.getName() + " — " + may.prompt()
                 ));
+            } else if (effect instanceof BoostTargetCreatureEffect) {
+                // Targeted death trigger — queue for target selection after current action completes
+                gameData.pendingDeathTriggerTargets.add(new PermanentChoiceContext.DeathTriggerTarget(
+                        dyingCard, controllerId, new ArrayList<>(List.of(effect))
+                ));
             } else {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -122,6 +128,45 @@ public class GameHelper {
                         new ArrayList<>(List.of(effect))
                 ));
             }
+        }
+    }
+
+    void processNextDeathTriggerTarget(GameData gameData) {
+        while (!gameData.pendingDeathTriggerTargets.isEmpty()) {
+            PermanentChoiceContext.DeathTriggerTarget pending = gameData.pendingDeathTriggerTargets.peekFirst();
+
+            // Collect valid creature targets from all battlefields
+            List<UUID> validTargets = new ArrayList<>();
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) continue;
+                for (Permanent p : battlefield) {
+                    if (gameQueryService.isCreature(gameData, p)) {
+                        validTargets.add(p.getId());
+                    }
+                }
+            }
+
+            if (validTargets.isEmpty()) {
+                // No valid targets — trigger can't go on the stack, skip it
+                gameData.pendingDeathTriggerTargets.removeFirst();
+                String logEntry = pending.dyingCard().getName() + "'s death trigger has no valid targets.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} death trigger skipped (no valid creature targets)",
+                        gameData.id, pending.dyingCard().getName());
+                continue;
+            }
+
+            // Remove from queue and begin permanent choice
+            gameData.pendingDeathTriggerTargets.removeFirst();
+            gameData.permanentChoiceContext = pending;
+            playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
+                    pending.dyingCard().getName() + "'s ability — Choose target creature.");
+
+            String logEntry = pending.dyingCard().getName() + "'s death trigger — choose a target creature.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} death trigger awaiting target selection", gameData.id, pending.dyingCard().getName());
+            return;
         }
     }
 

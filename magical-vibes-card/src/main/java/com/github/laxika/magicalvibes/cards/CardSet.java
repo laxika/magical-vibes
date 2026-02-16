@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.cards.c.CephalidConstable;
 import com.github.laxika.magicalvibes.cards.c.ChimericStaff;
 import com.github.laxika.magicalvibes.cards.c.ChromaticStar;
 import com.github.laxika.magicalvibes.cards.c.CitanulFlute;
+import com.github.laxika.magicalvibes.cards.c.CoatOfArms;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.ChoMannoRevolutionary;
 import com.github.laxika.magicalvibes.cards.c.CloudElemental;
@@ -64,6 +65,7 @@ import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.e.EssenceDrain;
 import com.github.laxika.magicalvibes.cards.e.Evacuation;
 import com.github.laxika.magicalvibes.cards.f.Fear;
+import com.github.laxika.magicalvibes.cards.f.FesteringGoblin;
 import com.github.laxika.magicalvibes.cards.f.FieldMarshal;
 import com.github.laxika.magicalvibes.cards.f.Flashfreeze;
 import com.github.laxika.magicalvibes.cards.f.FogElemental;
@@ -187,6 +189,7 @@ public enum CardSet {
             new CardPrinting("10E", "313", ChimericStaff::new),
             new CardPrinting("10E", "314", ChromaticStar::new),
             new CardPrinting("10E", "315", CitanulFlute::new),
+            new CardPrinting("10E", "316", CoatOfArms::new),
             new CardPrinting("10E", "326", IcyManipulator::new),
             new CardPrinting("10E", "6", AuraOfSilence::new),
             new CardPrinting("10E", "7", AvenCloudchaser::new),
@@ -215,6 +218,7 @@ public enum CardSet {
             new CardPrinting("10E", "140", DuskImp::new),
             new CardPrinting("10E", "141", EssenceDrain::new),
             new CardPrinting("10E", "142", Fear::new),
+            new CardPrinting("10E", "143", FesteringGoblin::new),
             new CardPrinting("10E", "15", FieldMarshal::new),
             new CardPrinting("10E", "16", GhostWarden::new),
             new CardPrinting("10E", "17", GloriousAnthem::new),
