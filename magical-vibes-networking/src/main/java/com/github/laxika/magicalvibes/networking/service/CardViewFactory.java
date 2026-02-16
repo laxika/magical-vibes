@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
@@ -70,9 +71,10 @@ public class CardViewFactory {
         );
     }
 
-    private ActivatedAbilityView createAbilityView(ActivatedAbility ability) {
+    public ActivatedAbilityView createAbilityView(ActivatedAbility ability) {
         boolean targetsPlayer = ability.getEffects().stream()
-                .anyMatch(e -> e instanceof MillTargetPlayerEffect || e instanceof RevealTopCardOfLibraryEffect);
+                .anyMatch(e -> e instanceof MillTargetPlayerEffect || e instanceof RevealTopCardOfLibraryEffect
+                        || e instanceof DealDamageToAnyTargetEffect);
 
         List<String> allowedTargetTypes = new ArrayList<>();
         for (CardEffect effect : ability.getEffects()) {
