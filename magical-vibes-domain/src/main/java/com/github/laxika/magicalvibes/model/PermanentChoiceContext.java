@@ -11,4 +11,6 @@ public sealed interface PermanentChoiceContext {
     record LegendRule(String cardName) implements PermanentChoiceContext {}
 
     record BounceCreature(UUID bouncingPlayerId) implements PermanentChoiceContext {}
+
+    record CopySpellRetarget(UUID copyCardId) implements PermanentChoiceContext {}
 }

@@ -765,7 +765,7 @@
       </div>
 
       <div class="turn-info">
-        <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)" [class.targetable]="choice.targetingForPlayer" [class.stack-targeted]="isStackTargetPlayer(0)" (click)="choice.selectPlayerTarget(0)">
+        <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)" [class.targetable]="choice.targetingForPlayer" [class.stack-targeted]="isStackTargetPlayer(0)" [class.choosable-permanent]="choice.choosingPermanent && choice.choosablePermanentIds().has(getPlayerId(0))" (click)="choice.choosingPermanent && choice.choosablePermanentIds().has(getPlayerId(0)) ? choice.choosePermanent(getPlayerId(0)) : choice.selectPlayerTarget(0)">
           {{ player1Name }}
           <span class="life-total">Life: {{ getLifeTotal(0) }}</span>
           <span class="hand-size">Hand: {{ player1HandSize }}</span>
@@ -778,7 +778,7 @@
           <span class="turn-number">Turn {{ game()?.turnNumber }}</span>
           <span class="vs-label">VS</span>
         </div>
-        <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)" [class.targetable]="choice.targetingForPlayer" [class.stack-targeted]="isStackTargetPlayer(1)" (click)="choice.selectPlayerTarget(1)">
+        <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)" [class.targetable]="choice.targetingForPlayer" [class.stack-targeted]="isStackTargetPlayer(1)" [class.choosable-permanent]="choice.choosingPermanent && choice.choosablePermanentIds().has(getPlayerId(1))" (click)="choice.choosingPermanent && choice.choosablePermanentIds().has(getPlayerId(1)) ? choice.choosePermanent(getPlayerId(1)) : choice.selectPlayerTarget(1)">
           {{ player2Name }}
           <span class="life-total">Life: {{ getLifeTotal(1) }}</span>
           <span class="hand-size">Hand: {{ player2HandSize }}</span>
@@ -837,7 +837,8 @@
                   <div class="stack-entry-wrapper"
                        [class.spell-targetable]="choice.targetingSpell && entry.isSpell"
                        [class.stack-targeted]="isStackTargetSpell(entry)"
-                       (click)="choice.targetingSpell && entry.isSpell ? choice.selectSpellTarget(entry) : null"
+                       [class.choosable-permanent]="choice.choosingPermanent && choice.choosablePermanentIds().has(entry.cardId)"
+                       (click)="choice.choosingPermanent && choice.choosablePermanentIds().has(entry.cardId) ? choice.choosePermanent(entry.cardId) : (choice.targetingSpell && entry.isSpell ? choice.selectSpellTarget(entry) : null)"
                        (mouseenter)="onStackEntryHover(entry); onCardHover(entry.card)"
                        (mouseleave)="onStackEntryHoverEnd(); onCardHoverEnd()">
                     <app-card-display

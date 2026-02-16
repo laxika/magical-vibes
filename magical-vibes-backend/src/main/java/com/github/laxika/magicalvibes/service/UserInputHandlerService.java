@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ColorChoiceContext;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -18,8 +17,24 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
+import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.SpellTypeTargetFilter;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -445,6 +460,24 @@ public class UserInputHandlerService {
             gameHelper.performStateBasedActions(gameData);
 
             turnProgressionService.resolveAutoPass(gameData);
+        } else if (context instanceof PermanentChoiceContext.CopySpellRetarget retarget) {
+            StackEntry copyEntry = null;
+            for (StackEntry se : gameData.stack) {
+                if (se.getCard().getId().equals(retarget.copyCardId())) {
+                    copyEntry = se;
+                    break;
+                }
+            }
+            if (copyEntry == null) {
+                log.info("Game {} - Copy no longer on stack for retarget", gameData.id);
+            } else {
+                copyEntry.setTargetPermanentId(permanentId);
+                String logMsg = "Copy of " + copyEntry.getCard().getName() + " now targets " + getTargetDisplayName(gameData, permanentId) + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                log.info("Game {} - Copy retargeted to {}", gameData.id, getTargetDisplayName(gameData, permanentId));
+            }
+
+            turnProgressionService.resolveAutoPass(gameData);
         } else if (gameData.pendingAuraCard != null) {
             Card auraCard = gameData.pendingAuraCard;
             gameData.pendingAuraCard = null;
@@ -720,6 +753,13 @@ public class UserInputHandlerService {
             return;
         }
 
+        // Copy spell retarget — choose new targets for a copied spell
+        boolean isCopySpellRetarget = ability.effects().stream().anyMatch(e -> e instanceof CopySpellEffect);
+        if (isCopySpellRetarget) {
+            handleCopySpellRetargetChoice(gameData, player, accepted, ability);
+            return;
+        }
+
         // Clone copy creature effect — handled separately (not via the stack)
         boolean isCloneCopy = ability.effects().stream().anyMatch(e -> e instanceof CopyCreatureOnEnterEffect);
         if (isCloneCopy) {
@@ -837,6 +877,187 @@ public class UserInputHandlerService {
             gameBroadcastService.broadcastGameState(gameData);
             turnProgressionService.resolveAutoPass(gameData);
         }
+    }
+
+    void handleCopySpellRetargetChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        if (!accepted) {
+            String logEntry = player.getUsername() + " keeps the original targets for the copy.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines to retarget copy", gameData.id, player.getUsername());
+
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && gameData.awaitingInput == null) {
+                gameData.priorityPassedBy.clear();
+                gameBroadcastService.broadcastGameState(gameData);
+                turnProgressionService.resolveAutoPass(gameData);
+            }
+            return;
+        }
+
+        // Find the copy on the stack
+        UUID copyCardId = ability.targetCardId();
+        StackEntry copyEntry = null;
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(copyCardId)) {
+                copyEntry = se;
+                break;
+            }
+        }
+
+        if (copyEntry == null) {
+            log.info("Game {} - Copy no longer on stack for retarget", gameData.id);
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && gameData.awaitingInput == null) {
+                gameData.priorityPassedBy.clear();
+                gameBroadcastService.broadcastGameState(gameData);
+                turnProgressionService.resolveAutoPass(gameData);
+            }
+            return;
+        }
+
+        Card copiedCard = copyEntry.getCard();
+        List<UUID> validTargets = new ArrayList<>();
+
+        if (copiedCard.isNeedsSpellTarget()) {
+            // Targets a spell on the stack
+            SpellTypeTargetFilter spellFilter = copiedCard.getTargetFilter() instanceof SpellTypeTargetFilter stf ? stf : null;
+            for (StackEntry se : gameData.stack) {
+                if (se.getCard().getId().equals(copyCardId)) continue; // exclude the copy itself
+                if (spellFilter != null && !spellFilter.spellTypes().contains(se.getEntryType())) continue;
+                validTargets.add(se.getCard().getId());
+            }
+        } else if (copiedCard.isNeedsTarget()) {
+            List<CardEffect> effects = copyEntry.getEffectsToResolve();
+
+            // Check if it targets a player only
+            boolean targetsPlayer = isPlayerTargetingEffects(effects);
+            if (targetsPlayer) {
+                validTargets.addAll(gameData.orderedPlayerIds);
+            } else {
+                // Determine targeting category from effects
+                boolean targetsAnyPermanent = false;
+                boolean targetsEnchantmentOnly = false;
+                boolean targetsCreatureOrPlayer = false;
+                boolean requiresAttacking = false;
+                Set<CardType> configuredTargetTypes = null;
+
+                for (CardEffect effect : effects) {
+                    if (effect instanceof ReturnTargetPermanentToHandEffect) {
+                        targetsAnyPermanent = true;
+                        break;
+                    }
+                    if (effect instanceof GainControlOfTargetAuraEffect) {
+                        targetsEnchantmentOnly = true;
+                        break;
+                    }
+                    if (effect instanceof DealXDamageToAnyTargetAndGainXLifeEffect
+                            || effect instanceof PreventDamageToTargetEffect) {
+                        targetsCreatureOrPlayer = true;
+                        break;
+                    }
+                    if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
+                        requiresAttacking = true;
+                        break;
+                    }
+                    if (effect instanceof DestroyTargetPermanentEffect dte) {
+                        configuredTargetTypes = dte.targetTypes();
+                        break;
+                    }
+                    if (effect instanceof TapTargetPermanentEffect tpe) {
+                        configuredTargetTypes = tpe.allowedTypes();
+                        break;
+                    }
+                }
+
+                // "Any target" spells can also target players
+                if (targetsCreatureOrPlayer) {
+                    validTargets.addAll(gameData.orderedPlayerIds);
+                }
+
+                // Add matching permanents from all battlefields
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                    if (battlefield == null) continue;
+                    for (Permanent p : battlefield) {
+                        if (targetsAnyPermanent) {
+                            validTargets.add(p.getId());
+                        } else if (targetsEnchantmentOnly) {
+                            if (p.getCard().getType() == CardType.ENCHANTMENT && p.getAttachedTo() != null) {
+                                validTargets.add(p.getId());
+                            }
+                        } else if (configuredTargetTypes != null) {
+                            if (configuredTargetTypes.contains(p.getCard().getType())) {
+                                validTargets.add(p.getId());
+                            }
+                        } else if (requiresAttacking) {
+                            if (gameQueryService.isCreature(gameData, p) && p.isAttacking()) {
+                                validTargets.add(p.getId());
+                            }
+                        } else {
+                            // Default: creature targeting (including "any target" which also adds players above)
+                            if (gameQueryService.isCreature(gameData, p)) {
+                                validTargets.add(p.getId());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (validTargets.isEmpty()) {
+            String logEntry = "No valid targets available for the copy.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - No valid targets for copy retarget", gameData.id);
+
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && gameData.awaitingInput == null) {
+                gameData.priorityPassedBy.clear();
+                gameBroadcastService.broadcastGameState(gameData);
+                turnProgressionService.resolveAutoPass(gameData);
+            }
+            return;
+        }
+
+        gameData.permanentChoiceContext = new PermanentChoiceContext.CopySpellRetarget(copyCardId);
+        playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
+                "Choose a new target for the copy of " + copiedCard.getName() + ".");
+    }
+
+    private boolean isPlayerTargetingEffects(List<CardEffect> effects) {
+        for (CardEffect effect : effects) {
+            if (effect instanceof ChooseCardsFromTargetHandToTopOfLibraryEffect
+                    || effect instanceof DoubleTargetPlayerLifeEffect
+                    || effect instanceof ExtraTurnEffect
+                    || effect instanceof LookAtHandEffect
+                    || effect instanceof MillTargetPlayerEffect
+                    || effect instanceof ReturnArtifactsTargetPlayerOwnsToHandEffect
+                    || effect instanceof ShuffleGraveyardIntoLibraryEffect) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    String getTargetDisplayName(GameData gameData, UUID targetId) {
+        // Check if it's a player
+        String playerName = gameData.playerIdToName.get(targetId);
+        if (playerName != null) return playerName;
+
+        // Check stack entries
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(targetId)) return se.getCard().getName();
+        }
+
+        // Check battlefield permanents
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (p.getId().equals(targetId)) return p.getCard().getName();
+            }
+        }
+
+        return targetId.toString();
     }
 
     void handleLibraryCardsReordered(GameData gameData, Player player, List<Integer> cardOrder) {
