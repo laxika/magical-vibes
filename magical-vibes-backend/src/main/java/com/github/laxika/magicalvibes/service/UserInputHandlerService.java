@@ -422,6 +422,22 @@ public class UserInputHandlerService {
             gameHelper.removeOrphanedAuras(gameData);
 
             turnProgressionService.resolveAutoPass(gameData);
+        } else if (context instanceof PermanentChoiceContext.SacrificeCreature sacrificeCreature) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+            if (target == null) {
+                throw new IllegalStateException("Target creature no longer exists");
+            }
+
+            UUID sacrificingPlayerId = sacrificeCreature.sacrificingPlayerId();
+            gameHelper.removePermanentToGraveyard(gameData, target);
+
+            String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
+            String logEntry = playerName + " sacrifices " + target.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} sacrifices {}", gameData.id, playerName, target.getCard().getName());
+
+            gameHelper.performStateBasedActions(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.BounceCreature bounceCreature) {
             Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
             if (target == null) {
