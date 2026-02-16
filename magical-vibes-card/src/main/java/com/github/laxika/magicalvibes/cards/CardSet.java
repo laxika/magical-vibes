@@ -138,12 +138,14 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
 @RequiredArgsConstructor
 public enum CardSet {
 
-    TENTH_EDITION("10E", "Tenth Edition", List.of(
+    TENTH_EDITION("10E", List.of(
             new CardPrinting("10E", "1", AncestorsChosen::new),
             new CardPrinting("10E", "2", AngelOfMercy::new),
             new CardPrinting("10E", "3", AngelicBlessing::new),
@@ -292,15 +294,28 @@ public enum CardSet {
             new CardPrinting("10E", "375", Swamp::new)
     )),
 
-    LORWYN_ECLIPSED("ECL", "Lorwyn Eclipsed", List.of(
+    LORWYN_ECLIPSED("ECL", List.of(
             new CardPrinting("ECL", "1", ChangelingWayfinder::new),
             new CardPrinting("ECL", "2", RooftopPercher::new),
             new CardPrinting("ECL", "3", AdeptWatershaper::new)
     ));
 
+    private static final Map<String, String> setNameRegistry = new ConcurrentHashMap<>();
+
+    public static void registerSetName(String code, String name) {
+        setNameRegistry.put(code, name);
+    }
+
+    public static void clearSetNameRegistry() {
+        setNameRegistry.clear();
+    }
+
     private final String code;
-    private final String name;
     private final List<CardPrinting> printings;
+
+    public String getName() {
+        return setNameRegistry.getOrDefault(code, code);
+    }
 
     public CardPrinting findByCollectorNumber(String collectorNumber) {
         return printings.stream()

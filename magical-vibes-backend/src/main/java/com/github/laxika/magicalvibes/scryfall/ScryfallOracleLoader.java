@@ -61,6 +61,14 @@ public class ScryfallOracleLoader {
             for (CardSet cardSet : CardSet.values()) {
                 Map<String, JsonNode> cardsByCollectorNumber = loadSet(cachePath, cardSet.getCode());
 
+                // Register set name from the first card's set_name field
+                if (!cardsByCollectorNumber.isEmpty()) {
+                    JsonNode firstCard = cardsByCollectorNumber.values().iterator().next();
+                    if (firstCard.has("set_name")) {
+                        CardSet.registerSetName(cardSet.getCode(), firstCard.get("set_name").asText());
+                    }
+                }
+
                 for (CardPrinting printing : cardSet.getPrintings()) {
                     JsonNode cardNode = cardsByCollectorNumber.get(printing.collectorNumber());
                     if (cardNode == null) {
