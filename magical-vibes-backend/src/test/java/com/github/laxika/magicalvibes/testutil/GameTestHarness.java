@@ -20,6 +20,9 @@ import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.LobbyService;
+import com.github.laxika.magicalvibes.service.SpellCastingService;
+import com.github.laxika.magicalvibes.service.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.UserInputHandlerService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import com.github.laxika.magicalvibes.config.JacksonConfig;
 import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader;
@@ -27,8 +30,6 @@ import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
-import com.github.laxika.magicalvibes.model.TurnStep;
 
 public class GameTestHarness {
 
@@ -65,9 +66,17 @@ public class GameTestHarness {
                 gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager, cardViewFactory);
         CombatService combatService = new CombatService(
                 gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager);
+        TurnProgressionService turnProgressionService = new TurnProgressionService(
+                combatService, gameHelper, gameQueryService, gameBroadcastService, playerInputService);
+        SpellCastingService spellCastingService = new SpellCastingService(
+                gameQueryService, gameHelper, gameBroadcastService, turnProgressionService);
+        UserInputHandlerService userInputHandlerService = new UserInputHandlerService(
+                sessionManager, gameQueryService, gameHelper, gameBroadcastService,
+                playerInputService, cardViewFactory, turnProgressionService);
         gameService = new GameService(
                 sessionManager, gameRegistry, gameHelper, gameQueryService, gameBroadcastService,
-                playerInputService, cardViewFactory, effectResolutionService, combatService);
+                playerInputService, cardViewFactory, effectResolutionService, combatService,
+                turnProgressionService, userInputHandlerService, spellCastingService);
         lobbyService = new LobbyService(gameRegistry, gameService);
 
         player1 = new Player(UUID.randomUUID(), "Alice");
