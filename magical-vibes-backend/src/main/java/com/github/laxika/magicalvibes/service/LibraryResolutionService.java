@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffec
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithMVXOrLessToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -62,6 +63,8 @@ public class LibraryResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveSearchLibraryForBasicLandToHand(gd, entry));
         registry.register(SearchLibraryForCardToHandEffect.class,
                 (gd, entry, effect) -> resolveSearchLibraryForCardToHand(gd, entry));
+        registry.register(SearchLibraryForCreatureWithMVXOrLessToHandEffect.class,
+                (gd, entry, effect) -> resolveSearchLibraryForCreatureWithMVXOrLessToHand(gd, entry));
         registry.register(LookAtTopCardsHandTopBottomEffect.class,
                 (gd, entry, effect) -> resolveLookAtTopCardsHandTopBottom(gd, entry, (LookAtTopCardsHandTopBottomEffect) effect));
         registry.register(AjaniUltimateEffect.class,
@@ -294,6 +297,51 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         String logMsg = playerName + " searches their library.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} searching library for any card ({} cards in library)", gameData.id, playerName, allCards.size());
+    }
+
+    void resolveSearchLibraryForCreatureWithMVXOrLessToHand(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+        int maxMV = entry.getXValue();
+
+        if (deck == null || deck.isEmpty()) {
+            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> eligibleCreatures = new ArrayList<>();
+        for (Card card : deck) {
+            if (card.getType() == CardType.CREATURE && card.getManaValue() <= maxMV) {
+                eligibleCreatures.add(card);
+            }
+        }
+
+        if (eligibleCreatures.isEmpty()) {
+            Collections.shuffle(deck);
+            String logMsg = playerName + " searches their library but finds no creature card with mana value " + maxMV + " or less. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - {} searches library, no eligible creatures found (MV <= {})", gameData.id, playerName, maxMV);
+            return;
+        }
+
+        gameData.awaitingLibrarySearchPlayerId = controllerId;
+        gameData.awaitingLibrarySearchCards = eligibleCreatures;
+        gameData.awaitingLibrarySearchReveals = true;
+        gameData.awaitingLibrarySearchCanFailToFind = true;
+        gameData.awaitingInput = AwaitingInput.LIBRARY_SEARCH;
+
+        List<CardView> cardViews = eligibleCreatures.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
+                cardViews,
+                "Search your library for a creature card with mana value " + maxMV + " or less to reveal and put into your hand.",
+                true
+        ));
+
+        String logMsg = playerName + " searches their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} searching library for creature with MV <= {} ({} found)", gameData.id, playerName, maxMV, eligibleCreatures.size());
     }
 
     void resolveAjaniUltimate(GameData gameData, StackEntry entry) {

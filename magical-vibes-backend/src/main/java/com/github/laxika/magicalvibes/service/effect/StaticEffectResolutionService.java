@@ -1,7 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
@@ -9,9 +13,15 @@ import com.github.laxika.magicalvibes.model.effect.BoostNonColorCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOtherCreaturesByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnTappedCreaturesEffect;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 public class StaticEffectResolutionService implements StaticEffectHandlerProvider {
@@ -26,6 +36,8 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         registry.register(BoostOtherCreaturesByColorEffect.class, this::resolveBoostOtherCreaturesByColor);
         registry.register(BoostNonColorCreaturesEffect.class, this::resolveBoostNonColorCreatures);
         registry.register(GrantKeywordToOwnTappedCreaturesEffect.class, this::resolveGrantKeywordToOwnTappedCreatures);
+        registry.register(GrantActivatedAbilityToEnchantedCreatureEffect.class, this::resolveGrantActivatedAbilityToEnchantedCreature);
+        registry.register(BoostBySharedCreatureTypeEffect.class, this::resolveBoostBySharedCreatureType);
     }
 
     private void resolveAnimateNoncreatureArtifacts(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
@@ -90,5 +102,70 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         if (context.targetOnSameBattlefield() && context.target().isTapped()) {
             accumulator.addKeyword(grant.keyword());
         }
+    }
+
+    private void resolveGrantActivatedAbilityToEnchantedCreature(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var grant = (GrantActivatedAbilityToEnchantedCreatureEffect) effect;
+        if (context.source().getAttachedTo() != null
+                && context.source().getAttachedTo().equals(context.target().getId())) {
+            accumulator.addActivatedAbility(grant.ability());
+        }
+    }
+
+    private void resolveBoostBySharedCreatureType(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        Permanent target = context.target();
+        GameData gameData = context.gameData();
+
+        List<CardSubtype> targetTypes = new ArrayList<>(target.getCard().getSubtypes());
+        targetTypes.addAll(target.getGrantedSubtypes());
+        boolean targetIsChangeling = target.hasKeyword(Keyword.CHANGELING);
+
+        if (targetTypes.isEmpty() && !targetIsChangeling) return;
+
+        boolean hasAnimateArtifacts = hasAnimateArtifactEffect(gameData);
+        int count = 0;
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent other : bf) {
+                if (other == target) continue;
+                if (!isEffectivelyCreature(other, hasAnimateArtifacts)) continue;
+
+                List<CardSubtype> otherTypes = new ArrayList<>(other.getCard().getSubtypes());
+                otherTypes.addAll(other.getGrantedSubtypes());
+                boolean otherIsChangeling = other.hasKeyword(Keyword.CHANGELING);
+
+                if (otherTypes.isEmpty() && !otherIsChangeling) continue;
+
+                boolean sharesType = (targetIsChangeling && (otherIsChangeling || !otherTypes.isEmpty()))
+                        || (otherIsChangeling && !targetTypes.isEmpty())
+                        || targetTypes.stream().anyMatch(otherTypes::contains);
+
+                if (sharesType) count++;
+            }
+        }
+
+        accumulator.addPower(count);
+        accumulator.addToughness(count);
+    }
+
+    private boolean isEffectivelyCreature(Permanent permanent, boolean hasAnimateArtifacts) {
+        if (permanent.getCard().getType() == CardType.CREATURE) return true;
+        if (permanent.isAnimatedUntilEndOfTurn()) return true;
+        return hasAnimateArtifacts && permanent.getCard().getType() == CardType.ARTIFACT;
+    }
+
+    private boolean hasAnimateArtifactEffect(GameData gameData) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent source : bf) {
+                for (CardEffect e : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (e instanceof AnimateNoncreatureArtifactsEffect) return true;
+                }
+            }
+        }
+        return false;
     }
 }

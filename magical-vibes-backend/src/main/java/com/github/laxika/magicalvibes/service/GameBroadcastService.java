@@ -90,7 +90,7 @@ public class GameBroadcastService {
                 List<PermanentView> views = new ArrayList<>();
                 for (Permanent p : bf) {
                     GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(data, p);
-                    views.add(permanentViewFactory.create(p, bonus.power(), bonus.toughness(), bonus.keywords(), bonus.animatedCreature()));
+                    views.add(permanentViewFactory.create(p, bonus.power(), bonus.toughness(), bonus.keywords(), bonus.animatedCreature(), bonus.grantedActivatedAbilities()));
                 }
                 battlefields.add(views);
             }
