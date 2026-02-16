@@ -50,6 +50,7 @@ public class ScryfallOracleLoader {
         KEYWORD_MAP.put("Vigilance", Keyword.VIGILANCE);
         KEYWORD_MAP.put("Shroud", Keyword.SHROUD);
         KEYWORD_MAP.put("Changeling", Keyword.CHANGELING);
+        KEYWORD_MAP.put("Fear", Keyword.FEAR);
         KEYWORD_MAP.put("Indestructible", Keyword.INDESTRUCTIBLE);
         KEYWORD_MAP.put("Convoke", Keyword.CONVOKE);
     }

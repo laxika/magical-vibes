@@ -11,6 +11,7 @@ public enum Keyword {
     VIGILANCE,
     SHROUD,
     CHANGELING,
+    FEAR,
     INDESTRUCTIBLE,
     CONVOKE
 }
