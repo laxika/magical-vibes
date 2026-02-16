@@ -37,18 +37,14 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFromGraveyardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
@@ -82,6 +78,7 @@ public class GameService {
     private final TurnProgressionService turnProgressionService;
     private final UserInputHandlerService userInputHandlerService;
     private final SpellCastingService spellCastingService;
+    private final TargetValidationService targetValidationService;
 
     public void passPriority(GameData gameData, Player player) {
         if (gameData.status != GameStatus.RUNNING) {
@@ -822,78 +819,8 @@ public class GameService {
             }
 
             // Validate target for effects that need one
-            for (CardEffect effect : abilityEffects) {
-                if (effect instanceof DealXDamageToTargetCreatureEffect) {
-                    if (targetPermanentId == null) {
-                        throw new IllegalStateException("Ability requires a target");
-                    }
-                    Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
-                    if (target == null) {
-                        throw new IllegalStateException("Invalid target permanent");
-                    }
-                    if (!isCreature(gameData, target)) {
-                        throw new IllegalStateException("Target must be a creature");
-                    }
-                    if (gameQueryService.hasProtectionFrom(gameData, target, permanent.getCard().getColor())) {
-                        throw new IllegalStateException(target.getCard().getName() + " has protection from " + permanent.getCard().getColor().name().toLowerCase());
-                    }
-                }
-                if (effect instanceof TapTargetPermanentEffect tapEffect) {
-                    if (targetPermanentId == null) {
-                        throw new IllegalStateException("Ability requires a target");
-                    }
-                    Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
-                    if (target == null) {
-                        throw new IllegalStateException("Invalid target permanent");
-                    }
-                    if (!tapEffect.allowedTypes().contains(target.getCard().getType())) {
-                        throw new IllegalStateException("Target must be an artifact, creature, or land");
-                    }
-                }
-                if (effect instanceof MillTargetPlayerEffect) {
-                    if (targetPermanentId == null) {
-                        throw new IllegalStateException("Ability requires a target player");
-                    }
-                    if (!gameData.playerIds.contains(targetPermanentId)) {
-                        throw new IllegalStateException("Target must be a player");
-                    }
-                }
-                if (effect instanceof RevealTopCardOfLibraryEffect) {
-                    if (targetPermanentId == null) {
-                        throw new IllegalStateException("Ability requires a target player");
-                    }
-                    if (!gameData.playerIds.contains(targetPermanentId)) {
-                        throw new IllegalStateException("Target must be a player");
-                    }
-                }
-                if (effect instanceof GainControlOfEnchantedTargetEffect) {
-                    if (targetPermanentId == null) {
-                        throw new IllegalStateException("Ability requires a target");
-                    }
-                    Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
-                    if (target == null) {
-                        throw new IllegalStateException("Invalid target permanent");
-                    }
-                    if (!isCreature(gameData, target)) {
-                        throw new IllegalStateException("Target must be a creature");
-                    }
-                }
-                if (effect instanceof ReturnAuraFromGraveyardToBattlefieldEffect) {
-                    if (targetZone != TargetZone.GRAVEYARD) {
-                        throw new IllegalStateException("Ability requires a graveyard target");
-                    }
-                    if (targetPermanentId == null) {
-                        throw new IllegalStateException("Ability requires a target Aura card");
-                    }
-                    Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, targetPermanentId);
-                    if (graveyardCard == null) {
-                        throw new IllegalStateException("Target card not found in any graveyard");
-                    }
-                    if (!graveyardCard.isAura()) {
-                        throw new IllegalStateException("Target card must be an Aura");
-                    }
-                }
-            }
+            targetValidationService.validateEffectTargets(abilityEffects,
+                    new TargetValidationContext(gameData, targetPermanentId, targetZone, permanent.getCard()));
 
             // Generic target filter validation
             if (ability.getTargetFilter() != null && targetPermanentId != null) {

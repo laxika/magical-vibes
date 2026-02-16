@@ -148,7 +148,7 @@ public class GameQueryService {
         return new StaticBonus(power, toughness, accumulator.getKeywords(), accumulator.isAnimatedCreature());
     }
 
-    boolean hasProtectionFrom(GameData gameData, Permanent target, CardColor sourceColor) {
+    public boolean hasProtectionFrom(GameData gameData, Permanent target, CardColor sourceColor) {
         if (sourceColor == null) return false;
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof ProtectionFromColorsEffect protection && protection.colors().contains(sourceColor)) {

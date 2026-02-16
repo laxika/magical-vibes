@@ -13,11 +13,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetZone;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.model.filter.SpellColorTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.SpellTypeTargetFilter;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +35,7 @@ public class SpellCastingService {
     private final GameHelper gameHelper;
     private final GameBroadcastService gameBroadcastService;
     private final TurnProgressionService turnProgressionService;
+    private final TargetValidationService targetValidationService;
 
     void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments) {
         int effectiveXValue = xValue != null ? xValue : 0;
@@ -133,25 +131,8 @@ public class SpellCastingService {
             }
 
             // Effect-specific target validation
-            for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-                if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
-                    if (target == null || !gameQueryService.isCreature(gameData, target)) {
-                        throw new IllegalStateException("Target must be a creature");
-                    }
-                }
-                if (effect instanceof BoostTargetBlockingCreatureEffect) {
-                    if (target == null || !gameQueryService.isCreature(gameData, target) || !target.isBlocking()) {
-                        throw new IllegalStateException("Target must be a blocking creature");
-                    }
-                }
-                if (effect instanceof GainControlOfTargetAuraEffect) {
-                    if (target == null || target.getCard().getType() != CardType.ENCHANTMENT
-                            || !target.getCard().getSubtypes().contains(CardSubtype.AURA)
-                            || target.getAttachedTo() == null) {
-                        throw new IllegalStateException("Target must be an Aura attached to a permanent");
-                    }
-                }
-            }
+            targetValidationService.validateEffectTargets(card.getEffects(EffectSlot.SPELL),
+                    new TargetValidationContext(gameData, targetPermanentId, null, card));
         }
 
         hand.remove(cardIndex);

@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
 import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionService;
 import com.github.laxika.magicalvibes.service.effect.PlayerInteractionResolutionService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectResolutionService;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import com.github.laxika.magicalvibes.config.JacksonConfig;
 import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader;
@@ -96,15 +97,16 @@ public class GameTestHarness {
                 gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager);
         TurnProgressionService turnProgressionService = new TurnProgressionService(
                 combatService, gameHelper, gameQueryService, gameBroadcastService, playerInputService);
+        TargetValidationService targetValidationService = new TargetValidationService(gameQueryService);
         SpellCastingService spellCastingService = new SpellCastingService(
-                gameQueryService, gameHelper, gameBroadcastService, turnProgressionService);
+                gameQueryService, gameHelper, gameBroadcastService, turnProgressionService, targetValidationService);
         UserInputHandlerService userInputHandlerService = new UserInputHandlerService(
                 sessionManager, gameQueryService, gameHelper, gameBroadcastService,
                 playerInputService, cardViewFactory, turnProgressionService);
         gameService = new GameService(
                 sessionManager, gameRegistry, gameHelper, gameQueryService, gameBroadcastService,
                 playerInputService, cardViewFactory, effectResolutionService, combatService,
-                turnProgressionService, userInputHandlerService, spellCastingService);
+                turnProgressionService, userInputHandlerService, spellCastingService, targetValidationService);
         lobbyService = new LobbyService(gameRegistry, gameService);
 
         player1 = new Player(UUID.randomUUID(), "Alice");
