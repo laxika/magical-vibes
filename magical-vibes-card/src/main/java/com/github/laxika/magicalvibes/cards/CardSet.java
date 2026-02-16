@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.cards.c.ChromaticStar;
 import com.github.laxika.magicalvibes.cards.c.CitanulFlute;
 import com.github.laxika.magicalvibes.cards.c.CoatOfArms;
 import com.github.laxika.magicalvibes.cards.c.ColossusOfSardia;
+import com.github.laxika.magicalvibes.cards.c.CompositeGolem;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.ChoMannoRevolutionary;
 import com.github.laxika.magicalvibes.cards.c.CloudElemental;
@@ -193,6 +194,7 @@ public enum CardSet {
             new CardPrinting("10E", "315", CitanulFlute::new),
             new CardPrinting("10E", "316", CoatOfArms::new),
             new CardPrinting("10E", "317", ColossusOfSardia::new),
+            new CardPrinting("10E", "318", CompositeGolem::new),
             new CardPrinting("10E", "326", IcyManipulator::new),
             new CardPrinting("10E", "6", AuraOfSilence::new),
             new CardPrinting("10E", "7", AvenCloudchaser::new),
