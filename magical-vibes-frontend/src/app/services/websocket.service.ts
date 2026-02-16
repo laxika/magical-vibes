@@ -335,6 +335,7 @@ export interface ChooseCardFromLibraryNotification {
   type: MessageType;
   cards: Card[];
   prompt: string;
+  canFailToFind: boolean;
 }
 
 export interface RevealHandNotification {
