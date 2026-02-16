@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.cards.d.DreambornMuse;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.d.Discombobulate;
 import com.github.laxika.magicalvibes.cards.d.Distress;
+import com.github.laxika.magicalvibes.cards.d.DoomedNecromancer;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.e.Evacuation;
 import com.github.laxika.magicalvibes.cards.f.FieldMarshal;
@@ -190,6 +191,7 @@ public enum CardSet {
             new CardPrinting("10E", "134", Deathmark::new),
             new CardPrinting("10E", "135", DiabolicTutor::new),
             new CardPrinting("10E", "136", Distress::new),
+            new CardPrinting("10E", "137", DoomedNecromancer::new),
             new CardPrinting("10E", "139", DrudgeSkeletons::new),
             new CardPrinting("10E", "15", FieldMarshal::new),
             new CardPrinting("10E", "16", GhostWarden::new),
