@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
@@ -49,6 +50,8 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveMakeTargetUnblockable(gd, entry));
         registry.register(TapCreaturesEffect.class,
                 (gd, entry, effect) -> resolveTapCreatures(gd, entry, (TapCreaturesEffect) effect));
+        registry.register(TapOrUntapTargetPermanentEffect.class,
+                (gd, entry, effect) -> resolveTapOrUntapTargetPermanent(gd, entry));
         registry.register(TapTargetCreatureEffect.class,
                 (gd, entry, effect) -> resolveTapTargetPermanent(gd, entry));
         registry.register(TapTargetPermanentEffect.class,
@@ -175,6 +178,25 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         }
 
         log.info("Game {} - {} taps creatures matching filters", gameData.id, entry.getCard().getName());
+    }
+
+    private void resolveTapOrUntapTargetPermanent(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        if (target.isTapped()) {
+            target.untap();
+            String logEntry = entry.getCard().getName() + " untaps " + target.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} untaps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
+        } else {
+            target.tap();
+            String logEntry = entry.getCard().getName() + " taps " + target.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} taps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
+        }
     }
 
     private void resolveTapTargetPermanent(GameData gameData, StackEntry entry) {

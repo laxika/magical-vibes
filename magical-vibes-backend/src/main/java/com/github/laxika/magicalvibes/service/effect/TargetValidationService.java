@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEff
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,14 @@ public class TargetValidationService {
             Permanent target = requireBattlefieldTarget(ctx);
             requireCreature(ctx, target);
             checkProtection(ctx, target);
+        });
+
+        registry.register(TapOrUntapTargetPermanentEffect.class, (ctx, effect) -> {
+            Permanent target = requireBattlefieldTarget(ctx);
+            TapOrUntapTargetPermanentEffect tapOrUntapEffect = (TapOrUntapTargetPermanentEffect) effect;
+            if (!tapOrUntapEffect.allowedTypes().contains(target.getCard().getType())) {
+                throw new IllegalStateException("Target must be an artifact, creature, or land");
+            }
         });
 
         registry.register(TapTargetPermanentEffect.class, (ctx, effect) -> {

@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEff
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.SpellTypeTargetFilter;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -995,6 +996,10 @@ public class UserInputHandlerService {
                     }
                     if (effect instanceof DestroyTargetPermanentEffect dte) {
                         configuredTargetTypes = dte.targetTypes();
+                        break;
+                    }
+                    if (effect instanceof TapOrUntapTargetPermanentEffect toue) {
+                        configuredTargetTypes = toue.allowedTypes();
                         break;
                     }
                     if (effect instanceof TapTargetPermanentEffect tpe) {
