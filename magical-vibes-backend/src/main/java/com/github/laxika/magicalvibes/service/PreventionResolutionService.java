@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
@@ -18,10 +21,24 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-class PreventionResolutionService {
+public class PreventionResolutionService implements EffectHandlerProvider {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+
+    @Override
+    public void registerHandlers(EffectHandlerRegistry registry) {
+        registry.register(PreventDamageToTargetEffect.class,
+                (gd, entry, effect) -> resolvePreventDamageToTarget(gd, entry, (PreventDamageToTargetEffect) effect));
+        registry.register(PreventNextDamageEffect.class,
+                (gd, entry, effect) -> resolvePreventNextDamage(gd, (PreventNextDamageEffect) effect));
+        registry.register(PreventAllCombatDamageEffect.class,
+                (gd, entry, effect) -> resolvePreventAllCombatDamage(gd));
+        registry.register(PreventDamageFromColorsEffect.class,
+                (gd, entry, effect) -> resolvePreventDamageFromColors(gd, (PreventDamageFromColorsEffect) effect));
+        registry.register(PreventNextColorDamageToControllerEffect.class,
+                (gd, entry, effect) -> resolvePreventNextColorDamageToController(gd, entry, (PreventNextColorDamageToControllerEffect) effect));
+    }
 
     void resolvePreventDamageToTarget(GameData gameData, StackEntry entry, PreventDamageToTargetEffect prevent) {
         UUID targetId = entry.getTargetPermanentId();

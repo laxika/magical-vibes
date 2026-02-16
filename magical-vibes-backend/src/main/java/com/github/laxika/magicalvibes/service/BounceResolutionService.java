@@ -1,12 +1,18 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.BounceOwnCreatureOnUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ExcludeSelfTargetFilter;
 import lombok.RequiredArgsConstructor;
@@ -18,12 +24,26 @@ import java.util.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-class BounceResolutionService {
+public class BounceResolutionService implements EffectHandlerProvider {
 
     private final GameHelper gameHelper;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
+
+    @Override
+    public void registerHandlers(EffectHandlerRegistry registry) {
+        registry.register(ReturnSelfToHandEffect.class,
+                (gd, entry, effect) -> resolveReturnSelfToHand(gd, entry));
+        registry.register(ReturnTargetPermanentToHandEffect.class,
+                (gd, entry, effect) -> resolveReturnTargetPermanentToHand(gd, entry));
+        registry.register(ReturnCreaturesToOwnersHandEffect.class,
+                (gd, entry, effect) -> resolveReturnCreaturesToOwnersHand(gd, entry, (ReturnCreaturesToOwnersHandEffect) effect));
+        registry.register(ReturnArtifactsTargetPlayerOwnsToHandEffect.class,
+                (gd, entry, effect) -> resolveReturnArtifactsTargetPlayerOwnsToHand(gd, entry));
+        registry.register(BounceOwnCreatureOnUpkeepEffect.class,
+                (gd, entry, effect) -> resolveBounceOwnCreatureOnUpkeep(gd, entry));
+    }
 
     void resolveReturnSelfToHand(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();

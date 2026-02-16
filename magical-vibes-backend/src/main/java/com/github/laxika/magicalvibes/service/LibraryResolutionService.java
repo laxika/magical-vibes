@@ -1,13 +1,20 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.MillByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
@@ -23,11 +30,31 @@ import java.util.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-class LibraryResolutionService {
+public class LibraryResolutionService implements EffectHandlerProvider {
 
     private final GameBroadcastService gameBroadcastService;
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
+
+    @Override
+    public void registerHandlers(EffectHandlerRegistry registry) {
+        registry.register(ShuffleIntoLibraryEffect.class,
+                (gd, entry, effect) -> resolveShuffleIntoLibrary(gd, entry));
+        registry.register(ShuffleGraveyardIntoLibraryEffect.class,
+                (gd, entry, effect) -> resolveShuffleGraveyardIntoLibrary(gd, entry));
+        registry.register(MillByHandSizeEffect.class,
+                (gd, entry, effect) -> resolveMillByHandSize(gd, entry));
+        registry.register(MillTargetPlayerEffect.class,
+                (gd, entry, effect) -> resolveMillTargetPlayer(gd, entry, (MillTargetPlayerEffect) effect));
+        registry.register(RevealTopCardOfLibraryEffect.class,
+                (gd, entry, effect) -> resolveRevealTopCardOfLibrary(gd, entry));
+        registry.register(ReorderTopCardsOfLibraryEffect.class,
+                (gd, entry, effect) -> resolveReorderTopCardsOfLibrary(gd, entry, (ReorderTopCardsOfLibraryEffect) effect));
+        registry.register(SearchLibraryForBasicLandToHandEffect.class,
+                (gd, entry, effect) -> resolveSearchLibraryForBasicLandToHand(gd, entry));
+        registry.register(LookAtTopCardsHandTopBottomEffect.class,
+                (gd, entry, effect) -> resolveLookAtTopCardsHandTopBottom(gd, entry, (LookAtTopCardsHandTopBottomEffect) effect));
+    }
 
     void resolveShuffleIntoLibrary(GameData gameData, StackEntry entry) {
         List<Card> deck = gameData.playerDecks.get(entry.getControllerId());

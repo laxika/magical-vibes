@@ -67,7 +67,7 @@ public class GameHelper {
         return false;
     }
 
-    void removeOrphanedAuras(GameData gameData) {
+    public void removeOrphanedAuras(GameData gameData) {
         boolean anyRemoved = false;
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -306,7 +306,7 @@ public class GameHelper {
         clonePerm.setCard(copy);
     }
 
-    boolean checkLegendRule(GameData gameData, UUID controllerId) {
+    public boolean checkLegendRule(GameData gameData, UUID controllerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return false;
 
@@ -330,7 +330,7 @@ public class GameHelper {
 
     // ===== ETB pipeline =====
 
-    void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId) {
+    public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId) {
         boolean needsCopyChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof CopyCreatureOnEnterEffect);
         if (needsCopyChoice) {
@@ -531,7 +531,7 @@ public class GameHelper {
 
     // ===== Control =====
 
-    void stealCreature(GameData gameData, UUID newControllerId, Permanent creature) {
+    public void stealCreature(GameData gameData, UUID newControllerId, Permanent creature) {
         UUID originalOwnerId = null;
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
@@ -675,7 +675,7 @@ public class GameHelper {
 
     // ===== Draw =====
 
-    void resolveDrawCard(GameData gameData, UUID playerId) {
+    public void resolveDrawCard(GameData gameData, UUID playerId) {
         UUID replacementController = gameData.drawReplacementTargetToController.get(playerId);
         if (replacementController != null) {
             String playerName = gameData.playerIdToName.get(playerId);

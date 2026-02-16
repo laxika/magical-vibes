@@ -263,7 +263,7 @@ public class GameBroadcastService {
         return totalTax;
     }
 
-    void logAndBroadcast(GameData gameData, String logEntry) {
+    public void logAndBroadcast(GameData gameData, String logEntry) {
         gameData.gameLog.add(logEntry);
     }
 }

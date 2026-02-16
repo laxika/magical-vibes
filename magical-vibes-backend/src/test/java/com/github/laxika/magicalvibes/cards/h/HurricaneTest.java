@@ -31,8 +31,11 @@ class HurricaneTest {
 
     /** A 2/2 flying creature for test purposes. */
     private static Card flyingCreature() {
-        Card card = new Card("Wind Drake", CardType.CREATURE, "{2}{U}", CardColor.BLUE);
-
+        Card card = new Card();
+        card.setName("Wind Drake");
+        card.setType(CardType.CREATURE);
+        card.setManaCost("{2}{U}");
+        card.setColor(CardColor.BLUE);
         card.setPower(2);
         card.setToughness(2);
         card.setKeywords(Set.of(Keyword.FLYING));

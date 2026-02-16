@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -7,6 +9,10 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnArtifactFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,12 +23,30 @@ import java.util.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-class GraveyardReturnResolutionService {
+public class GraveyardReturnResolutionService implements EffectHandlerProvider {
 
     private final GameHelper gameHelper;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
+
+    @Override
+    public void registerHandlers(EffectHandlerRegistry registry) {
+        registry.register(ReturnAuraFromGraveyardToBattlefieldEffect.class,
+                (gd, entry, effect) -> resolveReturnAuraFromGraveyardToBattlefield(gd, entry));
+        registry.register(ReturnCreatureFromGraveyardToBattlefieldEffect.class,
+                (gd, entry, effect) -> resolveReturnCardFromGraveyardToZone(gd, entry, CardType.CREATURE,
+                        GraveyardChoiceDestination.BATTLEFIELD,
+                        "You may return a creature card from your graveyard to the battlefield."));
+        registry.register(ReturnArtifactFromGraveyardToHandEffect.class,
+                (gd, entry, effect) -> resolveReturnCardFromGraveyardToZone(gd, entry, CardType.ARTIFACT,
+                        GraveyardChoiceDestination.HAND,
+                        "You may return an artifact card from your graveyard to your hand."));
+        registry.register(ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect.class,
+                (gd, entry, effect) -> resolveReturnArtifactOrCreatureFromAnyGraveyardToBattlefield(gd, entry));
+        registry.register(ExileCardsFromGraveyardEffect.class,
+                (gd, entry, effect) -> resolveExileCardsFromGraveyard(gd, entry, (ExileCardsFromGraveyardEffect) effect));
+    }
 
     void resolveReturnAuraFromGraveyardToBattlefield(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();

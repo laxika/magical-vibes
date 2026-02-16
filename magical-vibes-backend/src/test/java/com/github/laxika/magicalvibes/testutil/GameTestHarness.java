@@ -11,18 +11,30 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
 import com.github.laxika.magicalvibes.networking.service.StackEntryViewFactory;
+import com.github.laxika.magicalvibes.service.BounceResolutionService;
 import com.github.laxika.magicalvibes.service.CombatService;
+import com.github.laxika.magicalvibes.service.CounterResolutionService;
+import com.github.laxika.magicalvibes.service.DamageResolutionService;
+import com.github.laxika.magicalvibes.service.DestructionResolutionService;
 import com.github.laxika.magicalvibes.service.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
+import com.github.laxika.magicalvibes.service.GraveyardReturnResolutionService;
+import com.github.laxika.magicalvibes.service.LibraryResolutionService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.LobbyService;
+import com.github.laxika.magicalvibes.service.PreventionResolutionService;
 import com.github.laxika.magicalvibes.service.SpellCastingService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.UserInputHandlerService;
+import com.github.laxika.magicalvibes.service.effect.CreatureModResolutionService;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
+import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
+import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionService;
+import com.github.laxika.magicalvibes.service.effect.PlayerInteractionResolutionService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import com.github.laxika.magicalvibes.config.JacksonConfig;
 import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader;
@@ -62,8 +74,21 @@ public class GameTestHarness {
                 sessionManager, cardViewFactory, permanentViewFactory, stackEntryViewFactory, gameQueryService);
         GameHelper gameHelper = new GameHelper(
                 sessionManager, gameRegistry, cardViewFactory, gameQueryService, gameBroadcastService, playerInputService);
-        EffectResolutionService effectResolutionService = new EffectResolutionService(
-                gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager, cardViewFactory);
+        List<EffectHandlerProvider> providers = List.of(
+                new DamageResolutionService(gameHelper, gameQueryService, gameBroadcastService),
+                new DestructionResolutionService(gameHelper, gameQueryService, gameBroadcastService),
+                new LibraryResolutionService(gameBroadcastService, sessionManager, cardViewFactory),
+                new PreventionResolutionService(gameQueryService, gameBroadcastService),
+                new CounterResolutionService(gameBroadcastService),
+                new GraveyardReturnResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),
+                new BounceResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),
+                new LifeResolutionService(gameQueryService, gameBroadcastService),
+                new CreatureModResolutionService(gameQueryService, gameBroadcastService),
+                new PlayerInteractionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager, cardViewFactory),
+                new PermanentControlResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService)
+        );
+        EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper, providers);
+        effectResolutionService.init();
         CombatService combatService = new CombatService(
                 gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager);
         TurnProgressionService turnProgressionService = new TurnProgressionService(

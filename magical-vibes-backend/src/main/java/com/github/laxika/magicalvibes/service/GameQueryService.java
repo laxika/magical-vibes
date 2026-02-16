@@ -32,14 +32,14 @@ import java.util.*;
 @Component
 public class GameQueryService {
 
-    static final List<String> TEXT_CHANGE_COLOR_WORDS = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-    static final List<String> TEXT_CHANGE_LAND_TYPES = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
+    public static final List<String> TEXT_CHANGE_COLOR_WORDS = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+    public static final List<String> TEXT_CHANGE_LAND_TYPES = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
 
     record StaticBonus(int power, int toughness, Set<Keyword> keywords, boolean animatedCreature) {
         static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), false);
     }
 
-    Permanent findPermanentById(GameData gameData, UUID permanentId) {
+    public Permanent findPermanentById(GameData gameData, UUID permanentId) {
         if (permanentId == null) return null;
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -53,7 +53,7 @@ public class GameQueryService {
         return null;
     }
 
-    Card findCardInGraveyardById(GameData gameData, UUID cardId) {
+    public Card findCardInGraveyardById(GameData gameData, UUID cardId) {
         if (cardId == null) return null;
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
@@ -67,7 +67,7 @@ public class GameQueryService {
         return null;
     }
 
-    UUID getOpponentId(GameData gameData, UUID playerId) {
+    public UUID getOpponentId(GameData gameData, UUID playerId) {
         List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);
         return ids.get(0).equals(playerId) ? ids.get(1) : ids.get(0);
     }
@@ -227,7 +227,7 @@ public class GameQueryService {
         return false;
     }
 
-    boolean isEnchanted(GameData gameData, Permanent creature) {
+    public boolean isEnchanted(GameData gameData, Permanent creature) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
@@ -256,7 +256,7 @@ public class GameQueryService {
         return null;
     }
 
-    boolean matchesFilters(GameData gameData, Permanent permanent, Set<TargetFilter> filters) {
+    public boolean matchesFilters(GameData gameData, Permanent permanent, Set<TargetFilter> filters) {
         for (TargetFilter filter : filters) {
             if (filter instanceof WithoutKeywordTargetFilter f) {
                 if (hasKeyword(gameData, permanent, f.keyword())) {

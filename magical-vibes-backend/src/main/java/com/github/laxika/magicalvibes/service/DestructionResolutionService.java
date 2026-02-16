@@ -1,10 +1,15 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllEnchantmentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,11 +20,23 @@ import java.util.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-class DestructionResolutionService {
+public class DestructionResolutionService implements EffectHandlerProvider {
 
     private final GameHelper gameHelper;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+
+    @Override
+    public void registerHandlers(EffectHandlerRegistry registry) {
+        registry.register(DestroyAllCreaturesEffect.class,
+                (gd, entry, effect) -> resolveDestroyAllCreatures(gd, ((DestroyAllCreaturesEffect) effect).cannotBeRegenerated()));
+        registry.register(DestroyAllEnchantmentsEffect.class,
+                (gd, entry, effect) -> resolveDestroyAllEnchantments(gd));
+        registry.register(DestroyTargetPermanentEffect.class,
+                (gd, entry, effect) -> resolveDestroyTargetPermanent(gd, entry, (DestroyTargetPermanentEffect) effect));
+        registry.register(DestroyBlockedCreatureAndSelfEffect.class,
+                (gd, entry, effect) -> resolveDestroyBlockedCreatureAndSelf(gd, entry));
+    }
 
     void resolveDestroyAllCreatures(GameData gameData, boolean cannotBeRegenerated) {
         List<Permanent> toDestroy = new ArrayList<>();

@@ -38,7 +38,11 @@ class LuminesceTest {
     }
 
     private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card(name, CardType.CREATURE, "{1}", color);
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.CREATURE);
+        card.setManaCost("{1}");
+        card.setColor(color);
         card.setPower(power);
         card.setToughness(toughness);
         return card;

@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,9 +19,17 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-class CounterResolutionService {
+public class CounterResolutionService implements EffectHandlerProvider {
 
     private final GameBroadcastService gameBroadcastService;
+
+    @Override
+    public void registerHandlers(EffectHandlerRegistry registry) {
+        registry.register(CounterSpellEffect.class,
+                (gd, entry, effect) -> resolveCounterSpell(gd, entry));
+        registry.register(CounterUnlessPaysEffect.class,
+                (gd, entry, effect) -> resolveCounterUnlessPays(gd, entry, (CounterUnlessPaysEffect) effect));
+    }
 
     void resolveCounterSpell(GameData gameData, StackEntry entry) {
         UUID targetCardId = entry.getTargetPermanentId();

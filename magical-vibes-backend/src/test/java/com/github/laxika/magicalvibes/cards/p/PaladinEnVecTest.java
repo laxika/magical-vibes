@@ -49,14 +49,22 @@ class PaladinEnVecTest {
     }
 
     private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card(name, CardType.CREATURE, "{1}", color);
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.CREATURE);
+        card.setManaCost("{1}");
+        card.setColor(color);
         card.setPower(power);
         card.setToughness(toughness);
         return card;
     }
 
     private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card(name, CardType.INSTANT, manaCost, color);
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.INSTANT);
+        card.setManaCost(manaCost);
+        card.setColor(color);
         card.setNeedsTarget(true);
         return card;
     }
@@ -387,7 +395,11 @@ class PaladinEnVecTest {
         paladin.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(paladin);
 
-        Card blackAura = new Card("Unholy Strength", CardType.ENCHANTMENT, "{B}", CardColor.BLACK);
+        Card blackAura = new Card();
+        blackAura.setName("Unholy Strength");
+        blackAura.setType(CardType.ENCHANTMENT);
+        blackAura.setManaCost("{B}");
+        blackAura.setColor(CardColor.BLACK);
         blackAura.setSubtypes(List.of(CardSubtype.AURA));
         blackAura.setNeedsTarget(true);
         harness.setHand(player1, List.of(blackAura));

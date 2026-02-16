@@ -29,7 +29,7 @@ public class PlayerInputService {
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
 
-    void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
+    public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         gameData.awaitingInput = AwaitingInput.CARD_CHOICE;
         gameData.awaitingCardChoicePlayerId = playerId;
         gameData.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
@@ -39,7 +39,7 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a card from hand", gameData.id, playerName);
     }
 
-    void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID targetPermanentId) {
+    public void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID targetPermanentId) {
         gameData.awaitingInput = AwaitingInput.TARGETED_CARD_CHOICE;
         gameData.awaitingCardChoicePlayerId = playerId;
         gameData.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
@@ -50,7 +50,7 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a card from hand (targeted)", gameData.id, playerName);
     }
 
-    void beginPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, String prompt) {
+    public void beginPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, String prompt) {
         gameData.awaitingInput = AwaitingInput.PERMANENT_CHOICE;
         gameData.awaitingPermanentChoicePlayerId = playerId;
         gameData.awaitingPermanentChoiceValidIds = new HashSet<>(validIds);
@@ -104,7 +104,7 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a color", gameData.id, playerName);
     }
 
-    void beginDiscardChoice(GameData gameData, UUID playerId) {
+    public void beginDiscardChoice(GameData gameData, UUID playerId) {
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
@@ -120,7 +120,7 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a card to discard", gameData.id, playerName);
     }
 
-    void beginRevealedHandChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId, List<Integer> validIndices, String prompt) {
+    public void beginRevealedHandChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId, List<Integer> validIndices, String prompt) {
         gameData.awaitingInput = AwaitingInput.REVEALED_HAND_CHOICE;
         gameData.awaitingCardChoicePlayerId = choosingPlayerId;
         gameData.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
