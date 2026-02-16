@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -35,6 +37,25 @@ public class TurnResolutionService implements EffectHandlerProvider {
     public void registerHandlers(EffectHandlerRegistry registry) {
         registry.register(EndTurnEffect.class,
                 (gd, entry, effect) -> resolveEndTurn(gd, entry));
+        registry.register(ExtraTurnEffect.class,
+                (gd, entry, effect) -> resolveExtraTurn(gd, entry, (ExtraTurnEffect) effect));
+    }
+
+    private void resolveExtraTurn(GameData gameData, StackEntry entry, ExtraTurnEffect effect) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            return;
+        }
+
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+        for (int i = 0; i < effect.count(); i++) {
+            gameData.extraTurns.addFirst(targetPlayerId);
+        }
+
+        String logEntry = playerName + " takes " + effect.count() + " extra turn"
+                + (effect.count() > 1 ? "s" : "") + " after this one.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} granted {} extra turn(s)", gameData.id, playerName, effect.count());
     }
 
     private void resolveEndTurn(GameData gameData, StackEntry entry) {

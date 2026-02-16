@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
 import java.time.LocalDateTime;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -96,6 +98,7 @@ public class GameData {
     public final Map<UUID, UUID> stolenCreatures = new ConcurrentHashMap<>();
     public final Set<UUID> enchantmentDependentStolenCreatures = ConcurrentHashMap.newKeySet();
     public boolean endTurnRequested;
+    public final Deque<UUID> extraTurns = new ArrayDeque<>();
     public int lastBroadcastedLogSize = 0;
 
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {

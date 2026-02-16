@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.Card;
@@ -125,6 +124,10 @@ class TimeStopTest {
         harness.setHand(player1, List.of(new TimeStop()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
         harness.castCreature(player2, 0);
         harness.passPriority(player2);
         harness.castInstant(player1, 0, null);
@@ -150,8 +153,8 @@ class TimeStopTest {
     @Test
     @DisplayName("Resolving exiles multiple spells on the stack")
     void exilesMultipleSpellsOnStack() {
-        // Player2 casts a creature, player1 casts Boomerang targeting it, player2 casts another creature,
-        // then player1 casts Time Stop
+        // Player2 casts a creature, lets it resolve, casts another creature,
+        // then player1 responds with Time Stop
         GrizzlyBears bears1 = new GrizzlyBears();
         SerraAngel angel = new SerraAngel();
         harness.setHand(player2, List.of(bears1, angel));
@@ -160,6 +163,10 @@ class TimeStopTest {
 
         harness.setHand(player1, List.of(new TimeStop()));
         harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
         // Cast bears, then angel
         harness.castCreature(player2, 0);
@@ -196,6 +203,7 @@ class TimeStopTest {
         GrizzlyBears bears = new GrizzlyBears();
         harness.addToBattlefield(player1, bears);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
 
         GameData gd = harness.getGameData();
         // Simulate a creature that is attacking
@@ -205,6 +213,7 @@ class TimeStopTest {
         harness.setHand(player2, List.of(new TimeStop()));
         harness.addMana(player2, ManaColor.BLUE, 6);
 
+        harness.passPriority(player1);
         harness.castInstant(player2, 0, null);
         harness.passBothPriorities();
 
@@ -243,13 +252,14 @@ class TimeStopTest {
         harness.setHand(player1, List.of(new TimeStop()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
+        harness.castInstant(player1, 0, null);
+
+        // Simulate a pending may ability that exists when Time Stop resolves
         GameData gd = harness.getGameData();
-        // Simulate a pending may ability
         gd.pendingMayAbilities.add(new com.github.laxika.magicalvibes.model.PendingMayAbility(
                 new GrizzlyBears(), player1.getId(), List.of(), "Do something?"
         ));
 
-        harness.castInstant(player1, 0, null);
         harness.passBothPriorities();
 
         assertThat(gd.pendingMayAbilities).isEmpty();
@@ -279,6 +289,10 @@ class TimeStopTest {
 
         harness.setHand(player1, List.of(new TimeStop()));
         harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
         harness.castCreature(player2, 0);
         harness.passPriority(player2);
