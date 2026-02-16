@@ -152,14 +152,14 @@ public class TurnProgressionService {
             return;
         }
 
-        // Check for Plagiarize replacement effect
+        // Check for draw redirect replacement effect
         UUID replacementController = gameData.drawReplacementTargetToController.get(activePlayerId);
         if (replacementController != null) {
             String playerName = gameData.playerIdToName.get(activePlayerId);
             String controllerName = gameData.playerIdToName.get(replacementController);
-            String logEntry = playerName + "'s draw is replaced by Plagiarize — " + controllerName + " draws a card instead.";
+            String logEntry = playerName + "'s draw is redirected — " + controllerName + " draws a card instead.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - Plagiarize replaces {}'s draw step draw, {} draws instead",
+            log.info("Game {} - Draw redirect: {}'s draw step draw goes to {} instead",
                     gameData.id, playerName, controllerName);
             gameHelper.resolveDrawCard(gameData, replacementController);
             return;

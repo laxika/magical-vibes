@@ -680,9 +680,9 @@ public class GameHelper {
         if (replacementController != null) {
             String playerName = gameData.playerIdToName.get(playerId);
             String controllerName = gameData.playerIdToName.get(replacementController);
-            String logEntry = playerName + "'s draw is replaced by Plagiarize — " + controllerName + " draws a card instead.";
+            String logEntry = playerName + "'s draw is redirected — " + controllerName + " draws a card instead.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - Plagiarize replaces {}'s draw, {} draws instead",
+            log.info("Game {} - Draw redirect: {}'s draw goes to {} instead",
                     gameData.id, playerName, controllerName);
             performDrawCard(gameData, replacementController);
             return;

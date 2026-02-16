@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PlagiarizeEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectDrawsEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
@@ -57,8 +57,8 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
                 (gd, entry, effect) -> resolveChooseCardsFromTargetHandToTopOfLibrary(gd, entry, (ChooseCardsFromTargetHandToTopOfLibraryEffect) effect));
         registry.register(ChangeColorTextEffect.class,
                 (gd, entry, effect) -> resolveChangeColorText(gd, entry));
-        registry.register(PlagiarizeEffect.class,
-                (gd, entry, effect) -> resolvePlagiarize(gd, entry));
+        registry.register(RedirectDrawsEffect.class,
+                (gd, entry, effect) -> resolveRedirectDraws(gd, entry));
     }
 
     private void resolveOpponentMayPlayCreature(GameData gameData, UUID controllerId) {
@@ -183,23 +183,24 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
         log.info("Game {} - Awaiting {} to choose a color word or basic land type for text change", gameData.id, playerName);
     }
 
-    private void resolvePlagiarize(GameData gameData, StackEntry entry) {
+    private void resolveRedirectDraws(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         UUID controllerId = entry.getControllerId();
 
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
-            log.warn("Game {} - Plagiarize target player not found", gameData.id);
+            log.warn("Game {} - RedirectDraws target player not found", gameData.id);
             return;
         }
 
         gameData.drawReplacementTargetToController.put(targetPlayerId, controllerId);
 
+        String cardName = entry.getCard().getName();
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         String controllerName = gameData.playerIdToName.get(controllerId);
-        String logEntry = "Plagiarize resolves targeting " + targetName
+        String logEntry = cardName + " resolves targeting " + targetName
                 + ". Until end of turn, " + targetName + "'s draws are replaced.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - Plagiarize: {}'s draws replaced by {} until end of turn",
-                gameData.id, targetName, controllerName);
+        log.info("Game {} - {}: {}'s draws replaced by {} until end of turn",
+                gameData.id, cardName, targetName, controllerName);
     }
 }
