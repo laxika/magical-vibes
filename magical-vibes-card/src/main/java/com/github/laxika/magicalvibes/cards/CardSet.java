@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.cards.b.BeaconOfImmortality;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfUnrest;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.b.BogWraith;
+import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.c.ContaminatedBond;
 import com.github.laxika.magicalvibes.cards.c.ConsumeSpirit;
 import com.github.laxika.magicalvibes.cards.c.ChangelingWayfinder;
@@ -166,6 +167,7 @@ public enum CardSet {
             new CardPrinting("10E", "4", AngelicChorus::new),
             new CardPrinting("10E", "5", AngelicWall::new),
             new CardPrinting("10E", "311", AngelsFeather::new),
+            new CardPrinting("10E", "312", BottleGnomes::new),
             new CardPrinting("10E", "326", IcyManipulator::new),
             new CardPrinting("10E", "6", AuraOfSilence::new),
             new CardPrinting("10E", "7", AvenCloudchaser::new),
