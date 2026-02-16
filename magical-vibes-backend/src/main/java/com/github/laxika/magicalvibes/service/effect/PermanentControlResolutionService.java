@@ -268,4 +268,5 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         gameHelper.stealCreature(gameData, entry.getControllerId(), target);
         gameData.enchantmentDependentStolenCreatures.add(target.getId());
     }
+
 }

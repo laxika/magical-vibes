@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -59,6 +60,8 @@ public class LibraryResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveReorderTopCardsOfLibrary(gd, entry, (ReorderTopCardsOfLibraryEffect) effect));
         registry.register(SearchLibraryForBasicLandToHandEffect.class,
                 (gd, entry, effect) -> resolveSearchLibraryForBasicLandToHand(gd, entry));
+        registry.register(SearchLibraryForCardToHandEffect.class,
+                (gd, entry, effect) -> resolveSearchLibraryForCardToHand(gd, entry));
         registry.register(LookAtTopCardsHandTopBottomEffect.class,
                 (gd, entry, effect) -> resolveLookAtTopCardsHandTopBottom(gd, entry, (LookAtTopCardsHandTopBottomEffect) effect));
         registry.register(AjaniUltimateEffect.class,
@@ -246,17 +249,51 @@ public class LibraryResolutionService implements EffectHandlerProvider {
 
         gameData.awaitingLibrarySearchPlayerId = controllerId;
         gameData.awaitingLibrarySearchCards = basicLands;
+        gameData.awaitingLibrarySearchReveals = true;
+        gameData.awaitingLibrarySearchCanFailToFind = true;
         gameData.awaitingInput = AwaitingInput.LIBRARY_SEARCH;
 
         List<CardView> cardViews = basicLands.stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
                 cardViews,
-                "Search your library for a basic land card to put into your hand."
+                "Search your library for a basic land card to put into your hand.",
+                true
         ));
 
         String logMsg = playerName + " searches their library.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} searching library for a basic land ({} found)", gameData.id, playerName, basicLands.size());
+    }
+
+    void resolveSearchLibraryForCardToHand(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        if (deck == null || deck.isEmpty()) {
+            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> allCards = new ArrayList<>(deck);
+
+        gameData.awaitingLibrarySearchPlayerId = controllerId;
+        gameData.awaitingLibrarySearchCards = allCards;
+        gameData.awaitingLibrarySearchReveals = false;
+        gameData.awaitingLibrarySearchCanFailToFind = false;
+        gameData.awaitingInput = AwaitingInput.LIBRARY_SEARCH;
+
+        List<CardView> cardViews = allCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
+                cardViews,
+                "Search your library for a card to put into your hand.",
+                false
+        ));
+
+        String logMsg = playerName + " searches their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} searching library for any card ({} cards in library)", gameData.id, playerName, allCards.size());
     }
 
     void resolveAjaniUltimate(GameData gameData, StackEntry entry) {

@@ -104,6 +104,7 @@ export class GameChoiceService {
   searchingLibrary = false;
   librarySearchCards: Card[] = [];
   librarySearchPrompt = '';
+  librarySearchCanFailToFind = false;
 
   // --- Library reorder state ---
   reorderingLibrary = false;
@@ -210,6 +211,7 @@ export class GameChoiceService {
     this.searchingLibrary = true;
     this.librarySearchCards = msg.cards;
     this.librarySearchPrompt = msg.prompt;
+    this.librarySearchCanFailToFind = msg.canFailToFind;
   }
 
   handleChooseHandTopBottom(msg: ChooseHandTopBottomNotification): void {
@@ -963,6 +965,7 @@ export class GameChoiceService {
     this.searchingLibrary = false;
     this.librarySearchCards = [];
     this.librarySearchPrompt = '';
+    this.librarySearchCanFailToFind = false;
   }
 
   declineLibrarySearch(): void {
@@ -974,6 +977,7 @@ export class GameChoiceService {
     this.searchingLibrary = false;
     this.librarySearchCards = [];
     this.librarySearchPrompt = '';
+    this.librarySearchCanFailToFind = false;
   }
 
   // ========== Library reorder ==========

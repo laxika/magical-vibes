@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ public class DestructionResolutionService implements EffectHandlerProvider {
     private final GameHelper gameHelper;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+    private final PlayerInputService playerInputService;
 
     @Override
     public void registerHandlers(EffectHandlerRegistry registry) {
@@ -36,6 +39,8 @@ public class DestructionResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveDestroyTargetPermanent(gd, entry, (DestroyTargetPermanentEffect) effect));
         registry.register(DestroyBlockedCreatureAndSelfEffect.class,
                 (gd, entry, effect) -> resolveDestroyBlockedCreatureAndSelf(gd, entry));
+        registry.register(SacrificeCreatureEffect.class,
+                (gd, entry, effect) -> resolveSacrificeCreature(gd, entry));
     }
 
     void resolveDestroyAllCreatures(GameData gameData, boolean cannotBeRegenerated) {
@@ -136,6 +141,49 @@ public class DestructionResolutionService implements EffectHandlerProvider {
                 gameData.id, target.getCard().getName(), entry.getCard().getName());
 
         gameHelper.removeOrphanedAuras(gameData);
+    }
+
+    void resolveSacrificeCreature(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+        List<UUID> creatureIds = new ArrayList<>();
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (gameQueryService.isCreature(gameData, p)) {
+                    creatureIds.add(p.getId());
+                }
+            }
+        }
+
+        if (creatureIds.isEmpty()) {
+            String playerName = gameData.playerIdToName.get(targetPlayerId);
+            String logEntry = playerName + " has no creatures to sacrifice.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} has no creatures to sacrifice", gameData.id, playerName);
+            return;
+        }
+
+        if (creatureIds.size() == 1) {
+            // Only one creature — sacrifice it automatically
+            Permanent creature = gameQueryService.findPermanentById(gameData, creatureIds.getFirst());
+            if (creature != null) {
+                gameHelper.removePermanentToGraveyard(gameData, creature);
+                String playerName = gameData.playerIdToName.get(targetPlayerId);
+                String logEntry = playerName + " sacrifices " + creature.getCard().getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} sacrifices {}", gameData.id, playerName, creature.getCard().getName());
+            }
+            return;
+        }
+
+        // Multiple creatures — prompt player to choose
+        gameData.permanentChoiceContext = new PermanentChoiceContext.SacrificeCreature(targetPlayerId);
+        playerInputService.beginPermanentChoice(gameData, targetPlayerId, creatureIds,
+                "Choose a creature to sacrifice.");
     }
 
     void resolveDestroyBlockedCreatureAndSelf(GameData gameData, StackEntry entry) {

@@ -422,6 +422,22 @@ public class UserInputHandlerService {
             gameHelper.removeOrphanedAuras(gameData);
 
             turnProgressionService.resolveAutoPass(gameData);
+        } else if (context instanceof PermanentChoiceContext.SacrificeCreature sacrificeCreature) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+            if (target == null) {
+                throw new IllegalStateException("Target creature no longer exists");
+            }
+
+            UUID sacrificingPlayerId = sacrificeCreature.sacrificingPlayerId();
+            gameHelper.removePermanentToGraveyard(gameData, target);
+
+            String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
+            String logEntry = playerName + " sacrifices " + target.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} sacrifices {}", gameData.id, playerName, target.getCard().getName());
+
+            gameHelper.performStateBasedActions(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.BounceCreature bounceCreature) {
             Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
             if (target == null) {
@@ -950,18 +966,26 @@ public class UserInputHandlerService {
         UUID playerId = player.getId();
         List<Card> searchCards = gameData.awaitingLibrarySearchCards;
 
+        boolean reveals = gameData.awaitingLibrarySearchReveals;
+        boolean canFailToFind = gameData.awaitingLibrarySearchCanFailToFind;
+
         gameData.awaitingInput = null;
         gameData.awaitingLibrarySearchPlayerId = null;
         gameData.awaitingLibrarySearchCards = null;
+        gameData.awaitingLibrarySearchReveals = false;
+        gameData.awaitingLibrarySearchCanFailToFind = false;
 
         List<Card> deck = gameData.playerDecks.get(playerId);
 
         if (cardIndex == -1) {
-            // Player declined (fail to find)
+            // Player declined (fail to find) — only allowed for restricted searches (e.g. basic land)
+            if (!canFailToFind) {
+                throw new IllegalStateException("Cannot fail to find with an unrestricted search");
+            }
             Collections.shuffle(deck);
             String logEntry = player.getUsername() + " chooses not to take a card. Library is shuffled.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} declines to take a basic land from library", gameData.id, player.getUsername());
+            log.info("Game {} - {} declines to take a card from library", gameData.id, player.getUsername());
         } else {
             if (cardIndex < 0 || cardIndex >= searchCards.size()) {
                 throw new IllegalStateException("Invalid card index: " + cardIndex);
@@ -986,7 +1010,12 @@ public class UserInputHandlerService {
             gameData.playerHands.get(playerId).add(chosenCard);
             Collections.shuffle(deck);
 
-            String logEntry = player.getUsername() + " reveals " + chosenCard.getName() + " and puts it into their hand. Library is shuffled.";
+            String logEntry;
+            if (reveals) {
+                logEntry = player.getUsername() + " reveals " + chosenCard.getName() + " and puts it into their hand. Library is shuffled.";
+            } else {
+                logEntry = player.getUsername() + " puts a card into their hand. Library is shuffled.";
+            }
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} searches library and puts {} into hand", gameData.id, player.getUsername(), chosenCard.getName());
         }

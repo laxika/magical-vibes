@@ -258,7 +258,9 @@
                 (mouseleave)="onCardHoverEnd()" />
             }
           </div>
-          <button class="btn-keep" (click)="choice.declineLibrarySearch()">Decline</button>
+          @if (choice.librarySearchCanFailToFind) {
+            <button class="btn-keep" (click)="choice.declineLibrarySearch()">Decline</button>
+          }
         </div>
       </div>
     }

@@ -455,8 +455,11 @@ public class GameService {
                 case LIBRARY_SEARCH -> {
                     if (playerId.equals(gameData.awaitingLibrarySearchPlayerId) && gameData.awaitingLibrarySearchCards != null) {
                         List<CardView> cardViews = gameData.awaitingLibrarySearchCards.stream().map(cardViewFactory::create).toList();
+                        String prompt = gameData.awaitingLibrarySearchCanFailToFind
+                                ? "Search your library for a basic land card to put into your hand."
+                                : "Search your library for a card to put into your hand.";
                         sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(
-                                cardViews, "Search your library for a basic land card to put into your hand."));
+                                cardViews, prompt, gameData.awaitingLibrarySearchCanFailToFind));
                     }
                 }
                 case HAND_TOP_BOTTOM_CHOICE -> {

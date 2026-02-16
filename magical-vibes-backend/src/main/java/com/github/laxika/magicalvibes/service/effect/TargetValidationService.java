@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetE
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
@@ -52,6 +53,10 @@ public class TargetValidationService {
         });
 
         registry.register(MillTargetPlayerEffect.class, (ctx, effect) -> {
+            requireTargetPlayer(ctx);
+        });
+
+        registry.register(SacrificeCreatureEffect.class, (ctx, effect) -> {
             requireTargetPlayer(ctx);
         });
 

@@ -83,7 +83,7 @@ public class GameTestHarness {
                 gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager);
         List<EffectHandlerProvider> providers = List.of(
                 new DamageResolutionService(gameHelper, gameQueryService, gameBroadcastService),
-                new DestructionResolutionService(gameHelper, gameQueryService, gameBroadcastService),
+                new DestructionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),
                 new LibraryResolutionService(gameBroadcastService, sessionManager, cardViewFactory),
                 new PreventionResolutionService(gameQueryService, gameBroadcastService),
                 new CounterResolutionService(gameBroadcastService),
