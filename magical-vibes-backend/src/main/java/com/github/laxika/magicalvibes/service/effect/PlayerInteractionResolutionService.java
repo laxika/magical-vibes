@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
@@ -62,6 +63,8 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
                 (gd, entry, effect) -> resolveChangeColorText(gd, entry));
         registry.register(RedirectDrawsEffect.class,
                 (gd, entry, effect) -> resolveRedirectDraws(gd, entry));
+        registry.register(AwardAnyColorManaEffect.class,
+                (gd, entry, effect) -> resolveAwardAnyColorMana(gd, entry));
     }
 
     private void resolveOpponentMayPlayCreature(GameData gameData, UUID controllerId) {
@@ -233,6 +236,17 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
         log.info("Game {} - Awaiting {} to choose a color word or basic land type for text change", gameData.id, playerName);
+    }
+
+    private void resolveAwardAnyColorMana(GameData gameData, StackEntry entry) {
+        gameData.colorChoiceContext = new ColorChoiceContext.ManaColorChoice(entry.getControllerId());
+        gameData.awaitingInput = AwaitingInput.COLOR_CHOICE;
+        gameData.awaitingColorChoicePlayerId = entry.getControllerId();
+        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        sessionManager.sendToPlayer(entry.getControllerId(), new ChooseColorMessage(colors, "Choose a color of mana to add."));
+
+        String playerName = gameData.playerIdToName.get(entry.getControllerId());
+        log.info("Game {} - Awaiting {} to choose a mana color", gameData.id, playerName);
     }
 
     private void resolveRedirectDraws(GameData gameData, StackEntry entry) {
