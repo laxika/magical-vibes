@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
@@ -709,7 +710,13 @@ public class CombatService {
             if (damageDealt <= 0) continue;
 
             for (CardEffect effect : creature.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)) {
-                if (effect instanceof ExileTopCardsRepeatOnDuplicateEffect exileEffect) {
+                if (effect instanceof DrawCardEffect drawEffect) {
+                    String logEntry = creature.getCard().getName() + "'s ability triggers — " + gameData.playerIdToName.get(attackerId) + " draws " + drawEffect.amount() + " card" + (drawEffect.amount() > 1 ? "s" : "") + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    for (int i = 0; i < drawEffect.amount(); i++) {
+                        gameHelper.resolveDrawCard(gameData, attackerId);
+                    }
+                } else if (effect instanceof ExileTopCardsRepeatOnDuplicateEffect exileEffect) {
                     gameHelper.resolveExileTopCardsRepeatOnDuplicate(gameData, creature, defenderId, exileEffect);
                 } else if (effect instanceof ReturnPermanentsOnCombatDamageToPlayerEffect) {
                     // Collect valid permanents the damaged player controls
