@@ -205,6 +205,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 graveyard.add(dead.getOriginalCard());
                 gameHelper.collectDeathTrigger(gameData, dead.getCard(), playerId, true);
+                gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
                 battlefield.remove(idx);
             }
         }

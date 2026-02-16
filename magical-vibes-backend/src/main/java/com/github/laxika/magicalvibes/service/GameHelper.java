@@ -62,6 +62,9 @@ public class GameHelper {
                 gameData.playerGraveyards.get(graveyardOwnerId).add(target.getOriginalCard());
                 gameData.stolenCreatures.remove(target.getId());
                 collectDeathTrigger(gameData, target.getCard(), playerId, wasCreature);
+                if (wasCreature) {
+                    checkAllyCreatureDeathTriggers(gameData, playerId);
+                }
                 return true;
             }
         }
@@ -237,6 +240,7 @@ public class GameHelper {
                     gameData.stolenCreatures.remove(p.getId());
                     gameData.playerGraveyards.get(graveyardOwnerId).add(p.getOriginalCard());
                     collectDeathTrigger(gameData, p.getCard(), playerId, true);
+                    checkAllyCreatureDeathTriggers(gameData, playerId);
                     String logEntry = p.getCard().getName() + " is put into the graveyard (0 toughness).";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} dies to state-based actions (0 toughness)", gameData.id, p.getCard().getName());
@@ -546,6 +550,29 @@ public class GameHelper {
                     log.info("Game {} - {} triggers for {} entering (toughness={})",
                             gameData.id, perm.getCard().getName(), enteringCreature.getName(), toughness);
                 }
+            }
+        }
+    }
+
+    void checkAllyCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(dyingCreatureControllerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : battlefield) {
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DIES);
+            if (effects == null || effects.isEmpty()) continue;
+
+            for (CardEffect effect : effects) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        dyingCreatureControllerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect))
+                ));
+                String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                log.info("Game {} - {} triggers (ally creature died)", gameData.id, perm.getCard().getName());
             }
         }
     }

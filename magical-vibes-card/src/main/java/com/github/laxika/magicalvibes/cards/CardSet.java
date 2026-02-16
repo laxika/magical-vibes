@@ -77,6 +77,7 @@ import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GhostWarden;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.g.GravePact;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HailOfArrows;
 import com.github.laxika.magicalvibes.cards.h.HeartOfLight;
@@ -224,6 +225,7 @@ public enum CardSet {
             new CardPrinting("10E", "141", EssenceDrain::new),
             new CardPrinting("10E", "142", Fear::new),
             new CardPrinting("10E", "143", FesteringGoblin::new),
+            new CardPrinting("10E", "144", GravePact::new),
             new CardPrinting("10E", "15", FieldMarshal::new),
             new CardPrinting("10E", "16", GhostWarden::new),
             new CardPrinting("10E", "17", GloriousAnthem::new),

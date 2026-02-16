@@ -781,6 +781,9 @@ public class GameService {
             battlefield.remove(permanentIndex);
             gameData.playerGraveyards.get(playerId).add(permanent.getOriginalCard());
             gameHelper.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature);
+            if (wasCreature) {
+                gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+            }
             gameHelper.removeOrphanedAuras(gameData);
 
             String logEntry = player.getUsername() + " sacrifices " + permanent.getCard().getName() + ".";
@@ -974,6 +977,9 @@ public class GameService {
                 battlefield.remove(permanent);
                 gameData.playerGraveyards.get(playerId).add(permanent.getCard());
                 gameHelper.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature);
+                if (wasCreature) {
+                    gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                }
             }
 
             String logEntry = player.getUsername() + " activates " + permanent.getCard().getName() + "'s ability.";
