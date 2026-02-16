@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -307,6 +308,11 @@ public class CombatService {
                     && !gameQueryService.hasKeyword(gameData, blocker, Keyword.FLYING)
                     && !gameQueryService.hasKeyword(gameData, blocker, Keyword.REACH)) {
                 throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (flying)");
+            }
+            if (gameQueryService.hasKeyword(gameData, attacker, Keyword.FEAR)
+                    && blocker.getCard().getType() != CardType.ARTIFACT
+                    && blocker.getCard().getColor() != CardColor.BLACK) {
+                throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (fear)");
             }
             boolean blockOnlyFlyers = blocker.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof BlockOnlyFlyersEffect);

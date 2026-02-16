@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.e.EssenceDrain;
 import com.github.laxika.magicalvibes.cards.e.Evacuation;
+import com.github.laxika.magicalvibes.cards.f.Fear;
 import com.github.laxika.magicalvibes.cards.f.FieldMarshal;
 import com.github.laxika.magicalvibes.cards.f.Flashfreeze;
 import com.github.laxika.magicalvibes.cards.f.FogElemental;
@@ -204,6 +205,7 @@ public enum CardSet {
             new CardPrinting("10E", "139", DrudgeSkeletons::new),
             new CardPrinting("10E", "140", DuskImp::new),
             new CardPrinting("10E", "141", EssenceDrain::new),
+            new CardPrinting("10E", "142", Fear::new),
             new CardPrinting("10E", "15", FieldMarshal::new),
             new CardPrinting("10E", "16", GhostWarden::new),
             new CardPrinting("10E", "17", GloriousAnthem::new),
