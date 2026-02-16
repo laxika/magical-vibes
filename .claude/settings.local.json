@@ -16,7 +16,10 @@
       "Bash(git commit:*)",
       "WebFetch(domain:draftsim.com)",
       "WebFetch(domain:tappedout.net)",
-      "WebFetch(domain:mtg.fandom.com)"
+      "WebFetch(domain:mtg.fandom.com)",
+      "Bash(git -C */magical-vibes* status*)",
+      "Bash(git -C */magical-vibes* add *)",
+      "Bash(git -C */magical-vibes* commit *)"
     ]
   }
 }
