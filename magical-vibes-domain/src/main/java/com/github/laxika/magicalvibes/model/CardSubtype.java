@@ -59,6 +59,7 @@ public enum CardSubtype {
     ZOMBIE("Zombie"),
     CROCODILE("Crocodile"),
     CONSTRUCT("Construct"),
+    GOLEM("Golem"),
     IMP("Imp"),
     VEDALKEN("Vedalken"),
     GOBLIN("Goblin");
