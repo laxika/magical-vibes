@@ -55,6 +55,9 @@ public enum CardSubtype {
     AJANI("Ajani"),
     WRAITH("Wraith"),
     GNOME("Gnome"),
+    MERCENARY("Mercenary"),
+    ZOMBIE("Zombie"),
+    CROCODILE("Crocodile"),
     CONSTRUCT("Construct");
 
     @Getter

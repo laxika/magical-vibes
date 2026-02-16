@@ -91,6 +91,7 @@ public class GameData {
     public UUID awaitingRevealedHandChoiceTargetPlayerId;
     public int awaitingRevealedHandChoiceRemainingCount;
     public final List<Card> awaitingRevealedHandChosenCards = new ArrayList<>();
+    public boolean awaitingRevealedHandChoiceDiscardMode;
     public UUID awaitingHandTopBottomPlayerId;
     public List<Card> awaitingHandTopBottomCards;
     public UUID awaitingLibraryRevealPlayerId;

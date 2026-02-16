@@ -283,11 +283,11 @@ public class GameService {
                 log.info("Game {} - {} fizzles, target {} is illegal",
                         gameData.id, entry.getDescription(), entry.getTargetPermanentId());
 
-                // Fizzled spells still go to graveyard
-                if (entry.getEntryType() == StackEntryType.SORCERY_SPELL
-                        || entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
+                // Fizzled spells still go to graveyard (copies cease to exist per rule 707.10a)
+                if ((entry.getEntryType() == StackEntryType.SORCERY_SPELL
+                        || entry.getEntryType() == StackEntryType.INSTANT_SPELL)
+                        && !entry.isCopy()) {
                     gameData.playerGraveyards.get(entry.getControllerId()).add(entry.getCard());
-
                 }
             } else {
                 String logEntry = entry.getDescription() + " resolves.";
@@ -296,19 +296,22 @@ public class GameService {
 
                 effectResolutionService.resolveEffects(gameData, entry);
 
-                // Rule 723.1b: "End the turn" exiles the resolving spell itself
+                // Rule 723.1b: "End the turn" exiles the resolving spell itself (copies cease to exist per rule 707.10a)
                 if (gameData.endTurnRequested) {
                     gameData.endTurnRequested = false;
-                    if (entry.getEntryType() == StackEntryType.SORCERY_SPELL
-                            || entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
+                    if ((entry.getEntryType() == StackEntryType.SORCERY_SPELL
+                            || entry.getEntryType() == StackEntryType.INSTANT_SPELL)
+                            && !entry.isCopy()) {
                         gameData.playerExiledCards.get(entry.getControllerId()).add(entry.getCard());
                     }
                     gameBroadcastService.broadcastGameState(gameData);
                     return;
                 }
 
-                if (entry.getEntryType() == StackEntryType.SORCERY_SPELL
-                        || entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
+                // Copies cease to exist per rule 707.10a — skip graveyard/shuffle
+                if ((entry.getEntryType() == StackEntryType.SORCERY_SPELL
+                        || entry.getEntryType() == StackEntryType.INSTANT_SPELL)
+                        && !entry.isCopy()) {
                     boolean shuffled = entry.getEffectsToResolve().stream()
                             .anyMatch(e -> e instanceof ShuffleIntoLibraryEffect);
                     if (shuffled) {

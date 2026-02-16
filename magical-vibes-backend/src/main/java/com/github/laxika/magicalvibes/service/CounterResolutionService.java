@@ -50,8 +50,11 @@ public class CounterResolutionService implements EffectHandlerProvider {
 
         gameData.stack.remove(targetEntry);
 
-        UUID ownerId = targetEntry.getControllerId();
-        gameData.playerGraveyards.get(ownerId).add(targetEntry.getCard());
+        // Copies cease to exist per rule 707.10a — skip graveyard
+        if (!targetEntry.isCopy()) {
+            UUID ownerId = targetEntry.getControllerId();
+            gameData.playerGraveyards.get(ownerId).add(targetEntry.getCard());
+        }
 
         String logMsg = targetEntry.getCard().getName() + " is countered.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
@@ -82,7 +85,10 @@ public class CounterResolutionService implements EffectHandlerProvider {
         if (!cost.canPay(pool)) {
             // Can't pay — counter immediately
             gameData.stack.remove(targetEntry);
-            gameData.playerGraveyards.get(targetControllerId).add(targetEntry.getCard());
+            // Copies cease to exist per rule 707.10a — skip graveyard
+            if (!targetEntry.isCopy()) {
+                gameData.playerGraveyards.get(targetControllerId).add(targetEntry.getCard());
+            }
 
             String logMsg = targetEntry.getCard().getName() + " is countered.";
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
