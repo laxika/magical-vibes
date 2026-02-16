@@ -142,10 +142,12 @@ import com.github.laxika.magicalvibes.cards.t.TimeStop;
 import com.github.laxika.magicalvibes.cards.t.TimeStretch;
 import com.github.laxika.magicalvibes.cards.t.Traumatize;
 import com.github.laxika.magicalvibes.cards.t.Twincast;
+import com.github.laxika.magicalvibes.cards.t.Twitch;
 import com.github.laxika.magicalvibes.cards.t.TempestOfLight;
 import com.github.laxika.magicalvibes.cards.t.TreasureHunter;
 import com.github.laxika.magicalvibes.cards.t.TrueBeliever;
 import com.github.laxika.magicalvibes.cards.t.TundraWolves;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.v.VenerableMonk;
 import com.github.laxika.magicalvibes.cards.v.VoiceOfAll;
 import com.github.laxika.magicalvibes.cards.w.WallOfSwords;
@@ -304,6 +306,8 @@ public enum CardSet {
             new CardPrinting("10E", "118", TimeStretch::new),
             new CardPrinting("10E", "119", Traumatize::new),
             new CardPrinting("10E", "120", Twincast::new),
+            new CardPrinting("10E", "121", Twitch::new),
+            new CardPrinting("10E", "122", Unsummon::new),
             new CardPrinting("10E", "96", PhantomWarrior::new),
             new CardPrinting("10E", "77", CraftyPathmage::new),
             new CardPrinting("10E", "380", Forest::new),

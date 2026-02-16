@@ -13,9 +13,11 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetE
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import org.springframework.stereotype.Service;
@@ -42,6 +44,14 @@ public class TargetValidationService {
             Permanent target = requireBattlefieldTarget(ctx);
             requireCreature(ctx, target);
             checkProtection(ctx, target);
+        });
+
+        registry.register(TapOrUntapTargetPermanentEffect.class, (ctx, effect) -> {
+            Permanent target = requireBattlefieldTarget(ctx);
+            TapOrUntapTargetPermanentEffect tapOrUntapEffect = (TapOrUntapTargetPermanentEffect) effect;
+            if (!tapOrUntapEffect.allowedTypes().contains(target.getCard().getType())) {
+                throw new IllegalStateException("Target must be an artifact, creature, or land");
+            }
         });
 
         registry.register(TapTargetPermanentEffect.class, (ctx, effect) -> {
@@ -99,6 +109,11 @@ public class TargetValidationService {
             if (target == null || !gameQueryService.isCreature(ctx.gameData(), target) || !target.isBlocking()) {
                 throw new IllegalStateException("Target must be a blocking creature");
             }
+        });
+
+        registry.register(ReturnTargetCreatureToHandEffect.class, (ctx, effect) -> {
+            Permanent target = requireBattlefieldTarget(ctx);
+            requireCreature(ctx, target);
         });
 
         registry.register(GainControlOfTargetAuraEffect.class, (ctx, effect) -> {
