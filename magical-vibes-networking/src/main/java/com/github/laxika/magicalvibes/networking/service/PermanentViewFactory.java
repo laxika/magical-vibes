@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.networking.service;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -23,6 +25,7 @@ public class PermanentViewFactory {
         allKeywords.addAll(bonusKeywords);
         CardView cardView = cardViewFactory.create(p.getCard());
         cardView = applyTextReplacements(cardView, p);
+        cardView = applyGrantedSubtypes(cardView, p);
         return new PermanentView(
                 p.getId(), cardView,
                 p.isTapped(), p.isAttacking(), p.isBlocking(),
@@ -38,6 +41,28 @@ public class PermanentViewFactory {
                 p.isCantBeBlocked(),
                 animatedCreature,
                 p.getLoyaltyCounters()
+        );
+    }
+
+    private CardView applyGrantedSubtypes(CardView cardView, Permanent p) {
+        if (p.getGrantedSubtypes().isEmpty()) {
+            return cardView;
+        }
+        List<CardSubtype> mergedSubtypes = new ArrayList<>(cardView.subtypes());
+        for (CardSubtype subtype : p.getGrantedSubtypes()) {
+            if (!mergedSubtypes.contains(subtype)) {
+                mergedSubtypes.add(subtype);
+            }
+        }
+        return new CardView(
+                cardView.name(), cardView.type(), cardView.supertypes(), mergedSubtypes,
+                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
+                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
+                cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
+                cardView.needsSpellTarget(), cardView.targetsPlayer(),
+                cardView.requiresAttackingTarget(), cardView.allowedTargetTypes(),
+                cardView.activatedAbilities(), cardView.loyalty(),
+                cardView.minTargets(), cardView.maxTargets(), cardView.hasConvoke()
         );
     }
 

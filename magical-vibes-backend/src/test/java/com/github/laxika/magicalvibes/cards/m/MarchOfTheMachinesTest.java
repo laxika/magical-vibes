@@ -106,6 +106,22 @@ class MarchOfTheMachinesTest {
     }
 
     @Test
+    @DisplayName("Animated artifact does not gain any creature subtypes")
+    void animatedArtifactDoesNotGainSubtypes() {
+        harness.addToBattlefield(player1, new AngelsFeather());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+
+        Permanent feather = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Angel's Feather"))
+                .findFirst().orElseThrow();
+
+        // March of the Machines makes artifacts into creatures but does NOT grant creature subtypes
+        assertThat(gs.isCreature(gd, feather)).isTrue();
+        assertThat(feather.getGrantedSubtypes()).isEmpty();
+        assertThat(feather.getCard().getSubtypes()).isEmpty();
+    }
+
+    @Test
     @DisplayName("Icy Manipulator (cost {4}) becomes a 4/4 creature")
     void icyManipulatorBecomes4x4() {
         harness.addToBattlefield(player1, new IcyManipulator());

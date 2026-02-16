@@ -27,9 +27,13 @@ public class Permanent {
     @Setter private UUID attachedTo;
     @Setter private CardColor chosenColor;
     @Setter private boolean cantBeBlocked;
+    @Setter private boolean animatedUntilEndOfTurn;
+    @Setter private int animatedPower;
+    @Setter private int animatedToughness;
     @Setter private int loyaltyCounters;
     @Setter private boolean loyaltyAbilityUsedThisTurn;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
+    private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
     private final List<TextReplacement> textReplacements = new ArrayList<>();
 
     public Permanent(Card card) {
@@ -79,10 +83,16 @@ public class Permanent {
     }
 
     public int getEffectivePower() {
+        if (animatedUntilEndOfTurn) {
+            return animatedPower + powerModifier;
+        }
         return (card.getPower() != null ? card.getPower() : 0) + powerModifier;
     }
 
     public int getEffectiveToughness() {
+        if (animatedUntilEndOfTurn) {
+            return animatedToughness + toughnessModifier;
+        }
         return (card.getToughness() != null ? card.getToughness() : 0) + toughnessModifier;
     }
 
@@ -94,6 +104,10 @@ public class Permanent {
         this.powerModifier = 0;
         this.toughnessModifier = 0;
         this.cantBeBlocked = false;
+        this.animatedUntilEndOfTurn = false;
+        this.animatedPower = 0;
+        this.animatedToughness = 0;
         this.grantedKeywords.clear();
+        this.grantedSubtypes.clear();
     }
 }

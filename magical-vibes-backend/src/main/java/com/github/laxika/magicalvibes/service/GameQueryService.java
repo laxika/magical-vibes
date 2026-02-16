@@ -101,6 +101,7 @@ public class GameQueryService {
 
     public boolean isCreature(GameData gameData, Permanent permanent) {
         if (permanent.getCard().getType() == CardType.CREATURE) return true;
+        if (permanent.isAnimatedUntilEndOfTurn()) return true;
         if (permanent.getCard().getType() != CardType.ARTIFACT) return false;
         return hasAnimateArtifactEffect(gameData);
     }
@@ -135,17 +136,18 @@ public class GameQueryService {
                 }
             }
         }
-        if (!isNaturalCreature && !accumulator.isAnimatedCreature()) return StaticBonus.NONE;
+        boolean isSelfAnimated = target.isAnimatedUntilEndOfTurn();
+        if (!isNaturalCreature && !accumulator.isAnimatedCreature() && !isSelfAnimated) return StaticBonus.NONE;
 
         int power = accumulator.getPower();
         int toughness = accumulator.getToughness();
-        if (accumulator.isAnimatedCreature()) {
+        if (accumulator.isAnimatedCreature() && !isSelfAnimated) {
             int manaValue = target.getCard().getManaValue();
             power += manaValue;
             toughness += manaValue;
         }
 
-        return new StaticBonus(power, toughness, accumulator.getKeywords(), accumulator.isAnimatedCreature());
+        return new StaticBonus(power, toughness, accumulator.getKeywords(), accumulator.isAnimatedCreature() || isSelfAnimated);
     }
 
     public boolean hasProtectionFrom(GameData gameData, Permanent target, CardColor sourceColor) {
