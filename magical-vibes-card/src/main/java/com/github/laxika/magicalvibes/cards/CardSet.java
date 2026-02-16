@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.cards.c.Condemn;
 import com.github.laxika.magicalvibes.cards.c.CraftyPathmage;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.d.Deathmark;
 import com.github.laxika.magicalvibes.cards.d.Dehydration;
 import com.github.laxika.magicalvibes.cards.d.DenizenOfTheDeep;
 import com.github.laxika.magicalvibes.cards.d.Deluge;
@@ -181,6 +182,7 @@ public enum CardSet {
             new CardPrinting("10E", "131", ConsumeSpirit::new),
             new CardPrinting("10E", "132", ContaminatedBond::new),
             new CardPrinting("10E", "133", CruelEdict::new),
+            new CardPrinting("10E", "134", Deathmark::new),
             new CardPrinting("10E", "139", DrudgeSkeletons::new),
             new CardPrinting("10E", "15", FieldMarshal::new),
             new CardPrinting("10E", "16", GhostWarden::new),
