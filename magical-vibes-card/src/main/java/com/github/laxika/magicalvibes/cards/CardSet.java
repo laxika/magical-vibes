@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.a.AmbassadorLaquatus;
 import com.github.laxika.magicalvibes.cards.a.ArcanisTheOmnipotent;
 import com.github.laxika.magicalvibes.cards.a.AcademyResearchers;
 import com.github.laxika.magicalvibes.cards.a.AnabaBodyguard;
+import com.github.laxika.magicalvibes.cards.a.ArcaneTeachings;
 import com.github.laxika.magicalvibes.cards.a.AuraGraft;
 import com.github.laxika.magicalvibes.cards.a.AncestorsChosen;
 import com.github.laxika.magicalvibes.cards.a.AngelicBlessing;
@@ -328,6 +329,7 @@ public enum CardSet {
             new CardPrinting("10E", "274", LlanowarElves::new),
             new CardPrinting("10E", "277", MightOfOaks::new),
             new CardPrinting("10E", "187", AnabaBodyguard::new),
+            new CardPrinting("10E", "188", ArcaneTeachings::new),
             new CardPrinting("10E", "376", Mountain::new),
             new CardPrinting("10E", "377", Mountain::new),
             new CardPrinting("10E", "378", Mountain::new),

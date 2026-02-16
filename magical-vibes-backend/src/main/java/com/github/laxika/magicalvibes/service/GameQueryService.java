@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -47,8 +48,8 @@ public class GameQueryService {
         staticEffectProviders.forEach(p -> p.registerHandlers(staticEffectRegistry));
     }
 
-    record StaticBonus(int power, int toughness, Set<Keyword> keywords, boolean animatedCreature) {
-        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), false);
+    record StaticBonus(int power, int toughness, Set<Keyword> keywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities) {
+        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), false, List.of());
     }
 
     public Permanent findPermanentById(GameData gameData, UUID permanentId) {
@@ -147,7 +148,7 @@ public class GameQueryService {
             toughness += manaValue;
         }
 
-        return new StaticBonus(power, toughness, accumulator.getKeywords(), accumulator.isAnimatedCreature() || isSelfAnimated);
+        return new StaticBonus(power, toughness, accumulator.getKeywords(), accumulator.isAnimatedCreature() || isSelfAnimated, accumulator.getGrantedActivatedAbilities());
     }
 
     public boolean hasProtectionFrom(GameData gameData, Permanent target, CardColor sourceColor) {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostNonColorCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOtherCreaturesByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnTappedCreaturesEffect;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         registry.register(BoostOtherCreaturesByColorEffect.class, this::resolveBoostOtherCreaturesByColor);
         registry.register(BoostNonColorCreaturesEffect.class, this::resolveBoostNonColorCreatures);
         registry.register(GrantKeywordToOwnTappedCreaturesEffect.class, this::resolveGrantKeywordToOwnTappedCreatures);
+        registry.register(GrantActivatedAbilityToEnchantedCreatureEffect.class, this::resolveGrantActivatedAbilityToEnchantedCreature);
     }
 
     private void resolveAnimateNoncreatureArtifacts(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
@@ -89,6 +91,14 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         var grant = (GrantKeywordToOwnTappedCreaturesEffect) effect;
         if (context.targetOnSameBattlefield() && context.target().isTapped()) {
             accumulator.addKeyword(grant.keyword());
+        }
+    }
+
+    private void resolveGrantActivatedAbilityToEnchantedCreature(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var grant = (GrantActivatedAbilityToEnchantedCreatureEffect) effect;
+        if (context.source().getAttachedTo() != null
+                && context.source().getAttachedTo().equals(context.target().getId())) {
+            accumulator.addActivatedAbility(grant.ability());
         }
     }
 }

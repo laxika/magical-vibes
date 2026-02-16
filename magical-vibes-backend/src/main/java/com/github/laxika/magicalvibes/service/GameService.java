@@ -813,7 +813,10 @@ public class GameService {
             }
 
             Permanent permanent = battlefield.get(permanentIndex);
-            List<ActivatedAbility> abilities = permanent.getCard().getActivatedAbilities();
+            List<ActivatedAbility> ownAbilities = permanent.getCard().getActivatedAbilities();
+            List<ActivatedAbility> grantedAbilities = gameQueryService.computeStaticBonus(gameData, permanent).grantedActivatedAbilities();
+            List<ActivatedAbility> abilities = new ArrayList<>(ownAbilities);
+            abilities.addAll(grantedAbilities);
             if (abilities.isEmpty()) {
                 throw new IllegalStateException("Permanent has no activated ability");
             }
