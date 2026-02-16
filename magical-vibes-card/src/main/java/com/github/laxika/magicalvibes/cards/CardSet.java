@@ -56,6 +56,8 @@ import com.github.laxika.magicalvibes.cards.d.Distress;
 import com.github.laxika.magicalvibes.cards.d.DoomedNecromancer;
 import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
+import com.github.laxika.magicalvibes.cards.d.DuskImp;
+import com.github.laxika.magicalvibes.cards.e.EssenceDrain;
 import com.github.laxika.magicalvibes.cards.e.Evacuation;
 import com.github.laxika.magicalvibes.cards.f.FieldMarshal;
 import com.github.laxika.magicalvibes.cards.f.Flashfreeze;
@@ -141,10 +143,12 @@ import com.github.laxika.magicalvibes.cards.t.TimeStop;
 import com.github.laxika.magicalvibes.cards.t.TimeStretch;
 import com.github.laxika.magicalvibes.cards.t.Traumatize;
 import com.github.laxika.magicalvibes.cards.t.Twincast;
+import com.github.laxika.magicalvibes.cards.t.Twitch;
 import com.github.laxika.magicalvibes.cards.t.TempestOfLight;
 import com.github.laxika.magicalvibes.cards.t.TreasureHunter;
 import com.github.laxika.magicalvibes.cards.t.TrueBeliever;
 import com.github.laxika.magicalvibes.cards.t.TundraWolves;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.v.VenerableMonk;
 import com.github.laxika.magicalvibes.cards.v.VoiceOfAll;
 import com.github.laxika.magicalvibes.cards.w.WallOfSwords;
@@ -200,6 +204,8 @@ public enum CardSet {
             new CardPrinting("10E", "137", DoomedNecromancer::new),
             new CardPrinting("10E", "138", DrossCrocodile::new),
             new CardPrinting("10E", "139", DrudgeSkeletons::new),
+            new CardPrinting("10E", "140", DuskImp::new),
+            new CardPrinting("10E", "141", EssenceDrain::new),
             new CardPrinting("10E", "15", FieldMarshal::new),
             new CardPrinting("10E", "16", GhostWarden::new),
             new CardPrinting("10E", "17", GloriousAnthem::new),
@@ -302,6 +308,8 @@ public enum CardSet {
             new CardPrinting("10E", "118", TimeStretch::new),
             new CardPrinting("10E", "119", Traumatize::new),
             new CardPrinting("10E", "120", Twincast::new),
+            new CardPrinting("10E", "121", Twitch::new),
+            new CardPrinting("10E", "122", Unsummon::new),
             new CardPrinting("10E", "96", PhantomWarrior::new),
             new CardPrinting("10E", "77", CraftyPathmage::new),
             new CardPrinting("10E", "380", Forest::new),
