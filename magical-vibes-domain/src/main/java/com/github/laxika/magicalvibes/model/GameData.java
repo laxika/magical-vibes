@@ -101,6 +101,7 @@ public class GameData {
     public final Map<UUID, UUID> stolenCreatures = new ConcurrentHashMap<>();
     public final Set<UUID> enchantmentDependentStolenCreatures = ConcurrentHashMap.newKeySet();
     public boolean endTurnRequested;
+    public final Deque<PermanentChoiceContext.DeathTriggerTarget> pendingDeathTriggerTargets = new ArrayDeque<>();
     public final Deque<UUID> extraTurns = new ArrayDeque<>();
     public int lastBroadcastedLogSize = 0;
 

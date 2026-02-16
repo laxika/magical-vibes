@@ -237,6 +237,11 @@ public class TurnProgressionService {
     }
 
     void resolveAutoPass(GameData gameData) {
+        // Process any pending targeted death triggers before auto-passing
+        if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
+            gameHelper.processNextDeathTriggerTarget(gameData);
+        }
+
         for (int safety = 0; safety < 100; safety++) {
             if (gameData.awaitingInput != null) {
                 gameBroadcastService.broadcastGameState(gameData);

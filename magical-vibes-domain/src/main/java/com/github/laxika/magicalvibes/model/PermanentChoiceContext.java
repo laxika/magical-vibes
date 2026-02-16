@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+
+import java.util.List;
 import java.util.UUID;
 
 public sealed interface PermanentChoiceContext {
@@ -15,4 +18,6 @@ public sealed interface PermanentChoiceContext {
     record CopySpellRetarget(UUID copyCardId) implements PermanentChoiceContext {}
 
     record SacrificeCreature(UUID sacrificingPlayerId) implements PermanentChoiceContext {}
+
+    record DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
 }
