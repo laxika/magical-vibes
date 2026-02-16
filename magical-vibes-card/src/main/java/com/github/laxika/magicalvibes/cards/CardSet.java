@@ -126,6 +126,7 @@ import com.github.laxika.magicalvibes.cards.t.TellingTime;
 import com.github.laxika.magicalvibes.cards.t.ThievingMagpie;
 import com.github.laxika.magicalvibes.cards.t.Tidings;
 import com.github.laxika.magicalvibes.cards.t.TimeStop;
+import com.github.laxika.magicalvibes.cards.t.TimeStretch;
 import com.github.laxika.magicalvibes.cards.t.TempestOfLight;
 import com.github.laxika.magicalvibes.cards.t.TreasureHunter;
 import com.github.laxika.magicalvibes.cards.t.TrueBeliever;
@@ -273,6 +274,7 @@ public enum CardSet {
             new CardPrinting("10E", "115", ThievingMagpie::new),
             new CardPrinting("10E", "116", Tidings::new),
             new CardPrinting("10E", "117", TimeStop::new),
+            new CardPrinting("10E", "118", TimeStretch::new),
             new CardPrinting("10E", "96", PhantomWarrior::new),
             new CardPrinting("10E", "77", CraftyPathmage::new),
             new CardPrinting("10E", "380", Forest::new),
