@@ -51,6 +51,7 @@ public class ScryfallOracleLoader {
         KEYWORD_MAP.put("Shroud", Keyword.SHROUD);
         KEYWORD_MAP.put("Changeling", Keyword.CHANGELING);
         KEYWORD_MAP.put("Indestructible", Keyword.INDESTRUCTIBLE);
+        KEYWORD_MAP.put("Convoke", Keyword.CONVOKE);
     }
 
     public static void loadAll(String cacheDir) {

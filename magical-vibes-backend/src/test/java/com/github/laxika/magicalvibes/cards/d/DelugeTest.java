@@ -65,7 +65,7 @@ class DelugeTest {
         harness.setHand(player1, List.of(new Deluge()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -83,7 +83,7 @@ class DelugeTest {
         harness.setHand(player1, List.of(new Deluge()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         List<Permanent> p1Battlefield = gd.playerBattlefields.get(player1.getId());
@@ -109,7 +109,7 @@ class DelugeTest {
         harness.setHand(player1, List.of(new Deluge()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
@@ -130,7 +130,7 @@ class DelugeTest {
         harness.setHand(player1, List.of(new Deluge()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -142,7 +142,7 @@ class DelugeTest {
         harness.setHand(player1, List.of(new Deluge()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -158,7 +158,7 @@ class DelugeTest {
         harness.setHand(player1, List.of(new Deluge()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player2.getId());

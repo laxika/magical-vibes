@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
@@ -60,7 +62,10 @@ public class CardViewFactory {
                 requiresAttackingTarget,
                 spellAllowedTargetTypes,
                 abilityViews,
-                card.getLoyalty()
+                card.getLoyalty(),
+                card.getMinTargets(),
+                card.getMaxTargets(),
+                card.getKeywords().contains(Keyword.CONVOKE)
         );
     }
 
@@ -110,6 +115,7 @@ public class CardViewFactory {
                     || effect instanceof LookAtHandEffect
                     || effect instanceof MillTargetPlayerEffect
                     || effect instanceof ReturnArtifactsTargetPlayerOwnsToHandEffect
+                    || effect instanceof SacrificeCreatureEffect
                     || effect instanceof ShuffleGraveyardIntoLibraryEffect) {
                 return true;
             }

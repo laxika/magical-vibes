@@ -84,11 +84,14 @@ public class GameData {
     public List<Card> awaitingLibraryReorderCards;
     public UUID awaitingLibrarySearchPlayerId;
     public List<Card> awaitingLibrarySearchCards;
+    public boolean awaitingLibrarySearchReveals;
+    public boolean awaitingLibrarySearchCanFailToFind;
     public final Set<UUID> permanentsToSacrificeAtEndOfCombat = ConcurrentHashMap.newKeySet();
     public int awaitingDiscardRemainingCount;
     public UUID awaitingRevealedHandChoiceTargetPlayerId;
     public int awaitingRevealedHandChoiceRemainingCount;
     public final List<Card> awaitingRevealedHandChosenCards = new ArrayList<>();
+    public boolean awaitingRevealedHandChoiceDiscardMode;
     public UUID awaitingHandTopBottomPlayerId;
     public List<Card> awaitingHandTopBottomCards;
     public UUID awaitingLibraryRevealPlayerId;

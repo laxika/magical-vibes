@@ -289,6 +289,8 @@ public class UserInputHandlerService {
 
         gameData.awaitingRevealedHandChoiceRemainingCount--;
 
+        boolean discardMode = gameData.awaitingRevealedHandChoiceDiscardMode;
+
         if (gameData.awaitingRevealedHandChoiceRemainingCount > 0 && !targetHand.isEmpty()) {
             // More cards to choose — update valid indices and prompt again
             List<Integer> newValidIndices = new ArrayList<>();
@@ -296,29 +298,45 @@ public class UserInputHandlerService {
                 newValidIndices.add(i);
             }
 
-            playerInputService.beginRevealedHandChoice(gameData, player.getId(), targetPlayerId, newValidIndices,
-                    "Choose another card to put on top of " + targetName + "'s library.");
+            String prompt = discardMode
+                    ? "Choose another card to discard."
+                    : "Choose another card to put on top of " + targetName + "'s library.";
+            playerInputService.beginRevealedHandChoice(gameData, player.getId(), targetPlayerId, newValidIndices, prompt);
         } else {
-            // All cards chosen — put them on top of library
+            // All cards chosen
             gameData.awaitingInput = null;
             gameData.awaitingCardChoicePlayerId = null;
             gameData.awaitingCardChoiceValidIndices = null;
 
-            List<Card> deck = gameData.playerDecks.get(targetPlayerId);
             List<Card> chosenCards = new ArrayList<>(gameData.awaitingRevealedHandChosenCards);
 
-            // Insert in reverse order so first chosen ends up on top
-            for (int i = chosenCards.size() - 1; i >= 0; i--) {
-                deck.addFirst(chosenCards.get(i));
-            }
+            if (discardMode) {
+                // Discard chosen cards to graveyard
+                List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+                graveyard.addAll(chosenCards);
 
-            String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
-            String putLog = player.getUsername() + " puts " + cardNames + " on top of " + targetName + "'s library.";
-            gameBroadcastService.logAndBroadcast(gameData, putLog);
-            log.info("Game {} - {} puts {} on top of {}'s library", gameData.id, player.getUsername(), cardNames, targetName);
+                String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
+                String discardLog = targetName + " discards " + cardNames + ".";
+                gameBroadcastService.logAndBroadcast(gameData, discardLog);
+                log.info("Game {} - {} discards {} from {}'s hand", gameData.id, player.getUsername(), cardNames, targetName);
+            } else {
+                // Put chosen cards on top of library
+                List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+
+                // Insert in reverse order so first chosen ends up on top
+                for (int i = chosenCards.size() - 1; i >= 0; i--) {
+                    deck.addFirst(chosenCards.get(i));
+                }
+
+                String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
+                String putLog = player.getUsername() + " puts " + cardNames + " on top of " + targetName + "'s library.";
+                gameBroadcastService.logAndBroadcast(gameData, putLog);
+                log.info("Game {} - {} puts {} on top of {}'s library", gameData.id, player.getUsername(), cardNames, targetName);
+            }
 
             gameData.awaitingRevealedHandChoiceTargetPlayerId = null;
             gameData.awaitingRevealedHandChoiceRemainingCount = 0;
+            gameData.awaitingRevealedHandChoiceDiscardMode = false;
             gameData.awaitingRevealedHandChosenCards.clear();
 
             turnProgressionService.resolveAutoPass(gameData);
@@ -436,6 +454,22 @@ public class UserInputHandlerService {
 
             gameHelper.removeOrphanedAuras(gameData);
 
+            turnProgressionService.resolveAutoPass(gameData);
+        } else if (context instanceof PermanentChoiceContext.SacrificeCreature sacrificeCreature) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+            if (target == null) {
+                throw new IllegalStateException("Target creature no longer exists");
+            }
+
+            UUID sacrificingPlayerId = sacrificeCreature.sacrificingPlayerId();
+            gameHelper.removePermanentToGraveyard(gameData, target);
+
+            String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
+            String logEntry = playerName + " sacrifices " + target.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} sacrifices {}", gameData.id, playerName, target.getCard().getName());
+
+            gameHelper.performStateBasedActions(gameData);
             turnProgressionService.resolveAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.BounceCreature bounceCreature) {
             Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
@@ -1171,18 +1205,26 @@ public class UserInputHandlerService {
         UUID playerId = player.getId();
         List<Card> searchCards = gameData.awaitingLibrarySearchCards;
 
+        boolean reveals = gameData.awaitingLibrarySearchReveals;
+        boolean canFailToFind = gameData.awaitingLibrarySearchCanFailToFind;
+
         gameData.awaitingInput = null;
         gameData.awaitingLibrarySearchPlayerId = null;
         gameData.awaitingLibrarySearchCards = null;
+        gameData.awaitingLibrarySearchReveals = false;
+        gameData.awaitingLibrarySearchCanFailToFind = false;
 
         List<Card> deck = gameData.playerDecks.get(playerId);
 
         if (cardIndex == -1) {
-            // Player declined (fail to find)
+            // Player declined (fail to find) — only allowed for restricted searches (e.g. basic land)
+            if (!canFailToFind) {
+                throw new IllegalStateException("Cannot fail to find with an unrestricted search");
+            }
             Collections.shuffle(deck);
             String logEntry = player.getUsername() + " chooses not to take a card. Library is shuffled.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} declines to take a basic land from library", gameData.id, player.getUsername());
+            log.info("Game {} - {} declines to take a card from library", gameData.id, player.getUsername());
         } else {
             if (cardIndex < 0 || cardIndex >= searchCards.size()) {
                 throw new IllegalStateException("Invalid card index: " + cardIndex);
@@ -1207,7 +1249,12 @@ public class UserInputHandlerService {
             gameData.playerHands.get(playerId).add(chosenCard);
             Collections.shuffle(deck);
 
-            String logEntry = player.getUsername() + " reveals " + chosenCard.getName() + " and puts it into their hand. Library is shuffled.";
+            String logEntry;
+            if (reveals) {
+                logEntry = player.getUsername() + " reveals " + chosenCard.getName() + " and puts it into their hand. Library is shuffled.";
+            } else {
+                logEntry = player.getUsername() + " puts a card into their hand. Library is shuffled.";
+            }
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} searches library and puts {} into hand", gameData.id, player.getUsername(), chosenCard.getName());
         }

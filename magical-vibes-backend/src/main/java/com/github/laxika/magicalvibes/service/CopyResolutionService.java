@@ -61,7 +61,8 @@ public class CopyResolutionService implements EffectHandlerProvider {
                 targetEntry.getSourcePermanentId(),
                 targetEntry.getDamageAssignments(),
                 targetEntry.getTargetZone(),
-                targetEntry.getTargetCardIds() != null ? new ArrayList<>(targetEntry.getTargetCardIds()) : null
+                targetEntry.getTargetCardIds() != null ? new ArrayList<>(targetEntry.getTargetCardIds()) : null,
+                targetEntry.getTargetPermanentIds() != null ? new ArrayList<>(targetEntry.getTargetPermanentIds()) : null
         );
         copyEntry.setCopy(true);
 

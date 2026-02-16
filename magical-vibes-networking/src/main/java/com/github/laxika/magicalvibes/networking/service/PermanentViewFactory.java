@@ -56,7 +56,8 @@ public class PermanentViewFactory {
                 cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.targetsPlayer(),
                 cardView.requiresAttackingTarget(), cardView.allowedTargetTypes(),
-                cardView.activatedAbilities(), cardView.loyalty()
+                cardView.activatedAbilities(), cardView.loyalty(),
+                cardView.minTargets(), cardView.maxTargets(), cardView.hasConvoke()
         );
     }
 }

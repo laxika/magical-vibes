@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards;
 
 import com.github.laxika.magicalvibes.cards.a.AdeptWatershaper;
 import com.github.laxika.magicalvibes.cards.a.AjaniOutlandChaperone;
+import com.github.laxika.magicalvibes.cards.a.AppealToEirdu;
 import com.github.laxika.magicalvibes.cards.a.Afflict;
 import com.github.laxika.magicalvibes.cards.a.AgonizingMemories;
 import com.github.laxika.magicalvibes.cards.a.Assassinate;
@@ -27,6 +28,7 @@ import com.github.laxika.magicalvibes.cards.b.BeaconOfImmortality;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfUnrest;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.b.BogWraith;
+import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.c.ContaminatedBond;
 import com.github.laxika.magicalvibes.cards.c.ConsumeSpirit;
 import com.github.laxika.magicalvibes.cards.c.ChangelingWayfinder;
@@ -38,13 +40,18 @@ import com.github.laxika.magicalvibes.cards.c.CloudSprite;
 import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.c.Condemn;
 import com.github.laxika.magicalvibes.cards.c.CraftyPathmage;
+import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.d.Deathmark;
+import com.github.laxika.magicalvibes.cards.d.DiabolicTutor;
 import com.github.laxika.magicalvibes.cards.d.Dehydration;
 import com.github.laxika.magicalvibes.cards.d.DenizenOfTheDeep;
 import com.github.laxika.magicalvibes.cards.d.Deluge;
 import com.github.laxika.magicalvibes.cards.d.DreambornMuse;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.d.Discombobulate;
+import com.github.laxika.magicalvibes.cards.d.Distress;
+import com.github.laxika.magicalvibes.cards.d.DoomedNecromancer;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.e.Evacuation;
 import com.github.laxika.magicalvibes.cards.f.FieldMarshal;
@@ -162,6 +169,7 @@ public enum CardSet {
             new CardPrinting("10E", "4", AngelicChorus::new),
             new CardPrinting("10E", "5", AngelicWall::new),
             new CardPrinting("10E", "311", AngelsFeather::new),
+            new CardPrinting("10E", "312", BottleGnomes::new),
             new CardPrinting("10E", "326", IcyManipulator::new),
             new CardPrinting("10E", "6", AuraOfSilence::new),
             new CardPrinting("10E", "7", AvenCloudchaser::new),
@@ -180,6 +188,11 @@ public enum CardSet {
             new CardPrinting("10E", "130", BogWraith::new),
             new CardPrinting("10E", "131", ConsumeSpirit::new),
             new CardPrinting("10E", "132", ContaminatedBond::new),
+            new CardPrinting("10E", "133", CruelEdict::new),
+            new CardPrinting("10E", "134", Deathmark::new),
+            new CardPrinting("10E", "135", DiabolicTutor::new),
+            new CardPrinting("10E", "136", Distress::new),
+            new CardPrinting("10E", "137", DoomedNecromancer::new),
             new CardPrinting("10E", "139", DrudgeSkeletons::new),
             new CardPrinting("10E", "15", FieldMarshal::new),
             new CardPrinting("10E", "16", GhostWarden::new),
@@ -317,7 +330,8 @@ public enum CardSet {
             new CardPrinting("ECL", "1", ChangelingWayfinder::new),
             new CardPrinting("ECL", "2", RooftopPercher::new),
             new CardPrinting("ECL", "3", AdeptWatershaper::new),
-            new CardPrinting("ECL", "4", AjaniOutlandChaperone::new)
+            new CardPrinting("ECL", "4", AjaniOutlandChaperone::new),
+            new CardPrinting("ECL", "5", AppealToEirdu::new)
     ));
 
     private static final Map<String, String> setNameRegistry = new ConcurrentHashMap<>();

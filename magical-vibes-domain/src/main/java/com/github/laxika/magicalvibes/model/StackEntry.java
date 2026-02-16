@@ -23,6 +23,7 @@ public class StackEntry {
     private final TargetZone targetZone;
     private final List<UUID> targetCardIds;
     @Setter private boolean copy;
+    private final List<UUID> targetPermanentIds;
 
     // Creature spell constructor
     public StackEntry(Card card, UUID controllerId) {
@@ -37,6 +38,7 @@ public class StackEntry {
         this.damageAssignments = Map.of();
         this.targetZone = null;
         this.targetCardIds = List.of();
+        this.targetPermanentIds = List.of();
     }
 
     // Triggered ability constructor
@@ -52,6 +54,7 @@ public class StackEntry {
         this.damageAssignments = Map.of();
         this.targetZone = null;
         this.targetCardIds = List.of();
+        this.targetPermanentIds = List.of();
     }
 
     // General constructor with xValue (for sorcery spells)
@@ -67,6 +70,7 @@ public class StackEntry {
         this.damageAssignments = Map.of();
         this.targetZone = null;
         this.targetCardIds = List.of();
+        this.targetPermanentIds = List.of();
     }
 
     // Targeted or damage distribution spell constructor
@@ -82,6 +86,7 @@ public class StackEntry {
         this.damageAssignments = damageAssignments != null ? damageAssignments : Map.of();
         this.targetZone = null;
         this.targetCardIds = List.of();
+        this.targetPermanentIds = List.of();
     }
 
     // Triggered ability with source and target permanent constructor
@@ -97,6 +102,7 @@ public class StackEntry {
         this.damageAssignments = Map.of();
         this.targetZone = null;
         this.targetCardIds = List.of();
+        this.targetPermanentIds = List.of();
     }
 
     // Zone-aware targeted ability constructor (e.g. target a card in graveyard)
@@ -112,13 +118,14 @@ public class StackEntry {
         this.damageAssignments = Map.of();
         this.targetZone = targetZone;
         this.targetCardIds = List.of();
+        this.targetPermanentIds = List.of();
     }
 
     // Spell copy constructor — preserves all fields from the original stack entry
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description,
                       List<CardEffect> effectsToResolve, int xValue, UUID targetPermanentId,
                       UUID sourcePermanentId, Map<UUID, Integer> damageAssignments,
-                      TargetZone targetZone, List<UUID> targetCardIds) {
+                      TargetZone targetZone, List<UUID> targetCardIds, List<UUID> targetPermanentIds) {
         this.entryType = entryType;
         this.card = card;
         this.controllerId = controllerId;
@@ -130,6 +137,7 @@ public class StackEntry {
         this.damageAssignments = damageAssignments != null ? damageAssignments : Map.of();
         this.targetZone = targetZone;
         this.targetCardIds = targetCardIds != null ? targetCardIds : List.of();
+        this.targetPermanentIds = targetPermanentIds != null ? targetPermanentIds : List.of();
     }
 
     // Multi-target triggered ability constructor (e.g. exile up to N cards from graveyards)
@@ -145,5 +153,22 @@ public class StackEntry {
         this.damageAssignments = Map.of();
         this.targetZone = null;
         this.targetCardIds = targetCardIds != null ? targetCardIds : List.of();
+        this.targetPermanentIds = List.of();
+    }
+
+    // Multi-target permanent spell constructor (e.g. "one or two target creatures")
+    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, int xValue, List<UUID> targetPermanentIds) {
+        this.entryType = entryType;
+        this.card = card;
+        this.controllerId = controllerId;
+        this.description = description;
+        this.effectsToResolve = effectsToResolve;
+        this.xValue = xValue;
+        this.targetPermanentId = null;
+        this.sourcePermanentId = null;
+        this.damageAssignments = Map.of();
+        this.targetZone = null;
+        this.targetCardIds = List.of();
+        this.targetPermanentIds = targetPermanentIds != null ? targetPermanentIds : List.of();
     }
 }

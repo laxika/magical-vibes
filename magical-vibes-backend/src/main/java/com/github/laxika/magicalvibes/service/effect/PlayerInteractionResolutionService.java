@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -55,6 +56,8 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
                 (gd, entry, effect) -> resolveLookAtHand(gd, entry));
         registry.register(ChooseCardsFromTargetHandToTopOfLibraryEffect.class,
                 (gd, entry, effect) -> resolveChooseCardsFromTargetHandToTopOfLibrary(gd, entry, (ChooseCardsFromTargetHandToTopOfLibraryEffect) effect));
+        registry.register(ChooseCardFromTargetHandToDiscardEffect.class,
+                (gd, entry, effect) -> resolveChooseCardFromTargetHandToDiscard(gd, entry, (ChooseCardFromTargetHandToDiscardEffect) effect));
         registry.register(ChangeColorTextEffect.class,
                 (gd, entry, effect) -> resolveChangeColorText(gd, entry));
         registry.register(RedirectDrawsEffect.class,
@@ -154,12 +157,61 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
 
         gameData.awaitingRevealedHandChoiceTargetPlayerId = targetPlayerId;
         gameData.awaitingRevealedHandChoiceRemainingCount = cardsToChoose;
+        gameData.awaitingRevealedHandChoiceDiscardMode = false;
         gameData.awaitingRevealedHandChosenCards.clear();
 
         playerInputService.beginRevealedHandChoice(gameData, casterId, targetPlayerId, validIndices,
                 "Choose a card to put on top of " + targetName + "'s library.");
 
         log.info("Game {} - {} choosing {} card(s) from {}'s hand to put on top of library",
+                gameData.id, casterName, cardsToChoose, targetName);
+    }
+
+    private void resolveChooseCardFromTargetHandToDiscard(GameData gameData, StackEntry entry, ChooseCardFromTargetHandToDiscardEffect effect) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID casterId = entry.getControllerId();
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        String casterName = gameData.playerIdToName.get(casterId);
+
+        if (hand.isEmpty()) {
+            String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} looks at {}'s empty hand", gameData.id, casterName, targetName);
+            return;
+        }
+
+        // Log and reveal hand to caster
+        String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
+        String logEntry = targetName + " reveals their hand: " + cardNames + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        // Build valid indices (exclude cards matching excluded types)
+        List<Integer> validIndices = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            if (!effect.excludedTypes().contains(hand.get(i).getType())) {
+                validIndices.add(i);
+            }
+        }
+
+        if (validIndices.isEmpty()) {
+            String noValidEntry = casterName + " cannot choose a card (" + targetName + "'s hand contains no valid choices).";
+            gameBroadcastService.logAndBroadcast(gameData, noValidEntry);
+            log.info("Game {} - {}'s hand has no valid choices for {}", gameData.id, targetName, casterName);
+            return;
+        }
+
+        int cardsToChoose = Math.min(effect.count(), validIndices.size());
+
+        gameData.awaitingRevealedHandChoiceTargetPlayerId = targetPlayerId;
+        gameData.awaitingRevealedHandChoiceRemainingCount = cardsToChoose;
+        gameData.awaitingRevealedHandChoiceDiscardMode = true;
+        gameData.awaitingRevealedHandChosenCards.clear();
+
+        playerInputService.beginRevealedHandChoice(gameData, casterId, targetPlayerId, validIndices,
+                "Choose a nonland card to discard.");
+
+        log.info("Game {} - {} choosing {} card(s) from {}'s hand to discard",
                 gameData.id, casterName, cardsToChoose, targetName);
     }
 

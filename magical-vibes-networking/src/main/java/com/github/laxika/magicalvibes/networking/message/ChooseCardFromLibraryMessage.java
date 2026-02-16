@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.networking.model.MessageType;
 
 import java.util.List;
 
-public record ChooseCardFromLibraryMessage(MessageType type, List<CardView> cards, String prompt) {
+public record ChooseCardFromLibraryMessage(MessageType type, List<CardView> cards, String prompt, boolean canFailToFind) {
 
-    public ChooseCardFromLibraryMessage(List<CardView> cards, String prompt) {
-        this(MessageType.CHOOSE_CARD_FROM_LIBRARY, cards, prompt);
+    public ChooseCardFromLibraryMessage(List<CardView> cards, String prompt, boolean canFailToFind) {
+        this(MessageType.CHOOSE_CARD_FROM_LIBRARY, cards, prompt, canFailToFind);
     }
 }

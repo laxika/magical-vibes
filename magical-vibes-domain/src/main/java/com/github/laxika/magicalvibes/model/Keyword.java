@@ -11,5 +11,6 @@ public enum Keyword {
     VIGILANCE,
     SHROUD,
     CHANGELING,
-    INDESTRUCTIBLE
+    INDESTRUCTIBLE,
+    CONVOKE
 }

@@ -250,6 +250,19 @@ public class GameService {
                     }
                 }
             }
+            // Check multi-target permanent fizzle: if ALL targeted permanents are gone, fizzle
+            if (!targetFizzled && entry.getTargetPermanentIds() != null && !entry.getTargetPermanentIds().isEmpty()) {
+                boolean allGone = true;
+                for (UUID permId : entry.getTargetPermanentIds()) {
+                    if (gameQueryService.findPermanentById(gameData, permId) != null) {
+                        allGone = false;
+                        break;
+                    }
+                }
+                if (allGone) {
+                    targetFizzled = true;
+                }
+            }
             // Check multi-target graveyard fizzle: if ALL targeted cards are gone, fizzle
             if (!targetFizzled && entry.getTargetCardIds() != null && !entry.getTargetCardIds().isEmpty()) {
                 boolean allGone = true;
@@ -445,8 +458,11 @@ public class GameService {
                 case LIBRARY_SEARCH -> {
                     if (playerId.equals(gameData.awaitingLibrarySearchPlayerId) && gameData.awaitingLibrarySearchCards != null) {
                         List<CardView> cardViews = gameData.awaitingLibrarySearchCards.stream().map(cardViewFactory::create).toList();
+                        String prompt = gameData.awaitingLibrarySearchCanFailToFind
+                                ? "Search your library for a basic land card to put into your hand."
+                                : "Search your library for a card to put into your hand.";
                         sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(
-                                cardViews, "Search your library for a basic land card to put into your hand."));
+                                cardViews, prompt, gameData.awaitingLibrarySearchCanFailToFind));
                     }
                 }
                 case HAND_TOP_BOTTOM_CHOICE -> {
@@ -657,7 +673,13 @@ public class GameService {
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments) {
         synchronized (gameData) {
-            spellCastingService.playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments);
+            spellCastingService.playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, List.of(), List.of());
+        }
+    }
+
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments, List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds) {
+        synchronized (gameData) {
+            spellCastingService.playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds);
         }
     }
 

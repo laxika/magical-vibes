@@ -145,6 +145,9 @@ export interface Card {
   allowedTargetTypes: string[];
   activatedAbilities: ActivatedAbilityView[];
   loyalty: number | null;
+  minTargets: number;
+  maxTargets: number;
+  hasConvoke: boolean;
 }
 
 export interface Permanent {
@@ -335,6 +338,7 @@ export interface ChooseCardFromLibraryNotification {
   type: MessageType;
   cards: Card[];
   prompt: string;
+  canFailToFind: boolean;
 }
 
 export interface RevealHandNotification {

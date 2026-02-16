@@ -62,7 +62,7 @@ class TimeStopTest {
         harness.setHand(player1, List.of(new TimeStop()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -84,7 +84,7 @@ class TimeStopTest {
         UUID activePlayerBefore = gd.activePlayerId;
         int turnBefore = gd.turnNumber;
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         // Time Stop is exiled, not in graveyard
@@ -104,7 +104,7 @@ class TimeStopTest {
         harness.setHand(player1, List.of(new TimeStop()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -130,7 +130,7 @@ class TimeStopTest {
 
         harness.castCreature(player2, 0);
         harness.passPriority(player2);
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(2);
@@ -177,7 +177,7 @@ class TimeStopTest {
         harness.passPriority(player2);
 
         // Player1 responds with Time Stop
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -214,7 +214,7 @@ class TimeStopTest {
         harness.addMana(player2, ManaColor.BLUE, 6);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, null);
+        harness.castInstant(player2, 0);
         harness.passBothPriorities();
 
         // Combat state is cleared — creature should no longer be attacking
@@ -237,7 +237,7 @@ class TimeStopTest {
         harness.setHand(player1, List.of(new TimeStop()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         assertThat(perm.getPowerModifier()).isZero();
@@ -252,7 +252,7 @@ class TimeStopTest {
         harness.setHand(player1, List.of(new TimeStop()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
 
         // Simulate a pending may ability that exists when Time Stop resolves
         GameData gd = harness.getGameData();
@@ -273,7 +273,7 @@ class TimeStopTest {
         harness.setHand(player1, List.of(new TimeStop()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -296,7 +296,7 @@ class TimeStopTest {
 
         harness.castCreature(player2, 0);
         harness.passPriority(player2);
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -315,7 +315,7 @@ class TimeStopTest {
         GameData gd = harness.getGameData();
         gd.permanentsToSacrificeAtEndOfCombat.add(UUID.randomUUID());
 
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.permanentsToSacrificeAtEndOfCombat).isEmpty();
