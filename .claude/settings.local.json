@@ -23,7 +23,8 @@
       "WebFetch(domain:yawgatog.com)",
       "WebSearch",
       "WebFetch(domain:www.mtgassist.com)",
-      "WebFetch(domain:blogs.magicjudges.org)"
+      "WebFetch(domain:blogs.magicjudges.org)",
+      "WebFetch(domain:mtg.wiki)"
     ]
   }
 }

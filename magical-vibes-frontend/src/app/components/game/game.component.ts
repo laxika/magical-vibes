@@ -279,6 +279,10 @@ export class GameComponent implements OnInit, OnDestroy {
     return this.game()?.lifeTotals?.[playerIndex] ?? 20;
   }
 
+  getPlayerId(playerIndex: number): string {
+    return this.game()?.playerIds?.[playerIndex] ?? '';
+  }
+
   // ========== Game state ==========
 
   private applyGameState(state: GameStateNotification): void {
