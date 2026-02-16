@@ -274,6 +274,8 @@ public class UserInputHandlerService {
 
         gameData.awaitingRevealedHandChoiceRemainingCount--;
 
+        boolean discardMode = gameData.awaitingRevealedHandChoiceDiscardMode;
+
         if (gameData.awaitingRevealedHandChoiceRemainingCount > 0 && !targetHand.isEmpty()) {
             // More cards to choose — update valid indices and prompt again
             List<Integer> newValidIndices = new ArrayList<>();
@@ -281,29 +283,45 @@ public class UserInputHandlerService {
                 newValidIndices.add(i);
             }
 
-            playerInputService.beginRevealedHandChoice(gameData, player.getId(), targetPlayerId, newValidIndices,
-                    "Choose another card to put on top of " + targetName + "'s library.");
+            String prompt = discardMode
+                    ? "Choose another card to discard."
+                    : "Choose another card to put on top of " + targetName + "'s library.";
+            playerInputService.beginRevealedHandChoice(gameData, player.getId(), targetPlayerId, newValidIndices, prompt);
         } else {
-            // All cards chosen — put them on top of library
+            // All cards chosen
             gameData.awaitingInput = null;
             gameData.awaitingCardChoicePlayerId = null;
             gameData.awaitingCardChoiceValidIndices = null;
 
-            List<Card> deck = gameData.playerDecks.get(targetPlayerId);
             List<Card> chosenCards = new ArrayList<>(gameData.awaitingRevealedHandChosenCards);
 
-            // Insert in reverse order so first chosen ends up on top
-            for (int i = chosenCards.size() - 1; i >= 0; i--) {
-                deck.addFirst(chosenCards.get(i));
-            }
+            if (discardMode) {
+                // Discard chosen cards to graveyard
+                List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+                graveyard.addAll(chosenCards);
 
-            String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
-            String putLog = player.getUsername() + " puts " + cardNames + " on top of " + targetName + "'s library.";
-            gameBroadcastService.logAndBroadcast(gameData, putLog);
-            log.info("Game {} - {} puts {} on top of {}'s library", gameData.id, player.getUsername(), cardNames, targetName);
+                String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
+                String discardLog = targetName + " discards " + cardNames + ".";
+                gameBroadcastService.logAndBroadcast(gameData, discardLog);
+                log.info("Game {} - {} discards {} from {}'s hand", gameData.id, player.getUsername(), cardNames, targetName);
+            } else {
+                // Put chosen cards on top of library
+                List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+
+                // Insert in reverse order so first chosen ends up on top
+                for (int i = chosenCards.size() - 1; i >= 0; i--) {
+                    deck.addFirst(chosenCards.get(i));
+                }
+
+                String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
+                String putLog = player.getUsername() + " puts " + cardNames + " on top of " + targetName + "'s library.";
+                gameBroadcastService.logAndBroadcast(gameData, putLog);
+                log.info("Game {} - {} puts {} on top of {}'s library", gameData.id, player.getUsername(), cardNames, targetName);
+            }
 
             gameData.awaitingRevealedHandChoiceTargetPlayerId = null;
             gameData.awaitingRevealedHandChoiceRemainingCount = 0;
+            gameData.awaitingRevealedHandChoiceDiscardMode = false;
             gameData.awaitingRevealedHandChosenCards.clear();
 
             turnProgressionService.resolveAutoPass(gameData);
