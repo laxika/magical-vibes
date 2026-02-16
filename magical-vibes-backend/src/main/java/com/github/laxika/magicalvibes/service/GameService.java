@@ -334,6 +334,16 @@ public class GameService {
             }
         }
 
+        // Check SBA after resolution — creatures may have 0 toughness from effects (e.g. -1/-1)
+        gameHelper.performStateBasedActions(gameData);
+
+        if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
+            gameHelper.processNextDeathTriggerTarget(gameData);
+            if (gameData.awaitingInput != null) {
+                return;
+            }
+        }
+
         if (!gameData.pendingMayAbilities.isEmpty()) {
 
             playerInputService.processNextMayAbility(gameData);
@@ -1006,6 +1016,9 @@ public class GameService {
                 }
                 gameHelper.performStateBasedActions(gameData);
                 gameData.priorityPassedBy.clear();
+                if (gameData.awaitingInput == null && !gameData.pendingDeathTriggerTargets.isEmpty()) {
+                    gameHelper.processNextDeathTriggerTarget(gameData);
+                }
                 if (gameData.awaitingInput == null && !gameData.pendingMayAbilities.isEmpty()) {
                     playerInputService.processNextMayAbility(gameData);
                 }
@@ -1040,6 +1053,9 @@ public class GameService {
                 }
                 gameHelper.performStateBasedActions(gameData);
                 gameData.priorityPassedBy.clear();
+                if (gameData.awaitingInput == null && !gameData.pendingDeathTriggerTargets.isEmpty()) {
+                    gameHelper.processNextDeathTriggerTarget(gameData);
+                }
                 gameBroadcastService.broadcastGameState(gameData);
             }
         }

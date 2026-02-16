@@ -26,6 +26,8 @@ import com.github.laxika.magicalvibes.cards.a.AvenFisher;
 import com.github.laxika.magicalvibes.cards.a.AvenWindreader;
 import com.github.laxika.magicalvibes.cards.b.BallistaSquad;
 import com.github.laxika.magicalvibes.cards.b.Bandage;
+import com.github.laxika.magicalvibes.cards.b.Blaze;
+import com.github.laxika.magicalvibes.cards.b.BeaconOfDestruction;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfImmortality;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfUnrest;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
@@ -65,6 +67,7 @@ import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.e.EssenceDrain;
 import com.github.laxika.magicalvibes.cards.e.Evacuation;
 import com.github.laxika.magicalvibes.cards.f.Fear;
+import com.github.laxika.magicalvibes.cards.f.FesteringGoblin;
 import com.github.laxika.magicalvibes.cards.f.FieldMarshal;
 import com.github.laxika.magicalvibes.cards.f.Flashfreeze;
 import com.github.laxika.magicalvibes.cards.f.FogElemental;
@@ -218,6 +221,7 @@ public enum CardSet {
             new CardPrinting("10E", "140", DuskImp::new),
             new CardPrinting("10E", "141", EssenceDrain::new),
             new CardPrinting("10E", "142", Fear::new),
+            new CardPrinting("10E", "143", FesteringGoblin::new),
             new CardPrinting("10E", "15", FieldMarshal::new),
             new CardPrinting("10E", "16", GhostWarden::new),
             new CardPrinting("10E", "17", GloriousAnthem::new),
@@ -338,6 +342,8 @@ public enum CardSet {
             new CardPrinting("10E", "277", MightOfOaks::new),
             new CardPrinting("10E", "187", AnabaBodyguard::new),
             new CardPrinting("10E", "188", ArcaneTeachings::new),
+            new CardPrinting("10E", "189", BeaconOfDestruction::new),
+            new CardPrinting("10E", "190", Blaze::new),
             new CardPrinting("10E", "376", Mountain::new),
             new CardPrinting("10E", "377", Mountain::new),
             new CardPrinting("10E", "378", Mountain::new),

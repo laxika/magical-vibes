@@ -61,7 +61,8 @@ public enum CardSubtype {
     CONSTRUCT("Construct"),
     GOLEM("Golem"),
     IMP("Imp"),
-    VEDALKEN("Vedalken");
+    VEDALKEN("Vedalken"),
+    GOBLIN("Goblin");
 
     @Getter
     private final String displayName;
