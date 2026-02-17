@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import lombok.RequiredArgsConstructor;
@@ -208,7 +209,10 @@ public class TurnProgressionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(nextActive);
         if (battlefield != null) {
             battlefield.forEach(p -> {
-                if (!gameQueryService.hasAuraWithEffect(gameData, p, EnchantedCreatureDoesntUntapEffect.class)) {
+                boolean hasAuraDoesntUntap = gameQueryService.hasAuraWithEffect(gameData, p, EnchantedCreatureDoesntUntapEffect.class);
+                boolean hasSelfDoesntUntap = p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof DoesntUntapDuringUntapStepEffect);
+                if (!hasAuraDoesntUntap && !hasSelfDoesntUntap) {
                     p.untap();
                 }
                 p.setSummoningSick(false);

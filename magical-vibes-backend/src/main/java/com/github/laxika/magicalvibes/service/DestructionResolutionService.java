@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +42,8 @@ public class DestructionResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveDestroyBlockedCreatureAndSelf(gd, entry));
         registry.register(SacrificeCreatureEffect.class,
                 (gd, entry, effect) -> resolveSacrificeCreature(gd, entry));
+        registry.register(EachOpponentSacrificesCreatureEffect.class,
+                (gd, entry, effect) -> resolveEachOpponentSacrificesCreature(gd, entry));
     }
 
     void resolveDestroyAllCreatures(GameData gameData, boolean cannotBeRegenerated) {
@@ -149,6 +152,19 @@ public class DestructionResolutionService implements EffectHandlerProvider {
             return;
         }
 
+        performSacrificeCreatureForPlayer(gameData, targetPlayerId);
+    }
+
+    void resolveEachOpponentSacrificesCreature(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) continue;
+            performSacrificeCreatureForPlayer(gameData, playerId);
+        }
+    }
+
+    void performSacrificeCreatureForPlayer(GameData gameData, UUID targetPlayerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
         List<UUID> creatureIds = new ArrayList<>();
         if (battlefield != null) {

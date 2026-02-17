@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.networking.message.JoinGame;
 import com.github.laxika.magicalvibes.networking.message.MulliganResolvedMessage;
 import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMessage;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -789,6 +790,9 @@ public class GameService {
             battlefield.remove(permanentIndex);
             gameData.playerGraveyards.get(playerId).add(permanent.getOriginalCard());
             gameHelper.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature);
+            if (wasCreature) {
+                gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+            }
             gameHelper.removeOrphanedAuras(gameData);
 
             String logEntry = player.getUsername() + " sacrifices " + permanent.getCard().getName() + ".";
@@ -849,6 +853,18 @@ public class GameService {
             List<CardEffect> abilityEffects = ability.getEffects();
             String abilityCost = ability.getManaCost();
             boolean isTapAbility = ability.isRequiresTap();
+
+            // Validate activation timing restrictions (e.g. "Activate only during your upkeep")
+            if (ability.getTimingRestriction() != null) {
+                if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP) {
+                    if (!playerId.equals(gameData.activePlayerId)) {
+                        throw new IllegalStateException("This ability can only be activated during your upkeep");
+                    }
+                    if (gameData.currentStep != TurnStep.UPKEEP) {
+                        throw new IllegalStateException("This ability can only be activated during your upkeep");
+                    }
+                }
+            }
 
             // Validate loyalty ability restrictions
             if (ability.getLoyaltyCost() != null) {
@@ -970,6 +986,9 @@ public class GameService {
                 battlefield.remove(permanent);
                 gameData.playerGraveyards.get(playerId).add(permanent.getCard());
                 gameHelper.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature);
+                if (wasCreature) {
+                    gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                }
             }
 
             String logEntry = player.getUsername() + " activates " + permanent.getCard().getName() + "'s ability.";

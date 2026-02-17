@@ -41,6 +41,8 @@ import com.github.laxika.magicalvibes.cards.c.ChimericStaff;
 import com.github.laxika.magicalvibes.cards.c.ChromaticStar;
 import com.github.laxika.magicalvibes.cards.c.CitanulFlute;
 import com.github.laxika.magicalvibes.cards.c.CoatOfArms;
+import com.github.laxika.magicalvibes.cards.c.ColossusOfSardia;
+import com.github.laxika.magicalvibes.cards.c.CompositeGolem;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.ChoMannoRevolutionary;
 import com.github.laxika.magicalvibes.cards.c.CloudElemental;
@@ -75,6 +77,7 @@ import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GhostWarden;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.g.GravePact;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HailOfArrows;
 import com.github.laxika.magicalvibes.cards.h.HeartOfLight;
@@ -191,6 +194,8 @@ public enum CardSet {
             new CardPrinting("10E", "314", ChromaticStar::new),
             new CardPrinting("10E", "315", CitanulFlute::new),
             new CardPrinting("10E", "316", CoatOfArms::new),
+            new CardPrinting("10E", "317", ColossusOfSardia::new),
+            new CardPrinting("10E", "318", CompositeGolem::new),
             new CardPrinting("10E", "326", IcyManipulator::new),
             new CardPrinting("10E", "6", AuraOfSilence::new),
             new CardPrinting("10E", "7", AvenCloudchaser::new),
@@ -220,6 +225,7 @@ public enum CardSet {
             new CardPrinting("10E", "141", EssenceDrain::new),
             new CardPrinting("10E", "142", Fear::new),
             new CardPrinting("10E", "143", FesteringGoblin::new),
+            new CardPrinting("10E", "144", GravePact::new),
             new CardPrinting("10E", "15", FieldMarshal::new),
             new CardPrinting("10E", "16", GhostWarden::new),
             new CardPrinting("10E", "17", GloriousAnthem::new),

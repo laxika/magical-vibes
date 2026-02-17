@@ -483,6 +483,9 @@ public class UserInputHandlerService {
                 battlefield.remove(perm);
                 gameData.playerGraveyards.get(playerId).add(perm.getOriginalCard());
                 gameHelper.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature);
+                if (wasCreature) {
+                    gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                }
                 String logEntry = perm.getCard().getName() + " is put into the graveyard (legend rule).";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} sent to graveyard by legend rule", gameData.id, perm.getCard().getName());

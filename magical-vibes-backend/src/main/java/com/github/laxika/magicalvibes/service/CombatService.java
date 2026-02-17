@@ -485,6 +485,16 @@ public class CombatService {
                             }
                             remaining -= dmg;
                         }
+                        // Trample: excess damage goes to defending player
+                        if (remaining > 0 && gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)) {
+                            if (redirectTarget != null) {
+                                damageRedirectedToGuard += remaining;
+                            } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
+                                damageToDefendingPlayer += remaining;
+                            }
+                            combatDamageDealt.merge(atk, remaining, Integer::sum);
+                            combatDamageDealtToPlayer.merge(atk, remaining, Integer::sum);
+                        }
                     }
                     // First strike / double strike blockers deal damage to attacker
                     for (int blkIdx : blkIndices) {
@@ -561,6 +571,16 @@ public class CombatService {
                         }
                         remaining -= dmg;
                     }
+                    // Trample: excess damage goes to defending player
+                    if (remaining > 0 && gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)) {
+                        if (redirectTarget != null) {
+                            damageRedirectedToGuard += remaining;
+                        } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
+                            damageToDefendingPlayer += remaining;
+                        }
+                        combatDamageDealt.merge(atk, remaining, Integer::sum);
+                        combatDamageDealtToPlayer.merge(atk, remaining, Integer::sum);
+                    }
                 }
                 // Surviving blockers deal damage to attacker (skip first-strike-only, allow double strike)
                 for (int blkIdx : blkIndices) {
@@ -631,6 +651,7 @@ public class CombatService {
             gameData.stolenCreatures.remove(dead.getId());
             gameData.playerGraveyards.get(atkGraveyardOwner).add(dead.getOriginalCard());
             gameHelper.collectDeathTrigger(gameData, dead.getCard(), activeId, true);
+            gameHelper.checkAllyCreatureDeathTriggers(gameData, activeId);
             atkBf.remove(idx);
         }
         for (int idx : deadDefenderIndices) {
@@ -641,6 +662,7 @@ public class CombatService {
             gameData.stolenCreatures.remove(dead.getId());
             gameData.playerGraveyards.get(defGraveyardOwner).add(dead.getOriginalCard());
             gameHelper.collectDeathTrigger(gameData, dead.getCard(), defenderId, true);
+            gameHelper.checkAllyCreatureDeathTriggers(gameData, defenderId);
             defBf.remove(idx);
         }
         if (!deadAttackerIndices.isEmpty() || !deadDefenderIndices.isEmpty()) {
@@ -831,6 +853,9 @@ public class CombatService {
                     battlefield.remove(perm);
                     gameData.playerGraveyards.get(playerId).add(perm.getOriginalCard());
                     gameHelper.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature);
+                    if (wasCreature) {
+                        gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                    }
                     String logEntry = perm.getCard().getName() + " is sacrificed.";
                     gameData.gameLog.add(logEntry);
                     log.info("Game {} - {} sacrificed at end of combat", gameData.id, perm.getCard().getName());

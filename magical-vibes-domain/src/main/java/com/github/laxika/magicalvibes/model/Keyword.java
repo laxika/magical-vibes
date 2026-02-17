@@ -13,5 +13,6 @@ public enum Keyword {
     CHANGELING,
     FEAR,
     INDESTRUCTIBLE,
-    CONVOKE
+    CONVOKE,
+    TRAMPLE
 }
