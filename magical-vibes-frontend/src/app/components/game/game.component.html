@@ -493,6 +493,7 @@
                 [class.tappable]="choice.canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
                 [class.summoning-sick]="ip.perm.summoningSick"
                 [class.can-attack]="canAttack(ip.originalIndex) && !isSelectedAttacker(ip.originalIndex)"
+                [class.must-attack]="mustAttackIndices().has(ip.originalIndex)"
                 [class.can-block]="canBlock(ip.originalIndex) && !isAssignedBlocker(ip.originalIndex) && selectedBlockerIndex !== ip.originalIndex"
                 [class.selected-blocker]="selectedBlockerIndex === ip.originalIndex"
                 [class.assigned-blocker]="isAssignedBlocker(ip.originalIndex)"

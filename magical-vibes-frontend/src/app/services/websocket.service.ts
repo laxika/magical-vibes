@@ -277,6 +277,7 @@ export interface SelectCardsToBottomNotification {
 export interface AvailableAttackersNotification {
   type: MessageType;
   attackerIndices: number[];
+  mustAttackIndices: number[];
 }
 
 export interface AvailableBlockersNotification {

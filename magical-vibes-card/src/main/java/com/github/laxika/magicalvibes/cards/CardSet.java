@@ -28,6 +28,8 @@ import com.github.laxika.magicalvibes.cards.b.BallistaSquad;
 import com.github.laxika.magicalvibes.cards.b.Bandage;
 import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.b.BloodfireColossus;
+import com.github.laxika.magicalvibes.cards.b.BogardanFirefiend;
+import com.github.laxika.magicalvibes.cards.b.BloodrockCyclops;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfDestruction;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfImmortality;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfUnrest;
@@ -87,6 +89,7 @@ import com.github.laxika.magicalvibes.cards.g.Gravedigger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HailOfArrows;
 import com.github.laxika.magicalvibes.cards.h.HateWeaver;
+import com.github.laxika.magicalvibes.cards.h.HeadGames;
 import com.github.laxika.magicalvibes.cards.h.HeartOfLight;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
@@ -239,6 +242,7 @@ public enum CardSet {
             new CardPrinting("10E", "145", GravebornMuse::new),
             new CardPrinting("10E", "146", Gravedigger::new),
             new CardPrinting("10E", "147", HateWeaver::new),
+            new CardPrinting("10E", "148", HeadGames::new),
             new CardPrinting("10E", "15", FieldMarshal::new),
             new CardPrinting("10E", "16", GhostWarden::new),
             new CardPrinting("10E", "17", GloriousAnthem::new),
@@ -362,6 +366,8 @@ public enum CardSet {
             new CardPrinting("10E", "189", BeaconOfDestruction::new),
             new CardPrinting("10E", "190", Blaze::new),
             new CardPrinting("10E", "191", BloodfireColossus::new),
+            new CardPrinting("10E", "192", BloodrockCyclops::new),
+            new CardPrinting("10E", "193", BogardanFirefiend::new),
             new CardPrinting("10E", "376", Mountain::new),
             new CardPrinting("10E", "377", Mountain::new),
             new CardPrinting("10E", "378", Mountain::new),

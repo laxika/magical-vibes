@@ -489,6 +489,7 @@ export class GameComponent implements OnInit, OnDestroy {
   declaringAttackers = false;
   declaringBlockers = false;
   availableAttackerIndices = signal(new Set<number>());
+  mustAttackIndices = signal(new Set<number>());
   availableBlockerIndices = signal(new Set<number>());
   selectedAttackerIndices = signal(new Set<number>());
   opponentAttackerIndices: number[] = [];
@@ -500,7 +501,8 @@ export class GameComponent implements OnInit, OnDestroy {
   private handleAvailableAttackers(msg: AvailableAttackersNotification): void {
     this.declaringAttackers = true;
     this.availableAttackerIndices.set(new Set(msg.attackerIndices));
-    this.selectedAttackerIndices.set(new Set());
+    this.mustAttackIndices.set(new Set(msg.mustAttackIndices));
+    this.selectedAttackerIndices.set(new Set(msg.mustAttackIndices));
   }
 
   private handleAvailableBlockers(msg: AvailableBlockersNotification): void {
@@ -533,6 +535,7 @@ export class GameComponent implements OnInit, OnDestroy {
     if (!this.canAttack(index)) return;
     const updated = new Set(this.selectedAttackerIndices());
     if (updated.has(index)) {
+      if (this.mustAttackIndices().has(index)) return;
       updated.delete(index);
     } else {
       updated.add(index);
@@ -549,6 +552,7 @@ export class GameComponent implements OnInit, OnDestroy {
     });
     this.declaringAttackers = false;
     this.availableAttackerIndices.set(new Set());
+    this.mustAttackIndices.set(new Set());
   }
 
   canBlock(index: number): boolean {

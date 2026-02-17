@@ -89,6 +89,8 @@ public class GameData {
     public List<Card> awaitingLibrarySearchCards;
     public boolean awaitingLibrarySearchReveals;
     public boolean awaitingLibrarySearchCanFailToFind;
+    public UUID awaitingLibrarySearchTargetPlayerId;
+    public int awaitingLibrarySearchRemainingCount;
     public final Set<UUID> permanentsToSacrificeAtEndOfCombat = ConcurrentHashMap.newKeySet();
     public int awaitingDiscardRemainingCount;
     public UUID awaitingRevealedHandChoiceTargetPlayerId;

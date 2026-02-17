@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
@@ -82,6 +83,28 @@ public class CombatService {
         return false;
     }
 
+    /**
+     * Returns the subset of attackable indices where the creature has a MustAttackEffect.
+     * Per CR 508.1d, creatures are exempt from must-attack if there is an attack cost (tax).
+     */
+    List<Integer> getMustAttackIndices(GameData gameData, UUID playerId, List<Integer> attackableIndices) {
+        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
+        if (taxPerCreature > 0) {
+            return List.of();
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        List<Integer> mustAttack = new ArrayList<>();
+        for (int idx : attackableIndices) {
+            Permanent p = battlefield.get(idx);
+            boolean hasMustAttack = p.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(e -> e instanceof MustAttackEffect);
+            if (hasMustAttack) {
+                mustAttack.add(idx);
+            }
+        }
+        return mustAttack;
+    }
+
     List<Integer> getBlockableCreatureIndices(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
@@ -120,8 +143,9 @@ public class CombatService {
             return;
         }
 
+        List<Integer> mustAttack = getMustAttackIndices(gameData, activeId, attackable);
         gameData.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
-        sessionManager.sendToPlayer(activeId, new AvailableAttackersMessage(attackable));
+        sessionManager.sendToPlayer(activeId, new AvailableAttackersMessage(attackable, mustAttack));
     }
 
     void skipToEndOfCombat(GameData gameData) {
@@ -154,6 +178,14 @@ public class CombatService {
         for (int idx : attackerIndices) {
             if (!attackable.contains(idx)) {
                 throw new IllegalStateException("Invalid attacker index: " + idx);
+            }
+        }
+
+        // Validate must-attack creatures are included
+        List<Integer> mustAttack = getMustAttackIndices(gameData, playerId, attackable);
+        for (int mustIdx : mustAttack) {
+            if (!attackerIndices.contains(mustIdx)) {
+                throw new IllegalStateException("Creature at index " + mustIdx + " must attack this combat");
             }
         }
 

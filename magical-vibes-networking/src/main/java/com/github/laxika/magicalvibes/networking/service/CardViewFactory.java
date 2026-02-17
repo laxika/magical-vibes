@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
@@ -115,6 +116,7 @@ public class CardViewFactory {
             if (effect instanceof ChooseCardsFromTargetHandToTopOfLibraryEffect
                     || effect instanceof DoubleTargetPlayerLifeEffect
                     || effect instanceof ExtraTurnEffect
+                    || effect instanceof HeadGamesEffect
                     || effect instanceof LookAtHandEffect
                     || effect instanceof MillTargetPlayerEffect
                     || effect instanceof ReturnArtifactsTargetPlayerOwnsToHandEffect
