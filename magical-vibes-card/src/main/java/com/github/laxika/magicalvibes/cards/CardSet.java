@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.cards.d.Dehydration;
 import com.github.laxika.magicalvibes.cards.d.DenizenOfTheDeep;
 import com.github.laxika.magicalvibes.cards.d.Deluge;
 import com.github.laxika.magicalvibes.cards.d.DreambornMuse;
+import com.github.laxika.magicalvibes.cards.d.Demolish;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.d.Discombobulate;
 import com.github.laxika.magicalvibes.cards.d.Distress;
@@ -384,6 +385,7 @@ public enum CardSet {
             new CardPrinting("10E", "193", BogardanFirefiend::new),
             new CardPrinting("10E", "194", ConeOfFlame::new),
             new CardPrinting("10E", "195", Cryoclasm::new),
+            new CardPrinting("10E", "196", Demolish::new),
             new CardPrinting("10E", "376", Mountain::new),
             new CardPrinting("10E", "377", Mountain::new),
             new CardPrinting("10E", "378", Mountain::new),
