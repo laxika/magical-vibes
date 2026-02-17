@@ -27,6 +27,7 @@
       "WebFetch(domain:mtg.wiki)",
       "Bash(xargs:*)",
       "Bash(git pull:*)",
+      "Bash(git status:*)",
       "Bash(git stash:*)",
       "Bash(git push:*)"
     ]
