@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesXEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
@@ -48,6 +49,8 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         });
         registry.register(BoostAllOwnCreaturesEffect.class,
                 (gd, entry, effect) -> resolveBoostAllOwnCreatures(gd, entry, (BoostAllOwnCreaturesEffect) effect));
+        registry.register(BoostAllCreaturesXEffect.class,
+                (gd, entry, effect) -> resolveBoostAllCreaturesX(gd, entry, (BoostAllCreaturesXEffect) effect));
         registry.register(GrantKeywordToTargetEffect.class,
                 (gd, entry, effect) -> resolveGrantKeywordToTarget(gd, entry, (GrantKeywordToTargetEffect) effect));
         registry.register(CantBlockSourceEffect.class,
@@ -149,6 +152,32 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} boosts {} creatures +{}/+{}", gameData.id, entry.getCard().getName(), count, boost.powerBoost(), boost.toughnessBoost());
+    }
+
+    private void resolveBoostAllCreaturesX(GameData gameData, StackEntry entry, BoostAllCreaturesXEffect effect) {
+        int xValue = entry.getXValue();
+        int powerBoost = effect.powerMultiplier() * xValue;
+        int toughnessBoost = effect.toughnessMultiplier() * xValue;
+
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+
+            for (Permanent permanent : battlefield) {
+                if (gameQueryService.isCreature(gameData, permanent)) {
+                    permanent.setPowerModifier(permanent.getPowerModifier() + powerBoost);
+                    permanent.setToughnessModifier(permanent.getToughnessModifier() + toughnessBoost);
+                    count++;
+                }
+            }
+        }
+
+        String logEntry = String.format("%s gives %+d/%+d to %d creature(s) until end of turn.",
+                entry.getCard().getName(), powerBoost, toughnessBoost, count);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} gives {}/{} to {} creatures", gameData.id, entry.getCard().getName(), powerBoost, toughnessBoost, count);
     }
 
     private void resolveGrantKeywordToTarget(GameData gameData, StackEntry entry, GrantKeywordToTargetEffect grant) {
