@@ -80,6 +80,7 @@ import com.github.laxika.magicalvibes.cards.f.FesteringGoblin;
 import com.github.laxika.magicalvibes.cards.f.FieldMarshal;
 import com.github.laxika.magicalvibes.cards.f.Flashfreeze;
 import com.github.laxika.magicalvibes.cards.f.FogElemental;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GhostWarden;
@@ -213,6 +214,7 @@ public enum CardSet {
             new CardPrinting("10E", "320", DemonsHorn::new),
             new CardPrinting("10E", "321", DoublingCube::new),
             new CardPrinting("10E", "322", DragonsClaw::new),
+            new CardPrinting("10E", "323", FountainOfYouth::new),
             new CardPrinting("10E", "326", IcyManipulator::new),
             new CardPrinting("10E", "6", AuraOfSilence::new),
             new CardPrinting("10E", "7", AvenCloudchaser::new),
