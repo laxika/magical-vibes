@@ -36,7 +36,12 @@ import com.github.laxika.magicalvibes.service.SpellCastingService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.TurnResolutionService;
-import com.github.laxika.magicalvibes.service.UserInputHandlerService;
+import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
+import com.github.laxika.magicalvibes.service.input.ColorChoiceHandlerService;
+import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
+import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
+import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.effect.CreatureModResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EquipResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
@@ -112,9 +117,23 @@ public class GameTestHarness {
         TargetValidationService targetValidationService = new TargetValidationService(gameQueryService);
         SpellCastingService spellCastingService = new SpellCastingService(
                 gameQueryService, gameHelper, gameBroadcastService, turnProgressionService, targetValidationService);
-        UserInputHandlerService userInputHandlerService = new UserInputHandlerService(
+        ColorChoiceHandlerService colorChoiceHandlerService = new ColorChoiceHandlerService(
                 sessionManager, gameQueryService, gameHelper, gameBroadcastService,
-                playerInputService, cardViewFactory, turnProgressionService);
+                playerInputService, turnProgressionService);
+        CardChoiceHandlerService cardChoiceHandlerService = new CardChoiceHandlerService(
+                gameQueryService, gameHelper, gameBroadcastService,
+                playerInputService, turnProgressionService);
+        PermanentChoiceHandlerService permanentChoiceHandlerService = new PermanentChoiceHandlerService(
+                gameQueryService, gameHelper, gameBroadcastService,
+                playerInputService, turnProgressionService);
+        GraveyardChoiceHandlerService graveyardChoiceHandlerService = new GraveyardChoiceHandlerService(
+                gameQueryService, gameHelper, gameBroadcastService, turnProgressionService);
+        MayAbilityHandlerService mayAbilityHandlerService = new MayAbilityHandlerService(
+                gameQueryService, gameHelper, gameBroadcastService,
+                playerInputService, turnProgressionService);
+        LibraryChoiceHandlerService libraryChoiceHandlerService = new LibraryChoiceHandlerService(
+                sessionManager, gameQueryService, gameHelper, gameBroadcastService,
+                cardViewFactory, turnProgressionService);
         StackResolutionService stackResolutionService = new StackResolutionService(
                 gameHelper, gameQueryService, gameBroadcastService, effectResolutionService, playerInputService);
         AbilityActivationService abilityActivationService = new AbilityActivationService(
@@ -127,7 +146,11 @@ public class GameTestHarness {
         gameService = new GameService(
                 gameRegistry, gameQueryService, gameBroadcastService,
                 cardViewFactory, combatService,
-                turnProgressionService, userInputHandlerService, spellCastingService,
+                turnProgressionService,
+                colorChoiceHandlerService, cardChoiceHandlerService,
+                permanentChoiceHandlerService, graveyardChoiceHandlerService,
+                mayAbilityHandlerService, libraryChoiceHandlerService,
+                spellCastingService,
                 stackResolutionService, abilityActivationService, mulliganService, reconnectionService);
         lobbyService = new LobbyService(gameRegistry, gameService);
 

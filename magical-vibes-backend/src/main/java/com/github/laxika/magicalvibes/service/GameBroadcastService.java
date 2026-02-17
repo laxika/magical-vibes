@@ -39,7 +39,7 @@ public class GameBroadcastService {
     private final StackEntryViewFactory stackEntryViewFactory;
     private final GameQueryService gameQueryService;
 
-    void broadcastGameState(GameData gameData) {
+    public void broadcastGameState(GameData gameData) {
         List<String> newLogEntries;
         int logSize = gameData.gameLog.size();
         if (logSize > gameData.lastBroadcastedLogSize) {

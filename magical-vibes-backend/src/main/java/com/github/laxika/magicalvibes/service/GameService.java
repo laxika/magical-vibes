@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -11,6 +12,12 @@ import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.JoinGame;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
+import com.github.laxika.magicalvibes.service.input.ColorChoiceHandlerService;
+import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
+import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
+import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,7 +40,12 @@ public class GameService {
     private final CardViewFactory cardViewFactory;
     private final CombatService combatService;
     private final TurnProgressionService turnProgressionService;
-    private final UserInputHandlerService userInputHandlerService;
+    private final ColorChoiceHandlerService colorChoiceHandlerService;
+    private final CardChoiceHandlerService cardChoiceHandlerService;
+    private final PermanentChoiceHandlerService permanentChoiceHandlerService;
+    private final GraveyardChoiceHandlerService graveyardChoiceHandlerService;
+    private final MayAbilityHandlerService mayAbilityHandlerService;
+    private final LibraryChoiceHandlerService libraryChoiceHandlerService;
     private final SpellCastingService spellCastingService;
     private final StackResolutionService stackResolutionService;
     private final AbilityActivationService abilityActivationService;
@@ -214,61 +226,65 @@ public class GameService {
 
     public void handleColorChosen(GameData gameData, Player player, String colorName) {
         synchronized (gameData) {
-            userInputHandlerService.handleColorChosen(gameData, player, colorName);
+            colorChoiceHandlerService.handleColorChosen(gameData, player, colorName);
         }
     }
 
     public void handleCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
-            userInputHandlerService.handleCardChosen(gameData, player, cardIndex);
+            cardChoiceHandlerService.handleCardChosen(gameData, player, cardIndex);
         }
     }
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         synchronized (gameData) {
-            userInputHandlerService.handlePermanentChosen(gameData, player, permanentId);
+            permanentChoiceHandlerService.handlePermanentChosen(gameData, player, permanentId);
         }
     }
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
-            userInputHandlerService.handleGraveyardCardChosen(gameData, player, cardIndex);
+            graveyardChoiceHandlerService.handleGraveyardCardChosen(gameData, player, cardIndex);
         }
     }
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
         synchronized (gameData) {
-            userInputHandlerService.handleMultiplePermanentsChosen(gameData, player, permanentIds);
+            permanentChoiceHandlerService.handleMultiplePermanentsChosen(gameData, player, permanentIds);
         }
     }
 
     public void handleMultipleGraveyardCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
         synchronized (gameData) {
-            userInputHandlerService.handleMultipleGraveyardCardsChosen(gameData, player, cardIds);
+            if (gameData.awaitingInput == AwaitingInput.LIBRARY_REVEAL_CHOICE) {
+                libraryChoiceHandlerService.handleLibraryRevealChoice(gameData, player, cardIds);
+            } else {
+                graveyardChoiceHandlerService.handleMultipleGraveyardCardsChosen(gameData, player, cardIds);
+            }
         }
     }
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
         synchronized (gameData) {
-            userInputHandlerService.handleMayAbilityChosen(gameData, player, accepted);
+            mayAbilityHandlerService.handleMayAbilityChosen(gameData, player, accepted);
         }
     }
 
     public void handleLibraryCardsReordered(GameData gameData, Player player, List<Integer> cardOrder) {
         synchronized (gameData) {
-            userInputHandlerService.handleLibraryCardsReordered(gameData, player, cardOrder);
+            libraryChoiceHandlerService.handleLibraryCardsReordered(gameData, player, cardOrder);
         }
     }
 
     public void handleHandTopBottomChosen(GameData gameData, Player player, int handCardIndex, int topCardIndex) {
         synchronized (gameData) {
-            userInputHandlerService.handleHandTopBottomChosen(gameData, player, handCardIndex, topCardIndex);
+            libraryChoiceHandlerService.handleHandTopBottomChosen(gameData, player, handCardIndex, topCardIndex);
         }
     }
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
-            userInputHandlerService.handleLibraryCardChosen(gameData, player, cardIndex);
+            libraryChoiceHandlerService.handleLibraryCardChosen(gameData, player, cardIndex);
         }
     }
 

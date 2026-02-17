@@ -132,7 +132,7 @@ public class GameHelper {
         returnStolenCreatures(gameData);
     }
 
-    void removeCardFromGraveyardById(GameData gameData, UUID cardId) {
+    public void removeCardFromGraveyardById(GameData gameData, UUID cardId) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
@@ -142,7 +142,7 @@ public class GameHelper {
         }
     }
 
-    void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature) {
+    public void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature) {
         List<CardEffect> deathEffects = dyingCard.getEffects(EffectSlot.ON_DEATH);
         if (deathEffects.isEmpty()) return;
 
@@ -171,7 +171,7 @@ public class GameHelper {
         }
     }
 
-    void processNextDeathTriggerTarget(GameData gameData) {
+    public void processNextDeathTriggerTarget(GameData gameData) {
         while (!gameData.pendingDeathTriggerTargets.isEmpty()) {
             PermanentChoiceContext.DeathTriggerTarget pending = gameData.pendingDeathTriggerTargets.peekFirst();
 
@@ -263,7 +263,7 @@ public class GameHelper {
         gameData.drawReplacementTargetToController.clear();
     }
 
-    void performStateBasedActions(GameData gameData) {
+    public void performStateBasedActions(GameData gameData) {
         boolean anyDied = false;
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -510,7 +510,7 @@ public class GameHelper {
         processCreatureETBEffects(gameData, controllerId, card, targetPermanentId);
     }
 
-    void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId) {
+    public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId) {
         List<CardEffect> triggeredEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> !(e instanceof ChooseColorEffect))
                 .filter(e -> !(e instanceof CopyCreatureOnEnterEffect))
@@ -633,7 +633,7 @@ public class GameHelper {
         }
     }
 
-    void checkAllyCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId) {
+    public void checkAllyCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(dyingCreatureControllerId);
         if (battlefield == null) return;
 
@@ -830,7 +830,7 @@ public class GameHelper {
         playerInputService.processNextMayAbility(gameData);
     }
 
-    void checkDiscardTriggers(GameData gameData, UUID discardingPlayerId) {
+    public void checkDiscardTriggers(GameData gameData, UUID discardingPlayerId) {
         boolean anyTriggered = false;
 
         for (UUID playerId : gameData.orderedPlayerIds) {

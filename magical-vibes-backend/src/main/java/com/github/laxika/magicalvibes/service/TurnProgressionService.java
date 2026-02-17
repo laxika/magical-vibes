@@ -33,7 +33,7 @@ public class TurnProgressionService {
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
 
-    void advanceStep(GameData gameData) {
+    public void advanceStep(GameData gameData) {
         // Process end-of-combat sacrifices when leaving END_OF_COMBAT
         if (gameData.currentStep == TurnStep.END_OF_COMBAT && !gameData.permanentsToSacrificeAtEndOfCombat.isEmpty()) {
             combatService.processEndOfCombatSacrifices(gameData);
@@ -278,7 +278,7 @@ public class TurnProgressionService {
         }
     }
 
-    void resolveAutoPass(GameData gameData) {
+    public void resolveAutoPass(GameData gameData) {
         // Process any pending targeted death triggers before auto-passing
         if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
             gameHelper.processNextDeathTriggerTarget(gameData);

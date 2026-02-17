@@ -137,7 +137,7 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a card from revealed hand", gameData.id, playerName);
     }
 
-    void processNextMayAbility(GameData gameData) {
+    public void processNextMayAbility(GameData gameData) {
         if (gameData.pendingMayAbilities.isEmpty()) {
             return;
         }
