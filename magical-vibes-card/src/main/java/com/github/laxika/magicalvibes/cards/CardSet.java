@@ -78,6 +78,7 @@ import com.github.laxika.magicalvibes.cards.d.DemonsHorn;
 import com.github.laxika.magicalvibes.cards.d.DoublingCube;
 import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.e.EarthElemental;
+import com.github.laxika.magicalvibes.cards.f.Firebreathing;
 import com.github.laxika.magicalvibes.cards.e.EssenceDrain;
 import com.github.laxika.magicalvibes.cards.e.Evacuation;
 import com.github.laxika.magicalvibes.cards.f.Fear;
@@ -402,6 +403,7 @@ public enum CardSet {
             new CardPrinting("10E", "197", DragonRoost::new),
             new CardPrinting("10E", "198", DuctCrawler::new),
             new CardPrinting("10E", "199", EarthElemental::new),
+            new CardPrinting("10E", "200", Firebreathing::new),
             new CardPrinting("10E", "376", Mountain::new),
             new CardPrinting("10E", "377", Mountain::new),
             new CardPrinting("10E", "378", Mountain::new),
