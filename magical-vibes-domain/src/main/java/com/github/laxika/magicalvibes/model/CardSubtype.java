@@ -62,6 +62,7 @@ public enum CardSubtype {
     GOLEM("Golem"),
     IMP("Imp"),
     VEDALKEN("Vedalken"),
+    GIANT("Giant"),
     GOBLIN("Goblin");
 
     @Getter

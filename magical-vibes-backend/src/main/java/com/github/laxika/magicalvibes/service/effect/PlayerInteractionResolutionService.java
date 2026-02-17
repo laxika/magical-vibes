@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
@@ -65,6 +66,8 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
                 (gd, entry, effect) -> resolveRedirectDraws(gd, entry));
         registry.register(AwardAnyColorManaEffect.class,
                 (gd, entry, effect) -> resolveAwardAnyColorMana(gd, entry));
+        registry.register(DrawAndLoseLifePerSubtypeEffect.class,
+                (gd, entry, effect) -> resolveDrawAndLoseLifePerSubtype(gd, entry, (DrawAndLoseLifePerSubtypeEffect) effect));
     }
 
     private void resolveOpponentMayPlayCreature(GameData gameData, UUID controllerId) {
@@ -247,6 +250,40 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
         log.info("Game {} - Awaiting {} to choose a mana color", gameData.id, playerName);
+    }
+
+    private void resolveDrawAndLoseLifePerSubtype(GameData gameData, StackEntry entry, DrawAndLoseLifePerSubtypeEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        int count = 0;
+        if (battlefield != null) {
+            for (Permanent perm : battlefield) {
+                if (perm.getCard().getSubtypes().contains(effect.subtype())) {
+                    count++;
+                }
+            }
+        }
+
+        if (count == 0) {
+            String logEntry = playerName + " controls no " + effect.subtype().getDisplayName() + "s — draws nothing and loses no life.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} controls no {}s for draw/life loss", gameData.id, playerName, effect.subtype().getDisplayName());
+            return;
+        }
+
+        for (int i = 0; i < count; i++) {
+            gameHelper.resolveDrawCard(gameData, controllerId);
+        }
+
+        int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+        gameData.playerLifeTotals.put(controllerId, currentLife - count);
+
+        String logEntry = playerName + " draws " + count + " card" + (count != 1 ? "s" : "")
+                + " and loses " + count + " life (" + entry.getCard().getName() + ").";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} draws {} and loses {} life from {}", gameData.id, playerName, count, count, entry.getCard().getName());
     }
 
     private void resolveRedirectDraws(GameData gameData, StackEntry entry) {
