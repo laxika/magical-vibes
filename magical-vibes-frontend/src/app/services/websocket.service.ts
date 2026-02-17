@@ -144,6 +144,7 @@ export interface Card {
   targetsPlayer: boolean;
   requiresAttackingTarget: boolean;
   allowedTargetTypes: string[];
+  allowedTargetSubtypes: string[];
   activatedAbilities: ActivatedAbilityView[];
   loyalty: number | null;
   minTargets: number;

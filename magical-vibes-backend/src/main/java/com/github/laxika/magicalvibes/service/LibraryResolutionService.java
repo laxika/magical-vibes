@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -240,7 +241,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
 
         List<Card> basicLands = new ArrayList<>();
         for (Card card : deck) {
-            if (card.getType() == CardType.BASIC_LAND) {
+            if (card.getType() == CardType.LAND && card.getSupertypes().contains(CardSupertype.BASIC)) {
                 basicLands.add(card);
             }
         }
@@ -421,7 +422,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         List<Card> eligibleCards = new ArrayList<>();
         for (Card card : revealedCards) {
             if (card.getType() != null
-                    && card.getType() != CardType.BASIC_LAND
+                    && card.getType() != CardType.LAND
                     && card.getType() != CardType.INSTANT
                     && card.getType() != CardType.SORCERY
                     && card.getManaValue() <= 3) {

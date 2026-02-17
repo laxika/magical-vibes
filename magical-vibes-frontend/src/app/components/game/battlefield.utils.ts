@@ -51,7 +51,7 @@ export function stackBasicLands(lands: IndexedPermanent[]): (IndexedPermanent | 
   const nonBasic: IndexedPermanent[] = [];
 
   for (const ip of lands) {
-    if (ip.perm.card.type === 'BASIC_LAND') {
+    if (ip.perm.card.type === 'LAND' && ip.perm.card.supertypes?.includes('BASIC')) {
       // Group by name + tapped state so tapped/untapped form separate stacks
       const key = ip.perm.card.name + (ip.perm.tapped ? ':tapped' : ':untapped');
       if (!basicGroups.has(key)) {

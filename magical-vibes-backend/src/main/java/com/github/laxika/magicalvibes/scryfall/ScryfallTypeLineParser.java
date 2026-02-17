@@ -16,6 +16,7 @@ public class ScryfallTypeLineParser {
     private static final Logger LOG = Logger.getLogger(ScryfallTypeLineParser.class.getName());
 
     private static final Map<String, CardSupertype> SUPERTYPE_MAP = Map.of(
+            "Basic", CardSupertype.BASIC,
             "Legendary", CardSupertype.LEGENDARY
     );
 
@@ -25,7 +26,7 @@ public class ScryfallTypeLineParser {
             "Instant", CardType.INSTANT,
             "Sorcery", CardType.SORCERY,
             "Artifact", CardType.ARTIFACT,
-            "Land", CardType.BASIC_LAND,
+            "Land", CardType.LAND,
             "Planeswalker", CardType.PLANESWALKER
     );
 
@@ -66,13 +67,7 @@ public class ScryfallTypeLineParser {
         }
 
         // Parse types: "Legendary Creature" → supertype=LEGENDARY, type=CREATURE
-        // Special case: "Basic Land" maps to BASIC_LAND
-        if (typesPart.contains("Basic Land")) {
-            type = CardType.BASIC_LAND;
-            // Remove "Basic Land" from consideration for supertype parsing
-            typesPart = typesPart.replace("Basic Land", "").trim();
-        }
-
+        // "Basic Land" → supertype=BASIC, type=LAND (parsed normally via maps)
         String[] typeWords = typesPart.split("\\s+");
         for (String word : typeWords) {
             if (word.isEmpty()) continue;

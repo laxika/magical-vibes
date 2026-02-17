@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum CardSupertype {
 
+    BASIC("Basic"),
     LEGENDARY("Legendary");
 
     @Getter

@@ -59,7 +59,7 @@ public class SpellCastingService {
             }
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             Card graveyardCard = graveyard.get(cardIndex);
-            if (graveyardCard.getType() != CardType.BASIC_LAND) {
+            if (graveyardCard.getType() != CardType.LAND) {
                 throw new IllegalStateException("Only lands can be played from graveyard");
             }
             graveyard.remove(cardIndex);
@@ -260,7 +260,7 @@ public class SpellCastingService {
 
         hand.remove(cardIndex);
 
-        if (card.getType() == CardType.BASIC_LAND) {
+        if (card.getType() == CardType.LAND) {
             // Lands bypass the stack — go directly onto battlefield
             gameData.playerBattlefields.get(playerId).add(new Permanent(card));
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);

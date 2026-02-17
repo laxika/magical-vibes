@@ -13,7 +13,7 @@ public class Twitch extends Card {
     public Twitch() {
 
         setNeedsTarget(true);
-        addEffect(EffectSlot.SPELL, new TapOrUntapTargetPermanentEffect(Set.of(CardType.ARTIFACT, CardType.CREATURE, CardType.BASIC_LAND)));
+        addEffect(EffectSlot.SPELL, new TapOrUntapTargetPermanentEffect(Set.of(CardType.ARTIFACT, CardType.CREATURE, CardType.LAND)));
         addEffect(EffectSlot.SPELL, new DrawCardEffect());
     }
 }

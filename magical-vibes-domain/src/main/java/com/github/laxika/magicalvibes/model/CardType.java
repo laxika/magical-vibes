@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum CardType {
 
-    BASIC_LAND("Basic Land"),
+    LAND("Land"),
     CREATURE("Creature"),
     ENCHANTMENT("Enchantment"),
     SORCERY("Sorcery"),
@@ -16,4 +16,5 @@ public enum CardType {
 
     @Getter
     private final String displayName;
+
 }

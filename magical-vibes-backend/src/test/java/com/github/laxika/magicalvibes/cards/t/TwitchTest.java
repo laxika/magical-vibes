@@ -59,7 +59,7 @@ class TwitchTest {
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(TapOrUntapTargetPermanentEffect.class);
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
         TapOrUntapTargetPermanentEffect effect = (TapOrUntapTargetPermanentEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(effect.allowedTypes()).containsExactlyInAnyOrder(CardType.ARTIFACT, CardType.CREATURE, CardType.BASIC_LAND);
+        assertThat(effect.allowedTypes()).containsExactlyInAnyOrder(CardType.ARTIFACT, CardType.CREATURE, CardType.LAND);
     }
 
     // ===== Casting =====

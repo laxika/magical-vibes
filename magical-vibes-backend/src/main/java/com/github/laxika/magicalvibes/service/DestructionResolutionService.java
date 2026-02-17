@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
@@ -38,6 +39,8 @@ public class DestructionResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveDestroyAllEnchantments(gd));
         registry.register(DestroyTargetPermanentEffect.class,
                 (gd, entry, effect) -> resolveDestroyTargetPermanent(gd, entry, (DestroyTargetPermanentEffect) effect));
+        registry.register(DestroyTargetLandAndDamageControllerEffect.class,
+                (gd, entry, effect) -> resolveDestroyTargetLandAndDamageController(gd, entry, (DestroyTargetLandAndDamageControllerEffect) effect));
         registry.register(DestroyBlockedCreatureAndSelfEffect.class,
                 (gd, entry, effect) -> resolveDestroyBlockedCreatureAndSelf(gd, entry));
         registry.register(SacrificeCreatureEffect.class,
@@ -144,6 +147,70 @@ public class DestructionResolutionService implements EffectHandlerProvider {
                 gameData.id, target.getCard().getName(), entry.getCard().getName());
 
         gameHelper.removeOrphanedAuras(gameData);
+    }
+
+    void resolveDestroyTargetLandAndDamageController(GameData gameData, StackEntry entry,
+                                                      DestroyTargetLandAndDamageControllerEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        if (target.getCard().getType() != CardType.LAND) {
+            String fizzleLog = entry.getCard().getName() + "'s ability fizzles (invalid target type).";
+            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+            return;
+        }
+
+        // Find the controller of the targeted land before destruction
+        UUID landControllerId = null;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null && battlefield.contains(target)) {
+                landControllerId = playerId;
+                break;
+            }
+        }
+
+        if (landControllerId == null) {
+            return;
+        }
+
+        // Attempt to destroy the land
+        if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
+            String logEntry = target.getCard().getName() + " is indestructible.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else {
+            gameHelper.removePermanentToGraveyard(gameData, target);
+            String logEntry = target.getCard().getName() + " is destroyed.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} is destroyed by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
+            gameHelper.removeOrphanedAuras(gameData);
+        }
+
+        // Deal damage to the land's controller regardless of whether destruction succeeded
+        String cardName = entry.getCard().getName();
+        int damage = effect.damage();
+
+        if (!gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())
+                && !gameHelper.applyColorDamagePreventionForPlayer(gameData, landControllerId, entry.getCard().getColor())) {
+            int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, landControllerId, damage);
+            effectiveDamage = gameHelper.redirectPlayerDamageToEnchantedCreature(gameData, landControllerId, effectiveDamage, cardName);
+            int currentLife = gameData.playerLifeTotals.getOrDefault(landControllerId, 20);
+            gameData.playerLifeTotals.put(landControllerId, currentLife - effectiveDamage);
+
+            if (effectiveDamage > 0) {
+                String playerName = gameData.playerIdToName.get(landControllerId);
+                String damageLog = playerName + " takes " + effectiveDamage + " damage from " + cardName + ".";
+                gameBroadcastService.logAndBroadcast(gameData, damageLog);
+                log.info("Game {} - {} takes {} damage from {}", gameData.id, playerName, effectiveDamage, cardName);
+            }
+        } else {
+            String preventLog = cardName + "'s damage to " + gameData.playerIdToName.get(landControllerId) + " is prevented.";
+            gameBroadcastService.logAndBroadcast(gameData, preventLog);
+        }
+
+        gameHelper.checkWinCondition(gameData);
     }
 
     void resolveSacrificeCreature(GameData gameData, StackEntry entry) {

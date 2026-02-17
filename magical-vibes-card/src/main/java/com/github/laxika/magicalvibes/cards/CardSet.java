@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.cards.b.BogWraith;
 import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.c.ConeOfFlame;
 import com.github.laxika.magicalvibes.cards.c.ContaminatedBond;
+import com.github.laxika.magicalvibes.cards.c.Cryoclasm;
 import com.github.laxika.magicalvibes.cards.c.ConsumeSpirit;
 import com.github.laxika.magicalvibes.cards.c.ChangelingWayfinder;
 import com.github.laxika.magicalvibes.cards.c.CephalidConstable;
@@ -382,6 +383,7 @@ public enum CardSet {
             new CardPrinting("10E", "192", BloodrockCyclops::new),
             new CardPrinting("10E", "193", BogardanFirefiend::new),
             new CardPrinting("10E", "194", ConeOfFlame::new),
+            new CardPrinting("10E", "195", Cryoclasm::new),
             new CardPrinting("10E", "376", Mountain::new),
             new CardPrinting("10E", "377", Mountain::new),
             new CardPrinting("10E", "378", Mountain::new),

@@ -11,6 +11,6 @@ import java.util.Set;
 public class IcyManipulator extends Card {
 
     public IcyManipulator() {
-        addActivatedAbility(new ActivatedAbility(true, "{1}", List.of(new TapTargetPermanentEffect(Set.of(CardType.ARTIFACT, CardType.CREATURE, CardType.BASIC_LAND))), true, "{1}, {T}: Tap target artifact, creature, or land."));
+        addActivatedAbility(new ActivatedAbility(true, "{1}", List.of(new TapTargetPermanentEffect(Set.of(CardType.ARTIFACT, CardType.CREATURE, CardType.LAND))), true, "{1}, {T}: Tap target artifact, creature, or land."));
     }
 }

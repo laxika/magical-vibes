@@ -2,12 +2,17 @@ package com.github.laxika.magicalvibes.networking.service;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.LandSubtypeTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
@@ -44,6 +49,7 @@ public class CardViewFactory {
                 .toList();
 
         List<String> spellAllowedTargetTypes = computeSpellAllowedTargetTypes(card);
+        List<String> spellAllowedTargetSubtypes = computeSpellAllowedTargetSubtypes(card);
         boolean requiresAttackingTarget = computeRequiresAttackingTarget(card);
         boolean targetsPlayer = computeSpellTargetsPlayer(card);
 
@@ -67,6 +73,7 @@ public class CardViewFactory {
                 targetsPlayer,
                 requiresAttackingTarget,
                 spellAllowedTargetTypes,
+                spellAllowedTargetSubtypes,
                 abilityViews,
                 card.getLoyalty(),
                 card.getMinTargets(),
@@ -150,9 +157,27 @@ public class CardViewFactory {
                         CardType.CREATURE.getDisplayName(),
                         CardType.ENCHANTMENT.getDisplayName(),
                         CardType.ARTIFACT.getDisplayName(),
-                        CardType.BASIC_LAND.getDisplayName()
+                        CardType.LAND.getDisplayName()
                 );
             }
+            if (effect instanceof DestroyTargetPermanentEffect destroy) {
+                return destroy.targetTypes().stream()
+                        .map(CardType::getDisplayName)
+                        .toList();
+            }
+            if (effect instanceof DestroyTargetLandAndDamageControllerEffect) {
+                return List.of(CardType.LAND.getDisplayName());
+            }
+        }
+        return List.of();
+    }
+
+    private List<String> computeSpellAllowedTargetSubtypes(Card card) {
+        TargetFilter filter = card.getTargetFilter();
+        if (filter instanceof LandSubtypeTargetFilter f) {
+            return f.subtypes().stream()
+                    .map(CardSubtype::getDisplayName)
+                    .toList();
         }
         return List.of();
     }

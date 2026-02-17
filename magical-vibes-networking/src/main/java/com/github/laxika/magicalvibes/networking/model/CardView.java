@@ -29,6 +29,7 @@ public record CardView(
         boolean targetsPlayer,
         boolean requiresAttackingTarget,
         List<String> allowedTargetTypes,
+        List<String> allowedTargetSubtypes,
         List<ActivatedAbilityView> activatedAbilities,
         Integer loyalty,
         int minTargets,

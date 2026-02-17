@@ -210,7 +210,7 @@ public class GameBroadcastService {
 
         for (int i = 0; i < hand.size(); i++) {
             Card card = hand.get(i);
-            if (card.getType() == CardType.BASIC_LAND && isActivePlayer && isMainPhase && landsPlayed < 1 && stackEmpty) {
+            if (card.getType() == CardType.LAND && isActivePlayer && isMainPhase && landsPlayed < 1 && stackEmpty) {
                 playable.add(i);
             }
             if (card.getManaCost() != null && !spellLimitReached) {
@@ -270,7 +270,7 @@ public class GameBroadcastService {
         }
 
         for (int i = 0; i < graveyard.size(); i++) {
-            if (graveyard.get(i).getType() == CardType.BASIC_LAND) {
+            if (graveyard.get(i).getType() == CardType.LAND) {
                 playable.add(i);
             }
         }

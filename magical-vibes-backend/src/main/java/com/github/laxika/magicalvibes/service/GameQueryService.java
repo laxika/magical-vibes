@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.filter.AttackingOrBlockingTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AttackingTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CreatureColorTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.LandSubtypeTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.MaxPowerTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TappedTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.WithoutKeywordTargetFilter;
@@ -279,6 +281,16 @@ public class GameQueryService {
         } else if (filter instanceof TappedTargetFilter) {
             if (!target.isTapped()) {
                 throw new IllegalStateException("Target must be a tapped creature");
+            }
+        } else if (filter instanceof LandSubtypeTargetFilter f) {
+            if (target.getCard().getType() != CardType.LAND
+                    || target.getCard().getSubtypes().stream().noneMatch(f.subtypes()::contains)) {
+                String subtypeNames = f.subtypes().stream()
+                        .map(CardSubtype::getDisplayName)
+                        .sorted()
+                        .reduce((a, b) -> a + " or " + b)
+                        .orElse("");
+                throw new IllegalStateException("Target must be a " + subtypeNames);
             }
         }
     }

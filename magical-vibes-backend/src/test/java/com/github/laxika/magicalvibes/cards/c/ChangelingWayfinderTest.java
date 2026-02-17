@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -156,7 +157,7 @@ class ChangelingWayfinderTest {
 
         // Card is in hand
         assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getType() == CardType.BASIC_LAND);
+                .anyMatch(c -> c.getType() == CardType.LAND && c.getSupertypes().contains(CardSupertype.BASIC));
 
         // Library lost one card
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
@@ -292,7 +293,7 @@ class ChangelingWayfinderTest {
         GameData gd = harness.getGameData();
         assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.awaitingLibrarySearchCards).hasSize(2);
-        assertThat(gd.awaitingLibrarySearchCards).allMatch(c -> c.getType() == CardType.BASIC_LAND);
+        assertThat(gd.awaitingLibrarySearchCards).allMatch(c -> c.getType() == CardType.LAND && c.getSupertypes().contains(CardSupertype.BASIC));
     }
 
     // ===== Changeling keyword: counts as every creature type =====

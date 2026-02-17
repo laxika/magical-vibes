@@ -58,7 +58,7 @@ class IcyManipulatorTest {
         assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
                 .isInstanceOf(TapTargetPermanentEffect.class);
         TapTargetPermanentEffect effect = (TapTargetPermanentEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.allowedTypes()).containsExactlyInAnyOrder(CardType.ARTIFACT, CardType.CREATURE, CardType.BASIC_LAND);
+        assertThat(effect.allowedTypes()).containsExactlyInAnyOrder(CardType.ARTIFACT, CardType.CREATURE, CardType.LAND);
         assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}");
     }
 
