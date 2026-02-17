@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
@@ -117,7 +118,7 @@ public class GameHelper {
                         List.of(may.wrapped()),
                         dyingCard.getName() + " — " + may.prompt()
                 ));
-            } else if (effect instanceof BoostTargetCreatureEffect) {
+            } else if (effect instanceof BoostTargetCreatureEffect || effect instanceof DealDamageToTargetCreatureEffect) {
                 // Targeted death trigger — queue for target selection after current action completes
                 gameData.pendingDeathTriggerTargets.add(new PermanentChoiceContext.DeathTriggerTarget(
                         dyingCard, controllerId, new ArrayList<>(List.of(effect))
