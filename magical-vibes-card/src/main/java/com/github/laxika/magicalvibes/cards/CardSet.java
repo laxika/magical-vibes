@@ -119,6 +119,7 @@ import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.n.NomadMythmaker;
 import com.github.laxika.magicalvibes.cards.l.LoomingShade;
+import com.github.laxika.magicalvibes.cards.l.LordOfThePit;
 import com.github.laxika.magicalvibes.cards.l.LoyalSentry;
 import com.github.laxika.magicalvibes.cards.l.Luminesce;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -269,6 +270,7 @@ public enum CardSet {
             new CardPrinting("10E", "151", HypnoticSpecter::new),
             new CardPrinting("10E", "152", KnightOfDusk::new),
             new CardPrinting("10E", "153", LoomingShade::new),
+            new CardPrinting("10E", "154", LordOfThePit::new),
             new CardPrinting("10E", "15", FieldMarshal::new),
             new CardPrinting("10E", "16", GhostWarden::new),
             new CardPrinting("10E", "17", GloriousAnthem::new),

@@ -69,6 +69,7 @@ public enum CardSubtype {
     CYCLOPS("Cyclops"),
     HORROR("Horror"),
     SPECTER("Specter"),
+    DEMON("Demon"),
     DRAGON("Dragon");
 
     @Getter

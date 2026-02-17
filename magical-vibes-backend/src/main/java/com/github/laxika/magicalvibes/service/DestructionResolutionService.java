@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEf
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamageEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -50,6 +51,8 @@ public class DestructionResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveSacrificeCreature(gd, entry));
         registry.register(EachOpponentSacrificesCreatureEffect.class,
                 (gd, entry, effect) -> resolveEachOpponentSacrificesCreature(gd, entry));
+        registry.register(SacrificeOtherCreatureOrDamageEffect.class,
+                (gd, entry, effect) -> resolveSacrificeOtherCreatureOrDamage(gd, entry, (SacrificeOtherCreatureOrDamageEffect) effect));
     }
 
     void resolveDestroyAllCreatures(GameData gameData, boolean cannotBeRegenerated) {
@@ -270,6 +273,64 @@ public class DestructionResolutionService implements EffectHandlerProvider {
         gameData.permanentChoiceContext = new PermanentChoiceContext.SacrificeCreature(targetPlayerId);
         playerInputService.beginPermanentChoice(gameData, targetPlayerId, creatureIds,
                 "Choose a creature to sacrifice.");
+    }
+
+    void resolveSacrificeOtherCreatureOrDamage(GameData gameData, StackEntry entry, SacrificeOtherCreatureOrDamageEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String cardName = entry.getCard().getName();
+        UUID sourceCardId = entry.getCard().getId();
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        List<UUID> otherCreatureIds = new ArrayList<>();
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (gameQueryService.isCreature(gameData, p) && !p.getCard().getId().equals(sourceCardId)) {
+                    otherCreatureIds.add(p.getId());
+                }
+            }
+        }
+
+        if (otherCreatureIds.isEmpty()) {
+            // Can't sacrifice — deal damage to controller
+            int damage = effect.damage();
+
+            if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+                String logEntry = cardName + "'s damage is prevented.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, controllerId, entry.getCard().getColor())) {
+                int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, controllerId, damage);
+                effectiveDamage = gameHelper.redirectPlayerDamageToEnchantedCreature(gameData, controllerId, effectiveDamage, cardName);
+                int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+                gameData.playerLifeTotals.put(controllerId, currentLife - effectiveDamage);
+
+                if (effectiveDamage > 0) {
+                    String logEntry = cardName + " deals " + effectiveDamage + " damage to " + playerName + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} deals {} damage to {} (no creatures to sacrifice)", gameData.id, cardName, effectiveDamage, playerName);
+                }
+            }
+
+            gameHelper.checkWinCondition(gameData);
+            return;
+        }
+
+        if (otherCreatureIds.size() == 1) {
+            // Only one other creature — sacrifice it automatically
+            Permanent creature = gameQueryService.findPermanentById(gameData, otherCreatureIds.getFirst());
+            if (creature != null) {
+                gameHelper.removePermanentToGraveyard(gameData, creature);
+                String logEntry = playerName + " sacrifices " + creature.getCard().getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName, creature.getCard().getName(), cardName);
+            }
+            return;
+        }
+
+        // Multiple other creatures — prompt player to choose
+        gameData.permanentChoiceContext = new PermanentChoiceContext.SacrificeCreature(controllerId);
+        playerInputService.beginPermanentChoice(gameData, controllerId, otherCreatureIds,
+                "Choose a creature other than " + cardName + " to sacrifice.");
     }
 
     void resolveDestroyCreatureBlockingThis(GameData gameData, StackEntry entry) {
