@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTo
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectDrawsEffect;
@@ -72,6 +73,8 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
                 (gd, entry, effect) -> resolveDrawAndLoseLifePerSubtype(gd, entry, (DrawAndLoseLifePerSubtypeEffect) effect));
         registry.register(SacrificeUnlessDiscardCardTypeEffect.class,
                 (gd, entry, effect) -> resolveSacrificeUnlessDiscardCardType(gd, entry, (SacrificeUnlessDiscardCardTypeEffect) effect));
+        registry.register(DrawCardForTargetPlayerEffect.class,
+                (gd, entry, effect) -> resolveDrawCardForTargetPlayer(gd, entry, (DrawCardForTargetPlayerEffect) effect));
     }
 
     private void resolveOpponentMayPlayCreature(GameData gameData, UUID controllerId) {
@@ -309,6 +312,26 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {}: {}'s draws replaced by {} until end of turn",
                 gameData.id, cardName, targetName, controllerName);
+    }
+
+    private void resolveDrawCardForTargetPlayer(GameData gameData, StackEntry entry, DrawCardForTargetPlayerEffect effect) {
+        // Intervening-if re-check at resolution time (rule 603.4):
+        // If the source is still on the battlefield but now tapped, the ability does nothing.
+        // If the source left the battlefield, use last known information — it was untapped
+        // when the trigger was created, so the ability still resolves.
+        if (effect.requireSourceUntapped() && entry.getSourcePermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source != null && source.isTapped()) {
+                log.info("Game {} - {}'s draw trigger does nothing (source is tapped)",
+                        gameData.id, entry.getCard().getName());
+                return;
+            }
+        }
+
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        for (int i = 0; i < effect.amount(); i++) {
+            gameHelper.resolveDrawCard(gameData, targetPlayerId);
+        }
     }
 
     private void resolveSacrificeUnlessDiscardCardType(GameData gameData, StackEntry entry, SacrificeUnlessDiscardCardTypeEffect effect) {

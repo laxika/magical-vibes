@@ -106,6 +106,7 @@ import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.h.HonorGuard;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.h.HorseshoeCrab;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.h.HurkylsRecall;
 import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
@@ -223,6 +224,7 @@ public enum CardSet {
             new CardPrinting("10E", "322", DragonsClaw::new),
             new CardPrinting("10E", "323", FountainOfYouth::new),
             new CardPrinting("10E", "324", TheHive::new),
+            new CardPrinting("10E", "325", HowlingMine::new),
             new CardPrinting("10E", "326", IcyManipulator::new),
             new CardPrinting("10E", "6", AuraOfSilence::new),
             new CardPrinting("10E", "7", AvenCloudchaser::new),

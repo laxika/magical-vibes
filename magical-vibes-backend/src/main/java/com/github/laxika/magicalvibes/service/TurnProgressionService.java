@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import lombok.RequiredArgsConstructor;
@@ -145,7 +146,7 @@ public class TurnProgressionService {
     void handleDrawStep(GameData gameData) {
         UUID activePlayerId = gameData.activePlayerId;
 
-        // The starting player skips their draw on turn 1
+        // The starting player skips their entire draw step on turn 1 (rule 103.7a)
         if (gameData.turnNumber == 1 && activePlayerId.equals(gameData.startingPlayerId)) {
             String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips the draw (first turn).";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -153,7 +154,7 @@ public class TurnProgressionService {
             return;
         }
 
-        // Check for draw redirect replacement effect
+        // Normal draw (turn-based action, rule 504.1)
         UUID replacementController = gameData.drawReplacementTargetToController.get(activePlayerId);
         if (replacementController != null) {
             String playerName = gameData.playerIdToName.get(activePlayerId);
@@ -163,25 +164,62 @@ public class TurnProgressionService {
             log.info("Game {} - Draw redirect: {}'s draw step draw goes to {} instead",
                     gameData.id, playerName, controllerName);
             gameHelper.resolveDrawCard(gameData, replacementController);
-            return;
+        } else {
+            List<Card> deck = gameData.playerDecks.get(activePlayerId);
+            List<Card> hand = gameData.playerHands.get(activePlayerId);
+
+            if (deck == null || deck.isEmpty()) {
+                log.warn("Game {} - {} has no cards to draw", gameData.id, gameData.playerIdToName.get(activePlayerId));
+            } else {
+                Card drawn = deck.removeFirst();
+                hand.add(drawn);
+
+                String playerName = gameData.playerIdToName.get(activePlayerId);
+                String logEntry = playerName + " draws a card.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+                log.info("Game {} - {} draws a card (hand: {}, deck: {})", gameData.id, playerName, hand.size(), deck.size());
+            }
         }
 
-        List<Card> deck = gameData.playerDecks.get(activePlayerId);
-        List<Card> hand = gameData.playerHands.get(activePlayerId);
+        // Check for draw step triggered abilities (e.g. Howling Mine)
+        handleDrawStepTriggers(gameData);
+    }
 
-        if (deck == null || deck.isEmpty()) {
-            log.warn("Game {} - {} has no cards to draw", gameData.id, gameData.playerIdToName.get(activePlayerId));
-            return;
+    private void handleDrawStepTriggers(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> playerBattlefield = gameData.playerBattlefields.get(playerId);
+            if (playerBattlefield == null) continue;
+
+            for (Permanent perm : playerBattlefield) {
+                List<CardEffect> drawEffects = perm.getCard().getEffects(EffectSlot.EACH_DRAW_TRIGGERED);
+                if (drawEffects == null || drawEffects.isEmpty()) continue;
+
+                for (CardEffect effect : drawEffects) {
+                    // Intervening-if: skip trigger if the effect requires an untapped source and it's tapped
+                    if (effect instanceof DrawCardForTargetPlayerEffect dcEffect
+                            && dcEffect.requireSourceUntapped() && perm.isTapped()) {
+                        continue;
+                    }
+
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            playerId,
+                            perm.getCard().getName() + "'s draw step ability",
+                            new ArrayList<>(List.of(effect)),
+                            activePlayerId,
+                            perm.getId()
+                    ));
+
+                    String logEntry = perm.getCard().getName() + "'s draw step ability triggers.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} draw-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                }
+            }
         }
-
-        Card drawn = deck.removeFirst();
-        hand.add(drawn);
-
-        String playerName = gameData.playerIdToName.get(activePlayerId);
-        String logEntry = playerName + " draws a card.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-
-        log.info("Game {} - {} draws a card (hand: {}, deck: {})", gameData.id, playerName, hand.size(), deck.size());
     }
 
     void advanceTurn(GameData gameData) {
