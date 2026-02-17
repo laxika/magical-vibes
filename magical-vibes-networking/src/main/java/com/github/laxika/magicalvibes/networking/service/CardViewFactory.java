@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.LandSubtypeTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
@@ -86,7 +87,7 @@ public class CardViewFactory {
     public ActivatedAbilityView createAbilityView(ActivatedAbility ability) {
         boolean targetsPlayer = ability.getEffects().stream()
                 .anyMatch(e -> e instanceof MillTargetPlayerEffect || e instanceof RevealTopCardOfLibraryEffect
-                        || e instanceof DealDamageToAnyTargetEffect);
+                        || e instanceof DealDamageToAnyTargetEffect || e instanceof DealDamageToTargetPlayerEffect);
 
         List<String> allowedTargetTypes = new ArrayList<>();
         for (CardEffect effect : ability.getEffects()) {

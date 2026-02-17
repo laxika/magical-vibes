@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEf
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
@@ -65,6 +66,10 @@ public class TargetValidationService {
         });
 
         registry.register(MillTargetPlayerEffect.class, (ctx, effect) -> {
+            requireTargetPlayer(ctx);
+        });
+
+        registry.register(DealDamageToTargetPlayerEffect.class, (ctx, effect) -> {
             requireTargetPlayer(ctx);
         });
 

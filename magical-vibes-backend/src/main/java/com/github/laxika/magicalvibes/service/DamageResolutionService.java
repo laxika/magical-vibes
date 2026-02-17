@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesAndPl
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
@@ -52,6 +53,8 @@ public class DamageResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveDealDamageToAnyTarget(gd, entry, (DealDamageToAnyTargetEffect) effect));
         registry.register(DealDamageToAnyTargetAndGainLifeEffect.class,
                 (gd, entry, effect) -> resolveDealDamageToAnyTargetAndGainLife(gd, entry, (DealDamageToAnyTargetAndGainLifeEffect) effect));
+        registry.register(DealDamageToTargetPlayerEffect.class,
+                (gd, entry, effect) -> resolveDealDamageToTargetPlayer(gd, entry, (DealDamageToTargetPlayerEffect) effect));
         registry.register(DealOrderedDamageToAnyTargetsEffect.class,
                 (gd, entry, effect) -> resolveDealOrderedDamageToAnyTargets(gd, entry, (DealOrderedDamageToAnyTargetsEffect) effect));
     }
@@ -421,6 +424,36 @@ public class DamageResolutionService implements EffectHandlerProvider {
         String lifeLog = controllerName + " gains " + xValue + " life.";
         gameBroadcastService.logAndBroadcast(gameData, lifeLog);
         log.info("Game {} - {} gains {} life", gameData.id, controllerName, xValue);
+
+        gameHelper.checkWinCondition(gameData);
+    }
+
+    void resolveDealDamageToTargetPlayer(GameData gameData, StackEntry entry, DealDamageToTargetPlayerEffect effect) {
+        UUID targetId = entry.getTargetPermanentId();
+        int damage = effect.damage();
+        String cardName = entry.getCard().getName();
+
+        if (!gameData.playerIds.contains(targetId)) {
+            return;
+        }
+
+        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+            String logEntry = cardName + "'s damage is prevented.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else {
+            if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, targetId, entry.getCard().getColor())) {
+                int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, targetId, damage);
+                effectiveDamage = gameHelper.redirectPlayerDamageToEnchantedCreature(gameData, targetId, effectiveDamage, cardName);
+                int currentLife = gameData.playerLifeTotals.getOrDefault(targetId, 20);
+                gameData.playerLifeTotals.put(targetId, currentLife - effectiveDamage);
+
+                if (effectiveDamage > 0) {
+                    String playerName = gameData.playerIdToName.get(targetId);
+                    String logEntry = playerName + " takes " + effectiveDamage + " damage from " + cardName + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                }
+            }
+        }
 
         gameHelper.checkWinCondition(gameData);
     }
