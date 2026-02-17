@@ -12,6 +12,16 @@
   transition: transform 0.15s;
   position: relative;
   overflow: visible;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+:host img,
+:host svg,
+:host ::ng-deep img,
+:host ::ng-deep svg {
+  -webkit-user-drag: none;
+  pointer-events: none;
 }
 
 :host:hover {
@@ -244,7 +254,7 @@ img.card-art {
 
 .card-artist {
   font-size: 9px;
-  opacity: 0.6;
+  opacity: 0.7;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -258,18 +268,6 @@ img.card-art {
   white-space: nowrap;
   flex-shrink: 0;
   margin-left: 2px;
-}
-
-.card-set-badge[data-rarity="UNCOMMON"] {
-  color: #c0c0c0;
-}
-
-.card-set-badge[data-rarity="RARE"] {
-  color: #c8a951;
-}
-
-.card-set-badge[data-rarity="MYTHIC"] {
-  color: #e74c3c;
 }
 
 /* Badges */
