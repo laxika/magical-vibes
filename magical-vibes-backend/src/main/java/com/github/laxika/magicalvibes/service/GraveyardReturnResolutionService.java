@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardOfSubtypeFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
@@ -47,6 +48,9 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveReturnCardFromGraveyardToZone(gd, entry, CardType.CREATURE,
                         GraveyardChoiceDestination.HAND,
                         "You may return a creature card from your graveyard to your hand."));
+        registry.register(ReturnCardOfSubtypeFromGraveyardToHandEffect.class,
+                (gd, entry, effect) -> resolveReturnCardOfSubtypeFromGraveyardToHand(gd, entry,
+                        (ReturnCardOfSubtypeFromGraveyardToHandEffect) effect));
         registry.register(ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect.class,
                 (gd, entry, effect) -> resolveReturnArtifactOrCreatureFromAnyGraveyardToBattlefield(gd, entry));
         registry.register(ExileCardsFromGraveyardEffect.class,
@@ -112,6 +116,36 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
 
         gameData.graveyardChoiceDestination = destination;
         playerInputService.beginGraveyardChoice(gameData, controllerId, matchingIndices, prompt);
+    }
+
+    void resolveReturnCardOfSubtypeFromGraveyardToHand(GameData gameData, StackEntry entry,
+            ReturnCardOfSubtypeFromGraveyardToHandEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        String subtypeName = effect.subtype().getDisplayName();
+
+        if (graveyard == null || graveyard.isEmpty()) {
+            String logEntry = entry.getDescription() + " — no " + subtypeName + " cards in graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        List<Integer> matchingIndices = new ArrayList<>();
+        for (int i = 0; i < graveyard.size(); i++) {
+            if (graveyard.get(i).getSubtypes().contains(effect.subtype())) {
+                matchingIndices.add(i);
+            }
+        }
+
+        if (matchingIndices.isEmpty()) {
+            String logEntry = entry.getDescription() + " — no " + subtypeName + " cards in graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        gameData.graveyardChoiceDestination = GraveyardChoiceDestination.HAND;
+        playerInputService.beginGraveyardChoice(gameData, controllerId, matchingIndices,
+                "Return a " + subtypeName + " card from your graveyard to your hand.");
     }
 
     void resolveReturnArtifactOrCreatureFromAnyGraveyardToBattlefield(GameData gameData, StackEntry entry) {
