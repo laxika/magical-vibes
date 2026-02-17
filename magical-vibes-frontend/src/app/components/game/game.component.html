@@ -575,7 +575,10 @@
             <div class="graveyard-label">Graveyard ({{ myGraveyard.length }})</div>
             <div class="graveyard-cards">
               @for (card of myGraveyard; track $index) {
-                <app-card-display [card]="card" class="graveyard-card" (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
+                <app-card-display [card]="card" class="graveyard-card"
+                  [class.playable]="isGraveyardLandPlayable($index)"
+                  (click)="playGraveyardLand($index)"
+                  (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
               }
             </div>
           </div>
