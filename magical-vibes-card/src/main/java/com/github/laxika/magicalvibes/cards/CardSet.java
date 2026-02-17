@@ -160,6 +160,7 @@ import com.github.laxika.magicalvibes.cards.r.RooftopPercher;
 import com.github.laxika.magicalvibes.cards.r.RootwaterCommando;
 import com.github.laxika.magicalvibes.cards.r.Righteousness;
 import com.github.laxika.magicalvibes.cards.r.RobeOfMirrors;
+import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.r.RootwaterMatriarch;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 import com.github.laxika.magicalvibes.cards.s.SageOwl;
@@ -248,6 +249,7 @@ public enum CardSet {
             new CardPrinting("10E", "329", KrakensEye::new),
             new CardPrinting("10E", "330", LegacyWeapon::new),
             new CardPrinting("10E", "331", LeoninScimitar::new),
+            new CardPrinting("10E", "341", RodOfRuin::new),
             new CardPrinting("10E", "6", AuraOfSilence::new),
             new CardPrinting("10E", "7", AvenCloudchaser::new),
             new CardPrinting("10E", "8", BallistaSquad::new),
