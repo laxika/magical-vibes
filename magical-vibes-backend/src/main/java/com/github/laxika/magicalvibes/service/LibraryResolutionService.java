@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class LibraryResolutionService implements EffectHandlerProvider {
 
+    private final GameHelper gameHelper;
     private final GameBroadcastService gameBroadcastService;
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
@@ -97,12 +98,11 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         }
 
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
-        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
 
         int cardsToMill = Math.min(handSize, deck.size());
         for (int i = 0; i < cardsToMill; i++) {
             Card card = deck.removeFirst();
-            graveyard.add(card);
+            gameHelper.addCardToGraveyard(gameData, targetPlayerId, card);
         }
 
         String logEntry = playerName + " mills " + cardsToMill + " card" + (cardsToMill != 1 ? "s" : "") + ".";
@@ -114,13 +114,12 @@ public class LibraryResolutionService implements EffectHandlerProvider {
     void resolveMillTargetPlayer(GameData gameData, StackEntry entry, MillTargetPlayerEffect mill) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
-        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
         String playerName = gameData.playerIdToName.get(targetPlayerId);
 
         int cardsToMill = Math.min(mill.count(), deck.size());
         for (int i = 0; i < cardsToMill; i++) {
             Card card = deck.removeFirst();
-            graveyard.add(card);
+            gameHelper.addCardToGraveyard(gameData, targetPlayerId, card);
         }
 
         String logEntry = playerName + " mills " + cardsToMill + " card" + (cardsToMill != 1 ? "s" : "") + ".";
@@ -132,7 +131,6 @@ public class LibraryResolutionService implements EffectHandlerProvider {
     void resolveMillHalfLibrary(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
-        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
         String playerName = gameData.playerIdToName.get(targetPlayerId);
 
         int cardsToMill = deck.size() / 2;
@@ -144,7 +142,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
 
         for (int i = 0; i < cardsToMill; i++) {
             Card card = deck.removeFirst();
-            graveyard.add(card);
+            gameHelper.addCardToGraveyard(gameData, targetPlayerId, card);
         }
 
         String logEntry = playerName + " mills half their library (" + cardsToMill + " card" + (cardsToMill != 1 ? "s" : "") + ").";

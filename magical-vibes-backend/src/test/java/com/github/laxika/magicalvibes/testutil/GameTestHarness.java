@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.service.CopyResolutionService;
 import com.github.laxika.magicalvibes.service.CounterResolutionService;
 import com.github.laxika.magicalvibes.service.DamageResolutionService;
 import com.github.laxika.magicalvibes.service.DestructionResolutionService;
+import com.github.laxika.magicalvibes.service.ExileResolutionService;
 import com.github.laxika.magicalvibes.service.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
@@ -85,9 +86,10 @@ public class GameTestHarness {
         List<EffectHandlerProvider> providers = List.of(
                 new DamageResolutionService(gameHelper, gameQueryService, gameBroadcastService),
                 new DestructionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),
-                new LibraryResolutionService(gameBroadcastService, sessionManager, cardViewFactory),
+                new LibraryResolutionService(gameHelper, gameBroadcastService, sessionManager, cardViewFactory),
                 new PreventionResolutionService(gameQueryService, gameBroadcastService),
-                new CounterResolutionService(gameBroadcastService),
+                new CounterResolutionService(gameHelper, gameBroadcastService),
+                new ExileResolutionService(gameHelper, gameQueryService, gameBroadcastService),
                 new CopyResolutionService(gameBroadcastService),
                 new GraveyardReturnResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),
                 new BounceResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),

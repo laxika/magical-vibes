@@ -209,13 +209,12 @@ public class DamageResolutionService implements EffectHandlerProvider {
                 }
             }
 
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             for (int idx : deadIndices) {
                 String playerName = gameData.playerIdToName.get(playerId);
                 Permanent dead = battlefield.get(idx);
                 String logEntry = playerName + "'s " + dead.getCard().getName() + " is destroyed by " + cardName + ".";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                graveyard.add(dead.getOriginalCard());
+                gameHelper.addCardToGraveyard(gameData, playerId, dead.getOriginalCard());
                 gameHelper.collectDeathTrigger(gameData, dead.getCard(), playerId, true);
                 gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
                 battlefield.remove(idx);
@@ -272,13 +271,12 @@ public class DamageResolutionService implements EffectHandlerProvider {
                 }
             }
 
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             for (int idx : deadIndices) {
                 String playerName = gameData.playerIdToName.get(playerId);
                 Permanent dead = battlefield.get(idx);
                 String logEntry = playerName + "'s " + dead.getCard().getName() + " is destroyed by Hurricane.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                graveyard.add(dead.getOriginalCard());
+                gameHelper.addCardToGraveyard(gameData, playerId, dead.getOriginalCard());
                 gameHelper.collectDeathTrigger(gameData, dead.getCard(), playerId, true);
                 gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
                 battlefield.remove(idx);

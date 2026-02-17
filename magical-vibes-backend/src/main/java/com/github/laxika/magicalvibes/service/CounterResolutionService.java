@@ -21,6 +21,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CounterResolutionService implements EffectHandlerProvider {
 
+    private final GameHelper gameHelper;
     private final GameBroadcastService gameBroadcastService;
 
     @Override
@@ -53,7 +54,7 @@ public class CounterResolutionService implements EffectHandlerProvider {
         // Copies cease to exist per rule 707.10a — skip graveyard
         if (!targetEntry.isCopy()) {
             UUID ownerId = targetEntry.getControllerId();
-            gameData.playerGraveyards.get(ownerId).add(targetEntry.getCard());
+            gameHelper.addCardToGraveyard(gameData, ownerId, targetEntry.getCard());
         }
 
         String logMsg = targetEntry.getCard().getName() + " is countered.";
@@ -87,7 +88,7 @@ public class CounterResolutionService implements EffectHandlerProvider {
             gameData.stack.remove(targetEntry);
             // Copies cease to exist per rule 707.10a — skip graveyard
             if (!targetEntry.isCopy()) {
-                gameData.playerGraveyards.get(targetControllerId).add(targetEntry.getCard());
+                gameHelper.addCardToGraveyard(gameData, targetControllerId, targetEntry.getCard());
             }
 
             String logMsg = targetEntry.getCard().getName() + " is countered.";

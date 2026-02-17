@@ -692,7 +692,7 @@ public class CombatService {
             // Stolen creatures go to their owner's graveyard
             UUID atkGraveyardOwner = gameData.stolenCreatures.getOrDefault(dead.getId(), activeId);
             gameData.stolenCreatures.remove(dead.getId());
-            gameData.playerGraveyards.get(atkGraveyardOwner).add(dead.getOriginalCard());
+            gameHelper.addCardToGraveyard(gameData, atkGraveyardOwner, dead.getOriginalCard());
             gameHelper.collectDeathTrigger(gameData, dead.getCard(), activeId, true);
             gameHelper.checkAllyCreatureDeathTriggers(gameData, activeId);
             atkBf.remove(idx);
@@ -703,7 +703,7 @@ public class CombatService {
             // Stolen creatures go to their owner's graveyard
             UUID defGraveyardOwner = gameData.stolenCreatures.getOrDefault(dead.getId(), defenderId);
             gameData.stolenCreatures.remove(dead.getId());
-            gameData.playerGraveyards.get(defGraveyardOwner).add(dead.getOriginalCard());
+            gameHelper.addCardToGraveyard(gameData, defGraveyardOwner, dead.getOriginalCard());
             gameHelper.collectDeathTrigger(gameData, dead.getCard(), defenderId, true);
             gameHelper.checkAllyCreatureDeathTriggers(gameData, defenderId);
             defBf.remove(idx);
@@ -810,7 +810,7 @@ public class CombatService {
                             if (currentHand.isEmpty()) break;
                             int randomIndex = java.util.concurrent.ThreadLocalRandom.current().nextInt(currentHand.size());
                             Card discarded = currentHand.remove(randomIndex);
-                            gameData.playerGraveyards.get(defenderId).add(discarded);
+                            gameHelper.addCardToGraveyard(gameData, defenderId, discarded);
                             String logEntry = creature.getCard().getName() + "'s ability triggers — " + gameData.playerIdToName.get(defenderId) + " discards " + discarded.getName() + " at random.";
                             gameBroadcastService.logAndBroadcast(gameData, logEntry);
                             log.info("Game {} - {} triggers random discard: {} discards {}", gameData.id, creature.getCard().getName(), gameData.playerIdToName.get(defenderId), discarded.getName());
@@ -914,7 +914,7 @@ public class CombatService {
                 for (Permanent perm : toSacrifice) {
                     boolean wasCreature = gameQueryService.isCreature(gameData, perm);
                     battlefield.remove(perm);
-                    gameData.playerGraveyards.get(playerId).add(perm.getOriginalCard());
+                    gameHelper.addCardToGraveyard(gameData, playerId, perm.getOriginalCard());
                     gameHelper.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature);
                     if (wasCreature) {
                         gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);

@@ -282,7 +282,7 @@ public class UserInputHandlerService {
         List<Card> hand = gameData.playerHands.get(playerId);
         Card card = hand.remove(cardIndex);
 
-        gameData.playerGraveyards.get(playerId).add(card);
+        gameHelper.addCardToGraveyard(gameData, playerId, card);
 
         String logEntry = player.getUsername() + " discards " + card.getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -347,8 +347,9 @@ public class UserInputHandlerService {
 
             if (discardMode) {
                 // Discard chosen cards to graveyard
-                List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
-                graveyard.addAll(chosenCards);
+                for (Card discarded : chosenCards) {
+                    gameHelper.addCardToGraveyard(gameData, targetPlayerId, discarded);
+                }
 
                 String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
                 String discardLog = targetName + " discards " + cardNames + ".";
@@ -484,7 +485,7 @@ public class UserInputHandlerService {
             for (Permanent perm : toRemove) {
                 boolean wasCreature = gameQueryService.isCreature(gameData, perm);
                 battlefield.remove(perm);
-                gameData.playerGraveyards.get(playerId).add(perm.getOriginalCard());
+                gameHelper.addCardToGraveyard(gameData, playerId, perm.getOriginalCard());
                 gameHelper.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature);
                 if (wasCreature) {
                     gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
@@ -989,14 +990,14 @@ public class UserInputHandlerService {
                 log.info("Game {} - {} pays {} to avoid counter", gameData.id, player.getUsername(), amount);
             } else {
                 gameData.stack.remove(targetEntry);
-                gameData.playerGraveyards.get(targetEntry.getControllerId()).add(targetEntry.getCard());
+                gameHelper.addCardToGraveyard(gameData, targetEntry.getControllerId(), targetEntry.getCard());
                 String logEntry = player.getUsername() + " can't pay {" + amount + "}. " + targetEntry.getCard().getName() + " is countered.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} can't pay {} — spell countered", gameData.id, player.getUsername(), amount);
             }
         } else {
             gameData.stack.remove(targetEntry);
-            gameData.playerGraveyards.get(targetEntry.getControllerId()).add(targetEntry.getCard());
+            gameHelper.addCardToGraveyard(gameData, targetEntry.getControllerId(), targetEntry.getCard());
             String logEntry = player.getUsername() + " declines to pay {" + amount + "}. " + targetEntry.getCard().getName() + " is countered.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} declines to pay {} — spell countered", gameData.id, player.getUsername(), amount);

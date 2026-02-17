@@ -264,12 +264,16 @@ public class ScryfallOracleLoader {
 
     private static CardColor parseColor(JsonNode card) {
         // Use colors array first
-        if (card.has("colors") && card.get("colors").isArray() && !card.get("colors").isEmpty()) {
-            String firstColor = card.get("colors").get(0).asText();
-            return COLOR_MAP.get(firstColor);
+        if (card.has("colors") && card.get("colors").isArray()) {
+            if (!card.get("colors").isEmpty()) {
+                String firstColor = card.get("colors").get(0).asText();
+                return COLOR_MAP.get(firstColor);
+            }
+            // colors array is present but empty — card is colorless
+            return null;
         }
 
-        // For colorless cards (lands), fall back to color_identity
+        // For cards without a colors array (e.g. some lands), fall back to color_identity
         if (card.has("color_identity") && card.get("color_identity").isArray() && !card.get("color_identity").isEmpty()) {
             String firstColor = card.get("color_identity").get(0).asText();
             return COLOR_MAP.get(firstColor);

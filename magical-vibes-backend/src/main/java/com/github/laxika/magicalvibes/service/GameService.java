@@ -159,7 +159,7 @@ public class GameService {
                 if (target == null) {
                     String fizzleLog = card.getName() + " fizzles (enchanted creature no longer exists).";
                     gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
-                    gameData.playerGraveyards.get(controllerId).add(card);
+                    gameHelper.addCardToGraveyard(gameData, controllerId, card);
 
                     log.info("Game {} - {} fizzles, target {} no longer exists", gameData.id, card.getName(), entry.getTargetPermanentId());
                 } else {
@@ -296,7 +296,7 @@ public class GameService {
                 if ((entry.getEntryType() == StackEntryType.SORCERY_SPELL
                         || entry.getEntryType() == StackEntryType.INSTANT_SPELL)
                         && !entry.isCopy()) {
-                    gameData.playerGraveyards.get(entry.getControllerId()).add(entry.getCard());
+                    gameHelper.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
                 }
             } else {
                 String logEntry = entry.getDescription() + " resolves.";
@@ -335,7 +335,7 @@ public class GameService {
                             gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
                         }
                     } else {
-                        gameData.playerGraveyards.get(entry.getControllerId()).add(entry.getCard());
+                        gameHelper.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
                     }
                 }
             }
@@ -799,7 +799,7 @@ public class GameService {
             // Sacrifice: remove from battlefield, add to graveyard
             boolean wasCreature = isCreature(gameData, permanent);
             battlefield.remove(permanentIndex);
-            gameData.playerGraveyards.get(playerId).add(permanent.getOriginalCard());
+            gameHelper.addCardToGraveyard(gameData, playerId, permanent.getOriginalCard());
             gameHelper.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature);
             if (wasCreature) {
                 gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
@@ -995,7 +995,7 @@ public class GameService {
             if (shouldSacrifice) {
                 boolean wasCreature = isCreature(gameData, permanent);
                 battlefield.remove(permanent);
-                gameData.playerGraveyards.get(playerId).add(permanent.getCard());
+                gameHelper.addCardToGraveyard(gameData, playerId, permanent.getCard());
                 gameHelper.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature);
                 if (wasCreature) {
                     gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);

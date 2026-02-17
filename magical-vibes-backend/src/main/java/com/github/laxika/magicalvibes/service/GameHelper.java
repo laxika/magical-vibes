@@ -54,18 +54,44 @@ public class GameHelper {
 
     // ===== Lifecycle methods =====
 
+    public void addCardToGraveyard(GameData gameData, UUID ownerId, Card card) {
+        if (card.isShufflesIntoLibraryFromGraveyard()) {
+            List<Card> deck = gameData.playerDecks.get(ownerId);
+            deck.add(card);
+            Collections.shuffle(deck);
+            String shuffleLog = card.getName() + " is revealed and shuffled into its owner's library instead.";
+            gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
+            log.info("Game {} - {} replacement effect: shuffled into library instead of graveyard", gameData.id, card.getName());
+        } else {
+            gameData.playerGraveyards.get(ownerId).add(card);
+        }
+    }
+
     public boolean removePermanentToGraveyard(GameData gameData, Permanent target) {
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
                 UUID graveyardOwnerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
-                gameData.playerGraveyards.get(graveyardOwnerId).add(target.getOriginalCard());
+                addCardToGraveyard(gameData, graveyardOwnerId, target.getOriginalCard());
                 gameData.stolenCreatures.remove(target.getId());
                 collectDeathTrigger(gameData, target.getCard(), playerId, wasCreature);
                 if (wasCreature) {
                     checkAllyCreatureDeathTriggers(gameData, playerId);
                 }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean removePermanentToExile(GameData gameData, Permanent target) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null && battlefield.remove(target)) {
+                UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
+                gameData.playerExiledCards.get(ownerId).add(target.getOriginalCard());
+                gameData.stolenCreatures.remove(target.getId());
                 return true;
             }
         }
@@ -82,7 +108,7 @@ public class GameHelper {
                 Permanent p = it.next();
                 if (p.getAttachedTo() != null && gameQueryService.findPermanentById(gameData, p.getAttachedTo()) == null) {
                     it.remove();
-                    gameData.playerGraveyards.get(playerId).add(p.getOriginalCard());
+                    addCardToGraveyard(gameData, playerId, p.getOriginalCard());
                     String logEntry = p.getCard().getName() + " is put into the graveyard (enchanted creature left the battlefield).";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} removed (orphaned aura)", gameData.id, p.getCard().getName());
@@ -239,7 +265,7 @@ public class GameHelper {
                     it.remove();
                     UUID graveyardOwnerId = gameData.stolenCreatures.getOrDefault(p.getId(), playerId);
                     gameData.stolenCreatures.remove(p.getId());
-                    gameData.playerGraveyards.get(graveyardOwnerId).add(p.getOriginalCard());
+                    addCardToGraveyard(gameData, graveyardOwnerId, p.getOriginalCard());
                     collectDeathTrigger(gameData, p.getCard(), playerId, true);
                     checkAllyCreatureDeathTriggers(gameData, playerId);
                     String logEntry = p.getCard().getName() + " is put into the graveyard (0 toughness).";
@@ -248,7 +274,7 @@ public class GameHelper {
                     anyDied = true;
                 } else if (p.getCard().getType() == CardType.PLANESWALKER && p.getLoyaltyCounters() <= 0) {
                     it.remove();
-                    gameData.playerGraveyards.get(playerId).add(p.getOriginalCard());
+                    addCardToGraveyard(gameData, playerId, p.getOriginalCard());
                     String logEntry = p.getCard().getName() + " has no loyalty counters and is put into the graveyard.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} dies to state-based actions (0 loyalty)", gameData.id, p.getCard().getName());
