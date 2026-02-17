@@ -131,6 +131,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.l.LoxodonMystic;
 import com.github.laxika.magicalvibes.cards.l.LumengridWarden;
 import com.github.laxika.magicalvibes.cards.m.MahamotiDjinn;
+import com.github.laxika.magicalvibes.cards.m.MassOfGhouls;
 import com.github.laxika.magicalvibes.cards.m.MerfolkLooter;
 import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
@@ -279,6 +280,7 @@ public enum CardSet {
             new CardPrinting("10E", "153", LoomingShade::new),
             new CardPrinting("10E", "154", LordOfThePit::new),
             new CardPrinting("10E", "155", LordOfTheUndead::new),
+            new CardPrinting("10E", "156", MassOfGhouls::new),
             new CardPrinting("10E", "15", FieldMarshal::new),
             new CardPrinting("10E", "16", GhostWarden::new),
             new CardPrinting("10E", "17", GloriousAnthem::new),
