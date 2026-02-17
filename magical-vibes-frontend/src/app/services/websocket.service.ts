@@ -122,6 +122,7 @@ export interface ActivatedAbilityView {
   allowedTargetColors: string[];
   manaCost: string | null;
   loyaltyCost: number | null;
+  targetsBlockingThis: boolean;
 }
 
 export interface Card {

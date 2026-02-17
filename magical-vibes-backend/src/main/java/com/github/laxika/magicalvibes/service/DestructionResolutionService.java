@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
@@ -41,6 +42,8 @@ public class DestructionResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveDestroyTargetPermanent(gd, entry, (DestroyTargetPermanentEffect) effect));
         registry.register(DestroyTargetLandAndDamageControllerEffect.class,
                 (gd, entry, effect) -> resolveDestroyTargetLandAndDamageController(gd, entry, (DestroyTargetLandAndDamageControllerEffect) effect));
+        registry.register(DestroyCreatureBlockingThisEffect.class,
+                (gd, entry, effect) -> resolveDestroyCreatureBlockingThis(gd, entry));
         registry.register(DestroyBlockedCreatureAndSelfEffect.class,
                 (gd, entry, effect) -> resolveDestroyBlockedCreatureAndSelf(gd, entry));
         registry.register(SacrificeCreatureEffect.class,
@@ -267,6 +270,38 @@ public class DestructionResolutionService implements EffectHandlerProvider {
         gameData.permanentChoiceContext = new PermanentChoiceContext.SacrificeCreature(targetPlayerId);
         playerInputService.beginPermanentChoice(gameData, targetPlayerId, creatureIds,
                 "Choose a creature to sacrifice.");
+    }
+
+    void resolveDestroyCreatureBlockingThis(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        if (!gameQueryService.isCreature(gameData, target)) {
+            String fizzleLog = entry.getCard().getName() + "'s ability fizzles (invalid target).";
+            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+            return;
+        }
+
+        if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
+            String logEntry = target.getCard().getName() + " is indestructible.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} is indestructible, destroy prevented", gameData.id, target.getCard().getName());
+            return;
+        }
+
+        if (gameHelper.tryRegenerate(gameData, target)) {
+            return;
+        }
+
+        gameHelper.removePermanentToGraveyard(gameData, target);
+        String logEntry = target.getCard().getName() + " is destroyed.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} is destroyed by {}'s ability",
+                gameData.id, target.getCard().getName(), entry.getCard().getName());
+
+        gameHelper.removeOrphanedAuras(gameData);
     }
 
     void resolveDestroyBlockedCreatureAndSelf(GameData gameData, StackEntry entry) {

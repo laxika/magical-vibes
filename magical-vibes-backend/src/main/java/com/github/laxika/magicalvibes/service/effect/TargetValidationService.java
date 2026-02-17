@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.service.GameQueryService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class TargetValidationService {
@@ -111,6 +113,18 @@ public class TargetValidationService {
             }
         });
 
+        registry.register(DestroyCreatureBlockingThisEffect.class, (ctx, effect) -> {
+            requireTarget(ctx);
+            Permanent target = gameQueryService.findPermanentById(ctx.gameData(), ctx.targetPermanentId());
+            if (target == null || !gameQueryService.isCreature(ctx.gameData(), target) || !target.isBlocking()) {
+                throw new IllegalStateException("Target must be a creature blocking this creature");
+            }
+            int sourceIndex = findSourcePermanentIndex(ctx);
+            if (sourceIndex < 0 || !target.getBlockingTargets().contains(sourceIndex)) {
+                throw new IllegalStateException("Target must be a creature blocking this creature");
+            }
+        });
+
         registry.register(ReturnTargetCreatureToHandEffect.class, (ctx, effect) -> {
             Permanent target = requireBattlefieldTarget(ctx);
             requireCreature(ctx, target);
@@ -170,5 +184,18 @@ public class TargetValidationService {
         if (!ctx.gameData().playerIds.contains(ctx.targetPermanentId())) {
             throw new IllegalStateException("Target must be a player");
         }
+    }
+
+    private int findSourcePermanentIndex(TargetValidationContext ctx) {
+        for (UUID playerId : ctx.gameData().orderedPlayerIds) {
+            List<Permanent> battlefield = ctx.gameData().playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (int i = 0; i < battlefield.size(); i++) {
+                if (battlefield.get(i).getCard() == ctx.sourceCard()) {
+                    return i;
+                }
+            }
+        }
+        return -1;
     }
 }

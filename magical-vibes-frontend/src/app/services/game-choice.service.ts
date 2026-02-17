@@ -93,6 +93,7 @@ export class GameChoiceService {
   targetingAllowedSubtypes: string[] = [];
   targetingAllowedColors: string[] = [];
   targetingRequiresAttacking = false;
+  targetingBlockingThis = false;
   targetingAbilityIndex = -1;
   pendingAbilityXValue: number | null = null;
 
@@ -463,6 +464,7 @@ export class GameChoiceService {
         this.targetingForPlayer = ability.targetsPlayer;
         this.targetingAllowedTypes = ability.allowedTargetTypes ?? [];
         this.targetingAllowedColors = ability.allowedTargetColors ?? [];
+        this.targetingBlockingThis = ability.targetsBlockingThis ?? false;
         return;
       }
       // X value only, no target
@@ -707,6 +709,7 @@ export class GameChoiceService {
       this.targetingCardName = '';
       this.targetingForAbility = false;
       this.targetingRequiresAttacking = false;
+      this.targetingBlockingThis = false;
       this.targetingAbilityIndex = -1;
       this.targetingAllowedTypes = [];
       this.targetingAllowedSubtypes = [];
@@ -726,6 +729,7 @@ export class GameChoiceService {
     this.targetingCardName = '';
     this.targetingForAbility = false;
     this.targetingRequiresAttacking = false;
+    this.targetingBlockingThis = false;
     this.targetingAbilityIndex = -1;
     this.targetingAllowedTypes = [];
     this.targetingAllowedSubtypes = [];
@@ -759,6 +763,7 @@ export class GameChoiceService {
     this.targetingForAbility = false;
     this.targetingForPlayer = false;
     this.targetingRequiresAttacking = false;
+    this.targetingBlockingThis = false;
     this.targetingAbilityIndex = -1;
     this.targetingAllowedTypes = [];
     this.targetingAllowedSubtypes = [];
@@ -773,6 +778,7 @@ export class GameChoiceService {
     this.targetingForAbility = false;
     this.targetingForPlayer = false;
     this.targetingRequiresAttacking = false;
+    this.targetingBlockingThis = false;
     this.targetingAbilityIndex = -1;
     this.targetingAllowedTypes = [];
     this.targetingAllowedSubtypes = [];
@@ -812,6 +818,10 @@ export class GameChoiceService {
   }
 
   isValidTarget(perm: Permanent): boolean {
+    if (this.targetingBlockingThis) {
+      return isPermanentCreature(perm) && perm.blocking
+        && perm.blockingTargets.includes(this.targetingCardIndex);
+    }
     if (this.targetingRequiresAttacking) {
       return isPermanentCreature(perm) && perm.attacking;
     }
@@ -943,6 +953,7 @@ export class GameChoiceService {
       this.targetingForPlayer = ability.targetsPlayer;
       this.targetingAllowedTypes = ability.allowedTargetTypes ?? [];
       this.targetingAllowedColors = ability.allowedTargetColors ?? [];
+      this.targetingBlockingThis = ability.targetsBlockingThis ?? false;
       return;
     }
 

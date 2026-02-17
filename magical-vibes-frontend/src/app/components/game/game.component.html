@@ -88,6 +88,8 @@
           <span>Select a target player for {{ choice.targetingCardName }}</span>
         } @else if (choice.targetingAllowedTypes.includes('Enchantment')) {
           <span>Select a target Aura for {{ choice.targetingCardName }}</span>
+        } @else if (choice.targetingBlockingThis) {
+          <span>Select a creature blocking {{ choice.targetingCardName }}</span>
         } @else if (choice.targetingRequiresAttacking) {
           <span>Select a target attacking creature for {{ choice.targetingCardName }}</span>
         } @else {

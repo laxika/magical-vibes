@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
@@ -99,6 +100,9 @@ public class CardViewFactory {
             colorFilter.colors().forEach(c -> allowedTargetColors.add(c.name()));
         }
 
+        boolean targetsBlockingThis = ability.getEffects().stream()
+                .anyMatch(e -> e instanceof DestroyCreatureBlockingThisEffect);
+
         return new ActivatedAbilityView(
                 ability.getDescription(),
                 ability.isRequiresTap(),
@@ -108,7 +112,8 @@ public class CardViewFactory {
                 allowedTargetTypes,
                 allowedTargetColors,
                 ability.getManaCost(),
-                ability.getLoyaltyCost()
+                ability.getLoyaltyCost(),
+                targetsBlockingThis
         );
     }
 
