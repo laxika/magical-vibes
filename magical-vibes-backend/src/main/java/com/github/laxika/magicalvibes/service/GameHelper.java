@@ -54,7 +54,7 @@ public class GameHelper {
 
     // ===== Lifecycle methods =====
 
-    boolean removePermanentToGraveyard(GameData gameData, Permanent target) {
+    public boolean removePermanentToGraveyard(GameData gameData, Permanent target) {
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);

@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectDrawsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
@@ -68,6 +70,8 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
                 (gd, entry, effect) -> resolveAwardAnyColorMana(gd, entry));
         registry.register(DrawAndLoseLifePerSubtypeEffect.class,
                 (gd, entry, effect) -> resolveDrawAndLoseLifePerSubtype(gd, entry, (DrawAndLoseLifePerSubtypeEffect) effect));
+        registry.register(SacrificeUnlessDiscardCardTypeEffect.class,
+                (gd, entry, effect) -> resolveSacrificeUnlessDiscardCardType(gd, entry, (SacrificeUnlessDiscardCardTypeEffect) effect));
     }
 
     private void resolveOpponentMayPlayCreature(GameData gameData, UUID controllerId) {
@@ -305,5 +309,65 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {}: {}'s draws replaced by {} until end of turn",
                 gameData.id, cardName, targetName, controllerName);
+    }
+
+    private void resolveSacrificeUnlessDiscardCardType(GameData gameData, StackEntry entry, SacrificeUnlessDiscardCardTypeEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        Card sourceCard = entry.getCard();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        // Find the source permanent on the battlefield
+        Permanent sourcePermanent = null;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (p.getCard().getId().equals(sourceCard.getId())) {
+                    sourcePermanent = p;
+                    break;
+                }
+            }
+        }
+
+        // Check if the controller has any cards of the required type in hand
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        boolean hasValidCard = false;
+        if (hand != null) {
+            for (Card card : hand) {
+                if (card.getType() == effect.requiredType()) {
+                    hasValidCard = true;
+                    break;
+                }
+            }
+        }
+
+        String typeName = effect.requiredType().name().toLowerCase();
+
+        if (!hasValidCard) {
+            if (sourcePermanent != null) {
+                // No valid cards to discard — sacrifice immediately
+                gameHelper.removePermanentToGraveyard(gameData, sourcePermanent);
+                String logEntry = playerName + " has no " + typeName
+                        + " card to discard. " + sourceCard.getName() + " is sacrificed.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} sacrificed (no {} card to discard)", gameData.id, sourceCard.getName(), effect.requiredType());
+            } else {
+                // Permanent already gone and no valid cards — nothing to do
+                log.info("Game {} - {} is no longer on the battlefield and no {} card to discard", gameData.id, sourceCard.getName(), effect.requiredType());
+            }
+            return;
+        }
+
+        // Has valid cards — ask the controller via the may ability system
+        // Per ruling 2008-04-01: even if the creature left the battlefield, the player
+        // may still choose to discard if they want.
+        String prompt;
+        if (sourcePermanent != null) {
+            prompt = "Discard a " + typeName + " card? If you don't, " + sourceCard.getName() + " will be sacrificed.";
+        } else {
+            prompt = sourceCard.getName() + " is no longer on the battlefield. Discard a " + typeName + " card anyway?";
+        }
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                sourceCard, controllerId, List.of(effect), prompt
+        ));
     }
 }

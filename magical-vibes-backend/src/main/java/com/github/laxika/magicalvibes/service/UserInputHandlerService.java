@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
@@ -864,6 +865,13 @@ public class UserInputHandlerService {
             return;
         }
 
+        // Sacrifice-unless-discard — handled via the may ability system
+        boolean isSacrificeUnlessDiscard = ability.effects().stream().anyMatch(e -> e instanceof SacrificeUnlessDiscardCardTypeEffect);
+        if (isSacrificeUnlessDiscard) {
+            handleSacrificeUnlessDiscardChoice(gameData, player, accepted, ability);
+            return;
+        }
+
         // Copy spell retarget — choose new targets for a copied spell
         boolean isCopySpellRetarget = ability.effects().stream().anyMatch(e -> e instanceof CopySpellEffect);
         if (isCopySpellRetarget) {
@@ -991,6 +999,76 @@ public class UserInputHandlerService {
             String logEntry = player.getUsername() + " declines to pay {" + amount + "}. " + targetEntry.getCard().getName() + " is countered.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} declines to pay {} — spell countered", gameData.id, player.getUsername(), amount);
+        }
+
+        gameHelper.performStateBasedActions(gameData);
+        playerInputService.processNextMayAbility(gameData);
+        if (gameData.pendingMayAbilities.isEmpty() && gameData.awaitingInput == null) {
+            gameData.priorityPassedBy.clear();
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+        }
+    }
+
+    void handleSacrificeUnlessDiscardChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        SacrificeUnlessDiscardCardTypeEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof SacrificeUnlessDiscardCardTypeEffect)
+                .map(e -> (SacrificeUnlessDiscardCardTypeEffect) e)
+                .findFirst().orElseThrow();
+
+        Card sourceCard = ability.sourceCard();
+        UUID controllerId = ability.controllerId();
+
+        // Find the source permanent on the battlefield
+        Permanent sourcePermanent = null;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (p.getCard().getId().equals(sourceCard.getId())) {
+                    sourcePermanent = p;
+                    break;
+                }
+            }
+        }
+
+        if (accepted) {
+            // Per ruling 2008-04-01: player may still discard even if the creature
+            // is no longer on the battlefield.
+            List<Card> hand = gameData.playerHands.get(controllerId);
+            List<Integer> validIndices = new ArrayList<>();
+            if (hand != null) {
+                for (int i = 0; i < hand.size(); i++) {
+                    if (hand.get(i).getType() == effect.requiredType()) {
+                        validIndices.add(i);
+                    }
+                }
+            }
+
+            if (!validIndices.isEmpty()) {
+                String typeName = effect.requiredType().name().toLowerCase();
+                gameData.awaitingDiscardRemainingCount = 1;
+                playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
+                        "Choose a " + typeName + " card to discard.");
+
+                String logEntry = player.getUsername() + " chooses to discard a " + typeName + " card.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} accepts sacrifice-unless-discard for {}", gameData.id, player.getUsername(), sourceCard.getName());
+                return;
+            }
+
+            // Hand changed since trigger — no valid cards left, fall through to sacrifice
+        }
+
+        // Declined or no valid cards left — sacrifice if still on the battlefield
+        if (sourcePermanent != null) {
+            gameHelper.removePermanentToGraveyard(gameData, sourcePermanent);
+            String logEntry = player.getUsername() + " declines to discard. " + sourceCard.getName() + " is sacrificed.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines, {} sacrificed", gameData.id, player.getUsername(), sourceCard.getName());
+        } else {
+            String logEntry = player.getUsername() + " declines to discard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} is no longer on the battlefield, decline is a no-op", gameData.id, sourceCard.getName());
         }
 
         gameHelper.performStateBasedActions(gameData);

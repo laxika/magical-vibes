@@ -111,10 +111,14 @@ public class PlayerInputService {
             validIndices.add(i);
         }
 
+        beginDiscardChoice(gameData, playerId, validIndices, "Choose a card to discard.");
+    }
+
+    public void beginDiscardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         gameData.awaitingInput = AwaitingInput.DISCARD_CHOICE;
         gameData.awaitingCardChoicePlayerId = playerId;
         gameData.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
-        sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(validIndices, "Choose a card to discard."));
+        sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(validIndices, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a card to discard", gameData.id, playerName);
