@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffe
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.SpellTypeTargetFilter;
 import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -1299,14 +1300,23 @@ public class UserInputHandlerService {
 
         boolean reveals = gameData.awaitingLibrarySearchReveals;
         boolean canFailToFind = gameData.awaitingLibrarySearchCanFailToFind;
+        UUID targetPlayerId = gameData.awaitingLibrarySearchTargetPlayerId;
+        int remainingCount = gameData.awaitingLibrarySearchRemainingCount;
 
+        // Determine whose library/hand to use
+        UUID deckOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
+        UUID handOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
+
+        // Clear all state
         gameData.awaitingInput = null;
         gameData.awaitingLibrarySearchPlayerId = null;
         gameData.awaitingLibrarySearchCards = null;
         gameData.awaitingLibrarySearchReveals = false;
         gameData.awaitingLibrarySearchCanFailToFind = false;
+        gameData.awaitingLibrarySearchTargetPlayerId = null;
+        gameData.awaitingLibrarySearchRemainingCount = 0;
 
-        List<Card> deck = gameData.playerDecks.get(playerId);
+        List<Card> deck = gameData.playerDecks.get(deckOwnerId);
 
         if (cardIndex == -1) {
             // Player declined (fail to find) — only allowed for restricted searches (e.g. basic land)
@@ -1338,11 +1348,40 @@ public class UserInputHandlerService {
                 throw new IllegalStateException("Chosen card not found in library");
             }
 
-            gameData.playerHands.get(playerId).add(chosenCard);
+            gameData.playerHands.get(handOwnerId).add(chosenCard);
+
+            // Head Games multi-pick: more cards to choose
+            if (targetPlayerId != null && remainingCount > 1) {
+                int newRemaining = remainingCount - 1;
+                List<Card> newSearchCards = new ArrayList<>(deck);
+
+                gameData.awaitingInput = AwaitingInput.LIBRARY_SEARCH;
+                gameData.awaitingLibrarySearchPlayerId = playerId;
+                gameData.awaitingLibrarySearchCards = newSearchCards;
+                gameData.awaitingLibrarySearchReveals = false;
+                gameData.awaitingLibrarySearchCanFailToFind = false;
+                gameData.awaitingLibrarySearchTargetPlayerId = targetPlayerId;
+                gameData.awaitingLibrarySearchRemainingCount = newRemaining;
+
+                String targetName = gameData.playerIdToName.get(targetPlayerId);
+                List<CardView> cardViews = newSearchCards.stream().map(cardViewFactory::create).toList();
+                sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(
+                        cardViews,
+                        "Search " + targetName + "'s library for a card to put into their hand (" + newRemaining + " remaining).",
+                        false
+                ));
+
+                log.info("Game {} - {} picks for Head Games, {} remaining", gameData.id, player.getUsername(), newRemaining);
+                return;
+            }
+
             Collections.shuffle(deck);
 
             String logEntry;
-            if (reveals) {
+            if (targetPlayerId != null) {
+                String targetName = gameData.playerIdToName.get(targetPlayerId);
+                logEntry = player.getUsername() + " puts cards into " + targetName + "'s hand. " + targetName + "'s library is shuffled.";
+            } else if (reveals) {
                 logEntry = player.getUsername() + " reveals " + chosenCard.getName() + " and puts it into their hand. Library is shuffled.";
             } else {
                 logEntry = player.getUsername() + " puts a card into their hand. Library is shuffled.";

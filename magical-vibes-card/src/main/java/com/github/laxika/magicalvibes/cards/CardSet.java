@@ -87,6 +87,7 @@ import com.github.laxika.magicalvibes.cards.g.Gravedigger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HailOfArrows;
 import com.github.laxika.magicalvibes.cards.h.HateWeaver;
+import com.github.laxika.magicalvibes.cards.h.HeadGames;
 import com.github.laxika.magicalvibes.cards.h.HeartOfLight;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
@@ -238,6 +239,7 @@ public enum CardSet {
             new CardPrinting("10E", "145", GravebornMuse::new),
             new CardPrinting("10E", "146", Gravedigger::new),
             new CardPrinting("10E", "147", HateWeaver::new),
+            new CardPrinting("10E", "148", HeadGames::new),
             new CardPrinting("10E", "15", FieldMarshal::new),
             new CardPrinting("10E", "16", GhostWarden::new),
             new CardPrinting("10E", "17", GloriousAnthem::new),

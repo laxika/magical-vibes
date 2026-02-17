@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
+import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.MillByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
@@ -67,6 +68,8 @@ public class LibraryResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveSearchLibraryForCreatureWithMVXOrLessToHand(gd, entry));
         registry.register(LookAtTopCardsHandTopBottomEffect.class,
                 (gd, entry, effect) -> resolveLookAtTopCardsHandTopBottom(gd, entry, (LookAtTopCardsHandTopBottomEffect) effect));
+        registry.register(HeadGamesEffect.class,
+                (gd, entry, effect) -> resolveHeadGames(gd, entry));
         registry.register(AjaniUltimateEffect.class,
                 (gd, entry, effect) -> resolveAjaniUltimate(gd, entry));
     }
@@ -342,6 +345,58 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         String logMsg = playerName + " searches their library.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} searching library for creature with MV <= {} ({} found)", gameData.id, playerName, maxMV, eligibleCreatures.size());
+    }
+
+    void resolveHeadGames(GameData gameData, StackEntry entry) {
+        UUID casterId = entry.getControllerId();
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
+        List<Card> targetDeck = gameData.playerDecks.get(targetPlayerId);
+        String casterName = gameData.playerIdToName.get(casterId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        int handSize = targetHand.size();
+
+        // Step 1: Target opponent puts hand on top of library
+        if (handSize == 0) {
+            String logMsg = targetName + " has no cards in hand. " + targetName + "'s library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            Collections.shuffle(targetDeck);
+            return;
+        }
+
+        // Put hand cards on top of library (in order)
+        for (int i = targetHand.size() - 1; i >= 0; i--) {
+            targetDeck.addFirst(targetHand.get(i));
+        }
+        targetHand.clear();
+
+        String logMsg = targetName + " puts " + handSize + " card" + (handSize != 1 ? "s" : "")
+                + " from their hand on top of their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+
+        // Step 2: Caster searches target's library for that many cards
+        List<Card> allCards = new ArrayList<>(targetDeck);
+
+        gameData.awaitingLibrarySearchPlayerId = casterId;
+        gameData.awaitingLibrarySearchCards = allCards;
+        gameData.awaitingLibrarySearchReveals = false;
+        gameData.awaitingLibrarySearchCanFailToFind = false;
+        gameData.awaitingLibrarySearchTargetPlayerId = targetPlayerId;
+        gameData.awaitingLibrarySearchRemainingCount = handSize;
+        gameData.awaitingInput = AwaitingInput.LIBRARY_SEARCH;
+
+        List<CardView> cardViews = allCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(casterId, new ChooseCardFromLibraryMessage(
+                cardViews,
+                "Search " + targetName + "'s library for a card to put into their hand (" + handSize + " remaining).",
+                false
+        ));
+
+        String searchLog = casterName + " searches " + targetName + "'s library.";
+        gameBroadcastService.logAndBroadcast(gameData, searchLog);
+        log.info("Game {} - {} resolving Head Games, searching {}'s library for {} cards",
+                gameData.id, casterName, targetName, handSize);
     }
 
     void resolveAjaniUltimate(GameData gameData, StackEntry entry) {
