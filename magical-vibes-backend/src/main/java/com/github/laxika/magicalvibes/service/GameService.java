@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -41,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -1020,12 +1022,20 @@ public class GameService {
             boolean isManaAbility = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget()
                     && ability.getLoyaltyCost() == null
                     && !snapshotEffects.isEmpty()
-                    && snapshotEffects.stream().allMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect);
+                    && snapshotEffects.stream().allMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof DoubleManaPoolEffect);
 
             if (isManaAbility) {
                 for (CardEffect effect : snapshotEffects) {
                     if (effect instanceof AwardManaEffect award) {
                         gameData.playerManaPools.get(playerId).add(award.color());
+                    } else if (effect instanceof DoubleManaPoolEffect) {
+                        ManaPool pool = gameData.playerManaPools.get(playerId);
+                        for (ManaColor color : ManaColor.values()) {
+                            int current = pool.get(color);
+                            for (int i = 0; i < current; i++) {
+                                pool.add(color);
+                            }
+                        }
                     } else if (effect instanceof AwardAnyColorManaEffect) {
                         gameData.colorChoiceContext = new ColorChoiceContext.ManaColorChoice(playerId);
                         gameData.awaitingInput = AwaitingInput.COLOR_CHOICE;

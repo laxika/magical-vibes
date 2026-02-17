@@ -6,7 +6,8 @@ public enum ManaColor {
     BLUE("U"),
     BLACK("B"),
     RED("R"),
-    GREEN("G");
+    GREEN("G"),
+    COLORLESS("C");
 
     private final String code;
 
