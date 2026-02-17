@@ -253,7 +253,7 @@ public class CombatService {
 
         log.info("Game {} - {} declares {} attackers", gameData.id, player.getUsername(), attackerIndices.size());
 
-        return CombatResult.ADVANCE_AND_AUTO_PASS;
+        return CombatResult.AUTO_PASS_ONLY;
     }
 
     CombatResult handleDeclareBlockersStep(GameData gameData) {
@@ -424,7 +424,7 @@ public class CombatService {
 
         log.info("Game {} - {} declares {} blockers", gameData.id, player.getUsername(), blockerAssignments.size());
 
-        return CombatResult.ADVANCE_AND_AUTO_PASS;
+        return CombatResult.AUTO_PASS_ONLY;
     }
 
     // ===== Combat damage resolution =====
