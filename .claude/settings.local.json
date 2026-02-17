@@ -25,7 +25,10 @@
       "WebFetch(domain:www.mtgassist.com)",
       "WebFetch(domain:blogs.magicjudges.org)",
       "WebFetch(domain:mtg.wiki)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(git push:*)"
     ]
   }
 }
