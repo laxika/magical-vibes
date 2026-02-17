@@ -15,5 +15,6 @@ public enum EffectSlot {
     ON_DEATH,
     ON_ALLY_CREATURE_DIES,
     ON_COMBAT_DAMAGE_TO_PLAYER,
+    ON_DAMAGE_TO_PLAYER,
     ON_ATTACK
 }

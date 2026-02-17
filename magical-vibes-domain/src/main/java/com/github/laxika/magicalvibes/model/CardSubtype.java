@@ -66,7 +66,8 @@ public enum CardSubtype {
     GIANT("Giant"),
     GOBLIN("Goblin"),
     CYCLOPS("Cyclops"),
-    HORROR("Horror");
+    HORROR("Horror"),
+    SPECTER("Specter");
 
     @Getter
     private final String displayName;

@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicat
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.LandwalkEffect;
+import com.github.laxika.magicalvibes.model.effect.RandomDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
@@ -776,7 +777,10 @@ public class CombatService {
             int damageDealt = entry.getValue();
             if (damageDealt <= 0) continue;
 
-            for (CardEffect effect : creature.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)) {
+            List<CardEffect> allDamageEffects = new ArrayList<>();
+            allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
+            allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+            for (CardEffect effect : allDamageEffects) {
                 if (effect instanceof DrawCardEffect drawEffect) {
                     String logEntry = creature.getCard().getName() + "'s ability triggers — " + gameData.playerIdToName.get(attackerId) + " draws " + drawEffect.amount() + " card" + (drawEffect.amount() > 1 ? "s" : "") + ".";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -785,6 +789,23 @@ public class CombatService {
                     }
                 } else if (effect instanceof ExileTopCardsRepeatOnDuplicateEffect exileEffect) {
                     gameHelper.resolveExileTopCardsRepeatOnDuplicate(gameData, creature, defenderId, exileEffect);
+                } else if (effect instanceof RandomDiscardEffect randomDiscardEffect) {
+                    List<Card> defenderHand = gameData.playerHands.get(defenderId);
+                    if (defenderHand == null || defenderHand.isEmpty()) {
+                        String logEntry = creature.getCard().getName() + "'s ability triggers, but " + gameData.playerIdToName.get(defenderId) + " has no cards to discard.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    } else {
+                        for (int i = 0; i < randomDiscardEffect.amount(); i++) {
+                            List<Card> currentHand = gameData.playerHands.get(defenderId);
+                            if (currentHand.isEmpty()) break;
+                            int randomIndex = java.util.concurrent.ThreadLocalRandom.current().nextInt(currentHand.size());
+                            Card discarded = currentHand.remove(randomIndex);
+                            gameData.playerGraveyards.get(defenderId).add(discarded);
+                            String logEntry = creature.getCard().getName() + "'s ability triggers — " + gameData.playerIdToName.get(defenderId) + " discards " + discarded.getName() + " at random.";
+                            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                            log.info("Game {} - {} triggers random discard: {} discards {}", gameData.id, creature.getCard().getName(), gameData.playerIdToName.get(defenderId), discarded.getName());
+                        }
+                    }
                 } else if (effect instanceof ReturnPermanentsOnCombatDamageToPlayerEffect) {
                     // Collect valid permanents the damaged player controls
                     List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
