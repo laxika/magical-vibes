@@ -113,6 +113,7 @@ import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
 import com.github.laxika.magicalvibes.cards.i.IcatianPriest;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.n.NomadMythmaker;
 import com.github.laxika.magicalvibes.cards.l.LoomingShade;
@@ -227,6 +228,7 @@ public enum CardSet {
             new CardPrinting("10E", "324", TheHive::new),
             new CardPrinting("10E", "325", HowlingMine::new),
             new CardPrinting("10E", "326", IcyManipulator::new),
+            new CardPrinting("10E", "327", JayemdaeTome::new),
             new CardPrinting("10E", "6", AuraOfSilence::new),
             new CardPrinting("10E", "7", AvenCloudchaser::new),
             new CardPrinting("10E", "8", BallistaSquad::new),
