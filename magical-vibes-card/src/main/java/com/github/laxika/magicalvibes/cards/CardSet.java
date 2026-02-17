@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.cards.a.AvenWindreader;
 import com.github.laxika.magicalvibes.cards.b.BallistaSquad;
 import com.github.laxika.magicalvibes.cards.b.Bandage;
 import com.github.laxika.magicalvibes.cards.b.Blaze;
+import com.github.laxika.magicalvibes.cards.b.BloodfireColossus;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfDestruction;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfImmortality;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfUnrest;
@@ -348,6 +349,7 @@ public enum CardSet {
             new CardPrinting("10E", "188", ArcaneTeachings::new),
             new CardPrinting("10E", "189", BeaconOfDestruction::new),
             new CardPrinting("10E", "190", Blaze::new),
+            new CardPrinting("10E", "191", BloodfireColossus::new),
             new CardPrinting("10E", "376", Mountain::new),
             new CardPrinting("10E", "377", Mountain::new),
             new CardPrinting("10E", "378", Mountain::new),
