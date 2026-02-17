@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostNonColorCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOtherCreaturesByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
@@ -31,6 +32,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         registry.register(AnimateNoncreatureArtifactsEffect.class, this::resolveAnimateNoncreatureArtifacts);
         registry.register(BoostCreaturesBySubtypeEffect.class, this::resolveBoostCreaturesBySubtype);
         registry.register(BoostEnchantedCreatureEffect.class, this::resolveBoostEnchantedCreature);
+        registry.register(BoostEquippedCreatureEffect.class, this::resolveBoostEquippedCreature);
         registry.register(GrantKeywordToEnchantedCreatureEffect.class, this::resolveGrantKeywordToEnchantedCreature);
         registry.register(BoostOwnCreaturesEffect.class, this::resolveBoostOwnCreatures);
         registry.register(BoostOtherCreaturesByColorEffect.class, this::resolveBoostOtherCreaturesByColor);
@@ -58,6 +60,15 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
 
     private void resolveBoostEnchantedCreature(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostEnchantedCreatureEffect) effect;
+        if (context.source().getAttachedTo() != null
+                && context.source().getAttachedTo().equals(context.target().getId())) {
+            accumulator.addPower(boost.powerBoost());
+            accumulator.addToughness(boost.toughnessBoost());
+        }
+    }
+
+    private void resolveBoostEquippedCreature(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostEquippedCreatureEffect) effect;
         if (context.source().getAttachedTo() != null
                 && context.source().getAttachedTo().equals(context.target().getId())) {
             accumulator.addPower(boost.powerBoost());

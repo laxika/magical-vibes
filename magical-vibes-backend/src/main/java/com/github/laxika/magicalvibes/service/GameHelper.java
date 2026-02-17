@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -108,12 +109,20 @@ public class GameHelper {
             while (it.hasNext()) {
                 Permanent p = it.next();
                 if (p.getAttachedTo() != null && gameQueryService.findPermanentById(gameData, p.getAttachedTo()) == null) {
-                    it.remove();
-                    addCardToGraveyard(gameData, playerId, p.getOriginalCard());
-                    String logEntry = p.getCard().getName() + " is put into the graveyard (enchanted creature left the battlefield).";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - {} removed (orphaned aura)", gameData.id, p.getCard().getName());
-                    anyRemoved = true;
+                    if (p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+                        // Equipment stays on the battlefield unattached when the equipped creature leaves
+                        p.setAttachedTo(null);
+                        String logEntry = p.getCard().getName() + " becomes unattached (equipped creature left the battlefield).";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} unattached (equipped creature left)", gameData.id, p.getCard().getName());
+                    } else {
+                        it.remove();
+                        addCardToGraveyard(gameData, playerId, p.getOriginalCard());
+                        String logEntry = p.getCard().getName() + " is put into the graveyard (enchanted creature left the battlefield).";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} removed (orphaned aura)", gameData.id, p.getCard().getName());
+                        anyRemoved = true;
+                    }
                 }
             }
         }

@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.TurnResolutionService;
 import com.github.laxika.magicalvibes.service.UserInputHandlerService;
 import com.github.laxika.magicalvibes.service.effect.CreatureModResolutionService;
+import com.github.laxika.magicalvibes.service.effect.EquipResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
 import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
 import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionService;
@@ -97,7 +98,8 @@ public class GameTestHarness {
                 new CreatureModResolutionService(gameQueryService, gameBroadcastService),
                 new PlayerInteractionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager, cardViewFactory),
                 new PermanentControlResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),
-                new TurnResolutionService(gameHelper, combatService, gameBroadcastService)
+                new TurnResolutionService(gameHelper, combatService, gameBroadcastService),
+                new EquipResolutionService(gameQueryService, gameBroadcastService)
         );
         EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper, providers);
         effectResolutionService.init();

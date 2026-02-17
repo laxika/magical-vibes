@@ -108,6 +108,7 @@ import com.github.laxika.magicalvibes.cards.h.HypnoticSpecter;
 import com.github.laxika.magicalvibes.cards.k.KnightOfDusk;
 import com.github.laxika.magicalvibes.cards.k.KrakensEye;
 import com.github.laxika.magicalvibes.cards.l.LegacyWeapon;
+import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.h.HeartOfLight;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
@@ -245,6 +246,7 @@ public enum CardSet {
             new CardPrinting("10E", "328", Juggernaut::new),
             new CardPrinting("10E", "329", KrakensEye::new),
             new CardPrinting("10E", "330", LegacyWeapon::new),
+            new CardPrinting("10E", "331", LeoninScimitar::new),
             new CardPrinting("10E", "6", AuraOfSilence::new),
             new CardPrinting("10E", "7", AvenCloudchaser::new),
             new CardPrinting("10E", "8", BallistaSquad::new),

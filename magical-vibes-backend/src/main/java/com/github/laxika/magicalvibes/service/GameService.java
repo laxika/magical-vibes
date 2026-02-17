@@ -875,6 +875,17 @@ public class GameService {
                         throw new IllegalStateException("This ability can only be activated during your upkeep");
                     }
                 }
+                if (ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED) {
+                    if (!playerId.equals(gameData.activePlayerId)) {
+                        throw new IllegalStateException("This ability can only be activated at sorcery speed");
+                    }
+                    if (gameData.currentStep != TurnStep.PRECOMBAT_MAIN && gameData.currentStep != TurnStep.POSTCOMBAT_MAIN) {
+                        throw new IllegalStateException("This ability can only be activated during a main phase");
+                    }
+                    if (!gameData.stack.isEmpty()) {
+                        throw new IllegalStateException("This ability can only be activated when the stack is empty");
+                    }
+                }
             }
 
             // Validate loyalty ability restrictions
