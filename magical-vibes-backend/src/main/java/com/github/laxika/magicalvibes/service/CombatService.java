@@ -361,6 +361,9 @@ public class CombatService {
                     }
                 }
             }
+            if (blocker.getCantBlockIds().contains(attacker.getId())) {
+                throw new IllegalStateException(blocker.getCard().getName() + " can't block " + attacker.getCard().getName() + " this turn");
+            }
             if (gameQueryService.hasProtectionFrom(gameData, attacker, blocker.getCard().getColor())) {
                 throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (protection)");
             }

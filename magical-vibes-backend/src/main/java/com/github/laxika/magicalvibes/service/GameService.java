@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
@@ -1012,7 +1013,9 @@ public class GameService {
                 if (effect instanceof SacrificeSelfCost) {
                     continue;
                 }
-                if (effect instanceof PreventNextColorDamageToControllerEffect && permanent.getChosenColor() != null) {
+                if (effect instanceof CantBlockSourceEffect) {
+                    snapshotEffects.add(new CantBlockSourceEffect(permanent.getId()));
+                } else if (effect instanceof PreventNextColorDamageToControllerEffect && permanent.getChosenColor() != null) {
                     snapshotEffects.add(new PreventNextColorDamageToControllerEffect(permanent.getChosenColor()));
                 } else {
                     snapshotEffects.add(effect);

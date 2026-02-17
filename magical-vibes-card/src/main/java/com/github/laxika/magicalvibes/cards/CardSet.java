@@ -71,6 +71,7 @@ import com.github.laxika.magicalvibes.cards.d.Distress;
 import com.github.laxika.magicalvibes.cards.d.DoomedNecromancer;
 import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
 import com.github.laxika.magicalvibes.cards.d.DragonRoost;
+import com.github.laxika.magicalvibes.cards.d.DuctCrawler;
 import com.github.laxika.magicalvibes.cards.d.DragonsClaw;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.d.DemonsHorn;
@@ -396,6 +397,7 @@ public enum CardSet {
             new CardPrinting("10E", "195", Cryoclasm::new),
             new CardPrinting("10E", "196", Demolish::new),
             new CardPrinting("10E", "197", DragonRoost::new),
+            new CardPrinting("10E", "198", DuctCrawler::new),
             new CardPrinting("10E", "376", Mountain::new),
             new CardPrinting("10E", "377", Mountain::new),
             new CardPrinting("10E", "378", Mountain::new),

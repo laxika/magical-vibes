@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
@@ -49,6 +50,8 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveBoostAllOwnCreatures(gd, entry, (BoostAllOwnCreaturesEffect) effect));
         registry.register(GrantKeywordToTargetEffect.class,
                 (gd, entry, effect) -> resolveGrantKeywordToTarget(gd, entry, (GrantKeywordToTargetEffect) effect));
+        registry.register(CantBlockSourceEffect.class,
+                (gd, entry, effect) -> resolveCantBlockSource(gd, entry, (CantBlockSourceEffect) effect));
         registry.register(MakeTargetUnblockableEffect.class,
                 (gd, entry, effect) -> resolveMakeTargetUnblockable(gd, entry));
         registry.register(TapCreaturesEffect.class,
@@ -161,6 +164,23 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gains {}", gameData.id, target.getCard().getName(), grant.keyword());
+    }
+
+    private void resolveCantBlockSource(GameData gameData, StackEntry entry, CantBlockSourceEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null || effect.sourcePermanentId() == null) {
+            return;
+        }
+
+        Permanent source = gameQueryService.findPermanentById(gameData, effect.sourcePermanentId());
+        String sourceName = source != null ? source.getCard().getName() : entry.getCard().getName();
+
+        target.getCantBlockIds().add(effect.sourcePermanentId());
+
+        String logEntry = target.getCard().getName() + " can't block " + sourceName + " this turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} can't block {} this turn", gameData.id, target.getCard().getName(), sourceName);
     }
 
     private void resolveMakeTargetUnblockable(GameData gameData, StackEntry entry) {

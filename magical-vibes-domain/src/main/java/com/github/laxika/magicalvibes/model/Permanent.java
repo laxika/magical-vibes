@@ -35,6 +35,7 @@ public class Permanent {
     private final Set<Keyword> grantedKeywords = new HashSet<>();
     private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
     private final List<TextReplacement> textReplacements = new ArrayList<>();
+    private final Set<UUID> cantBlockIds = new HashSet<>();
 
     public Permanent(Card card) {
         this.id = UUID.randomUUID();
@@ -109,5 +110,6 @@ public class Permanent {
         this.animatedToughness = 0;
         this.grantedKeywords.clear();
         this.grantedSubtypes.clear();
+        this.cantBlockIds.clear();
     }
 }
