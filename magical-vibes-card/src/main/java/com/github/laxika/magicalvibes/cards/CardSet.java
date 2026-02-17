@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.cards.d.Discombobulate;
 import com.github.laxika.magicalvibes.cards.d.Distress;
 import com.github.laxika.magicalvibes.cards.d.DoomedNecromancer;
 import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
+import com.github.laxika.magicalvibes.cards.d.DragonsClaw;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.d.DemonsHorn;
 import com.github.laxika.magicalvibes.cards.d.DoublingCube;
@@ -210,6 +211,7 @@ public enum CardSet {
             new CardPrinting("10E", "319", CrucibleOfWorlds::new),
             new CardPrinting("10E", "320", DemonsHorn::new),
             new CardPrinting("10E", "321", DoublingCube::new),
+            new CardPrinting("10E", "322", DragonsClaw::new),
             new CardPrinting("10E", "326", IcyManipulator::new),
             new CardPrinting("10E", "6", AuraOfSilence::new),
             new CardPrinting("10E", "7", AvenCloudchaser::new),
