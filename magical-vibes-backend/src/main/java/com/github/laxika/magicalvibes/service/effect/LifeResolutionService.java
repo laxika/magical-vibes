@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,8 @@ public class LifeResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveDoubleTargetPlayerLife(gd, entry));
         registry.register(EnchantedCreatureControllerLosesLifeEffect.class,
                 (gd, entry, effect) -> resolveEnchantedCreatureControllerLosesLife(gd, entry, (EnchantedCreatureControllerLosesLifeEffect) effect));
+        registry.register(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class,
+                (gd, entry, effect) -> resolveTargetPlayerLosesLifeAndControllerGainsLife(gd, entry, (TargetPlayerLosesLifeAndControllerGainsLifeEffect) effect));
     }
 
     private void resolveGainLife(GameData gameData, UUID controllerId, int amount) {
@@ -112,5 +115,22 @@ public class LifeResolutionService implements EffectHandlerProvider {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, effect.amount(), entry.getCard().getName());
+    }
+
+    private void resolveTargetPlayerLosesLifeAndControllerGainsLife(GameData gameData, StackEntry entry, TargetPlayerLosesLifeAndControllerGainsLifeEffect effect) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID controllerId = entry.getControllerId();
+
+        // Target loses life
+        int targetCurrentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
+        gameData.playerLifeTotals.put(targetPlayerId, targetCurrentLife - effect.lifeLoss());
+
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        String lossLog = targetName + " loses " + effect.lifeLoss() + " life (" + entry.getCard().getName() + ").";
+        gameBroadcastService.logAndBroadcast(gameData, lossLog);
+        log.info("Game {} - {} loses {} life from {}", gameData.id, targetName, effect.lifeLoss(), entry.getCard().getName());
+
+        // Controller gains life
+        resolveGainLife(gameData, controllerId, effect.lifeGain());
     }
 }

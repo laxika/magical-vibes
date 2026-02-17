@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOw
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.SpellTypeTargetFilter;
@@ -1236,7 +1237,8 @@ public class UserInputHandlerService {
                     || effect instanceof LookAtHandEffect
                     || effect instanceof MillTargetPlayerEffect
                     || effect instanceof ReturnArtifactsTargetPlayerOwnsToHandEffect
-                    || effect instanceof ShuffleGraveyardIntoLibraryEffect) {
+                    || effect instanceof ShuffleGraveyardIntoLibraryEffect
+                    || effect instanceof TargetPlayerLosesLifeAndControllerGainsLifeEffect) {
                 return true;
             }
         }

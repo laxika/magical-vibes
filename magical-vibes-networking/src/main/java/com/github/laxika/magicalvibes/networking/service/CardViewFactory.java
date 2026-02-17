@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandEff
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
@@ -124,6 +125,11 @@ public class CardViewFactory {
                     || effect instanceof SacrificeCreatureEffect
                     || effect instanceof ShuffleGraveyardIntoLibraryEffect
                     || effect instanceof DealOrderedDamageToAnyTargetsEffect) {
+                return true;
+            }
+        }
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (effect instanceof TargetPlayerLosesLifeAndControllerGainsLifeEffect) {
                 return true;
             }
         }
