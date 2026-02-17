@@ -49,6 +49,8 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.CreatureYouControlTargetFilter;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -968,6 +970,22 @@ public class GameService {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
                 if (target != null) {
                     gameQueryService.validateTargetFilter(ability.getTargetFilter(), target);
+
+                    // Controller ownership validation
+                    if (ability.getTargetFilter() instanceof ControllerOnlyTargetFilter
+                            || ability.getTargetFilter() instanceof CreatureYouControlTargetFilter) {
+                        List<Permanent> playerBf = gameData.playerBattlefields.get(playerId);
+                        if (playerBf == null || !playerBf.contains(target)) {
+                            throw new IllegalStateException("Target must be a permanent you control");
+                        }
+                    }
+
+                    // Creature type validation for equip and similar effects
+                    if (ability.getTargetFilter() instanceof CreatureYouControlTargetFilter) {
+                        if (!isCreature(gameData, target)) {
+                            throw new IllegalStateException("Target must be a creature you control");
+                        }
+                    }
                 }
             }
 
