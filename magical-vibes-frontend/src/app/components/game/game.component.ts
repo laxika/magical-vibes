@@ -20,7 +20,7 @@ export class GameComponent implements OnInit, OnDestroy {
   hoveredCard = signal<Card | null>(null);
   hoveredPermanent = signal<Permanent | null>(null);
   stackTargetId = signal<string | null>(null);
-  activeTab = signal<'log' | 'stack'>('log');
+  activeTab = signal<'game' | 'stack' | 'graveyard'>('game');
   private subscriptions: Subscription[] = [];
 
   readonly choice = inject(GameChoiceService);
@@ -328,8 +328,8 @@ export class GameComponent implements OnInit, OnDestroy {
     // Switch to stack tab when stack is non-empty
     if (state.stack.length > 0) {
       this.activeTab.set('stack');
-    } else {
-      this.activeTab.set('log');
+    } else if (this.activeTab() === 'stack') {
+      this.activeTab.set('game');
     }
 
     // Clear pending combat state when server confirms battlefield

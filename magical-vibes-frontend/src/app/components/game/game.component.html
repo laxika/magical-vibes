@@ -382,16 +382,6 @@
         @if (opponentBattlefield.length === 0) {
           <div class="battlefield-empty">No permanents</div>
         }
-        @if (opponentGraveyard.length > 0) {
-          <div class="graveyard-row">
-            <div class="graveyard-label">Graveyard ({{ opponentGraveyard.length }})</div>
-            <div class="graveyard-cards">
-              @for (card of opponentGraveyard; track $index) {
-                <app-card-display [card]="card" class="graveyard-card" (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
-              }
-            </div>
-          </div>
-        }
         @if (opponentHand.length > 0) {
           <div class="revealed-hand-row">
             <div class="revealed-hand-label">Revealed Hand ({{ opponentHand.length }})</div>
@@ -576,19 +566,6 @@
         </div>
         @if (myBattlefield.length === 0) {
           <div class="battlefield-empty">No permanents</div>
-        }
-        @if (myGraveyard.length > 0) {
-          <div class="graveyard-row">
-            <div class="graveyard-label">Graveyard ({{ myGraveyard.length }})</div>
-            <div class="graveyard-cards">
-              @for (card of myGraveyard; track $index) {
-                <app-card-display [card]="card" class="graveyard-card"
-                  [class.playable]="isGraveyardLandPlayable($index)"
-                  (click)="playGraveyardLand($index)"
-                  (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
-              }
-            </div>
-          </div>
         }
       </div>
     </div>
@@ -785,37 +762,133 @@
     </div>
 
     <div class="side-panel">
-      <div class="card-preview-panel">
-        @if (hoveredCard()) {
-          <app-card-display [card]="hoveredCard()!" [permanent]="hoveredPermanent()" [preview]="true" class="preview-card" />
-        } @else {
-          <div class="card-preview-empty"></div>
-        }
+      <div class="tab-header">
+        <div class="tab" [class.active]="activeTab() === 'game'" (click)="activeTab.set('game')">Game</div>
+        <div class="tab" [class.active]="activeTab() === 'stack'" (click)="activeTab.set('stack')">
+          Stack
+          @if (!isStackEmpty) {
+            <span class="tab-badge">{{ stackEntries.length }}</span>
+          }
+        </div>
+        <div class="tab" [class.active]="activeTab() === 'graveyard'" (click)="activeTab.set('graveyard')">
+          Graveyard
+          @if (myGraveyard.length + opponentGraveyard.length > 0) {
+            <span class="tab-badge">{{ myGraveyard.length + opponentGraveyard.length }}</span>
+          }
+        </div>
       </div>
 
-      <div class="turn-info">
-        <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)" [class.targetable]="choice.targetingForPlayer || (choice.multiTargeting && choice.multiTargetForPlayer)" [class.multi-target-selected]="choice.multiTargeting && choice.multiTargetForPlayer && choice.isMultiTargetSelected(getPlayerId(0))" [class.stack-targeted]="isStackTargetPlayer(0)" [class.choosable-permanent]="choice.choosingPermanent && choice.choosablePermanentIds().has(getPlayerId(0))" (click)="onPlayerBadgeClick(0)">
-          {{ player1Name }}
-          <span class="life-total">Life: {{ getLifeTotal(0) }}</span>
-          <span class="hand-size">Hand: {{ player1HandSize }}</span>
-          <span class="deck-size">Deck: {{ player1DeckSize }}</span>
-          @if (holdsPriority(0)) {
-            <span class="priority-indicator">Priority</span>
-          }
-        </div>
-        <div class="turn-center">
-          <span class="turn-number">Turn {{ game()?.turnNumber }}</span>
-          <span class="vs-label">VS</span>
-        </div>
-        <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)" [class.targetable]="choice.targetingForPlayer || (choice.multiTargeting && choice.multiTargetForPlayer)" [class.multi-target-selected]="choice.multiTargeting && choice.multiTargetForPlayer && choice.isMultiTargetSelected(getPlayerId(1))" [class.stack-targeted]="isStackTargetPlayer(1)" [class.choosable-permanent]="choice.choosingPermanent && choice.choosablePermanentIds().has(getPlayerId(1))" (click)="onPlayerBadgeClick(1)">
-          {{ player2Name }}
-          <span class="life-total">Life: {{ getLifeTotal(1) }}</span>
-          <span class="hand-size">Hand: {{ player2HandSize }}</span>
-          <span class="deck-size">Deck: {{ player2DeckSize }}</span>
-          @if (holdsPriority(1)) {
-            <span class="priority-indicator">Priority</span>
-          }
-        </div>
+      <div class="tab-content">
+        @if (activeTab() === 'game') {
+          <div class="game-tab">
+            <div class="card-preview-panel">
+              @if (hoveredCard()) {
+                <app-card-display [card]="hoveredCard()!" [permanent]="hoveredPermanent()" [preview]="true" class="preview-card" />
+              } @else {
+                <div class="card-preview-empty"></div>
+              }
+            </div>
+
+            <div class="turn-info">
+              <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)" [class.targetable]="choice.targetingForPlayer || (choice.multiTargeting && choice.multiTargetForPlayer)" [class.multi-target-selected]="choice.multiTargeting && choice.multiTargetForPlayer && choice.isMultiTargetSelected(getPlayerId(0))" [class.stack-targeted]="isStackTargetPlayer(0)" [class.choosable-permanent]="choice.choosingPermanent && choice.choosablePermanentIds().has(getPlayerId(0))" (click)="onPlayerBadgeClick(0)">
+                {{ player1Name }}
+                <span class="life-total">Life: {{ getLifeTotal(0) }}</span>
+                <span class="hand-size">Hand: {{ player1HandSize }}</span>
+                <span class="deck-size">Deck: {{ player1DeckSize }}</span>
+                @if (holdsPriority(0)) {
+                  <span class="priority-indicator">Priority</span>
+                }
+              </div>
+              <div class="turn-center">
+                <span class="turn-number">Turn {{ game()?.turnNumber }}</span>
+                <span class="vs-label">VS</span>
+              </div>
+              <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)" [class.targetable]="choice.targetingForPlayer || (choice.multiTargeting && choice.multiTargetForPlayer)" [class.multi-target-selected]="choice.multiTargeting && choice.multiTargetForPlayer && choice.isMultiTargetSelected(getPlayerId(1))" [class.stack-targeted]="isStackTargetPlayer(1)" [class.choosable-permanent]="choice.choosingPermanent && choice.choosablePermanentIds().has(getPlayerId(1))" (click)="onPlayerBadgeClick(1)">
+                {{ player2Name }}
+                <span class="life-total">Life: {{ getLifeTotal(1) }}</span>
+                <span class="hand-size">Hand: {{ player2HandSize }}</span>
+                <span class="deck-size">Deck: {{ player2DeckSize }}</span>
+                @if (holdsPriority(1)) {
+                  <span class="priority-indicator">Priority</span>
+                }
+              </div>
+            </div>
+
+            <div class="log-entries">
+              @if (gameLog.length === 0) {
+                <div class="log-entry empty">Waiting for game to start...</div>
+              } @else {
+                @for (entry of gameLog; track $index) {
+                  <div class="log-entry">{{ entry }}</div>
+                }
+              }
+            </div>
+          </div>
+        } @else if (activeTab() === 'stack') {
+          <div class="stack-entries">
+            @if (isStackEmpty) {
+              <div class="log-entry empty">The stack is empty.</div>
+            } @else {
+              @for (entry of stackEntries; track $index) {
+                <div class="stack-entry-wrapper"
+                     [class.spell-targetable]="choice.targetingSpell && entry.isSpell"
+                     [class.stack-targeted]="isStackTargetSpell(entry)"
+                     [class.choosable-permanent]="choice.choosingPermanent && choice.choosablePermanentIds().has(entry.cardId)"
+                     (click)="choice.choosingPermanent && choice.choosablePermanentIds().has(entry.cardId) ? choice.choosePermanent(entry.cardId) : (choice.targetingSpell && entry.isSpell ? choice.selectSpellTarget(entry) : null)"
+                     (mouseenter)="onStackEntryHover(entry); onCardHover(entry.card)"
+                     (mouseleave)="onStackEntryHoverEnd(); onCardHoverEnd()">
+                  <app-card-display
+                    [card]="entry.card"
+                    [attr.data-entry-type]="entry.entryType" />
+                  <div class="stack-entry-overlay">
+                    <div class="stack-entry-controller">
+                      ({{ getPlayerName(entry.controllerId) }})
+                    </div>
+                    @if (entry.targetPermanentId) {
+                      <div class="stack-entry-target">
+                        Target: {{ getStackEntryTargetName(entry) ?? entry.targetPermanentId }}
+                      </div>
+                    }
+                  </div>
+                  @if ($index === 0) {
+                    <div class="stack-top-badge">Next to resolve</div>
+                  }
+                </div>
+              }
+            }
+          </div>
+        } @else {
+          <div class="graveyard-tab">
+            <div class="graveyard-section">
+              <div class="graveyard-section-label">{{ game()?.playerNames?.[opponentPlayerIndex] }}'s Graveyard ({{ opponentGraveyard.length }})</div>
+              @if (opponentGraveyard.length === 0) {
+                <div class="log-entry empty">No cards in graveyard.</div>
+              } @else {
+                <div class="graveyard-tab-cards">
+                  @for (card of opponentGraveyard; track $index) {
+                    <app-card-display [card]="card" class="graveyard-card"
+                      (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
+                  }
+                </div>
+              }
+            </div>
+            <div class="graveyard-section">
+              <div class="graveyard-section-label">Your Graveyard ({{ myGraveyard.length }})</div>
+              @if (myGraveyard.length === 0) {
+                <div class="log-entry empty">No cards in graveyard.</div>
+              } @else {
+                <div class="graveyard-tab-cards">
+                  @for (card of myGraveyard; track $index) {
+                    <app-card-display [card]="card" class="graveyard-card"
+                      [class.playable]="isGraveyardLandPlayable($index)"
+                      (click)="playGraveyardLand($index)"
+                      (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
       </div>
 
       <div class="action-bar">
@@ -835,64 +908,6 @@
           <button class="btn-confirm-combat" (click)="choice.declineMayAbility()">No</button>
         </div>
       }
-
-      <div class="log-panel">
-        <div class="tab-header">
-          <div class="tab" [class.active]="activeTab() === 'log'" (click)="activeTab.set('log')">Game Log</div>
-          <div class="tab" [class.active]="activeTab() === 'stack'" (click)="activeTab.set('stack')">
-            Stack
-            @if (!isStackEmpty) {
-              <span class="tab-badge">{{ stackEntries.length }}</span>
-            }
-          </div>
-        </div>
-        <div class="tab-content">
-          @if (activeTab() === 'log') {
-            <div class="log-entries">
-              @if (gameLog.length === 0) {
-                <div class="log-entry empty">Waiting for game to start...</div>
-              } @else {
-                @for (entry of gameLog; track $index) {
-                  <div class="log-entry">{{ entry }}</div>
-                }
-              }
-            </div>
-          } @else {
-            <div class="stack-entries">
-              @if (isStackEmpty) {
-                <div class="log-entry empty">The stack is empty.</div>
-              } @else {
-                @for (entry of stackEntries; track $index) {
-                  <div class="stack-entry-wrapper"
-                       [class.spell-targetable]="choice.targetingSpell && entry.isSpell"
-                       [class.stack-targeted]="isStackTargetSpell(entry)"
-                       [class.choosable-permanent]="choice.choosingPermanent && choice.choosablePermanentIds().has(entry.cardId)"
-                       (click)="choice.choosingPermanent && choice.choosablePermanentIds().has(entry.cardId) ? choice.choosePermanent(entry.cardId) : (choice.targetingSpell && entry.isSpell ? choice.selectSpellTarget(entry) : null)"
-                       (mouseenter)="onStackEntryHover(entry); onCardHover(entry.card)"
-                       (mouseleave)="onStackEntryHoverEnd(); onCardHoverEnd()">
-                    <app-card-display
-                      [card]="entry.card"
-                      [attr.data-entry-type]="entry.entryType" />
-                    <div class="stack-entry-overlay">
-                      <div class="stack-entry-controller">
-                        ({{ getPlayerName(entry.controllerId) }})
-                      </div>
-                      @if (entry.targetPermanentId) {
-                        <div class="stack-entry-target">
-                          Target: {{ getStackEntryTargetName(entry) ?? entry.targetPermanentId }}
-                        </div>
-                      }
-                    </div>
-                    @if ($index === 0) {
-                      <div class="stack-top-badge">Next to resolve</div>
-                    }
-                  </div>
-                }
-              }
-            </div>
-          }
-        </div>
-      </div>
     </div>
   </div>
 </div>
