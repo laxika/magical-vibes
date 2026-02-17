@@ -29,7 +29,11 @@ import com.github.laxika.magicalvibes.service.LibraryResolutionService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.LobbyService;
 import com.github.laxika.magicalvibes.service.PreventionResolutionService;
+import com.github.laxika.magicalvibes.service.AbilityActivationService;
+import com.github.laxika.magicalvibes.service.MulliganService;
+import com.github.laxika.magicalvibes.service.ReconnectionService;
 import com.github.laxika.magicalvibes.service.SpellCastingService;
+import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.TurnResolutionService;
 import com.github.laxika.magicalvibes.service.UserInputHandlerService;
@@ -111,10 +115,20 @@ public class GameTestHarness {
         UserInputHandlerService userInputHandlerService = new UserInputHandlerService(
                 sessionManager, gameQueryService, gameHelper, gameBroadcastService,
                 playerInputService, cardViewFactory, turnProgressionService);
+        StackResolutionService stackResolutionService = new StackResolutionService(
+                gameHelper, gameQueryService, gameBroadcastService, effectResolutionService, playerInputService);
+        AbilityActivationService abilityActivationService = new AbilityActivationService(
+                gameHelper, gameQueryService, gameBroadcastService, targetValidationService,
+                playerInputService, sessionManager);
+        MulliganService mulliganService = new MulliganService(
+                sessionManager, gameBroadcastService, turnProgressionService);
+        ReconnectionService reconnectionService = new ReconnectionService(
+                sessionManager, cardViewFactory, combatService, gameQueryService);
         gameService = new GameService(
-                sessionManager, gameRegistry, gameHelper, gameQueryService, gameBroadcastService,
-                playerInputService, cardViewFactory, effectResolutionService, combatService,
-                turnProgressionService, userInputHandlerService, spellCastingService, targetValidationService);
+                gameRegistry, gameQueryService, gameBroadcastService,
+                cardViewFactory, combatService,
+                turnProgressionService, userInputHandlerService, spellCastingService,
+                stackResolutionService, abilityActivationService, mulliganService, reconnectionService);
         lobbyService = new LobbyService(gameRegistry, gameService);
 
         player1 = new Player(UUID.randomUUID(), "Alice");
