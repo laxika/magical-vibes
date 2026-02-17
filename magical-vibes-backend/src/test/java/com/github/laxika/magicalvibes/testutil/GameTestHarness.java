@@ -175,6 +175,10 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }
 
+    public void playGraveyardLand(Player player, int cardIndex) {
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), true);
+    }
+
     public void castPlaneswalker(Player player, int cardIndex) {
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }

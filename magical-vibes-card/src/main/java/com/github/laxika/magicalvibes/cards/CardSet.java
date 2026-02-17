@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.cards.c.CitanulFlute;
 import com.github.laxika.magicalvibes.cards.c.CoatOfArms;
 import com.github.laxika.magicalvibes.cards.c.ColossusOfSardia;
 import com.github.laxika.magicalvibes.cards.c.CompositeGolem;
+import com.github.laxika.magicalvibes.cards.c.CrucibleOfWorlds;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.ChoMannoRevolutionary;
 import com.github.laxika.magicalvibes.cards.c.CloudElemental;
@@ -66,6 +67,7 @@ import com.github.laxika.magicalvibes.cards.d.Distress;
 import com.github.laxika.magicalvibes.cards.d.DoomedNecromancer;
 import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
+import com.github.laxika.magicalvibes.cards.d.DemonsHorn;
 import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.e.EssenceDrain;
 import com.github.laxika.magicalvibes.cards.e.Evacuation;
@@ -81,8 +83,10 @@ import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GravePact;
 import com.github.laxika.magicalvibes.cards.g.GravebornMuse;
+import com.github.laxika.magicalvibes.cards.g.Gravedigger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HailOfArrows;
+import com.github.laxika.magicalvibes.cards.h.HateWeaver;
 import com.github.laxika.magicalvibes.cards.h.HeartOfLight;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
@@ -199,6 +203,8 @@ public enum CardSet {
             new CardPrinting("10E", "316", CoatOfArms::new),
             new CardPrinting("10E", "317", ColossusOfSardia::new),
             new CardPrinting("10E", "318", CompositeGolem::new),
+            new CardPrinting("10E", "319", CrucibleOfWorlds::new),
+            new CardPrinting("10E", "320", DemonsHorn::new),
             new CardPrinting("10E", "326", IcyManipulator::new),
             new CardPrinting("10E", "6", AuraOfSilence::new),
             new CardPrinting("10E", "7", AvenCloudchaser::new),
@@ -230,6 +236,8 @@ public enum CardSet {
             new CardPrinting("10E", "143", FesteringGoblin::new),
             new CardPrinting("10E", "144", GravePact::new),
             new CardPrinting("10E", "145", GravebornMuse::new),
+            new CardPrinting("10E", "146", Gravedigger::new),
+            new CardPrinting("10E", "147", HateWeaver::new),
             new CardPrinting("10E", "15", FieldMarshal::new),
             new CardPrinting("10E", "16", GhostWarden::new),
             new CardPrinting("10E", "17", GloriousAnthem::new),

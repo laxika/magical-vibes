@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnArtifactFromGraveyardTo
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +43,10 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveReturnCardFromGraveyardToZone(gd, entry, CardType.ARTIFACT,
                         GraveyardChoiceDestination.HAND,
                         "You may return an artifact card from your graveyard to your hand."));
+        registry.register(ReturnCreatureFromGraveyardToHandEffect.class,
+                (gd, entry, effect) -> resolveReturnCardFromGraveyardToZone(gd, entry, CardType.CREATURE,
+                        GraveyardChoiceDestination.HAND,
+                        "You may return a creature card from your graveyard to your hand."));
         registry.register(ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect.class,
                 (gd, entry, effect) -> resolveReturnArtifactOrCreatureFromAnyGraveyardToBattlefield(gd, entry));
         registry.register(ExileCardsFromGraveyardEffect.class,

@@ -322,6 +322,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.websocketService.currentGame = updated;
 
     this.playableCardIndices.set(new Set(state.playableCardIndices));
+    this.playableGraveyardLandIndices.set(new Set(state.playableGraveyardLandIndices ?? []));
     this.autoStopSteps.set(new Set(state.autoStopSteps));
 
     // Switch to stack tab when stack is non-empty
@@ -427,14 +428,25 @@ export class GameComponent implements OnInit, OnDestroy {
   // ========== Priority & playability ==========
 
   playableCardIndices = signal(new Set<number>());
+  playableGraveyardLandIndices = signal(new Set<number>());
   autoStopSteps = signal(new Set<string>());
 
   isCardPlayable(index: number): boolean {
     return this.playableCardIndices().has(index);
   }
 
+  isGraveyardLandPlayable(index: number): boolean {
+    return this.playableGraveyardLandIndices().has(index);
+  }
+
   playCard(index: number): void {
     this.choice.playCard(index, (i) => this.isCardPlayable(i));
+  }
+
+  playGraveyardLand(index: number): void {
+    if (this.isGraveyardLandPlayable(index)) {
+      this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetPermanentId: null, fromGraveyard: true });
+    }
   }
 
   passPriority(): void {
