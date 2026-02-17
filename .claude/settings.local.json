@@ -24,7 +24,8 @@
       "WebSearch",
       "WebFetch(domain:www.mtgassist.com)",
       "WebFetch(domain:blogs.magicjudges.org)",
-      "WebFetch(domain:mtg.wiki)"
+      "WebFetch(domain:mtg.wiki)",
+      "Bash(xargs:*)"
     ]
   }
 }
