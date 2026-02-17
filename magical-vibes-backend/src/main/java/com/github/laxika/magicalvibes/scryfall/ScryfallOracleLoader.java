@@ -249,6 +249,7 @@ public class ScryfallOracleLoader {
         return new OracleData(
                 name,
                 parsed.type(),
+                parsed.additionalTypes(),
                 manaCost,
                 color,
                 parsed.supertypes(),

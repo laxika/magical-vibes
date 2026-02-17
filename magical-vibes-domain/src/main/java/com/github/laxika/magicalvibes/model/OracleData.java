@@ -6,6 +6,7 @@ import java.util.Set;
 public record OracleData(
         String name,
         CardType type,
+        Set<CardType> additionalTypes,
         String manaCost,
         CardColor color,
         Set<CardSupertype> supertypes,

@@ -42,6 +42,7 @@ public class ScryfallTypeLineParser {
     public record ParsedTypeLine(
             Set<CardSupertype> supertypes,
             CardType type,
+            Set<CardType> additionalTypes,
             List<CardSubtype> subtypes
     ) {}
 
@@ -53,6 +54,7 @@ public class ScryfallTypeLineParser {
 
         Set<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
         CardType type = null;
+        Set<CardType> additionalTypes = EnumSet.noneOf(CardType.class);
         List<CardSubtype> subtypes = new ArrayList<>();
 
         // Split into type part and subtype part on " — " (em dash with spaces)
@@ -68,6 +70,7 @@ public class ScryfallTypeLineParser {
 
         // Parse types: "Legendary Creature" → supertype=LEGENDARY, type=CREATURE
         // "Basic Land" → supertype=BASIC, type=LAND (parsed normally via maps)
+        // "Artifact Creature" → type=ARTIFACT, additionalTypes={CREATURE}
         String[] typeWords = typesPart.split("\\s+");
         for (String word : typeWords) {
             if (word.isEmpty()) continue;
@@ -78,10 +81,12 @@ public class ScryfallTypeLineParser {
                 continue;
             }
 
-            if (type == null) {
-                CardType cardType = TYPE_MAP.get(word);
-                if (cardType != null) {
+            CardType cardType = TYPE_MAP.get(word);
+            if (cardType != null) {
+                if (type == null) {
                     type = cardType;
+                } else {
+                    additionalTypes.add(cardType);
                 }
             }
         }
@@ -100,6 +105,6 @@ public class ScryfallTypeLineParser {
             }
         }
 
-        return new ParsedTypeLine(supertypes, type, subtypes);
+        return new ParsedTypeLine(supertypes, type, additionalTypes, subtypes);
     }
 }

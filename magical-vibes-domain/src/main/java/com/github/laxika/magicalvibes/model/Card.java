@@ -57,6 +57,7 @@ public class Card {
         if (oracle != null) {
             this.name = oracle.name();
             this.type = oracle.type();
+            this.additionalTypes = oracle.additionalTypes();
             this.manaCost = oracle.manaCost();
             this.color = oracle.color();
             this.supertypes = oracle.supertypes();

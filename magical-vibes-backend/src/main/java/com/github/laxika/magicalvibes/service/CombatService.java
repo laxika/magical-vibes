@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BlockOnlyFlyersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsLandTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
@@ -358,6 +359,12 @@ public class CombatService {
                             .anyMatch(p -> p.getCard().getSubtypes().contains(landwalk.landType()));
                     if (defenderControlsLand) {
                         throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked (" + landwalk.landType().getDisplayName().toLowerCase() + "walk)");
+                    }
+                }
+                if (effect instanceof CantBeBlockedBySubtypeEffect restriction) {
+                    if (blocker.getCard().getSubtypes().contains(restriction.subtype())
+                            || gameQueryService.hasKeyword(gameData, blocker, Keyword.CHANGELING)) {
+                        throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked by " + restriction.subtype().getDisplayName() + "s");
                     }
                 }
             }
