@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public sealed interface PermanentChoiceContext {
 
-    record CloneCopy(UUID clonePermanentId) implements PermanentChoiceContext {}
+    record CloneCopy() implements PermanentChoiceContext {}
 
     record AuraGraft(UUID auraPermanentId) implements PermanentChoiceContext {}
 

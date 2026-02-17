@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -13,8 +14,10 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.t.TreasureHunter;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -294,5 +297,117 @@ class CloneTest {
         // Clone should be in graveyard as "Clone"
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Clone"));
+    }
+
+    // ===== Copied creature's ETB effects =====
+
+    @Test
+    @DisplayName("Clone copying a creature with mandatory ETB triggers that effect")
+    void copiedCreatureMandatoryETBFires() {
+        // Angel of Mercy has ETB: gain 3 life
+        harness.addToBattlefield(player2, new AngelOfMercy());
+        harness.setHand(player1, List.of(new Clone()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        UUID angelId = harness.getPermanentId(player2, "Angel of Mercy");
+        harness.handlePermanentChosen(player1, angelId);
+
+        GameData gd = harness.getGameData();
+
+        // Clone should be on the battlefield as Angel of Mercy
+        Permanent clonePerm = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getOriginalCard().getName().equals("Clone"))
+                .findFirst().orElse(null);
+        assertThat(clonePerm).isNotNull();
+        assertThat(clonePerm.getCard().getName()).isEqualTo("Angel of Mercy");
+
+        // The copied Angel of Mercy's ETB "gain 3 life" should be on the stack
+        assertThat(gd.stack).anyMatch(e ->
+                e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && e.getDescription().contains("Angel of Mercy"));
+
+        // Resolve the triggered ability
+        harness.passBothPriorities();
+
+        // Player 1 should have gained 3 life (20 → 23)
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+    }
+
+    @Test
+    @DisplayName("Angelic Chorus sees cloned creature's toughness, not 0/0")
+    void angelicChorusSeesCopiedToughness() {
+        // Angelic Chorus: whenever a creature enters under your control, gain life equal to its toughness
+        harness.addToBattlefield(player1, new AngelicChorus());
+        // Grizzly Bears is a 2/2
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Clone()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.handlePermanentChosen(player1, bearsId);
+
+        GameData gd = harness.getGameData();
+
+        // Angelic Chorus should have triggered with toughness=2 (not 0)
+        assertThat(gd.stack).anyMatch(e ->
+                e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && e.getDescription().contains("Angelic Chorus"));
+
+        // Resolve the triggered ability
+        harness.passBothPriorities();
+
+        // Player 1 should have gained 2 life (20 → 22), proving Angelic Chorus saw toughness=2
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+    }
+
+    @Test
+    @DisplayName("Clone copying a creature with may-based ETB presents the may prompt")
+    void copiedCreatureMayETBPromptAppears() {
+        // Treasure Hunter has may ETB: "You may return an artifact from your graveyard to your hand"
+        harness.addToBattlefield(player2, new TreasureHunter());
+        harness.setHand(player1, List.of(new Clone()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        // First may prompt: Clone's own "you may copy" prompt
+        GameData gd = harness.getGameData();
+        assertThat(gd.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        // Choose to copy Treasure Hunter
+        UUID hunterId = harness.getPermanentId(player2, "Treasure Hunter");
+        harness.handlePermanentChosen(player1, hunterId);
+
+        // Clone should be on the battlefield as Treasure Hunter
+        Permanent clonePerm = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getOriginalCard().getName().equals("Clone"))
+                .findFirst().orElse(null);
+        assertThat(clonePerm).isNotNull();
+        assertThat(clonePerm.getCard().getName()).isEqualTo("Treasure Hunter");
+
+        // Second may prompt: copied Treasure Hunter's may ETB should now be presented
+        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
+
+        // Decline it (no artifacts in graveyard anyway)
+        harness.handleMayAbilityChosen(player1, false);
+
+        // Game should proceed normally — no awaiting input
+        assertThat(gd.awaitingInput).isNull();
     }
 }

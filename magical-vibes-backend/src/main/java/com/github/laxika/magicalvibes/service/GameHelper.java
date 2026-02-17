@@ -379,43 +379,84 @@ public class GameHelper {
         return false;
     }
 
-    // ===== ETB pipeline =====
+    // ===== Clone replacement effect =====
 
-    public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId) {
+    public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId) {
         boolean needsCopyChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof CopyCreatureOnEnterEffect);
-        if (needsCopyChoice) {
-            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-            Permanent clonePerm = bf.get(bf.size() - 1);
-            gameData.permanentChoiceContext = new PermanentChoiceContext.CloneCopy(clonePerm.getId());
+        if (!needsCopyChoice) return false;
 
-            List<UUID> creatureIds = new ArrayList<>();
-            for (UUID pid : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                if (battlefield == null) continue;
-                for (Permanent p : battlefield) {
-                    if (gameQueryService.isCreature(gameData, p) && !p.getId().equals(clonePerm.getId())) {
-                        creatureIds.add(p.getId());
-                    }
+        List<UUID> creatureIds = new ArrayList<>();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (gameQueryService.isCreature(gameData, p)) {
+                    creatureIds.add(p.getId());
                 }
-            }
-
-            if (!creatureIds.isEmpty()) {
-                gameData.pendingMayAbilities.add(new PendingMayAbility(
-                        card,
-                        controllerId,
-                        List.of(new CopyCreatureOnEnterEffect()),
-                        card.getName() + " — You may have it enter as a copy of any creature on the battlefield."
-                ));
-                playerInputService.processNextMayAbility(gameData);
-                return;
-            } else {
-                gameData.permanentChoiceContext = null;
-                performStateBasedActions(gameData);
-                return;
             }
         }
 
+        if (creatureIds.isEmpty()) return false;
+
+        gameData.pendingCloneCard = card;
+        gameData.pendingCloneControllerId = controllerId;
+        gameData.pendingCloneETBTargetId = targetPermanentId;
+        gameData.permanentChoiceContext = new PermanentChoiceContext.CloneCopy();
+
+        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                card,
+                controllerId,
+                List.of(new CopyCreatureOnEnterEffect()),
+                card.getName() + " — You may have it enter as a copy of any creature on the battlefield."
+        ));
+        playerInputService.processNextMayAbility(gameData);
+        return true;
+    }
+
+    public void completeCloneEntry(GameData gameData, UUID targetPermanentId) {
+        Card card = gameData.pendingCloneCard;
+        UUID controllerId = gameData.pendingCloneControllerId;
+        UUID etbTargetId = gameData.pendingCloneETBTargetId;
+
+        gameData.pendingCloneCard = null;
+        gameData.pendingCloneControllerId = null;
+        gameData.pendingCloneETBTargetId = null;
+
+        Permanent perm = new Permanent(card);
+
+        if (targetPermanentId != null) {
+            Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetPermanentId);
+            if (targetPerm != null) {
+                applyCloneCopy(perm, targetPerm);
+            }
+        }
+
+        gameData.playerBattlefields.get(controllerId).add(perm);
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        if (targetPermanentId != null) {
+            Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetPermanentId);
+            String targetName = targetPerm != null ? targetPerm.getCard().getName() : perm.getCard().getName();
+            String logEntry = "Clone enters the battlefield as a copy of " + targetName + " under " + playerName + "'s control.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - Clone enters as copy of {} for {}", gameData.id, targetName, playerName);
+        } else {
+            String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} enters battlefield as 0/0 for {}", gameData.id, card.getName(), playerName);
+        }
+
+        handleCreatureEnteredBattlefield(gameData, controllerId, perm.getCard(), etbTargetId);
+
+        if (gameData.awaitingInput == null) {
+            checkLegendRule(gameData, controllerId);
+        }
+    }
+
+    // ===== ETB pipeline =====
+
+    public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId) {
         boolean needsColorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof ChooseColorEffect);
         if (needsColorChoice) {
@@ -431,6 +472,7 @@ public class GameHelper {
     void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId) {
         List<CardEffect> triggeredEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> !(e instanceof ChooseColorEffect))
+                .filter(e -> !(e instanceof CopyCreatureOnEnterEffect))
                 .toList();
         if (!triggeredEffects.isEmpty()) {
             List<CardEffect> mayEffects = triggeredEffects.stream().filter(e -> e instanceof MayEffect).toList();

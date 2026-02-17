@@ -129,8 +129,11 @@ public class GameService {
             Card card = entry.getCard();
             UUID controllerId = entry.getControllerId();
 
-            gameData.playerBattlefields.get(controllerId).add(new Permanent(card));
+            if (gameHelper.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetPermanentId())) {
+                return;
+            }
 
+            gameData.playerBattlefields.get(controllerId).add(new Permanent(card));
 
             String playerName = gameData.playerIdToName.get(controllerId);
             String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
@@ -331,6 +334,12 @@ public class GameService {
                     }
                 }
             }
+        }
+
+        // If the ETB handler already set up a user interaction (e.g. Clone copy choice),
+        // skip post-resolution SBA — the creature must remain alive until the choice resolves.
+        if (gameData.awaitingInput != null) {
+            return;
         }
 
         // Check SBA after resolution — creatures may have 0 toughness from effects (e.g. -1/-1)

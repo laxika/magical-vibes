@@ -425,26 +425,30 @@ public class UserInputHandlerService {
         PermanentChoiceContext context = gameData.permanentChoiceContext;
         gameData.permanentChoiceContext = null;
 
-        if (context instanceof PermanentChoiceContext.CloneCopy cloneCopy) {
-            Permanent clonePerm = gameQueryService.findPermanentById(gameData, cloneCopy.clonePermanentId());
-            if (clonePerm == null) {
-                throw new IllegalStateException("Clone permanent no longer exists");
-            }
-
+        if (context instanceof PermanentChoiceContext.CloneCopy) {
             Permanent targetPerm = gameQueryService.findPermanentById(gameData, permanentId);
             if (targetPerm == null) {
                 throw new IllegalStateException("Target creature no longer exists");
             }
 
-            gameHelper.applyCloneCopy(clonePerm, targetPerm);
+            gameHelper.completeCloneEntry(gameData, permanentId);
 
-            String logEntry = "Clone enters as a copy of " + targetPerm.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - Clone copies {}", gameData.id, targetPerm.getCard().getName());
-
-            // Check legend rule (Clone may have copied a legendary creature)
-            if (!gameHelper.checkLegendRule(gameData, playerId)) {
+            // If no legend rule or other awaiting input pending, do SBA + auto-pass
+            if (gameData.awaitingInput == null) {
                 gameHelper.performStateBasedActions(gameData);
+
+                if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
+                    gameHelper.processNextDeathTriggerTarget(gameData);
+                    if (gameData.awaitingInput != null) {
+                        return;
+                    }
+                }
+
+                if (!gameData.pendingMayAbilities.isEmpty()) {
+                    playerInputService.processNextMayAbility(gameData);
+                    return;
+                }
+
                 turnProgressionService.resolveAutoPass(gameData);
             }
         } else if (context instanceof PermanentChoiceContext.AuraGraft auraGraft) {
@@ -863,19 +867,17 @@ public class UserInputHandlerService {
             return;
         }
 
-        // Clone copy creature effect — handled separately (not via the stack)
+        // Clone copy creature effect — handled as replacement effect (pre-entry)
         boolean isCloneCopy = ability.effects().stream().anyMatch(e -> e instanceof CopyCreatureOnEnterEffect);
         if (isCloneCopy) {
             if (accepted) {
-                // Collect valid creature targets
-                UUID cloneId = gameData.permanentChoiceContext instanceof PermanentChoiceContext.CloneCopy cloneCopy
-                        ? cloneCopy.clonePermanentId() : null;
+                // Collect valid creature targets (Clone is NOT on the battlefield yet)
                 List<UUID> creatureIds = new ArrayList<>();
                 for (UUID pid : gameData.orderedPlayerIds) {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
-                        if (gameQueryService.isCreature(gameData, p) && !p.getId().equals(cloneId)) {
+                        if (gameQueryService.isCreature(gameData, p)) {
                             creatureIds.add(p.getId());
                         }
                     }
@@ -891,7 +893,21 @@ public class UserInputHandlerService {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} declines clone copy", gameData.id, player.getUsername());
 
+                gameHelper.completeCloneEntry(gameData, null);
                 gameHelper.performStateBasedActions(gameData);
+
+                if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
+                    gameHelper.processNextDeathTriggerTarget(gameData);
+                    if (gameData.awaitingInput != null) {
+                        return;
+                    }
+                }
+
+                if (!gameData.pendingMayAbilities.isEmpty()) {
+                    playerInputService.processNextMayAbility(gameData);
+                    return;
+                }
+
                 turnProgressionService.resolveAutoPass(gameData);
             }
             return;

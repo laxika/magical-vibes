@@ -79,6 +79,9 @@ public class GameData {
     public Card pendingGraveyardTargetCard;
     public UUID pendingGraveyardTargetControllerId;
     public List<CardEffect> pendingGraveyardTargetEffects;
+    public Card pendingCloneCard;
+    public UUID pendingCloneControllerId;
+    public UUID pendingCloneETBTargetId;
     public UUID pendingCombatDamageBounceTargetPlayerId;
     public UUID awaitingLibraryReorderPlayerId;
     public List<Card> awaitingLibraryReorderCards;
