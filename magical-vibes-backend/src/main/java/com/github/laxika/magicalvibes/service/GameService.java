@@ -258,11 +258,12 @@ public class GameService {
                     }
                 }
             }
-            // Check multi-target permanent fizzle: if ALL targeted permanents are gone, fizzle
+            // Check multi-target permanent fizzle: if ALL targeted permanents/players are gone, fizzle
             if (!targetFizzled && entry.getTargetPermanentIds() != null && !entry.getTargetPermanentIds().isEmpty()) {
                 boolean allGone = true;
                 for (UUID permId : entry.getTargetPermanentIds()) {
-                    if (gameQueryService.findPermanentById(gameData, permId) != null) {
+                    if (gameQueryService.findPermanentById(gameData, permId) != null
+                            || gameData.playerIds.contains(permId)) {
                         allGone = false;
                         break;
                     }

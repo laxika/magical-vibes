@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
+import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.filter.SpellColorTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.SpellTypeTargetFilter;
 import lombok.RequiredArgsConstructor;
@@ -182,21 +183,36 @@ public class SpellCastingService {
         // Validate multi-target permanent targeting
         if (card.getMaxTargets() > 0 && !targetPermanentIds.isEmpty()) {
             if (targetPermanentIds.size() < card.getMinTargets() || targetPermanentIds.size() > card.getMaxTargets()) {
-                throw new IllegalStateException("Must target between " + card.getMinTargets() + " and " + card.getMaxTargets() + " creatures");
+                throw new IllegalStateException("Must target between " + card.getMinTargets() + " and " + card.getMaxTargets() + " targets");
             }
+            if (new java.util.HashSet<>(targetPermanentIds).size() != targetPermanentIds.size()) {
+                throw new IllegalStateException("All targets must be different");
+            }
+            boolean multiTargetAllowsPlayers = card.getEffects(EffectSlot.SPELL).stream()
+                    .anyMatch(e -> e instanceof DealOrderedDamageToAnyTargetsEffect);
             for (UUID tpId : targetPermanentIds) {
-                Permanent target = gameQueryService.findPermanentById(gameData, tpId);
-                if (target == null) {
-                    throw new IllegalStateException("Invalid target permanent");
+                boolean isPlayerTarget = gameData.playerIds.contains(tpId);
+                Permanent target = isPlayerTarget ? null : gameQueryService.findPermanentById(gameData, tpId);
+                if (!isPlayerTarget && target == null) {
+                    throw new IllegalStateException("Invalid target");
                 }
-                if (!gameQueryService.isCreature(gameData, target)) {
-                    throw new IllegalStateException(target.getCard().getName() + " is not a creature");
+                if (isPlayerTarget && !multiTargetAllowsPlayers) {
+                    throw new IllegalStateException("This spell cannot target players");
                 }
-                if (card.isNeedsTarget() && gameQueryService.hasProtectionFrom(gameData, target, card.getColor())) {
-                    throw new IllegalStateException(target.getCard().getName() + " has protection from " + card.getColor().name().toLowerCase());
-                }
-                if (card.isNeedsTarget() && gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)) {
-                    throw new IllegalStateException(target.getCard().getName() + " has shroud and can't be targeted");
+                if (!isPlayerTarget) {
+                    if (!gameQueryService.isCreature(gameData, target)) {
+                        throw new IllegalStateException(target.getCard().getName() + " is not a creature");
+                    }
+                    if (card.isNeedsTarget() && gameQueryService.hasProtectionFrom(gameData, target, card.getColor())) {
+                        throw new IllegalStateException(target.getCard().getName() + " has protection from " + card.getColor().name().toLowerCase());
+                    }
+                    if (card.isNeedsTarget() && gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)) {
+                        throw new IllegalStateException(target.getCard().getName() + " has shroud and can't be targeted");
+                    }
+                } else {
+                    if (card.isNeedsTarget() && gameQueryService.playerHasShroud(gameData, tpId)) {
+                        throw new IllegalStateException(gameData.playerIdToName.get(tpId) + " has shroud and can't be targeted");
+                    }
                 }
             }
         }
@@ -285,10 +301,17 @@ public class SpellCastingService {
             finishSpellCast(gameData, playerId, player, hand, card);
         } else if (card.getType() == CardType.SORCERY) {
             paySpellManaCost(gameData, playerId, card, effectiveXValue, convokeContributions);
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.SORCERY_SPELL, card, playerId, card.getName(),
-                    new ArrayList<>(card.getEffects(EffectSlot.SPELL)), effectiveXValue, targetPermanentId, null
-            ));
+            if (!targetPermanentIds.isEmpty()) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.SORCERY_SPELL, card, playerId, card.getName(),
+                        new ArrayList<>(card.getEffects(EffectSlot.SPELL)), effectiveXValue, targetPermanentIds
+                ));
+            } else {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.SORCERY_SPELL, card, playerId, card.getName(),
+                        new ArrayList<>(card.getEffects(EffectSlot.SPELL)), effectiveXValue, targetPermanentId, null
+                ));
+            }
             finishSpellCast(gameData, playerId, player, hand, card);
         } else if (card.getType() == CardType.INSTANT) {
             paySpellManaCost(gameData, playerId, card, effectiveXValue, convokeContributions);

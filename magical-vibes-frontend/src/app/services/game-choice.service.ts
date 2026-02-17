@@ -141,6 +141,7 @@ export class GameChoiceService {
   multiTargetMinCount = 0;
   multiTargetMaxCount = 0;
   multiTargetSelectedIds = signal<string[]>([]);
+  multiTargetForPlayer = false;
 
   // --- Convoke state ---
   convoking = false;
@@ -414,6 +415,7 @@ export class GameChoiceService {
         this.multiTargetMinCount = card.minTargets;
         this.multiTargetMaxCount = card.maxTargets;
         this.multiTargetSelectedIds.set([]);
+        this.multiTargetForPlayer = card.targetsPlayer ?? false;
         this.pendingConvokeCard = card;
         return;
       }
@@ -549,6 +551,17 @@ export class GameChoiceService {
     this.multiTargetSelectedIds.set([...current, permanentId]);
   }
 
+  addMultiTargetPlayer(playerIndex: number): void {
+    if (!this.multiTargeting || !this.multiTargetForPlayer) return;
+    const g = this.gameSignal();
+    if (!g) return;
+    const playerId = g.playerIds[playerIndex];
+    const current = this.multiTargetSelectedIds();
+    if (current.includes(playerId)) return;
+    if (current.length >= this.multiTargetMaxCount) return;
+    this.multiTargetSelectedIds.set([...current, playerId]);
+  }
+
   removeMultiTarget(permanentId: string): void {
     if (!this.multiTargeting) return;
     this.multiTargetSelectedIds.set(this.multiTargetSelectedIds().filter(id => id !== permanentId));
@@ -585,6 +598,7 @@ export class GameChoiceService {
     this.multiTargetCardIndex = -1;
     this.multiTargetCardName = '';
     this.multiTargetSelectedIds.set([]);
+    this.multiTargetForPlayer = false;
     this.pendingConvokeCard = null;
   }
 
@@ -597,6 +611,7 @@ export class GameChoiceService {
     this.multiTargetCardName = '';
     this.multiTargetMinCount = 0;
     this.multiTargetMaxCount = 0;
+    this.multiTargetForPlayer = false;
     this.pendingMultiTargetIds = [];
     this.pendingConvokeCard = null;
   }

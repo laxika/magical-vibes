@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
@@ -121,7 +122,8 @@ public class CardViewFactory {
                     || effect instanceof MillTargetPlayerEffect
                     || effect instanceof ReturnArtifactsTargetPlayerOwnsToHandEffect
                     || effect instanceof SacrificeCreatureEffect
-                    || effect instanceof ShuffleGraveyardIntoLibraryEffect) {
+                    || effect instanceof ShuffleGraveyardIntoLibraryEffect
+                    || effect instanceof DealOrderedDamageToAnyTargetsEffect) {
                 return true;
             }
         }

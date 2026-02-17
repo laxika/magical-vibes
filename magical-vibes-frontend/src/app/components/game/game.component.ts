@@ -884,6 +884,21 @@ export class GameComponent implements OnInit, OnDestroy {
     return this.stackTargetId() === g.playerIds[playerIndex];
   }
 
+  onPlayerBadgeClick(playerIndex: number): void {
+    const playerId = this.getPlayerId(playerIndex);
+    if (this.choice.choosingPermanent && this.choice.choosablePermanentIds().has(playerId)) {
+      this.choice.choosePermanent(playerId);
+    } else if (this.choice.multiTargeting && this.choice.multiTargetForPlayer) {
+      if (this.choice.isMultiTargetSelected(playerId)) {
+        this.choice.removeMultiTarget(playerId);
+      } else {
+        this.choice.addMultiTargetPlayer(playerIndex);
+      }
+    } else {
+      this.choice.selectPlayerTarget(playerIndex);
+    }
+  }
+
   isStackTargetSpell(entry: StackEntry): boolean {
     return this.stackTargetId() === entry.cardId;
   }

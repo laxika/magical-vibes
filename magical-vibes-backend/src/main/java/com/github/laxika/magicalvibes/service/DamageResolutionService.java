@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesAndPl
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
@@ -51,6 +52,8 @@ public class DamageResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveDealDamageToAnyTarget(gd, entry, (DealDamageToAnyTargetEffect) effect));
         registry.register(DealDamageToAnyTargetAndGainLifeEffect.class,
                 (gd, entry, effect) -> resolveDealDamageToAnyTargetAndGainLife(gd, entry, (DealDamageToAnyTargetAndGainLifeEffect) effect));
+        registry.register(DealOrderedDamageToAnyTargetsEffect.class,
+                (gd, entry, effect) -> resolveDealOrderedDamageToAnyTargets(gd, entry, (DealOrderedDamageToAnyTargetsEffect) effect));
     }
 
     void resolveDealXDamageToTargetCreature(GameData gameData, StackEntry entry) {
@@ -473,6 +476,79 @@ public class DamageResolutionService implements EffectHandlerProvider {
                 String logEntry = cardName + "'s damage is prevented.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
             }
+        }
+
+        gameHelper.checkWinCondition(gameData);
+    }
+
+    void resolveDealOrderedDamageToAnyTargets(GameData gameData, StackEntry entry, DealOrderedDamageToAnyTargetsEffect effect) {
+        List<UUID> targets = entry.getTargetPermanentIds();
+        List<Integer> damages = effect.damageAmounts();
+        String cardName = entry.getCard().getName();
+
+        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+            String logEntry = cardName + "'s damage is prevented.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        List<Permanent> destroyed = new ArrayList<>();
+
+        for (int i = 0; i < Math.min(targets.size(), damages.size()); i++) {
+            UUID targetId = targets.get(i);
+            int damage = damages.get(i);
+
+            boolean targetIsPlayer = gameData.playerIds.contains(targetId);
+            Permanent targetPermanent = targetIsPlayer ? null : gameQueryService.findPermanentById(gameData, targetId);
+
+            if (!targetIsPlayer && targetPermanent == null) {
+                continue;
+            }
+
+            if (targetIsPlayer) {
+                if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, targetId, entry.getCard().getColor())) {
+                    int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, targetId, damage);
+                    effectiveDamage = gameHelper.redirectPlayerDamageToEnchantedCreature(gameData, targetId, effectiveDamage, cardName);
+                    int currentLife = gameData.playerLifeTotals.getOrDefault(targetId, 20);
+                    gameData.playerLifeTotals.put(targetId, currentLife - effectiveDamage);
+
+                    if (effectiveDamage > 0) {
+                        String playerName = gameData.playerIdToName.get(targetId);
+                        String logEntry = playerName + " takes " + effectiveDamage + " damage from " + cardName + ".";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    }
+                }
+            } else {
+                if (!gameQueryService.hasProtectionFrom(gameData, targetPermanent, entry.getCard().getColor())) {
+                    int effectiveDamage = gameHelper.applyCreaturePreventionShield(gameData, targetPermanent, damage);
+                    String logEntry = cardName + " deals " + effectiveDamage + " damage to " + targetPermanent.getCard().getName() + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} deals {} damage to {}", gameData.id, cardName, effectiveDamage, targetPermanent.getCard().getName());
+
+                    if (effectiveDamage >= gameQueryService.getEffectiveToughness(gameData, targetPermanent)) {
+                        if (gameQueryService.hasKeyword(gameData, targetPermanent, Keyword.INDESTRUCTIBLE)) {
+                            String indestructibleLog = targetPermanent.getCard().getName() + " is indestructible and survives.";
+                            gameBroadcastService.logAndBroadcast(gameData, indestructibleLog);
+                        } else if (!gameHelper.tryRegenerate(gameData, targetPermanent)) {
+                            destroyed.add(targetPermanent);
+                        }
+                    }
+                } else {
+                    String logEntry = cardName + "'s damage to " + targetPermanent.getCard().getName() + " is prevented.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                }
+            }
+        }
+
+        for (Permanent target : destroyed) {
+            gameHelper.removePermanentToGraveyard(gameData, target);
+            String destroyLog = target.getCard().getName() + " is destroyed.";
+            gameBroadcastService.logAndBroadcast(gameData, destroyLog);
+            log.info("Game {} - {} is destroyed", gameData.id, target.getCard().getName());
+        }
+
+        if (!destroyed.isEmpty()) {
+            gameHelper.removeOrphanedAuras(gameData);
         }
 
         gameHelper.checkWinCondition(gameData);

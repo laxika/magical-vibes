@@ -278,6 +278,12 @@
   cursor: pointer;
 }
 
+.player-badge.multi-target-selected {
+  border: 3px solid #2d7a50;
+  background: linear-gradient(135deg, rgba(45, 122, 80, 0.3), rgba(30, 90, 56, 0.3));
+  box-shadow: 0 0 16px rgba(45, 122, 80, 0.6), 2px 3px 8px rgba(0, 0, 0, 0.5);
+}
+
 .life-total {
   display: block;
   font-size: 13px;

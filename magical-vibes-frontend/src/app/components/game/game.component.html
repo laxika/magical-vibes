@@ -106,7 +106,11 @@
 
     @if (choice.multiTargeting) {
       <div class="combat-banner targeting-banner">
-        <span>Select target creatures for {{ choice.multiTargetCardName }} ({{ choice.multiTargetSelectedIds().length }}/{{ choice.multiTargetMaxCount }})</span>
+        @if (choice.multiTargetForPlayer) {
+          <span>Select targets for {{ choice.multiTargetCardName }} ({{ choice.multiTargetSelectedIds().length }}/{{ choice.multiTargetMaxCount }})</span>
+        } @else {
+          <span>Select target creatures for {{ choice.multiTargetCardName }} ({{ choice.multiTargetSelectedIds().length }}/{{ choice.multiTargetMaxCount }})</span>
+        }
         <button class="btn-confirm-combat" (click)="choice.confirmMultiTargets()" [disabled]="choice.multiTargetSelectedIds().length < choice.multiTargetMinCount">Confirm</button>
         <button class="btn-confirm-combat" (click)="choice.cancelMultiTargeting()">Cancel</button>
       </div>
@@ -788,7 +792,7 @@
       </div>
 
       <div class="turn-info">
-        <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)" [class.targetable]="choice.targetingForPlayer" [class.stack-targeted]="isStackTargetPlayer(0)" [class.choosable-permanent]="choice.choosingPermanent && choice.choosablePermanentIds().has(getPlayerId(0))" (click)="choice.choosingPermanent && choice.choosablePermanentIds().has(getPlayerId(0)) ? choice.choosePermanent(getPlayerId(0)) : choice.selectPlayerTarget(0)">
+        <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)" [class.targetable]="choice.targetingForPlayer || (choice.multiTargeting && choice.multiTargetForPlayer)" [class.multi-target-selected]="choice.multiTargeting && choice.multiTargetForPlayer && choice.isMultiTargetSelected(getPlayerId(0))" [class.stack-targeted]="isStackTargetPlayer(0)" [class.choosable-permanent]="choice.choosingPermanent && choice.choosablePermanentIds().has(getPlayerId(0))" (click)="onPlayerBadgeClick(0)">
           {{ player1Name }}
           <span class="life-total">Life: {{ getLifeTotal(0) }}</span>
           <span class="hand-size">Hand: {{ player1HandSize }}</span>
@@ -801,7 +805,7 @@
           <span class="turn-number">Turn {{ game()?.turnNumber }}</span>
           <span class="vs-label">VS</span>
         </div>
-        <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)" [class.targetable]="choice.targetingForPlayer" [class.stack-targeted]="isStackTargetPlayer(1)" [class.choosable-permanent]="choice.choosingPermanent && choice.choosablePermanentIds().has(getPlayerId(1))" (click)="choice.choosingPermanent && choice.choosablePermanentIds().has(getPlayerId(1)) ? choice.choosePermanent(getPlayerId(1)) : choice.selectPlayerTarget(1)">
+        <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)" [class.targetable]="choice.targetingForPlayer || (choice.multiTargeting && choice.multiTargetForPlayer)" [class.multi-target-selected]="choice.multiTargeting && choice.multiTargetForPlayer && choice.isMultiTargetSelected(getPlayerId(1))" [class.stack-targeted]="isStackTargetPlayer(1)" [class.choosable-permanent]="choice.choosingPermanent && choice.choosablePermanentIds().has(getPlayerId(1))" (click)="onPlayerBadgeClick(1)">
           {{ player2Name }}
           <span class="life-total">Life: {{ getLifeTotal(1) }}</span>
           <span class="hand-size">Hand: {{ player2HandSize }}</span>

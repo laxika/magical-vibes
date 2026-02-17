@@ -195,6 +195,10 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, xValue, targetId, null);
     }
 
+    public void castSorcery(Player player, int cardIndex, List<UUID> targetPermanentIds) {
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, targetPermanentIds, List.of());
+    }
+
     public void castInstant(Player player, int cardIndex) {
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }
