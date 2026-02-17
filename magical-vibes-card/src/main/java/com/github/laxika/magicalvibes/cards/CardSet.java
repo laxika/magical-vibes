@@ -162,6 +162,7 @@ import com.github.laxika.magicalvibes.cards.s.SunkenHope;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.cards.s.SerrasEmbrace;
 import com.github.laxika.magicalvibes.cards.t.Telepathy;
+import com.github.laxika.magicalvibes.cards.t.TheHive;
 import com.github.laxika.magicalvibes.cards.t.TellingTime;
 import com.github.laxika.magicalvibes.cards.t.ThievingMagpie;
 import com.github.laxika.magicalvibes.cards.t.Tidings;
@@ -216,6 +217,7 @@ public enum CardSet {
             new CardPrinting("10E", "321", DoublingCube::new),
             new CardPrinting("10E", "322", DragonsClaw::new),
             new CardPrinting("10E", "323", FountainOfYouth::new),
+            new CardPrinting("10E", "324", TheHive::new),
             new CardPrinting("10E", "326", IcyManipulator::new),
             new CardPrinting("10E", "6", AuraOfSilence::new),
             new CardPrinting("10E", "7", AvenCloudchaser::new),

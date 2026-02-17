@@ -153,7 +153,7 @@ public class BounceResolutionService implements EffectHandlerProvider {
         }
 
         List<Permanent> artifactsToReturn = battlefield.stream()
-                .filter(p -> p.getCard().getType() == CardType.ARTIFACT)
+                .filter(p -> gameQueryService.isArtifact(p))
                 .toList();
 
         if (artifactsToReturn.isEmpty()) {

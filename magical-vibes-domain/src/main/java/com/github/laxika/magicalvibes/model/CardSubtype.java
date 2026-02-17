@@ -61,6 +61,7 @@ public enum CardSubtype {
     CONSTRUCT("Construct"),
     GOLEM("Golem"),
     IMP("Imp"),
+    INSECT("Insect"),
     VEDALKEN("Vedalken"),
     GIANT("Giant"),
     GOBLIN("Goblin"),

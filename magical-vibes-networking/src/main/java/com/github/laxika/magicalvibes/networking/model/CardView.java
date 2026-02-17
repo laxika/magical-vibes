@@ -12,6 +12,7 @@ import java.util.Set;
 public record CardView(
         String name,
         CardType type,
+        Set<CardType> additionalTypes,
         Set<CardSupertype> supertypes,
         List<CardSubtype> subtypes,
         String cardText,

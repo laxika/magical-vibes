@@ -16,6 +16,6 @@ public class Mobilization extends Card {
 
     public Mobilization() {
         addEffect(EffectSlot.STATIC, new BoostCreaturesBySubtypeEffect(Set.of(CardSubtype.SOLDIER), 0, 0, Set.of(Keyword.VIGILANCE)));
-        addActivatedAbility(new ActivatedAbility(false, "{2}{W}", List.of(new CreateCreatureTokenEffect("Soldier", 1, 1, CardColor.WHITE, List.of(CardSubtype.SOLDIER))), false, "{2}{W}: Create a 1/1 white Soldier creature token."));
+        addActivatedAbility(new ActivatedAbility(false, "{2}{W}", List.of(new CreateCreatureTokenEffect("Soldier", 1, 1, CardColor.WHITE, List.of(CardSubtype.SOLDIER), Set.of(), Set.of())), false, "{2}{W}: Create a 1/1 white Soldier creature token."));
     }
 }

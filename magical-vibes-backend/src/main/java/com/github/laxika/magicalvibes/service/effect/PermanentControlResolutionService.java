@@ -69,6 +69,12 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         tokenCard.setPower(token.power());
         tokenCard.setToughness(token.toughness());
         tokenCard.setSubtypes(token.subtypes());
+        if (token.keywords() != null && !token.keywords().isEmpty()) {
+            tokenCard.setKeywords(token.keywords());
+        }
+        if (token.additionalTypes() != null && !token.additionalTypes().isEmpty()) {
+            tokenCard.setAdditionalTypes(token.additionalTypes());
+        }
 
         Permanent tokenPermanent = new Permanent(tokenCard);
         gameData.playerBattlefields.get(controllerId).add(tokenPermanent);

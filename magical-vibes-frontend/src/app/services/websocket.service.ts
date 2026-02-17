@@ -127,6 +127,7 @@ export interface ActivatedAbilityView {
 export interface Card {
   name: string;
   type: string;
+  additionalTypes: string[];
   supertypes: string[];
   subtypes: string[];
   cardText: string | null;

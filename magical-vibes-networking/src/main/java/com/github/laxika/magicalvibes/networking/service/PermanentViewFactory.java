@@ -58,7 +58,7 @@ public class PermanentViewFactory {
             }
         }
         return new CardView(
-                cardView.name(), cardView.type(), cardView.supertypes(), mergedSubtypes,
+                cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), mergedSubtypes,
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
                 cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
@@ -80,7 +80,7 @@ public class PermanentViewFactory {
         boolean hasTapAbility = cardView.hasTapAbility()
                 || grantedAbilities.stream().anyMatch(ActivatedAbility::isRequiresTap);
         return new CardView(
-                cardView.name(), cardView.type(), cardView.supertypes(), cardView.subtypes(),
+                cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), cardView.subtypes(),
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), hasTapAbility, cardView.setCode(),
                 cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
@@ -100,7 +100,7 @@ public class PermanentViewFactory {
             modifiedText = modifiedText.replace(rep.fromWord(), rep.toWord());
         }
         return new CardView(
-                cardView.name(), cardView.type(), cardView.supertypes(), cardView.subtypes(),
+                cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), cardView.subtypes(),
                 modifiedText, cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
                 cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),

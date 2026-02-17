@@ -342,7 +342,7 @@ public class CombatService {
                 throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (flying)");
             }
             if (gameQueryService.hasKeyword(gameData, attacker, Keyword.FEAR)
-                    && blocker.getCard().getType() != CardType.ARTIFACT
+                    && !gameQueryService.isArtifact(blocker)
                     && blocker.getCard().getColor() != CardColor.BLACK) {
                 throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (fear)");
             }

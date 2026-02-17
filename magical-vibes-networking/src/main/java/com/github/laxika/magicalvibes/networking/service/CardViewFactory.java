@@ -50,6 +50,7 @@ public class CardViewFactory {
         return new CardView(
                 card.getName(),
                 card.getType(),
+                card.getAdditionalTypes(),
                 card.getSupertypes(),
                 card.getSubtypes(),
                 card.getCardText(),

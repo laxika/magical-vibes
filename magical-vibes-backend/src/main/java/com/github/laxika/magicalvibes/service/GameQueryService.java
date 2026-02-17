@@ -102,9 +102,15 @@ public class GameQueryService {
 
     public boolean isCreature(GameData gameData, Permanent permanent) {
         if (permanent.getCard().getType() == CardType.CREATURE) return true;
+        if (permanent.getCard().getAdditionalTypes().contains(CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
-        if (permanent.getCard().getType() != CardType.ARTIFACT) return false;
-        return hasAnimateArtifactEffect(gameData);
+        if (isArtifact(permanent)) return hasAnimateArtifactEffect(gameData);
+        return false;
+    }
+
+    public boolean isArtifact(Permanent permanent) {
+        return permanent.getCard().getType() == CardType.ARTIFACT
+                || permanent.getCard().getAdditionalTypes().contains(CardType.ARTIFACT);
     }
 
     public boolean hasKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
@@ -120,7 +126,8 @@ public class GameQueryService {
     }
 
     StaticBonus computeStaticBonus(GameData gameData, Permanent target) {
-        boolean isNaturalCreature = target.getCard().getType() == CardType.CREATURE;
+        boolean isNaturalCreature = target.getCard().getType() == CardType.CREATURE
+                || target.getCard().getAdditionalTypes().contains(CardType.CREATURE);
         StaticBonusAccumulator accumulator = new StaticBonusAccumulator();
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);

@@ -152,8 +152,10 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
 
     private boolean isEffectivelyCreature(Permanent permanent, boolean hasAnimateArtifacts) {
         if (permanent.getCard().getType() == CardType.CREATURE) return true;
+        if (permanent.getCard().getAdditionalTypes().contains(CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
-        return hasAnimateArtifacts && permanent.getCard().getType() == CardType.ARTIFACT;
+        return hasAnimateArtifacts && (permanent.getCard().getType() == CardType.ARTIFACT
+                || permanent.getCard().getAdditionalTypes().contains(CardType.ARTIFACT));
     }
 
     private boolean hasAnimateArtifactEffect(GameData gameData) {
