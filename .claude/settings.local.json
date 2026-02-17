@@ -29,7 +29,8 @@
       "Bash(git pull:*)",
       "Bash(git status:*)",
       "Bash(git stash:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(wc:*)"
     ]
   }
 }
