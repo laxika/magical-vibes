@@ -213,19 +213,65 @@ img.card-art {
 /* P/T box */
 .card-pt {
   position: absolute;
-  bottom: 2px;
+  bottom: 1px;
   right: 2px;
-  font-size: 15px;
+  width: 28px;
+  font-size: 11px;
   font-weight: 700;
   font-family: 'Cinzel', Georgia, serif;
-  background: rgba(0, 0, 0, 0.4);
-  padding: 1px 5px;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 0;
   border-radius: 3px;
+  border: 1.5px solid rgba(245, 230, 200, 0.4);
+  outline: 1.5px solid rgba(0, 0, 0, 0.5);
+  line-height: 1.4;
+  text-align: center;
 }
 
+.pt-slash {
+  margin: 0 0.5px;
+  opacity: 0.6;
+}
+
+/* Color-matched P/T backgrounds */
+:host([data-card-color="GREEN"]) .card-pt {
+  background: rgba(30, 60, 10, 0.75);
+  border-color: rgba(74, 124, 40, 0.5);
+}
+
+:host([data-card-color="WHITE"]) .card-pt {
+  background: rgba(160, 128, 48, 0.65);
+  border-color: rgba(192, 168, 80, 0.5);
+  color: #2c1810;
+}
+
+:host([data-card-color="BLUE"]) .card-pt {
+  background: rgba(20, 48, 80, 0.75);
+  border-color: rgba(44, 94, 162, 0.5);
+}
+
+:host([data-card-color="RED"]) .card-pt {
+  background: rgba(92, 16, 16, 0.75);
+  border-color: rgba(160, 48, 48, 0.5);
+}
+
+:host([data-card-color="BLACK"]) .card-pt {
+  background: rgba(20, 20, 26, 0.75);
+  border-color: rgba(58, 58, 68, 0.5);
+}
+
+/* Buffed state */
 .card-pt.buffed {
   color: #2ecc71;
   background: rgba(46, 204, 113, 0.3);
+  border-color: rgba(46, 204, 113, 0.5);
+}
+
+/* Debuffed state */
+.card-pt.debuffed {
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.3);
+  border-color: rgba(231, 76, 60, 0.5);
 }
 
 /* Loyalty box */

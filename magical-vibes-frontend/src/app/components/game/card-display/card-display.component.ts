@@ -80,6 +80,11 @@ export class CardDisplayComponent implements OnInit, OnChanges {
       (this.permanent.powerModifier > 0 || this.permanent.toughnessModifier > 0);
   }
 
+  get isDebuffed(): boolean {
+    return this.permanent != null &&
+      (this.permanent.powerModifier < 0 || this.permanent.toughnessModifier < 0);
+  }
+
   get displayPower(): number | null {
     if (this.permanent?.animatedCreature) return this.permanent.effectivePower;
     if (this.card.power == null) return null;

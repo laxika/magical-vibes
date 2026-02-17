@@ -29,7 +29,7 @@
     <div class="card-flavor-text">{{ flavorText }}</div>
   }
   @if (card.power != null && card.toughness != null || permanent?.animatedCreature) {
-    <div class="card-pt" [class.buffed]="isBuffed">{{ displayPower }}/{{ displayToughness }}</div>
+    <div class="card-pt" [class.buffed]="isBuffed" [class.debuffed]="isDebuffed">{{ displayPower }}<span class="pt-slash">/</span>{{ displayToughness }}</div>
   }
   @if (displayLoyalty != null) {
     <div class="card-loyalty">{{ displayLoyalty }}</div>
