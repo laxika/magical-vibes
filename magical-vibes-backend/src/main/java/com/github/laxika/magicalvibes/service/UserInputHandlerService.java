@@ -288,6 +288,8 @@ public class UserInputHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} discards {}", gameData.id, player.getUsername(), card.getName());
 
+        gameHelper.checkDiscardTriggers(gameData, playerId);
+
         gameData.awaitingDiscardRemainingCount--;
 
         if (gameData.awaitingDiscardRemainingCount > 0 && !hand.isEmpty()) {
@@ -355,6 +357,10 @@ public class UserInputHandlerService {
                 String discardLog = targetName + " discards " + cardNames + ".";
                 gameBroadcastService.logAndBroadcast(gameData, discardLog);
                 log.info("Game {} - {} discards {} from {}'s hand", gameData.id, player.getUsername(), cardNames, targetName);
+
+                for (int i = 0; i < chosenCards.size(); i++) {
+                    gameHelper.checkDiscardTriggers(gameData, targetPlayerId);
+                }
             } else {
                 // Put chosen cards on top of library
                 List<Card> deck = gameData.playerDecks.get(targetPlayerId);

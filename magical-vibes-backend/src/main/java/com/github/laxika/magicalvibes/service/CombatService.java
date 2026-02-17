@@ -814,6 +814,7 @@ public class CombatService {
                             String logEntry = creature.getCard().getName() + "'s ability triggers — " + gameData.playerIdToName.get(defenderId) + " discards " + discarded.getName() + " at random.";
                             gameBroadcastService.logAndBroadcast(gameData, logEntry);
                             log.info("Game {} - {} triggers random discard: {} discards {}", gameData.id, creature.getCard().getName(), gameData.playerIdToName.get(defenderId), discarded.getName());
+                            gameHelper.checkDiscardTriggers(gameData, defenderId);
                         }
                     }
                 } else if (effect instanceof ReturnPermanentsOnCombatDamageToPlayerEffect) {

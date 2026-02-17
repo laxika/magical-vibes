@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureOnEnterEffect;
@@ -818,6 +819,45 @@ public class GameHelper {
         }
 
         playerInputService.processNextMayAbility(gameData);
+    }
+
+    void checkDiscardTriggers(GameData gameData, UUID discardingPlayerId) {
+        boolean anyTriggered = false;
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(discardingPlayerId)) continue;
+
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+
+            for (Permanent perm : battlefield) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_OPPONENT_DISCARDS)) {
+                    if (effect instanceof DealDamageToDiscardingPlayerEffect trigger) {
+                        String cardName = perm.getCard().getName();
+                        int damage = trigger.damage();
+
+                        String logEntry = cardName + " triggers — deals " + damage + " damage to " + gameData.playerIdToName.get(discardingPlayerId) + ".";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} triggers on discard, dealing {} damage to {}",
+                                gameData.id, cardName, damage, gameData.playerIdToName.get(discardingPlayerId));
+
+                        if (!gameQueryService.isDamageFromSourcePrevented(gameData, perm.getCard().getColor())
+                                && !applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, perm.getCard().getColor())) {
+                            int effectiveDamage = applyPlayerPreventionShield(gameData, discardingPlayerId, damage);
+                            effectiveDamage = redirectPlayerDamageToEnchantedCreature(gameData, discardingPlayerId, effectiveDamage, cardName);
+                            int currentLife = gameData.playerLifeTotals.getOrDefault(discardingPlayerId, 20);
+                            gameData.playerLifeTotals.put(discardingPlayerId, currentLife - effectiveDamage);
+                        }
+
+                        anyTriggered = true;
+                    }
+                }
+            }
+        }
+
+        if (anyTriggered) {
+            checkWinCondition(gameData);
+        }
     }
 
     // ===== Draw =====
