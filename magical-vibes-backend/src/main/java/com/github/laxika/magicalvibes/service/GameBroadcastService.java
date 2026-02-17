@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -66,12 +67,14 @@ public class GameBroadcastService {
                     ? new ArrayList<>(gameData.playerAutoStopSteps.get(playerId))
                     : List.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN);
             List<Integer> playableCardIndices = getPlayableCardIndices(gameData, playerId);
+            List<Integer> playableGraveyardLandIndices = getPlayableGraveyardLandIndices(gameData, playerId);
 
             sessionManager.sendToPlayer(playerId, new GameStateMessage(
                     gameData.status, gameData.activePlayerId, gameData.turnNumber,
                     gameData.currentStep, priorityPlayerId,
                     battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals,
-                    hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices, newLogEntries
+                    hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
+                    playableGraveyardLandIndices, newLogEntries
             ));
         }
     }
@@ -234,6 +237,58 @@ public class GameBroadcastService {
         }
 
         return playable;
+    }
+
+    List<Integer> getPlayableGraveyardLandIndices(GameData gameData, UUID playerId) {
+        List<Integer> playable = new ArrayList<>();
+        if (gameData.status != GameStatus.RUNNING || gameData.awaitingInput != null) {
+            return playable;
+        }
+
+        UUID priorityHolder = gameQueryService.getPriorityPlayerId(gameData);
+        if (!playerId.equals(priorityHolder)) {
+            return playable;
+        }
+
+        if (!canPlayLandsFromGraveyard(gameData, playerId)) {
+            return playable;
+        }
+
+        boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
+        boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
+        int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
+        boolean stackEmpty = gameData.stack.isEmpty();
+
+        if (!isActivePlayer || !isMainPhase || landsPlayed >= 1 || !stackEmpty) {
+            return playable;
+        }
+
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (graveyard == null) {
+            return playable;
+        }
+
+        for (int i = 0; i < graveyard.size(); i++) {
+            if (graveyard.get(i).getType() == CardType.BASIC_LAND) {
+                playable.add(i);
+            }
+        }
+
+        return playable;
+    }
+
+    private boolean canPlayLandsFromGraveyard(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent perm : battlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof PlayLandsFromGraveyardEffect) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     int getMaxSpellsPerTurn(GameData gameData) {

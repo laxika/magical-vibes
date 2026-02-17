@@ -40,7 +40,7 @@ public class SpellCastingService {
     private final TargetValidationService targetValidationService;
 
     void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments,
-                  List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds) {
+                  List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (targetPermanentIds == null) targetPermanentIds = List.of();
         if (convokeCreatureIds == null) convokeCreatureIds = List.of();
@@ -49,6 +49,31 @@ public class SpellCastingService {
         }
 
         UUID playerId = player.getId();
+
+        // Handle playing a land from graveyard (e.g. via Crucible of Worlds)
+        if (fromGraveyard) {
+            List<Integer> playableGraveyard = gameBroadcastService.getPlayableGraveyardLandIndices(gameData, playerId);
+            if (!playableGraveyard.contains(cardIndex)) {
+                throw new IllegalStateException("Card is not playable from graveyard");
+            }
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            Card graveyardCard = graveyard.get(cardIndex);
+            if (graveyardCard.getType() != CardType.BASIC_LAND) {
+                throw new IllegalStateException("Only lands can be played from graveyard");
+            }
+            graveyard.remove(cardIndex);
+            gameData.playerBattlefields.get(playerId).add(new Permanent(graveyardCard));
+            gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
+
+            String logEntry = player.getUsername() + " plays " + graveyardCard.getName() + " from graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+            log.info("Game {} - {} plays {} from graveyard", gameData.id, player.getUsername(), graveyardCard.getName());
+
+            turnProgressionService.resolveAutoPass(gameData);
+            return;
+        }
+
         List<Integer> playable = gameBroadcastService.getPlayableCardIndices(gameData, playerId);
         if (!playable.contains(cardIndex)) {
             // Re-check with convoke if card has convoke keyword
