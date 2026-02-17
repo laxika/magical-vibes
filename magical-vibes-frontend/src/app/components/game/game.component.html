@@ -773,7 +773,8 @@
         <div class="tab" [class.active]="activeTab() === 'graveyard'" (click)="activeTab.set('graveyard')">
           Graveyard
           @if (myGraveyard.length + opponentGraveyard.length > 0) {
-            <span class="tab-badge">{{ myGraveyard.length + opponentGraveyard.length }}</span>
+            <span class="tab-badge">{{ myGraveyard.length }}</span>
+            <span class="tab-badge tab-badge-opponent">{{ opponentGraveyard.length }}</span>
           }
         </div>
       </div>

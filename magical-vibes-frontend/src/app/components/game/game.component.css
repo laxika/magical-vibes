@@ -179,6 +179,11 @@
   line-height: 1.2;
 }
 
+.tab-badge-opponent {
+  background: #4a2a1a;
+  margin-left: 8px;
+}
+
 .tab-content {
   flex: 1;
   min-height: 0;
