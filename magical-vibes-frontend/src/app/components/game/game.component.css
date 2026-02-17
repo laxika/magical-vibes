@@ -834,6 +834,11 @@
   cursor: pointer;
 }
 
+.card.must-attack {
+  outline: 2px solid #e05555;
+  box-shadow: 0 0 12px rgba(224, 85, 85, 0.6);
+}
+
 .card.can-block {
   outline: 2px solid #c8a951;
   box-shadow: 0 0 12px rgba(200, 169, 81, 0.5);

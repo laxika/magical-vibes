@@ -374,7 +374,8 @@ public class GameService {
                 case ATTACKER_DECLARATION -> {
                     if (playerId.equals(gameData.activePlayerId)) {
                         List<Integer> attackable = combatService.getAttackableCreatureIndices(gameData, playerId);
-                        sessionManager.sendToPlayer(playerId, new AvailableAttackersMessage(attackable));
+                        List<Integer> mustAttack = combatService.getMustAttackIndices(gameData, playerId, attackable);
+                        sessionManager.sendToPlayer(playerId, new AvailableAttackersMessage(attackable, mustAttack));
                     }
                 }
                 case BLOCKER_DECLARATION -> {
