@@ -16,6 +16,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   games = signal<LobbyGame[]>([]);
   newGameName = signal('');
   selectedDeckId = signal<string>('');
+  vsAi = signal(false);
+  aiDeckId = signal<string>('');
   errorMessage = signal('');
   showCreateForm = signal(false);
   private subscriptions: Subscription[] = [];
@@ -38,6 +40,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Initialize selected deck to first available deck
     if (this.websocketService.availableDecks.length > 0) {
       this.selectedDeckId.set(this.websocketService.availableDecks[0].id);
+      this.aiDeckId.set(this.websocketService.availableDecks[0].id);
     }
 
     // Listen for game notifications
@@ -105,7 +108,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.websocketService.send({
       type: MessageType.CREATE_GAME,
       gameName: this.newGameName(),
-      deckId: this.selectedDeckId()
+      deckId: this.selectedDeckId(),
+      vsAi: this.vsAi(),
+      aiDeckId: this.aiDeckId()
     });
 
     this.newGameName.set('');

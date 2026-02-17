@@ -45,6 +45,26 @@
             placeholder="Enter game name"
           />
         </div>
+        <div class="form-group">
+          <label class="toggle-label">
+            <input
+              type="checkbox"
+              [ngModel]="vsAi()"
+              (ngModelChange)="vsAi.set($event)"
+            />
+            Play vs AI
+          </label>
+        </div>
+        @if (vsAi()) {
+          <div class="form-group">
+            <label for="aiDeckSelect">AI Deck</label>
+            <select id="aiDeckSelect" [ngModel]="aiDeckId()" (ngModelChange)="aiDeckId.set($event)">
+              @for (deck of websocketService.availableDecks; track deck.id) {
+                <option [value]="deck.id">{{ deck.name }}</option>
+              }
+            </select>
+          </div>
+        }
         <button class="btn-primary" (click)="createGame()">
           Create Game
         </button>

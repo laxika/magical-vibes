@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.HandTopBottomChosenRequest;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
+import com.github.laxika.magicalvibes.ai.AiPlayerService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.LobbyService;
@@ -54,19 +55,22 @@ public class GameMessageHandler implements MessageHandler {
     private final GameRegistry gameRegistry;
     private final WebSocketSessionManager sessionManager;
     private final ObjectMapper objectMapper;
+    private final AiPlayerService aiPlayerService;
 
     public GameMessageHandler(LoginService loginService,
             GameService gameService,
             LobbyService lobbyService,
             GameRegistry gameRegistry,
             WebSocketSessionManager sessionManager,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            AiPlayerService aiPlayerService) {
         this.loginService = loginService;
         this.gameService = gameService;
         this.lobbyService = lobbyService;
         this.gameRegistry = gameRegistry;
         this.sessionManager = sessionManager;
         this.objectMapper = objectMapper;
+        this.aiPlayerService = aiPlayerService;
     }
 
     @Override
@@ -133,11 +137,22 @@ public class GameMessageHandler implements MessageHandler {
         // Mark creator as in-game
         sessionManager.setInGame(connection.getId());
 
-        // Send GAME_JOINED to the creator
-        sendJoinMessage(connection, MessageType.GAME_JOINED, result.joinGame());
+        if (Boolean.TRUE.equals(request.vsAi())) {
+            GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+            String aiDeck = (request.aiDeckId() != null && !request.aiDeckId().isBlank())
+                    ? request.aiDeckId() : request.deckId();
+            aiPlayerService.joinAsAi(gameData, aiDeck);
 
-        // Broadcast NEW_GAME to lobby users only
-        broadcastToLobby(MessageType.NEW_GAME, result.lobbyGame());
+            // Game is now in MULLIGAN — send full state to the creator
+            JoinGame joinGame = gameService.getJoinGame(gameData, player.getId());
+            sendJoinMessage(connection, MessageType.GAME_JOINED, joinGame);
+        } else {
+            // Send GAME_JOINED to the creator
+            sendJoinMessage(connection, MessageType.GAME_JOINED, result.joinGame());
+
+            // Broadcast NEW_GAME to lobby users only
+            broadcastToLobby(MessageType.NEW_GAME, result.lobbyGame());
+        }
     }
 
     @Override
