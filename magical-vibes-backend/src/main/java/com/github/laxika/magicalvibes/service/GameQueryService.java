@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -293,6 +294,30 @@ public class GameQueryService {
                 throw new IllegalStateException("Target must be a " + subtypeNames);
             }
         }
+    }
+
+    /**
+     * Returns the global damage multiplier based on DoubleDamageEffect permanents on the battlefield.
+     * Each instance doubles the multiplier (e.g. two Furnaces = 4x damage).
+     */
+    int getDamageMultiplier(GameData gameData) {
+        int multiplier = 1;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof DoubleDamageEffect) {
+                        multiplier *= 2;
+                    }
+                }
+            }
+        }
+        return multiplier;
+    }
+
+    int applyDamageMultiplier(GameData gameData, int damage) {
+        return damage * getDamageMultiplier(gameData);
     }
 
     boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature) {

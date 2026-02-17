@@ -82,6 +82,7 @@ import com.github.laxika.magicalvibes.cards.f.Firebreathing;
 import com.github.laxika.magicalvibes.cards.f.FistsOfTheAnvil;
 import com.github.laxika.magicalvibes.cards.f.FlamewaveInvoker;
 import com.github.laxika.magicalvibes.cards.f.FlowstoneSlide;
+import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.cards.e.EssenceDrain;
 import com.github.laxika.magicalvibes.cards.e.Evacuation;
 import com.github.laxika.magicalvibes.cards.f.Fear;
@@ -424,6 +425,7 @@ public enum CardSet {
             new CardPrinting("10E", "201", FistsOfTheAnvil::new),
             new CardPrinting("10E", "202", FlamewaveInvoker::new),
             new CardPrinting("10E", "203", FlowstoneSlide::new),
+            new CardPrinting("10E", "204", FurnaceOfRath::new),
             new CardPrinting("10E", "376", Mountain::new),
             new CardPrinting("10E", "377", Mountain::new),
             new CardPrinting("10E", "378", Mountain::new),

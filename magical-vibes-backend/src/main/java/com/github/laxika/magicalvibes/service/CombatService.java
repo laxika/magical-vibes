@@ -506,7 +506,7 @@ public class CombatService {
                 if (blkIndices.isEmpty()) {
                     // Unblocked first striker deals damage to player (or redirect target)
                     if (atkHasFS && !gameQueryService.isPreventedFromDealingDamage(gameData, atk)) {
-                        int power = gameQueryService.getEffectivePower(gameData, atk);
+                        int power = gameQueryService.applyDamageMultiplier(gameData, gameQueryService.getEffectivePower(gameData, atk));
                         if (redirectTarget != null) {
                             damageRedirectedToGuard += power;
                         } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
@@ -523,20 +523,22 @@ public class CombatService {
                             Permanent blk = defBf.get(blkIdx);
                             int dmg = Math.min(remaining, gameQueryService.getEffectiveToughness(gameData, blk));
                             if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getCard().getColor())) {
-                                defDamageTaken.merge(blkIdx, dmg, Integer::sum);
-                                combatDamageDealt.merge(atk, dmg, Integer::sum);
+                                int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
+                                defDamageTaken.merge(blkIdx, actualDmg, Integer::sum);
+                                combatDamageDealt.merge(atk, actualDmg, Integer::sum);
                             }
                             remaining -= dmg;
                         }
                         // Trample: excess damage goes to defending player
                         if (remaining > 0 && gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)) {
+                            int doubledRemaining = gameQueryService.applyDamageMultiplier(gameData, remaining);
                             if (redirectTarget != null) {
-                                damageRedirectedToGuard += remaining;
+                                damageRedirectedToGuard += doubledRemaining;
                             } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
-                                damageToDefendingPlayer += remaining;
+                                damageToDefendingPlayer += doubledRemaining;
                             }
-                            combatDamageDealt.merge(atk, remaining, Integer::sum);
-                            combatDamageDealtToPlayer.merge(atk, remaining, Integer::sum);
+                            combatDamageDealt.merge(atk, doubledRemaining, Integer::sum);
+                            combatDamageDealtToPlayer.merge(atk, doubledRemaining, Integer::sum);
                         }
                     }
                     // First strike / double strike blockers deal damage to attacker
@@ -545,8 +547,9 @@ public class CombatService {
                         if ((gameQueryService.hasKeyword(gameData, blk, Keyword.FIRST_STRIKE) || gameQueryService.hasKeyword(gameData, blk, Keyword.DOUBLE_STRIKE))
                                 && !gameQueryService.isPreventedFromDealingDamage(gameData, blk)
                                 && !gameQueryService.hasProtectionFrom(gameData, atk, blk.getCard().getColor())) {
-                            atkDamageTaken.merge(atkIdx, gameQueryService.getEffectivePower(gameData, blk), Integer::sum);
-                            combatDamageDealt.merge(blk, gameQueryService.getEffectivePower(gameData, blk), Integer::sum);
+                            int actualDmg = gameQueryService.applyDamageMultiplier(gameData, gameQueryService.getEffectivePower(gameData, blk));
+                            atkDamageTaken.merge(atkIdx, actualDmg, Integer::sum);
+                            combatDamageDealt.merge(blk, actualDmg, Integer::sum);
                         }
                     }
                 }
@@ -590,7 +593,7 @@ public class CombatService {
             if (blkIndices.isEmpty()) {
                 // Unblocked regular attacker deals damage to player (or redirect target)
                 if (!atkSkipPhase2 && !gameQueryService.isPreventedFromDealingDamage(gameData, atk)) {
-                    int power = gameQueryService.getEffectivePower(gameData, atk);
+                    int power = gameQueryService.applyDamageMultiplier(gameData, gameQueryService.getEffectivePower(gameData, atk));
                     if (redirectTarget != null) {
                         damageRedirectedToGuard += power;
                     } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
@@ -609,20 +612,22 @@ public class CombatService {
                         int remainingToughness = gameQueryService.getEffectiveToughness(gameData, blk) - defDamageTaken.getOrDefault(blkIdx, 0);
                         int dmg = Math.min(remaining, remainingToughness);
                         if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getCard().getColor())) {
-                            defDamageTaken.merge(blkIdx, dmg, Integer::sum);
-                            combatDamageDealt.merge(atk, dmg, Integer::sum);
+                            int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
+                            defDamageTaken.merge(blkIdx, actualDmg, Integer::sum);
+                            combatDamageDealt.merge(atk, actualDmg, Integer::sum);
                         }
                         remaining -= dmg;
                     }
                     // Trample: excess damage goes to defending player
                     if (remaining > 0 && gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)) {
+                        int doubledRemaining = gameQueryService.applyDamageMultiplier(gameData, remaining);
                         if (redirectTarget != null) {
-                            damageRedirectedToGuard += remaining;
+                            damageRedirectedToGuard += doubledRemaining;
                         } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
-                            damageToDefendingPlayer += remaining;
+                            damageToDefendingPlayer += doubledRemaining;
                         }
-                        combatDamageDealt.merge(atk, remaining, Integer::sum);
-                        combatDamageDealtToPlayer.merge(atk, remaining, Integer::sum);
+                        combatDamageDealt.merge(atk, doubledRemaining, Integer::sum);
+                        combatDamageDealtToPlayer.merge(atk, doubledRemaining, Integer::sum);
                     }
                 }
                 // Surviving blockers deal damage to attacker (skip first-strike-only, allow double strike)
@@ -633,8 +638,9 @@ public class CombatService {
                             && !gameQueryService.hasKeyword(gameData, blk, Keyword.DOUBLE_STRIKE);
                     if (!blkSkipPhase2 && !gameQueryService.isPreventedFromDealingDamage(gameData, blk)
                             && !gameQueryService.hasProtectionFrom(gameData, atk, blk.getCard().getColor())) {
-                        atkDamageTaken.merge(atkIdx, gameQueryService.getEffectivePower(gameData, blk), Integer::sum);
-                        combatDamageDealt.merge(blk, gameQueryService.getEffectivePower(gameData, blk), Integer::sum);
+                        int actualDmg = gameQueryService.applyDamageMultiplier(gameData, gameQueryService.getEffectivePower(gameData, blk));
+                        atkDamageTaken.merge(atkIdx, actualDmg, Integer::sum);
+                        combatDamageDealt.merge(blk, actualDmg, Integer::sum);
                     }
                 }
             }

@@ -196,7 +196,7 @@ public class DestructionResolutionService implements EffectHandlerProvider {
 
         // Deal damage to the land's controller regardless of whether destruction succeeded
         String cardName = entry.getCard().getName();
-        int damage = effect.damage();
+        int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
 
         if (!gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())
                 && !gameHelper.applyColorDamagePreventionForPlayer(gameData, landControllerId, entry.getCard().getColor())) {
@@ -293,7 +293,7 @@ public class DestructionResolutionService implements EffectHandlerProvider {
 
         if (otherCreatureIds.isEmpty()) {
             // Can't sacrifice — deal damage to controller
-            int damage = effect.damage();
+            int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
 
             if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
                 String logEntry = cardName + "'s damage is prevented.";
