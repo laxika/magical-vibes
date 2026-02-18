@@ -28,7 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.LandwalkEffect;
+
 import com.github.laxika.magicalvibes.model.effect.RandomDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -361,18 +361,21 @@ public class CombatService {
                 throw new IllegalStateException(blocker.getCard().getName() + " can only block creatures with flying");
             }
             for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof LandwalkEffect landwalk) {
-                    boolean defenderControlsLand = defenderBattlefield.stream()
-                            .anyMatch(p -> p.getCard().getSubtypes().contains(landwalk.landType()));
-                    if (defenderControlsLand) {
-                        throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked (" + landwalk.landType().getDisplayName().toLowerCase() + "walk)");
-                    }
-                }
                 if (effect instanceof CantBeBlockedBySubtypeEffect restriction) {
                     if (blocker.getCard().getSubtypes().contains(restriction.subtype())
                             || gameQueryService.hasKeyword(gameData, blocker, Keyword.CHANGELING)) {
                         throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked by " + restriction.subtype().getDisplayName() + "s");
                     }
+                }
+            }
+            for (var entry : Map.of(
+                    Keyword.MOUNTAINWALK, CardSubtype.MOUNTAIN,
+                    Keyword.ISLANDWALK, CardSubtype.ISLAND,
+                    Keyword.SWAMPWALK, CardSubtype.SWAMP
+            ).entrySet()) {
+                if (gameQueryService.hasKeyword(gameData, attacker, entry.getKey())
+                        && defenderBattlefield.stream().anyMatch(p -> p.getCard().getSubtypes().contains(entry.getValue()))) {
+                    throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked (" + entry.getValue().getDisplayName().toLowerCase() + "walk)");
                 }
             }
             if (blocker.getCantBlockIds().contains(attacker.getId())) {

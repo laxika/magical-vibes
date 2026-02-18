@@ -6,15 +6,14 @@ import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.LandwalkEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -60,8 +59,7 @@ class RootwaterCommandoTest {
         assertThat(card.getPower()).isEqualTo(2);
         assertThat(card.getToughness()).isEqualTo(2);
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.MERFOLK);
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(LandwalkEffect.class);
+        assertThat(card.getKeywords()).contains(Keyword.ISLANDWALK);
     }
 
     // ===== Casting and resolving =====
@@ -124,15 +122,12 @@ class RootwaterCommandoTest {
     @Test
     @DisplayName("Rootwater Commando cannot be blocked when defending player controls an Island")
     void cannotBeBlockedWhenDefenderControlsIsland() {
-        // Defender controls an Island
         harness.addToBattlefield(player2, new Island());
 
-        // Player2 has Grizzly Bears as potential blocker
         Permanent blockerPerm = new Permanent(new GrizzlyBears());
         blockerPerm.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
-        // Player1 has Rootwater Commando as attacker
         Permanent atkPerm = new Permanent(new RootwaterCommando());
         atkPerm.setSummoningSick(false);
         atkPerm.setAttacking(true);
@@ -154,14 +149,10 @@ class RootwaterCommandoTest {
     @Test
     @DisplayName("Rootwater Commando can be blocked when defending player does not control an Island")
     void canBeBlockedWhenDefenderDoesNotControlIsland() {
-        // No Island on defender's battlefield
-
-        // Player2 has Grizzly Bears as potential blocker
         Permanent blockerPerm = new Permanent(new GrizzlyBears());
         blockerPerm.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
-        // Player1 has Rootwater Commando as attacker
         Permanent atkPerm = new Permanent(new RootwaterCommando());
         atkPerm.setSummoningSick(false);
         atkPerm.setAttacking(true);
@@ -175,7 +166,6 @@ class RootwaterCommandoTest {
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
 
-        // Should NOT throw - blocking is legal when defender has no Islands
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 
         assertThat(blockerPerm.isBlocking()).isTrue();

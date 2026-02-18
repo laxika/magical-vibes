@@ -15,5 +15,8 @@ public enum Keyword {
     INDESTRUCTIBLE,
     CONVOKE,
     TRAMPLE,
-    LIFELINK
+    LIFELINK,
+    MOUNTAINWALK,
+    ISLANDWALK,
+    SWAMPWALK
 }
