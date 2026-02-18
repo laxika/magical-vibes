@@ -262,10 +262,7 @@ public class AiDecisionEngine {
         int cardIndex = castableSpells.get(0)[0];
         Card card = hand.get(cardIndex);
 
-        // Tap lands to pay for it
-        tapLandsForCost(gameData, card.getManaCost());
-
-        // Determine target if needed
+        // Determine target if needed (before tapping lands, so we don't waste mana)
         UUID targetId = null;
         if (card.isNeedsTarget() || card.isAura()) {
             targetId = chooseTarget(gameData, card);
@@ -274,6 +271,9 @@ public class AiDecisionEngine {
                 return false;
             }
         }
+
+        // Tap lands to pay for it
+        tapLandsForCost(gameData, card.getManaCost());
 
         log.info("AI: Casting {} in game {}", card.getName(), gameId);
         gameService.playCard(gameData, aiPlayer, cardIndex, null, targetId, null);
