@@ -96,7 +96,7 @@
   flex-direction: column;
   position: sticky;
   top: 10px;
-  max-height: calc(100vh - 20px);
+  height: calc(100vh - 20px);
   align-self: flex-start;
   background: linear-gradient(180deg, #f5e6c8 0%, #ecd9b0 100%);
   border-radius: 4px;

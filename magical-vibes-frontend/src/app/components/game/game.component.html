@@ -766,16 +766,12 @@
         <div class="tab" [class.active]="activeTab() === 'game'" (click)="activeTab.set('game')">Game</div>
         <div class="tab" [class.active]="activeTab() === 'stack'" (click)="activeTab.set('stack')">
           Stack
-          @if (!isStackEmpty) {
-            <span class="tab-badge">{{ stackEntries.length }}</span>
-          }
+          <span class="tab-badge">{{ stackEntries.length }}</span>
         </div>
         <div class="tab" [class.active]="activeTab() === 'graveyard'" (click)="activeTab.set('graveyard')">
           Graveyard
-          @if (myGraveyard.length + opponentGraveyard.length > 0) {
-            <span class="tab-badge">{{ myGraveyard.length }}</span>
-            <span class="tab-badge tab-badge-opponent">{{ opponentGraveyard.length }}</span>
-          }
+          <span class="tab-badge">{{ myGraveyard.length }}</span>
+          <span class="tab-badge tab-badge-opponent">{{ opponentGraveyard.length }}</span>
         </div>
       </div>
 
