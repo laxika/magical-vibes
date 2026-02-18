@@ -154,6 +154,7 @@ import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
 import com.github.laxika.magicalvibes.cards.m.MindBend;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
+import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.m.Mobilization;
 import com.github.laxika.magicalvibes.cards.m.MortalCombat;
 import com.github.laxika.magicalvibes.cards.m.Mortivore;
@@ -266,6 +267,7 @@ public enum CardSet {
             new CardPrinting("10E", "332", LoxodonWarhammer::new),
             new CardPrinting("10E", "333", MantisEngine::new),
             new CardPrinting("10E", "334", Millstone::new),
+            new CardPrinting("10E", "335", MindStone::new),
             new CardPrinting("10E", "341", RodOfRuin::new),
             new CardPrinting("10E", "6", AuraOfSilence::new),
             new CardPrinting("10E", "7", AvenCloudchaser::new),
