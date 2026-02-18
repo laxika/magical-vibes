@@ -112,6 +112,7 @@ import com.github.laxika.magicalvibes.cards.h.HailOfArrows;
 import com.github.laxika.magicalvibes.cards.h.HateWeaver;
 import com.github.laxika.magicalvibes.cards.h.HeadGames;
 import com.github.laxika.magicalvibes.cards.h.HiddenHorror;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.HighwayRobber;
 import com.github.laxika.magicalvibes.cards.h.HypnoticSpecter;
 import com.github.laxika.magicalvibes.cards.k.KnightOfDusk;
@@ -462,6 +463,7 @@ public enum CardSet {
             new CardPrinting("10E", "209", GoblinPiker::new),
             new CardPrinting("10E", "210", GoblinSkyRaider::new),
             new CardPrinting("10E", "211", GuerrillaTactics::new),
+            new CardPrinting("10E", "212", HillGiant::new),
             new CardPrinting("10E", "376", Mountain::new),
             new CardPrinting("10E", "377", Mountain::new),
             new CardPrinting("10E", "378", Mountain::new),
