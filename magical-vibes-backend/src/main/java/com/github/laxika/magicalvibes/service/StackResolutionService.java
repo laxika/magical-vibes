@@ -243,6 +243,13 @@ public class StackResolutionService {
     }
 
     private boolean checkTargetFizzle(GameData gameData, StackEntry entry) {
+        // Non-targeting abilities (e.g. "destroy that creature and Loyal Sentry") reference
+        // permanents without using the "target" keyword — they resolve even if the referenced
+        // permanent is gone (per MTG rule 608.2b: only check legality for actual targets).
+        if (entry.isNonTargeting()) {
+            return false;
+        }
+
         boolean targetFizzled = false;
 
         if (entry.getTargetPermanentId() != null) {

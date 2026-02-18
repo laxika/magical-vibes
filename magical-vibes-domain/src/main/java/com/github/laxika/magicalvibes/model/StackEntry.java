@@ -23,6 +23,7 @@ public class StackEntry {
     private final TargetZone targetZone;
     private final List<UUID> targetCardIds;
     @Setter private boolean copy;
+    @Setter private boolean nonTargeting;
     private final List<UUID> targetPermanentIds;
 
     // Creature spell constructor

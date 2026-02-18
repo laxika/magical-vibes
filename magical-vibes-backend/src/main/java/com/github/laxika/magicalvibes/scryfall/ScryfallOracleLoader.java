@@ -269,8 +269,12 @@ public class ScryfallOracleLoader {
             return COLOR_MAP.get(firstColor);
         }
 
-        // For colorless cards (e.g. lands with empty colors array), fall back to color_identity
-        if (card.has("color_identity") && card.get("color_identity").isArray() && !card.get("color_identity").isEmpty()) {
+        // Lands have an empty colors array but can derive color from color_identity
+        // (e.g. Forest has color_identity ["G"]). Other colorless cards (artifacts, Eldrazi)
+        // should remain null even if they have a color_identity (e.g. Legacy Weapon has WUBRG identity).
+        String typeLine = card.has("type_line") ? card.get("type_line").asText() : "";
+        if (typeLine.contains("Land")
+                && card.has("color_identity") && card.get("color_identity").isArray() && !card.get("color_identity").isEmpty()) {
             String firstColor = card.get("color_identity").get(0).asText();
             return COLOR_MAP.get(firstColor);
         }

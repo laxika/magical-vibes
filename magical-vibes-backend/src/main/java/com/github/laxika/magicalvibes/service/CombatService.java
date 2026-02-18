@@ -399,7 +399,7 @@ public class CombatService {
                 // Only set target if effects need the attacker reference
                 boolean needsAttackerTarget = blocker.getCard().getEffects(EffectSlot.ON_BLOCK).stream()
                         .anyMatch(e -> e instanceof DestroyBlockedCreatureAndSelfEffect);
-                gameData.stack.add(new StackEntry(
+                StackEntry blockTrigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         blocker.getCard(),
                         defenderId,
@@ -407,7 +407,10 @@ public class CombatService {
                         new ArrayList<>(blocker.getCard().getEffects(EffectSlot.ON_BLOCK)),
                         needsAttackerTarget ? attacker.getId() : null,
                         blocker.getId()
-                ));
+                );
+                // Block triggers reference "that creature" but don't target — they can't fizzle
+                blockTrigger.setNonTargeting(true);
+                gameData.stack.add(blockTrigger);
                 String triggerLog = blocker.getCard().getName() + "'s block ability triggers.";
                 gameBroadcastService.logAndBroadcast(gameData, triggerLog);
                 log.info("Game {} - {} block trigger pushed onto stack", gameData.id, blocker.getCard().getName());
