@@ -912,15 +912,16 @@
         } @else {
           <button class="btn-pass" (click)="passPriority()" [disabled]="!hasPriority">Pass Priority</button>
         }
+        @if (choice.awaitingMayAbility) {
+          <div class="may-ability-banner">
+            <span class="may-ability-prompt">{{ choice.mayAbilityPrompt }}</span>
+            <div class="may-ability-buttons">
+              <button class="btn-may-ability" (click)="choice.acceptMayAbility()">Yes</button>
+              <button class="btn-may-ability" (click)="choice.declineMayAbility()">No</button>
+            </div>
+          </div>
+        }
       </div>
-
-      @if (choice.awaitingMayAbility) {
-        <div class="combat-banner may-ability-banner">
-          <span>{{ choice.mayAbilityPrompt }}</span>
-          <button class="btn-confirm-combat" (click)="choice.acceptMayAbility()">Yes</button>
-          <button class="btn-confirm-combat" (click)="choice.declineMayAbility()">No</button>
-        </div>
-      }
     </div>
   </div>
 </div>
