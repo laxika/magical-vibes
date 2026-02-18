@@ -140,6 +140,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.l.LoxodonMystic;
 import com.github.laxika.magicalvibes.cards.l.LumengridWarden;
 import com.github.laxika.magicalvibes.cards.m.MahamotiDjinn;
+import com.github.laxika.magicalvibes.cards.m.MantisEngine;
 import com.github.laxika.magicalvibes.cards.m.MassOfGhouls;
 import com.github.laxika.magicalvibes.cards.m.Megrim;
 import com.github.laxika.magicalvibes.cards.m.MerfolkLooter;
@@ -256,6 +257,7 @@ public enum CardSet {
             new CardPrinting("10E", "330", LegacyWeapon::new),
             new CardPrinting("10E", "331", LeoninScimitar::new),
             new CardPrinting("10E", "332", LoxodonWarhammer::new),
+            new CardPrinting("10E", "333", MantisEngine::new),
             new CardPrinting("10E", "341", RodOfRuin::new),
             new CardPrinting("10E", "6", AuraOfSilence::new),
             new CardPrinting("10E", "7", AvenCloudchaser::new),

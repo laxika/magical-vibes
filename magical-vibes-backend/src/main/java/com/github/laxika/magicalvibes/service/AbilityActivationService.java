@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
@@ -258,7 +259,7 @@ public class AbilityActivationService {
         if (effectiveTargetId == null) {
             boolean needsSelfTarget = abilityEffects.stream().anyMatch(e ->
                     e instanceof RegenerateEffect || e instanceof BoostSelfEffect || e instanceof UntapSelfEffect
-                            || e instanceof AnimateSelfEffect);
+                            || e instanceof AnimateSelfEffect || e instanceof GrantKeywordToSelfEffect);
             if (needsSelfTarget) {
                 effectiveTargetId = permanent.getId();
             }
