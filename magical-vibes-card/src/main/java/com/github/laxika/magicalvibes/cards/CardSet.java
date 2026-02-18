@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.cards.b.BeaconOfUnrest;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.b.BogWraith;
 import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
+import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.c.ConeOfFlame;
 import com.github.laxika.magicalvibes.cards.c.ContaminatedBond;
 import com.github.laxika.magicalvibes.cards.c.Cryoclasm;
@@ -348,6 +349,7 @@ public enum CardSet {
             new CardPrinting("10E", "68", AvenFisher::new),
             new CardPrinting("10E", "69", AvenWindreader::new),
             new CardPrinting("10E", "70", Boomerang::new),
+            new CardPrinting("10E", "71", Cancel::new),
             new CardPrinting("10E", "72", CephalidConstable::new),
             new CardPrinting("10E", "73", Clone::new),
             new CardPrinting("10E", "74", CloudElemental::new),
