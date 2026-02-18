@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { WebsocketService, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, ChooseMultipleCardsFromGraveyardsNotification, StackEntry, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification, ChooseFromRevealedHandNotification, ChooseCardFromGraveyardNotification, ChooseHandTopBottomNotification } from '../../services/websocket.service';
@@ -7,6 +8,7 @@ import { GameChoiceService } from '../../services/game-choice.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { IndexedPermanent, CombatGroup, CombatBlocker, AttachedAura, LandStack, splitBattlefield, stackBasicLands, getAttachedAuras, isLandStack, isPermanentCreature } from './battlefield.utils';
 import { Subscription } from 'rxjs';
+import { ManaSymbolService } from '../../services/mana-symbol.service';
 
 @Component({
   selector: 'app-game',
@@ -24,6 +26,8 @@ export class GameComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
 
   readonly choice = inject(GameChoiceService);
+  private manaSymbolService = inject(ManaSymbolService);
+  private sanitizer = inject(DomSanitizer);
 
   constructor(
     private router: Router,
@@ -952,6 +956,12 @@ export class GameComponent implements OnInit, OnDestroy {
       return perm.grantedKeywords.filter(kw => !perm.card.keywords.includes(kw));
     }
     return [];
+  }
+
+  formatAbilityDescription(description: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(
+      this.manaSymbolService.replaceSymbols(description)
+    );
   }
 
   readonly GameStatus = GameStatus;

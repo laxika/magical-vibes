@@ -1270,18 +1270,63 @@
   box-shadow: 0 4px 12px rgba(201, 133, 74, 0.4);
 }
 
-.ability-choice-banner {
+.ability-popup {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
   background: linear-gradient(135deg, #4b0082, #2e0854);
-  border: 2px solid #3a0068;
-  box-shadow: 0 4px 12px rgba(75, 0, 130, 0.4);
-  flex-wrap: wrap;
-  gap: 10px;
+  border: 2px solid #6a3d9a;
+  border-radius: 6px;
+  padding: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 180px;
+  white-space: nowrap;
 }
 
-.ability-choice-buttons {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+.ability-popup-title {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'Cinzel', Georgia, serif;
+  color: #c9a84c;
+  letter-spacing: 0.5px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  margin-bottom: 2px;
+}
+
+.ability-popup-btn {
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Cinzel', Georgia, serif;
+  color: #f5e6c8;
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.ability-popup-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.ability-popup-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ability-popup-cancel {
+  margin-top: 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding-top: 6px;
+  color: #d9a0a0;
 }
 
 
@@ -1383,6 +1428,7 @@
 /* Aura attachment stacking */
 
 .permanent-stack {
+  position: relative;
   display: inline-flex;
   flex-direction: column;
   align-items: center;

@@ -500,6 +500,15 @@
                 (click)="onMyBattlefieldCardClick(ip.originalIndex)"
                 (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
                 (mouseleave)="onCardHoverEnd()" />
+              @if (choice.choosingAbility && choice.abilityChoicePermanentIndex === ip.originalIndex) {
+                <div class="ability-popup" (click)="$event.stopPropagation()">
+                  <div class="ability-popup-title">Choose an ability:</div>
+                  @for (ch of choice.abilityChoices; track ch.index) {
+                    <button class="ability-popup-btn" [disabled]="!ch.usable" (click)="choice.chooseAbility(ch)" [innerHTML]="formatAbilityDescription(ch.ability.description)"></button>
+                  }
+                  <button class="ability-popup-btn ability-popup-cancel" (click)="choice.cancelAbilityChoice()">Cancel</button>
+                </div>
+              }
             </div>
           }
         </div>
@@ -532,6 +541,15 @@
                         (click)="onMyBattlefieldCardClick(ip.originalIndex)"
                         (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
                         (mouseleave)="onCardHoverEnd()" />
+                      @if (choice.choosingAbility && choice.abilityChoicePermanentIndex === ip.originalIndex) {
+                        <div class="ability-popup" (click)="$event.stopPropagation()">
+                          <div class="ability-popup-title">Choose an ability:</div>
+                          @for (ch of choice.abilityChoices; track ch.index) {
+                            <button class="ability-popup-btn" [disabled]="!ch.usable" (click)="choice.chooseAbility(ch)" [innerHTML]="formatAbilityDescription(ch.ability.description)"></button>
+                          }
+                          <button class="ability-popup-btn ability-popup-cancel" (click)="choice.cancelAbilityChoice()">Cancel</button>
+                        </div>
+                      }
                     </div>
                   </div>
                 }
@@ -560,6 +578,15 @@
                   (click)="onMyBattlefieldCardClick(item.originalIndex)"
                   (mouseenter)="onCardHover(item.perm.card, item.perm)"
                   (mouseleave)="onCardHoverEnd()" />
+              @if (choice.choosingAbility && choice.abilityChoicePermanentIndex === item.originalIndex) {
+                <div class="ability-popup" (click)="$event.stopPropagation()">
+                  <div class="ability-popup-title">Choose an ability:</div>
+                  @for (ch of choice.abilityChoices; track ch.index) {
+                    <button class="ability-popup-btn" [disabled]="!ch.usable" (click)="choice.chooseAbility(ch)" [innerHTML]="formatAbilityDescription(ch.ability.description)"></button>
+                  }
+                  <button class="ability-popup-btn ability-popup-cancel" (click)="choice.cancelAbilityChoice()">Cancel</button>
+                </div>
+              }
               </div>
             }
           }
@@ -620,17 +647,6 @@
       </div>
     }
 
-    @if (choice.choosingAbility) {
-      <div class="combat-banner ability-choice-banner">
-        <span>Choose an ability to activate:</span>
-        <div class="ability-choice-buttons">
-          @for (ch of choice.abilityChoices; track ch.index) {
-            <button class="btn-confirm-combat" [disabled]="!ch.usable" (click)="choice.chooseAbility(ch)">{{ ch.ability.description }}</button>
-          }
-        </div>
-        <button class="btn-confirm-combat" (click)="choice.cancelAbilityChoice()">Cancel</button>
-      </div>
-    }
 
     @if (choice.choosingPermanent) {
       <div class="combat-banner permanent-choice-banner">
