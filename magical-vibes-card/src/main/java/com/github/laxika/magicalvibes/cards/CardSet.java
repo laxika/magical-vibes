@@ -135,6 +135,7 @@ import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
 import com.github.laxika.magicalvibes.cards.j.Juggernaut;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.n.NomadMythmaker;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.l.LoomingShade;
 import com.github.laxika.magicalvibes.cards.l.LordOfThePit;
 import com.github.laxika.magicalvibes.cards.l.LordOfTheUndead;
@@ -268,6 +269,7 @@ public enum CardSet {
             new CardPrinting("10E", "333", MantisEngine::new),
             new CardPrinting("10E", "334", Millstone::new),
             new CardPrinting("10E", "335", MindStone::new),
+            new CardPrinting("10E", "336", Ornithopter::new),
             new CardPrinting("10E", "341", RodOfRuin::new),
             new CardPrinting("10E", "6", AuraOfSilence::new),
             new CardPrinting("10E", "7", AvenCloudchaser::new),
