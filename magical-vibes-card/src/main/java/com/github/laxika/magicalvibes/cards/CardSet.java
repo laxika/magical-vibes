@@ -100,6 +100,7 @@ import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GoblinEliteInfantry;
 import com.github.laxika.magicalvibes.cards.g.GoblinKing;
 import com.github.laxika.magicalvibes.cards.g.GoblinLore;
+import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GravePact;
 import com.github.laxika.magicalvibes.cards.g.GravebornMuse;
@@ -448,6 +449,7 @@ public enum CardSet {
             new CardPrinting("10E", "206", GoblinEliteInfantry::new),
             new CardPrinting("10E", "207", GoblinKing::new),
             new CardPrinting("10E", "208", GoblinLore::new),
+            new CardPrinting("10E", "209", GoblinPiker::new),
             new CardPrinting("10E", "376", Mountain::new),
             new CardPrinting("10E", "377", Mountain::new),
             new CardPrinting("10E", "378", Mountain::new),
