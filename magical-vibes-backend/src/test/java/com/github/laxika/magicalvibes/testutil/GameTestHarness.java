@@ -377,6 +377,10 @@ public class GameTestHarness {
         return gameService;
     }
 
+    public GameRegistry getGameRegistry() {
+        return gameRegistry;
+    }
+
     public void clearMessages() {
         conn1.clearMessages();
         conn2.clearMessages();

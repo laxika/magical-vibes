@@ -404,11 +404,15 @@ public class AiDecisionEngine {
                         .orElse(null);
             }
         } else {
-            // Detrimental — target opponent's highest-power creature
+            // Detrimental — target opponent's highest-power creature that doesn't already have this effect
             List<Permanent> oppBattlefield = gameData.playerBattlefields.get(opponentId);
             if (oppBattlefield != null) {
+                List<Class<? extends CardEffect>> auraEffectClasses = card.getEffects(EffectSlot.STATIC).stream()
+                        .map(CardEffect::getClass)
+                        .toList();
                 return oppBattlefield.stream()
                         .filter(p -> gameService.isCreature(gameData, p))
+                        .filter(p -> auraEffectClasses.stream().noneMatch(ec -> gameService.hasAuraWithEffect(gameData, p, ec)))
                         .max(Comparator.comparingInt(p -> gameService.getEffectivePower(gameData, p)))
                         .map(Permanent::getId)
                         .orElse(null);

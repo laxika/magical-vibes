@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -318,5 +319,9 @@ public class GameService {
 
     public boolean hasKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
         return gameQueryService.hasKeyword(gameData, permanent, keyword);
+    }
+
+    public boolean hasAuraWithEffect(GameData gameData, Permanent permanent, Class<? extends CardEffect> effectClass) {
+        return gameQueryService.hasAuraWithEffect(gameData, permanent, effectClass);
     }
 }
