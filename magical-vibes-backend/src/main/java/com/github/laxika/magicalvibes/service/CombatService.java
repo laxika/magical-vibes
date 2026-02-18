@@ -226,6 +226,9 @@ public class CombatService {
 
 
 
+        // Collect all attack-step triggers, then reorder per APNAP (CR 603.3b)
+        int stackSizeBeforeAttackTriggers = gameData.stack.size();
+
         // Check for "when this creature attacks" triggers
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
@@ -247,6 +250,10 @@ public class CombatService {
             // Check for aura-based "when enchanted creature attacks" triggers
             checkAuraTriggersForCreature(gameData, attacker, EffectSlot.ON_ATTACK);
         }
+
+        // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
+        reorderTriggersAPNAP(gameData, stackSizeBeforeAttackTriggers, playerId);
+
         if (!gameData.stack.isEmpty()) {
 
         }
@@ -391,12 +398,16 @@ public class CombatService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         }
 
-        // Check for "when this creature blocks" triggers
+        // Collect all blocker-step triggers, then reorder per APNAP (CR 603.3b)
+        int stackSizeBeforeBlockerTriggers = gameData.stack.size();
+
+        // Check for "when this creature blocks" triggers (defending player's / NAP's)
         for (BlockerAssignment assignment : blockerAssignments) {
             Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
             if (!blocker.getCard().getEffects(EffectSlot.ON_BLOCK).isEmpty()) {
                 Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
-                // Only set target if effects need the attacker reference
+                // Set target: attacker ID for effects that need it (e.g. DestroyBlockedCreatureAndSelfEffect),
+                // otherwise blocker's own ID for self-targeting effects (e.g. BoostSelfEffect)
                 boolean needsAttackerTarget = blocker.getCard().getEffects(EffectSlot.ON_BLOCK).stream()
                         .anyMatch(e -> e instanceof DestroyBlockedCreatureAndSelfEffect);
                 StackEntry blockTrigger = new StackEntry(
@@ -405,7 +416,7 @@ public class CombatService {
                         defenderId,
                         blocker.getCard().getName() + "'s block trigger",
                         new ArrayList<>(blocker.getCard().getEffects(EffectSlot.ON_BLOCK)),
-                        needsAttackerTarget ? attacker.getId() : null,
+                        needsAttackerTarget ? attacker.getId() : blocker.getId(),
                         blocker.getId()
                 );
                 // Block triggers reference "that creature" but don't target — they can't fizzle
@@ -420,6 +431,34 @@ public class CombatService {
             checkAuraTriggersForCreature(gameData, blocker, EffectSlot.ON_BLOCK);
         }
 
+        // Check for "when this creature becomes blocked" triggers (active player's / AP's)
+        Set<Integer> blockedAttackerIndices = new LinkedHashSet<>();
+        for (BlockerAssignment assignment : blockerAssignments) {
+            blockedAttackerIndices.add(assignment.attackerIndex());
+        }
+        for (int atkIdx : blockedAttackerIndices) {
+            Permanent attacker = attackerBattlefield.get(atkIdx);
+            if (!attacker.getCard().getEffects(EffectSlot.ON_BECOMES_BLOCKED).isEmpty()) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        attacker.getCard(),
+                        activeId,
+                        attacker.getCard().getName() + "'s becomes-blocked trigger",
+                        new ArrayList<>(attacker.getCard().getEffects(EffectSlot.ON_BECOMES_BLOCKED)),
+                        attacker.getId(),
+                        attacker.getId()
+                ));
+                String triggerLog = attacker.getCard().getName() + "'s becomes-blocked ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                log.info("Game {} - {} becomes-blocked trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+            }
+
+            // Check for aura-based "when enchanted creature becomes blocked" triggers
+            checkAuraTriggersForCreature(gameData, attacker, EffectSlot.ON_BECOMES_BLOCKED);
+        }
+
+        // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
+        reorderTriggersAPNAP(gameData, stackSizeBeforeBlockerTriggers, activeId);
 
         if (!gameData.stack.isEmpty()) {
 
@@ -929,6 +968,45 @@ public class CombatService {
                 }
             }
         }
+    }
+
+    // ===== APNAP trigger ordering =====
+
+    /**
+     * Reorders triggered abilities added to the stack since {@code startIndex} according to APNAP
+     * (Active Player, Non-Active Player) ordering per CR 603.3b.
+     * <p>
+     * Active player's triggers are placed on the stack first (bottom), then the non-active player's
+     * triggers on top. Since the stack resolves LIFO, the non-active player's triggers resolve first.
+     */
+    private void reorderTriggersAPNAP(GameData gameData, int startIndex, UUID activePlayerId) {
+        int totalEntries = gameData.stack.size() - startIndex;
+        if (totalEntries <= 1) return;
+
+        List<StackEntry> newEntries = new ArrayList<>();
+        for (int i = startIndex; i < gameData.stack.size(); i++) {
+            newEntries.add(gameData.stack.get(i));
+        }
+
+        List<StackEntry> apTriggers = new ArrayList<>();
+        List<StackEntry> napTriggers = new ArrayList<>();
+        for (StackEntry entry : newEntries) {
+            if (entry.getControllerId().equals(activePlayerId)) {
+                apTriggers.add(entry);
+            } else {
+                napTriggers.add(entry);
+            }
+        }
+
+        // Only reorder if both players have triggers
+        if (apTriggers.isEmpty() || napTriggers.isEmpty()) return;
+
+        // Remove new entries and re-add in APNAP order: AP first (bottom), NAP on top
+        for (int i = gameData.stack.size() - 1; i >= startIndex; i--) {
+            gameData.stack.remove(i);
+        }
+        gameData.stack.addAll(apTriggers);
+        gameData.stack.addAll(napTriggers);
     }
 
     // ===== Combat state management =====
