@@ -175,6 +175,13 @@ public class CardViewFactory {
                 return List.of(CardType.LAND.getDisplayName());
             }
         }
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (effect instanceof DestroyTargetPermanentEffect destroy) {
+                return destroy.targetTypes().stream()
+                        .map(CardType::getDisplayName)
+                        .toList();
+            }
+        }
         return List.of();
     }
 

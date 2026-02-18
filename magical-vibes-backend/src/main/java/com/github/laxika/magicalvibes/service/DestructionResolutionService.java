@@ -142,7 +142,8 @@ public class DestructionResolutionService implements EffectHandlerProvider {
             return;
         }
 
-        if (gameQueryService.isCreature(gameData, target) && gameHelper.tryRegenerate(gameData, target)) {
+        if (!destroy.cannotBeRegenerated()
+                && gameQueryService.isCreature(gameData, target) && gameHelper.tryRegenerate(gameData, target)) {
             return;
         }
 

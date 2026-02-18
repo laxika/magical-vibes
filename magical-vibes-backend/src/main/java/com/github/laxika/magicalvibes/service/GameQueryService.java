@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.AttackingTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CreatureColorTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.LandSubtypeTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.MaxPowerTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.NonArtifactNonColorCreatureTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TappedTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.WithoutKeywordTargetFilter;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
@@ -308,6 +309,18 @@ public class GameQueryService {
         } else if (filter instanceof TappedTargetFilter) {
             if (!target.isTapped()) {
                 throw new IllegalStateException("Target must be a tapped creature");
+            }
+        } else if (filter instanceof NonArtifactNonColorCreatureTargetFilter f) {
+            if (isArtifact(target)) {
+                throw new IllegalStateException("Target must be a nonartifact creature");
+            }
+            if (f.excludedColors().contains(target.getCard().getColor())) {
+                String colorNames = f.excludedColors().stream()
+                        .map(c -> c.name().toLowerCase())
+                        .sorted()
+                        .reduce((a, b) -> a + " or " + b)
+                        .orElse("");
+                throw new IllegalStateException("Target must be a non" + colorNames + " creature");
             }
         } else if (filter instanceof LandSubtypeTargetFilter f) {
             if (target.getCard().getType() != CardType.LAND
