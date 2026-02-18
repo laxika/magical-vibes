@@ -62,7 +62,7 @@ public class CombatService {
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent p = battlefield.get(i);
-            if (gameQueryService.isCreature(gameData, p) && !p.isTapped() && !p.isSummoningSick() && !gameQueryService.hasKeyword(gameData, p, Keyword.DEFENDER) && !gameQueryService.hasAuraWithEffect(gameData, p, EnchantedCreatureCantAttackOrBlockEffect.class)) {
+            if (gameQueryService.isCreature(gameData, p) && !p.isTapped() && (!p.isSummoningSick() || gameQueryService.hasKeyword(gameData, p, Keyword.HASTE)) && !gameQueryService.hasKeyword(gameData, p, Keyword.DEFENDER) && !gameQueryService.hasAuraWithEffect(gameData, p, EnchantedCreatureCantAttackOrBlockEffect.class)) {
                 if (isCantAttackDueToLandRestriction(p, defenderBattlefield)) {
                     continue;
                 }

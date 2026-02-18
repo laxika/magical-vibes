@@ -303,7 +303,7 @@ public class AiDecisionEngine {
                 }
                 // Skip creatures with summoning sickness (they can't tap)
                 if (gameService.isCreature(gameData, perm) && perm.isSummoningSick()
-                        && !gameService.hasKeyword(gameData, perm, Keyword.VIGILANCE)) {
+                        && !gameService.hasKeyword(gameData, perm, Keyword.HASTE)) {
                     continue;
                 }
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
@@ -341,7 +341,7 @@ public class AiDecisionEngine {
 
             // Skip creatures with summoning sickness
             if (gameService.isCreature(gameData, perm) && perm.isSummoningSick()
-                    && !gameService.hasKeyword(gameData, perm, Keyword.VIGILANCE)) {
+                    && !gameService.hasKeyword(gameData, perm, Keyword.HASTE)) {
                 continue;
             }
 
@@ -442,8 +442,7 @@ public class AiDecisionEngine {
             Permanent perm = battlefield.get(i);
             if (!gameService.isCreature(gameData, perm)) continue;
             if (perm.isTapped()) continue;
-            if (perm.isSummoningSick() && !gameService.hasKeyword(gameData, perm, Keyword.VIGILANCE)
-                    && !gameService.hasKeyword(gameData, perm, Keyword.DOUBLE_STRIKE)) continue;
+            if (perm.isSummoningSick() && !gameService.hasKeyword(gameData, perm, Keyword.HASTE)) continue;
             if (gameService.hasKeyword(gameData, perm, Keyword.DEFENDER)) continue;
 
             int power = gameService.getEffectivePower(gameData, perm);

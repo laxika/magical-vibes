@@ -32,7 +32,7 @@ public class PermanentViewFactory {
         return new PermanentView(
                 p.getId(), cardView,
                 p.isTapped(), p.isAttacking(), p.isBlocking(),
-                new ArrayList<>(p.getBlockingTargets()), p.isSummoningSick(),
+                new ArrayList<>(p.getBlockingTargets()), p.isSummoningSick() && !p.hasKeyword(Keyword.HASTE) && !allKeywords.contains(Keyword.HASTE),
                 p.getPowerModifier() + bonusPower,
                 p.getToughnessModifier() + bonusToughness,
                 allKeywords,

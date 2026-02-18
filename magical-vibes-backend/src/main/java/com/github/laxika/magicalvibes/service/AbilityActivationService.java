@@ -71,7 +71,7 @@ public class AbilityActivationService {
         if (permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty()) {
             throw new IllegalStateException("Permanent has no tap effects");
         }
-        if (permanent.isSummoningSick() && gameQueryService.isCreature(gameData, permanent)) {
+        if (permanent.isSummoningSick() && gameQueryService.isCreature(gameData, permanent) && !gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE)) {
             throw new IllegalStateException("Creature has summoning sickness");
         }
 
@@ -197,7 +197,7 @@ public class AbilityActivationService {
             if (permanent.isTapped()) {
                 throw new IllegalStateException("Permanent is already tapped");
             }
-            if (permanent.isSummoningSick() && gameQueryService.isCreature(gameData, permanent)) {
+            if (permanent.isSummoningSick() && gameQueryService.isCreature(gameData, permanent) && !gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE)) {
                 throw new IllegalStateException("Creature has summoning sickness");
             }
         }
