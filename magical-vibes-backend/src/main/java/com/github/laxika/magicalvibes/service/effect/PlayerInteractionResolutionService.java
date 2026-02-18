@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTo
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.RandomDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
@@ -37,6 +38,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Service
@@ -78,6 +80,8 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
                 (gd, entry, effect) -> resolveSacrificeUnlessDiscardCardType(gd, entry, (SacrificeUnlessDiscardCardTypeEffect) effect));
         registry.register(DrawCardForTargetPlayerEffect.class,
                 (gd, entry, effect) -> resolveDrawCardForTargetPlayer(gd, entry, (DrawCardForTargetPlayerEffect) effect));
+        registry.register(RandomDiscardEffect.class,
+                (gd, entry, effect) -> resolveRandomDiscardCards(gd, entry.getControllerId(), entry.getCard().getName(), ((RandomDiscardEffect) effect).amount()));
     }
 
     private void resolveOpponentMayPlayCreature(GameData gameData, UUID controllerId) {
@@ -121,6 +125,29 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
 
         gameData.awaitingDiscardRemainingCount = amount;
         playerInputService.beginDiscardChoice(gameData, playerId);
+    }
+
+    private void resolveRandomDiscardCards(GameData gameData, UUID playerId, String sourceName, int amount) {
+        List<Card> hand = gameData.playerHands.get(playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+
+        if (hand == null || hand.isEmpty()) {
+            String logEntry = playerName + " has no cards to discard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        for (int i = 0; i < amount; i++) {
+            List<Card> currentHand = gameData.playerHands.get(playerId);
+            if (currentHand.isEmpty()) break;
+            int randomIndex = ThreadLocalRandom.current().nextInt(currentHand.size());
+            Card discarded = currentHand.remove(randomIndex);
+            gameHelper.addCardToGraveyard(gameData, playerId, discarded);
+            String logEntry = playerName + " discards " + discarded.getName() + " at random.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
+            gameHelper.checkDiscardTriggers(gameData, playerId);
+        }
     }
 
     private void resolveLookAtHand(GameData gameData, StackEntry entry) {
