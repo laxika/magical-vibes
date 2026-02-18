@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -214,5 +216,78 @@ class AiDecisionEngineTest {
         ai.handleMessage("GAME_STATE", "");
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    // ===== Blocker declaration =====
+
+    /**
+     * Sets up the game so the human is the active player attacking, and the AI is defending.
+     */
+    private void setupBlockerPhase() {
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+    }
+
+    @Test
+    @DisplayName("AI does not attempt to block an unblockable creature")
+    void doesNotBlockUnblockableCreature() {
+        setupBlockerPhase();
+
+        // Human attacks with Phantom Warrior (unblockable)
+        Permanent phantomWarrior = new Permanent(new PhantomWarrior());
+        phantomWarrior.setSummoningSick(false);
+        phantomWarrior.setAttacking(true);
+        gd.playerBattlefields.get(human.getId()).add(phantomWarrior);
+
+        // AI has a creature that could theoretically block
+        Permanent aiBears = new Permanent(new GrizzlyBears());
+        aiBears.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(aiBears);
+
+        // Should not throw — AI skips the unblockable attacker
+        ai.handleMessage("AVAILABLE_BLOCKERS", "");
+
+        // Bears should not be tapped (not assigned as blocker)
+        assertThat(aiBears.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("AI blocks normal attacker but skips unblockable attacker")
+    void blocksNormalButSkipsUnblockable() {
+        setupBlockerPhase();
+
+        // Human attacks with Phantom Warrior (unblockable) and Grizzly Bears (blockable)
+        Permanent phantomWarrior = new Permanent(new PhantomWarrior());
+        phantomWarrior.setSummoningSick(false);
+        phantomWarrior.setAttacking(true);
+        gd.playerBattlefields.get(human.getId()).add(phantomWarrior);
+
+        Permanent humanBears = new Permanent(new GrizzlyBears());
+        humanBears.setSummoningSick(false);
+        humanBears.setAttacking(true);
+        gd.playerBattlefields.get(human.getId()).add(humanBears);
+
+        // AI has Air Elemental — big enough to favorably block Grizzly Bears (4/4 vs 2/2)
+        Permanent aiElemental = new Permanent(new AirElemental());
+        aiElemental.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(aiElemental);
+
+        // Set life low enough that lethal incoming triggers chump-block logic too
+        gd.playerLifeTotals.put(aiPlayer.getId(), 3);
+
+        ai.handleMessage("AVAILABLE_BLOCKERS", "");
+
+        // Combat fully resolves — assert on outcomes:
+        // Phantom Warrior was unblocked, so only its 2 damage got through (3 - 2 = 1)
+        assertThat(gd.playerLifeTotals.get(aiPlayer.getId())).isEqualTo(1);
+        // Grizzly Bears was blocked by Air Elemental and died
+        assertThat(gd.playerBattlefields.get(human.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        // Air Elemental survived (4/4 vs 2/2)
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));
     }
 }

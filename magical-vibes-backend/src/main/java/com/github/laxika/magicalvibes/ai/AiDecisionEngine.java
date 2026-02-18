@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -544,11 +545,17 @@ public class AiDecisionEngine {
             return;
         }
 
-        // Find all attacking creatures
+        // Find all attacking creatures that can be blocked
         List<int[]> attackers = new ArrayList<>(); // [index in opponent field, power, toughness]
         for (int i = 0; i < opponentBattlefield.size(); i++) {
             Permanent perm = opponentBattlefield.get(i);
             if (perm.isAttacking()) {
+                // Skip unblockable creatures
+                if (perm.isCantBeBlocked()) continue;
+                boolean hasCantBeBlockedStatic = perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof CantBeBlockedEffect);
+                if (hasCantBeBlockedStatic) continue;
+
                 attackers.add(new int[]{i,
                         gameService.getEffectivePower(gameData, perm),
                         gameService.getEffectiveToughness(gameData, perm)});
