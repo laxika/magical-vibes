@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionS
 import com.github.laxika.magicalvibes.service.effect.PlayerInteractionResolutionService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
+import com.github.laxika.magicalvibes.service.effect.WinConditionResolutionService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import com.github.laxika.magicalvibes.config.JacksonConfig;
 import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader;
@@ -108,7 +109,8 @@ public class GameTestHarness {
                 new PlayerInteractionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager, cardViewFactory),
                 new PermanentControlResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),
                 new TurnResolutionService(gameHelper, combatService, gameBroadcastService),
-                new EquipResolutionService(gameQueryService, gameBroadcastService)
+                new EquipResolutionService(gameQueryService, gameBroadcastService),
+                new WinConditionResolutionService(gameHelper, gameBroadcastService)
         );
         EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper, providers);
         effectResolutionService.init();

@@ -234,6 +234,21 @@ public class GameHelper {
         return false;
     }
 
+    public void declareWinner(GameData gameData, UUID winnerId) {
+        String winnerName = gameData.playerIdToName.get(winnerId);
+
+        gameData.status = GameStatus.FINISHED;
+
+        String logEntry = winnerName + " wins the game!";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        sessionManager.sendToPlayers(gameData.orderedPlayerIds, new GameOverMessage(winnerId, winnerName));
+
+        gameRegistry.remove(gameData.id);
+
+        log.info("Game {} - {} wins!", gameData.id, winnerName);
+    }
+
     void resetEndOfTurnModifiers(GameData gameData) {
         boolean anyReset = false;
         for (UUID playerId : gameData.orderedPlayerIds) {

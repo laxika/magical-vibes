@@ -151,6 +151,7 @@ import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
 import com.github.laxika.magicalvibes.cards.m.MindBend;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.cards.m.Mobilization;
+import com.github.laxika.magicalvibes.cards.m.MortalCombat;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
@@ -304,6 +305,7 @@ public enum CardSet {
             new CardPrinting("10E", "157", Megrim::new),
             new CardPrinting("10E", "158", MidnightRitual::new),
             new CardPrinting("10E", "159", MindRot::new),
+            new CardPrinting("10E", "160", MortalCombat::new),
             new CardPrinting("10E", "15", FieldMarshal::new),
             new CardPrinting("10E", "16", GhostWarden::new),
             new CardPrinting("10E", "17", GloriousAnthem::new),

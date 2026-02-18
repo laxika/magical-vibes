@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringUntapStepEff
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -93,6 +95,30 @@ public class TurnProgressionService {
                             List.of(may.wrapped()),
                             perm.getCard().getName() + " — " + may.prompt()
                     ));
+                } else if (effect instanceof WinGameIfCreaturesInGraveyardEffect winEffect) {
+                    // Intervening-if: only trigger if condition is met
+                    List<Card> graveyard = gameData.playerGraveyards.get(activePlayerId);
+                    long creatureCount = 0;
+                    if (graveyard != null) {
+                        creatureCount = graveyard.stream()
+                                .filter(c -> c.getType() == CardType.CREATURE
+                                        || c.getAdditionalTypes().contains(CardType.CREATURE))
+                                .count();
+                    }
+                    if (creatureCount >= winEffect.threshold()) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                activePlayerId,
+                                perm.getCard().getName() + "'s upkeep ability",
+                                new ArrayList<>(List.of(effect))
+                        ));
+
+                        String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: {} creatures in graveyard)",
+                                gameData.id, perm.getCard().getName(), creatureCount);
+                    }
                 } else {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
