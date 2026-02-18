@@ -182,6 +182,43 @@ public class PermanentChoiceHandlerService {
             }
 
             turnProgressionService.resolveAutoPass(gameData);
+        } else if (context instanceof PermanentChoiceContext.DiscardTriggerAnyTarget dtt) {
+            // Discard self-trigger targeting any target (creature or player)
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    dtt.discardedCard(),
+                    dtt.controllerId(),
+                    dtt.discardedCard().getName() + "'s ability",
+                    new ArrayList<>(dtt.effects())
+            );
+            entry.setTargetPermanentId(permanentId);
+            gameData.stack.add(entry);
+
+            String targetName = getTargetDisplayName(gameData, permanentId);
+            String logEntry = dtt.discardedCard().getName() + "'s discard trigger targets " + targetName + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} discard trigger targets {}", gameData.id, dtt.discardedCard().getName(), targetName);
+
+            // Process more pending discard self triggers
+            if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
+                gameHelper.processNextDiscardSelfTrigger(gameData);
+                return;
+            }
+
+            // Process pending death trigger targets
+            if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
+                gameHelper.processNextDeathTriggerTarget(gameData);
+                return;
+            }
+
+            // Process pending may abilities
+            if (!gameData.pendingMayAbilities.isEmpty()) {
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+
+            gameData.priorityPassedBy.clear();
+            turnProgressionService.resolveAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.DeathTriggerTarget dtt) {
             Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
             if (target != null) {

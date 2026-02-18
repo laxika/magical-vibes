@@ -109,6 +109,8 @@ public class GameData {
     public final Set<UUID> enchantmentDependentStolenCreatures = ConcurrentHashMap.newKeySet();
     public boolean endTurnRequested;
     public final Deque<PermanentChoiceContext.DeathTriggerTarget> pendingDeathTriggerTargets = new ArrayDeque<>();
+    public final Deque<PermanentChoiceContext.DiscardTriggerAnyTarget> pendingDiscardSelfTriggers = new ArrayDeque<>();
+    public boolean discardCausedByOpponent;
     public final Deque<UUID> extraTurns = new ArrayDeque<>();
     public int lastBroadcastedLogSize = 0;
 

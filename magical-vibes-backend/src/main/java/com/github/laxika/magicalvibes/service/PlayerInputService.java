@@ -60,6 +60,18 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a permanent", gameData.id, playerName);
     }
 
+    public void beginAnyTargetChoice(GameData gameData, UUID playerId, List<UUID> validPermanentIds, List<UUID> validPlayerIds, String prompt) {
+        Set<UUID> allValidIds = new HashSet<>(validPermanentIds);
+        allValidIds.addAll(validPlayerIds);
+        gameData.awaitingInput = AwaitingInput.PERMANENT_CHOICE;
+        gameData.awaitingPermanentChoicePlayerId = playerId;
+        gameData.awaitingPermanentChoiceValidIds = allValidIds;
+        sessionManager.sendToPlayer(playerId, new ChoosePermanentMessage(validPermanentIds, validPlayerIds, prompt));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose any target", gameData.id, playerName);
+    }
+
     void beginGraveyardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         gameData.awaitingInput = AwaitingInput.GRAVEYARD_CHOICE;
         gameData.awaitingGraveyardChoicePlayerId = playerId;

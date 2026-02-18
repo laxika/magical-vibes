@@ -886,7 +886,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   onPlayerBadgeClick(playerIndex: number): void {
     const playerId = this.getPlayerId(playerIndex);
-    if (this.choice.choosingPermanent && this.choice.choosablePermanentIds().has(playerId)) {
+    if (this.choice.choosingPermanent && (this.choice.choosablePermanentIds().has(playerId) || this.choice.choosablePlayerIds().has(playerId))) {
       this.choice.choosePermanent(playerId);
     } else if (this.choice.multiTargeting && this.choice.multiTargetForPlayer) {
       if (this.choice.isMultiTargetSelected(playerId)) {

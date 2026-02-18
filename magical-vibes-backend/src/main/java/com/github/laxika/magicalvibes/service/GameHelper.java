@@ -869,7 +869,7 @@ public class GameHelper {
         playerInputService.processNextMayAbility(gameData);
     }
 
-    public void checkDiscardTriggers(GameData gameData, UUID discardingPlayerId) {
+    public void checkDiscardTriggers(GameData gameData, UUID discardingPlayerId, Card discardedCard) {
         boolean anyTriggered = false;
 
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -905,6 +905,52 @@ public class GameHelper {
 
         if (anyTriggered) {
             checkWinCondition(gameData);
+        }
+
+        // Check the discarded card itself for self-discard triggers (e.g. Guerrilla Tactics)
+        if (discardedCard != null && gameData.discardCausedByOpponent) {
+            List<CardEffect> selfTriggers = discardedCard.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT);
+            if (!selfTriggers.isEmpty()) {
+                gameData.pendingDiscardSelfTriggers.add(new PermanentChoiceContext.DiscardTriggerAnyTarget(
+                        discardedCard, discardingPlayerId, new ArrayList<>(selfTriggers)
+                ));
+                String logEntry = discardedCard.getName() + " was discarded by an opponent's effect — its ability triggers!";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} self-discard trigger queued", gameData.id, discardedCard.getName());
+            }
+        }
+    }
+
+    public void processNextDiscardSelfTrigger(GameData gameData) {
+        while (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
+            PermanentChoiceContext.DiscardTriggerAnyTarget pending = gameData.pendingDiscardSelfTriggers.peekFirst();
+
+            // Collect valid targets: all creatures and planeswalkers on all battlefields + all players
+            List<UUID> validPermanentTargets = new ArrayList<>();
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) continue;
+                for (Permanent p : battlefield) {
+                    if (gameQueryService.isCreature(gameData, p)
+                            || p.getCard().getType() == CardType.PLANESWALKER) {
+                        validPermanentTargets.add(p.getId());
+                    }
+                }
+            }
+
+            List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
+
+            // There are always valid targets (at least the players)
+            gameData.pendingDiscardSelfTriggers.removeFirst();
+            gameData.permanentChoiceContext = pending;
+            playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
+                    validPermanentTargets, validPlayerTargets,
+                    pending.discardedCard().getName() + "'s ability — Choose any target.");
+
+            String logEntry = pending.discardedCard().getName() + "'s discard trigger — choose a target.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} discard trigger awaiting target selection", gameData.id, pending.discardedCard().getName());
+            return;
         }
     }
 

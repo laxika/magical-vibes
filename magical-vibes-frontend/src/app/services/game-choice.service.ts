@@ -54,6 +54,7 @@ export class GameChoiceService {
   // --- Permanent choice state ---
   choosingPermanent = false;
   choosablePermanentIds = signal(new Set<string>());
+  choosablePlayerIds = signal(new Set<string>());
   permanentChoicePrompt = '';
 
   // --- Multi-permanent state ---
@@ -182,6 +183,7 @@ export class GameChoiceService {
   handleChoosePermanent(msg: ChoosePermanentNotification): void {
     this.choosingPermanent = true;
     this.choosablePermanentIds.set(new Set(msg.permanentIds));
+    this.choosablePlayerIds.set(new Set(msg.playerIds ?? []));
     this.permanentChoicePrompt = msg.prompt;
   }
 
@@ -305,13 +307,14 @@ export class GameChoiceService {
 
   choosePermanent(permanentId: string): void {
     if (!this.choosingPermanent) return;
-    if (!this.choosablePermanentIds().has(permanentId)) return;
+    if (!this.choosablePermanentIds().has(permanentId) && !this.choosablePlayerIds().has(permanentId)) return;
     this.websocketService.send({
       type: MessageType.PERMANENT_CHOSEN,
       permanentId: permanentId
     });
     this.choosingPermanent = false;
     this.choosablePermanentIds.set(new Set());
+    this.choosablePlayerIds.set(new Set());
     this.permanentChoicePrompt = '';
   }
 

@@ -59,15 +59,24 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
         registry.register(DrawCardEffect.class,
                 (gd, entry, effect) -> resolveDrawCards(gd, entry.getControllerId(), ((DrawCardEffect) effect).amount()));
         registry.register(DiscardCardEffect.class,
-                (gd, entry, effect) -> resolveDiscardCards(gd, entry.getControllerId(), ((DiscardCardEffect) effect).amount()));
+                (gd, entry, effect) -> {
+                    gd.discardCausedByOpponent = false;
+                    resolveDiscardCards(gd, entry.getControllerId(), ((DiscardCardEffect) effect).amount());
+                });
         registry.register(TargetPlayerDiscardsEffect.class,
-                (gd, entry, effect) -> resolveDiscardCards(gd, entry.getTargetPermanentId(), ((TargetPlayerDiscardsEffect) effect).amount()));
+                (gd, entry, effect) -> {
+                    gd.discardCausedByOpponent = true;
+                    resolveDiscardCards(gd, entry.getTargetPermanentId(), ((TargetPlayerDiscardsEffect) effect).amount());
+                });
         registry.register(LookAtHandEffect.class,
                 (gd, entry, effect) -> resolveLookAtHand(gd, entry));
         registry.register(ChooseCardsFromTargetHandToTopOfLibraryEffect.class,
                 (gd, entry, effect) -> resolveChooseCardsFromTargetHandToTopOfLibrary(gd, entry, (ChooseCardsFromTargetHandToTopOfLibraryEffect) effect));
         registry.register(ChooseCardFromTargetHandToDiscardEffect.class,
-                (gd, entry, effect) -> resolveChooseCardFromTargetHandToDiscard(gd, entry, (ChooseCardFromTargetHandToDiscardEffect) effect));
+                (gd, entry, effect) -> {
+                    gd.discardCausedByOpponent = true;
+                    resolveChooseCardFromTargetHandToDiscard(gd, entry, (ChooseCardFromTargetHandToDiscardEffect) effect);
+                });
         registry.register(ChangeColorTextEffect.class,
                 (gd, entry, effect) -> resolveChangeColorText(gd, entry));
         registry.register(RedirectDrawsEffect.class,
@@ -81,7 +90,10 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
         registry.register(DrawCardForTargetPlayerEffect.class,
                 (gd, entry, effect) -> resolveDrawCardForTargetPlayer(gd, entry, (DrawCardForTargetPlayerEffect) effect));
         registry.register(RandomDiscardEffect.class,
-                (gd, entry, effect) -> resolveRandomDiscardCards(gd, entry.getControllerId(), entry.getCard().getName(), ((RandomDiscardEffect) effect).amount()));
+                (gd, entry, effect) -> {
+                    gd.discardCausedByOpponent = false;
+                    resolveRandomDiscardCards(gd, entry.getControllerId(), entry.getCard().getName(), ((RandomDiscardEffect) effect).amount());
+                });
     }
 
     private void resolveOpponentMayPlayCreature(GameData gameData, UUID controllerId) {
@@ -146,7 +158,12 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
             String logEntry = playerName + " discards " + discarded.getName() + " at random.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
-            gameHelper.checkDiscardTriggers(gameData, playerId);
+            gameHelper.checkDiscardTriggers(gameData, playerId, discarded);
+        }
+
+        // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
+        if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
+            gameHelper.processNextDiscardSelfTrigger(gameData);
         }
     }
 

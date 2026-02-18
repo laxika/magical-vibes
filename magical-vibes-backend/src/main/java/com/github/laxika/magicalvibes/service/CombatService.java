@@ -885,6 +885,7 @@ public class CombatService {
                         String logEntry = creature.getCard().getName() + "'s ability triggers, but " + gameData.playerIdToName.get(defenderId) + " has no cards to discard.";
                         gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     } else {
+                        gameData.discardCausedByOpponent = true;
                         for (int i = 0; i < randomDiscardEffect.amount(); i++) {
                             List<Card> currentHand = gameData.playerHands.get(defenderId);
                             if (currentHand.isEmpty()) break;
@@ -894,7 +895,7 @@ public class CombatService {
                             String logEntry = creature.getCard().getName() + "'s ability triggers — " + gameData.playerIdToName.get(defenderId) + " discards " + discarded.getName() + " at random.";
                             gameBroadcastService.logAndBroadcast(gameData, logEntry);
                             log.info("Game {} - {} triggers random discard: {} discards {}", gameData.id, creature.getCard().getName(), gameData.playerIdToName.get(defenderId), discarded.getName());
-                            gameHelper.checkDiscardTriggers(gameData, defenderId);
+                            gameHelper.checkDiscardTriggers(gameData, defenderId, discarded);
                         }
                     }
                 } else if (effect instanceof ReturnPermanentsOnCombatDamageToPlayerEffect) {

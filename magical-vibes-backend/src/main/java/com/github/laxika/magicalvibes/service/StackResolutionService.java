@@ -59,6 +59,13 @@ public class StackResolutionService {
         // Check SBA after resolution — creatures may have 0 toughness from effects (e.g. -1/-1)
         gameHelper.performStateBasedActions(gameData);
 
+        if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
+            gameHelper.processNextDiscardSelfTrigger(gameData);
+            if (gameData.awaitingInput != null) {
+                return;
+            }
+        }
+
         if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
             gameHelper.processNextDeathTriggerTarget(gameData);
             if (gameData.awaitingInput != null) {

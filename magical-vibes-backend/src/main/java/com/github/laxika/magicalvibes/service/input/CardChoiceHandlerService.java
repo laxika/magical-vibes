@@ -101,7 +101,7 @@ public class CardChoiceHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} discards {}", gameData.id, player.getUsername(), card.getName());
 
-        gameHelper.checkDiscardTriggers(gameData, playerId);
+        gameHelper.checkDiscardTriggers(gameData, playerId, card);
 
         gameData.awaitingDiscardRemainingCount--;
 
@@ -112,6 +112,13 @@ public class CardChoiceHandlerService {
             gameData.awaitingCardChoicePlayerId = null;
             gameData.awaitingCardChoiceValidIndices = null;
             gameData.awaitingDiscardRemainingCount = 0;
+
+            // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
+            if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
+                gameHelper.processNextDiscardSelfTrigger(gameData);
+                return;
+            }
+
             turnProgressionService.resolveAutoPass(gameData);
         }
     }
@@ -171,8 +178,8 @@ public class CardChoiceHandlerService {
                 gameBroadcastService.logAndBroadcast(gameData, discardLog);
                 log.info("Game {} - {} discards {} from {}'s hand", gameData.id, player.getUsername(), cardNames, targetName);
 
-                for (int i = 0; i < chosenCards.size(); i++) {
-                    gameHelper.checkDiscardTriggers(gameData, targetPlayerId);
+                for (Card discarded : chosenCards) {
+                    gameHelper.checkDiscardTriggers(gameData, targetPlayerId, discarded);
                 }
             } else {
                 // Put chosen cards on top of library
@@ -193,6 +200,12 @@ public class CardChoiceHandlerService {
             gameData.awaitingRevealedHandChoiceRemainingCount = 0;
             gameData.awaitingRevealedHandChoiceDiscardMode = false;
             gameData.awaitingRevealedHandChosenCards.clear();
+
+            // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
+            if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
+                gameHelper.processNextDiscardSelfTrigger(gameData);
+                return;
+            }
 
             turnProgressionService.resolveAutoPass(gameData);
         }

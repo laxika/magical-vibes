@@ -305,6 +305,11 @@ public class TurnProgressionService {
     }
 
     public void resolveAutoPass(GameData gameData) {
+        // Process any pending discard self-triggers before death triggers
+        if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
+            gameHelper.processNextDiscardSelfTrigger(gameData);
+        }
+
         // Process any pending targeted death triggers before auto-passing
         if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
             gameHelper.processNextDeathTriggerTarget(gameData);

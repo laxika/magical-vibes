@@ -259,6 +259,7 @@ public class MayAbilityHandlerService {
 
             if (!validIndices.isEmpty()) {
                 String typeName = effect.requiredType().name().toLowerCase();
+                gameData.discardCausedByOpponent = false;
                 gameData.awaitingDiscardRemainingCount = 1;
                 playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
                         "Choose a " + typeName + " card to discard.");

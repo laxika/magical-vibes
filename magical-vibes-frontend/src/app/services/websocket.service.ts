@@ -315,6 +315,7 @@ export interface MayAbilityNotification {
 export interface ChoosePermanentNotification {
   type: MessageType;
   permanentIds: string[];
+  playerIds?: string[];
   prompt: string;
 }
 

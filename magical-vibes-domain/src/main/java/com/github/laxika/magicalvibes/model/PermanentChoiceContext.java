@@ -20,4 +20,6 @@ public sealed interface PermanentChoiceContext {
     record SacrificeCreature(UUID sacrificingPlayerId) implements PermanentChoiceContext {}
 
     record DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
+
+    record DiscardTriggerAnyTarget(Card discardedCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
 }
