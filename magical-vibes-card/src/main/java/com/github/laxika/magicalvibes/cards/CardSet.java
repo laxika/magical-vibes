@@ -133,6 +133,7 @@ import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
 import com.github.laxika.magicalvibes.cards.i.IcatianPriest;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
 import com.github.laxika.magicalvibes.cards.j.Juggernaut;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -464,6 +465,7 @@ public enum CardSet {
             new CardPrinting("10E", "210", GoblinSkyRaider::new),
             new CardPrinting("10E", "211", GuerrillaTactics::new),
             new CardPrinting("10E", "212", HillGiant::new),
+            new CardPrinting("10E", "213", Incinerate::new),
             new CardPrinting("10E", "376", Mountain::new),
             new CardPrinting("10E", "377", Mountain::new),
             new CardPrinting("10E", "378", Mountain::new),

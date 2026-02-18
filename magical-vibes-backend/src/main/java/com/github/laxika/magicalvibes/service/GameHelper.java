@@ -257,7 +257,7 @@ public class GameHelper {
             for (Permanent p : battlefield) {
                 if (p.getPowerModifier() != 0 || p.getToughnessModifier() != 0 || !p.getGrantedKeywords().isEmpty()
                         || p.getDamagePreventionShield() != 0 || p.getRegenerationShield() != 0 || p.isCantBeBlocked()
-                        || p.isAnimatedUntilEndOfTurn()) {
+                        || p.isAnimatedUntilEndOfTurn() || p.isCantRegenerateThisTurn()) {
                     p.resetModifiers();
                     p.setDamagePreventionShield(0);
                     p.setRegenerationShield(0);
@@ -993,6 +993,9 @@ public class GameHelper {
     // ===== Regeneration =====
 
     boolean tryRegenerate(GameData gameData, Permanent perm) {
+        if (perm.isCantRegenerateThisTurn()) {
+            return false;
+        }
         if (perm.getRegenerationShield() > 0) {
             perm.setRegenerationShield(perm.getRegenerationShield() - 1);
             perm.tap();

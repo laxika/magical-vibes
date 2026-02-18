@@ -488,6 +488,11 @@ public class DamageResolutionService implements EffectHandlerProvider {
         } else {
             if (!gameQueryService.hasProtectionFrom(gameData, targetPermanent, entry.getCard().getColor())) {
                 int effectiveDamage = gameHelper.applyCreaturePreventionShield(gameData, targetPermanent, damage);
+
+                if (effect.cantRegenerate() && effectiveDamage > 0) {
+                    targetPermanent.setCantRegenerateThisTurn(true);
+                }
+
                 String logEntry = cardName + " deals " + effectiveDamage + " damage to " + targetPermanent.getCard().getName() + ".";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} deals {} damage to {}", gameData.id, cardName, effectiveDamage, targetPermanent.getCard().getName());
