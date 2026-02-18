@@ -72,7 +72,8 @@ public enum CardSubtype {
     DEMON("Demon"),
     DRAGON("Dragon"),
     JUGGERNAUT("Juggernaut"),
-    EQUIPMENT("Equipment");
+    EQUIPMENT("Equipment"),
+    LHURGOYF("Lhurgoyf");
 
     @Getter
     private final String displayName;

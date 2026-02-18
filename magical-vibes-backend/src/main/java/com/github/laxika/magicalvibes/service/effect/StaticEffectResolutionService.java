@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -19,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffe
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnTappedCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -42,6 +44,8 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         registry.register(GrantKeywordToOwnTappedCreaturesEffect.class, this::resolveGrantKeywordToOwnTappedCreatures);
         registry.register(GrantActivatedAbilityToEnchantedCreatureEffect.class, this::resolveGrantActivatedAbilityToEnchantedCreature);
         registry.register(BoostBySharedCreatureTypeEffect.class, this::resolveBoostBySharedCreatureType);
+
+        registry.registerSelfHandler(PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect.class, this::resolvePowerToughnessEqualToCreatureCardsInAllGraveyards);
     }
 
     private void resolveAnimateNoncreatureArtifacts(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
@@ -177,6 +181,22 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
         return hasAnimateArtifacts && (permanent.getCard().getType() == CardType.ARTIFACT
                 || permanent.getCard().getAdditionalTypes().contains(CardType.ARTIFACT));
+    }
+
+    private void resolvePowerToughnessEqualToCreatureCardsInAllGraveyards(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        GameData gameData = context.gameData();
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card card : graveyard) {
+                if (card.getType() == CardType.CREATURE || card.getAdditionalTypes().contains(CardType.CREATURE)) {
+                    count++;
+                }
+            }
+        }
+        accumulator.addPower(count);
+        accumulator.addToughness(count);
     }
 
     private boolean hasAnimateArtifactEffect(GameData gameData) {

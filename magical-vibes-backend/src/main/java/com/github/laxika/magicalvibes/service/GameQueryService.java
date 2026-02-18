@@ -147,6 +147,15 @@ public class GameQueryService {
                 }
             }
         }
+        // Handle characteristic-defining abilities (self-referencing static effects like */* P/T)
+        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            StaticEffectHandler selfHandler = staticEffectRegistry.getSelfHandler(effect);
+            if (selfHandler != null) {
+                StaticEffectContext selfContext = new StaticEffectContext(target, target, true, gameData);
+                selfHandler.apply(selfContext, effect, accumulator);
+            }
+        }
+
         boolean isSelfAnimated = target.isAnimatedUntilEndOfTurn();
         if (!isNaturalCreature && !accumulator.isAnimatedCreature() && !isSelfAnimated) return StaticBonus.NONE;
 
