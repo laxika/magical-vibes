@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
 import lombok.RequiredArgsConstructor;
@@ -158,6 +159,44 @@ public class TurnProgressionService {
                     String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} each-upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                }
+            }
+        }
+
+        // Check all battlefields for OPPONENT_UPKEEP_TRIGGERED effects (only opponents of the active player)
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(activePlayerId)) continue; // Skip the active player's own permanents
+
+            List<Permanent> playerBattlefield = gameData.playerBattlefields.get(playerId);
+            if (playerBattlefield == null) continue;
+
+            for (Permanent perm : playerBattlefield) {
+                List<CardEffect> opponentUpkeepEffects = perm.getCard().getEffects(EffectSlot.OPPONENT_UPKEEP_TRIGGERED);
+                if (opponentUpkeepEffects == null || opponentUpkeepEffects.isEmpty()) continue;
+
+                for (CardEffect effect : opponentUpkeepEffects) {
+                    // Intervening-if: check condition at trigger time
+                    if (effect instanceof DealDamageIfFewCardsInHandEffect fewCardsEffect) {
+                        List<Card> hand = gameData.playerHands.get(activePlayerId);
+                        int handSize = hand != null ? hand.size() : 0;
+                        if (handSize > fewCardsEffect.maxCards()) {
+                            continue; // Condition not met, don't trigger
+                        }
+                    }
+
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            playerId,
+                            perm.getCard().getName() + "'s upkeep ability",
+                            new ArrayList<>(List.of(effect)),
+                            activePlayerId,
+                            (UUID) null
+                    ));
+
+                    String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} opponent-upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
                 }
             }
         }

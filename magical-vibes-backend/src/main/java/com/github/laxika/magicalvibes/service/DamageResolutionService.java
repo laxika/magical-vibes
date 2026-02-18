@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesAndPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -57,6 +58,8 @@ public class DamageResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveDealDamageToTargetPlayer(gd, entry, (DealDamageToTargetPlayerEffect) effect));
         registry.register(DealOrderedDamageToAnyTargetsEffect.class,
                 (gd, entry, effect) -> resolveDealOrderedDamageToAnyTargets(gd, entry, (DealOrderedDamageToAnyTargetsEffect) effect));
+        registry.register(DealDamageIfFewCardsInHandEffect.class,
+                (gd, entry, effect) -> resolveDealDamageIfFewCardsInHand(gd, entry, (DealDamageIfFewCardsInHandEffect) effect));
     }
 
     void resolveDealXDamageToTargetCreature(GameData gameData, StackEntry entry) {
@@ -435,6 +438,47 @@ public class DamageResolutionService implements EffectHandlerProvider {
         if (!gameData.playerIds.contains(targetId)) {
             return;
         }
+
+        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+            String logEntry = cardName + "'s damage is prevented.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else {
+            if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, targetId, entry.getCard().getColor())) {
+                int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, targetId, damage);
+                effectiveDamage = gameHelper.redirectPlayerDamageToEnchantedCreature(gameData, targetId, effectiveDamage, cardName);
+                int currentLife = gameData.playerLifeTotals.getOrDefault(targetId, 20);
+                gameData.playerLifeTotals.put(targetId, currentLife - effectiveDamage);
+
+                if (effectiveDamage > 0) {
+                    String playerName = gameData.playerIdToName.get(targetId);
+                    String logEntry = playerName + " takes " + effectiveDamage + " damage from " + cardName + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                }
+            }
+        }
+
+        gameHelper.checkWinCondition(gameData);
+    }
+
+    void resolveDealDamageIfFewCardsInHand(GameData gameData, StackEntry entry, DealDamageIfFewCardsInHandEffect effect) {
+        UUID targetId = entry.getTargetPermanentId();
+        String cardName = entry.getCard().getName();
+
+        if (!gameData.playerIds.contains(targetId)) {
+            return;
+        }
+
+        // Intervening-if: re-check condition at resolution time
+        List<Card> hand = gameData.playerHands.get(targetId);
+        int handSize = hand != null ? hand.size() : 0;
+        if (handSize > effect.maxCards()) {
+            String playerName = gameData.playerIdToName.get(targetId);
+            String logEntry = cardName + "'s ability does nothing — " + playerName + " has more than " + effect.maxCards() + " cards in hand.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
 
         if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
             String logEntry = cardName + "'s damage is prevented.";
