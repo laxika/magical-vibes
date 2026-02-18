@@ -184,7 +184,7 @@ public class AiDecisionEngine {
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean isActivePlayer = aiPlayer.getId().equals(gameData.activePlayerId);
 
-        if (isMainPhase && isActivePlayer) {
+        if (isMainPhase && isActivePlayer && gameData.stack.isEmpty()) {
             // Try to play a land
             if (tryPlayLand(gameData)) {
                 return;

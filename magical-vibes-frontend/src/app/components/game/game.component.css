@@ -1471,9 +1471,12 @@
 }
 
 .stack-entry-wrapper.spell-targetable {
+  cursor: pointer;
+}
+
+.stack-entry-wrapper.spell-targetable .card {
   outline: 3px dashed #e74c3c;
   box-shadow: 0 0 12px rgba(231, 76, 60, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5);
-  cursor: pointer;
   animation: spell-target-pulse 1.5s ease-in-out infinite;
 }
 
