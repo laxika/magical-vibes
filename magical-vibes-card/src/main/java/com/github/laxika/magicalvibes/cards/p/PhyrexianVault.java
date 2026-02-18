@@ -1,0 +1,24 @@
+package com.github.laxika.magicalvibes.cards.p;
+
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.filter.CreatureYouControlTargetFilter;
+
+import java.util.List;
+
+public class PhyrexianVault extends Card {
+
+    public PhyrexianVault() {
+        // {2}, {T}, Sacrifice a creature: Draw a card.
+        addActivatedAbility(new ActivatedAbility(
+                true,
+                "{2}",
+                List.of(new SacrificeCreatureCost(), new DrawCardEffect()),
+                true,
+                "{2}, {T}, Sacrifice a creature: Draw a card.",
+                new CreatureYouControlTargetFilter()
+        ));
+    }
+}

@@ -174,6 +174,7 @@ import com.github.laxika.magicalvibes.cards.p.Pariah;
 import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.cards.p.Persuasion;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianVault;
 import com.github.laxika.magicalvibes.cards.p.Plagiarize;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.Reminisce;
@@ -278,6 +279,7 @@ public enum CardSet {
             new CardPrinting("10E", "334", Millstone::new),
             new CardPrinting("10E", "335", MindStone::new),
             new CardPrinting("10E", "336", Ornithopter::new),
+            new CardPrinting("10E", "337", PhyrexianVault::new),
             new CardPrinting("10E", "341", RodOfRuin::new),
             new CardPrinting("10E", "6", AuraOfSilence::new),
             new CardPrinting("10E", "7", AvenCloudchaser::new),
