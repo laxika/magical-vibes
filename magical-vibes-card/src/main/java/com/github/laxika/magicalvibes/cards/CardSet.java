@@ -143,6 +143,7 @@ import com.github.laxika.magicalvibes.cards.m.MassOfGhouls;
 import com.github.laxika.magicalvibes.cards.m.Megrim;
 import com.github.laxika.magicalvibes.cards.m.MerfolkLooter;
 import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
+import com.github.laxika.magicalvibes.cards.m.MidnightRitual;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
 import com.github.laxika.magicalvibes.cards.m.MindBend;
 import com.github.laxika.magicalvibes.cards.m.Mobilization;
@@ -296,6 +297,7 @@ public enum CardSet {
             new CardPrinting("10E", "155", LordOfTheUndead::new),
             new CardPrinting("10E", "156", MassOfGhouls::new),
             new CardPrinting("10E", "157", Megrim::new),
+            new CardPrinting("10E", "158", MidnightRitual::new),
             new CardPrinting("10E", "15", FieldMarshal::new),
             new CardPrinting("10E", "16", GhostWarden::new),
             new CardPrinting("10E", "17", GloriousAnthem::new),

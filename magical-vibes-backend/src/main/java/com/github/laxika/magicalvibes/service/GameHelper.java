@@ -605,6 +605,30 @@ public class GameHelper {
         }
     }
 
+    void handleGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                       StackEntryType entryType, int xValue) {
+        // Collect creature cards from controller's own graveyard
+        List<UUID> creatureCardIds = new ArrayList<>();
+        List<CardView> cardViews = new ArrayList<>();
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        if (graveyard != null) {
+            for (Card graveyardCard : graveyard) {
+                if (graveyardCard.getType() == CardType.CREATURE) {
+                    creatureCardIds.add(graveyardCard.getId());
+                    cardViews.add(cardViewFactory.create(graveyardCard));
+                }
+            }
+        }
+
+        gameData.pendingGraveyardTargetCard = card;
+        gameData.pendingGraveyardTargetControllerId = controllerId;
+        gameData.pendingGraveyardTargetEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        gameData.pendingGraveyardTargetEntryType = entryType;
+        gameData.pendingGraveyardTargetXValue = xValue;
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, creatureCardIds, cardViews, xValue,
+                "Choose " + xValue + " target creature card" + (xValue != 1 ? "s" : "") + " from your graveyard to exile.");
+    }
+
     void checkAllyCreatureEntersTriggers(GameData gameData, UUID controllerId, Card enteringCreature) {
         if (enteringCreature.getToughness() == null) return;
 
@@ -789,7 +813,7 @@ public class GameHelper {
 
     // ===== Triggers =====
 
-    void checkSpellCastTriggers(GameData gameData, Card spellCard) {
+    public void checkSpellCastTriggers(GameData gameData, Card spellCard) {
         if (spellCard.getColor() == null) {
             return;
         }

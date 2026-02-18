@@ -396,11 +396,19 @@ export class GameChoiceService {
       const hasXCost = card.manaCost?.includes('{X}') ?? false;
 
       if (hasXCost) {
+        const baseCost = (card.manaCost ?? '').replace('{X}', '');
+        let base = 0;
+        const matches = baseCost.match(/\{([^}]+)\}/g) || [];
+        for (const m of matches) {
+          const inner = m.slice(1, -1);
+          const num = parseInt(inner);
+          base += isNaN(num) ? 1 : num;
+        }
         this.choosingXValue = true;
         this.xValueCardIndex = index;
         this.xValueCardName = card.name;
         this.xValueInput = 0;
-        this.xValueMaximum = this.totalManaFn() - 1; // subtract 1 for the {W} base cost
+        this.xValueMaximum = this.totalManaFn() - base;
         return;
       }
       if (card.needsSpellTarget) {

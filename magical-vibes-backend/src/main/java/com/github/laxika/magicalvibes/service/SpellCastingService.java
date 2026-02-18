@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.filter.SpellColorTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.SpellTypeTargetFilter;
 import lombok.RequiredArgsConstructor;
@@ -258,6 +259,18 @@ public class SpellCastingService {
             convokeContributions = contributions;
         }
 
+        // Validate graveyard targets for spells that target creature cards in graveyard
+        boolean needsGraveyardCreatureTargeting = card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(e -> e instanceof ExileCreaturesFromGraveyardAndCreateTokensEffect);
+        if (needsGraveyardCreatureTargeting && effectiveXValue > 0) {
+            long creatureCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                    .filter(c -> c.getType() == CardType.CREATURE)
+                    .count();
+            if (effectiveXValue > creatureCount) {
+                throw new IllegalStateException("Not enough creature cards in graveyard (need " + effectiveXValue + ", have " + creatureCount + ")");
+            }
+        }
+
         hand.remove(cardIndex);
 
         if (card.getType() == CardType.LAND) {
@@ -301,18 +314,31 @@ public class SpellCastingService {
             finishSpellCast(gameData, playerId, player, hand, card);
         } else if (card.getType() == CardType.SORCERY) {
             paySpellManaCost(gameData, playerId, card, effectiveXValue, convokeContributions);
-            if (!targetPermanentIds.isEmpty()) {
+            if (needsGraveyardCreatureTargeting && effectiveXValue > 0) {
+                // Prompt player to choose graveyard targets before putting spell on stack
+                gameHelper.handleGraveyardSpellTargeting(gameData, playerId, card,
+                        StackEntryType.SORCERY_SPELL, effectiveXValue);
+            } else if (needsGraveyardCreatureTargeting) {
+                // X=0: no targets needed, put spell on stack directly (resolves doing nothing)
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.SORCERY_SPELL, card, playerId, card.getName(),
+                        new ArrayList<>(card.getEffects(EffectSlot.SPELL)), 0, null,
+                        null, null, null, List.of(), List.of()
+                ));
+                finishSpellCast(gameData, playerId, player, hand, card);
+            } else if (!targetPermanentIds.isEmpty()) {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.SORCERY_SPELL, card, playerId, card.getName(),
                         new ArrayList<>(card.getEffects(EffectSlot.SPELL)), effectiveXValue, targetPermanentIds
                 ));
+                finishSpellCast(gameData, playerId, player, hand, card);
             } else {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.SORCERY_SPELL, card, playerId, card.getName(),
                         new ArrayList<>(card.getEffects(EffectSlot.SPELL)), effectiveXValue, targetPermanentId, null
                 ));
+                finishSpellCast(gameData, playerId, player, hand, card);
             }
-            finishSpellCast(gameData, playerId, player, hand, card);
         } else if (card.getType() == CardType.INSTANT) {
             paySpellManaCost(gameData, playerId, card, effectiveXValue, convokeContributions);
 

@@ -79,6 +79,8 @@ public class GameData {
     public Card pendingGraveyardTargetCard;
     public UUID pendingGraveyardTargetControllerId;
     public List<CardEffect> pendingGraveyardTargetEffects;
+    public StackEntryType pendingGraveyardTargetEntryType;
+    public int pendingGraveyardTargetXValue;
     public Card pendingCloneCard;
     public UUID pendingCloneControllerId;
     public UUID pendingCloneETBTargetId;

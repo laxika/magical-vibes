@@ -3,12 +3,15 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
@@ -55,6 +58,8 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveReturnArtifactOrCreatureFromAnyGraveyardToBattlefield(gd, entry));
         registry.register(ExileCardsFromGraveyardEffect.class,
                 (gd, entry, effect) -> resolveExileCardsFromGraveyard(gd, entry, (ExileCardsFromGraveyardEffect) effect));
+        registry.register(ExileCreaturesFromGraveyardAndCreateTokensEffect.class,
+                (gd, entry, effect) -> resolveExileCreaturesAndCreateTokens(gd, entry));
     }
 
     void resolveReturnAuraFromGraveyardToBattlefield(GameData gameData, StackEntry entry) {
@@ -218,6 +223,53 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
             String lifeLogEntry = playerName + " gains " + effect.lifeGain() + " life.";
             gameBroadcastService.logAndBroadcast(gameData, lifeLogEntry);
             log.info("Game {} - {} gains {} life", gameData.id, playerName, effect.lifeGain());
+        }
+    }
+
+    void resolveExileCreaturesAndCreateTokens(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        List<UUID> targetCardIds = entry.getTargetCardIds();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        int tokensToCreate = 0;
+        for (UUID cardId : targetCardIds) {
+            Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+            if (card != null) {
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    List<Card> graveyard = gameData.playerGraveyards.get(pid);
+                    if (graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
+                        gameData.playerExiledCards.get(pid).add(card);
+                        break;
+                    }
+                }
+                String exileLog = playerName + " exiles " + card.getName() + " from graveyard.";
+                gameBroadcastService.logAndBroadcast(gameData, exileLog);
+                tokensToCreate++;
+            }
+        }
+
+        for (int i = 0; i < tokensToCreate; i++) {
+            Card tokenCard = new Card();
+            tokenCard.setName("Zombie");
+            tokenCard.setType(CardType.CREATURE);
+            tokenCard.setManaCost("");
+            tokenCard.setColor(CardColor.BLACK);
+            tokenCard.setPower(2);
+            tokenCard.setToughness(2);
+            tokenCard.setSubtypes(List.of(CardSubtype.ZOMBIE));
+
+            Permanent tokenPermanent = new Permanent(tokenCard);
+            gameData.playerBattlefields.get(controllerId).add(tokenPermanent);
+
+            String tokenLog = "A 2/2 Zombie creature token enters the battlefield.";
+            gameBroadcastService.logAndBroadcast(gameData, tokenLog);
+
+            gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
+            if (gameData.awaitingInput == null) {
+                gameHelper.checkLegendRule(gameData, controllerId);
+            }
+
+            log.info("Game {} - Zombie token created for player {}", gameData.id, controllerId);
         }
     }
 }

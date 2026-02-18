@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -122,6 +123,13 @@ public class GraveyardChoiceHandlerService {
             throw new IllegalStateException("Too many cards selected: " + cardIds.size() + " > " + maxCount);
         }
 
+        // Spell targeting (e.g. Midnight Ritual) requires exactly X targets — "X target" is not "up to X target"
+        StackEntryType pendingEntryTypeCheck = gameData.pendingGraveyardTargetEntryType;
+        int pendingXValueCheck = gameData.pendingGraveyardTargetXValue;
+        if (pendingEntryTypeCheck != null && cardIds.size() != pendingXValueCheck) {
+            throw new IllegalStateException("Must choose exactly " + pendingXValueCheck + " targets, but chose " + cardIds.size());
+        }
+
         Set<UUID> uniqueIds = new HashSet<>(cardIds);
         if (uniqueIds.size() != cardIds.size()) {
             throw new IllegalStateException("Duplicate card IDs in selection");
@@ -133,10 +141,12 @@ public class GraveyardChoiceHandlerService {
             }
         }
 
-        // Retrieve the pending ETB info
+        // Retrieve the pending info
         Card pendingCard = gameData.pendingGraveyardTargetCard;
         UUID controllerId = gameData.pendingGraveyardTargetControllerId;
         List<CardEffect> pendingEffects = gameData.pendingGraveyardTargetEffects;
+        StackEntryType pendingEntryType = gameData.pendingGraveyardTargetEntryType;
+        int pendingXValue = gameData.pendingGraveyardTargetXValue;
 
         // Clear awaiting state
         gameData.awaitingInput = null;
@@ -146,32 +156,56 @@ public class GraveyardChoiceHandlerService {
         gameData.pendingGraveyardTargetCard = null;
         gameData.pendingGraveyardTargetControllerId = null;
         gameData.pendingGraveyardTargetEffects = null;
+        gameData.pendingGraveyardTargetEntryType = null;
+        gameData.pendingGraveyardTargetXValue = 0;
 
-        // Put the ETB ability on the stack with the chosen targets
-        gameData.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                pendingCard,
-                controllerId,
-                pendingCard.getName() + "'s ETB ability",
-                new ArrayList<>(pendingEffects),
-                new ArrayList<>(cardIds)
-        ));
-
-        if (cardIds.isEmpty()) {
-            String etbLog = pendingCard.getName() + "'s enter-the-battlefield ability triggers targeting no cards.";
-            gameBroadcastService.logAndBroadcast(gameData, etbLog);
-        } else {
-            List<String> targetNames = new ArrayList<>();
-            for (UUID cardId : cardIds) {
-                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
-                if (card != null) {
-                    targetNames.add(card.getName());
-                }
+        List<String> targetNames = new ArrayList<>();
+        for (UUID cardId : cardIds) {
+            Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+            if (card != null) {
+                targetNames.add(card.getName());
             }
-            String etbLog = pendingCard.getName() + "'s enter-the-battlefield ability triggers targeting " + String.join(", ", targetNames) + ".";
-            gameBroadcastService.logAndBroadcast(gameData, etbLog);
         }
-        log.info("Game {} - {} ETB ability pushed onto stack with {} graveyard targets", gameData.id, pendingCard.getName(), cardIds.size());
+
+        if (pendingEntryType != null) {
+            // Spell casting (e.g. Midnight Ritual) — put spell on stack with targets
+            gameData.stack.add(new StackEntry(
+                    pendingEntryType, pendingCard, controllerId, pendingCard.getName(),
+                    new ArrayList<>(pendingEffects), pendingXValue, null,
+                    null, Map.of(), null, new ArrayList<>(cardIds), List.of()
+            ));
+
+            gameData.spellsCastThisTurn.merge(controllerId, 1, Integer::sum);
+            gameData.priorityPassedBy.clear();
+
+            String castLog = gameData.playerIdToName.get(controllerId) + " casts " + pendingCard.getName()
+                    + " targeting " + String.join(", ", targetNames) + ".";
+            gameBroadcastService.logAndBroadcast(gameData, castLog);
+            log.info("Game {} - {} casts {} with {} graveyard targets", gameData.id, pendingCard.getName(),
+                    pendingCard.getName(), cardIds.size());
+
+            gameHelper.checkSpellCastTriggers(gameData, pendingCard);
+            gameBroadcastService.broadcastGameState(gameData);
+        } else {
+            // ETB ability — put triggered ability on stack with targets
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    pendingCard,
+                    controllerId,
+                    pendingCard.getName() + "'s ETB ability",
+                    new ArrayList<>(pendingEffects),
+                    new ArrayList<>(cardIds)
+            ));
+
+            if (cardIds.isEmpty()) {
+                String etbLog = pendingCard.getName() + "'s enter-the-battlefield ability triggers targeting no cards.";
+                gameBroadcastService.logAndBroadcast(gameData, etbLog);
+            } else {
+                String etbLog = pendingCard.getName() + "'s enter-the-battlefield ability triggers targeting " + String.join(", ", targetNames) + ".";
+                gameBroadcastService.logAndBroadcast(gameData, etbLog);
+            }
+            log.info("Game {} - {} ETB ability pushed onto stack with {} graveyard targets", gameData.id, pendingCard.getName(), cardIds.size());
+        }
 
         turnProgressionService.resolveAutoPass(gameData);
     }
