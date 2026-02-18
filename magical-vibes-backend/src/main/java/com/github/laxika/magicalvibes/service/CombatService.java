@@ -551,7 +551,7 @@ public class CombatService {
                 if (blkIndices.isEmpty()) {
                     // Unblocked first striker deals damage to player (or redirect target)
                     if (atkHasFS && !gameQueryService.isPreventedFromDealingDamage(gameData, atk)) {
-                        int power = gameQueryService.applyDamageMultiplier(gameData, gameQueryService.getEffectivePower(gameData, atk));
+                        int power = gameQueryService.applyDamageMultiplier(gameData, gameQueryService.getEffectiveCombatDamage(gameData, atk));
                         if (redirectTarget != null) {
                             damageRedirectedToGuard += power;
                         } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
@@ -563,7 +563,7 @@ public class CombatService {
                 } else {
                     // First strike attacker deals damage to blockers
                     if (atkHasFS && !gameQueryService.isPreventedFromDealingDamage(gameData, atk)) {
-                        int remaining = gameQueryService.getEffectivePower(gameData, atk);
+                        int remaining = gameQueryService.getEffectiveCombatDamage(gameData, atk);
                         for (int blkIdx : blkIndices) {
                             Permanent blk = defBf.get(blkIdx);
                             int dmg = Math.min(remaining, gameQueryService.getEffectiveToughness(gameData, blk));
@@ -592,7 +592,7 @@ public class CombatService {
                         if ((gameQueryService.hasKeyword(gameData, blk, Keyword.FIRST_STRIKE) || gameQueryService.hasKeyword(gameData, blk, Keyword.DOUBLE_STRIKE))
                                 && !gameQueryService.isPreventedFromDealingDamage(gameData, blk)
                                 && !gameQueryService.hasProtectionFrom(gameData, atk, blk.getCard().getColor())) {
-                            int actualDmg = gameQueryService.applyDamageMultiplier(gameData, gameQueryService.getEffectivePower(gameData, blk));
+                            int actualDmg = gameQueryService.applyDamageMultiplier(gameData, gameQueryService.getEffectiveCombatDamage(gameData, blk));
                             atkDamageTaken.merge(atkIdx, actualDmg, Integer::sum);
                             combatDamageDealt.merge(blk, actualDmg, Integer::sum);
                         }
@@ -638,7 +638,7 @@ public class CombatService {
             if (blkIndices.isEmpty()) {
                 // Unblocked regular attacker deals damage to player (or redirect target)
                 if (!atkSkipPhase2 && !gameQueryService.isPreventedFromDealingDamage(gameData, atk)) {
-                    int power = gameQueryService.applyDamageMultiplier(gameData, gameQueryService.getEffectivePower(gameData, atk));
+                    int power = gameQueryService.applyDamageMultiplier(gameData, gameQueryService.getEffectiveCombatDamage(gameData, atk));
                     if (redirectTarget != null) {
                         damageRedirectedToGuard += power;
                     } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
@@ -650,7 +650,7 @@ public class CombatService {
             } else {
                 // Attacker deals damage to surviving blockers (skip first-strike-only, allow double strike)
                 if (!atkSkipPhase2 && !gameQueryService.isPreventedFromDealingDamage(gameData, atk)) {
-                    int remaining = gameQueryService.getEffectivePower(gameData, atk);
+                    int remaining = gameQueryService.getEffectiveCombatDamage(gameData, atk);
                     for (int blkIdx : blkIndices) {
                         if (deadDefenderIndices.contains(blkIdx)) continue;
                         Permanent blk = defBf.get(blkIdx);
@@ -683,7 +683,7 @@ public class CombatService {
                             && !gameQueryService.hasKeyword(gameData, blk, Keyword.DOUBLE_STRIKE);
                     if (!blkSkipPhase2 && !gameQueryService.isPreventedFromDealingDamage(gameData, blk)
                             && !gameQueryService.hasProtectionFrom(gameData, atk, blk.getCard().getColor())) {
-                        int actualDmg = gameQueryService.applyDamageMultiplier(gameData, gameQueryService.getEffectivePower(gameData, blk));
+                        int actualDmg = gameQueryService.applyDamageMultiplier(gameData, gameQueryService.getEffectiveCombatDamage(gameData, blk));
                         atkDamageTaken.merge(atkIdx, actualDmg, Integer::sum);
                         combatDamageDealt.merge(blk, actualDmg, Integer::sum);
                     }

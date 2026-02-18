@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
+import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
@@ -126,6 +127,22 @@ public class GameQueryService {
 
     public int getEffectiveToughness(GameData gameData, Permanent permanent) {
         return permanent.getEffectiveToughness() + computeStaticBonus(gameData, permanent).toughness();
+    }
+
+    /**
+     * Returns the amount of combat damage this creature assigns.
+     * Normally equal to effective power, but some effects (e.g. Bark of Doran)
+     * cause a creature to assign damage equal to its toughness when toughness > power.
+     */
+    public int getEffectiveCombatDamage(GameData gameData, Permanent creature) {
+        int power = getEffectivePower(gameData, creature);
+        int toughness = getEffectiveToughness(gameData, creature);
+
+        if (toughness > power && hasAuraWithEffect(gameData, creature, AssignCombatDamageWithToughnessEffect.class)) {
+            return toughness;
+        }
+
+        return power;
     }
 
     StaticBonus computeStaticBonus(GameData gameData, Permanent target) {

@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.cards.a.AvenFisher;
 import com.github.laxika.magicalvibes.cards.a.AvenWindreader;
 import com.github.laxika.magicalvibes.cards.b.BallistaSquad;
 import com.github.laxika.magicalvibes.cards.b.Bandage;
+import com.github.laxika.magicalvibes.cards.b.BarkOfDoran;
 import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.b.BloodfireColossus;
 import com.github.laxika.magicalvibes.cards.b.BogardanFirefiend;
@@ -497,7 +498,8 @@ public enum CardSet {
             new CardPrinting("ECL", "2", RooftopPercher::new),
             new CardPrinting("ECL", "3", AdeptWatershaper::new),
             new CardPrinting("ECL", "4", AjaniOutlandChaperone::new),
-            new CardPrinting("ECL", "5", AppealToEirdu::new)
+            new CardPrinting("ECL", "5", AppealToEirdu::new),
+            new CardPrinting("ECL", "6", BarkOfDoran::new)
     ));
 
     private static final Map<String, String> setNameRegistry = new ConcurrentHashMap<>();

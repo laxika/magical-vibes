@@ -317,6 +317,10 @@ public class GameService {
         return gameQueryService.getEffectiveToughness(gameData, permanent);
     }
 
+    public int getEffectiveCombatDamage(GameData gameData, Permanent permanent) {
+        return gameQueryService.getEffectiveCombatDamage(gameData, permanent);
+    }
+
     public boolean hasKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
         return gameQueryService.hasKeyword(gameData, permanent, keyword);
     }
