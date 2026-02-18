@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnTappedCreaturesEffect;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +35,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         registry.register(BoostEnchantedCreatureEffect.class, this::resolveBoostEnchantedCreature);
         registry.register(BoostEquippedCreatureEffect.class, this::resolveBoostEquippedCreature);
         registry.register(GrantKeywordToEnchantedCreatureEffect.class, this::resolveGrantKeywordToEnchantedCreature);
+        registry.register(GrantKeywordToEquippedCreatureEffect.class, this::resolveGrantKeywordToEquippedCreature);
         registry.register(BoostOwnCreaturesEffect.class, this::resolveBoostOwnCreatures);
         registry.register(BoostOtherCreaturesByColorEffect.class, this::resolveBoostOtherCreaturesByColor);
         registry.register(BoostNonColorCreaturesEffect.class, this::resolveBoostNonColorCreatures);
@@ -78,6 +80,14 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
 
     private void resolveGrantKeywordToEnchantedCreature(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantKeywordToEnchantedCreatureEffect) effect;
+        if (context.source().getAttachedTo() != null
+                && context.source().getAttachedTo().equals(context.target().getId())) {
+            accumulator.addKeyword(grant.keyword());
+        }
+    }
+
+    private void resolveGrantKeywordToEquippedCreature(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var grant = (GrantKeywordToEquippedCreatureEffect) effect;
         if (context.source().getAttachedTo() != null
                 && context.source().getAttachedTo().equals(context.target().getId())) {
             accumulator.addKeyword(grant.keyword());

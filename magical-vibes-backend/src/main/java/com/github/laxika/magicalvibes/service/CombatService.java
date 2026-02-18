@@ -687,6 +687,9 @@ public class CombatService {
             }
         }
 
+        // Process lifelink before removing dead creatures
+        processLifelink(gameData, combatDamageDealt);
+
         // Process life gain from damage triggers (e.g. Spirit Link) before removing dead creatures
         processGainLifeEqualToDamageDealt(gameData, combatDamageDealt);
 
@@ -762,6 +765,32 @@ public class CombatService {
         }
 
         return CombatResult.ADVANCE_AND_AUTO_PASS;
+    }
+
+    private void processLifelink(GameData gameData, Map<Permanent, Integer> combatDamageDealt) {
+        for (var entry : combatDamageDealt.entrySet()) {
+            Permanent creature = entry.getKey();
+            int damageDealt = entry.getValue();
+            if (damageDealt <= 0) continue;
+
+            if (!gameQueryService.hasKeyword(gameData, creature, Keyword.LIFELINK)) continue;
+
+            // Find the controller of this creature
+            UUID controllerId = null;
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+                if (bf != null && bf.contains(creature)) {
+                    controllerId = playerId;
+                    break;
+                }
+            }
+            if (controllerId == null) continue;
+
+            int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+            gameData.playerLifeTotals.put(controllerId, currentLife + damageDealt);
+            String logEntry = gameData.playerIdToName.get(controllerId) + " gains " + damageDealt + " life from lifelink.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        }
     }
 
     private void processGainLifeEqualToDamageDealt(GameData gameData, Map<Permanent, Integer> combatDamageDealt) {

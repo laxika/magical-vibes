@@ -14,5 +14,6 @@ public enum Keyword {
     FEAR,
     INDESTRUCTIBLE,
     CONVOKE,
-    TRAMPLE
+    TRAMPLE,
+    LIFELINK
 }
