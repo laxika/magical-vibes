@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
@@ -57,6 +58,8 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
                 (gd, entry, effect) -> resolveDrawCards(gd, entry.getControllerId(), ((DrawCardEffect) effect).amount()));
         registry.register(DiscardCardEffect.class,
                 (gd, entry, effect) -> resolveDiscardCards(gd, entry.getControllerId(), ((DiscardCardEffect) effect).amount()));
+        registry.register(TargetPlayerDiscardsEffect.class,
+                (gd, entry, effect) -> resolveDiscardCards(gd, entry.getTargetPermanentId(), ((TargetPlayerDiscardsEffect) effect).amount()));
         registry.register(LookAtHandEffect.class,
                 (gd, entry, effect) -> resolveLookAtHand(gd, entry));
         registry.register(ChooseCardsFromTargetHandToTopOfLibraryEffect.class,
