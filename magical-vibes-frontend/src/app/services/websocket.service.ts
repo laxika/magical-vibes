@@ -221,6 +221,11 @@ export interface DeckInfo {
   name: string;
 }
 
+export interface SetInfo {
+  code: string;
+  name: string;
+}
+
 export interface LoginResponse {
   type: MessageType;
   message: string;
@@ -228,6 +233,7 @@ export interface LoginResponse {
   username?: string;
   games?: LobbyGame[];
   decks?: DeckInfo[];
+  sets?: SetInfo[];
   activeGame?: Game;
 }
 
@@ -394,6 +400,7 @@ export class WebsocketService {
   currentGame: Game | null = null;
   initialGames: LobbyGame[] = [];
   availableDecks: DeckInfo[] = [];
+  availableSets: SetInfo[] = [];
 
   login(username: string, password: string): Observable<LoginResponse> {
     return new Observable(observer => {
@@ -424,6 +431,7 @@ export class WebsocketService {
               this.currentUser = { userId: response.userId!, username: response.username! };
               this.initialGames = response.games ?? [];
               this.availableDecks = response.decks ?? [];
+              this.availableSets = response.sets ?? [];
               if (response.activeGame) {
                 this.currentGame = response.activeGame;
               }
@@ -496,6 +504,7 @@ export class WebsocketService {
     this.currentGame = null;
     this.initialGames = [];
     this.availableDecks = [];
+    this.availableSets = [];
     this.authenticated = false;
   }
 }

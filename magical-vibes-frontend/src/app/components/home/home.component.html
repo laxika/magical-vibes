@@ -14,15 +14,6 @@
       </div>
     }
 
-    <div class="deck-selector">
-      <label for="deckSelect">Select Deck</label>
-      <select id="deckSelect" [ngModel]="selectedDeckId()" (ngModelChange)="selectedDeckId.set($event)">
-        @for (deck of websocketService.availableDecks; track deck.id) {
-          <option [value]="deck.id">{{ deck.name }}</option>
-        }
-      </select>
-    </div>
-
     <div class="actions">
       <button class="btn-primary" (click)="toggleCreateForm()">
         @if (showCreateForm()) {
@@ -36,43 +27,106 @@
     @if (showCreateForm()) {
       <div class="create-game-form">
         <h2>Create New Game</h2>
-        <div class="form-group">
-          <label for="gameName">Game Name</label>
-          <input
-            type="text"
-            id="gameName"
-            [(ngModel)]="newGameName"
-            placeholder="Enter game name"
-          />
+
+        <div class="tab-bar">
+          <button
+            class="tab-button"
+            [class.active]="activeTab() === '1v1'"
+            (click)="activeTab.set('1v1')"
+          >
+            1 vs 1
+          </button>
+          <button
+            class="tab-button"
+            [class.active]="activeTab() === 'draft'"
+            (click)="activeTab.set('draft')"
+          >
+            Draft
+          </button>
         </div>
-        <div class="form-group">
-          <label class="toggle-label">
-            <input
-              type="checkbox"
-              [ngModel]="vsAi()"
-              (ngModelChange)="vsAi.set($event)"
-            />
-            Play vs AI
-          </label>
-        </div>
-        @if (vsAi()) {
-          <div class="form-group">
-            <label for="aiDeckSelect">AI Deck</label>
-            <select id="aiDeckSelect" [ngModel]="aiDeckId()" (ngModelChange)="aiDeckId.set($event)">
-              @for (deck of websocketService.availableDecks; track deck.id) {
-                <option [value]="deck.id">{{ deck.name }}</option>
-              }
-            </select>
+
+        @if (activeTab() === '1v1') {
+          <div class="tab-content">
+            <div class="form-group">
+              <label for="gameName">Game Name</label>
+              <input
+                type="text"
+                id="gameName"
+                [(ngModel)]="newGameName"
+                placeholder="Enter game name"
+              />
+            </div>
+            <div class="form-group">
+              <label for="deckSelect">Select Deck</label>
+              <select id="deckSelect" [ngModel]="selectedDeckId()" (ngModelChange)="selectedDeckId.set($event)">
+                @for (deck of websocketService.availableDecks; track deck.id) {
+                  <option [value]="deck.id">{{ deck.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="toggle-label">
+                <input
+                  type="checkbox"
+                  [ngModel]="vsAi()"
+                  (ngModelChange)="vsAi.set($event)"
+                />
+                Play vs AI
+              </label>
+            </div>
+            @if (vsAi()) {
+              <div class="form-group">
+                <label for="aiDeckSelect">AI Deck</label>
+                <select id="aiDeckSelect" [ngModel]="aiDeckId()" (ngModelChange)="aiDeckId.set($event)">
+                  @for (deck of websocketService.availableDecks; track deck.id) {
+                    <option [value]="deck.id">{{ deck.name }}</option>
+                  }
+                </select>
+              </div>
+            }
+            <button class="btn-primary" (click)="createGame()">
+              Create Game
+            </button>
           </div>
         }
-        <button class="btn-primary" (click)="createGame()">
-          Create Game
-        </button>
+
+        @if (activeTab() === 'draft') {
+          <div class="tab-content">
+            <div class="form-group">
+              <label for="draftAiCount">Number of AI Players</label>
+              <select id="draftAiCount" [ngModel]="draftAiCount()" (ngModelChange)="draftAiCount.set(+$event)">
+                @for (count of aiCountOptions; track count) {
+                  <option [value]="count">{{ count }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="draftSet">Set</label>
+              <select id="draftSet" [ngModel]="draftSetCode()" (ngModelChange)="draftSetCode.set($event)">
+                @for (set of websocketService.availableSets; track set.code) {
+                  <option [value]="set.code">{{ set.name }}</option>
+                }
+              </select>
+            </div>
+            <button class="btn-primary" disabled>
+              Coming Soon
+            </button>
+          </div>
+        }
       </div>
     }
 
     <div class="games-section">
       <h2>Available Games</h2>
+
+      <div class="join-deck-selector">
+        <label for="joinDeckSelect">Your Deck</label>
+        <select id="joinDeckSelect" [ngModel]="selectedDeckId()" (ngModelChange)="selectedDeckId.set($event)">
+          @for (deck of websocketService.availableDecks; track deck.id) {
+            <option [value]="deck.id">{{ deck.name }}</option>
+          }
+        </select>
+      </div>
 
       @if (games().length === 0) {
         <div class="no-games">

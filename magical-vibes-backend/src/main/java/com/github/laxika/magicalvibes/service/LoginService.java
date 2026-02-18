@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.cards.PrebuiltDeck;
 import com.github.laxika.magicalvibes.networking.message.DeckInfo;
 import com.github.laxika.magicalvibes.networking.message.LoginRequest;
 import com.github.laxika.magicalvibes.networking.message.LoginResponse;
+import com.github.laxika.magicalvibes.networking.message.SetInfo;
 import com.github.laxika.magicalvibes.entity.User;
 import com.github.laxika.magicalvibes.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +47,12 @@ public class LoginService {
                     .map(d -> new DeckInfo(d.getId(), d.getName()))
                     .toList();
 
-            return LoginResponse.success(user.getId(), user.getUsername(), games, decks, null);
+            // Build available sets list
+            List<SetInfo> sets = Arrays.stream(CardSet.values())
+                    .map(s -> new SetInfo(s.getCode(), s.getName()))
+                    .toList();
+
+            return LoginResponse.success(user.getId(), user.getUsername(), games, decks, sets, null);
         } else {
             log.warn("Authentication failed for username: {}", loginRequest.getUsername());
             return LoginResponse.failure("Invalid username or password");

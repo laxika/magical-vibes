@@ -20,6 +20,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   aiDeckId = signal<string>('');
   errorMessage = signal('');
   showCreateForm = signal(false);
+  activeTab = signal<'1v1' | 'draft'>('1v1');
+  draftAiCount = signal(1);
+  draftSetCode = signal('');
   private subscriptions: Subscription[] = [];
 
   constructor(
@@ -41,6 +44,11 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (this.websocketService.availableDecks.length > 0) {
       this.selectedDeckId.set(this.websocketService.availableDecks[0].id);
       this.aiDeckId.set(this.websocketService.availableDecks[0].id);
+    }
+
+    // Initialize selected set to first available set
+    if (this.websocketService.availableSets.length > 0) {
+      this.draftSetCode.set(this.websocketService.availableSets[0].code);
     }
 
     // Listen for game notifications
@@ -92,10 +100,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach(s => s.unsubscribe());
   }
 
+  readonly aiCountOptions = [1, 2, 3, 4, 5, 6, 7];
+
   toggleCreateForm() {
     this.showCreateForm.set(!this.showCreateForm());
     this.newGameName.set('');
     this.errorMessage.set('');
+    this.activeTab.set('1v1');
   }
 
   createGame() {
