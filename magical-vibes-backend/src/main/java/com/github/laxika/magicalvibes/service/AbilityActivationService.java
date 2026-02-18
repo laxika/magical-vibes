@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
@@ -212,6 +213,37 @@ public class AbilityActivationService {
             payManaCost(gameData, playerId, abilityCost, effectiveXValue);
         }
 
+        // Handle sacrifice-a-creature cost (e.g. Nantuko Husk: "Sacrifice a creature: ...")
+        boolean hasSacCreatureCost = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeCreatureCost);
+        if (hasSacCreatureCost) {
+            if (targetPermanentId == null) {
+                throw new IllegalStateException("Must choose a creature to sacrifice");
+            }
+            Permanent sacTarget = gameQueryService.findPermanentById(gameData, targetPermanentId);
+            if (sacTarget == null) {
+                throw new IllegalStateException("Invalid sacrifice target");
+            }
+            if (!gameQueryService.isCreature(gameData, sacTarget)) {
+                throw new IllegalStateException("Must sacrifice a creature");
+            }
+            List<Permanent> playerBf = gameData.playerBattlefields.get(playerId);
+            if (playerBf == null || !playerBf.contains(sacTarget)) {
+                throw new IllegalStateException("Must sacrifice a creature you control");
+            }
+
+            // Sacrifice the creature as cost
+            playerBf.remove(sacTarget);
+            gameHelper.addCardToGraveyard(gameData, playerId, sacTarget.getCard());
+            gameHelper.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true);
+            gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+
+            String sacLog = player.getUsername() + " sacrifices " + sacTarget.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, sacLog);
+
+            // Clear targetPermanentId so it's not used for effect targeting
+            targetPermanentId = null;
+        }
+
         // Validate target for effects that need one
         targetValidationService.validateEffectTargets(abilityEffects,
                 new TargetValidationContext(gameData, targetPermanentId, targetZone, permanent.getCard()));
@@ -301,6 +333,14 @@ public class AbilityActivationService {
             resolveManaAbility(gameData, playerId, player, snapshotEffects);
         } else {
             pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId, targetZone);
+
+            // Sacrifice-a-creature cost uses needsTarget for UI (player picks creature to sacrifice),
+            // but the ability itself doesn't target — the effect references "this creature" without
+            // the "target" keyword. Mark as non-targeting so it doesn't incorrectly fizzle if the
+            // source gains shroud/protection in response (per MTG rule 608.2b).
+            if (hasSacCreatureCost && !gameData.stack.isEmpty()) {
+                gameData.stack.getLast().setNonTargeting(true);
+            }
         }
     }
 
@@ -388,7 +428,7 @@ public class AbilityActivationService {
     private List<CardEffect> snapshotEffects(List<CardEffect> abilityEffects, Permanent permanent) {
         List<CardEffect> snapshotEffects = new ArrayList<>();
         for (CardEffect effect : abilityEffects) {
-            if (effect instanceof SacrificeSelfCost) {
+            if (effect instanceof SacrificeSelfCost || effect instanceof SacrificeCreatureCost) {
                 continue;
             }
             if (effect instanceof CantBlockSourceEffect) {

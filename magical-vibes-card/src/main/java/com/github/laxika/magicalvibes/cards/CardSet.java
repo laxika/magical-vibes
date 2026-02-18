@@ -139,6 +139,7 @@ import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
 import com.github.laxika.magicalvibes.cards.j.Juggernaut;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.n.NantukoHusk;
 import com.github.laxika.magicalvibes.cards.n.NomadMythmaker;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.l.LoomingShade;
@@ -322,6 +323,7 @@ public enum CardSet {
             new CardPrinting("10E", "159", MindRot::new),
             new CardPrinting("10E", "160", MortalCombat::new),
             new CardPrinting("10E", "161", Mortivore::new),
+            new CardPrinting("10E", "162", NantukoHusk::new),
             new CardPrinting("10E", "15", FieldMarshal::new),
             new CardPrinting("10E", "16", GhostWarden::new),
             new CardPrinting("10E", "17", GloriousAnthem::new),
