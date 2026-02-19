@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
@@ -89,6 +90,11 @@ public class AbilityActivationService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} taps {}", gameData.id, player.getUsername(), permanent.getCard().getName());
+
+        // Check for "whenever a player taps a land for mana" triggers (e.g. Manabarbs)
+        if (permanent.getCard().getType() == CardType.LAND) {
+            gameHelper.checkLandTapTriggers(gameData, playerId);
+        }
 
         gameBroadcastService.broadcastGameState(gameData);
     }

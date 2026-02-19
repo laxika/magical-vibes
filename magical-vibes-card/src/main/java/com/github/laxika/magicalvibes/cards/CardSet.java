@@ -155,6 +155,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.l.LoxodonMystic;
 import com.github.laxika.magicalvibes.cards.l.LumengridWarden;
 import com.github.laxika.magicalvibes.cards.m.MahamotiDjinn;
+import com.github.laxika.magicalvibes.cards.m.Manabarbs;
 import com.github.laxika.magicalvibes.cards.m.MantisEngine;
 import com.github.laxika.magicalvibes.cards.m.MassOfGhouls;
 import com.github.laxika.magicalvibes.cards.m.Megrim;
@@ -481,6 +482,7 @@ public enum CardSet {
             new CardPrinting("10E", "215", LavaAxe::new),
             new CardPrinting("10E", "216", LavabornMuse::new),
             new CardPrinting("10E", "217", LightningElemental::new),
+            new CardPrinting("10E", "218", Manabarbs::new),
             new CardPrinting("10E", "376", Mountain::new),
             new CardPrinting("10E", "377", Mountain::new),
             new CardPrinting("10E", "378", Mountain::new),
