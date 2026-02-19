@@ -77,7 +77,9 @@ public enum CardSubtype {
     JUGGERNAUT("Juggernaut"),
     THOPTER("Thopter"),
     EQUIPMENT("Equipment"),
-    LHURGOYF("Lhurgoyf");
+    LHURGOYF("Lhurgoyf"),
+    SCOUT("Scout"),
+    VIASHINO("Viashino");
 
     @Getter
     private final String displayName;
