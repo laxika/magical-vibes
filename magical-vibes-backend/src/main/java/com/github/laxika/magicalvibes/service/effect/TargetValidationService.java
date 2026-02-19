@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqu
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
@@ -25,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEf
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import org.springframework.stereotype.Service;
 
@@ -89,6 +91,14 @@ public class TargetValidationService {
             }
         });
 
+        registry.register(UntapTargetPermanentEffect.class, (ctx, effect) -> {
+            Permanent target = requireBattlefieldTarget(ctx);
+            UntapTargetPermanentEffect untapEffect = (UntapTargetPermanentEffect) effect;
+            if (!untapEffect.allowedTypes().contains(target.getCard().getType())) {
+                throw new IllegalStateException("Target must be a creature");
+            }
+        });
+
         registry.register(MillTargetPlayerEffect.class, (ctx, effect) -> {
             requireTargetPlayer(ctx);
         });
@@ -110,6 +120,11 @@ public class TargetValidationService {
         });
 
         registry.register(GainControlOfEnchantedTargetEffect.class, (ctx, effect) -> {
+            Permanent target = requireBattlefieldTarget(ctx);
+            requireCreature(ctx, target);
+        });
+
+        registry.register(GainControlOfTargetCreatureUntilEndOfTurnEffect.class, (ctx, effect) -> {
             Permanent target = requireBattlefieldTarget(ctx);
             requireCreature(ctx, target);
         });

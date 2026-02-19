@@ -302,6 +302,8 @@ public class GameHelper {
 
         }
 
+        returnStolenCreatures(gameData, true);
+
         gameData.playerDamagePreventionShields.clear();
         gameData.globalDamagePreventionShield = 0;
         gameData.preventAllCombatDamage = false;
@@ -788,6 +790,10 @@ public class GameHelper {
     }
 
     void returnStolenCreatures(GameData gameData) {
+        returnStolenCreatures(gameData, false);
+    }
+
+    private void returnStolenCreatures(GameData gameData, boolean includeUntilEndOfTurn) {
         if (gameData.stolenCreatures.isEmpty()) return;
 
         boolean anyReturned = false;
@@ -796,20 +802,35 @@ public class GameHelper {
             Map.Entry<UUID, UUID> entry = it.next();
             UUID creatureId = entry.getKey();
             UUID ownerId = entry.getValue();
+            boolean isUntilEndOfTurnSteal = gameData.untilEndOfTurnStolenCreatures.contains(creatureId);
+
+            if (includeUntilEndOfTurn && !isUntilEndOfTurnSteal) {
+                continue;
+            }
+            if (!includeUntilEndOfTurn && isUntilEndOfTurnSteal) {
+                continue;
+            }
 
             Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
             if (creature == null) {
                 it.remove();
                 gameData.enchantmentDependentStolenCreatures.remove(creatureId);
+                gameData.untilEndOfTurnStolenCreatures.remove(creatureId);
                 continue;
             }
 
             if (gameQueryService.hasAuraWithEffect(gameData, creature, ControlEnchantedCreatureEffect.class)) {
+                if (includeUntilEndOfTurn) {
+                    gameData.untilEndOfTurnStolenCreatures.remove(creatureId);
+                }
                 continue;
             }
 
             if (gameData.enchantmentDependentStolenCreatures.contains(creatureId)
                     && gameQueryService.isEnchanted(gameData, creature)) {
+                if (includeUntilEndOfTurn) {
+                    gameData.untilEndOfTurnStolenCreatures.remove(creatureId);
+                }
                 continue;
             }
             gameData.enchantmentDependentStolenCreatures.remove(creatureId);
@@ -829,6 +850,7 @@ public class GameHelper {
                 }
             }
             it.remove();
+            gameData.untilEndOfTurnStolenCreatures.remove(creatureId);
         }
         if (anyReturned) {
 

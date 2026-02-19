@@ -107,6 +107,7 @@ public class GameData {
     public Set<UUID> awaitingLibraryRevealValidCardIds;
     public final Map<UUID, UUID> drawReplacementTargetToController = new ConcurrentHashMap<>();
     public final Map<UUID, UUID> stolenCreatures = new ConcurrentHashMap<>();
+    public final Set<UUID> untilEndOfTurnStolenCreatures = ConcurrentHashMap.newKeySet();
     public final Set<UUID> enchantmentDependentStolenCreatures = ConcurrentHashMap.newKeySet();
     public boolean endTurnRequested;
     public final Deque<PermanentChoiceContext.DeathTriggerTarget> pendingDeathTriggerTargets = new ArrayDeque<>();

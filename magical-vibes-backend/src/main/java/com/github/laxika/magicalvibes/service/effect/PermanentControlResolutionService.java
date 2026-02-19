@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenWithColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
@@ -61,6 +62,8 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
                 (gd, entry, effect) -> resolveGainControlOfTargetAura(gd, entry));
         registry.register(GainControlOfEnchantedTargetEffect.class,
                 (gd, entry, effect) -> resolveGainControlOfEnchantedTarget(gd, entry));
+        registry.register(GainControlOfTargetCreatureUntilEndOfTurnEffect.class,
+                (gd, entry, effect) -> resolveGainControlOfTargetCreatureUntilEndOfTurn(gd, entry));
     }
 
     private void resolveCreateCreatureToken(GameData gameData, UUID controllerId, CreateCreatureTokenEffect token) {
@@ -295,6 +298,29 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
 
         gameHelper.stealCreature(gameData, entry.getControllerId(), target);
         gameData.enchantmentDependentStolenCreatures.add(target.getId());
+    }
+
+    private void resolveGainControlOfTargetCreatureUntilEndOfTurn(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) return;
+
+        UUID oldController = findControllerId(gameData, target);
+        if (oldController == null || oldController.equals(entry.getControllerId())) {
+            return;
+        }
+
+        gameHelper.stealCreature(gameData, entry.getControllerId(), target);
+        gameData.untilEndOfTurnStolenCreatures.add(target.getId());
+    }
+
+    private UUID findControllerId(GameData gameData, Permanent permanent) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield != null && battlefield.contains(permanent)) {
+                return pid;
+            }
+        }
+        return null;
     }
 
 }

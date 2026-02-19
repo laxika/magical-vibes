@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAttackedCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
@@ -69,6 +70,8 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveTapTargetPermanent(gd, entry));
         registry.register(TapTargetPermanentEffect.class,
                 (gd, entry, effect) -> resolveTapTargetPermanent(gd, entry));
+        registry.register(UntapTargetPermanentEffect.class,
+                (gd, entry, effect) -> resolveUntapTargetPermanent(gd, entry));
         registry.register(UntapSelfEffect.class,
                 (gd, entry, effect) -> resolveUntapSelf(gd, entry));
         registry.register(UntapAttackedCreaturesEffect.class,
@@ -303,6 +306,20 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} taps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
+    }
+
+    private void resolveUntapTargetPermanent(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        target.untap();
+
+        String logEntry = entry.getCard().getName() + " untaps " + target.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} untaps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
     }
 
     private void resolveUntapSelf(GameData gameData, StackEntry entry) {
