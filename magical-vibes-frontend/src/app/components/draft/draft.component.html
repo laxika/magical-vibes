@@ -1,0 +1,236 @@
+<div class="draft-container">
+  <!-- ===== DRAFTING STATE ===== -->
+  @if (draftStatus() === DraftStatus.DRAFTING) {
+    <div class="draft-phase">
+      <div class="draft-info-bar">
+        <span class="pack-info">Pack {{ packNumber() + 1 }} / 3</span>
+        <span class="pick-info">Pick {{ pickNumber() + 1 }} / 15</span>
+        <span class="direction-info">Pass {{ passDirection }} {{ passDirectionArrow }}</span>
+      </div>
+
+      @if (waitingForPack()) {
+        <div class="waiting-banner">
+          Waiting for other players to pick...
+        </div>
+      }
+
+      <div class="draft-layout">
+        <div class="pack-area">
+          <h2>Current Pack</h2>
+          <div class="card-grid">
+            @for (card of currentPack(); track $index) {
+              <div class="draft-card-wrapper"
+                   [class.disabled]="waitingForPack()"
+                   (click)="pickCard($index)"
+                   (mouseenter)="hoveredCard.set(card)"
+                   (mouseleave)="hoveredCard.set(null)">
+                <app-card-display [card]="card"></app-card-display>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="side-panel">
+          <div class="card-preview-area">
+            @if (hoveredCard()) {
+              <div class="preview-card">
+                <app-card-display [card]="hoveredCard()!" [preview]="true"></app-card-display>
+              </div>
+            }
+          </div>
+
+          <div class="pool-summary">
+            <h3>Drafted Pool ({{ draftPool().length }})</h3>
+            @for (group of poolByColorGrouped; track group.color) {
+              <div class="pool-color-group">
+                <span class="pool-color-label" [class]="'color-' + group.color.toLowerCase()">
+                  {{ group.color }}
+                </span>
+                <div class="pool-card-names">
+                  @for (item of group.cards; track item.card.name) {
+                    <span class="pool-card-name"
+                          (mouseenter)="hoveredCard.set(item.card)"
+                          (mouseleave)="hoveredCard.set(null)">
+                      @if (item.count > 1) {
+                        {{ item.count }}x
+                      }
+                      {{ item.card.name }}
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ===== DECK BUILDING STATE ===== -->
+  @if (draftStatus() === DraftStatus.DECK_BUILDING) {
+    <div class="deck-building-phase">
+      <div class="deck-building-info-bar">
+        <span class="timer">Time Remaining: {{ timerDisplay() }}</span>
+        <span class="deck-count" [class.valid]="totalDeckSize >= 40" [class.invalid]="totalDeckSize < 40">
+          Deck: {{ totalDeckSize }} / 40+
+        </span>
+        <span class="card-count">Cards: {{ deckCards().size }} | Lands: {{ totalLands }}</span>
+      </div>
+
+      @if (deckSubmitted()) {
+        <div class="submitted-banner">
+          Deck submitted! Waiting for other players...
+        </div>
+      }
+
+      <div class="deck-building-layout">
+        <div class="pool-column">
+          <h2>Card Pool</h2>
+          @for (group of poolByColor; track group.color) {
+            <div class="build-color-group">
+              <h3 class="color-header" [class]="'color-' + group.color.toLowerCase()">
+                {{ group.color }} ({{ group.cards.length }})
+              </h3>
+              <div class="build-card-grid">
+                @for (item of group.cards; track item.index) {
+                  <div class="build-card-wrapper"
+                       [class.in-deck]="isInDeck(item.index)"
+                       [class.disabled]="deckSubmitted()"
+                       (click)="toggleCardInDeck(item.index)"
+                       (mouseenter)="hoveredCard.set(item.card)"
+                       (mouseleave)="hoveredCard.set(null)">
+                    <app-card-display [card]="item.card"></app-card-display>
+                    @if (isInDeck(item.index)) {
+                      <div class="in-deck-badge">IN DECK</div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="deck-side-panel">
+          <div class="card-preview-area">
+            @if (hoveredCard()) {
+              <div class="preview-card">
+                <app-card-display [card]="hoveredCard()!" [preview]="true"></app-card-display>
+              </div>
+            }
+          </div>
+
+          <div class="basic-lands-section">
+            <h3>Basic Lands</h3>
+            @for (land of landNames; track land) {
+              <div class="land-row">
+                <span class="land-name" [style.background-color]="landColors[land]">{{ land }}</span>
+                <button class="land-btn" (click)="adjustLand(land, -1)" [disabled]="deckSubmitted()">-</button>
+                <span class="land-count">{{ basicLands()[land] }}</span>
+                <button class="land-btn" (click)="adjustLand(land, 1)" [disabled]="deckSubmitted()">+</button>
+              </div>
+            }
+            <button class="btn-auto-lands" (click)="autoSuggestLands()" [disabled]="deckSubmitted()">
+              Auto-suggest Lands
+            </button>
+          </div>
+
+          <button class="btn-submit-deck" (click)="submitDeck()" [disabled]="!canSubmitDeck">
+            @if (deckSubmitted()) {
+              Deck Submitted
+            } @else {
+              Submit Deck ({{ totalDeckSize }} cards)
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ===== TOURNAMENT STATE ===== -->
+  @if (draftStatus() === DraftStatus.TOURNAMENT) {
+    <div class="tournament-phase">
+      <h2>Tournament Bracket</h2>
+      <div class="bracket-container">
+        @for (round of bracket(); track $index) {
+          <div class="bracket-round" [class.current-round]="$index === currentRound()">
+            <h3 class="round-title">{{ round.roundName }}</h3>
+            @for (pairing of round.pairings; track $index) {
+              <div class="bracket-match" [class.completed]="pairing.winnerName">
+                <div class="match-player"
+                     [class.winner]="pairing.winnerName === pairing.player1Name"
+                     [class.loser]="pairing.winnerName && pairing.winnerName !== pairing.player1Name">
+                  {{ pairing.player1Name }}
+                </div>
+                <div class="match-vs">vs</div>
+                <div class="match-player"
+                     [class.winner]="pairing.winnerName === pairing.player2Name"
+                     [class.loser]="pairing.winnerName && pairing.winnerName !== pairing.player2Name">
+                  {{ pairing.player2Name }}
+                </div>
+                @if (pairing.winnerName) {
+                  <div class="match-result">Winner: {{ pairing.winnerName }}</div>
+                } @else {
+                  <div class="match-result in-progress">In Progress</div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      @if (waitingForGame()) {
+        <div class="waiting-banner">
+          Waiting for your next match...
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ===== FINISHED STATE ===== -->
+  @if (draftStatus() === DraftStatus.FINISHED) {
+    <div class="finished-phase">
+      <div class="tournament-complete">
+        <h2>Tournament Complete!</h2>
+        @if (tournamentWinner()) {
+          <div class="winner-display">
+            <span class="trophy">&#x1F3C6;</span>
+            <span class="winner-name">{{ tournamentWinner() }}</span>
+            <span class="winner-label">wins the tournament!</span>
+          </div>
+        }
+
+        <div class="bracket-container final-bracket">
+          @for (round of bracket(); track $index) {
+            <div class="bracket-round">
+              <h3 class="round-title">{{ round.roundName }}</h3>
+              @for (pairing of round.pairings; track $index) {
+                <div class="bracket-match completed">
+                  <div class="match-player"
+                       [class.winner]="pairing.winnerName === pairing.player1Name"
+                       [class.loser]="pairing.winnerName !== pairing.player1Name">
+                    {{ pairing.player1Name }}
+                  </div>
+                  <div class="match-vs">vs</div>
+                  <div class="match-player"
+                       [class.winner]="pairing.winnerName === pairing.player2Name"
+                       [class.loser]="pairing.winnerName !== pairing.player2Name">
+                    {{ pairing.player2Name }}
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <button class="btn-primary" (click)="backToHome()">Back to Lobby</button>
+      </div>
+    </div>
+  }
+
+  <!-- ===== WAITING STATE ===== -->
+  @if (draftStatus() === DraftStatus.WAITING) {
+    <div class="waiting-phase">
+      <h2>Waiting for players to join...</h2>
+    </div>
+  }
+</div>

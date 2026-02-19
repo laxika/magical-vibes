@@ -19,6 +19,7 @@ public class LoginResponse {
     private List<DeckInfo> decks;
     private List<SetInfo> sets;
     private JoinGame activeGame;
+    private UUID activeDraftId;
 
     public LoginResponse() {
     }

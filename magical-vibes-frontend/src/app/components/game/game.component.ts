@@ -927,7 +927,11 @@ export class GameComponent implements OnInit, OnDestroy {
   // ========== Hover & navigation ==========
 
   backToLobby(): void {
-    this.router.navigate(['/home']);
+    if (this.websocketService.inDraft) {
+      this.router.navigate(['/draft']);
+    } else {
+      this.router.navigate(['/home']);
+    }
   }
 
   onCardHover(card: Card, permanent: Permanent | null = null): void {

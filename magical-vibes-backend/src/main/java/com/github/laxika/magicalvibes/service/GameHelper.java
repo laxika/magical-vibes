@@ -33,18 +33,18 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.DraftData;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class GameHelper {
 
     private final SessionManager sessionManager;
@@ -53,6 +53,26 @@ public class GameHelper {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
+    private final DraftRegistry draftRegistry;
+    private final DraftService draftService;
+
+    public GameHelper(SessionManager sessionManager,
+                      GameRegistry gameRegistry,
+                      CardViewFactory cardViewFactory,
+                      GameQueryService gameQueryService,
+                      GameBroadcastService gameBroadcastService,
+                      PlayerInputService playerInputService,
+                      DraftRegistry draftRegistry,
+                      @Lazy DraftService draftService) {
+        this.sessionManager = sessionManager;
+        this.gameRegistry = gameRegistry;
+        this.cardViewFactory = cardViewFactory;
+        this.gameQueryService = gameQueryService;
+        this.gameBroadcastService = gameBroadcastService;
+        this.playerInputService = playerInputService;
+        this.draftRegistry = draftRegistry;
+        this.draftService = draftService;
+    }
 
     // ===== Lifecycle methods =====
 
@@ -224,6 +244,8 @@ public class GameHelper {
 
                 sessionManager.sendToPlayers(gameData.orderedPlayerIds, new GameOverMessage(winnerId, winnerName));
 
+                notifyDraftIfTournamentGame(gameData, winnerId);
+
                 gameRegistry.remove(gameData.id);
 
                 log.info("Game {} - {} wins! {} is at {} life", gameData.id, winnerName,
@@ -244,9 +266,20 @@ public class GameHelper {
 
         sessionManager.sendToPlayers(gameData.orderedPlayerIds, new GameOverMessage(winnerId, winnerName));
 
+        notifyDraftIfTournamentGame(gameData, winnerId);
+
         gameRegistry.remove(gameData.id);
 
         log.info("Game {} - {} wins!", gameData.id, winnerName);
+    }
+
+    private void notifyDraftIfTournamentGame(GameData gameData, UUID winnerId) {
+        if (gameData.draftId != null) {
+            DraftData draftData = draftRegistry.get(gameData.draftId);
+            if (draftData != null) {
+                draftService.handleGameFinished(draftData, winnerId);
+            }
+        }
     }
 
     void resetEndOfTurnModifiers(GameData gameData) {

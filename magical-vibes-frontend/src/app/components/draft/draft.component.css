@@ -1,0 +1,523 @@
+.draft-container {
+  min-height: 100vh;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 52px,
+      rgba(0, 0, 0, 0.08) 52px,
+      rgba(0, 0, 0, 0.08) 54px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 78px,
+      rgba(0, 0, 0, 0.05) 78px,
+      rgba(0, 0, 0, 0.05) 80px
+    ),
+    linear-gradient(180deg, #1a1210 0%, #2b1b17 30%, #1a1210 60%, #0d0a07 100%);
+  padding: 20px;
+  color: #ecd9b0;
+}
+
+/* ===== Draft Info Bar ===== */
+
+.draft-info-bar, .deck-building-info-bar {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  background: linear-gradient(180deg, #f5e6c8 0%, #ecd9b0 100%);
+  padding: 12px 20px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  border: 2px solid #c4a882;
+  color: #2b1b17;
+  font-weight: 700;
+  font-size: 15px;
+  font-family: 'Cinzel', Georgia, serif;
+}
+
+.pack-info { color: #8b1a1a; }
+.pick-info { color: #2d5016; }
+.direction-info { color: #1a3a6b; font-size: 16px; }
+
+.timer { color: #8b1a1a; font-size: 18px; }
+.deck-count.valid { color: #2d5016; }
+.deck-count.invalid { color: #8b1a1a; }
+.card-count { color: #5c3a2e; }
+
+/* ===== Waiting Banner ===== */
+
+.waiting-banner, .submitted-banner {
+  text-align: center;
+  padding: 16px;
+  background: linear-gradient(180deg, #f5e6c8 0%, #ecd9b0 100%);
+  border: 2px solid #c4a882;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  color: #5c3a2e;
+  font-weight: 700;
+  font-size: 16px;
+  font-family: 'Cinzel', Georgia, serif;
+}
+
+.submitted-banner {
+  background: linear-gradient(180deg, #d8e8c8 0%, #c4deb8 100%);
+  border-color: #8bb070;
+  color: #2d5016;
+}
+
+/* ===== Draft Layout ===== */
+
+.draft-layout {
+  display: flex;
+  gap: 20px;
+}
+
+.pack-area {
+  flex: 1;
+}
+
+.pack-area h2, .pool-column h2 {
+  margin: 0 0 12px;
+  color: #c8a951;
+  font-size: 20px;
+  font-family: 'Cinzel', Georgia, serif;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 165px);
+  gap: 8px;
+}
+
+.draft-card-wrapper {
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.draft-card-wrapper:hover:not(.disabled) {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 20px rgba(200, 169, 81, 0.5);
+  z-index: 10;
+}
+
+.draft-card-wrapper.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== Side Panel ===== */
+
+.side-panel, .deck-side-panel {
+  width: 280px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 20px;
+  align-self: flex-start;
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+}
+
+.card-preview-area {
+  margin-bottom: 16px;
+  min-height: 340px;
+  display: flex;
+  justify-content: center;
+}
+
+.preview-card {
+  transform: scale(1.4);
+  transform-origin: top center;
+  margin-bottom: 80px;
+}
+
+.pool-summary {
+  background: linear-gradient(180deg, #2b1b17 0%, #1a1210 100%);
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid #3b2314;
+}
+
+.pool-summary h3 {
+  margin: 0 0 8px;
+  color: #c8a951;
+  font-size: 16px;
+  font-family: 'Cinzel', Georgia, serif;
+}
+
+.pool-color-group {
+  margin-bottom: 8px;
+}
+
+.pool-color-label {
+  display: block;
+  font-weight: 700;
+  font-size: 12px;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.color-white { color: #f9f3e3; }
+.color-blue { color: #6ba3d6; }
+.color-black { color: #a88fbc; }
+.color-red { color: #e88060; }
+.color-green { color: #7cb870; }
+.color-colorless { color: #a0a0a0; }
+.color-multi { color: #c8a951; }
+
+.pool-card-names {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.pool-card-name {
+  font-size: 13px;
+  color: #c4a882;
+  cursor: default;
+}
+
+.pool-card-name:hover {
+  color: #f5e6c8;
+}
+
+/* ===== Deck Building ===== */
+
+.deck-building-layout {
+  display: flex;
+  gap: 20px;
+}
+
+.pool-column {
+  flex: 1;
+}
+
+.build-color-group {
+  margin-bottom: 16px;
+}
+
+.color-header {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-family: 'Cinzel', Georgia, serif;
+  text-transform: uppercase;
+}
+
+.build-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 165px);
+  gap: 8px;
+}
+
+.build-card-wrapper {
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  border-radius: 6px;
+  position: relative;
+  width: fit-content;
+}
+
+.build-card-wrapper:hover:not(.disabled) {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.build-card-wrapper.in-deck {
+  outline: 3px solid #c8a951;
+  outline-offset: -1px;
+}
+
+.build-card-wrapper.disabled {
+  cursor: not-allowed;
+}
+
+.in-deck-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: #c8a951;
+  color: #2b1b17;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  z-index: 5;
+}
+
+/* ===== Basic Lands ===== */
+
+.basic-lands-section {
+  background: linear-gradient(180deg, #2b1b17 0%, #1a1210 100%);
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid #3b2314;
+  margin-bottom: 12px;
+}
+
+.basic-lands-section h3 {
+  margin: 0 0 10px;
+  color: #c8a951;
+  font-size: 15px;
+  font-family: 'Cinzel', Georgia, serif;
+}
+
+.land-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.land-name {
+  flex: 1;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-weight: 700;
+  font-size: 13px;
+  color: #2b1b17;
+}
+
+.land-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #5c3a2e;
+  border-radius: 3px;
+  background: #3b2314;
+  color: #ecd9b0;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.land-btn:hover:not(:disabled) {
+  background: #5c3a2e;
+}
+
+.land-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.land-count {
+  width: 24px;
+  text-align: center;
+  font-weight: 700;
+  color: #ecd9b0;
+}
+
+.btn-auto-lands {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  background: linear-gradient(180deg, #4a2c17 0%, #3b2314 100%);
+  color: #ecd9b0;
+  border: 2px solid #7a5a40;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Cinzel', Georgia, serif;
+  cursor: pointer;
+}
+
+.btn-auto-lands:hover:not(:disabled) {
+  background: linear-gradient(180deg, #5c3a2e 0%, #4a2c17 100%);
+}
+
+.btn-auto-lands:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-submit-deck {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(180deg, #b22222 0%, #8b1a1a 100%);
+  color: #f5e6c8;
+  border: 2px solid #6b1010;
+  border-radius: 3px;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Cinzel', Georgia, serif;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+
+.btn-submit-deck:hover:not(:disabled) {
+  background: linear-gradient(180deg, #cc2929 0%, #a01e1e 100%);
+  box-shadow: 0 5px 15px rgba(139, 26, 26, 0.5);
+}
+
+.btn-submit-deck:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== Tournament ===== */
+
+.tournament-phase, .finished-phase {
+  background: linear-gradient(180deg, #f5e6c8 0%, #ecd9b0 100%);
+  padding: 30px;
+  border-radius: 4px;
+  border: 2px solid #8b1a1a;
+  color: #2b1b17;
+}
+
+.tournament-phase h2, .finished-phase h2 {
+  margin: 0 0 20px;
+  color: #8b1a1a;
+  font-size: 24px;
+  font-family: 'Cinzel', Georgia, serif;
+  text-align: center;
+}
+
+.bracket-container {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.bracket-round {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  min-width: 200px;
+}
+
+.bracket-round.current-round {
+  background: rgba(139, 26, 26, 0.08);
+  padding: 12px;
+  border-radius: 6px;
+  border: 2px dashed #8b1a1a;
+}
+
+.round-title {
+  margin: 0 0 8px;
+  color: #8b1a1a;
+  font-size: 16px;
+  font-family: 'Cinzel', Georgia, serif;
+  text-align: center;
+}
+
+.bracket-match {
+  background: #faf3e5;
+  border: 2px solid #c4a882;
+  border-radius: 6px;
+  padding: 12px;
+  width: 100%;
+  text-align: center;
+}
+
+.bracket-match.completed {
+  border-color: #8bb070;
+}
+
+.match-player {
+  padding: 4px 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.match-player.winner {
+  color: #2d5016;
+  font-weight: 700;
+}
+
+.match-player.loser {
+  color: #a0a0a0;
+  text-decoration: line-through;
+}
+
+.match-vs {
+  color: #8b7060;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.match-result {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #2d5016;
+}
+
+.match-result.in-progress {
+  color: #8b1a1a;
+}
+
+/* ===== Finished ===== */
+
+.tournament-complete {
+  text-align: center;
+}
+
+.winner-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: linear-gradient(180deg, #faf3e5 0%, #f0e2c4 100%);
+  border: 3px solid #c8a951;
+  border-radius: 8px;
+}
+
+.trophy {
+  font-size: 40px;
+}
+
+.winner-name {
+  font-size: 28px;
+  font-weight: 700;
+  color: #8b1a1a;
+  font-family: 'Cinzel', Georgia, serif;
+}
+
+.winner-label {
+  font-size: 18px;
+  color: #5c3a2e;
+  font-family: 'Cinzel', Georgia, serif;
+}
+
+.final-bracket {
+  margin-bottom: 24px;
+}
+
+.btn-primary {
+  padding: 12px 24px;
+  color: #f5e6c8;
+  border-radius: 3px;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Cinzel', Georgia, serif;
+  cursor: pointer;
+  letter-spacing: 1px;
+  background: linear-gradient(180deg, #b22222 0%, #8b1a1a 100%);
+  border: 2px solid #6b1010;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(180deg, #cc2929 0%, #a01e1e 100%);
+  box-shadow: 0 5px 15px rgba(139, 26, 26, 0.5);
+}
+
+/* ===== Waiting ===== */
+
+.waiting-phase {
+  text-align: center;
+  padding: 60px;
+}
+
+.waiting-phase h2 {
+  color: #c8a951;
+  font-family: 'Cinzel', Georgia, serif;
+}

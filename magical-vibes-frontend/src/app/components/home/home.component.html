@@ -93,6 +93,15 @@
         @if (activeTab() === 'draft') {
           <div class="tab-content">
             <div class="form-group">
+              <label for="draftGameName">Draft Name</label>
+              <input
+                type="text"
+                id="draftGameName"
+                [(ngModel)]="draftGameName"
+                placeholder="Enter draft name"
+              />
+            </div>
+            <div class="form-group">
               <label for="draftAiCount">Number of AI Players</label>
               <select id="draftAiCount" [ngModel]="draftAiCount()" (ngModelChange)="draftAiCount.set(+$event)">
                 @for (count of aiCountOptions; track count) {
@@ -108,8 +117,8 @@
                 }
               </select>
             </div>
-            <button class="btn-primary" disabled>
-              Coming Soon
+            <button class="btn-primary" (click)="createDraft()">
+              Create Draft
             </button>
           </div>
         }

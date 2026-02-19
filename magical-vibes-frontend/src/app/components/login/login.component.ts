@@ -39,8 +39,16 @@ export class LoginComponent {
         this.loading.set(false);
 
         if (response.type === MessageType.LOGIN_SUCCESS) {
-          const destination = response.activeGame ? '/game' : '/home';
-          this.successMessage.set(response.activeGame ? 'Rejoining game...' : response.message);
+          let destination = '/home';
+          let msg = response.message;
+          if (response.activeGame) {
+            destination = '/game';
+            msg = 'Rejoining game...';
+          } else if (response.activeDraftId) {
+            destination = '/draft';
+            msg = 'Rejoining draft...';
+          }
+          this.successMessage.set(msg);
           setTimeout(() => this.router.navigate([destination]), 1000);
         } else if (response.type === MessageType.LOGIN_FAILURE) {
           this.errorMessage.set(response.message);

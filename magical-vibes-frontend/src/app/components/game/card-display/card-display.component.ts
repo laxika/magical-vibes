@@ -37,6 +37,7 @@ export class CardDisplayComponent implements OnInit, OnChanges {
         if (cached) {
           this.artUrl.set(cached);
         } else {
+          this.artUrl.set(null);
           this.fetchCardArt();
         }
       } else {

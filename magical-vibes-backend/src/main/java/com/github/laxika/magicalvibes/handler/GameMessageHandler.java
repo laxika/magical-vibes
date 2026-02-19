@@ -34,8 +34,15 @@ import com.github.laxika.magicalvibes.networking.message.SacrificePermanentReque
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.HandTopBottomChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.CreateDraftRequest;
+import com.github.laxika.magicalvibes.networking.message.DraftPickRequest;
+import com.github.laxika.magicalvibes.networking.message.SubmitDeckRequest;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.ai.AiPlayerService;
+import com.github.laxika.magicalvibes.model.DraftData;
+import com.github.laxika.magicalvibes.model.DraftStatus;
+import com.github.laxika.magicalvibes.service.DraftRegistry;
+import com.github.laxika.magicalvibes.service.DraftService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.LobbyService;
@@ -56,6 +63,8 @@ public class GameMessageHandler implements MessageHandler {
     private final WebSocketSessionManager sessionManager;
     private final ObjectMapper objectMapper;
     private final AiPlayerService aiPlayerService;
+    private final DraftService draftService;
+    private final DraftRegistry draftRegistry;
 
     public GameMessageHandler(LoginService loginService,
             GameService gameService,
@@ -63,7 +72,9 @@ public class GameMessageHandler implements MessageHandler {
             GameRegistry gameRegistry,
             WebSocketSessionManager sessionManager,
             ObjectMapper objectMapper,
-            AiPlayerService aiPlayerService) {
+            AiPlayerService aiPlayerService,
+            DraftService draftService,
+            DraftRegistry draftRegistry) {
         this.loginService = loginService;
         this.gameService = gameService;
         this.lobbyService = lobbyService;
@@ -71,6 +82,8 @@ public class GameMessageHandler implements MessageHandler {
         this.sessionManager = sessionManager;
         this.objectMapper = objectMapper;
         this.aiPlayerService = aiPlayerService;
+        this.draftService = draftService;
+        this.draftRegistry = draftRegistry;
     }
 
     @Override
@@ -96,6 +109,12 @@ public class GameMessageHandler implements MessageHandler {
                 JoinGame joinGame = gameService.getJoinGame(activeGame, response.getUserId());
                 response.setActiveGame(joinGame);
             }
+
+            // Check if the player has an active draft to rejoin
+            DraftData activeDraft = draftRegistry.getDraftForPlayer(response.getUserId());
+            if (activeDraft != null) {
+                response.setActiveDraftId(activeDraft.id);
+            }
         }
 
         String jsonResponse = objectMapper.writeValueAsString(response);
@@ -110,6 +129,13 @@ public class GameMessageHandler implements MessageHandler {
                 log.info("Connection {} registered for user {} ({}) - rejoining active game {}", connection.getId(), response.getUserId(), response.getUsername(), response.getActiveGame().id());
                 if (activeGame != null) {
                     gameService.resendAwaitingInput(activeGame, response.getUserId());
+                }
+            } else if (response.getActiveDraftId() != null) {
+                DraftData activeDraft = draftRegistry.getDraftForPlayer(response.getUserId());
+                sessionManager.setInGame(connection.getId());
+                log.info("Connection {} registered for user {} ({}) - rejoining active draft {}", connection.getId(), response.getUserId(), response.getUsername(), response.getActiveDraftId());
+                if (activeDraft != null) {
+                    draftService.resendDraftState(activeDraft, response.getUserId());
                 }
             } else {
                 log.info("Connection {} registered for user {} ({}) - connection staying open", connection.getId(), response.getUserId(), response.getUsername());
@@ -637,6 +663,82 @@ public class GameMessageHandler implements MessageHandler {
 
         try {
             gameService.handleHandTopBottomChosen(gameData, player, request.handCardIndex(), request.topCardIndex());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            handleError(connection, e.getMessage());
+        }
+    }
+
+    @Override
+    public void handleCreateDraft(Connection connection, CreateDraftRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        if (gameRegistry.getGameForPlayer(player.getId()) != null) {
+            handleError(connection, "You are already in a game");
+            return;
+        }
+
+        if (draftRegistry.getDraftForPlayer(player.getId()) != null) {
+            handleError(connection, "You are already in a draft");
+            return;
+        }
+
+        try {
+            DraftData draftData = draftService.createDraft(
+                    request.draftName(), player.getId(), player.getUsername(),
+                    request.setCode(), request.aiCount());
+
+            sessionManager.setInGame(connection.getId());
+
+            // Send DRAFT_JOINED to the creator
+            draftService.sendDraftJoined(draftData, player.getId());
+
+            // If draft is full (1 human + 7 AI), the first pack is already sent in startDraft()
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            handleError(connection, e.getMessage());
+        }
+    }
+
+    @Override
+    public void handleDraftPick(Connection connection, DraftPickRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        DraftData draftData = draftRegistry.getDraftForPlayer(player.getId());
+        if (draftData == null) {
+            handleError(connection, "Not in a draft");
+            return;
+        }
+
+        try {
+            draftService.handlePick(draftData, player.getId(), request.cardIndex());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            handleError(connection, e.getMessage());
+        }
+    }
+
+    @Override
+    public void handleSubmitDeck(Connection connection, SubmitDeckRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        DraftData draftData = draftRegistry.getDraftForPlayer(player.getId());
+        if (draftData == null) {
+            handleError(connection, "Not in a draft");
+            return;
+        }
+
+        try {
+            draftService.submitDeck(draftData, player.getId(), request.cardIndices(), request.basicLands());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

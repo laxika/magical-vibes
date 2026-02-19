@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, GameNotification, LobbyGame, LobbyGameNotification, DeckInfo, GameStatus, MessageType } from '../../services/websocket.service';
+import { WebsocketService, GameNotification, LobbyGame, LobbyGameNotification, DeckInfo, GameStatus, MessageType, DraftJoinedNotification, DraftPackUpdateNotification } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -21,8 +21,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   errorMessage = signal('');
   showCreateForm = signal(false);
   activeTab = signal<'1v1' | 'draft'>('1v1');
-  draftAiCount = signal(1);
+  draftAiCount = signal(7);
   draftSetCode = signal('');
+  draftGameName = signal('');
   private subscriptions: Subscription[] = [];
 
   constructor(
@@ -34,6 +35,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     // No active connection means no session - go back to login
     if (!this.websocketService.isConnected()) {
       this.router.navigate(['/']);
+      return;
+    }
+
+    // If the player has an active draft, navigate to draft (state messages will follow)
+    if (this.websocketService.activeDraftId) {
+      this.router.navigate(['/draft']);
       return;
     }
 
@@ -79,6 +86,10 @@ export class HomeComponent implements OnInit, OnDestroy {
               this.games.set(updatedGames);
             }
           }
+        } else if (message.type === MessageType.DRAFT_JOINED) {
+          this.router.navigate(['/draft']);
+        } else if (message.type === MessageType.DRAFT_PACK_UPDATE) {
+          this.router.navigate(['/draft']);
         } else if (message.type === MessageType.ERROR) {
           const notification = message as GameNotification;
           if (notification.message) {
@@ -126,6 +137,21 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     this.newGameName.set('');
     this.showCreateForm.set(false);
+  }
+
+  createDraft() {
+    if (!this.draftGameName().trim()) {
+      this.errorMessage.set('Please enter a draft name');
+      return;
+    }
+
+    this.errorMessage.set('');
+    this.websocketService.send({
+      type: MessageType.CREATE_DRAFT,
+      draftName: this.draftGameName(),
+      setCode: this.draftSetCode(),
+      aiCount: this.draftAiCount()
+    });
   }
 
   joinGame(gameId: string) {

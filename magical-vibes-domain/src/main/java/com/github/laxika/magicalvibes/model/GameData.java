@@ -113,6 +113,7 @@ public class GameData {
     public boolean discardCausedByOpponent;
     public final Deque<UUID> extraTurns = new ArrayDeque<>();
     public int lastBroadcastedLogSize = 0;
+    public UUID draftId;
 
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {
         this.id = id;

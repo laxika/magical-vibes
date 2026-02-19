@@ -26,6 +26,9 @@ import com.github.laxika.magicalvibes.networking.message.SacrificePermanentReque
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.HandTopBottomChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.CreateDraftRequest;
+import com.github.laxika.magicalvibes.networking.message.DraftPickRequest;
+import com.github.laxika.magicalvibes.networking.message.SubmitDeckRequest;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -111,6 +114,9 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 case LIBRARY_CARDS_REORDERED -> messageHandler.handleLibraryCardsReordered(connection, objectMapper.treeToValue(jsonNode, ReorderLibraryCardsRequest.class));
                 case LIBRARY_CARD_CHOSEN -> messageHandler.handleLibraryCardChosen(connection, objectMapper.treeToValue(jsonNode, LibraryCardChosenRequest.class));
                 case HAND_TOP_BOTTOM_CHOSEN -> messageHandler.handleHandTopBottomChosen(connection, objectMapper.treeToValue(jsonNode, HandTopBottomChosenRequest.class));
+                case CREATE_DRAFT -> messageHandler.handleCreateDraft(connection, objectMapper.treeToValue(jsonNode, CreateDraftRequest.class));
+                case DRAFT_PICK -> messageHandler.handleDraftPick(connection, objectMapper.treeToValue(jsonNode, DraftPickRequest.class));
+                case SUBMIT_DECK -> messageHandler.handleSubmitDeck(connection, objectMapper.treeToValue(jsonNode, SubmitDeckRequest.class));
                 default -> messageHandler.handleError(connection, "Unknown message type: " + type);
             }
         } catch (Exception e) {

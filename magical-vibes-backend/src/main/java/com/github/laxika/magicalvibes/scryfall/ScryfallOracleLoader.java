@@ -30,6 +30,9 @@ public class ScryfallOracleLoader {
     private static final Logger LOG = Logger.getLogger(ScryfallOracleLoader.class.getName());
     private static final ObjectMapper MAPPER = JsonMapper.builder().build();
 
+    // Rarity registry: "SET:collectorNumber" -> rarity (e.g. "common", "uncommon", "rare", "mythic")
+    private static final Map<String, String> rarityRegistry = new HashMap<>();
+
     private static final Map<String, CardColor> COLOR_MAP = Map.of(
             "W", CardColor.WHITE,
             "U", CardColor.BLUE,
@@ -77,6 +80,15 @@ public class ScryfallOracleLoader {
                     }
                 }
 
+                // Build rarity registry for all cards in the set
+                for (Map.Entry<String, JsonNode> entry : cardsByCollectorNumber.entrySet()) {
+                    JsonNode cardNode = entry.getValue();
+                    if (cardNode.has("rarity")) {
+                        String key = cardSet.getCode() + ":" + entry.getKey();
+                        rarityRegistry.put(key, cardNode.get("rarity").asText());
+                    }
+                }
+
                 for (CardPrinting printing : cardSet.getPrintings()) {
                     JsonNode cardNode = cardsByCollectorNumber.get(printing.collectorNumber());
                     if (cardNode == null) {
@@ -98,6 +110,13 @@ public class ScryfallOracleLoader {
         } catch (Exception e) {
             throw new RuntimeException("Failed to load Scryfall oracle data", e);
         }
+    }
+
+    /**
+     * Returns the rarity for a card in a set, e.g. "common", "uncommon", "rare", "mythic".
+     */
+    public static String getRarity(String setCode, String collectorNumber) {
+        return rarityRegistry.get(setCode + ":" + collectorNumber);
     }
 
     private static Map<String, JsonNode> loadSet(Path cachePath, String setCode) throws IOException, InterruptedException {

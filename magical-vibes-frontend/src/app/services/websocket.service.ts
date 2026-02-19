@@ -51,7 +51,16 @@ export enum MessageType {
   GRAVEYARD_CARD_CHOSEN = 'GRAVEYARD_CARD_CHOSEN',
   CHOOSE_HAND_TOP_BOTTOM = 'CHOOSE_HAND_TOP_BOTTOM',
   HAND_TOP_BOTTOM_CHOSEN = 'HAND_TOP_BOTTOM_CHOSEN',
-  ERROR = 'ERROR'
+  ERROR = 'ERROR',
+  CREATE_DRAFT = 'CREATE_DRAFT',
+  DRAFT_JOINED = 'DRAFT_JOINED',
+  DRAFT_PACK_UPDATE = 'DRAFT_PACK_UPDATE',
+  DRAFT_PICK = 'DRAFT_PICK',
+  DECK_BUILDING_STATE = 'DECK_BUILDING_STATE',
+  SUBMIT_DECK = 'SUBMIT_DECK',
+  TOURNAMENT_UPDATE = 'TOURNAMENT_UPDATE',
+  TOURNAMENT_GAME_READY = 'TOURNAMENT_GAME_READY',
+  DRAFT_FINISHED = 'DRAFT_FINISHED'
 }
 
 export enum GameStatus {
@@ -235,6 +244,7 @@ export interface LoginResponse {
   decks?: DeckInfo[];
   sets?: SetInfo[];
   activeGame?: Game;
+  activeDraftId?: string;
 }
 
 export interface GameNotification {
@@ -378,7 +388,68 @@ export interface ChooseHandTopBottomNotification {
   prompt: string;
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameStateNotification | MulliganResolvedNotification | SelectCardsToBottomNotification | AvailableAttackersNotification | AvailableBlockersNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | ChooseMultipleCardsFromGraveyardsNotification | ReorderLibraryCardsNotification | ChooseCardFromLibraryNotification | RevealHandNotification | ChooseFromRevealedHandNotification | ChooseCardFromGraveyardNotification | ChooseHandTopBottomNotification;
+export enum DraftStatus {
+  WAITING = 'WAITING',
+  DRAFTING = 'DRAFTING',
+  DECK_BUILDING = 'DECK_BUILDING',
+  TOURNAMENT = 'TOURNAMENT',
+  FINISHED = 'FINISHED'
+}
+
+export interface DraftJoinedNotification {
+  type: MessageType;
+  draftId: string;
+  draftName: string;
+  setCode: string;
+  playerNames: string[];
+  status: string;
+}
+
+export interface DraftPackUpdateNotification {
+  type: MessageType;
+  pack: Card[];
+  packNumber: number;
+  pickNumber: number;
+  pool: Card[];
+}
+
+export interface DeckBuildingStateNotification {
+  type: MessageType;
+  pool: Card[];
+  deadlineEpochMillis: number;
+  alreadySubmitted?: boolean;
+}
+
+export interface TournamentPairing {
+  player1Name: string;
+  player2Name: string;
+  winnerName: string | null;
+}
+
+export interface TournamentRound {
+  roundName: string;
+  pairings: TournamentPairing[];
+}
+
+export interface TournamentUpdateNotification {
+  type: MessageType;
+  rounds: TournamentRound[];
+  currentRound: number;
+  roundName: string;
+}
+
+export interface TournamentGameReadyNotification {
+  type: MessageType;
+  gameId: string;
+  opponentName: string;
+}
+
+export interface DraftFinishedNotification {
+  type: MessageType;
+  winnerName: string;
+}
+
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameStateNotification | MulliganResolvedNotification | SelectCardsToBottomNotification | AvailableAttackersNotification | AvailableBlockersNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | ChooseMultipleCardsFromGraveyardsNotification | ReorderLibraryCardsNotification | ChooseCardFromLibraryNotification | RevealHandNotification | ChooseFromRevealedHandNotification | ChooseCardFromGraveyardNotification | ChooseHandTopBottomNotification | DraftJoinedNotification | DraftPackUpdateNotification | DeckBuildingStateNotification | TournamentUpdateNotification | TournamentGameReadyNotification | DraftFinishedNotification;
 
 export interface User {
   userId: string;
@@ -401,6 +472,13 @@ export class WebsocketService {
   initialGames: LobbyGame[] = [];
   availableDecks: DeckInfo[] = [];
   availableSets: SetInfo[] = [];
+  inDraft = false;
+  activeDraftId: string | null = null;
+  lastDraftJoined: DraftJoinedNotification | null = null;
+  lastDraftPackUpdate: DraftPackUpdateNotification | null = null;
+  lastDeckBuildingState: DeckBuildingStateNotification | null = null;
+  lastTournamentUpdate: TournamentUpdateNotification | null = null;
+  lastDraftFinished: DraftFinishedNotification | null = null;
 
   login(username: string, password: string): Observable<LoginResponse> {
     return new Observable(observer => {
@@ -435,10 +513,27 @@ export class WebsocketService {
               if (response.activeGame) {
                 this.currentGame = response.activeGame;
               }
+              if (response.activeDraftId) {
+                this.activeDraftId = response.activeDraftId;
+                this.inDraft = true;
+              }
             }
             observer.next(response);
             observer.complete();
             return;
+          }
+
+          // Buffer draft state messages so they're available when draft component mounts
+          if (message.type === MessageType.DRAFT_JOINED) {
+            this.lastDraftJoined = message as DraftJoinedNotification;
+          } else if (message.type === MessageType.DRAFT_PACK_UPDATE) {
+            this.lastDraftPackUpdate = message as DraftPackUpdateNotification;
+          } else if (message.type === MessageType.DECK_BUILDING_STATE) {
+            this.lastDeckBuildingState = message as DeckBuildingStateNotification;
+          } else if (message.type === MessageType.TOURNAMENT_UPDATE) {
+            this.lastTournamentUpdate = message as TournamentUpdateNotification;
+          } else if (message.type === MessageType.DRAFT_FINISHED) {
+            this.lastDraftFinished = message as DraftFinishedNotification;
           }
 
           // After authenticated, forward everything to the messages stream
@@ -506,5 +601,12 @@ export class WebsocketService {
     this.availableDecks = [];
     this.availableSets = [];
     this.authenticated = false;
+    this.inDraft = false;
+    this.activeDraftId = null;
+    this.lastDraftJoined = null;
+    this.lastDraftPackUpdate = null;
+    this.lastDeckBuildingState = null;
+    this.lastTournamentUpdate = null;
+    this.lastDraftFinished = null;
   }
 }
