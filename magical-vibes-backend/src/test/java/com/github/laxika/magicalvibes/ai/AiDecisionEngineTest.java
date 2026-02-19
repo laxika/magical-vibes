@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
+import com.github.laxika.magicalvibes.cards.a.AvenCloudchaser;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -289,5 +291,50 @@ class AiDecisionEngineTest {
         // Air Elemental survived (4/4 vs 2/2)
         assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));
+    }
+
+    // ===== ETB destroy targeting =====
+
+    @Test
+    @DisplayName("AI casts Aven Cloudchaser targeting opponent's enchantment, not a creature")
+    void castsAvenCloudchaserTargetingEnchantment() {
+        giveAiPriority();
+        giveAiPlains(4);
+
+        // Opponent has a creature and an enchantment
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(bears);
+
+        Permanent chorus = new Permanent(new AngelicChorus());
+        gd.playerBattlefields.get(human.getId()).add(chorus);
+
+        harness.setHand(aiPlayer, List.of(new AvenCloudchaser()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should cast Aven Cloudchaser targeting the enchantment, not the creature
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Aven Cloudchaser");
+        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(chorus.getId());
+    }
+
+    @Test
+    @DisplayName("AI does not cast Aven Cloudchaser when no enchantments on battlefield")
+    void doesNotCastAvenCloudchaserWithoutEnchantments() {
+        giveAiPriority();
+        giveAiPlains(4);
+
+        // Opponent has only creatures, no enchantments
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(bears);
+
+        harness.setHand(aiPlayer, List.of(new AvenCloudchaser()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should not cast — no valid enchantment targets
+        assertThat(gd.stack).isEmpty();
     }
 }
