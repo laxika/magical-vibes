@@ -76,6 +76,8 @@ public class TurnProgressionService {
                 handleCombatResult(combatService.resolveCombatDamage(gameData), gameData);
             } else if (next == TurnStep.END_OF_COMBAT) {
                 combatService.clearCombatState(gameData);
+            } else if (next == TurnStep.END_STEP) {
+                handleEndStepTriggers(gameData);
             } else if (next == TurnStep.CLEANUP) {
                 gameHelper.resetEndOfTurnModifiers(gameData);
             }
@@ -290,6 +292,54 @@ public class TurnProgressionService {
                 }
             }
         }
+    }
+
+    private void handleEndStepTriggers(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+        List<UUID> triggerOrder = new ArrayList<>();
+        triggerOrder.add(activePlayerId);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(activePlayerId)) {
+                triggerOrder.add(playerId);
+            }
+        }
+
+        for (UUID playerId : triggerOrder) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+
+            for (Permanent perm : battlefield) {
+                List<CardEffect> endStepEffects = perm.getCard().getEffects(EffectSlot.END_STEP_TRIGGERED);
+                if (endStepEffects == null || endStepEffects.isEmpty()) continue;
+
+                for (CardEffect effect : endStepEffects) {
+                    if (effect instanceof MayEffect may) {
+                        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                                perm.getCard(),
+                                playerId,
+                                List.of(may.wrapped()),
+                                perm.getCard().getName() + " - " + may.prompt()
+                        ));
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s end step ability",
+                                new ArrayList<>(List.of(effect)),
+                                null,
+                                perm.getId()
+                        ));
+
+                        String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                    }
+                }
+            }
+        }
+
+        playerInputService.processNextMayAbility(gameData);
     }
 
     void advanceTurn(GameData gameData) {

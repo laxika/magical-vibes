@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEff
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
@@ -50,6 +51,8 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
                 (gd, entry, effect) -> resolvePutTargetOnBottomOfLibrary(gd, entry));
         registry.register(SacrificeAtEndOfCombatEffect.class,
                 (gd, entry, effect) -> resolveSacrificeAtEndOfCombat(gd, entry));
+        registry.register(SacrificeSelfEffect.class,
+                (gd, entry, effect) -> resolveSacrificeSelf(gd, entry));
         registry.register(RedirectUnblockedCombatDamageToSelfEffect.class,
                 (gd, entry, effect) -> resolveRedirectUnblockedCombatDamageToSelf(gd, entry));
         registry.register(RegenerateEffect.class,
@@ -188,6 +191,23 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
             gameData.permanentsToSacrificeAtEndOfCombat.add(self.getId());
             String logEntry = entry.getCard().getName() + " will be sacrificed at end of combat.";
             gameData.gameLog.add(logEntry);
+        }
+    }
+
+    private void resolveSacrificeSelf(GameData gameData, StackEntry entry) {
+        if (entry.getSourcePermanentId() == null) {
+            return;
+        }
+
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (self == null) {
+            return;
+        }
+
+        if (gameHelper.removePermanentToGraveyard(gameData, self)) {
+            String logEntry = self.getCard().getName() + " is sacrificed.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameHelper.removeOrphanedAuras(gameData);
         }
     }
 
