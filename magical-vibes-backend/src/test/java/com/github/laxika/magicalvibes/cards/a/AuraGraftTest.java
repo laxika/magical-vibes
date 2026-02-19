@@ -226,12 +226,12 @@ class AuraGraftTest {
         harness.handlePermanentChosen(player1, myCreature.getId());
 
         // Holy Strength gives +1/+2, Grizzly Bears is 2/2 → should be 3/4
-        assertThat(harness.getGameService().getEffectivePower(gd, myCreature)).isEqualTo(3);
-        assertThat(harness.getGameService().getEffectiveToughness(gd, myCreature)).isEqualTo(4);
+        assertThat(harness.getGameQueryService().getEffectivePower(gd, myCreature)).isEqualTo(3);
+        assertThat(harness.getGameQueryService().getEffectiveToughness(gd, myCreature)).isEqualTo(4);
 
         // Opponent creature should no longer get the bonus
-        assertThat(harness.getGameService().getEffectivePower(gd, opponentCreature)).isEqualTo(2);
-        assertThat(harness.getGameService().getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
+        assertThat(harness.getGameQueryService().getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(harness.getGameQueryService().getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
     }
 
     // ===== Self-targeting (own aura) =====

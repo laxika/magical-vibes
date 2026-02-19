@@ -216,8 +216,8 @@ class NomadMythmakerTest {
         GameData gd = harness.getGameData();
         // Holy Strength gives +1/+2, Grizzly Bears is 2/2 → should be 3/4
         // Static bonuses are computed on-the-fly by GameService, not stored on Permanent
-        assertThat(harness.getGameService().getEffectivePower(gd, creature)).isEqualTo(3);
-        assertThat(harness.getGameService().getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(harness.getGameQueryService().getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(harness.getGameQueryService().getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
 
     @Test

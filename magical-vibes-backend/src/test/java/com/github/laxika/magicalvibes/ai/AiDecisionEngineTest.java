@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.GameService;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +29,6 @@ class AiDecisionEngineTest {
     private GameTestHarness harness;
     private Player human;
     private Player aiPlayer;
-    private GameService gs;
     private GameData gd;
     private AiDecisionEngine ai;
 
@@ -38,12 +37,15 @@ class AiDecisionEngineTest {
         harness = new GameTestHarness();
         human = harness.getPlayer1();
         aiPlayer = harness.getPlayer2();
-        gs = harness.getGameService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
 
-        ai = new AiDecisionEngine(gd.id, aiPlayer, harness.getGameRegistry(), gs);
+        FakeConnection aiConn = new FakeConnection("ai-test");
+        harness.getSessionManager().registerPlayer(aiConn, aiPlayer.getId(), "Bob");
+        ai = new AiDecisionEngine(gd.id, aiPlayer, harness.getGameRegistry(),
+                harness.getMessageHandler(), harness.getGameQueryService());
+        ai.setSelfConnection(aiConn);
     }
 
     /**

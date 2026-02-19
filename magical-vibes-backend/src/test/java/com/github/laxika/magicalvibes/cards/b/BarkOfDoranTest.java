@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LoxodonWarhammer;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +35,7 @@ class BarkOfDoranTest {
     private Player player1;
     private Player player2;
     private GameService gs;
+    private GameQueryService gqs;
     private GameData gd;
 
     @BeforeEach
@@ -42,6 +44,7 @@ class BarkOfDoranTest {
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
@@ -131,8 +134,8 @@ class BarkOfDoranTest {
         bark.setAttachedTo(creature.getId());
 
         // GrizzlyBears base 2/2, with Bark becomes 2/3
-        assertThat(gs.getEffectivePower(gd, creature)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -142,12 +145,12 @@ class BarkOfDoranTest {
         Permanent bark = addBarkReady(player1);
         bark.setAttachedTo(creature.getId());
 
-        assertThat(gs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
 
         gd.playerBattlefields.get(player1.getId()).remove(bark);
 
-        assertThat(gs.getEffectivePower(gd, creature)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -158,8 +161,8 @@ class BarkOfDoranTest {
         Permanent bark = addBarkReady(player1);
         bark.setAttachedTo(creature.getId());
 
-        assertThat(gs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
     }
 
     // ===== Combat damage: toughness > power → uses toughness =====
@@ -189,7 +192,7 @@ class BarkOfDoranTest {
         bark.setAttachedTo(creature.getId());
 
         // GrizzlyBears 2/2 + Bark = 2/3, toughness > power
-        assertThat(gs.getEffectiveCombatDamage(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveCombatDamage(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -260,7 +263,7 @@ class BarkOfDoranTest {
         bark.setAttachedTo(creature.getId());
         creature.setAttacking(true);
 
-        assertThat(gs.getEffectiveCombatDamage(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCombatDamage(gd, creature)).isEqualTo(2);
 
         resolveCombat();
 
@@ -281,9 +284,9 @@ class BarkOfDoranTest {
         warhammer.setAttachedTo(creature.getId());
         creature.setAttacking(true);
 
-        assertThat(gs.getEffectivePower(gd, creature)).isEqualTo(5);
-        assertThat(gs.getEffectiveToughness(gd, creature)).isEqualTo(3);
-        assertThat(gs.getEffectiveCombatDamage(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveCombatDamage(gd, creature)).isEqualTo(5);
 
         resolveCombat();
 
@@ -311,7 +314,7 @@ class BarkOfDoranTest {
 
         // creature2 deals normal 2 power damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18); // 20 - 2
-        assertThat(gs.getEffectiveCombatDamage(gd, creature2)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCombatDamage(gd, creature2)).isEqualTo(2);
     }
 
     // ===== Re-equip =====
@@ -324,8 +327,8 @@ class BarkOfDoranTest {
         Permanent creature2 = addReadyCreature(player1, new GrizzlyBears());
 
         bark.setAttachedTo(creature1.getId());
-        assertThat(gs.getEffectiveToughness(gd, creature1)).isEqualTo(3);
-        assertThat(gs.getEffectiveCombatDamage(gd, creature1)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature1)).isEqualTo(3);
+        assertThat(gqs.getEffectiveCombatDamage(gd, creature1)).isEqualTo(3);
 
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.activateAbility(player1, 0, null, creature2.getId());
@@ -333,11 +336,11 @@ class BarkOfDoranTest {
 
         assertThat(bark.getAttachedTo()).isEqualTo(creature2.getId());
         // creature1 loses boost and combat damage effect
-        assertThat(gs.getEffectiveToughness(gd, creature1)).isEqualTo(2);
-        assertThat(gs.getEffectiveCombatDamage(gd, creature1)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature1)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCombatDamage(gd, creature1)).isEqualTo(2);
         // creature2 gains boost and combat damage effect
-        assertThat(gs.getEffectiveToughness(gd, creature2)).isEqualTo(3);
-        assertThat(gs.getEffectiveCombatDamage(gd, creature2)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature2)).isEqualTo(3);
+        assertThat(gqs.getEffectiveCombatDamage(gd, creature2)).isEqualTo(3);
     }
 
     // ===== Helpers =====

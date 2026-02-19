@@ -1,18 +1,12 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.networking.message.JoinGame;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.ColorChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
@@ -23,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,7 +31,6 @@ public class GameService {
     private final GameRegistry gameRegistry;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
-    private final CardViewFactory cardViewFactory;
     private final CombatService combatService;
     private final TurnProgressionService turnProgressionService;
     private final ColorChoiceHandlerService colorChoiceHandlerService;
@@ -90,10 +82,6 @@ public class GameService {
         turnProgressionService.advanceStep(gameData);
     }
 
-    public JoinGame getJoinGame(GameData data, UUID playerId) {
-        return toJoinGame(data, playerId);
-    }
-
     public void resendAwaitingInput(GameData gameData, UUID playerId) {
         synchronized (gameData) {
             reconnectionService.resendAwaitingInput(gameData, playerId);
@@ -125,39 +113,6 @@ public class GameService {
             }
             mulliganService.mulligan(gameData, player);
         }
-    }
-
-    private JoinGame toJoinGame(GameData data, UUID playerId) {
-        List<CardView> hand = playerId != null
-                ? data.playerHands.getOrDefault(playerId, List.of()).stream().map(cardViewFactory::create).toList()
-                : List.of();
-        int mulliganCount = playerId != null ? data.mulliganCounts.getOrDefault(playerId, 0) : 0;
-        Map<String, Integer> manaPool = gameBroadcastService.getManaPool(data, playerId);
-        List<TurnStep> autoStopSteps = playerId != null && data.playerAutoStopSteps.containsKey(playerId)
-                ? new ArrayList<>(data.playerAutoStopSteps.get(playerId))
-                : List.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN);
-        return new JoinGame(
-                data.id,
-                data.gameName,
-                data.status,
-                new ArrayList<>(data.playerNames),
-                new ArrayList<>(data.orderedPlayerIds),
-                new ArrayList<>(data.gameLog),
-                data.currentStep,
-                data.activePlayerId,
-                data.turnNumber,
-                gameQueryService.getPriorityPlayerId(data),
-                hand,
-                mulliganCount,
-                gameBroadcastService.getDeckSizes(data),
-                gameBroadcastService.getHandSizes(data),
-                gameBroadcastService.getBattlefields(data),
-                manaPool,
-                autoStopSteps,
-                gameBroadcastService.getLifeTotals(data),
-                gameBroadcastService.getStackViews(data),
-                gameBroadcastService.getGraveyardViews(data)
-        );
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments) {
@@ -303,29 +258,4 @@ public class GameService {
         }
     }
 
-    // ===== Thin delegates for test API =====
-
-    public boolean isCreature(GameData gameData, Permanent permanent) {
-        return gameQueryService.isCreature(gameData, permanent);
-    }
-
-    public int getEffectivePower(GameData gameData, Permanent permanent) {
-        return gameQueryService.getEffectivePower(gameData, permanent);
-    }
-
-    public int getEffectiveToughness(GameData gameData, Permanent permanent) {
-        return gameQueryService.getEffectiveToughness(gameData, permanent);
-    }
-
-    public int getEffectiveCombatDamage(GameData gameData, Permanent permanent) {
-        return gameQueryService.getEffectiveCombatDamage(gameData, permanent);
-    }
-
-    public boolean hasKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
-        return gameQueryService.hasKeyword(gameData, permanent, keyword);
-    }
-
-    public boolean hasAuraWithEffect(GameData gameData, Permanent permanent, Class<? extends CardEffect> effectClass) {
-        return gameQueryService.hasAuraWithEffect(gameData, permanent, effectClass);
-    }
 }

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.filter.CreatureYouControlTargetFilter;
 import com.github.laxika.magicalvibes.cards.d.Deathmark;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +34,7 @@ class LeoninScimitarTest {
     private Player player1;
     private Player player2;
     private GameService gs;
+    private GameQueryService gqs;
     private GameData gd;
 
     @BeforeEach
@@ -41,6 +43,7 @@ class LeoninScimitarTest {
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
@@ -185,8 +188,8 @@ class LeoninScimitarTest {
         Permanent scimitar = addScimitarReady(player1);
         scimitar.setAttachedTo(creature.getId());
 
-        assertThat(gs.getEffectivePower(gd, creature)).isEqualTo(3);
-        assertThat(gs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -197,15 +200,15 @@ class LeoninScimitarTest {
         scimitar.setAttachedTo(creature.getId());
 
         // Verify boost is active
-        assertThat(gs.getEffectivePower(gd, creature)).isEqualTo(3);
-        assertThat(gs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
 
         // Remove equipment
         gd.playerBattlefields.get(player1.getId()).remove(scimitar);
 
         // Verify boost is gone
-        assertThat(gs.getEffectivePower(gd, creature)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -216,8 +219,8 @@ class LeoninScimitarTest {
         Permanent scimitar = addScimitarReady(player1);
         scimitar.setAttachedTo(creature.getId());
 
-        assertThat(gs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
     }
 
     // ===== Re-equip: moving equipment to another creature =====
@@ -231,7 +234,7 @@ class LeoninScimitarTest {
 
         // Equip to creature1
         scimitar.setAttachedTo(creature1.getId());
-        assertThat(gs.getEffectivePower(gd, creature1)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature1)).isEqualTo(3);
 
         // Re-equip to creature2
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -239,8 +242,8 @@ class LeoninScimitarTest {
         harness.passBothPriorities();
 
         assertThat(scimitar.getAttachedTo()).isEqualTo(creature2.getId());
-        assertThat(gs.getEffectivePower(gd, creature1)).isEqualTo(2);
-        assertThat(gs.getEffectivePower(gd, creature2)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature1)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature2)).isEqualTo(3);
     }
 
     // ===== Equipment stays when creature dies =====

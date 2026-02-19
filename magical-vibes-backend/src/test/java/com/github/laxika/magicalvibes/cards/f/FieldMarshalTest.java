@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.cards.a.AvenCloudchaser;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +32,7 @@ class FieldMarshalTest {
     private Player player1;
     private Player player2;
     private GameService gs;
+    private GameQueryService gqs;
     private GameData gd;
 
     @BeforeEach
@@ -39,6 +41,7 @@ class FieldMarshalTest {
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
@@ -120,9 +123,9 @@ class FieldMarshalTest {
                 .filter(p -> p.getCard().getName().equals("Aven Cloudchaser"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, cloudchaser)).isEqualTo(3);
-        assertThat(gs.getEffectiveToughness(gd, cloudchaser)).isEqualTo(3);
-        assertThat(gs.hasKeyword(gd, cloudchaser, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, cloudchaser)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cloudchaser)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, cloudchaser, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -134,9 +137,9 @@ class FieldMarshalTest {
                 .filter(p -> p.getCard().getName().equals("Field Marshal"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, marshal)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, marshal)).isEqualTo(2);
-        assertThat(gs.hasKeyword(gd, marshal, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, marshal)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, marshal)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, marshal, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -149,9 +152,9 @@ class FieldMarshalTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, bears)).isEqualTo(2);
-        assertThat(gs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -164,9 +167,9 @@ class FieldMarshalTest {
                 .filter(p -> p.getCard().getName().equals("Aven Cloudchaser"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, opponentSoldier)).isEqualTo(3);
-        assertThat(gs.getEffectiveToughness(gd, opponentSoldier)).isEqualTo(3);
-        assertThat(gs.hasKeyword(gd, opponentSoldier, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, opponentSoldier)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opponentSoldier)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, opponentSoldier, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     // ===== Multiple sources =====
@@ -184,9 +187,9 @@ class FieldMarshalTest {
         assertThat(marshals).hasSize(2);
         for (Permanent marshal : marshals) {
             // Each gets +1/+1 from the other → 3/3 with first strike
-            assertThat(gs.getEffectivePower(gd, marshal)).isEqualTo(3);
-            assertThat(gs.getEffectiveToughness(gd, marshal)).isEqualTo(3);
-            assertThat(gs.hasKeyword(gd, marshal, Keyword.FIRST_STRIKE)).isTrue();
+            assertThat(gqs.getEffectivePower(gd, marshal)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, marshal)).isEqualTo(3);
+            assertThat(gqs.hasKeyword(gd, marshal, Keyword.FIRST_STRIKE)).isTrue();
         }
     }
 
@@ -202,9 +205,9 @@ class FieldMarshalTest {
                 .findFirst().orElseThrow();
 
         // 2/2 base + 2/2 from two sources = 4/4
-        assertThat(gs.getEffectivePower(gd, cloudchaser)).isEqualTo(4);
-        assertThat(gs.getEffectiveToughness(gd, cloudchaser)).isEqualTo(4);
-        assertThat(gs.hasKeyword(gd, cloudchaser, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, cloudchaser)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, cloudchaser)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, cloudchaser, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     // ===== Bonus gone when source leaves =====
@@ -220,16 +223,16 @@ class FieldMarshalTest {
                 .findFirst().orElseThrow();
 
         // Verify buff is applied
-        assertThat(gs.getEffectivePower(gd, cloudchaser)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, cloudchaser)).isEqualTo(3);
 
         // Remove Field Marshal from battlefield
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(p -> p.getCard().getName().equals("Field Marshal"));
 
         // Bonus should be gone immediately (computed on the fly)
-        assertThat(gs.getEffectivePower(gd, cloudchaser)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, cloudchaser)).isEqualTo(2);
-        assertThat(gs.hasKeyword(gd, cloudchaser, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, cloudchaser)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, cloudchaser)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, cloudchaser, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     // ===== Bonus applied on resolve =====
@@ -246,16 +249,16 @@ class FieldMarshalTest {
                 .findFirst().orElseThrow();
 
         // Before casting, no bonus
-        assertThat(gs.getEffectivePower(gd, cloudchaser)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, cloudchaser)).isEqualTo(2);
 
         // Cast and resolve Field Marshal
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         // After resolving, Aven Cloudchaser should be buffed
-        assertThat(gs.getEffectivePower(gd, cloudchaser)).isEqualTo(3);
-        assertThat(gs.getEffectiveToughness(gd, cloudchaser)).isEqualTo(3);
-        assertThat(gs.hasKeyword(gd, cloudchaser, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, cloudchaser)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cloudchaser)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, cloudchaser, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     // ===== Combat with static buff =====
@@ -310,14 +313,14 @@ class FieldMarshalTest {
 
         // Simulate a temporary spell boost
         cloudchaser.setPowerModifier(cloudchaser.getPowerModifier() + 7);
-        assertThat(gs.getEffectivePower(gd, cloudchaser)).isEqualTo(10); // 2 base + 7 spell + 1 static
+        assertThat(gqs.getEffectivePower(gd, cloudchaser)).isEqualTo(10); // 2 base + 7 spell + 1 static
 
         // Reset end-of-turn modifiers (simulates cleanup step)
         cloudchaser.resetModifiers();
 
         // Spell bonus gone, static bonus still computed
-        assertThat(gs.getEffectivePower(gd, cloudchaser)).isEqualTo(3); // 2 base + 1 static
-        assertThat(gs.getEffectiveToughness(gd, cloudchaser)).isEqualTo(3);
-        assertThat(gs.hasKeyword(gd, cloudchaser, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, cloudchaser)).isEqualTo(3); // 2 base + 1 static
+        assertThat(gqs.getEffectiveToughness(gd, cloudchaser)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, cloudchaser, Keyword.FIRST_STRIKE)).isTrue();
     }
 }

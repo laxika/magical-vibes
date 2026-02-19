@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnTappedCreaturesEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +33,7 @@ class AdeptWatershaperTest {
     private Player player1;
     private Player player2;
     private GameService gs;
+    private GameQueryService gqs;
     private GameData gd;
 
     @BeforeEach
@@ -40,6 +42,7 @@ class AdeptWatershaperTest {
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
@@ -117,7 +120,7 @@ class AdeptWatershaperTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         bears.tap();
 
-        assertThat(gs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -129,7 +132,7 @@ class AdeptWatershaperTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(bears.isTapped()).isFalse();
-        assertThat(gs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -140,7 +143,7 @@ class AdeptWatershaperTest {
         Permanent watershaper = findPermanent(player1, "Adept Watershaper");
         watershaper.tap();
 
-        assertThat(gs.hasKeyword(gd, watershaper, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, watershaper, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -152,7 +155,7 @@ class AdeptWatershaperTest {
         Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
         opponentBears.tap();
 
-        assertThat(gs.hasKeyword(gd, opponentBears, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -164,11 +167,11 @@ class AdeptWatershaperTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         bears.tap();
 
-        assertThat(gs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
 
         bears.untap();
 
-        assertThat(gs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     // ===== Bonus gone when source leaves =====
@@ -182,14 +185,14 @@ class AdeptWatershaperTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         bears.tap();
 
-        assertThat(gs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
 
         // Remove Watershaper from battlefield
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(p -> p.getCard().getName().equals("Adept Watershaper"));
 
         // Indestructible should be gone immediately (computed on the fly)
-        assertThat(gs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     // ===== Static bonus survives end-of-turn reset =====
@@ -203,13 +206,13 @@ class AdeptWatershaperTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         bears.tap();
 
-        assertThat(gs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
 
         // Simulate end-of-turn cleanup
         bears.resetModifiers();
 
         // Static keyword should still be computed
-        assertThat(gs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     // ===== Multiple Watershapers =====
@@ -232,7 +235,7 @@ class AdeptWatershaperTest {
 
         // Each should be indestructible from the other
         for (Permanent ws : watershapers) {
-            assertThat(gs.hasKeyword(gd, ws, Keyword.INDESTRUCTIBLE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, ws, Keyword.INDESTRUCTIBLE)).isTrue();
         }
     }
 
@@ -248,7 +251,7 @@ class AdeptWatershaperTest {
         gd.playerBattlefields.get(player1.getId()).add(tappedBears);
 
         // Verify indestructible
-        assertThat(gs.hasKeyword(gd, tappedBears, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, tappedBears, Keyword.INDESTRUCTIBLE)).isTrue();
 
         // Cast Assassinate targeting the tapped creature
         harness.setHand(player2, List.of(new Assassinate()));
@@ -283,7 +286,7 @@ class AdeptWatershaperTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         // Verify indestructible
-        assertThat(gs.hasKeyword(gd, tappedBears, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, tappedBears, Keyword.INDESTRUCTIBLE)).isTrue();
 
         // Cast Wrath of God
         harness.setHand(player2, List.of(new WrathOfGod()));
@@ -316,7 +319,7 @@ class AdeptWatershaperTest {
         tappedBears.tap();
         gd.playerBattlefields.get(player1.getId()).add(tappedBears);
 
-        assertThat(gs.hasKeyword(gd, tappedBears, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, tappedBears, Keyword.INDESTRUCTIBLE)).isFalse();
 
         // Cast Assassinate
         harness.setHand(player2, List.of(new Assassinate()));
@@ -353,7 +356,7 @@ class AdeptWatershaperTest {
         gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         // Verify indestructible
-        assertThat(gs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isTrue();
 
         // Big blocker that would normally kill the 1/1
         GrizzlyBears bigBlocker = new GrizzlyBears();
@@ -398,7 +401,7 @@ class AdeptWatershaperTest {
         gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         // Verify indestructible
-        assertThat(gs.hasKeyword(gd, blocker, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.INDESTRUCTIBLE)).isTrue();
 
         // Set up blocking state
         blocker.setBlocking(true);
@@ -441,7 +444,7 @@ class AdeptWatershaperTest {
 
         // Before attacking — untapped, not indestructible
         assertThat(attacker.isTapped()).isFalse();
-        assertThat(gs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isFalse();
 
         // Declare attackers
         harness.forceActivePlayer(player1);
@@ -453,7 +456,7 @@ class AdeptWatershaperTest {
 
         // After declaring attackers — tapped and indestructible
         assertThat(attacker.isTapped()).isTrue();
-        assertThat(gs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     // ===== Bonus applied on resolve =====
@@ -467,7 +470,7 @@ class AdeptWatershaperTest {
         gd.playerBattlefields.get(player1.getId()).add(tappedBears);
 
         // Before Watershaper — no indestructible
-        assertThat(gs.hasKeyword(gd, tappedBears, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, tappedBears, Keyword.INDESTRUCTIBLE)).isFalse();
 
         // Cast and resolve Watershaper
         harness.setHand(player1, List.of(new AdeptWatershaper()));
@@ -476,7 +479,7 @@ class AdeptWatershaperTest {
         harness.passBothPriorities();
 
         // After resolving, tapped creature should be indestructible
-        assertThat(gs.hasKeyword(gd, tappedBears, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, tappedBears, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     // ===== Helper methods =====

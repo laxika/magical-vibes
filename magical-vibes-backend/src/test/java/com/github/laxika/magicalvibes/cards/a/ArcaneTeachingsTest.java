@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +30,7 @@ class ArcaneTeachingsTest {
     private Player player1;
     private Player player2;
     private GameService gs;
+    private GameQueryService gqs;
     private GameData gd;
 
     @BeforeEach
@@ -37,6 +39,7 @@ class ArcaneTeachingsTest {
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
@@ -113,8 +116,8 @@ class ArcaneTeachingsTest {
         auraPerm.setAttachedTo(bearsPerm.getId());
         gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
-        assertThat(gs.getEffectivePower(gd, bearsPerm)).isEqualTo(4);
-        assertThat(gs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(4);
     }
 
     // ===== Granted activated ability: deal 1 damage to creature =====
@@ -262,15 +265,15 @@ class ArcaneTeachingsTest {
         gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         // Verify effects are active
-        assertThat(gs.getEffectivePower(gd, bearsPerm)).isEqualTo(4);
-        assertThat(gs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(4);
 
         // Remove Arcane Teachings
         gd.playerBattlefields.get(player1.getId()).remove(auraPerm);
 
         // Verify effects are gone
-        assertThat(gs.getEffectivePower(gd, bearsPerm)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(2);
 
         // Creature should no longer have an activated ability
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
@@ -296,8 +299,8 @@ class ArcaneTeachingsTest {
         gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         // Other creature should not get the boost
-        assertThat(gs.getEffectivePower(gd, otherBears)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, otherBears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherBears)).isEqualTo(2);
     }
 
     // ===== Can enchant opponent's creature =====
@@ -314,7 +317,7 @@ class ArcaneTeachingsTest {
         gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         // Opponent's creature should get the boost
-        assertThat(gs.getEffectivePower(gd, bearsPerm)).isEqualTo(4);
-        assertThat(gs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(4);
     }
 }

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostNonColorCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOtherCreaturesByColorEffect;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +33,7 @@ class AscendantEvincarTest {
     private Player player1;
     private Player player2;
     private GameService gs;
+    private GameQueryService gqs;
     private GameData gd;
 
     @BeforeEach
@@ -40,6 +42,7 @@ class AscendantEvincarTest {
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
@@ -122,8 +125,8 @@ class AscendantEvincarTest {
                 .filter(p -> p.getCard().getName().equals("Ascendant Evincar"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, evincar)).isEqualTo(3);
-        assertThat(gs.getEffectiveToughness(gd, evincar)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, evincar)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, evincar)).isEqualTo(3);
     }
 
     // ===== Static effect: buffs other black creatures =====
@@ -138,8 +141,8 @@ class AscendantEvincarTest {
                 .filter(p -> p.getCard().getName().equals("Drudge Skeletons"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, skeletons)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, skeletons)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, skeletons)).isEqualTo(2);
     }
 
     @Test
@@ -152,8 +155,8 @@ class AscendantEvincarTest {
                 .filter(p -> p.getCard().getName().equals("Drudge Skeletons"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, opponentSkeletons)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, opponentSkeletons)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentSkeletons)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentSkeletons)).isEqualTo(2);
     }
 
     // ===== Static effect: debuffs nonblack creatures =====
@@ -168,8 +171,8 @@ class AscendantEvincarTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, bears)).isEqualTo(1);
-        assertThat(gs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
     }
 
     @Test
@@ -182,8 +185,8 @@ class AscendantEvincarTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, opponentBears)).isEqualTo(1);
-        assertThat(gs.getEffectiveToughness(gd, opponentBears)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(1);
     }
 
     // ===== Multiple sources =====
@@ -201,8 +204,8 @@ class AscendantEvincarTest {
         assertThat(evincars).hasSize(2);
         for (Permanent evincar : evincars) {
             // Each gets +1/+1 from the other → 4/4
-            assertThat(gs.getEffectivePower(gd, evincar)).isEqualTo(4);
-            assertThat(gs.getEffectiveToughness(gd, evincar)).isEqualTo(4);
+            assertThat(gqs.getEffectivePower(gd, evincar)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, evincar)).isEqualTo(4);
         }
     }
 
@@ -218,8 +221,8 @@ class AscendantEvincarTest {
                 .findFirst().orElseThrow();
 
         // 1/1 base + 2/2 from two Evincars = 3/3
-        assertThat(gs.getEffectivePower(gd, skeletons)).isEqualTo(3);
-        assertThat(gs.getEffectiveToughness(gd, skeletons)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, skeletons)).isEqualTo(3);
     }
 
     @Test
@@ -234,8 +237,8 @@ class AscendantEvincarTest {
                 .findFirst().orElseThrow();
 
         // 2/2 base - 2/2 from two Evincars = 0/0
-        assertThat(gs.getEffectivePower(gd, bears)).isEqualTo(0);
-        assertThat(gs.getEffectiveToughness(gd, bears)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(0);
     }
 
     // ===== Bonus gone when source leaves =====
@@ -250,13 +253,13 @@ class AscendantEvincarTest {
                 .filter(p -> p.getCard().getName().equals("Drudge Skeletons"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, skeletons)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(2);
 
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(p -> p.getCard().getName().equals("Ascendant Evincar"));
 
-        assertThat(gs.getEffectivePower(gd, skeletons)).isEqualTo(1);
-        assertThat(gs.getEffectiveToughness(gd, skeletons)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, skeletons)).isEqualTo(1);
     }
 
     @Test
@@ -269,13 +272,13 @@ class AscendantEvincarTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
 
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(p -> p.getCard().getName().equals("Ascendant Evincar"));
 
-        assertThat(gs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     // ===== Bonus applies on resolve =====
@@ -296,17 +299,17 @@ class AscendantEvincarTest {
                 .findFirst().orElseThrow();
 
         // Before casting, no bonus
-        assertThat(gs.getEffectivePower(gd, skeletons)).isEqualTo(1);
-        assertThat(gs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         // After resolving, black creature buffed, nonblack debuffed
-        assertThat(gs.getEffectivePower(gd, skeletons)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, skeletons)).isEqualTo(2);
-        assertThat(gs.getEffectivePower(gd, bears)).isEqualTo(1);
-        assertThat(gs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, skeletons)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
     }
 
     // ===== Static bonus survives end-of-turn reset =====
@@ -323,14 +326,14 @@ class AscendantEvincarTest {
 
         // Simulate a temporary spell boost
         skeletons.setPowerModifier(skeletons.getPowerModifier() + 3);
-        assertThat(gs.getEffectivePower(gd, skeletons)).isEqualTo(5); // 1 base + 3 spell + 1 static
+        assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(5); // 1 base + 3 spell + 1 static
 
         // Reset end-of-turn modifiers
         skeletons.resetModifiers();
 
         // Spell bonus gone, static bonus still computed
-        assertThat(gs.getEffectivePower(gd, skeletons)).isEqualTo(2); // 1 base + 1 static
-        assertThat(gs.getEffectiveToughness(gd, skeletons)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(2); // 1 base + 1 static
+        assertThat(gqs.getEffectiveToughness(gd, skeletons)).isEqualTo(2);
     }
 
     // ===== Flying keyword =====
@@ -344,6 +347,6 @@ class AscendantEvincarTest {
                 .filter(p -> p.getCard().getName().equals("Ascendant Evincar"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.hasKeyword(gd, evincar, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, evincar, Keyword.FLYING)).isTrue();
     }
 }

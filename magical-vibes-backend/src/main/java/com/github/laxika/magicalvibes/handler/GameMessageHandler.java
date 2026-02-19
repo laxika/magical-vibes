@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.DraftData;
 import com.github.laxika.magicalvibes.model.DraftStatus;
 import com.github.laxika.magicalvibes.service.DraftRegistry;
 import com.github.laxika.magicalvibes.service.DraftService;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.LobbyService;
@@ -58,6 +59,7 @@ public class GameMessageHandler implements MessageHandler {
 
     private final LoginService loginService;
     private final GameService gameService;
+    private final GameBroadcastService gameBroadcastService;
     private final LobbyService lobbyService;
     private final GameRegistry gameRegistry;
     private final WebSocketSessionManager sessionManager;
@@ -68,6 +70,7 @@ public class GameMessageHandler implements MessageHandler {
 
     public GameMessageHandler(LoginService loginService,
             GameService gameService,
+            GameBroadcastService gameBroadcastService,
             LobbyService lobbyService,
             GameRegistry gameRegistry,
             WebSocketSessionManager sessionManager,
@@ -77,6 +80,7 @@ public class GameMessageHandler implements MessageHandler {
             DraftRegistry draftRegistry) {
         this.loginService = loginService;
         this.gameService = gameService;
+        this.gameBroadcastService = gameBroadcastService;
         this.lobbyService = lobbyService;
         this.gameRegistry = gameRegistry;
         this.sessionManager = sessionManager;
@@ -106,7 +110,7 @@ public class GameMessageHandler implements MessageHandler {
             // Check if the player has an active game to rejoin
             GameData activeGame = gameRegistry.getGameForPlayer(response.getUserId());
             if (activeGame != null) {
-                JoinGame joinGame = gameService.getJoinGame(activeGame, response.getUserId());
+                JoinGame joinGame = gameBroadcastService.getJoinGame(activeGame, response.getUserId());
                 response.setActiveGame(joinGame);
             }
 
@@ -170,7 +174,7 @@ public class GameMessageHandler implements MessageHandler {
             aiPlayerService.joinAsAi(gameData, aiDeck);
 
             // Game is now in MULLIGAN — send full state to the creator
-            JoinGame joinGame = gameService.getJoinGame(gameData, player.getId());
+            JoinGame joinGame = gameBroadcastService.getJoinGame(gameData, player.getId());
             sendJoinMessage(connection, MessageType.GAME_JOINED, joinGame);
         } else {
             // Send GAME_JOINED to the creator
@@ -207,13 +211,13 @@ public class GameMessageHandler implements MessageHandler {
             sessionManager.setInGame(connection.getId());
 
             // Send GAME_JOINED to the joiner (with their own hand)
-            JoinGame joinerGame = gameService.getJoinGame(gameData, player.getId());
+            JoinGame joinerGame = gameBroadcastService.getJoinGame(gameData, player.getId());
             sendJoinMessage(connection, MessageType.GAME_JOINED, joinerGame);
 
             // Send OPPONENT_JOINED to the creator (with their own hand)
             Connection creatorConnection = sessionManager.getConnectionByUserId(gameData.createdByUserId);
             if (creatorConnection != null && creatorConnection.isOpen()) {
-                JoinGame creatorGame = gameService.getJoinGame(gameData, gameData.createdByUserId);
+                JoinGame creatorGame = gameBroadcastService.getJoinGame(gameData, gameData.createdByUserId);
                 sendJoinMessage(creatorConnection, MessageType.OPPONENT_JOINED, creatorGame);
             }
 

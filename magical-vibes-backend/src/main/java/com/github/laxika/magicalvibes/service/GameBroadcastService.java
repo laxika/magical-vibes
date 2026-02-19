@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
+import com.github.laxika.magicalvibes.networking.message.JoinGame;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import com.github.laxika.magicalvibes.networking.model.StackEntryView;
@@ -338,6 +339,39 @@ public class GameBroadcastService {
             }
         }
         return totalTax;
+    }
+
+    public JoinGame getJoinGame(GameData data, UUID playerId) {
+        List<CardView> hand = playerId != null
+                ? data.playerHands.getOrDefault(playerId, List.of()).stream().map(cardViewFactory::create).toList()
+                : List.of();
+        int mulliganCount = playerId != null ? data.mulliganCounts.getOrDefault(playerId, 0) : 0;
+        Map<String, Integer> manaPool = getManaPool(data, playerId);
+        List<TurnStep> autoStopSteps = playerId != null && data.playerAutoStopSteps.containsKey(playerId)
+                ? new ArrayList<>(data.playerAutoStopSteps.get(playerId))
+                : List.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN);
+        return new JoinGame(
+                data.id,
+                data.gameName,
+                data.status,
+                new ArrayList<>(data.playerNames),
+                new ArrayList<>(data.orderedPlayerIds),
+                new ArrayList<>(data.gameLog),
+                data.currentStep,
+                data.activePlayerId,
+                data.turnNumber,
+                gameQueryService.getPriorityPlayerId(data),
+                hand,
+                mulliganCount,
+                getDeckSizes(data),
+                getHandSizes(data),
+                getBattlefields(data),
+                manaPool,
+                autoStopSteps,
+                getLifeTotals(data),
+                getStackViews(data),
+                getGraveyardViews(data)
+        );
     }
 
     public void logAndBroadcast(GameData gameData, String logEntry) {

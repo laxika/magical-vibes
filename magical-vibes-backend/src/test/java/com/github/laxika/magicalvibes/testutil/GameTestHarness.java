@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.testutil;
 
+import com.github.laxika.magicalvibes.handler.GameMessageHandler;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
 import com.github.laxika.magicalvibes.networking.service.StackEntryViewFactory;
@@ -17,6 +19,7 @@ import com.github.laxika.magicalvibes.service.CopyResolutionService;
 import com.github.laxika.magicalvibes.service.CounterResolutionService;
 import com.github.laxika.magicalvibes.service.DamageResolutionService;
 import com.github.laxika.magicalvibes.service.DestructionResolutionService;
+import com.github.laxika.magicalvibes.service.DraftRegistry;
 import com.github.laxika.magicalvibes.service.ExileResolutionService;
 import com.github.laxika.magicalvibes.service.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -66,6 +69,8 @@ public class GameTestHarness {
     private final GameRegistry gameRegistry;
     private final WebSocketSessionManager sessionManager;
     private final GameService gameService;
+    private final GameQueryService gameQueryService;
+    private final MessageHandler messageHandler;
     private final LobbyService lobbyService;
     private final GameData gameData;
     private final Player player1;
@@ -84,14 +89,16 @@ public class GameTestHarness {
         CardViewFactory cardViewFactory = new CardViewFactory();
         PermanentViewFactory permanentViewFactory = new PermanentViewFactory(cardViewFactory);
         StackEntryViewFactory stackEntryViewFactory = new StackEntryViewFactory(cardViewFactory);
-        GameQueryService gameQueryService = new GameQueryService(
+        gameQueryService = new GameQueryService(
                 List.of(new StaticEffectResolutionService()));
         gameQueryService.init();
         PlayerInputService playerInputService = new PlayerInputService(sessionManager, cardViewFactory);
         GameBroadcastService gameBroadcastService = new GameBroadcastService(
                 sessionManager, cardViewFactory, permanentViewFactory, stackEntryViewFactory, gameQueryService);
+        DraftRegistry draftRegistry = new DraftRegistry();
         GameHelper gameHelper = new GameHelper(
-                sessionManager, gameRegistry, cardViewFactory, gameQueryService, gameBroadcastService, playerInputService);
+                sessionManager, gameRegistry, cardViewFactory, gameQueryService, gameBroadcastService, playerInputService,
+                draftRegistry, null);
         CombatService combatService = new CombatService(
                 gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager);
         List<EffectHandlerProvider> providers = List.of(
@@ -147,14 +154,20 @@ public class GameTestHarness {
                 sessionManager, cardViewFactory, combatService, gameQueryService);
         gameService = new GameService(
                 gameRegistry, gameQueryService, gameBroadcastService,
-                cardViewFactory, combatService,
+                combatService,
                 turnProgressionService,
                 colorChoiceHandlerService, cardChoiceHandlerService,
                 permanentChoiceHandlerService, graveyardChoiceHandlerService,
                 mayAbilityHandlerService, libraryChoiceHandlerService,
                 spellCastingService,
                 stackResolutionService, abilityActivationService, mulliganService, reconnectionService);
-        lobbyService = new LobbyService(gameRegistry, gameService);
+        lobbyService = new LobbyService(gameRegistry, gameBroadcastService);
+
+        // Create the MessageHandler (GameMessageHandler) for AI tests
+        messageHandler = new GameMessageHandler(
+                null, gameService, gameBroadcastService, lobbyService, gameRegistry,
+                sessionManager, new JacksonConfig().objectMapper(),
+                null, null, draftRegistry);
 
         player1 = new Player(UUID.randomUUID(), "Alice");
         player2 = new Player(UUID.randomUUID(), "Bob");
@@ -381,6 +394,18 @@ public class GameTestHarness {
 
     public GameRegistry getGameRegistry() {
         return gameRegistry;
+    }
+
+    public GameQueryService getGameQueryService() {
+        return gameQueryService;
+    }
+
+    public MessageHandler getMessageHandler() {
+        return messageHandler;
+    }
+
+    public WebSocketSessionManager getSessionManager() {
+        return sessionManager;
     }
 
     public void clearMessages() {

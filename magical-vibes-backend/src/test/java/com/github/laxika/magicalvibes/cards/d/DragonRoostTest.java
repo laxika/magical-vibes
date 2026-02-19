@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +29,7 @@ class DragonRoostTest {
     private Player player1;
     private Player player2;
     private GameService gs;
+    private GameQueryService gqs;
     private GameData gd;
 
     @BeforeEach
@@ -36,6 +38,7 @@ class DragonRoostTest {
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
@@ -151,7 +154,7 @@ class DragonRoostTest {
                 .filter(p -> p.getCard().getName().equals("Dragon"))
                 .findFirst().orElseThrow();
         assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
-        assertThat(gs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -166,7 +169,7 @@ class DragonRoostTest {
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Dragon"))
                 .findFirst().orElseThrow();
-        assertThat(gs.isCreature(gd, token)).isTrue();
+        assertThat(gqs.isCreature(gd, token)).isTrue();
     }
 
     @Test

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.DeckBuildingStateMessage;
 import com.github.laxika.magicalvibes.networking.message.DraftFinishedMessage;
@@ -30,7 +31,7 @@ import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
 
@@ -58,7 +59,9 @@ public class DraftService {
 
     private final DraftRegistry draftRegistry;
     private final GameRegistry gameRegistry;
-    private final GameService gameService;
+    private final GameBroadcastService gameBroadcastService;
+    private final ObjectProvider<MessageHandler> messageHandlerProvider;
+    private final GameQueryService gameQueryService;
     private final SessionManager sessionManager;
     private final WebSocketSessionManager webSocketSessionManager;
     private final CardViewFactory cardViewFactory;
@@ -69,14 +72,18 @@ public class DraftService {
 
     public DraftService(DraftRegistry draftRegistry,
                         GameRegistry gameRegistry,
-                        @Lazy GameService gameService,
+                        GameBroadcastService gameBroadcastService,
+                        ObjectProvider<MessageHandler> messageHandlerProvider,
+                        GameQueryService gameQueryService,
                         SessionManager sessionManager,
                         WebSocketSessionManager webSocketSessionManager,
                         CardViewFactory cardViewFactory,
                         ObjectMapper objectMapper) {
         this.draftRegistry = draftRegistry;
         this.gameRegistry = gameRegistry;
-        this.gameService = gameService;
+        this.gameBroadcastService = gameBroadcastService;
+        this.messageHandlerProvider = messageHandlerProvider;
+        this.gameQueryService = gameQueryService;
         this.sessionManager = sessionManager;
         this.webSocketSessionManager = webSocketSessionManager;
         this.cardViewFactory = cardViewFactory;
@@ -541,27 +548,29 @@ public class DraftService {
         // Send TOURNAMENT_GAME_READY + GAME_JOINED to human players
         if (!p1IsAi) {
             sessionManager.sendToPlayer(player1Id, new TournamentGameReadyMessage(gameData.id, p2Name));
-            JoinGame joinGame = gameService.getJoinGame(gameData, player1Id);
+            JoinGame joinGame = gameBroadcastService.getJoinGame(gameData, player1Id);
             sessionManager.sendToPlayer(player1Id, new JoinGameMessage(MessageType.GAME_JOINED, joinGame));
         }
         if (!p2IsAi) {
             sessionManager.sendToPlayer(player2Id, new TournamentGameReadyMessage(gameData.id, p1Name));
-            JoinGame joinGame = gameService.getJoinGame(gameData, player2Id);
+            JoinGame joinGame = gameBroadcastService.getJoinGame(gameData, player2Id);
             sessionManager.sendToPlayer(player2Id, new JoinGameMessage(MessageType.GAME_JOINED, joinGame));
         }
     }
 
     private void registerAiForTournamentGame(GameData gameData, UUID aiPlayerId, String aiName) {
         Player aiPlayer = new Player(aiPlayerId, aiName);
-        AiDecisionEngine engine = new AiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService);
+        MessageHandler handler = messageHandlerProvider.getObject();
+        AiDecisionEngine engine = new AiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService);
         String connectionId = "ai-draft-" + gameData.id + "-" + aiPlayerId;
         AiConnection aiConnection = new AiConnection(connectionId, engine, objectMapper);
+        engine.setSelfConnection(aiConnection);
 
         webSocketSessionManager.registerPlayer(aiConnection, aiPlayerId, aiName);
         webSocketSessionManager.setInGame(connectionId);
 
         // Schedule the AI's initial mulligan decision
-        aiConnection.scheduleInitialAction(() -> engine.handleInitialMulligan(gameData));
+        aiConnection.scheduleInitialAction(engine::handleInitialMulligan);
     }
 
     private GameData createDraftGame(String gameName, UUID p1Id, String p1Name,
@@ -798,7 +807,7 @@ public class DraftService {
                         if (gameData != null && gameData.status != GameStatus.FINISHED) {
                             String opponentName = getOpponentName(draftData, playerId, activeGameId);
                             sessionManager.sendToPlayer(playerId, new TournamentGameReadyMessage(gameData.id, opponentName));
-                            JoinGame joinGame = gameService.getJoinGame(gameData, playerId);
+                            JoinGame joinGame = gameBroadcastService.getJoinGame(gameData, playerId);
                             sessionManager.sendToPlayer(playerId, new JoinGameMessage(MessageType.GAME_JOINED, joinGame));
                         }
                     }

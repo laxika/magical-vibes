@@ -312,9 +312,9 @@ class ChangelingWayfinderTest {
 
         // Field Marshal gives other Soldiers +1/+1 and first strike
         // Changeling Wayfinder is 1/2 base → should be 2/3
-        assertThat(harness.getGameService().getEffectivePower(gd, wayfinder)).isEqualTo(2);
-        assertThat(harness.getGameService().getEffectiveToughness(gd, wayfinder)).isEqualTo(3);
-        assertThat(harness.getGameService().hasKeyword(gd, wayfinder, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(harness.getGameQueryService().getEffectivePower(gd, wayfinder)).isEqualTo(2);
+        assertThat(harness.getGameQueryService().getEffectiveToughness(gd, wayfinder)).isEqualTo(3);
+        assertThat(harness.getGameQueryService().hasKeyword(gd, wayfinder, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test

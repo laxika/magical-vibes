@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToSelfEffect;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +28,7 @@ class MantisEngineTest {
     private Player player1;
     private Player player2;
     private GameService gs;
+    private GameQueryService gqs;
     private GameData gd;
 
     @BeforeEach
@@ -35,6 +37,7 @@ class MantisEngineTest {
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
@@ -150,7 +153,7 @@ class MantisEngineTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gs.hasKeyword(gd, mantis, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mantis, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -162,13 +165,13 @@ class MantisEngineTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gs.hasKeyword(gd, mantis, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mantis, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gs.hasKeyword(gd, mantis, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mantis, Keyword.FLYING)).isFalse();
     }
 
     // ===== First strike ability =====
@@ -198,7 +201,7 @@ class MantisEngineTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gs.hasKeyword(gd, mantis, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mantis, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -210,13 +213,13 @@ class MantisEngineTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gs.hasKeyword(gd, mantis, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mantis, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gs.hasKeyword(gd, mantis, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mantis, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     // ===== Both abilities =====
@@ -232,8 +235,8 @@ class MantisEngineTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gs.hasKeyword(gd, mantis, Keyword.FLYING)).isTrue();
-        assertThat(gs.hasKeyword(gd, mantis, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mantis, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mantis, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -247,15 +250,15 @@ class MantisEngineTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gs.hasKeyword(gd, mantis, Keyword.FLYING)).isTrue();
-        assertThat(gs.hasKeyword(gd, mantis, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mantis, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mantis, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gs.hasKeyword(gd, mantis, Keyword.FLYING)).isFalse();
-        assertThat(gs.hasKeyword(gd, mantis, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mantis, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mantis, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     // ===== Activation constraints =====
@@ -330,7 +333,7 @@ class MantisEngineTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gs.hasKeyword(gd, mantis, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mantis, Keyword.FLYING)).isTrue();
     }
 
     // ===== Fizzle =====

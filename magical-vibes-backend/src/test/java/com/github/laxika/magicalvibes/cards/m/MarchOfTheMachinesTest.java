@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +30,7 @@ class MarchOfTheMachinesTest {
     private Player player1;
     private Player player2;
     private GameService gs;
+    private GameQueryService gqs;
     private GameData gd;
 
     @BeforeEach
@@ -37,6 +39,7 @@ class MarchOfTheMachinesTest {
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
@@ -100,9 +103,9 @@ class MarchOfTheMachinesTest {
                 .filter(p -> p.getCard().getName().equals("Angel's Feather"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.isCreature(gd, feather)).isTrue();
-        assertThat(gs.getEffectivePower(gd, feather)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, feather)).isEqualTo(2);
+        assertThat(gqs.isCreature(gd, feather)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, feather)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, feather)).isEqualTo(2);
     }
 
     @Test
@@ -116,7 +119,7 @@ class MarchOfTheMachinesTest {
                 .findFirst().orElseThrow();
 
         // March of the Machines makes artifacts into creatures but does NOT grant creature subtypes
-        assertThat(gs.isCreature(gd, feather)).isTrue();
+        assertThat(gqs.isCreature(gd, feather)).isTrue();
         assertThat(feather.getGrantedSubtypes()).isEmpty();
         assertThat(feather.getCard().getSubtypes()).isEmpty();
     }
@@ -131,9 +134,9 @@ class MarchOfTheMachinesTest {
                 .filter(p -> p.getCard().getName().equals("Icy Manipulator"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.isCreature(gd, icy)).isTrue();
-        assertThat(gs.getEffectivePower(gd, icy)).isEqualTo(4);
-        assertThat(gs.getEffectiveToughness(gd, icy)).isEqualTo(4);
+        assertThat(gqs.isCreature(gd, icy)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, icy)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, icy)).isEqualTo(4);
     }
 
     // ===== Does not affect creatures =====
@@ -148,8 +151,8 @@ class MarchOfTheMachinesTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     // ===== Animated artifacts benefit from creature buffs =====
@@ -166,8 +169,8 @@ class MarchOfTheMachinesTest {
                 .findFirst().orElseThrow();
 
         // Angel's Feather: mana value 2 + Glorious Anthem +1/+1 = 3/3
-        assertThat(gs.getEffectivePower(gd, feather)).isEqualTo(3);
-        assertThat(gs.getEffectiveToughness(gd, feather)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, feather)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, feather)).isEqualTo(3);
     }
 
     // ===== Effect removed when March leaves =====
@@ -182,16 +185,16 @@ class MarchOfTheMachinesTest {
                 .filter(p -> p.getCard().getName().equals("Angel's Feather"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.isCreature(gd, feather)).isTrue();
-        assertThat(gs.getEffectivePower(gd, feather)).isEqualTo(2);
+        assertThat(gqs.isCreature(gd, feather)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, feather)).isEqualTo(2);
 
         // Remove March of the Machines
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(p -> p.getCard().getName().equals("March of the Machines"));
 
-        assertThat(gs.isCreature(gd, feather)).isFalse();
-        assertThat(gs.getEffectivePower(gd, feather)).isEqualTo(0);
-        assertThat(gs.getEffectiveToughness(gd, feather)).isEqualTo(0);
+        assertThat(gqs.isCreature(gd, feather)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, feather)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, feather)).isEqualTo(0);
     }
 
     // ===== Affects both players' artifacts =====
@@ -206,9 +209,9 @@ class MarchOfTheMachinesTest {
                 .filter(p -> p.getCard().getName().equals("Icy Manipulator"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.isCreature(gd, opponentIcy)).isTrue();
-        assertThat(gs.getEffectivePower(gd, opponentIcy)).isEqualTo(4);
-        assertThat(gs.getEffectiveToughness(gd, opponentIcy)).isEqualTo(4);
+        assertThat(gqs.isCreature(gd, opponentIcy)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, opponentIcy)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opponentIcy)).isEqualTo(4);
     }
 
     // ===== Enchantments are not affected =====
@@ -223,6 +226,6 @@ class MarchOfTheMachinesTest {
                 .filter(p -> p.getCard().getName().equals("Glorious Anthem"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.isCreature(gd, anthem)).isFalse();
+        assertThat(gqs.isCreature(gd, anthem)).isFalse();
     }
 }

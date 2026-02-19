@@ -21,9 +21,30 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.NonArtifactNonColorCreatureTargetFilter;
+import com.github.laxika.magicalvibes.networking.Connection;
+import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
+import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.ColorChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
+import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
+import com.github.laxika.magicalvibes.networking.message.GraveyardCardChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.HandTopBottomChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.KeepHandRequest;
+import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
+import com.github.laxika.magicalvibes.networking.message.MultipleGraveyardCardsChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
+import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
+import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsRequest;
+import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
-import com.github.laxika.magicalvibes.service.GameService;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -38,13 +59,19 @@ public class AiDecisionEngine {
     private final UUID gameId;
     private final Player aiPlayer;
     private final GameRegistry gameRegistry;
-    private final GameService gameService;
+    private final MessageHandler messageHandler;
+    private final GameQueryService gameQueryService;
 
-    public AiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry, GameService gameService) {
+    @Setter
+    private Connection selfConnection;
+
+    public AiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
+                            MessageHandler messageHandler, GameQueryService gameQueryService) {
         this.gameId = gameId;
         this.aiPlayer = aiPlayer;
         this.gameRegistry = gameRegistry;
-        this.gameService = gameService;
+        this.messageHandler = messageHandler;
+        this.gameQueryService = gameQueryService;
     }
 
     public void handleMessage(String type, String json) {
@@ -79,13 +106,15 @@ public class AiDecisionEngine {
 
     // ===== Mulligan =====
 
-    public void handleInitialMulligan(GameData gameData) {
+    public void handleInitialMulligan() {
+        GameData gameData = gameRegistry.get(gameId);
+        if (gameData == null) return;
         if (shouldKeepHand(gameData)) {
             log.info("AI: Keeping hand in game {}", gameId);
-            gameService.keepHand(gameData, aiPlayer);
+            send(() -> messageHandler.handleKeepHand(selfConnection, new KeepHandRequest()));
         } else {
             log.info("AI: Taking mulligan in game {}", gameId);
-            gameService.mulligan(gameData, aiPlayer);
+            send(() -> messageHandler.handleMulligan(selfConnection, new MulliganRequest()));
         }
     }
 
@@ -93,7 +122,7 @@ public class AiDecisionEngine {
         if (gameData.playerKeptHand.contains(aiPlayer.getId())) {
             return;
         }
-        handleInitialMulligan(gameData);
+        handleInitialMulligan();
     }
 
     private boolean shouldKeepHand(GameData gameData) {
@@ -162,7 +191,7 @@ public class AiDecisionEngine {
         }
 
         log.info("AI: Bottoming {} cards in game {}", toBottom.size(), gameId);
-        gameService.bottomCards(gameData, aiPlayer, toBottom);
+        send(() -> messageHandler.handleBottomCards(selfConnection, new BottomCardsRequest(toBottom)));
     }
 
     // ===== Priority / Main Phase =====
@@ -200,7 +229,7 @@ public class AiDecisionEngine {
         }
 
         // Pass priority
-        gameService.passPriority(gameData, aiPlayer);
+        send(() -> messageHandler.handlePassPriority(selfConnection, new PassPriorityRequest()));
     }
 
     private boolean tryPlayLand(GameData gameData) {
@@ -218,7 +247,9 @@ public class AiDecisionEngine {
             Card card = hand.get(i);
             if (card.getType() == CardType.LAND) {
                 log.info("AI: Playing land {} in game {}", card.getName(), gameId);
-                gameService.playCard(gameData, aiPlayer, i, null, null, null);
+                final int idx = i;
+                send(() -> messageHandler.handlePlayCard(selfConnection,
+                        new PlayCardRequest(idx, null, null, null, null, null, null)));
                 return true;
             }
         }
@@ -279,7 +310,9 @@ public class AiDecisionEngine {
         tapLandsForCost(gameData, card.getManaCost());
 
         log.info("AI: Casting {} in game {}", card.getName(), gameId);
-        gameService.playCard(gameData, aiPlayer, cardIndex, null, targetId, null);
+        final UUID finalTargetId = targetId;
+        send(() -> messageHandler.handlePlayCard(selfConnection,
+                new PlayCardRequest(cardIndex, null, finalTargetId, null, null, null, null)));
         return true;
     }
 
@@ -304,8 +337,8 @@ public class AiDecisionEngine {
                     continue;
                 }
                 // Skip creatures with summoning sickness (they can't tap)
-                if (gameService.isCreature(gameData, perm) && perm.isSummoningSick()
-                        && !gameService.hasKeyword(gameData, perm, Keyword.HASTE)) {
+                if (gameQueryService.isCreature(gameData, perm) && perm.isSummoningSick()
+                        && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) {
                     continue;
                 }
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
@@ -342,8 +375,8 @@ public class AiDecisionEngine {
             }
 
             // Skip creatures with summoning sickness
-            if (gameService.isCreature(gameData, perm) && perm.isSummoningSick()
-                    && !gameService.hasKeyword(gameData, perm, Keyword.HASTE)) {
+            if (gameQueryService.isCreature(gameData, perm) && perm.isSummoningSick()
+                    && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) {
                 continue;
             }
 
@@ -353,7 +386,8 @@ public class AiDecisionEngine {
                 continue;
             }
 
-            gameService.tapPermanent(gameData, aiPlayer, i);
+            final int idx = i;
+            send(() -> messageHandler.handleTapPermanent(selfConnection, new TapPermanentRequest(idx)));
 
             // Re-read pool after tap (mutated in place)
             currentPool = gameData.playerManaPools.get(aiPlayer.getId());
@@ -408,8 +442,8 @@ public class AiDecisionEngine {
             List<Permanent> ownBattlefield = gameData.playerBattlefields.get(aiPlayer.getId());
             if (ownBattlefield != null) {
                 return ownBattlefield.stream()
-                        .filter(p -> gameService.isCreature(gameData, p))
-                        .max(Comparator.comparingInt(p -> gameService.getEffectiveToughness(gameData, p)))
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .max(Comparator.comparingInt(p -> gameQueryService.getEffectiveToughness(gameData, p)))
                         .map(Permanent::getId)
                         .orElse(null);
             }
@@ -421,9 +455,9 @@ public class AiDecisionEngine {
                         .map(CardEffect::getClass)
                         .toList();
                 return oppBattlefield.stream()
-                        .filter(p -> gameService.isCreature(gameData, p))
-                        .filter(p -> auraEffectClasses.stream().noneMatch(ec -> gameService.hasAuraWithEffect(gameData, p, ec)))
-                        .max(Comparator.comparingInt(p -> gameService.getEffectivePower(gameData, p)))
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .filter(p -> auraEffectClasses.stream().noneMatch(ec -> gameQueryService.hasAuraWithEffect(gameData, p, ec)))
+                        .max(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)))
                         .map(Permanent::getId)
                         .orElse(null);
             }
@@ -457,7 +491,7 @@ public class AiDecisionEngine {
         // For creature targets, prefer highest power
         if (targetTypes.contains(CardType.CREATURE)) {
             return candidates.stream()
-                    .max(Comparator.comparingInt(p -> gameService.getEffectivePower(gameData, p)))
+                    .max(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)))
                     .map(Permanent::getId)
                     .orElse(null);
         }
@@ -468,7 +502,7 @@ public class AiDecisionEngine {
 
     private boolean matchesPermanentType(GameData gameData, Permanent permanent, Set<CardType> targetTypes) {
         for (CardType targetType : targetTypes) {
-            if (targetType == CardType.CREATURE && gameService.isCreature(gameData, permanent)) return true;
+            if (targetType == CardType.CREATURE && gameQueryService.isCreature(gameData, permanent)) return true;
             if (permanent.getCard().getType() == targetType) return true;
             if (permanent.getCard().getAdditionalTypes().contains(targetType)) return true;
         }
@@ -491,7 +525,7 @@ public class AiDecisionEngine {
     private void handleAttackers(GameData gameData) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
         if (battlefield == null) {
-            gameService.declareAttackers(gameData, aiPlayer, List.of());
+            send(() -> messageHandler.handleDeclareAttackers(selfConnection, new DeclareAttackersRequest(List.of())));
             return;
         }
 
@@ -504,14 +538,14 @@ public class AiDecisionEngine {
 
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent perm = battlefield.get(i);
-            if (!gameService.isCreature(gameData, perm)) continue;
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
             if (perm.isTapped()) continue;
-            if (perm.isSummoningSick() && !gameService.hasKeyword(gameData, perm, Keyword.HASTE)) continue;
-            if (gameService.hasKeyword(gameData, perm, Keyword.DEFENDER)) continue;
+            if (perm.isSummoningSick() && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) continue;
+            if (gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER)) continue;
 
-            int power = gameService.getEffectivePower(gameData, perm);
-            int toughness = gameService.getEffectiveToughness(gameData, perm);
-            boolean hasFlying = gameService.hasKeyword(gameData, perm, Keyword.FLYING);
+            int power = gameQueryService.getEffectivePower(gameData, perm);
+            int toughness = gameQueryService.getEffectiveToughness(gameData, perm);
+            boolean hasFlying = gameQueryService.hasKeyword(gameData, perm, Keyword.FLYING);
 
             // Find the best potential blocker
             Permanent bestBlocker = findBestBlocker(gameData, perm, opponentBattlefield);
@@ -521,8 +555,8 @@ public class AiDecisionEngine {
                 // No blocker available — safe to attack
                 shouldAttack = true;
             } else {
-                int blockerPower = gameService.getEffectivePower(gameData, bestBlocker);
-                int blockerToughness = gameService.getEffectiveToughness(gameData, bestBlocker);
+                int blockerPower = gameQueryService.getEffectivePower(gameData, bestBlocker);
+                int blockerToughness = gameQueryService.getEffectiveToughness(gameData, bestBlocker);
 
                 // Attack if we kill the blocker and survive
                 if (power >= blockerToughness && blockerPower < toughness) {
@@ -533,8 +567,8 @@ public class AiDecisionEngine {
                     shouldAttack = true;
                 }
                 // Attack with evasion creatures (flying that can't be blocked by reach-less ground)
-                else if (hasFlying && !gameService.hasKeyword(gameData, bestBlocker, Keyword.FLYING)
-                        && !gameService.hasKeyword(gameData, bestBlocker, Keyword.REACH)) {
+                else if (hasFlying && !gameQueryService.hasKeyword(gameData, bestBlocker, Keyword.FLYING)
+                        && !gameQueryService.hasKeyword(gameData, bestBlocker, Keyword.REACH)) {
                     shouldAttack = true;
                 }
             }
@@ -552,13 +586,13 @@ public class AiDecisionEngine {
             List<Integer> allInIndices = new ArrayList<>();
             for (int i = 0; i < battlefield.size(); i++) {
                 Permanent perm = battlefield.get(i);
-                if (!gameService.isCreature(gameData, perm)) continue;
+                if (!gameQueryService.isCreature(gameData, perm)) continue;
                 if (perm.isTapped()) continue;
-                if (perm.isSummoningSick() && !gameService.hasKeyword(gameData, perm, Keyword.VIGILANCE)
-                        && !gameService.hasKeyword(gameData, perm, Keyword.DOUBLE_STRIKE)) continue;
-                if (gameService.hasKeyword(gameData, perm, Keyword.DEFENDER)) continue;
+                if (perm.isSummoningSick() && !gameQueryService.hasKeyword(gameData, perm, Keyword.VIGILANCE)
+                        && !gameQueryService.hasKeyword(gameData, perm, Keyword.DOUBLE_STRIKE)) continue;
+                if (gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER)) continue;
 
-                allInDamage += gameService.getEffectivePower(gameData, perm);
+                allInDamage += gameQueryService.getEffectivePower(gameData, perm);
                 allInIndices.add(i);
             }
             if (allInDamage >= opponentLife) {
@@ -567,29 +601,30 @@ public class AiDecisionEngine {
         }
 
         log.info("AI: Declaring {} attackers in game {}", attackerIndices.size(), gameId);
-        gameService.declareAttackers(gameData, aiPlayer, attackerIndices);
+        final List<Integer> finalAttackerIndices = attackerIndices;
+        send(() -> messageHandler.handleDeclareAttackers(selfConnection, new DeclareAttackersRequest(finalAttackerIndices)));
     }
 
     private Permanent findBestBlocker(GameData gameData, Permanent attacker, List<Permanent> opponentField) {
-        boolean hasFlying = gameService.hasKeyword(gameData, attacker, Keyword.FLYING);
+        boolean hasFlying = gameQueryService.hasKeyword(gameData, attacker, Keyword.FLYING);
 
         Permanent best = null;
         int bestToughness = Integer.MAX_VALUE;
 
         for (Permanent opp : opponentField) {
-            if (!gameService.isCreature(gameData, opp)) continue;
+            if (!gameQueryService.isCreature(gameData, opp)) continue;
             if (opp.isTapped()) continue;
-            if (gameService.hasKeyword(gameData, opp, Keyword.DEFENDER) || !opp.isSummoningSick() || true) {
+            if (gameQueryService.hasKeyword(gameData, opp, Keyword.DEFENDER) || !opp.isSummoningSick() || true) {
                 // Can potentially block
             }
 
             // Flying creatures can only be blocked by flying or reach
-            if (hasFlying && !gameService.hasKeyword(gameData, opp, Keyword.FLYING)
-                    && !gameService.hasKeyword(gameData, opp, Keyword.REACH)) {
+            if (hasFlying && !gameQueryService.hasKeyword(gameData, opp, Keyword.FLYING)
+                    && !gameQueryService.hasKeyword(gameData, opp, Keyword.REACH)) {
                 continue;
             }
 
-            int oppToughness = gameService.getEffectiveToughness(gameData, opp);
+            int oppToughness = gameQueryService.getEffectiveToughness(gameData, opp);
             if (best == null || oppToughness < bestToughness) {
                 best = opp;
                 bestToughness = oppToughness;
@@ -604,7 +639,7 @@ public class AiDecisionEngine {
         List<Permanent> opponentBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
 
         if (battlefield == null || opponentBattlefield == null) {
-            gameService.declareBlockers(gameData, aiPlayer, List.of());
+            send(() -> messageHandler.handleDeclareBlockers(selfConnection, new DeclareBlockersRequest(List.of())));
             return;
         }
 
@@ -620,8 +655,8 @@ public class AiDecisionEngine {
                 if (hasCantBeBlockedStatic) continue;
 
                 attackers.add(new int[]{i,
-                        gameService.getEffectivePower(gameData, perm),
-                        gameService.getEffectiveToughness(gameData, perm)});
+                        gameQueryService.getEffectivePower(gameData, perm),
+                        gameQueryService.getEffectiveToughness(gameData, perm)});
             }
         }
 
@@ -641,7 +676,7 @@ public class AiDecisionEngine {
             int attackerPower = attacker[1];
             int attackerToughness = attacker[2];
             Permanent attackingPerm = opponentBattlefield.get(attackerIdx);
-            boolean attackerHasFlying = gameService.hasKeyword(gameData, attackingPerm, Keyword.FLYING);
+            boolean attackerHasFlying = gameQueryService.hasKeyword(gameData, attackingPerm, Keyword.FLYING);
 
             // Find cheapest blocker that can kill attacker and survive
             int bestBlockerIdx = -1;
@@ -650,17 +685,17 @@ public class AiDecisionEngine {
             for (int j = 0; j < battlefield.size(); j++) {
                 if (blockerUsed[j]) continue;
                 Permanent blocker = battlefield.get(j);
-                if (!gameService.isCreature(gameData, blocker)) continue;
+                if (!gameQueryService.isCreature(gameData, blocker)) continue;
                 if (blocker.isTapped()) continue;
 
                 // Flying can only be blocked by flying or reach
-                if (attackerHasFlying && !gameService.hasKeyword(gameData, blocker, Keyword.FLYING)
-                        && !gameService.hasKeyword(gameData, blocker, Keyword.REACH)) {
+                if (attackerHasFlying && !gameQueryService.hasKeyword(gameData, blocker, Keyword.FLYING)
+                        && !gameQueryService.hasKeyword(gameData, blocker, Keyword.REACH)) {
                     continue;
                 }
 
-                int blockerPower = gameService.getEffectivePower(gameData, blocker);
-                int blockerToughness = gameService.getEffectiveToughness(gameData, blocker);
+                int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);
+                int blockerToughness = gameQueryService.getEffectiveToughness(gameData, blocker);
 
                 // Favorable block: we kill attacker and survive
                 if (blockerPower >= attackerToughness && attackerPower < blockerToughness) {
@@ -680,11 +715,11 @@ public class AiDecisionEngine {
                 for (int j = 0; j < battlefield.size(); j++) {
                     if (blockerUsed[j]) continue;
                     Permanent blocker = battlefield.get(j);
-                    if (!gameService.isCreature(gameData, blocker)) continue;
+                    if (!gameQueryService.isCreature(gameData, blocker)) continue;
                     if (blocker.isTapped()) continue;
 
-                    if (attackerHasFlying && !gameService.hasKeyword(gameData, blocker, Keyword.FLYING)
-                            && !gameService.hasKeyword(gameData, blocker, Keyword.REACH)) {
+                    if (attackerHasFlying && !gameQueryService.hasKeyword(gameData, blocker, Keyword.FLYING)
+                            && !gameQueryService.hasKeyword(gameData, blocker, Keyword.REACH)) {
                         continue;
                     }
 
@@ -698,7 +733,7 @@ public class AiDecisionEngine {
         }
 
         log.info("AI: Declaring {} blockers in game {}", assignments.size(), gameId);
-        gameService.declareBlockers(gameData, aiPlayer, assignments);
+        send(() -> messageHandler.handleDeclareBlockers(selfConnection, new DeclareBlockersRequest(assignments)));
     }
 
     // ===== Choice Handlers =====
@@ -720,7 +755,7 @@ public class AiDecisionEngine {
                 .orElse(validIndices.iterator().next());
 
         log.info("AI: Choosing card at index {} in game {}", bestIndex, gameId);
-        gameService.handleCardChosen(gameData, aiPlayer, bestIndex);
+        send(() -> messageHandler.handleCardChosen(selfConnection, new CardChosenRequest(bestIndex)));
     }
 
     private void handlePermanentChoice(GameData gameData) {
@@ -741,8 +776,8 @@ public class AiDecisionEngine {
         // Try opponent's best creature first
         UUID best = opponentField.stream()
                 .filter(p -> validIds.contains(p.getId()))
-                .filter(p -> gameService.isCreature(gameData, p))
-                .max(Comparator.comparingInt(p -> gameService.getEffectivePower(gameData, p)))
+                .filter(p -> gameQueryService.isCreature(gameData, p))
+                .max(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)))
                 .map(Permanent::getId)
                 .orElse(null);
 
@@ -765,7 +800,8 @@ public class AiDecisionEngine {
         }
 
         log.info("AI: Choosing permanent {} in game {}", best, gameId);
-        gameService.handlePermanentChosen(gameData, aiPlayer, best);
+        final UUID finalBest = best;
+        send(() -> messageHandler.handlePermanentChosen(selfConnection, new PermanentChosenRequest(finalBest)));
     }
 
     private void handleMultiPermanentChoice(GameData gameData) {
@@ -785,7 +821,7 @@ public class AiDecisionEngine {
         // Pick opponent's biggest threats
         List<UUID> chosen = opponentField.stream()
                 .filter(p -> validIds.contains(p.getId()))
-                .sorted(Comparator.comparingInt((Permanent p) -> gameService.getEffectivePower(gameData, p)).reversed())
+                .sorted(Comparator.comparingInt((Permanent p) -> gameQueryService.getEffectivePower(gameData, p)).reversed())
                 .limit(maxCount)
                 .map(Permanent::getId)
                 .toList();
@@ -796,7 +832,8 @@ public class AiDecisionEngine {
         }
 
         log.info("AI: Choosing {} permanents in game {}", chosen.size(), gameId);
-        gameService.handleMultiplePermanentsChosen(gameData, aiPlayer, chosen);
+        final List<UUID> finalChosen = chosen;
+        send(() -> messageHandler.handleMultiplePermanentsChosen(selfConnection, new MultiplePermanentsChosenRequest(finalChosen)));
     }
 
     private void handleColorChoice(GameData gameData) {
@@ -826,7 +863,8 @@ public class AiDecisionEngine {
         }
 
         log.info("AI: Choosing color {} in game {}", bestColor.name(), gameId);
-        gameService.handleColorChosen(gameData, aiPlayer, bestColor.name());
+        final String colorName = bestColor.name();
+        send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, colorName)));
     }
 
     private void handleMayAbilityChoice(GameData gameData) {
@@ -836,7 +874,7 @@ public class AiDecisionEngine {
 
         // Generally accept may abilities
         log.info("AI: Accepting may ability in game {}", gameId);
-        gameService.handleMayAbilityChosen(gameData, aiPlayer, true);
+        send(() -> messageHandler.handleMayAbilityChosen(selfConnection, new MayAbilityChosenRequest(null, true)));
     }
 
     private void handleReorderCards(GameData gameData) {
@@ -861,7 +899,7 @@ public class AiDecisionEngine {
         List<Integer> order = indexedCards.stream().map(a -> a[0]).toList();
 
         log.info("AI: Reordering {} library cards in game {}", order.size(), gameId);
-        gameService.handleLibraryCardsReordered(gameData, aiPlayer, order);
+        send(() -> messageHandler.handleLibraryCardsReordered(selfConnection, new ReorderLibraryCardsRequest(order)));
     }
 
     private void handleLibrarySearch(GameData gameData) {
@@ -887,7 +925,8 @@ public class AiDecisionEngine {
         }
 
         log.info("AI: Choosing card {} from library in game {}", searchCards.get(bestIndex).getName(), gameId);
-        gameService.handleLibraryCardChosen(gameData, aiPlayer, bestIndex);
+        final int idx = bestIndex;
+        send(() -> messageHandler.handleLibraryCardChosen(selfConnection, new LibraryCardChosenRequest(idx)));
     }
 
     private void handleGraveyardChoice(GameData gameData) {
@@ -912,7 +951,7 @@ public class AiDecisionEngine {
                 .orElse(validIndices.iterator().next());
 
         log.info("AI: Choosing graveyard card at index {} in game {}", bestIndex, gameId);
-        gameService.handleGraveyardCardChosen(gameData, aiPlayer, bestIndex);
+        send(() -> messageHandler.handleGraveyardCardChosen(selfConnection, new GraveyardCardChosenRequest(bestIndex)));
     }
 
     private void handleMultiGraveyardChoice(GameData gameData) {
@@ -929,7 +968,7 @@ public class AiDecisionEngine {
         List<UUID> chosen = validIds.stream().limit(maxCount).toList();
 
         log.info("AI: Choosing {} graveyard cards in game {}", chosen.size(), gameId);
-        gameService.handleMultipleGraveyardCardsChosen(gameData, aiPlayer, chosen);
+        send(() -> messageHandler.handleMultipleGraveyardCardsChosen(selfConnection, new MultipleGraveyardCardsChosenRequest(chosen)));
     }
 
     private void handleHandTopBottom(GameData gameData) {
@@ -968,7 +1007,9 @@ public class AiDecisionEngine {
         }
 
         log.info("AI: Choosing hand={} top={} in game {}", handCardIndex, topCardIndex, gameId);
-        gameService.handleHandTopBottomChosen(gameData, aiPlayer, handCardIndex, topCardIndex);
+        final int h = handCardIndex;
+        final int t = topCardIndex;
+        send(() -> messageHandler.handleHandTopBottomChosen(selfConnection, new HandTopBottomChosenRequest(h, t)));
     }
 
     private void handleRevealedHandChoice(GameData gameData) {
@@ -994,7 +1035,7 @@ public class AiDecisionEngine {
                 .orElse(validIndices.iterator().next());
 
         log.info("AI: Choosing card {} from revealed hand in game {}", bestIndex, gameId);
-        gameService.handleCardChosen(gameData, aiPlayer, bestIndex);
+        send(() -> messageHandler.handleCardChosen(selfConnection, new CardChosenRequest(bestIndex)));
     }
 
     // ===== Utility =====
@@ -1021,5 +1062,18 @@ public class AiDecisionEngine {
             return nonActive;
         }
         return null;
+    }
+
+    private void send(MessageHandlerAction action) {
+        try {
+            action.execute();
+        } catch (Exception e) {
+            log.error("AI: Error sending message in game {}", gameId, e);
+        }
+    }
+
+    @FunctionalInterface
+    private interface MessageHandlerAction {
+        void execute() throws Exception;
     }
 }

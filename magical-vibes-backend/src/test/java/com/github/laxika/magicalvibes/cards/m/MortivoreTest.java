@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +34,7 @@ class MortivoreTest {
     private Player player1;
     private Player player2;
     private GameService gs;
+    private GameQueryService gqs;
     private GameData gd;
 
     @BeforeEach
@@ -41,6 +43,7 @@ class MortivoreTest {
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
@@ -127,8 +130,8 @@ class MortivoreTest {
     void isZeroZeroWithEmptyGraveyards() {
         Permanent perm = addMortivoreReady(player1);
 
-        assertThat(gs.getEffectivePower(gd, perm)).isEqualTo(0);
-        assertThat(gs.getEffectiveToughness(gd, perm)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(0);
     }
 
     @Test
@@ -137,8 +140,8 @@ class MortivoreTest {
         Permanent perm = addMortivoreReady(player1);
         harness.setGraveyard(player1, createCreatureCards(3));
 
-        assertThat(gs.getEffectivePower(gd, perm)).isEqualTo(3);
-        assertThat(gs.getEffectiveToughness(gd, perm)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(3);
     }
 
     @Test
@@ -148,8 +151,8 @@ class MortivoreTest {
         harness.setGraveyard(player1, createCreatureCards(2));
         harness.setGraveyard(player2, createCreatureCards(3));
 
-        assertThat(gs.getEffectivePower(gd, perm)).isEqualTo(5);
-        assertThat(gs.getEffectiveToughness(gd, perm)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(5);
     }
 
     @Test
@@ -163,8 +166,8 @@ class MortivoreTest {
         graveyard.add(new MindRot());
         harness.setGraveyard(player1, graveyard);
 
-        assertThat(gs.getEffectivePower(gd, perm)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, perm)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(2);
     }
 
     @Test
@@ -173,13 +176,13 @@ class MortivoreTest {
         Permanent perm = addMortivoreReady(player1);
         harness.setGraveyard(player1, createCreatureCards(1));
 
-        assertThat(gs.getEffectivePower(gd, perm)).isEqualTo(1);
-        assertThat(gs.getEffectiveToughness(gd, perm)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(1);
 
         gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
 
-        assertThat(gs.getEffectivePower(gd, perm)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, perm)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(2);
     }
 
     @Test
@@ -188,13 +191,13 @@ class MortivoreTest {
         Permanent perm = addMortivoreReady(player1);
         harness.setGraveyard(player1, createCreatureCards(5));
 
-        assertThat(gs.getEffectivePower(gd, perm)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(5);
 
         gd.playerGraveyards.get(player1.getId()).removeFirst();
         gd.playerGraveyards.get(player1.getId()).removeFirst();
 
-        assertThat(gs.getEffectivePower(gd, perm)).isEqualTo(3);
-        assertThat(gs.getEffectiveToughness(gd, perm)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(3);
     }
 
     @Test
@@ -203,8 +206,8 @@ class MortivoreTest {
         Permanent perm = addMortivoreReady(player1);
         harness.setGraveyard(player2, createCreatureCards(4));
 
-        assertThat(gs.getEffectivePower(gd, perm)).isEqualTo(4);
-        assertThat(gs.getEffectiveToughness(gd, perm)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(4);
     }
 
     @Test
@@ -214,8 +217,8 @@ class MortivoreTest {
         harness.setGraveyard(player1, createCreatureCards(15));
         harness.setGraveyard(player2, createCreatureCards(10));
 
-        assertThat(gs.getEffectivePower(gd, perm)).isEqualTo(25);
-        assertThat(gs.getEffectiveToughness(gd, perm)).isEqualTo(25);
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(25);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(25);
     }
 
     // ===== P/T interacts with other static effects =====
@@ -229,8 +232,8 @@ class MortivoreTest {
         // Add a Glorious Anthem for +1/+1 to own creatures
         harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.g.GloriousAnthem());
 
-        assertThat(gs.getEffectivePower(gd, perm)).isEqualTo(4);
-        assertThat(gs.getEffectiveToughness(gd, perm)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(4);
     }
 
     @Test
@@ -242,8 +245,8 @@ class MortivoreTest {
         perm.setPowerModifier(2);
         perm.setToughnessModifier(2);
 
-        assertThat(gs.getEffectivePower(gd, perm)).isEqualTo(5);
-        assertThat(gs.getEffectiveToughness(gd, perm)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(5);
     }
 
     // ===== Regeneration ability =====
@@ -365,15 +368,15 @@ class MortivoreTest {
         Permanent mort2 = addMortivoreReady(player1);
         harness.setGraveyard(player1, createCreatureCards(3)); // Both are 3/3
 
-        assertThat(gs.getEffectivePower(gd, mort1)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mort1)).isEqualTo(3);
 
         // Simulate mort2 dying — move its card to graveyard
         gd.playerBattlefields.get(player1.getId()).remove(mort2);
         gd.playerGraveyards.get(player1.getId()).add(mort2.getCard());
 
         // mort1 should now be 4/4 (3 original creatures + Mortivore in graveyard)
-        assertThat(gs.getEffectivePower(gd, mort1)).isEqualTo(4);
-        assertThat(gs.getEffectiveToughness(gd, mort1)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, mort1)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, mort1)).isEqualTo(4);
     }
 
     // ===== Helper methods =====

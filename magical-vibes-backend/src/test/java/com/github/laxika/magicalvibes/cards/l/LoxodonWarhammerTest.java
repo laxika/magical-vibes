@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.CreatureYouControlTargetFilter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +32,7 @@ class LoxodonWarhammerTest {
     private Player player1;
     private Player player2;
     private GameService gs;
+    private GameQueryService gqs;
     private GameData gd;
 
     @BeforeEach
@@ -39,6 +41,7 @@ class LoxodonWarhammerTest {
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
@@ -147,8 +150,8 @@ class LoxodonWarhammerTest {
         Permanent warhammer = addWarhammerReady(player1);
         warhammer.setAttachedTo(creature.getId());
 
-        assertThat(gs.getEffectivePower(gd, creature)).isEqualTo(5);   // 2 + 3
-        assertThat(gs.getEffectiveToughness(gd, creature)).isEqualTo(2); // 2 + 0
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);   // 2 + 3
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2); // 2 + 0
     }
 
     @Test
@@ -158,12 +161,12 @@ class LoxodonWarhammerTest {
         Permanent warhammer = addWarhammerReady(player1);
         warhammer.setAttachedTo(creature.getId());
 
-        assertThat(gs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
 
         gd.playerBattlefields.get(player1.getId()).remove(warhammer);
 
-        assertThat(gs.getEffectivePower(gd, creature)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -174,8 +177,8 @@ class LoxodonWarhammerTest {
         Permanent warhammer = addWarhammerReady(player1);
         warhammer.setAttachedTo(creature.getId());
 
-        assertThat(gs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
     }
 
     // ===== Static effects: keyword grants =====
@@ -187,7 +190,7 @@ class LoxodonWarhammerTest {
         Permanent warhammer = addWarhammerReady(player1);
         warhammer.setAttachedTo(creature.getId());
 
-        assertThat(gs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -197,7 +200,7 @@ class LoxodonWarhammerTest {
         Permanent warhammer = addWarhammerReady(player1);
         warhammer.setAttachedTo(creature.getId());
 
-        assertThat(gs.hasKeyword(gd, creature, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -207,13 +210,13 @@ class LoxodonWarhammerTest {
         Permanent warhammer = addWarhammerReady(player1);
         warhammer.setAttachedTo(creature.getId());
 
-        assertThat(gs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
-        assertThat(gs.hasKeyword(gd, creature, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isTrue();
 
         gd.playerBattlefields.get(player1.getId()).remove(warhammer);
 
-        assertThat(gs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
-        assertThat(gs.hasKeyword(gd, creature, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isFalse();
     }
 
     // ===== Lifelink: unblocked combat damage =====
@@ -392,9 +395,9 @@ class LoxodonWarhammerTest {
         Permanent creature2 = addReadyCreature(player1);
 
         warhammer.setAttachedTo(creature1.getId());
-        assertThat(gs.getEffectivePower(gd, creature1)).isEqualTo(5);
-        assertThat(gs.hasKeyword(gd, creature1, Keyword.TRAMPLE)).isTrue();
-        assertThat(gs.hasKeyword(gd, creature1, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature1)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, creature1, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature1, Keyword.LIFELINK)).isTrue();
 
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.activateAbility(player1, 0, null, creature2.getId());
@@ -402,13 +405,13 @@ class LoxodonWarhammerTest {
 
         assertThat(warhammer.getAttachedTo()).isEqualTo(creature2.getId());
         // creature1 loses all bonuses
-        assertThat(gs.getEffectivePower(gd, creature1)).isEqualTo(2);
-        assertThat(gs.hasKeyword(gd, creature1, Keyword.TRAMPLE)).isFalse();
-        assertThat(gs.hasKeyword(gd, creature1, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, creature1)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature1, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature1, Keyword.LIFELINK)).isFalse();
         // creature2 gains all bonuses
-        assertThat(gs.getEffectivePower(gd, creature2)).isEqualTo(5);
-        assertThat(gs.hasKeyword(gd, creature2, Keyword.TRAMPLE)).isTrue();
-        assertThat(gs.hasKeyword(gd, creature2, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature2)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, creature2, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature2, Keyword.LIFELINK)).isTrue();
     }
 
     // ===== Helpers =====

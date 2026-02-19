@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatu
 import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +34,7 @@ class FearTest {
     private Player player1;
     private Player player2;
     private GameService gs;
+    private GameQueryService gqs;
     private GameData gd;
 
     @BeforeEach
@@ -41,6 +43,7 @@ class FearTest {
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
@@ -116,7 +119,7 @@ class FearTest {
         fearPerm.setAttachedTo(bearsPerm.getId());
         gd.playerBattlefields.get(player1.getId()).add(fearPerm);
 
-        assertThat(gs.hasKeyword(gd, bearsPerm, Keyword.FEAR)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FEAR)).isTrue();
     }
 
     // ===== Blocking restrictions =====
@@ -221,13 +224,13 @@ class FearTest {
         gd.playerBattlefields.get(player1.getId()).add(fearPerm);
 
         // Verify fear is active
-        assertThat(gs.hasKeyword(gd, bearsPerm, Keyword.FEAR)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FEAR)).isTrue();
 
         // Remove Fear aura
         gd.playerBattlefields.get(player1.getId()).remove(fearPerm);
 
         // Verify fear is gone
-        assertThat(gs.hasKeyword(gd, bearsPerm, Keyword.FEAR)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FEAR)).isFalse();
     }
 
     // ===== Does not affect other creatures =====
@@ -248,7 +251,7 @@ class FearTest {
         gd.playerBattlefields.get(player1.getId()).add(fearPerm);
 
         // Other creature should not have fear
-        assertThat(gs.hasKeyword(gd, otherBears, Keyword.FEAR)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherBears, Keyword.FEAR)).isFalse();
     }
 
     // ===== Fizzle =====

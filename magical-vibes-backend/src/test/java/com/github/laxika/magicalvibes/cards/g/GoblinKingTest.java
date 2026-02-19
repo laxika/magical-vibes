@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +34,7 @@ class GoblinKingTest {
     private Player player1;
     private Player player2;
     private GameService gs;
+    private GameQueryService gqs;
     private GameData gd;
 
     @BeforeEach
@@ -41,6 +43,7 @@ class GoblinKingTest {
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
@@ -112,9 +115,9 @@ class GoblinKingTest {
                 .filter(p -> p.getCard().getName().equals("Goblin Elite Infantry"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, goblin)).isEqualTo(3);
-        assertThat(gs.getEffectiveToughness(gd, goblin)).isEqualTo(3);
-        assertThat(gs.hasKeyword(gd, goblin, Keyword.MOUNTAINWALK)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.MOUNTAINWALK)).isTrue();
     }
 
     @Test
@@ -126,9 +129,9 @@ class GoblinKingTest {
                 .filter(p -> p.getCard().getName().equals("Goblin King"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, king)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, king)).isEqualTo(2);
-        assertThat(gs.hasKeyword(gd, king, Keyword.MOUNTAINWALK)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, king)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, king)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, king, Keyword.MOUNTAINWALK)).isFalse();
     }
 
     @Test
@@ -141,9 +144,9 @@ class GoblinKingTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, bears)).isEqualTo(2);
-        assertThat(gs.hasKeyword(gd, bears, Keyword.MOUNTAINWALK)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.MOUNTAINWALK)).isFalse();
     }
 
     @Test
@@ -156,9 +159,9 @@ class GoblinKingTest {
                 .filter(p -> p.getCard().getName().equals("Goblin Elite Infantry"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, opponentGoblin)).isEqualTo(3);
-        assertThat(gs.getEffectiveToughness(gd, opponentGoblin)).isEqualTo(3);
-        assertThat(gs.hasKeyword(gd, opponentGoblin, Keyword.MOUNTAINWALK)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, opponentGoblin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opponentGoblin)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, opponentGoblin, Keyword.MOUNTAINWALK)).isTrue();
     }
 
     // ===== Multiple sources =====
@@ -175,9 +178,9 @@ class GoblinKingTest {
 
         assertThat(kings).hasSize(2);
         for (Permanent king : kings) {
-            assertThat(gs.getEffectivePower(gd, king)).isEqualTo(3);
-            assertThat(gs.getEffectiveToughness(gd, king)).isEqualTo(3);
-            assertThat(gs.hasKeyword(gd, king, Keyword.MOUNTAINWALK)).isTrue();
+            assertThat(gqs.getEffectivePower(gd, king)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, king)).isEqualTo(3);
+            assertThat(gqs.hasKeyword(gd, king, Keyword.MOUNTAINWALK)).isTrue();
         }
     }
 
@@ -193,8 +196,8 @@ class GoblinKingTest {
                 .findFirst().orElseThrow();
 
         // 2/2 base + 2/2 from two kings = 4/4
-        assertThat(gs.getEffectivePower(gd, goblin)).isEqualTo(4);
-        assertThat(gs.getEffectiveToughness(gd, goblin)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(4);
     }
 
     // ===== Bonus gone when source leaves =====
@@ -209,14 +212,14 @@ class GoblinKingTest {
                 .filter(p -> p.getCard().getName().equals("Goblin Elite Infantry"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, goblin)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
 
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(p -> p.getCard().getName().equals("Goblin King"));
 
-        assertThat(gs.getEffectivePower(gd, goblin)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
-        assertThat(gs.hasKeyword(gd, goblin, Keyword.MOUNTAINWALK)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.MOUNTAINWALK)).isFalse();
     }
 
     @Test
@@ -230,14 +233,14 @@ class GoblinKingTest {
                 .filter(p -> p.getCard().getName().equals("Goblin Elite Infantry"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gs.getEffectivePower(gd, goblin)).isEqualTo(3);
-        assertThat(gs.getEffectiveToughness(gd, goblin)).isEqualTo(3);
-        assertThat(gs.hasKeyword(gd, goblin, Keyword.MOUNTAINWALK)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.MOUNTAINWALK)).isTrue();
     }
 
     @Test
@@ -251,13 +254,13 @@ class GoblinKingTest {
                 .findFirst().orElseThrow();
 
         goblin.setPowerModifier(goblin.getPowerModifier() + 5);
-        assertThat(gs.getEffectivePower(gd, goblin)).isEqualTo(8); // 2 base + 5 spell + 1 static
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(8); // 2 base + 5 spell + 1 static
 
         goblin.resetModifiers();
 
-        assertThat(gs.getEffectivePower(gd, goblin)).isEqualTo(3); // 2 base + 1 static
-        assertThat(gs.getEffectiveToughness(gd, goblin)).isEqualTo(3); // 2 base + 1 static
-        assertThat(gs.hasKeyword(gd, goblin, Keyword.MOUNTAINWALK)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3); // 2 base + 1 static
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(3); // 2 base + 1 static
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.MOUNTAINWALK)).isTrue();
     }
 
     // ===== Mountainwalk blocking =====
@@ -358,13 +361,13 @@ class GoblinKingTest {
         gd.playerBattlefields.get(player1.getId()).add(goblinAttacker);
 
         // Verify mountainwalk is present
-        assertThat(gs.hasKeyword(gd, goblinAttacker, Keyword.MOUNTAINWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, goblinAttacker, Keyword.MOUNTAINWALK)).isTrue();
 
         // Remove Goblin King
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(p -> p.getCard().getName().equals("Goblin King"));
 
         // Mountainwalk should be gone, allowing blocking
-        assertThat(gs.hasKeyword(gd, goblinAttacker, Keyword.MOUNTAINWALK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, goblinAttacker, Keyword.MOUNTAINWALK)).isFalse();
     }
 }

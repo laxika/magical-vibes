@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +31,7 @@ class SerrasEmbraceTest {
     private Player player1;
     private Player player2;
     private GameService gs;
+    private GameQueryService gqs;
     private GameData gd;
 
     @BeforeEach
@@ -38,6 +40,7 @@ class SerrasEmbraceTest {
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
@@ -116,8 +119,8 @@ class SerrasEmbraceTest {
         embracePerm.setAttachedTo(bearsPerm.getId());
         gd.playerBattlefields.get(player1.getId()).add(embracePerm);
 
-        assertThat(gs.getEffectivePower(gd, bearsPerm)).isEqualTo(4);
-        assertThat(gs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(4);
     }
 
     // ===== Flying =====
@@ -133,7 +136,7 @@ class SerrasEmbraceTest {
         embracePerm.setAttachedTo(bearsPerm.getId());
         gd.playerBattlefields.get(player1.getId()).add(embracePerm);
 
-        assertThat(gs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
     }
 
     // ===== Vigilance =====
@@ -149,7 +152,7 @@ class SerrasEmbraceTest {
         embracePerm.setAttachedTo(bearsPerm.getId());
         gd.playerBattlefields.get(player1.getId()).add(embracePerm);
 
-        assertThat(gs.hasKeyword(gd, bearsPerm, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.VIGILANCE)).isTrue();
     }
 
     // ===== Effects stop when removed =====
@@ -166,18 +169,18 @@ class SerrasEmbraceTest {
         gd.playerBattlefields.get(player1.getId()).add(embracePerm);
 
         // Verify effects are active
-        assertThat(gs.getEffectivePower(gd, bearsPerm)).isEqualTo(4);
-        assertThat(gs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
-        assertThat(gs.hasKeyword(gd, bearsPerm, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.VIGILANCE)).isTrue();
 
         // Remove Serra's Embrace
         gd.playerBattlefields.get(player1.getId()).remove(embracePerm);
 
         // Verify effects are gone
-        assertThat(gs.getEffectivePower(gd, bearsPerm)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(2);
-        assertThat(gs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isFalse();
-        assertThat(gs.hasKeyword(gd, bearsPerm, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.VIGILANCE)).isFalse();
     }
 
     // ===== Does not affect other creatures =====
@@ -198,9 +201,9 @@ class SerrasEmbraceTest {
         gd.playerBattlefields.get(player1.getId()).add(embracePerm);
 
         // Other creature should not be affected
-        assertThat(gs.getEffectivePower(gd, otherBears)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, otherBears)).isEqualTo(2);
-        assertThat(gs.hasKeyword(gd, otherBears, Keyword.FLYING)).isFalse();
-        assertThat(gs.hasKeyword(gd, otherBears, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, otherBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherBears)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, otherBears, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherBears, Keyword.VIGILANCE)).isFalse();
     }
 }

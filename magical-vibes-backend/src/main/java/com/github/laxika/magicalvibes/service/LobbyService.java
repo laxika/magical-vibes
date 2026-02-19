@@ -31,7 +31,7 @@ public class LobbyService {
     private final Random random = new Random();
 
     private final GameRegistry gameRegistry;
-    private final GameService gameService;
+    private final GameBroadcastService gameBroadcastService;
 
     public GameResult createGame(String gameName, Player player, String deckId) {
         UUID gameId = UUID.randomUUID();
@@ -45,7 +45,7 @@ public class LobbyService {
         gameRegistry.register(gameData);
 
         log.info("Game created: id={}, name='{}', creator={}", gameId, gameName, player.getUsername());
-        return new GameResult(gameService.getJoinGame(gameData, null), toLobbyGame(gameData));
+        return new GameResult(gameBroadcastService.getJoinGame(gameData, null), toLobbyGame(gameData));
     }
 
     public List<LobbyGame> listRunningGames() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +27,7 @@ class GloriousAnthemTest {
     private Player player1;
     private Player player2;
     private GameService gs;
+    private GameQueryService gqs;
     private GameData gd;
 
     @BeforeEach
@@ -34,6 +36,7 @@ class GloriousAnthemTest {
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
@@ -100,8 +103,8 @@ class GloriousAnthemTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, bears)).isEqualTo(3);
-        assertThat(gs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }
 
     @Test
@@ -114,8 +117,8 @@ class GloriousAnthemTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, opponentBears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(2);
     }
 
     @Test
@@ -127,9 +130,9 @@ class GloriousAnthemTest {
 
         for (Permanent p : gd.playerBattlefields.get(player1.getId())) {
             if (p.getCard().getType() == CardType.CREATURE) {
-                assertThat(gs.getEffectivePower(gd, p))
+                assertThat(gqs.getEffectivePower(gd, p))
                         .isEqualTo(p.getCard().getPower() + 1);
-                assertThat(gs.getEffectiveToughness(gd, p))
+                assertThat(gqs.getEffectiveToughness(gd, p))
                         .isEqualTo(p.getCard().getToughness() + 1);
             }
         }
@@ -148,8 +151,8 @@ class GloriousAnthemTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, bears)).isEqualTo(4);
-        assertThat(gs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
     }
 
     // ===== Bonus gone when source leaves =====
@@ -164,14 +167,14 @@ class GloriousAnthemTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
 
         // Remove Glorious Anthem
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(p -> p.getCard().getName().equals("Glorious Anthem"));
 
-        assertThat(gs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     // ===== Bonus applies on resolve =====
@@ -187,13 +190,13 @@ class GloriousAnthemTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gs.getEffectivePower(gd, bears)).isEqualTo(3);
-        assertThat(gs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }
 
     // ===== Static bonus survives end-of-turn reset =====
@@ -210,13 +213,13 @@ class GloriousAnthemTest {
 
         // Simulate a temporary spell boost
         bears.setPowerModifier(bears.getPowerModifier() + 3);
-        assertThat(gs.getEffectivePower(gd, bears)).isEqualTo(6); // 2 base + 3 spell + 1 static
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6); // 2 base + 3 spell + 1 static
 
         // Reset end-of-turn modifiers
         bears.resetModifiers();
 
         // Spell bonus gone, static bonus still computed
-        assertThat(gs.getEffectivePower(gd, bears)).isEqualTo(3); // 2 base + 1 static
-        assertThat(gs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3); // 2 base + 1 static
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }
 }

@@ -200,8 +200,8 @@ class AcademyResearchersTest {
                 .orElseThrow();
 
         // Holy Strength gives +1/+2, Academy Researchers is 2/2 → should be 3/4
-        assertThat(harness.getGameService().getEffectivePower(gd, researchers)).isEqualTo(3);
-        assertThat(harness.getGameService().getEffectiveToughness(gd, researchers)).isEqualTo(4);
+        assertThat(harness.getGameQueryService().getEffectivePower(gd, researchers)).isEqualTo(3);
+        assertThat(harness.getGameQueryService().getEffectiveToughness(gd, researchers)).isEqualTo(4);
     }
 
     // ===== Decline =====

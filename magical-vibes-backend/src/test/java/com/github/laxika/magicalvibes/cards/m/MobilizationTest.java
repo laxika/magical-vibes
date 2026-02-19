@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.cards.a.AvenCloudchaser;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HonorGuard;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +36,7 @@ class MobilizationTest {
     private Player player1;
     private Player player2;
     private GameService gs;
+    private GameQueryService gqs;
     private GameData gd;
 
     @BeforeEach
@@ -43,6 +45,7 @@ class MobilizationTest {
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
@@ -190,7 +193,7 @@ class MobilizationTest {
                 .filter(p -> p.getCard().getName().equals("Honor Guard"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.hasKeyword(gd, soldier, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.VIGILANCE)).isTrue();
     }
 
     @Test
@@ -203,7 +206,7 @@ class MobilizationTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -219,7 +222,7 @@ class MobilizationTest {
                 .filter(p -> p.getCard().getName().equals("Soldier"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.hasKeyword(gd, token, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.VIGILANCE)).isTrue();
     }
 
     @Test
@@ -232,13 +235,13 @@ class MobilizationTest {
                 .filter(p -> p.getCard().getName().equals("Honor Guard"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.hasKeyword(gd, soldier, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.VIGILANCE)).isTrue();
 
         // Remove Mobilization
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(p -> p.getCard().getName().equals("Mobilization"));
 
-        assertThat(gs.hasKeyword(gd, soldier, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.VIGILANCE)).isFalse();
     }
 
     // ===== Vigilance in combat: attacker doesn't tap =====

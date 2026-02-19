@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +30,7 @@ class ChimericStaffTest {
     private Player player1;
     private Player player2;
     private GameService gs;
+    private GameQueryService gqs;
     private GameData gd;
 
     @BeforeEach
@@ -37,6 +39,7 @@ class ChimericStaffTest {
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
@@ -123,9 +126,9 @@ class ChimericStaffTest {
         assertThat(staffPerm.isAnimatedUntilEndOfTurn()).isTrue();
         assertThat(staffPerm.getAnimatedPower()).isEqualTo(3);
         assertThat(staffPerm.getAnimatedToughness()).isEqualTo(3);
-        assertThat(gs.isCreature(gd, staffPerm)).isTrue();
-        assertThat(gs.getEffectivePower(gd, staffPerm)).isEqualTo(3);
-        assertThat(gs.getEffectiveToughness(gd, staffPerm)).isEqualTo(3);
+        assertThat(gqs.isCreature(gd, staffPerm)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, staffPerm)).isEqualTo(3);
     }
 
     @Test
@@ -137,8 +140,8 @@ class ChimericStaffTest {
         harness.activateAbility(player1, 0, 5, null);
         harness.passBothPriorities();
 
-        assertThat(gs.getEffectivePower(gd, staffPerm)).isEqualTo(5);
-        assertThat(gs.getEffectiveToughness(gd, staffPerm)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, staffPerm)).isEqualTo(5);
     }
 
     @Test
@@ -226,13 +229,13 @@ class ChimericStaffTest {
         // First activation: X=3
         harness.activateAbility(player1, 0, 3, null);
         harness.passBothPriorities();
-        assertThat(gs.getEffectivePower(gd, staffPerm)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(3);
 
         // Second activation: X=5 — should replace, not add
         harness.activateAbility(player1, 0, 5, null);
         harness.passBothPriorities();
-        assertThat(gs.getEffectivePower(gd, staffPerm)).isEqualTo(5);
-        assertThat(gs.getEffectiveToughness(gd, staffPerm)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, staffPerm)).isEqualTo(5);
     }
 
     // ===== Mana cost =====
@@ -266,7 +269,7 @@ class ChimericStaffTest {
     void notACreatureBeforeActivation() {
         Permanent staffPerm = addStaffReady(player1);
 
-        assertThat(gs.isCreature(gd, staffPerm)).isFalse();
+        assertThat(gqs.isCreature(gd, staffPerm)).isFalse();
         assertThat(staffPerm.getCard().getType()).isEqualTo(CardType.ARTIFACT);
     }
 
@@ -281,8 +284,8 @@ class ChimericStaffTest {
         harness.activateAbility(player1, 0, 3, null);
         harness.passBothPriorities();
 
-        assertThat(gs.isCreature(gd, staffPerm)).isTrue();
-        assertThat(gs.getEffectivePower(gd, staffPerm)).isEqualTo(3);
+        assertThat(gqs.isCreature(gd, staffPerm)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(3);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
@@ -290,9 +293,9 @@ class ChimericStaffTest {
         harness.passBothPriorities();
 
         assertThat(staffPerm.isAnimatedUntilEndOfTurn()).isFalse();
-        assertThat(gs.isCreature(gd, staffPerm)).isFalse();
-        assertThat(gs.getEffectivePower(gd, staffPerm)).isEqualTo(0);
-        assertThat(gs.getEffectiveToughness(gd, staffPerm)).isEqualTo(0);
+        assertThat(gqs.isCreature(gd, staffPerm)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, staffPerm)).isEqualTo(0);
     }
 
     // ===== Ability fizzles if removed =====
@@ -342,8 +345,8 @@ class ChimericStaffTest {
         harness.passBothPriorities();
 
         // 3/3 base from animation + 1/1 from Glorious Anthem = 4/4
-        assertThat(gs.getEffectivePower(gd, staffPerm)).isEqualTo(4);
-        assertThat(gs.getEffectiveToughness(gd, staffPerm)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, staffPerm)).isEqualTo(4);
     }
 
     @Test
@@ -357,8 +360,8 @@ class ChimericStaffTest {
         harness.passBothPriorities();
 
         // Self-animation sets base to X=2, March should NOT also add mana value (4) on top
-        assertThat(gs.getEffectivePower(gd, staffPerm)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, staffPerm)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, staffPerm)).isEqualTo(2);
     }
 
     @Test
@@ -368,9 +371,9 @@ class ChimericStaffTest {
         harness.addToBattlefield(player1, new MarchOfTheMachines());
 
         // Not self-animated — March should animate it with P/T = mana value = 4
-        assertThat(gs.isCreature(gd, staffPerm)).isTrue();
-        assertThat(gs.getEffectivePower(gd, staffPerm)).isEqualTo(4);
-        assertThat(gs.getEffectiveToughness(gd, staffPerm)).isEqualTo(4);
+        assertThat(gqs.isCreature(gd, staffPerm)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, staffPerm)).isEqualTo(4);
     }
 
     // ===== Logging =====

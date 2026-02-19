@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatu
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +32,7 @@ class RobeOfMirrorsTest {
     private Player player1;
     private Player player2;
     private GameService gs;
+    private GameQueryService gqs;
     private GameData gd;
 
     @BeforeEach
@@ -39,6 +41,7 @@ class RobeOfMirrorsTest {
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
@@ -189,13 +192,13 @@ class RobeOfMirrorsTest {
         gd.playerBattlefields.get(player1.getId()).add(robePerm);
 
         // Verify creature has shroud
-        assertThat(gs.hasKeyword(gd, bearsPerm, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.SHROUD)).isTrue();
 
         // Remove the Robe
         gd.playerBattlefields.get(player1.getId()).remove(robePerm);
 
         // Verify creature no longer has shroud
-        assertThat(gs.hasKeyword(gd, bearsPerm, Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.SHROUD)).isFalse();
 
         // Now creature can be targeted — cast Boomerang on it
         harness.setHand(player1, List.of(new Boomerang()));

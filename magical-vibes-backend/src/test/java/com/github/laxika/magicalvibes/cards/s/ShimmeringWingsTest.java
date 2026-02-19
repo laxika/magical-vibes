@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatu
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +33,7 @@ class ShimmeringWingsTest {
     private Player player1;
     private Player player2;
     private GameService gs;
+    private GameQueryService gqs;
     private GameData gd;
 
     @BeforeEach
@@ -40,6 +42,7 @@ class ShimmeringWingsTest {
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
@@ -119,7 +122,7 @@ class ShimmeringWingsTest {
         wingsPerm.setAttachedTo(bearsPerm.getId());
         gd.playerBattlefields.get(player1.getId()).add(wingsPerm);
 
-        assertThat(gs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -137,7 +140,7 @@ class ShimmeringWingsTest {
         wingsPerm.setAttachedTo(bearsPerm.getId());
         gd.playerBattlefields.get(player1.getId()).add(wingsPerm);
 
-        assertThat(gs.hasKeyword(gd, otherBears, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherBears, Keyword.FLYING)).isFalse();
     }
 
     // ===== Activated ability: return to hand =====
@@ -183,7 +186,7 @@ class ShimmeringWingsTest {
         gd.playerBattlefields.get(player1.getId()).add(wingsPerm);
 
         // Verify flying is granted
-        assertThat(gs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
 
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -192,7 +195,7 @@ class ShimmeringWingsTest {
         harness.passBothPriorities();
 
         // Creature no longer has flying
-        assertThat(gs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isFalse();
     }
 
     // ===== Re-cast after bounce =====
@@ -235,7 +238,7 @@ class ShimmeringWingsTest {
                 .anyMatch(p -> p.getCard().getName().equals("Shimmering Wings")
                         && p.getAttachedTo() != null
                         && p.getAttachedTo().equals(bearsPerm.getId()));
-        assertThat(gs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
     }
 
     // ===== Fizzle =====

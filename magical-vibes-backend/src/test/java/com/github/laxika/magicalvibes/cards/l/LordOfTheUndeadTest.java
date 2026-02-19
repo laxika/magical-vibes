@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardOfSubtypeFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +35,7 @@ class LordOfTheUndeadTest {
     private Player player1;
     private Player player2;
     private GameService gs;
+    private GameQueryService gqs;
     private GameData gd;
 
     @BeforeEach
@@ -42,6 +44,7 @@ class LordOfTheUndeadTest {
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
+        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
@@ -155,8 +158,8 @@ class LordOfTheUndeadTest {
                 .filter(p -> p.getCard().getName().equals("Gravedigger"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, gravedigger)).isEqualTo(3);
-        assertThat(gs.getEffectiveToughness(gd, gravedigger)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, gravedigger)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, gravedigger)).isEqualTo(3);
     }
 
     @Test
@@ -168,8 +171,8 @@ class LordOfTheUndeadTest {
                 .filter(p -> p.getCard().getName().equals("Lord of the Undead"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, lord)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, lord)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, lord)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lord)).isEqualTo(2);
     }
 
     @Test
@@ -182,8 +185,8 @@ class LordOfTheUndeadTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -196,8 +199,8 @@ class LordOfTheUndeadTest {
                 .filter(p -> p.getCard().getName().equals("Gravedigger"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, opponentZombie)).isEqualTo(3);
-        assertThat(gs.getEffectiveToughness(gd, opponentZombie)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentZombie)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opponentZombie)).isEqualTo(3);
     }
 
     // ===== Multiple sources =====
@@ -214,8 +217,8 @@ class LordOfTheUndeadTest {
 
         assertThat(lords).hasSize(2);
         for (Permanent lord : lords) {
-            assertThat(gs.getEffectivePower(gd, lord)).isEqualTo(3);
-            assertThat(gs.getEffectiveToughness(gd, lord)).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, lord)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, lord)).isEqualTo(3);
         }
     }
 
@@ -231,8 +234,8 @@ class LordOfTheUndeadTest {
                 .findFirst().orElseThrow();
 
         // 2/2 base + 2/2 from two lords = 4/4
-        assertThat(gs.getEffectivePower(gd, gravedigger)).isEqualTo(4);
-        assertThat(gs.getEffectiveToughness(gd, gravedigger)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, gravedigger)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, gravedigger)).isEqualTo(4);
     }
 
     // ===== Bonus gone when source leaves =====
@@ -247,13 +250,13 @@ class LordOfTheUndeadTest {
                 .filter(p -> p.getCard().getName().equals("Gravedigger"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, gravedigger)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, gravedigger)).isEqualTo(3);
 
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(p -> p.getCard().getName().equals("Lord of the Undead"));
 
-        assertThat(gs.getEffectivePower(gd, gravedigger)).isEqualTo(2);
-        assertThat(gs.getEffectiveToughness(gd, gravedigger)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, gravedigger)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, gravedigger)).isEqualTo(2);
     }
 
     @Test
@@ -267,13 +270,13 @@ class LordOfTheUndeadTest {
                 .filter(p -> p.getCard().getName().equals("Gravedigger"))
                 .findFirst().orElseThrow();
 
-        assertThat(gs.getEffectivePower(gd, gravedigger)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, gravedigger)).isEqualTo(2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gs.getEffectivePower(gd, gravedigger)).isEqualTo(3);
-        assertThat(gs.getEffectiveToughness(gd, gravedigger)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, gravedigger)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, gravedigger)).isEqualTo(3);
     }
 
     @Test
@@ -287,12 +290,12 @@ class LordOfTheUndeadTest {
                 .findFirst().orElseThrow();
 
         gravedigger.setPowerModifier(gravedigger.getPowerModifier() + 5);
-        assertThat(gs.getEffectivePower(gd, gravedigger)).isEqualTo(8); // 2 base + 5 spell + 1 static
+        assertThat(gqs.getEffectivePower(gd, gravedigger)).isEqualTo(8); // 2 base + 5 spell + 1 static
 
         gravedigger.resetModifiers();
 
-        assertThat(gs.getEffectivePower(gd, gravedigger)).isEqualTo(3); // 2 base + 1 static
-        assertThat(gs.getEffectiveToughness(gd, gravedigger)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, gravedigger)).isEqualTo(3); // 2 base + 1 static
+        assertThat(gqs.getEffectiveToughness(gd, gravedigger)).isEqualTo(3);
     }
 
     // ===== Activated ability: activating =====
