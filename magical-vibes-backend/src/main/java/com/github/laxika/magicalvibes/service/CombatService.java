@@ -113,7 +113,10 @@ public class CombatService {
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent p = battlefield.get(i);
-            if (gameQueryService.isCreature(gameData, p) && !p.isTapped() && !gameQueryService.hasAuraWithEffect(gameData, p, EnchantedCreatureCantAttackOrBlockEffect.class)) {
+            if (gameQueryService.isCreature(gameData, p)
+                    && !p.isTapped()
+                    && !p.isCantBlockThisTurn()
+                    && !gameQueryService.hasAuraWithEffect(gameData, p, EnchantedCreatureCantAttackOrBlockEffect.class)) {
                 indices.add(i);
             }
         }
@@ -377,6 +380,9 @@ public class CombatService {
                         && defenderBattlefield.stream().anyMatch(p -> p.getCard().getSubtypes().contains(entry.getValue()))) {
                     throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked (" + entry.getValue().getDisplayName().toLowerCase() + "walk)");
                 }
+            }
+            if (blocker.isCantBlockThisTurn()) {
+                throw new IllegalStateException(blocker.getCard().getName() + " can't block this turn");
             }
             if (blocker.getCantBlockIds().contains(attacker.getId())) {
                 throw new IllegalStateException(blocker.getCard().getName() + " can't block " + attacker.getCard().getName() + " this turn");

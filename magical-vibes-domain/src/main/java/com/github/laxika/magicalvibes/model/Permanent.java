@@ -28,6 +28,7 @@ public class Permanent {
     @Setter private UUID attachedTo;
     @Setter private CardColor chosenColor;
     @Setter private boolean cantBeBlocked;
+    @Setter private boolean cantBlockThisTurn;
     @Setter private boolean cantRegenerateThisTurn;
     @Setter private boolean animatedUntilEndOfTurn;
     @Setter private int animatedPower;
@@ -115,6 +116,7 @@ public class Permanent {
         this.powerModifier = 0;
         this.toughnessModifier = 0;
         this.cantBeBlocked = false;
+        this.cantBlockThisTurn = false;
         this.cantRegenerateThisTurn = false;
         this.animatedUntilEndOfTurn = false;
         this.animatedPower = 0;

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
@@ -60,6 +61,8 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveGrantKeywordToTarget(gd, entry, (GrantKeywordToTargetEffect) effect));
         registry.register(CantBlockSourceEffect.class,
                 (gd, entry, effect) -> resolveCantBlockSource(gd, entry, (CantBlockSourceEffect) effect));
+        registry.register(TargetCreatureCantBlockThisTurnEffect.class,
+                (gd, entry, effect) -> resolveCantBlockTargetCreature(gd, entry));
         registry.register(MakeTargetUnblockableEffect.class,
                 (gd, entry, effect) -> resolveMakeTargetUnblockable(gd, entry));
         registry.register(TapCreaturesEffect.class,
@@ -234,6 +237,19 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} can't block {} this turn", gameData.id, target.getCard().getName(), sourceName);
+    }
+
+    private void resolveCantBlockTargetCreature(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        target.setCantBlockThisTurn(true);
+
+        String logEntry = target.getCard().getName() + " can't block this turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} can't block this turn", gameData.id, target.getCard().getName());
     }
 
     private void resolveMakeTargetUnblockable(GameData gameData, StackEntry entry) {

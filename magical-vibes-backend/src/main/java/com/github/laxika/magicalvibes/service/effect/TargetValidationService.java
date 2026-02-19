@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
@@ -174,6 +175,11 @@ public class TargetValidationService {
         });
 
         registry.register(ReturnTargetCreatureToHandEffect.class, (ctx, effect) -> {
+            Permanent target = requireBattlefieldTarget(ctx);
+            requireCreature(ctx, target);
+        });
+
+        registry.register(TargetCreatureCantBlockThisTurnEffect.class, (ctx, effect) -> {
             Permanent target = requireBattlefieldTarget(ctx);
             requireCreature(ctx, target);
         });
