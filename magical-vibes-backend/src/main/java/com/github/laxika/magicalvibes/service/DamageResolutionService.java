@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEff
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesAndPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
@@ -54,6 +55,8 @@ public class DamageResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveDealDamageToAnyTarget(gd, entry, (DealDamageToAnyTargetEffect) effect));
         registry.register(DealDamageToAnyTargetAndGainLifeEffect.class,
                 (gd, entry, effect) -> resolveDealDamageToAnyTargetAndGainLife(gd, entry, (DealDamageToAnyTargetAndGainLifeEffect) effect));
+        registry.register(DealDamageToControllerEffect.class,
+                (gd, entry, effect) -> resolveDealDamageToController(gd, entry, (DealDamageToControllerEffect) effect));
         registry.register(DealDamageToTargetPlayerEffect.class,
                 (gd, entry, effect) -> resolveDealDamageToTargetPlayer(gd, entry, (DealDamageToTargetPlayerEffect) effect));
         registry.register(DealOrderedDamageToAnyTargetsEffect.class,
@@ -698,6 +701,31 @@ public class DamageResolutionService implements EffectHandlerProvider {
         String lifeLog = controllerName + " gains " + lifeGain + " life.";
         gameBroadcastService.logAndBroadcast(gameData, lifeLog);
         log.info("Game {} - {} gains {} life", gameData.id, controllerName, lifeGain);
+
+        gameHelper.checkWinCondition(gameData);
+    }
+
+    void resolveDealDamageToController(GameData gameData, StackEntry entry, DealDamageToControllerEffect effect) {
+        int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+        UUID controllerId = entry.getControllerId();
+        String cardName = entry.getCard().getName();
+
+        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+            String logEntry = cardName + "'s damage to controller is prevented.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, controllerId, entry.getCard().getColor())) {
+            int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, controllerId, damage);
+            effectiveDamage = gameHelper.redirectPlayerDamageToEnchantedCreature(gameData, controllerId, effectiveDamage, cardName);
+            int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+            gameData.playerLifeTotals.put(controllerId, currentLife - effectiveDamage);
+
+            if (effectiveDamage > 0) {
+                String controllerName = gameData.playerIdToName.get(controllerId);
+                String logEntry = controllerName + " takes " + effectiveDamage + " damage from " + cardName + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} takes {} damage from {}", gameData.id, controllerName, effectiveDamage, cardName);
+            }
+        }
 
         gameHelper.checkWinCondition(gameData);
     }
