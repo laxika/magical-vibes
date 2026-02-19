@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
@@ -37,6 +38,8 @@ public class DestructionResolutionService implements EffectHandlerProvider {
     public void registerHandlers(EffectHandlerRegistry registry) {
         registry.register(DestroyAllCreaturesEffect.class,
                 (gd, entry, effect) -> resolveDestroyAllCreatures(gd, ((DestroyAllCreaturesEffect) effect).cannotBeRegenerated()));
+        registry.register(DestroyAllArtifactsEffect.class,
+                (gd, entry, effect) -> resolveDestroyAllArtifacts(gd, ((DestroyAllArtifactsEffect) effect).cannotBeRegenerated()));
         registry.register(DestroyAllEnchantmentsEffect.class,
                 (gd, entry, effect) -> resolveDestroyAllEnchantments(gd));
         registry.register(DestroyTargetPermanentEffect.class,
@@ -113,6 +116,41 @@ public class DestructionResolutionService implements EffectHandlerProvider {
             if (indestructible.contains(perm)) {
                 String logEntry = perm.getCard().getName() + " is indestructible.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                continue;
+            }
+            gameHelper.removePermanentToGraveyard(gameData, perm);
+            String logEntry = perm.getCard().getName() + " is destroyed.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} is destroyed", gameData.id, perm.getCard().getName());
+        }
+    }
+
+    void resolveDestroyAllArtifacts(GameData gameData, boolean cannotBeRegenerated) {
+        List<Permanent> toDestroy = new ArrayList<>();
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            for (Permanent perm : gameData.playerBattlefields.get(playerId)) {
+                if (gameQueryService.isArtifact(perm)) {
+                    toDestroy.add(perm);
+                }
+            }
+        }
+
+        // Snapshot indestructible status before any removals (MTG rules: "destroy all" is simultaneous)
+        Set<Permanent> indestructible = new HashSet<>();
+        for (Permanent perm : toDestroy) {
+            if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
+                indestructible.add(perm);
+            }
+        }
+
+        for (Permanent perm : toDestroy) {
+            if (indestructible.contains(perm)) {
+                String logEntry = perm.getCard().getName() + " is indestructible.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                continue;
+            }
+            if (!cannotBeRegenerated && gameHelper.tryRegenerate(gameData, perm)) {
                 continue;
             }
             gameHelper.removePermanentToGraveyard(gameData, perm);
