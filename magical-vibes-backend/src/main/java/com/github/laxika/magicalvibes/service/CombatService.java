@@ -323,6 +323,7 @@ public class CombatService {
         // Validate assignments
         Map<Integer, Integer> blockerUsageCount = new HashMap<>();
         Set<String> blockerAttackerPairs = new HashSet<>();
+        Map<Integer, Integer> blockersPerAttacker = new HashMap<>();
         for (BlockerAssignment assignment : blockerAssignments) {
             int blockerIdx = assignment.blockerIndex();
             int attackerIdx = assignment.attackerIndex();
@@ -392,6 +393,17 @@ public class CombatService {
             }
             if (gameQueryService.hasProtectionFrom(gameData, attacker, blocker.getCard().getColor())) {
                 throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (protection)");
+            }
+
+            blockersPerAttacker.merge(attackerIdx, 1, Integer::sum);
+        }
+
+        for (var entry : blockersPerAttacker.entrySet()) {
+            int attackerIdx = entry.getKey();
+            int blockerCount = entry.getValue();
+            Permanent attacker = attackerBattlefield.get(attackerIdx);
+            if (gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE) && blockerCount == 1) {
+                throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked except by two or more creatures");
             }
         }
 

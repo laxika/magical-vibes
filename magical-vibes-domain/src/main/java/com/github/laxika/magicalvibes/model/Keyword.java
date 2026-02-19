@@ -12,6 +12,7 @@ public enum Keyword {
     SHROUD,
     CHANGELING,
     FEAR,
+    MENACE,
     INDESTRUCTIBLE,
     CONVOKE,
     HASTE,

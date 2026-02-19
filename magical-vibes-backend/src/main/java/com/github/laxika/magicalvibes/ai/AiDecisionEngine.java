@@ -677,6 +677,12 @@ public class AiDecisionEngine {
             int attackerToughness = attacker[2];
             Permanent attackingPerm = opponentBattlefield.get(attackerIdx);
             boolean attackerHasFlying = gameQueryService.hasKeyword(gameData, attackingPerm, Keyword.FLYING);
+            boolean attackerHasMenace = gameQueryService.hasKeyword(gameData, attackingPerm, Keyword.MENACE);
+
+            // Current blocker planner only models single-blocker assignments.
+            if (attackerHasMenace) {
+                continue;
+            }
 
             // Find cheapest blocker that can kill attacker and survive
             int bestBlockerIdx = -1;
