@@ -4,6 +4,7 @@
 - Make sure that the way we are implementing the cards and the rules is accurate. Having non-rules-correct behavior in the engine is not fine nor acceptable!
 - If you need any rules clarification feel free to search the web! Being rules accurate is our number one priority.
 - When implementing cards always try to create reusable components (effects, abilities, etc) that could be reused for other cards as well.
+- If you can recreate an effect by combining existing ones then do not create a new class for it. For example "Orcish Artillery deals 2 damage to any target and 3 damage to you." could be achieved by combining DealDamageToAnyTargetEffect with DealDamageToControllerEffect.
 
 ## Architecture
 
