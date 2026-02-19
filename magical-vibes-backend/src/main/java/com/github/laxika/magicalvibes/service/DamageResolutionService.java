@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesAndPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -43,6 +44,8 @@ public class DamageResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveDealDamageToTargetCreature(gd, entry, (DealDamageToTargetCreatureEffect) effect));
         registry.register(DealXDamageDividedAmongTargetAttackingCreaturesEffect.class,
                 (gd, entry, effect) -> resolveDealXDamageDividedAmongTargetAttackingCreatures(gd, entry));
+        registry.register(DealDamageToAllCreaturesEffect.class,
+                (gd, entry, effect) -> resolveDealDamageToAllCreatures(gd, entry, (DealDamageToAllCreaturesEffect) effect));
         registry.register(DealDamageToAllCreaturesAndPlayersEffect.class,
                 (gd, entry, effect) -> resolveDealDamageToAllCreaturesAndPlayers(gd, entry, (DealDamageToAllCreaturesAndPlayersEffect) effect));
         registry.register(DealDamageToFlyingAndPlayersEffect.class,
@@ -181,6 +184,53 @@ public class DamageResolutionService implements EffectHandlerProvider {
         if (!destroyed.isEmpty()) {
             gameHelper.removeOrphanedAuras(gameData);
         }
+    }
+
+    void resolveDealDamageToAllCreatures(GameData gameData, StackEntry entry, DealDamageToAllCreaturesEffect effect) {
+        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+            String logMsg = entry.getCard().getName() + "'s damage is prevented.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+        String cardName = entry.getCard().getName();
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+
+            Set<Integer> deadIndices = new TreeSet<>(Collections.reverseOrder());
+            for (int i = 0; i < battlefield.size(); i++) {
+                Permanent p = battlefield.get(i);
+                if (!gameQueryService.isCreature(gameData, p)) {
+                    continue;
+                }
+                if (gameQueryService.hasProtectionFrom(gameData, p, entry.getCard().getColor())) {
+                    continue;
+                }
+                int effectiveDamage = gameHelper.applyCreaturePreventionShield(gameData, p, damage);
+                int toughness = gameQueryService.getEffectiveToughness(gameData, p);
+                if (effectiveDamage >= toughness
+                        && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)
+                        && !gameHelper.tryRegenerate(gameData, p)) {
+                    deadIndices.add(i);
+                }
+            }
+
+            for (int idx : deadIndices) {
+                String playerName = gameData.playerIdToName.get(playerId);
+                Permanent dead = battlefield.get(idx);
+                String logEntry = playerName + "'s " + dead.getCard().getName() + " is destroyed by " + cardName + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameHelper.addCardToGraveyard(gameData, playerId, dead.getOriginalCard());
+                gameHelper.collectDeathTrigger(gameData, dead.getCard(), playerId, true);
+                gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                battlefield.remove(idx);
+            }
+        }
+
+        gameHelper.removeOrphanedAuras(gameData);
     }
 
     void resolveDealDamageToAllCreaturesAndPlayers(GameData gameData, StackEntry entry, DealDamageToAllCreaturesAndPlayersEffect effect) {
