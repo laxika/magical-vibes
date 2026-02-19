@@ -1,7 +1,6 @@
 .draft-container {
-  height: 100vh;
+  min-height: 100vh;
   box-sizing: border-box;
-  overflow: hidden;
   background:
     repeating-linear-gradient(
       0deg,
@@ -70,6 +69,11 @@
 }
 
 /* ===== Draft Layout ===== */
+
+.draft-phase {
+  height: calc(100vh - 40px);
+  overflow: hidden;
+}
 
 .draft-layout {
   display: flex;

@@ -369,7 +369,7 @@ export class DraftComponent implements OnInit, OnDestroy {
 
     return Object.entries(groups)
       .filter(([_, cards]) => cards.length > 0)
-      .map(([color, cards]) => ({color, cards}));
+      .map(([color, cards]) => ({color, cards: cards.sort((a, b) => a.card.name.localeCompare(b.card.name))}));
   }
 
   get poolByColorGrouped(): {color: string, cards: {card: Card, count: number}[]}[] {
