@@ -678,28 +678,16 @@ public class AiDecisionEngine {
             Permanent attackingPerm = opponentBattlefield.get(attackerIdx);
             boolean attackerHasFlying = gameQueryService.hasKeyword(gameData, attackingPerm, Keyword.FLYING);
             boolean attackerHasMenace = gameQueryService.hasKeyword(gameData, attackingPerm, Keyword.MENACE);
-
-            // Current blocker planner only models single-blocker assignments.
-            if (attackerHasMenace) {
-                continue;
-            }
+            List<Integer> availableBlockers = getAvailableBlockersForAttacker(
+                    gameData, battlefield, blockerUsed, attackingPerm, attackerHasFlying
+            );
 
             // Find cheapest blocker that can kill attacker and survive
             int bestBlockerIdx = -1;
             int bestBlockerValue = Integer.MAX_VALUE;
 
-            for (int j = 0; j < battlefield.size(); j++) {
-                if (blockerUsed[j]) continue;
+            for (int j : availableBlockers) {
                 Permanent blocker = battlefield.get(j);
-                if (!gameQueryService.isCreature(gameData, blocker)) continue;
-                if (blocker.isTapped()) continue;
-
-                // Flying can only be blocked by flying or reach
-                if (attackerHasFlying && !gameQueryService.hasKeyword(gameData, blocker, Keyword.FLYING)
-                        && !gameQueryService.hasKeyword(gameData, blocker, Keyword.REACH)) {
-                    continue;
-                }
-
                 int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);
                 int blockerToughness = gameQueryService.getEffectiveToughness(gameData, blocker);
 
@@ -713,22 +701,43 @@ public class AiDecisionEngine {
                 }
             }
 
+            List<Integer> bestPair = selectBestFavorablePair(gameData, battlefield, availableBlockers, attackerPower, attackerToughness);
+
+            if (attackerHasMenace) {
+                if (bestPair != null) {
+                    assignments.add(new BlockerAssignment(bestPair.get(0), attackerIdx));
+                    assignments.add(new BlockerAssignment(bestPair.get(1), attackerIdx));
+                    blockerUsed[bestPair.get(0)] = true;
+                    blockerUsed[bestPair.get(1)] = true;
+                    totalIncomingDamage -= attackerPower;
+                    lethalIncoming = totalIncomingDamage >= myLife;
+                } else if (lethalIncoming && availableBlockers.size() >= 2) {
+                    List<Integer> chumpPair = pickCheapestBlockers(battlefield, availableBlockers, 2);
+                    assignments.add(new BlockerAssignment(chumpPair.get(0), attackerIdx));
+                    assignments.add(new BlockerAssignment(chumpPair.get(1), attackerIdx));
+                    blockerUsed[chumpPair.get(0)] = true;
+                    blockerUsed[chumpPair.get(1)] = true;
+                    totalIncomingDamage -= attackerPower;
+                    lethalIncoming = totalIncomingDamage >= myLife;
+                }
+                continue;
+            }
+
             if (bestBlockerIdx != -1) {
                 assignments.add(new BlockerAssignment(bestBlockerIdx, attackerIdx));
                 blockerUsed[bestBlockerIdx] = true;
+                totalIncomingDamage -= attackerPower;
+                lethalIncoming = totalIncomingDamage >= myLife;
+            } else if (bestPair != null) {
+                assignments.add(new BlockerAssignment(bestPair.get(0), attackerIdx));
+                assignments.add(new BlockerAssignment(bestPair.get(1), attackerIdx));
+                blockerUsed[bestPair.get(0)] = true;
+                blockerUsed[bestPair.get(1)] = true;
+                totalIncomingDamage -= attackerPower;
+                lethalIncoming = totalIncomingDamage >= myLife;
             } else if (lethalIncoming) {
                 // Chump block to survive
-                for (int j = 0; j < battlefield.size(); j++) {
-                    if (blockerUsed[j]) continue;
-                    Permanent blocker = battlefield.get(j);
-                    if (!gameQueryService.isCreature(gameData, blocker)) continue;
-                    if (blocker.isTapped()) continue;
-
-                    if (attackerHasFlying && !gameQueryService.hasKeyword(gameData, blocker, Keyword.FLYING)
-                            && !gameQueryService.hasKeyword(gameData, blocker, Keyword.REACH)) {
-                        continue;
-                    }
-
+                for (int j : availableBlockers) {
                     assignments.add(new BlockerAssignment(j, attackerIdx));
                     blockerUsed[j] = true;
                     totalIncomingDamage -= attackerPower;
@@ -740,6 +749,62 @@ public class AiDecisionEngine {
 
         log.info("AI: Declaring {} blockers in game {}", assignments.size(), gameId);
         send(() -> messageHandler.handleDeclareBlockers(selfConnection, new DeclareBlockersRequest(assignments)));
+    }
+
+    private List<Integer> getAvailableBlockersForAttacker(GameData gameData, List<Permanent> battlefield, boolean[] blockerUsed,
+                                                          Permanent attackingPerm, boolean attackerHasFlying) {
+        List<Integer> available = new ArrayList<>();
+        for (int j = 0; j < battlefield.size(); j++) {
+            if (blockerUsed[j]) continue;
+            Permanent blocker = battlefield.get(j);
+            if (!gameQueryService.isCreature(gameData, blocker)) continue;
+            if (blocker.isTapped()) continue;
+
+            if (attackerHasFlying && !gameQueryService.hasKeyword(gameData, blocker, Keyword.FLYING)
+                    && !gameQueryService.hasKeyword(gameData, blocker, Keyword.REACH)) {
+                continue;
+            }
+            available.add(j);
+        }
+        return available;
+    }
+
+    private List<Integer> selectBestFavorablePair(GameData gameData, List<Permanent> battlefield, List<Integer> availableBlockers,
+                                                   int attackerPower, int attackerToughness) {
+        List<Integer> bestPair = null;
+        int bestPairValue = Integer.MAX_VALUE;
+
+        for (int a = 0; a < availableBlockers.size(); a++) {
+            for (int b = a + 1; b < availableBlockers.size(); b++) {
+                int idxA = availableBlockers.get(a);
+                int idxB = availableBlockers.get(b);
+                Permanent blockerA = battlefield.get(idxA);
+                Permanent blockerB = battlefield.get(idxB);
+
+                int powerA = gameQueryService.getEffectivePower(gameData, blockerA);
+                int powerB = gameQueryService.getEffectivePower(gameData, blockerB);
+                int toughnessA = gameQueryService.getEffectiveToughness(gameData, blockerA);
+                int toughnessB = gameQueryService.getEffectiveToughness(gameData, blockerB);
+
+                boolean killsAttacker = powerA + powerB >= attackerToughness;
+                boolean oneSurvives = attackerPower < toughnessA || attackerPower < toughnessB;
+                if (!killsAttacker || !oneSurvives) continue;
+
+                int value = blockerA.getCard().getManaValue() + blockerB.getCard().getManaValue();
+                if (value < bestPairValue) {
+                    bestPair = List.of(idxA, idxB);
+                    bestPairValue = value;
+                }
+            }
+        }
+        return bestPair;
+    }
+
+    private List<Integer> pickCheapestBlockers(List<Permanent> battlefield, List<Integer> availableBlockers, int count) {
+        return availableBlockers.stream()
+                .sorted(Comparator.comparingInt(idx -> battlefield.get(idx).getCard().getManaValue()))
+                .limit(count)
+                .toList();
     }
 
     // ===== Choice Handlers =====
