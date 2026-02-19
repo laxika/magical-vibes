@@ -15,7 +15,7 @@ public sealed interface PermanentChoiceContext {
 
     record BounceCreature(UUID bouncingPlayerId) implements PermanentChoiceContext {}
 
-    record CopySpellRetarget(UUID copyCardId) implements PermanentChoiceContext {}
+    record SpellRetarget(UUID spellCardId) implements PermanentChoiceContext {}
 
     record SacrificeCreature(UUID sacrificingPlayerId) implements PermanentChoiceContext {}
 

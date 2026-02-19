@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
+import com.github.laxika.magicalvibes.model.filter.SingleTargetSpellTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.SpellColorTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.SpellTypeTargetFilter;
 import lombok.RequiredArgsConstructor;
@@ -152,6 +153,16 @@ public class SpellCastingService {
                         .findFirst().orElse(null);
                 if (targetSpell != null && !typeFilter.spellTypes().contains(targetSpell.getEntryType())) {
                     throw new IllegalStateException("Target must be a creature spell.");
+                }
+            }
+
+            // Validate "target spell with a single target" filter (e.g., Shunt)
+            if (card.getTargetFilter() instanceof SingleTargetSpellTargetFilter) {
+                StackEntry targetSpell = gameData.stack.stream()
+                        .filter(se -> se.getCard().getId().equals(targetPermanentId))
+                        .findFirst().orElse(null);
+                if (targetSpell == null || !isSingleTargetSpell(targetSpell)) {
+                    throw new IllegalStateException("Target spell must have a single target.");
                 }
             }
         }
@@ -460,5 +471,11 @@ public class SpellCastingService {
         gameHelper.checkSpellCastTriggers(gameData, card);
         gameBroadcastService.broadcastGameState(gameData);
         turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private boolean isSingleTargetSpell(StackEntry stackEntry) {
+        return stackEntry.getTargetPermanentId() != null
+                && stackEntry.getTargetPermanentIds().isEmpty()
+                && stackEntry.getTargetCardIds().isEmpty();
     }
 }

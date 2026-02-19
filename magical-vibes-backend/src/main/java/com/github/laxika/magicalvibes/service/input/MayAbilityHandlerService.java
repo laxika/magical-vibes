@@ -437,7 +437,7 @@ public class MayAbilityHandlerService {
             return;
         }
 
-        gameData.permanentChoiceContext = new PermanentChoiceContext.CopySpellRetarget(copyCardId);
+        gameData.permanentChoiceContext = new PermanentChoiceContext.SpellRetarget(copyCardId);
         playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
                 "Choose a new target for the copy of " + copiedCard.getName() + ".");
     }

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEff
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
@@ -148,6 +149,10 @@ public class TargetValidationService {
         registry.register(ReturnTargetCreatureToHandEffect.class, (ctx, effect) -> {
             Permanent target = requireBattlefieldTarget(ctx);
             requireCreature(ctx, target);
+        });
+
+        registry.register(ReturnTargetPermanentToHandEffect.class, (ctx, effect) -> {
+            requireBattlefieldTarget(ctx);
         });
 
         registry.register(GainControlOfTargetAuraEffect.class, (ctx, effect) -> {

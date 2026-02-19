@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.service.SpellCastingService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.TurnResolutionService;
+import com.github.laxika.magicalvibes.service.TargetRedirectionResolutionService;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.ColorChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
@@ -101,6 +102,7 @@ public class GameTestHarness {
                 draftRegistry, null);
         CombatService combatService = new CombatService(
                 gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager);
+        TargetValidationService targetValidationService = new TargetValidationService(gameQueryService);
         List<EffectHandlerProvider> providers = List.of(
                 new DamageResolutionService(gameHelper, gameQueryService, gameBroadcastService),
                 new DestructionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),
@@ -109,6 +111,7 @@ public class GameTestHarness {
                 new CounterResolutionService(gameHelper, gameBroadcastService),
                 new ExileResolutionService(gameHelper, gameQueryService, gameBroadcastService),
                 new CopyResolutionService(gameBroadcastService),
+                new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetValidationService),
                 new GraveyardReturnResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),
                 new BounceResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),
                 new LifeResolutionService(gameQueryService, gameBroadcastService),
@@ -123,7 +126,6 @@ public class GameTestHarness {
         effectResolutionService.init();
         TurnProgressionService turnProgressionService = new TurnProgressionService(
                 combatService, gameHelper, gameQueryService, gameBroadcastService, playerInputService);
-        TargetValidationService targetValidationService = new TargetValidationService(gameQueryService);
         SpellCastingService spellCastingService = new SpellCastingService(
                 gameQueryService, gameHelper, gameBroadcastService, turnProgressionService, targetValidationService);
         AbilityActivationService abilityActivationService = new AbilityActivationService(

@@ -164,21 +164,25 @@ public class PermanentChoiceHandlerService {
             gameHelper.performStateBasedActions(gameData);
 
             turnProgressionService.resolveAutoPass(gameData);
-        } else if (context instanceof PermanentChoiceContext.CopySpellRetarget retarget) {
-            StackEntry copyEntry = null;
+        } else if (context instanceof PermanentChoiceContext.SpellRetarget retarget) {
+            StackEntry targetSpell = null;
             for (StackEntry se : gameData.stack) {
-                if (se.getCard().getId().equals(retarget.copyCardId())) {
-                    copyEntry = se;
+                if (se.getCard().getId().equals(retarget.spellCardId())) {
+                    targetSpell = se;
                     break;
                 }
             }
-            if (copyEntry == null) {
-                log.info("Game {} - Copy no longer on stack for retarget", gameData.id);
+            if (targetSpell == null) {
+                log.info("Game {} - Target spell no longer on stack for retarget", gameData.id);
             } else {
-                copyEntry.setTargetPermanentId(permanentId);
-                String logMsg = "Copy of " + copyEntry.getCard().getName() + " now targets " + getTargetDisplayName(gameData, permanentId) + ".";
+                targetSpell.setTargetPermanentId(permanentId);
+                String spellName = targetSpell.isCopy()
+                        ? "Copy of " + targetSpell.getCard().getName()
+                        : targetSpell.getCard().getName();
+                String targetName = getTargetDisplayName(gameData, permanentId);
+                String logMsg = spellName + " now targets " + targetName + ".";
                 gameBroadcastService.logAndBroadcast(gameData, logMsg);
-                log.info("Game {} - Copy retargeted to {}", gameData.id, getTargetDisplayName(gameData, permanentId));
+                log.info("Game {} - {} retargeted to {}", gameData.id, spellName, targetName);
             }
 
             turnProgressionService.resolveAutoPass(gameData);
@@ -384,6 +388,10 @@ public class PermanentChoiceHandlerService {
                 if (p.getId().equals(targetId)) return p.getCard().getName();
             }
         }
+
+        // Check graveyards
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, targetId);
+        if (graveyardCard != null) return graveyardCard.getName();
 
         return targetId.toString();
     }
