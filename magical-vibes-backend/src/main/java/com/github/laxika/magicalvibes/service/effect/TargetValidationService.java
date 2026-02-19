@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEf
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
@@ -93,6 +94,10 @@ public class TargetValidationService {
         });
 
         registry.register(DealDamageToTargetPlayerEffect.class, (ctx, effect) -> {
+            requireTargetPlayer(ctx);
+        });
+
+        registry.register(DealDamageToTargetPlayerByHandSizeEffect.class, (ctx, effect) -> {
             requireTargetPlayer(ctx);
         });
 
