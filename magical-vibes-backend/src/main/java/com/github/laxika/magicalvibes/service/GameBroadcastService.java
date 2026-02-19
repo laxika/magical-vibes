@@ -216,7 +216,7 @@ public class GameBroadcastService {
             }
             if (card.getManaCost() != null && !spellLimitReached) {
                 boolean isInstantSpeed = card.getType() == CardType.INSTANT
-                        || (card.getType() == CardType.CREATURE && card.getKeywords().contains(Keyword.FLASH));
+                        || card.getKeywords().contains(Keyword.FLASH);
                 boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
 
                 if (canCastTiming) {

@@ -100,6 +100,9 @@ public class CombatService {
             Permanent p = battlefield.get(idx);
             boolean hasMustAttack = p.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof MustAttackEffect);
+            if (!hasMustAttack) {
+                hasMustAttack = gameQueryService.hasAuraWithEffect(gameData, p, MustAttackEffect.class);
+            }
             if (hasMustAttack) {
                 mustAttack.add(idx);
             }
