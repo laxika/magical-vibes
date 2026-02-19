@@ -138,7 +138,7 @@ public class GameTestHarness {
                 gameQueryService, gameHelper, gameBroadcastService,
                 playerInputService, turnProgressionService, abilityActivationService);
         PermanentChoiceHandlerService permanentChoiceHandlerService = new PermanentChoiceHandlerService(
-                gameQueryService, gameHelper, gameBroadcastService,
+                gameQueryService, gameHelper, gameBroadcastService, abilityActivationService,
                 playerInputService, turnProgressionService);
         GraveyardChoiceHandlerService graveyardChoiceHandlerService = new GraveyardChoiceHandlerService(
                 gameQueryService, gameHelper, gameBroadcastService, turnProgressionService);

@@ -64,33 +64,35 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
     }
 
     private void resolveCreateCreatureToken(GameData gameData, UUID controllerId, CreateCreatureTokenEffect token) {
-        Card tokenCard = new Card();
-        tokenCard.setName(token.tokenName());
-        tokenCard.setType(CardType.CREATURE);
-        tokenCard.setManaCost("");
-        tokenCard.setColor(token.color());
-        tokenCard.setPower(token.power());
-        tokenCard.setToughness(token.toughness());
-        tokenCard.setSubtypes(token.subtypes());
-        if (token.keywords() != null && !token.keywords().isEmpty()) {
-            tokenCard.setKeywords(token.keywords());
+        for (int i = 0; i < token.amount(); i++) {
+            Card tokenCard = new Card();
+            tokenCard.setName(token.tokenName());
+            tokenCard.setType(CardType.CREATURE);
+            tokenCard.setManaCost("");
+            tokenCard.setColor(token.color());
+            tokenCard.setPower(token.power());
+            tokenCard.setToughness(token.toughness());
+            tokenCard.setSubtypes(token.subtypes());
+            if (token.keywords() != null && !token.keywords().isEmpty()) {
+                tokenCard.setKeywords(token.keywords());
+            }
+            if (token.additionalTypes() != null && !token.additionalTypes().isEmpty()) {
+                tokenCard.setAdditionalTypes(token.additionalTypes());
+            }
+
+            Permanent tokenPermanent = new Permanent(tokenCard);
+            gameData.playerBattlefields.get(controllerId).add(tokenPermanent);
+
+            String logEntry = "A " + token.power() + "/" + token.toughness() + " " + token.tokenName() + " creature token enters the battlefield.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+            gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
+            if (gameData.awaitingInput == null) {
+                gameHelper.checkLegendRule(gameData, controllerId);
+            }
         }
-        if (token.additionalTypes() != null && !token.additionalTypes().isEmpty()) {
-            tokenCard.setAdditionalTypes(token.additionalTypes());
-        }
 
-        Permanent tokenPermanent = new Permanent(tokenCard);
-        gameData.playerBattlefields.get(controllerId).add(tokenPermanent);
-
-        String logEntry = "A " + token.power() + "/" + token.toughness() + " " + token.tokenName() + " creature token enters the battlefield.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-
-        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
-        if (gameData.awaitingInput == null) {
-            gameHelper.checkLegendRule(gameData, controllerId);
-        }
-
-        log.info("Game {} - {} token created for player {}", gameData.id, token.tokenName(), controllerId);
+        log.info("Game {} - {} {} token(s) created for player {}", gameData.id, token.amount(), token.tokenName(), controllerId);
     }
 
     private void resolveCreateCreatureTokenWithColors(GameData gameData, UUID controllerId, CreateCreatureTokenWithColorsEffect token) {

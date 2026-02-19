@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
+import com.github.laxika.magicalvibes.service.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class PermanentChoiceHandlerService {
     private final GameQueryService gameQueryService;
     private final GameHelper gameHelper;
     private final GameBroadcastService gameBroadcastService;
+    private final AbilityActivationService abilityActivationService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
 
@@ -141,6 +143,8 @@ public class PermanentChoiceHandlerService {
 
             gameHelper.performStateBasedActions(gameData);
             turnProgressionService.resolveAutoPass(gameData);
+        } else if (context instanceof PermanentChoiceContext.ActivatedAbilitySacrificeSubtype activatedAbilitySacrificeSubtype) {
+            abilityActivationService.completeActivatedAbilitySubtypeSacrificeChoice(gameData, player, activatedAbilitySacrificeSubtype, permanentId);
         } else if (context instanceof PermanentChoiceContext.BounceCreature bounceCreature) {
             Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
             if (target == null) {

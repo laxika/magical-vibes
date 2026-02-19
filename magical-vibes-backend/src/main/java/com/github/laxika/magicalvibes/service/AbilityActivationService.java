@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingAbilityActivation;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -31,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
@@ -49,6 +51,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -262,10 +265,17 @@ public class AbilityActivationService {
         }
 
         boolean hasSacCreatureCost = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeCreatureCost);
+        Optional<SacrificeSubtypeCreatureCost> sacSubtypeCost = abilityEffects.stream()
+                .filter(SacrificeSubtypeCreatureCost.class::isInstance)
+                .map(SacrificeSubtypeCreatureCost.class::cast)
+                .findFirst();
 
         // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
         if (!hasSacCreatureCost) {
             validateAbilityTargeting(gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard());
+        }
+        if (sacSubtypeCost.isPresent() && !hasSubtypeCreatureToSacrifice(gameData, playerId, sacSubtypeCost.get())) {
+            throw new IllegalStateException("Must choose a " + sacSubtypeCost.get().subtype().getDisplayName() + " to sacrifice");
         }
 
         DiscardCardTypeCost discardCardTypeCost = abilityEffects.stream()
@@ -293,6 +303,12 @@ public class AbilityActivationService {
 
         if (discardCardTypeCost != null) {
             payDiscardCost(gameData, player, discardCardTypeCost.requiredType(), discardCardIndex);
+        }
+        if (sacSubtypeCost.isPresent()) {
+            if (handleSubtypeSacrificeCostSelection(gameData, player, permanent, effectiveIndex, effectiveXValue,
+                    targetPermanentId, targetZone, sacSubtypeCost.get())) {
+                return;
+            }
         }
 
         // Handle sacrifice-a-creature cost (e.g. Nantuko Husk: "Sacrifice a creature: ...")
@@ -330,6 +346,140 @@ public class AbilityActivationService {
         if (hasSacCreatureCost) {
             validateAbilityTargeting(gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard());
         }
+        completeAbilityActivationAfterCosts(gameData, player, permanent, ability, abilityEffects, effectiveXValue, targetPermanentId, targetZone, hasSacCreatureCost);
+    }
+
+    public void completeActivatedAbilitySubtypeSacrificeChoice(GameData gameData,
+                                                               Player player,
+                                                               PermanentChoiceContext.ActivatedAbilitySacrificeSubtype context,
+                                                               UUID sacrificedPermanentId) {
+        UUID playerId = player.getId();
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+        if (sourcePermanent == null) {
+            throw new IllegalStateException("Source permanent no longer exists");
+        }
+
+        List<ActivatedAbility> ownAbilities = sourcePermanent.getCard().getActivatedAbilities();
+        List<ActivatedAbility> grantedAbilities = gameQueryService.computeStaticBonus(gameData, sourcePermanent).grantedActivatedAbilities();
+        List<ActivatedAbility> abilities = new ArrayList<>(ownAbilities);
+        abilities.addAll(grantedAbilities);
+        int effectiveIndex = context.abilityIndex() != null ? context.abilityIndex() : 0;
+        if (effectiveIndex < 0 || effectiveIndex >= abilities.size()) {
+            throw new IllegalStateException("Invalid ability index");
+        }
+        ActivatedAbility ability = abilities.get(effectiveIndex);
+        List<CardEffect> abilityEffects = ability.getEffects();
+        boolean hasSubtypeCost = abilityEffects.stream()
+                .filter(SacrificeSubtypeCreatureCost.class::isInstance)
+                .map(SacrificeSubtypeCreatureCost.class::cast)
+                .anyMatch(c -> c.subtype() == context.subtype());
+        if (!hasSubtypeCost) {
+            throw new IllegalStateException("Activated ability no longer has the required sacrifice cost");
+        }
+
+        Permanent sacrificed = gameQueryService.findPermanentById(gameData, sacrificedPermanentId);
+        if (sacrificed == null) {
+            throw new IllegalStateException("Invalid sacrifice target");
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null || !battlefield.contains(sacrificed)) {
+            throw new IllegalStateException("Must sacrifice a creature you control");
+        }
+        if (!gameQueryService.isCreature(gameData, sacrificed)) {
+            throw new IllegalStateException("Must sacrifice a creature");
+        }
+        if (!sacrificed.getCard().getSubtypes().contains(context.subtype())) {
+            throw new IllegalStateException("Must sacrifice a " + context.subtype().getDisplayName());
+        }
+
+        sacrificeCreatureAsCost(gameData, player, sacrificed);
+        completeAbilityActivationAfterCosts(gameData, player, sourcePermanent, ability, abilityEffects,
+                context.xValue() != null ? context.xValue() : 0, context.targetPermanentId(), context.targetZone(), false);
+    }
+
+    private boolean handleSubtypeSacrificeCostSelection(GameData gameData,
+                                                        Player player,
+                                                        Permanent sourcePermanent,
+                                                        int abilityIndex,
+                                                        int xValue,
+                                                        UUID targetPermanentId,
+                                                        TargetZone targetZone,
+                                                        SacrificeSubtypeCreatureCost subtypeCost) {
+        UUID playerId = player.getId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            throw new IllegalStateException("Invalid battlefield for player");
+        }
+
+        List<UUID> validSacrificeIds = battlefield.stream()
+                .filter(p -> gameQueryService.isCreature(gameData, p))
+                .filter(p -> p.getCard().getSubtypes().contains(subtypeCost.subtype()))
+                .map(Permanent::getId)
+                .toList();
+        if (validSacrificeIds.isEmpty()) {
+            throw new IllegalStateException("Must choose a " + subtypeCost.subtype().getDisplayName() + " to sacrifice");
+        }
+        if (validSacrificeIds.size() == 1) {
+            Permanent onlyChoice = gameQueryService.findPermanentById(gameData, validSacrificeIds.getFirst());
+            if (onlyChoice != null) {
+                sacrificeCreatureAsCost(gameData, player, onlyChoice);
+            }
+            return false;
+        }
+
+        gameData.permanentChoiceContext = new PermanentChoiceContext.ActivatedAbilitySacrificeSubtype(
+                playerId,
+                sourcePermanent.getId(),
+                abilityIndex,
+                xValue,
+                targetPermanentId,
+                targetZone,
+                subtypeCost.subtype()
+        );
+        playerInputService.beginPermanentChoice(gameData, playerId, validSacrificeIds,
+                "Choose a " + subtypeCost.subtype().getDisplayName() + " to sacrifice.");
+        gameBroadcastService.broadcastGameState(gameData);
+        return true;
+    }
+
+    private boolean hasSubtypeCreatureToSacrifice(GameData gameData, UUID playerId, SacrificeSubtypeCreatureCost subtypeCost) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return false;
+        }
+        return battlefield.stream()
+                .anyMatch(p -> gameQueryService.isCreature(gameData, p)
+                        && p.getCard().getSubtypes().contains(subtypeCost.subtype()));
+    }
+
+    private void sacrificeCreatureAsCost(GameData gameData, Player player, Permanent sacTarget) {
+        UUID playerId = player.getId();
+        List<Permanent> playerBf = gameData.playerBattlefields.get(playerId);
+        if (playerBf == null || !playerBf.contains(sacTarget)) {
+            throw new IllegalStateException("Must sacrifice a creature you control");
+        }
+        playerBf.remove(sacTarget);
+        gameHelper.addCardToGraveyard(gameData, playerId, sacTarget.getCard());
+        gameHelper.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true);
+        gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+        String sacLog = player.getUsername() + " sacrifices " + sacTarget.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, sacLog);
+    }
+
+    private void completeAbilityActivationAfterCosts(GameData gameData,
+                                                     Player player,
+                                                     Permanent permanent,
+                                                     ActivatedAbility ability,
+                                                     List<CardEffect> abilityEffects,
+                                                     int effectiveXValue,
+                                                     UUID targetPermanentId,
+                                                     TargetZone targetZone,
+                                                     boolean markAsNonTargetingForSacCreatureCost) {
+        UUID playerId = player.getId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            throw new IllegalStateException("Invalid battlefield");
+        }
 
         // Self-target if effects need the source permanent
         UUID effectiveTargetId = targetPermanentId;
@@ -343,7 +493,7 @@ public class AbilityActivationService {
         }
 
         // Tap the permanent (only for tap abilities)
-        if (isTapAbility) {
+        if (ability.isRequiresTap()) {
             permanent.tap();
         }
 
@@ -383,7 +533,7 @@ public class AbilityActivationService {
             // but the ability itself doesn't target — the effect references "this creature" without
             // the "target" keyword. Mark as non-targeting so it doesn't incorrectly fizzle if the
             // source gains shroud/protection in response (per MTG rule 608.2b).
-            if (hasSacCreatureCost && !gameData.stack.isEmpty()) {
+            if (markAsNonTargetingForSacCreatureCost && !gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setNonTargeting(true);
             }
         }
@@ -576,7 +726,10 @@ public class AbilityActivationService {
     private List<CardEffect> snapshotEffects(List<CardEffect> abilityEffects, Permanent permanent) {
         List<CardEffect> snapshotEffects = new ArrayList<>();
         for (CardEffect effect : abilityEffects) {
-            if (effect instanceof SacrificeSelfCost || effect instanceof SacrificeCreatureCost || effect instanceof DiscardCardTypeCost) {
+            if (effect instanceof SacrificeSelfCost
+                    || effect instanceof SacrificeCreatureCost
+                    || effect instanceof SacrificeSubtypeCreatureCost
+                    || effect instanceof DiscardCardTypeCost) {
                 continue;
             }
             if (effect instanceof CantBlockSourceEffect) {
