@@ -143,6 +143,37 @@ public class TurnProgressionService {
             }
         }
 
+        List<Card> graveyard = gameData.playerGraveyards.get(activePlayerId);
+        if (graveyard != null) {
+            for (Card card : new ArrayList<>(graveyard)) {
+                List<CardEffect> upkeepEffects = card.getEffects(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED);
+                if (upkeepEffects == null || upkeepEffects.isEmpty()) continue;
+
+                for (CardEffect effect : upkeepEffects) {
+                    if (effect instanceof MayEffect may) {
+                        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                                card,
+                                activePlayerId,
+                                List.of(may.wrapped()),
+                                card.getName() + " - " + may.prompt()
+                        ));
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                card,
+                                activePlayerId,
+                                card.getName() + "'s upkeep ability",
+                                new ArrayList<>(List.of(effect))
+                        ));
+
+                        String logEntry = card.getName() + "'s upkeep ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} graveyard upkeep trigger pushed onto stack", gameData.id, card.getName());
+                    }
+                }
+            }
+        }
+
         // Check all battlefields for EACH_UPKEEP_TRIGGERED effects
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> playerBattlefield = gameData.playerBattlefields.get(playerId);

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBatt
 import com.github.laxika.magicalvibes.model.effect.ReturnCardOfSubtypeFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSelfFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +52,8 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveReturnCardFromGraveyardToZone(gd, entry, CardType.CREATURE,
                         GraveyardChoiceDestination.HAND,
                         "You may return a creature card from your graveyard to your hand."));
+        registry.register(ReturnSelfFromGraveyardToHandEffect.class,
+                (gd, entry, effect) -> resolveReturnSelfFromGraveyardToHand(gd, entry));
         registry.register(ReturnCardOfSubtypeFromGraveyardToHandEffect.class,
                 (gd, entry, effect) -> resolveReturnCardOfSubtypeFromGraveyardToHand(gd, entry,
                         (ReturnCardOfSubtypeFromGraveyardToHandEffect) effect));
@@ -151,6 +154,26 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
         gameData.graveyardChoiceDestination = GraveyardChoiceDestination.HAND;
         playerInputService.beginGraveyardChoice(gameData, controllerId, matchingIndices,
                 "Return a " + subtypeName + " card from your graveyard to your hand.");
+    }
+
+    void resolveReturnSelfFromGraveyardToHand(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        if (graveyard == null) {
+            return;
+        }
+
+        Card sourceCard = entry.getCard();
+        boolean removed = graveyard.removeIf(card -> card.getId().equals(sourceCard.getId()));
+        if (!removed) {
+            return;
+        }
+
+        gameData.playerHands.get(controllerId).add(sourceCard);
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String logEntry = playerName + " returns " + sourceCard.getName() + " from graveyard to hand.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} returns {} from graveyard to hand", gameData.id, playerName, sourceCard.getName());
     }
 
     void resolveReturnArtifactOrCreatureFromAnyGraveyardToBattlefield(GameData gameData, StackEntry entry) {
