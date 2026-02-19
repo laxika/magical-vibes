@@ -30,7 +30,8 @@
       "Bash(git status:*)",
       "Bash(git stash:*)",
       "Bash(git push:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(./gradlew :magical-vibes-backend:test:*)"
     ]
   }
 }
