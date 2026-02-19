@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BounceOwnCreatureOnUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandOnCoinFlipLossEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
@@ -21,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Service
@@ -46,6 +48,8 @@ public class BounceResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveReturnArtifactsTargetPlayerOwnsToHand(gd, entry));
         registry.register(BounceOwnCreatureOnUpkeepEffect.class,
                 (gd, entry, effect) -> resolveBounceOwnCreatureOnUpkeep(gd, entry));
+        registry.register(ReturnSelfToHandOnCoinFlipLossEffect.class,
+                (gd, entry, effect) -> resolveReturnSelfToHandOnCoinFlipLoss(gd, entry));
     }
 
     void resolveReturnSelfToHand(GameData gameData, StackEntry entry) {
@@ -196,5 +200,22 @@ public class BounceResolutionService implements EffectHandlerProvider {
         gameData.permanentChoiceContext = new PermanentChoiceContext.BounceCreature(targetPlayerId);
         playerInputService.beginPermanentChoice(gameData, targetPlayerId, creatureIds,
                 "Choose a creature you control to return to its owner's hand.");
+    }
+
+    void resolveReturnSelfToHandOnCoinFlipLoss(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        String sourceName = entry.getCard().getName();
+        boolean wonFlip = ThreadLocalRandom.current().nextBoolean();
+
+        String flipLog = wonFlip
+                ? gameData.playerIdToName.get(controllerId) + " wins the coin flip for " + sourceName + "."
+                : gameData.playerIdToName.get(controllerId) + " loses the coin flip for " + sourceName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, flipLog);
+
+        if (wonFlip) {
+            return;
+        }
+
+        resolveReturnSelfToHand(gameData, entry);
     }
 }
