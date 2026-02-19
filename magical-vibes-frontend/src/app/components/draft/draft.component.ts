@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import {
@@ -9,6 +9,9 @@ import {
   TournamentRound, GameNotification, DraftStatus
 } from '../../services/websocket.service';
 import { CardDisplayComponent } from '../game/card-display/card-display.component';
+import { ScryfallImageService } from '../../services/scryfall-image.service';
+import { ManaSymbolService } from '../../services/mana-symbol.service';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -49,6 +52,12 @@ export class DraftComponent implements OnInit, OnDestroy {
   // Card preview
   hoveredCard = signal<Card | null>(null);
 
+  // Pool art cache for Hearthstone-style list
+  poolArtUrls = signal<Map<string, string>>(new Map());
+
+  private scryfallImageService = inject(ScryfallImageService);
+  private manaSymbolService = inject(ManaSymbolService);
+  private sanitizer = inject(DomSanitizer);
   private subscriptions: Subscription[] = [];
   private timerInterval: ReturnType<typeof setInterval> | null = null;
   private pendingMessages: any[] = [];
@@ -83,6 +92,7 @@ export class DraftComponent implements OnInit, OnDestroy {
             this.packNumber.set(msg.packNumber);
             this.pickNumber.set(msg.pickNumber);
             this.waitingForPack.set(msg.pack.length === 0);
+            this.loadPoolArt();
             this.websocketService.lastDraftPackUpdate = null;
             break;
           }
@@ -161,6 +171,7 @@ export class DraftComponent implements OnInit, OnDestroy {
       this.packNumber.set(msg.packNumber);
       this.pickNumber.set(msg.pickNumber);
       this.waitingForPack.set(msg.pack.length === 0);
+      this.loadPoolArt();
       this.websocketService.lastDraftPackUpdate = null;
     }
     if (this.websocketService.lastDeckBuildingState) {
@@ -372,8 +383,24 @@ export class DraftComponent implements OnInit, OnDestroy {
           counts.set(item.card.name, {card: item.card, count: 1});
         }
       }
-      return {color: group.color, cards: Array.from(counts.values())};
+      const cards = Array.from(counts.values())
+        .sort((a, b) => this.getManaValue(a.card) - this.getManaValue(b.card) || a.card.name.localeCompare(b.card.name));
+      return {color: group.color, cards};
     });
+  }
+
+  get poolSortedFlat(): {card: Card, count: number}[] {
+    const counts = new Map<string, {card: Card, count: number}>();
+    for (const card of this.draftPool()) {
+      const existing = counts.get(card.name);
+      if (existing) {
+        existing.count++;
+      } else {
+        counts.set(card.name, {card, count: 1});
+      }
+    }
+    return Array.from(counts.values())
+      .sort((a, b) => this.getManaValue(a.card) - this.getManaValue(b.card) || a.card.name.localeCompare(b.card.name));
   }
 
   readonly landNames = ['Plains', 'Island', 'Swamp', 'Mountain', 'Forest'];
@@ -385,4 +412,69 @@ export class DraftComponent implements OnInit, OnDestroy {
     'Mountain': '#f4c4b0',
     'Forest': '#c4deb8'
   };
+
+  // ===== Pool art loading =====
+
+  private loadPoolArt() {
+    const pool = this.draftPool();
+    for (const card of pool) {
+      if (card.setCode && card.collectorNumber) {
+        const key = `${card.setCode}:${card.collectorNumber}`;
+        if (!this.poolArtUrls().has(key)) {
+          this.scryfallImageService.getArtCropUrl(card.setCode, card.collectorNumber)
+            .then(url => {
+              const updated = new Map(this.poolArtUrls());
+              updated.set(key, url);
+              this.poolArtUrls.set(updated);
+            })
+            .catch(() => {});
+        }
+      }
+    }
+  }
+
+  getPoolArtUrl(card: Card): string | null {
+    if (!card.setCode || !card.collectorNumber) return null;
+    return this.poolArtUrls().get(`${card.setCode}:${card.collectorNumber}`) ?? null;
+  }
+
+  getManaValue(card: Card): number {
+    if (!card.manaCost) return 0;
+    let total = 0;
+    const symbols = card.manaCost.match(/\{([^}]+)\}/g);
+    if (!symbols) return 0;
+    for (const sym of symbols) {
+      const inner = sym.slice(1, -1);
+      const num = parseInt(inner, 10);
+      if (!isNaN(num)) {
+        total += num;
+      } else if (inner === 'X') {
+        // X costs count as 0
+      } else {
+        total += 1; // colored symbols
+      }
+    }
+    return total;
+  }
+
+  getFormattedManaCost(card: Card): SafeHtml {
+    if (!card.manaCost) return '';
+    this.manaSymbolService.symbolsVersion();
+    return this.sanitizer.bypassSecurityTrustHtml(
+      this.manaSymbolService.replaceSymbols(card.manaCost)
+    );
+  }
+
+  getCardColorClass(card: Card): string {
+    if (!card.color) return 'pool-bar-colorless';
+    const c = card.color.toUpperCase();
+    switch (c) {
+      case 'WHITE': return 'pool-bar-white';
+      case 'BLUE': return 'pool-bar-blue';
+      case 'BLACK': return 'pool-bar-black';
+      case 'RED': return 'pool-bar-red';
+      case 'GREEN': return 'pool-bar-green';
+      default: return 'pool-bar-multi';
+    }
+  }
 }

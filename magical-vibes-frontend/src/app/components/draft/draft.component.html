@@ -40,26 +40,31 @@
           </div>
 
           <div class="pool-summary">
-            <h3>Drafted Pool ({{ draftPool().length }})</h3>
-            @for (group of poolByColorGrouped; track group.color) {
-              <div class="pool-color-group">
-                <span class="pool-color-label" [class]="'color-' + group.color.toLowerCase()">
-                  {{ group.color }}
-                </span>
-                <div class="pool-card-names">
-                  @for (item of group.cards; track item.card.name) {
-                    <span class="pool-card-name"
-                          (mouseenter)="hoveredCard.set(item.card)"
-                          (mouseleave)="hoveredCard.set(null)">
-                      @if (item.count > 1) {
-                        {{ item.count }}x
-                      }
-                      {{ item.card.name }}
-                    </span>
+            <div class="pool-header">
+              <span class="pool-header-title">Drafted</span>
+              <span class="pool-header-count">{{ draftPool().length }}</span>
+            </div>
+            <div class="pool-card-list">
+              @for (item of poolSortedFlat; track item.card.name) {
+                <div class="pool-bar" [class]="getCardColorClass(item.card)"
+                     (mouseenter)="hoveredCard.set(item.card)"
+                     (mouseleave)="hoveredCard.set(null)">
+                  <div class="pool-bar-cost">
+                    <span class="pool-bar-cost-value">{{ getManaValue(item.card) }}</span>
+                  </div>
+                  <div class="pool-bar-name">{{ item.card.name }}</div>
+                  @if (item.count > 1) {
+                    <div class="pool-bar-count">{{ item.count }}</div>
                   }
+                  <div class="pool-bar-art">
+                    @if (getPoolArtUrl(item.card)) {
+                      <img [src]="getPoolArtUrl(item.card)!" alt="" class="pool-bar-art-img">
+                    }
+                  </div>
+                  <div class="pool-bar-fade"></div>
                 </div>
-              </div>
-            }
+              }
+            </div>
           </div>
         </div>
       </div>
