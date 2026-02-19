@@ -121,6 +121,7 @@ import com.github.laxika.magicalvibes.cards.k.KnightOfDusk;
 import com.github.laxika.magicalvibes.cards.k.KrakensEye;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
 import com.github.laxika.magicalvibes.cards.l.LavabornMuse;
+import com.github.laxika.magicalvibes.cards.l.LightningElemental;
 import com.github.laxika.magicalvibes.cards.l.LegacyWeapon;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.l.LoxodonWarhammer;
@@ -479,6 +480,7 @@ public enum CardSet {
             new CardPrinting("10E", "214", KamahlPitFighter::new),
             new CardPrinting("10E", "215", LavaAxe::new),
             new CardPrinting("10E", "216", LavabornMuse::new),
+            new CardPrinting("10E", "217", LightningElemental::new),
             new CardPrinting("10E", "376", Mountain::new),
             new CardPrinting("10E", "377", Mountain::new),
             new CardPrinting("10E", "378", Mountain::new),
