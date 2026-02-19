@@ -168,6 +168,7 @@ import com.github.laxika.magicalvibes.cards.m.MindBend;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.m.Mobilization;
+import com.github.laxika.magicalvibes.cards.m.MoggFanatic;
 import com.github.laxika.magicalvibes.cards.m.MortalCombat;
 import com.github.laxika.magicalvibes.cards.m.Mortivore;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -483,6 +484,7 @@ public enum CardSet {
             new CardPrinting("10E", "216", LavabornMuse::new),
             new CardPrinting("10E", "217", LightningElemental::new),
             new CardPrinting("10E", "218", Manabarbs::new),
+            new CardPrinting("10E", "219", MoggFanatic::new),
             new CardPrinting("10E", "376", Mountain::new),
             new CardPrinting("10E", "377", Mountain::new),
             new CardPrinting("10E", "378", Mountain::new),
