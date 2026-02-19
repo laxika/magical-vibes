@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithMVXOrLessToHandEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "315")
 public class CitanulFlute extends Card {
 
     public CitanulFlute() {

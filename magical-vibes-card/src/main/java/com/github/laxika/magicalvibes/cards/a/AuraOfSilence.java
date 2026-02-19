@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 
 import java.util.Set;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "6")
 public class AuraOfSilence extends Card {
 
     public AuraOfSilence() {

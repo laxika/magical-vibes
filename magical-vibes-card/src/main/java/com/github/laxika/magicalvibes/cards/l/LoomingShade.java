@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "153")
 public class LoomingShade extends Card {
 
     public LoomingShade() {

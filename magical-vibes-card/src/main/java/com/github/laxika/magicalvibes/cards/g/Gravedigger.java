@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "146")
 public class Gravedigger extends Card {
 
     public Gravedigger() {

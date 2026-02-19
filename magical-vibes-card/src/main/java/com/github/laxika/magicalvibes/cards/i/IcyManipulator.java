@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "326")
 public class IcyManipulator extends Card {
 
     public IcyManipulator() {

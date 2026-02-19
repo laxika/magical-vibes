@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.NonArtifactNonColorCreatureTargetFilter;
 
 import java.util.Set;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "163")
 public class Nekrataal extends Card {
 
     public Nekrataal() {

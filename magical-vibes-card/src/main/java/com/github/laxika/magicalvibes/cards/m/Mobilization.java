@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "29")
 public class Mobilization extends Card {
 
     public Mobilization() {

@@ -18,7 +18,7 @@ backend → card → domain
 
 - **`magical-vibes-domain`** — Core domain model: `Card`, `Permanent`, `GameData`, `StackEntry`, `ManaPool`, `ManaCost`, enums (`CardType`, `CardColor`, `CardSubtype`, `Keyword`, `TurnStep`), and all `CardEffect` records (in `model/effect/`).
 - **`magical-vibes-networking`** — Wire protocol: WebSocket message records (in `message/`), view DTOs (`CardView`, `PermanentView`, `StackEntryView`), and their factory services (`CardViewFactory`, `PermanentViewFactory`, `StackEntryViewFactory`). The `SessionManager` interface and `Connection` interface live here too.
-- **`magical-vibes-card`** — Card definitions: each card is a `Card` subclass (organized in alphabetical subpackages like `cards/a/`, `cards/b/`). `CardSet` enum registers all cards with their set code, collector number, and factory. `CardPrinting` stamps `setCode`/`collectorNumber`/`flavorText` onto cards.
+- **`magical-vibes-card`** — Card definitions: each card is a `Card` subclass (organized in alphabetical subpackages like `cards/a/`, `cards/b/`), annotated with `@CardRegistration(set, collectorNumber)`. `CardSet` enum discovers printings at runtime via `CardScanner` (ClassGraph classpath scan). `CardPrinting` stamps `setCode`/`collectorNumber`/`flavorText` onto cards.
 - **`magical-vibes-websocket`** — WebSocket infrastructure: `WebSocketSessionManager` (implements `SessionManager`), `WebSocketHandler`, Spring config. Depends on networking for the `SessionManager` interface.
 - **`magical-vibes-backend`** — Spring Boot application. `GameMessageHandler` dispatches WebSocket messages to `LoginService`, `LobbyService`, or `GameService`. `GameService` is the game engine (~1700 lines): turn progression, combat, stack resolution, effect dispatch.
 - **`magical-vibes-frontend`** — Angular standalone components. `websocket.service.ts` defines all TypeScript interfaces (`Card`, `Permanent`, `Game`, `StackEntry`) and handles WebSocket communication. `game.component.ts` is the main game UI.
@@ -40,7 +40,7 @@ All card metadata (name, type, mana cost, color, supertypes, subtypes, card text
 
 1. Create card class in `magical-vibes-card/src/main/java/.../cards/{letter}/CardName.java` extending `Card`.
 2. Constructor: only add game-engine logic — `addEffect()`, `addActivatedAbility()`, `setNeedsTarget()`, `setNeedsSpellTarget()`, `setTargetFilter()`. All metadata (name, type, mana cost, color, subtypes, keywords, power/toughness, card text) is loaded automatically from Scryfall. Cards with no special abilities have an empty class body.
-3. Register in `CardSet` with a `new CardPrinting("SET", "collectorNumber", CardName::new)`.
+3. Add `@CardRegistration(set = "SET", collectorNumber = "collectorNumber")` annotation(s) to the card class. For multiple printings (e.g. basic lands), use multiple annotations.
 4. If the card introduces a new effect, create a record in `magical-vibes-domain/.../model/effect/` implementing `CardEffect`, then add resolution logic in `GameService.resolveStackEntry()`.
 5. If Scryfall returns subtypes or keywords not yet in our enums (`CardSubtype`, `Keyword`), add the new enum values.
 6. Update `CardView`/`CardViewFactory` if the new effect requires a new boolean flag on the view.

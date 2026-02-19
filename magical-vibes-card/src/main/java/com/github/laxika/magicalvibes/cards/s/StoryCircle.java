@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "49")
 public class StoryCircle extends Card {
 
     public StoryCircle() {

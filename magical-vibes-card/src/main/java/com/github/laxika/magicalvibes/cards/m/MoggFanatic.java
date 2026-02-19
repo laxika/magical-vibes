@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "219")
 public class MoggFanatic extends Card {
 
     public MoggFanatic() {

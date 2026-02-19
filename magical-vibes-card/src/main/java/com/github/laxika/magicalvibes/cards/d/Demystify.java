@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 
 import java.util.Set;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "14")
 public class Demystify extends Card {
 
     public Demystify() {

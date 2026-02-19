@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "211")
 public class GuerrillaTactics extends Card {
 
     public GuerrillaTactics() {

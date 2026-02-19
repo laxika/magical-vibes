@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "103")
 public class RootwaterMatriarch extends Card {
 
     public RootwaterMatriarch() {

@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEf
 import com.github.laxika.magicalvibes.model.filter.AttackingOrBlockingTargetFilter;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "8")
 public class BallistaSquad extends Card {
 
     public BallistaSquad() {

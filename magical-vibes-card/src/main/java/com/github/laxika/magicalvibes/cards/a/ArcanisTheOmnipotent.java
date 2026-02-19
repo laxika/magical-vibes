@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "66")
 public class ArcanisTheOmnipotent extends Card {
 
     public ArcanisTheOmnipotent() {

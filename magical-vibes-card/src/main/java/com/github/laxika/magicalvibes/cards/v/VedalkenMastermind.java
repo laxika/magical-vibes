@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEf
 import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "123")
 public class VedalkenMastermind extends Card {
 
     public VedalkenMastermind() {

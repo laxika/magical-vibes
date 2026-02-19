@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.CreatureColorTargetFilter;
 
 import java.util.Set;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "134")
 public class Deathmark extends Card {
 
     public Deathmark() {

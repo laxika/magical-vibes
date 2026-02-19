@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageCon
 import com.github.laxika.magicalvibes.model.filter.LandSubtypeTargetFilter;
 
 import java.util.Set;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "195")
 public class Cryoclasm extends Card {
 
     public Cryoclasm() {

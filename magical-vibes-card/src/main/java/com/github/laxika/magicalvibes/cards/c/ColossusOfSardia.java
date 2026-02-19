@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringUntapStepEff
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "317")
 public class ColossusOfSardia extends Card {
 
     public ColossusOfSardia() {

@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardOfSubtypeFromGravey
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "155")
 public class LordOfTheUndead extends Card {
 
     public LordOfTheUndead() {

@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ExcludeSelfTargetFilter;
 
 import java.util.Set;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "80")
 public class DenizenOfTheDeep extends Card {
 
     public DenizenOfTheDeep() {

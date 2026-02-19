@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.filter.SpellTypeTargetFilter;
 
 import java.util.Set;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "100")
 public class RemoveSoul extends Card {
 
     public RemoveSoul() {

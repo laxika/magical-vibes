@@ -10,7 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.filter.CreatureYouControlTargetFilter;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "ECL", collectorNumber = "6")
 public class BarkOfDoran extends Card {
 
     public BarkOfDoran() {

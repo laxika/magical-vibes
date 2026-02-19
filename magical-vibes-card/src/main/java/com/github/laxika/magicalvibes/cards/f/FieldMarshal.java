@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 
 import java.util.Set;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "15")
 public class FieldMarshal extends Card {
 
     public FieldMarshal() {

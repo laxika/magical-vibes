@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.CreatureYouControlTargetFilter;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "162")
 public class NantukoHusk extends Card {
 
     public NantukoHusk() {

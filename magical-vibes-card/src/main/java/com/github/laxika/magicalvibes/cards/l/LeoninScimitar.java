@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.filter.CreatureYouControlTargetFilter;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "331")
 public class LeoninScimitar extends Card {
 
     public LeoninScimitar() {

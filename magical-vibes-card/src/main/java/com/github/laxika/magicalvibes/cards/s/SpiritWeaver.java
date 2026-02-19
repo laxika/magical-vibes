@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.filter.CreatureColorTargetFilter;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "46")
 public class SpiritWeaver extends Card {
 
     public SpiritWeaver() {

@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandToHandEffect;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "ECL", collectorNumber = "1")
 public class ChangelingWayfinder extends Card {
 
     public ChangelingWayfinder() {

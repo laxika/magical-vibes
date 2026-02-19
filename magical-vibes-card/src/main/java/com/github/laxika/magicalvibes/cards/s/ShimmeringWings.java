@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatu
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "107")
 public class ShimmeringWings extends Card {
 
     public ShimmeringWings() {

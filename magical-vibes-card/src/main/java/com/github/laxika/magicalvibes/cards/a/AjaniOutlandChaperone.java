@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.filter.TappedTargetFilter;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "ECL", collectorNumber = "4")
 public class AjaniOutlandChaperone extends Card {
 
     public AjaniOutlandChaperone() {

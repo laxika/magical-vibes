@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostNonColorCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOtherCreaturesByColorEffect;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "127")
 public class AscendantEvincar extends Card {
 
     public AscendantEvincar() {

@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatur
 import com.github.laxika.magicalvibes.model.filter.CreatureYouControlTargetFilter;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "10E", collectorNumber = "332")
 public class LoxodonWarhammer extends Card {
 
     public LoxodonWarhammer() {
