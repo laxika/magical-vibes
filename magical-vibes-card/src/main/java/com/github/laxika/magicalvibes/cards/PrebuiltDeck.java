@@ -50,6 +50,27 @@ public enum PrebuiltDeck {
             new DeckEntry("116", 1),   // Tidings
             new DeckEntry("329", 1),   // Kraken's Eye
             new DeckEntry("341", 1)    // Rod of Ruin
+    )),
+
+    KAMAHLS_TEMPER("kamahls-temper", "Kamahl's Temper (Tenth Edition Theme Deck)", CardSet.TENTH_EDITION, List.of(
+            new DeckEntry("376", 17),  // Mountain
+            new DeckEntry("224", 1),   // Raging Goblin
+            new DeckEntry("246", 1),   // Viashino Sandscout
+            new DeckEntry("192", 2),   // Bloodrock Cyclops
+            new DeckEntry("193", 2),   // Bogardan Firefiend
+            new DeckEntry("221", 1),   // Prodigal Pyromancer
+            new DeckEntry("217", 2),   // Lightning Elemental
+            new DeckEntry("205", 1),   // Furnace Whelp
+            new DeckEntry("243", 2),   // Thundering Giant
+            new DeckEntry("214", 1),   // Kamahl, Pit Fighter
+            new DeckEntry("232", 1),   // Shock
+            new DeckEntry("213", 2),   // Incinerate
+            new DeckEntry("189", 1),   // Beacon of Destruction
+            new DeckEntry("190", 1),   // Blaze
+            new DeckEntry("238", 2),   // Spitting Earth
+            new DeckEntry("242", 1),   // Threaten
+            new DeckEntry("322", 1),   // Dragon's Claw
+            new DeckEntry("337", 1)    // Phyrexian Vault
     ));
 
     public record DeckEntry(String collectorNumber, int count) {}
