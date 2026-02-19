@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersE
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetEffect;
@@ -42,6 +44,9 @@ public class DamageResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveDealXDamageToTargetCreature(gd, entry));
         registry.register(DealDamageToTargetCreatureEffect.class,
                 (gd, entry, effect) -> resolveDealDamageToTargetCreature(gd, entry, (DealDamageToTargetCreatureEffect) effect));
+        registry.register(DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect.class,
+                (gd, entry, effect) -> resolveDealDamageToTargetCreatureEqualToControlledSubtypeCount(
+                        gd, entry, (DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect) effect));
         registry.register(DealXDamageDividedAmongTargetAttackingCreaturesEffect.class,
                 (gd, entry, effect) -> resolveDealXDamageDividedAmongTargetAttackingCreatures(gd, entry));
         registry.register(DealDamageToAllCreaturesEffect.class,
@@ -134,6 +139,63 @@ public class DamageResolutionService implements EffectHandlerProvider {
                 gameHelper.removeOrphanedAuras(gameData);
             }
         }
+    }
+
+    void resolveDealDamageToTargetCreatureEqualToControlledSubtypeCount(
+            GameData gameData,
+            StackEntry entry,
+            DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect effect
+    ) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())
+                || gameQueryService.hasProtectionFrom(gameData, target, entry.getCard().getColor())) {
+            String logEntry = entry.getCard().getName() + "'s damage is prevented.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        int controlledSubtypeCount = countControlledSubtypePermanents(gameData, entry.getControllerId(), effect.subtype());
+        int damage = gameHelper.applyCreaturePreventionShield(
+                gameData,
+                target,
+                gameQueryService.applyDamageMultiplier(gameData, controlledSubtypeCount)
+        );
+        String logEntry = entry.getCard().getName() + " deals " + damage + " damage to " + target.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} deals {} damage to {}", gameData.id, entry.getCard().getName(), damage, target.getCard().getName());
+
+        if (damage >= gameQueryService.getEffectiveToughness(gameData, target)) {
+            if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
+                String indestructibleLog = target.getCard().getName() + " is indestructible and survives.";
+                gameBroadcastService.logAndBroadcast(gameData, indestructibleLog);
+            } else if (gameHelper.tryRegenerate(gameData, target)) {
+
+            } else {
+                gameHelper.removePermanentToGraveyard(gameData, target);
+                String destroyLog = target.getCard().getName() + " is destroyed.";
+                gameBroadcastService.logAndBroadcast(gameData, destroyLog);
+                log.info("Game {} - {} is destroyed", gameData.id, target.getCard().getName());
+                gameHelper.removeOrphanedAuras(gameData);
+            }
+        }
+    }
+
+    private int countControlledSubtypePermanents(GameData gameData, UUID controllerId, CardSubtype subtype) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return 0;
+        }
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (permanent.getCard().getSubtypes().contains(subtype)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     void resolveDealXDamageDividedAmongTargetAttackingCreatures(GameData gameData, StackEntry entry) {

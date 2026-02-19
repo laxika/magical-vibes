@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEf
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
@@ -46,6 +47,12 @@ public class TargetValidationService {
         });
 
         registry.register(DealDamageToTargetCreatureEffect.class, (ctx, effect) -> {
+            Permanent target = requireBattlefieldTarget(ctx);
+            requireCreature(ctx, target);
+            checkProtection(ctx, target);
+        });
+
+        registry.register(DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect.class, (ctx, effect) -> {
             Permanent target = requireBattlefieldTarget(ctx);
             requireCreature(ctx, target);
             checkProtection(ctx, target);
