@@ -45,7 +45,7 @@ class ViashinoSandscoutTest {
         assertThat(card.getColor()).isEqualTo(CardColor.RED);
         assertThat(card.getPower()).isEqualTo(2);
         assertThat(card.getToughness()).isEqualTo(1);
-        assertThat(card.getSubtypes()).containsExactly(CardSubtype.SCOUT);
+        assertThat(card.getSubtypes()).containsExactly(CardSubtype.LIZARD, CardSubtype.SCOUT);
         assertThat(card.getKeywords()).containsExactly(Keyword.HASTE);
         assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst())
