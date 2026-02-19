@@ -95,6 +95,7 @@ public class GameData {
     public int awaitingLibrarySearchRemainingCount;
     public final Set<UUID> permanentsToSacrificeAtEndOfCombat = ConcurrentHashMap.newKeySet();
     public int awaitingDiscardRemainingCount;
+    public PendingAbilityActivation pendingAbilityActivation;
     public UUID awaitingRevealedHandChoiceTargetPlayerId;
     public int awaitingRevealedHandChoiceRemainingCount;
     public final List<Card> awaitingRevealedHandChosenCards = new ArrayList<>();

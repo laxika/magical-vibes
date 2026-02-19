@@ -79,6 +79,14 @@ public class ReconnectionService {
                             new ArrayList<>(gameData.awaitingCardChoiceValidIndices), "Choose a card to discard."));
                 }
             }
+            case ACTIVATED_ABILITY_DISCARD_COST_CHOICE -> {
+                if (playerId.equals(gameData.awaitingCardChoicePlayerId) && gameData.pendingAbilityActivation != null) {
+                    String typeName = gameData.pendingAbilityActivation.discardCostType().name().toLowerCase();
+                    sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(
+                            new ArrayList<>(gameData.awaitingCardChoiceValidIndices),
+                            "Choose a " + typeName + " card to discard as an activation cost."));
+                }
+            }
             case PERMANENT_CHOICE -> {
                 if (playerId.equals(gameData.awaitingPermanentChoicePlayerId)) {
                     sessionManager.sendToPlayer(playerId, new ChoosePermanentMessage(

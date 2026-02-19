@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
@@ -46,6 +47,20 @@ public class TargetValidationService {
         registry.register(DealDamageToTargetCreatureEffect.class, (ctx, effect) -> {
             Permanent target = requireBattlefieldTarget(ctx);
             requireCreature(ctx, target);
+            checkProtection(ctx, target);
+        });
+
+        registry.register(DealDamageToAnyTargetEffect.class, (ctx, effect) -> {
+            requireTarget(ctx);
+            if (ctx.gameData().playerIds.contains(ctx.targetPermanentId())) {
+                return;
+            }
+            Permanent target = requireBattlefieldTarget(ctx);
+            boolean validPermanentType = gameQueryService.isCreature(ctx.gameData(), target)
+                    || target.getCard().getType() == CardType.PLANESWALKER;
+            if (!validPermanentType) {
+                throw new IllegalStateException("Target must be a creature, planeswalker, or player");
+            }
             checkProtection(ctx, target);
         });
 

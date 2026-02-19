@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.AbilityActivationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,10 +30,15 @@ public class CardChoiceHandlerService {
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
+    private final AbilityActivationService abilityActivationService;
 
     public void handleCardChosen(GameData gameData, Player player, int cardIndex) {
         if (gameData.awaitingInput == AwaitingInput.DISCARD_CHOICE) {
             handleDiscardCardChosen(gameData, player, cardIndex);
+            return;
+        }
+        if (gameData.awaitingInput == AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE) {
+            abilityActivationService.handleActivatedAbilityDiscardCostChosen(gameData, player, cardIndex);
             return;
         }
 

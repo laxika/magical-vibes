@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingAbilityActivation;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -25,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
@@ -35,6 +37,7 @@ import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CreatureYouControlTargetFilter;
 import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -43,8 +46,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -164,6 +169,48 @@ public class AbilityActivationService {
     }
 
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetPermanentId, TargetZone targetZone) {
+        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetPermanentId, targetZone, null);
+    }
+
+    public void handleActivatedAbilityDiscardCostChosen(GameData gameData, Player player, int cardIndex) {
+        if (!player.getId().equals(gameData.awaitingCardChoicePlayerId)) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (gameData.pendingAbilityActivation == null) {
+            throw new IllegalStateException("No pending ability activation");
+        }
+        if (gameData.awaitingCardChoiceValidIndices == null || !gameData.awaitingCardChoiceValidIndices.contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        PendingAbilityActivation pending = gameData.pendingAbilityActivation;
+        Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+        if (source == null) {
+            clearPendingAbilityActivation(gameData);
+            throw new IllegalStateException("Source permanent is no longer on the battlefield");
+        }
+
+        int permanentIndex = gameData.playerBattlefields.get(player.getId()).indexOf(source);
+        if (permanentIndex < 0) {
+            clearPendingAbilityActivation(gameData);
+            throw new IllegalStateException("Source permanent is no longer under your control");
+        }
+
+        clearPendingAbilityActivation(gameData);
+        activateAbilityInternal(
+                gameData,
+                player,
+                permanentIndex,
+                pending.abilityIndex(),
+                pending.xValue(),
+                pending.targetPermanentId(),
+                pending.targetZone(),
+                cardIndex
+        );
+    }
+
+    private void activateAbilityInternal(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue,
+                                         UUID targetPermanentId, TargetZone targetZone, Integer discardCardIndex) {
         int effectiveXValue = xValue != null ? xValue : 0;
 
         UUID playerId = player.getId();
@@ -214,13 +261,41 @@ public class AbilityActivationService {
             validateSpellTarget(gameData, targetPermanentId);
         }
 
+        boolean hasSacCreatureCost = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeCreatureCost);
+
+        // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
+        if (!hasSacCreatureCost) {
+            validateAbilityTargeting(gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard());
+        }
+
+        DiscardCardTypeCost discardCardTypeCost = abilityEffects.stream()
+                .filter(DiscardCardTypeCost.class::isInstance)
+                .map(DiscardCardTypeCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (discardCardTypeCost != null) {
+            List<Card> hand = gameData.playerHands.get(playerId);
+            List<Integer> validDiscardIndices = collectDiscardIndicesForType(hand, discardCardTypeCost.requiredType());
+            if (validDiscardIndices.isEmpty()) {
+                throw new IllegalStateException("Must discard a " + discardCardTypeCost.requiredType().name().toLowerCase() + " card to activate ability");
+            }
+            if (discardCardIndex == null) {
+                beginDiscardCostChoice(gameData, playerId, permanent, effectiveIndex, effectiveXValue, targetPermanentId, targetZone,
+                        discardCardTypeCost.requiredType(), validDiscardIndices);
+                return;
+            }
+        }
+
         // Pay mana cost
         if (abilityCost != null) {
             payManaCost(gameData, playerId, abilityCost, effectiveXValue);
         }
 
+        if (discardCardTypeCost != null) {
+            payDiscardCost(gameData, player, discardCardTypeCost.requiredType(), discardCardIndex);
+        }
+
         // Handle sacrifice-a-creature cost (e.g. Nantuko Husk: "Sacrifice a creature: ...")
-        boolean hasSacCreatureCost = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeCreatureCost);
         if (hasSacCreatureCost) {
             if (targetPermanentId == null) {
                 throw new IllegalStateException("Must choose a creature to sacrifice");
@@ -250,46 +325,10 @@ public class AbilityActivationService {
             targetPermanentId = null;
         }
 
-        // Validate target for effects that need one
-        targetValidationService.validateEffectTargets(abilityEffects,
-                new TargetValidationContext(gameData, targetPermanentId, targetZone, permanent.getCard()));
-
-        // Generic target filter validation
-        if (ability.getTargetFilter() != null && targetPermanentId != null) {
-            Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
-            if (target != null) {
-                gameQueryService.validateTargetFilter(ability.getTargetFilter(), target);
-
-                // Controller ownership validation
-                if (ability.getTargetFilter() instanceof ControllerOnlyTargetFilter
-                        || ability.getTargetFilter() instanceof CreatureYouControlTargetFilter) {
-                    List<Permanent> playerBf = gameData.playerBattlefields.get(playerId);
-                    if (playerBf == null || !playerBf.contains(target)) {
-                        throw new IllegalStateException("Target must be a permanent you control");
-                    }
-                }
-
-                // Creature type validation for equip and similar effects
-                if (ability.getTargetFilter() instanceof CreatureYouControlTargetFilter) {
-                    if (!gameQueryService.isCreature(gameData, target)) {
-                        throw new IllegalStateException("Target must be a creature you control");
-                    }
-                }
-            }
-        }
-
-        // Creature shroud validation for abilities
-        if (targetPermanentId != null) {
-            Permanent shroudTarget = gameQueryService.findPermanentById(gameData, targetPermanentId);
-            if (shroudTarget != null && gameQueryService.hasKeyword(gameData, shroudTarget, Keyword.SHROUD)) {
-                throw new IllegalStateException(shroudTarget.getCard().getName() + " has shroud and can't be targeted");
-            }
-        }
-
-        // Player shroud validation for abilities
-        if (targetPermanentId != null && gameData.playerIds.contains(targetPermanentId)
-                && gameQueryService.playerHasShroud(gameData, targetPermanentId)) {
-            throw new IllegalStateException(gameData.playerIdToName.get(targetPermanentId) + " has shroud and can't be targeted");
+        // Sacrifice-a-creature cost abilities use target selection as UI for cost payment.
+        // Validate any remaining real targets after the cost has been paid.
+        if (hasSacCreatureCost) {
+            validateAbilityTargeting(gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard());
         }
 
         // Self-target if effects need the source permanent
@@ -431,10 +470,113 @@ public class AbilityActivationService {
         }
     }
 
+    private void validateAbilityTargeting(GameData gameData, UUID playerId, ActivatedAbility ability, List<CardEffect> abilityEffects,
+                                          UUID targetPermanentId, TargetZone targetZone, Card sourceCard) {
+        // Validate target for effects that need one
+        targetValidationService.validateEffectTargets(abilityEffects,
+                new TargetValidationContext(gameData, targetPermanentId, targetZone, sourceCard));
+
+        // Generic target filter validation
+        if (ability.getTargetFilter() != null && targetPermanentId != null) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
+            if (target != null) {
+                gameQueryService.validateTargetFilter(ability.getTargetFilter(), target);
+
+                if (ability.getTargetFilter() instanceof ControllerOnlyTargetFilter
+                        || ability.getTargetFilter() instanceof CreatureYouControlTargetFilter) {
+                    List<Permanent> playerBf = gameData.playerBattlefields.get(playerId);
+                    if (playerBf == null || !playerBf.contains(target)) {
+                        throw new IllegalStateException("Target must be a permanent you control");
+                    }
+                }
+
+                if (ability.getTargetFilter() instanceof CreatureYouControlTargetFilter
+                        && !gameQueryService.isCreature(gameData, target)) {
+                    throw new IllegalStateException("Target must be a creature you control");
+                }
+            }
+        }
+
+        // Creature shroud validation for abilities
+        if (targetPermanentId != null) {
+            Permanent shroudTarget = gameQueryService.findPermanentById(gameData, targetPermanentId);
+            if (shroudTarget != null && gameQueryService.hasKeyword(gameData, shroudTarget, Keyword.SHROUD)) {
+                throw new IllegalStateException(shroudTarget.getCard().getName() + " has shroud and can't be targeted");
+            }
+        }
+
+        // Player shroud validation for abilities
+        if (targetPermanentId != null && gameData.playerIds.contains(targetPermanentId)
+                && gameQueryService.playerHasShroud(gameData, targetPermanentId)) {
+            throw new IllegalStateException(gameData.playerIdToName.get(targetPermanentId) + " has shroud and can't be targeted");
+        }
+    }
+
+    private List<Integer> collectDiscardIndicesForType(List<Card> hand, CardType requiredType) {
+        List<Integer> validIndices = new ArrayList<>();
+        if (hand == null) {
+            return validIndices;
+        }
+        for (int i = 0; i < hand.size(); i++) {
+            if (hand.get(i).getType() == requiredType) {
+                validIndices.add(i);
+            }
+        }
+        return validIndices;
+    }
+
+    private void beginDiscardCostChoice(GameData gameData, UUID playerId, Permanent permanent, int abilityIndex, int xValue,
+                                        UUID targetPermanentId, TargetZone targetZone, CardType requiredType, List<Integer> validDiscardIndices) {
+        gameData.pendingAbilityActivation = new PendingAbilityActivation(
+                permanent.getId(),
+                abilityIndex,
+                xValue,
+                targetPermanentId,
+                targetZone,
+                requiredType
+        );
+        gameData.awaitingInput = AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE;
+        gameData.awaitingCardChoicePlayerId = playerId;
+        gameData.awaitingCardChoiceValidIndices = new HashSet<>(validDiscardIndices);
+        sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(
+                validDiscardIndices,
+                "Choose a " + requiredType.name().toLowerCase() + " card to discard as an activation cost."
+        ));
+    }
+
+    private void payDiscardCost(GameData gameData, Player player, CardType requiredType, Integer discardCardIndex) {
+        if (discardCardIndex == null) {
+            throw new IllegalStateException("Must choose a card to discard");
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        List<Integer> validDiscardIndices = collectDiscardIndicesForType(hand, requiredType);
+        Set<Integer> validSet = new HashSet<>(validDiscardIndices);
+        if (!validSet.contains(discardCardIndex)) {
+            throw new IllegalStateException("Must discard a " + requiredType.name().toLowerCase() + " card");
+        }
+
+        Card discarded = hand.remove((int) discardCardIndex);
+        gameHelper.addCardToGraveyard(gameData, player.getId(), discarded);
+        gameData.discardCausedByOpponent = false;
+        gameHelper.checkDiscardTriggers(gameData, player.getId(), discarded);
+
+        String logEntry = player.getUsername() + " discards " + discarded.getName() + " as an activation cost.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} discards {} as activation cost", gameData.id, player.getUsername(), discarded.getName());
+    }
+
+    private void clearPendingAbilityActivation(GameData gameData) {
+        gameData.pendingAbilityActivation = null;
+        gameData.awaitingInput = null;
+        gameData.awaitingCardChoicePlayerId = null;
+        gameData.awaitingCardChoiceValidIndices = null;
+    }
+
     private List<CardEffect> snapshotEffects(List<CardEffect> abilityEffects, Permanent permanent) {
         List<CardEffect> snapshotEffects = new ArrayList<>();
         for (CardEffect effect : abilityEffects) {
-            if (effect instanceof SacrificeSelfCost || effect instanceof SacrificeCreatureCost) {
+            if (effect instanceof SacrificeSelfCost || effect instanceof SacrificeCreatureCost || effect instanceof DiscardCardTypeCost) {
                 continue;
             }
             if (effect instanceof CantBlockSourceEffect) {

@@ -126,12 +126,15 @@ public class GameTestHarness {
         TargetValidationService targetValidationService = new TargetValidationService(gameQueryService);
         SpellCastingService spellCastingService = new SpellCastingService(
                 gameQueryService, gameHelper, gameBroadcastService, turnProgressionService, targetValidationService);
+        AbilityActivationService abilityActivationService = new AbilityActivationService(
+                gameHelper, gameQueryService, gameBroadcastService, targetValidationService,
+                playerInputService, sessionManager);
         ColorChoiceHandlerService colorChoiceHandlerService = new ColorChoiceHandlerService(
                 sessionManager, gameQueryService, gameHelper, gameBroadcastService,
                 playerInputService, turnProgressionService);
         CardChoiceHandlerService cardChoiceHandlerService = new CardChoiceHandlerService(
                 gameQueryService, gameHelper, gameBroadcastService,
-                playerInputService, turnProgressionService);
+                playerInputService, turnProgressionService, abilityActivationService);
         PermanentChoiceHandlerService permanentChoiceHandlerService = new PermanentChoiceHandlerService(
                 gameQueryService, gameHelper, gameBroadcastService,
                 playerInputService, turnProgressionService);
@@ -145,9 +148,6 @@ public class GameTestHarness {
                 cardViewFactory, turnProgressionService);
         StackResolutionService stackResolutionService = new StackResolutionService(
                 gameHelper, gameQueryService, gameBroadcastService, effectResolutionService, playerInputService);
-        AbilityActivationService abilityActivationService = new AbilityActivationService(
-                gameHelper, gameQueryService, gameBroadcastService, targetValidationService,
-                playerInputService, sessionManager);
         MulliganService mulliganService = new MulliganService(
                 sessionManager, gameBroadcastService, turnProgressionService);
         ReconnectionService reconnectionService = new ReconnectionService(
