@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
@@ -39,6 +40,8 @@ public class TurnResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveEndTurn(gd, entry));
         registry.register(ExtraTurnEffect.class,
                 (gd, entry, effect) -> resolveExtraTurn(gd, entry, (ExtraTurnEffect) effect));
+        registry.register(AdditionalCombatMainPhaseEffect.class,
+                (gd, entry, effect) -> resolveAdditionalCombatMainPhase(gd, entry, (AdditionalCombatMainPhaseEffect) effect));
     }
 
     private void resolveExtraTurn(GameData gameData, StackEntry entry, ExtraTurnEffect effect) {
@@ -94,5 +97,22 @@ public class TurnResolutionService implements EffectHandlerProvider {
         String logEntry = "The turn ends.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - End the turn effect resolved, skipping to cleanup", gameData.id);
+    }
+
+    private void resolveAdditionalCombatMainPhase(GameData gameData, StackEntry entry, AdditionalCombatMainPhaseEffect effect) {
+        if (effect.count() <= 0) {
+            return;
+        }
+
+        gameData.additionalCombatMainPhasePairs += effect.count();
+
+        String logEntry = "After this main phase, there is an additional combat phase followed by an additional main phase.";
+        if (effect.count() > 1) {
+            logEntry = "After this main phase, there are " + effect.count()
+                    + " additional combat phases followed by additional main phases.";
+        }
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} queued {} additional combat/main phase pair(s)",
+                gameData.id, entry.getCard().getName(), effect.count());
     }
 }

@@ -112,6 +112,7 @@ public class GameData {
     public final Deque<PermanentChoiceContext.DiscardTriggerAnyTarget> pendingDiscardSelfTriggers = new ArrayDeque<>();
     public boolean discardCausedByOpponent;
     public final Deque<UUID> extraTurns = new ArrayDeque<>();
+    public int additionalCombatMainPhasePairs;
     public int lastBroadcastedLogSize = 0;
     public UUID draftId;
 

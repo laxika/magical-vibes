@@ -48,6 +48,11 @@ public class TurnProgressionService {
         gameData.awaitingInput = null;
         TurnStep next = gameData.currentStep.next();
 
+        if (gameData.currentStep == TurnStep.POSTCOMBAT_MAIN && gameData.additionalCombatMainPhasePairs > 0) {
+            next = TurnStep.BEGINNING_OF_COMBAT;
+            gameData.additionalCombatMainPhasePairs--;
+        }
+
         gameHelper.drainManaPools(gameData);
 
         if (next != null) {
@@ -305,8 +310,15 @@ public class TurnProgressionService {
         gameData.priorityPassedBy.clear();
         gameData.landsPlayedThisTurn.clear();
         gameData.spellsCastThisTurn.clear();
+        gameData.additionalCombatMainPhasePairs = 0;
 
         gameHelper.drainManaPools(gameData);
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> playerBattlefield = gameData.playerBattlefields.get(playerId);
+            if (playerBattlefield == null) continue;
+            playerBattlefield.forEach(p -> p.setAttackedThisTurn(false));
+        }
 
         // Untap all permanents for the new active player (skip those with "doesn't untap" effects)
         List<Permanent> battlefield = gameData.playerBattlefields.get(nextActive);

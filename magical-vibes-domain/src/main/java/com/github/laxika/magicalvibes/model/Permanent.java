@@ -17,6 +17,7 @@ public class Permanent {
     private final Card originalCard;
     private boolean tapped;
     private boolean attacking;
+    private boolean attackedThisTurn;
     private boolean blocking;
     private final List<Integer> blockingTargets = new ArrayList<>();
     private boolean summoningSick;
@@ -43,6 +44,7 @@ public class Permanent {
         this.card = card;
         this.originalCard = card;
         this.tapped = false;
+        this.attackedThisTurn = false;
         this.summoningSick = true;
     }
 
@@ -64,6 +66,9 @@ public class Permanent {
 
     public void setAttacking(boolean attacking) {
         this.attacking = attacking;
+        if (attacking) {
+            this.attackedThisTurn = true;
+        }
     }
 
     public void setBlocking(boolean blocking) {
@@ -82,6 +87,10 @@ public class Permanent {
         this.attacking = false;
         this.blocking = false;
         this.blockingTargets.clear();
+    }
+
+    public void setAttackedThisTurn(boolean attackedThisTurn) {
+        this.attackedThisTurn = attackedThisTurn;
     }
 
     public int getEffectivePower() {

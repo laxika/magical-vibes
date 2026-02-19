@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapAttackedCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameQueryService;
@@ -70,6 +71,8 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveTapTargetPermanent(gd, entry));
         registry.register(UntapSelfEffect.class,
                 (gd, entry, effect) -> resolveUntapSelf(gd, entry));
+        registry.register(UntapAttackedCreaturesEffect.class,
+                (gd, entry, effect) -> resolveUntapAttackedCreatures(gd, entry));
     }
 
     private void resolveAnimateSelf(GameData gameData, StackEntry entry, AnimateSelfEffect effect) {
@@ -314,5 +317,26 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} untaps", gameData.id, entry.getCard().getName());
+    }
+
+    private void resolveUntapAttackedCreatures(GameData gameData, StackEntry entry) {
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+
+            for (Permanent permanent : battlefield) {
+                if (!gameQueryService.isCreature(gameData, permanent)) continue;
+                if (!permanent.isAttackedThisTurn()) continue;
+                if (!permanent.isTapped()) continue;
+
+                permanent.untap();
+                count++;
+            }
+        }
+
+        String logEntry = entry.getCard().getName() + " untaps " + count + " creature(s) that attacked this turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} untaps {} attacked creature(s)", gameData.id, entry.getCard().getName(), count);
     }
 }
