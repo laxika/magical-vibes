@@ -86,8 +86,7 @@ public class CombatService {
     }
 
     /**
-     * Returns the subset of attackable indices where the creature has a MustAttackEffect.
-     * Per CR 508.1d, creatures are exempt from must-attack if there is an attack cost (tax).
+     * Returns attackable indices whose creature has at least one "attacks each combat if able" requirement.
      */
     List<Integer> getMustAttackIndices(GameData gameData, UUID playerId, List<Integer> attackableIndices) {
         int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
@@ -98,16 +97,73 @@ public class CombatService {
         List<Integer> mustAttack = new ArrayList<>();
         for (int idx : attackableIndices) {
             Permanent p = battlefield.get(idx);
-            boolean hasMustAttack = p.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(e -> e instanceof MustAttackEffect);
-            if (!hasMustAttack) {
-                hasMustAttack = gameQueryService.hasAuraWithEffect(gameData, p, MustAttackEffect.class);
-            }
-            if (hasMustAttack) {
+            if (getMustAttackRequirementCount(gameData, p) > 0) {
                 mustAttack.add(idx);
             }
         }
         return mustAttack;
+    }
+
+    /**
+     * Counts "attacks each combat if able" requirements affecting this creature
+     * from itself and attached Auras.
+     */
+    private int getMustAttackRequirementCount(GameData gameData, Permanent creature) {
+        int count = (int) creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(MustAttackEffect.class::isInstance)
+                .count();
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (permanent.getAttachedTo() != null
+                        && permanent.getAttachedTo().equals(creature.getId())) {
+                    count += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                            .filter(MustAttackEffect.class::isInstance)
+                            .count();
+                }
+            }
+        }
+
+        return count;
+    }
+
+    /**
+     * Per CR 508.1d, attack requirements must be satisfied as much as possible
+     * without violating restrictions. If attacking has a tax/cost, no creature
+     * is required to attack solely due to MustAttack requirements.
+     */
+    private void validateMaximumAttackRequirements(GameData gameData,
+                                                   UUID playerId,
+                                                   List<Integer> attackableIndices,
+                                                   Set<Integer> declaredAttackerIndices) {
+        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
+        if (taxPerCreature > 0) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+
+        int maxRequirements = 0;
+        for (int idx : attackableIndices) {
+            maxRequirements += getMustAttackRequirementCount(gameData, battlefield.get(idx));
+        }
+
+        int satisfiedRequirements = 0;
+        for (int idx : declaredAttackerIndices) {
+            satisfiedRequirements += getMustAttackRequirementCount(gameData, battlefield.get(idx));
+        }
+
+        if (satisfiedRequirements < maxRequirements) {
+            for (int idx : attackableIndices) {
+                if (!declaredAttackerIndices.contains(idx)
+                        && getMustAttackRequirementCount(gameData, battlefield.get(idx)) > 0) {
+                    throw new IllegalStateException("Creature at index " + idx + " must attack this combat");
+                }
+            }
+            throw new IllegalStateException("Attack declaration satisfies too few attack requirements");
+        }
     }
 
     List<Integer> getBlockableCreatureIndices(GameData gameData, UUID playerId) {
@@ -189,13 +245,8 @@ public class CombatService {
             }
         }
 
-        // Validate must-attack creatures are included
-        List<Integer> mustAttack = getMustAttackIndices(gameData, playerId, attackable);
-        for (int mustIdx : mustAttack) {
-            if (!attackerIndices.contains(mustIdx)) {
-                throw new IllegalStateException("Creature at index " + mustIdx + " must attack this combat");
-            }
-        }
+        // Validate attack requirements (CR 508.1d: satisfy as many as possible)
+        validateMaximumAttackRequirements(gameData, playerId, attackable, uniqueIndices);
 
         gameData.awaitingInput = null;
 
