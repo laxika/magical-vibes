@@ -516,7 +516,11 @@ public class AiDecisionEngine {
             return true;
         }
         try {
-            gameQueryService.validateTargetFilter(gameRegistry.get(gameId), card.getTargetFilter(), target);
+            gameQueryService.validateTargetFilter(gameRegistry.get(gameId),
+                    card.getTargetFilter(),
+                    target,
+                    card.getId(),
+                    aiPlayer.getId());
             return true;
         } catch (IllegalStateException e) {
             return false;

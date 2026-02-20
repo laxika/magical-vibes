@@ -133,7 +133,7 @@ public class CardSpecificResolutionService implements EffectHandlerProvider {
             for (Card card : revealed) {
                 if (card.getType() == CardType.ENCHANTMENT) {
                     if (card.isAura()) {
-                        List<UUID> validTargets = findLegalAuraAttachments(gameData, card, auraLegalBaseTargetIds);
+                        List<UUID> validTargets = findLegalAuraAttachments(gameData, card, playerId, auraLegalBaseTargetIds);
                         if (validTargets.size() == 1) {
                             UUID attachmentTargetId = validTargets.getFirst();
                             gameData.warpWorldOperation.pendingEnchantmentPlacements.add(
@@ -202,7 +202,7 @@ public class CardSpecificResolutionService implements EffectHandlerProvider {
         gameHelper.finalizePendingWarpWorld(gameData);
     }
 
-    private List<UUID> findLegalAuraAttachments(GameData gameData, Card auraCard, List<UUID> baseTargetIds) {
+    private List<UUID> findLegalAuraAttachments(GameData gameData, Card auraCard, UUID auraControllerId, List<UUID> baseTargetIds) {
         List<UUID> validTargets = new ArrayList<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -219,7 +219,11 @@ public class CardSpecificResolutionService implements EffectHandlerProvider {
                 }
                 if (auraCard.getTargetFilter() != null) {
                     try {
-                        gameQueryService.validateTargetFilter(gameData, auraCard.getTargetFilter(), candidate);
+                        gameQueryService.validateTargetFilter(gameData,
+                                auraCard.getTargetFilter(),
+                                candidate,
+                                auraCard.getId(),
+                                auraControllerId);
                     } catch (IllegalStateException ignored) {
                         continue;
                     }

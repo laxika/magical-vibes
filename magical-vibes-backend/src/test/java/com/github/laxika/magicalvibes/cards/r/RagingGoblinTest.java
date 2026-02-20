@@ -50,7 +50,7 @@ class RagingGoblinTest {
         assertThat(card.getPower()).isEqualTo(1);
         assertThat(card.getToughness()).isEqualTo(1);
         assertThat(card.getKeywords()).containsExactly(Keyword.HASTE);
-        assertThat(card.getSubtypes()).containsExactly(CardSubtype.GOBLIN);
+        assertThat(card.getSubtypes()).containsExactlyInAnyOrder(CardSubtype.GOBLIN, CardSubtype.BERSERKER);
     }
 
     @Test

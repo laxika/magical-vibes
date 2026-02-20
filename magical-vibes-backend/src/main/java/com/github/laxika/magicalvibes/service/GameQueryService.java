@@ -53,6 +53,16 @@ public class GameQueryService {
 
     public static final List<String> TEXT_CHANGE_COLOR_WORDS = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
     public static final List<String> TEXT_CHANGE_LAND_TYPES = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
+    private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = EnumSet.of(
+            CardSubtype.FOREST,
+            CardSubtype.MOUNTAIN,
+            CardSubtype.ISLAND,
+            CardSubtype.PLAINS,
+            CardSubtype.SWAMP,
+            CardSubtype.AURA,
+            CardSubtype.EQUIPMENT,
+            CardSubtype.AJANI
+    );
 
     private final List<StaticEffectHandlerProvider> staticEffectProviders;
 
@@ -149,16 +159,18 @@ public class GameQueryService {
             return hasKeyword(gameData, permanent, hasKeywordPredicate.keyword());
         }
         if (predicate instanceof PermanentHasSubtypePredicate hasSubtypePredicate) {
+            boolean creatureSubtype = isCreatureSubtype(hasSubtypePredicate.subtype());
             return permanent.getCard().getSubtypes().contains(hasSubtypePredicate.subtype())
-                    || (gameData == null
+                    || (creatureSubtype && (gameData == null
                     ? permanent.hasKeyword(Keyword.CHANGELING)
-                    : hasKeyword(gameData, permanent, Keyword.CHANGELING));
+                    : hasKeyword(gameData, permanent, Keyword.CHANGELING)));
         }
         if (predicate instanceof PermanentHasAnySubtypePredicate hasAnySubtypePredicate) {
             boolean hasSubtype = permanent.getCard().getSubtypes().stream().anyMatch(hasAnySubtypePredicate.subtypes()::contains);
-            return hasSubtype || (gameData == null
+            boolean canUseChangeling = hasAnySubtypePredicate.subtypes().stream().anyMatch(this::isCreatureSubtype);
+            return hasSubtype || (canUseChangeling && (gameData == null
                     ? permanent.hasKeyword(Keyword.CHANGELING)
-                    : hasKeyword(gameData, permanent, Keyword.CHANGELING));
+                    : hasKeyword(gameData, permanent, Keyword.CHANGELING)));
         }
         if (predicate instanceof PermanentIsCreaturePredicate) {
             if (gameData == null) {
@@ -408,15 +420,40 @@ public class GameQueryService {
     }
 
     public void validateTargetFilter(TargetFilter filter, Permanent target) {
-        validateTargetFilter(null, filter, target);
+        validateTargetFilter(null, filter, target, null, null);
     }
 
     public void validateTargetFilter(GameData gameData, TargetFilter filter, Permanent target) {
+        validateTargetFilter(gameData, filter, target, null, null);
+    }
+
+    public void validateTargetFilter(GameData gameData,
+                                     TargetFilter filter,
+                                     Permanent target,
+                                     UUID sourceCardId,
+                                     UUID sourceControllerId) {
+        if (filter instanceof ControlledPermanentPredicateTargetFilter controlledFilter) {
+            if (gameData == null || sourceControllerId == null) {
+                throw new IllegalStateException(controlledFilter.errorMessage());
+            }
+            List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (controllerBattlefield == null || !controllerBattlefield.contains(target)) {
+                throw new IllegalStateException(controlledFilter.errorMessage());
+            }
+            if (!matchesPermanentPredicate(gameData, target, controlledFilter.predicate(), sourceCardId, sourceControllerId)) {
+                throw new IllegalStateException(controlledFilter.errorMessage());
+            }
+            return;
+        }
         if (filter instanceof PermanentPredicateTargetFilter f) {
-            if (!matchesPermanentPredicate(gameData, target, f.predicate())) {
+            if (!matchesPermanentPredicate(gameData, target, f.predicate(), sourceCardId, sourceControllerId)) {
                 throw new IllegalStateException(f.errorMessage());
             }
         }
+    }
+
+    private boolean isCreatureSubtype(CardSubtype subtype) {
+        return !NON_CREATURE_SUBTYPES.contains(subtype);
     }
 
     /**

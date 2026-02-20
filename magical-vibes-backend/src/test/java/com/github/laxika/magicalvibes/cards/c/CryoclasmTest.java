@@ -163,7 +163,7 @@ class CryoclasmTest {
         UUID mountainId = harness.getPermanentId(player2, "Mountain");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, mountainId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Island or Plains");
+                .hasMessageContaining("Plains or Island");
     }
 
     @Test

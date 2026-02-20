@@ -262,6 +262,29 @@ class VedalkenMastermindTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
     }
 
+    @Test
+    @DisplayName("Ability fizzles if target changes controller before resolution")
+    void fizzlesIfTargetChangesController() {
+        addReadyMastermind(player1);
+        Permanent target = addReadyCreature(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        // Target is no longer controlled by player1 when the ability resolves.
+        harness.getGameData().playerBattlefields.get(player1.getId()).remove(target);
+        harness.getGameData().playerBattlefields.get(player2.getId()).add(target);
+
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+    }
+
     // ===== Helpers =====
 
     private Permanent addReadyMastermind(Player player) {

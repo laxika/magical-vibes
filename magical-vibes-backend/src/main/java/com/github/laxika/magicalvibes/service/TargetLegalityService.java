@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -69,17 +68,11 @@ public class TargetLegalityService {
         if (ability.getTargetFilter() != null && targetPermanentId != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
             if (target != null) {
-                if (ability.getTargetFilter() instanceof ControlledPermanentPredicateTargetFilter controlledFilter) {
-                    List<Permanent> playerBattlefield = gameData.playerBattlefields.get(playerId);
-                    if (playerBattlefield == null || !playerBattlefield.contains(target)) {
-                        throw new IllegalStateException("Target must be a permanent you control");
-                    }
-                    if (!gameQueryService.matchesPermanentPredicate(gameData, target, controlledFilter.predicate())) {
-                        throw new IllegalStateException(controlledFilter.errorMessage());
-                    }
-                } else {
-                    gameQueryService.validateTargetFilter(gameData, ability.getTargetFilter(), target);
-                }
+                gameQueryService.validateTargetFilter(gameData,
+                        ability.getTargetFilter(),
+                        target,
+                        sourceCard.getId(),
+                        playerId);
             }
         }
 
@@ -112,17 +105,7 @@ public class TargetLegalityService {
         }
 
         if (card.getTargetFilter() != null && target != null) {
-            if (card.getTargetFilter() instanceof ControlledPermanentPredicateTargetFilter controlledFilter) {
-                List<Permanent> playerBattlefield = gameData.playerBattlefields.get(controllerId);
-                if (playerBattlefield == null || !playerBattlefield.contains(target)) {
-                    throw new IllegalStateException("Target must be a permanent you control");
-                }
-                if (!gameQueryService.matchesPermanentPredicate(gameData, target, controlledFilter.predicate())) {
-                    throw new IllegalStateException(controlledFilter.errorMessage());
-                }
-            } else {
-                gameQueryService.validateTargetFilter(gameData, card.getTargetFilter(), target);
-            }
+            gameQueryService.validateTargetFilter(gameData, card.getTargetFilter(), target, card.getId(), controllerId);
         }
 
         targetValidationService.validateEffectTargets(card.getEffects(EffectSlot.SPELL),
@@ -191,7 +174,12 @@ public class TargetLegalityService {
                                     : entry.getCard() != null ? entry.getCard().getTargetFilter() : null;
                     if (effectiveTargetFilter != null) {
                         try {
-                            gameQueryService.validateTargetFilter(gameData, effectiveTargetFilter, targetPerm);
+                            UUID sourceCardId = entry.getCard() != null ? entry.getCard().getId() : null;
+                            gameQueryService.validateTargetFilter(gameData,
+                                    effectiveTargetFilter,
+                                    targetPerm,
+                                    sourceCardId,
+                                    entry.getControllerId());
                         } catch (IllegalStateException e) {
                             targetFizzled = true;
                         }
