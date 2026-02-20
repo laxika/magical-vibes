@@ -91,7 +91,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
             gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
-            if (gameData.interaction.awaitingInput == null) {
+            if (!gameData.interaction.isAwaitingInput()) {
                 gameHelper.checkLegendRule(gameData, controllerId);
             }
         }
@@ -120,7 +120,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
-        if (gameData.interaction.awaitingInput == null) {
+        if (!gameData.interaction.isAwaitingInput()) {
             gameHelper.checkLegendRule(gameData, controllerId);
         }
 

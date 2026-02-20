@@ -718,9 +718,8 @@ public class AbilityActivationService {
 
     private void clearPendingAbilityActivation(GameData gameData) {
         gameData.pendingAbilityActivation = null;
-        gameData.interaction.awaitingInput = null;
+        gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearCardChoice();
-        gameData.interaction.clearContext();
     }
 
     private List<CardEffect> snapshotEffects(List<CardEffect> abilityEffects, Permanent permanent) {
@@ -765,10 +764,10 @@ public class AbilityActivationService {
         }
         gameHelper.performStateBasedActions(gameData);
         gameData.priorityPassedBy.clear();
-        if (gameData.interaction.awaitingInput == null && !gameData.pendingDeathTriggerTargets.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingDeathTriggerTargets.isEmpty()) {
             gameHelper.processNextDeathTriggerTarget(gameData);
         }
-        if (gameData.interaction.awaitingInput == null && !gameData.pendingMayAbilities.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
         }
         gameBroadcastService.broadcastGameState(gameData);
@@ -804,7 +803,7 @@ public class AbilityActivationService {
         }
         gameHelper.performStateBasedActions(gameData);
         gameData.priorityPassedBy.clear();
-        if (gameData.interaction.awaitingInput == null && !gameData.pendingDeathTriggerTargets.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingDeathTriggerTargets.isEmpty()) {
             gameHelper.processNextDeathTriggerTarget(gameData);
         }
         gameBroadcastService.broadcastGameState(gameData);

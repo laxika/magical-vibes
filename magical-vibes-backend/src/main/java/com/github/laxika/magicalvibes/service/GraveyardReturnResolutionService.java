@@ -289,7 +289,7 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
             gameBroadcastService.logAndBroadcast(gameData, tokenLog);
 
             gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
-            if (gameData.interaction.awaitingInput == null) {
+            if (!gameData.interaction.isAwaitingInput()) {
                 gameHelper.checkLegendRule(gameData, controllerId);
             }
 

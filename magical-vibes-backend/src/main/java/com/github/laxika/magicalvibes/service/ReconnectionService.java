@@ -44,14 +44,15 @@ public class ReconnectionService {
     private final GameQueryService gameQueryService;
 
     public void resendAwaitingInput(GameData gameData, UUID playerId) {
-        InteractionContext context = gameData.interaction.context;
+        InteractionContext context = gameData.interaction.currentContext();
         if (context != null) {
             resendFromContext(gameData, playerId, context);
             return;
         }
-        if (gameData.interaction.awaitingInput == null) return;
+        AwaitingInput awaitingInput = gameData.interaction.awaitingInputType();
+        if (awaitingInput == null) return;
 
-        switch (gameData.interaction.awaitingInput) {
+        switch (awaitingInput) {
             case ATTACKER_DECLARATION -> {
                 if (playerId.equals(gameData.activePlayerId)) {
                     List<Integer> attackable = combatService.getAttackableCreatureIndices(gameData, playerId);

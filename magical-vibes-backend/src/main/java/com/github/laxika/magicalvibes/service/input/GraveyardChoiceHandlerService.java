@@ -37,7 +37,7 @@ public class GraveyardChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
-        if (gameData.interaction.awaitingInput != AwaitingInput.GRAVEYARD_CHOICE) {
+        if (!gameData.interaction.isAwaitingInput(AwaitingInput.GRAVEYARD_CHOICE)) {
             throw new IllegalStateException("Not awaiting graveyard choice");
         }
         InteractionContext.GraveyardChoice graveyardChoice = gameData.interaction.graveyardChoiceContext();
@@ -49,10 +49,9 @@ public class GraveyardChoiceHandlerService {
         Set<Integer> validIndices = graveyardChoice.validIndices();
         List<Card> cardPool = graveyardChoice.cardPool();
 
-        gameData.interaction.awaitingInput = null;
+        gameData.interaction.clearAwaitingInput();
         GraveyardChoiceDestination destination = graveyardChoice.destination();
         gameData.interaction.clearGraveyardChoice();
-        gameData.interaction.clearContext();
 
         if (cardIndex == -1) {
             // Player declined
@@ -94,7 +93,7 @@ public class GraveyardChoiceHandlerService {
                     if (card.getType() == CardType.CREATURE) {
                         gameHelper.handleCreatureEnteredBattlefield(gameData, playerId, card, null);
                     }
-                    if (gameData.interaction.awaitingInput == null) {
+                    if (!gameData.interaction.isAwaitingInput()) {
                         gameHelper.checkLegendRule(gameData, playerId);
                     }
                 }
@@ -105,7 +104,7 @@ public class GraveyardChoiceHandlerService {
     }
 
     public void handleMultipleGraveyardCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
-        if (gameData.interaction.awaitingInput != AwaitingInput.MULTI_GRAVEYARD_CHOICE) {
+        if (!gameData.interaction.isAwaitingInput(AwaitingInput.MULTI_GRAVEYARD_CHOICE)) {
             throw new IllegalStateException("Not awaiting multi-graveyard choice");
         }
         InteractionContext.MultiGraveyardChoice multiGraveyardChoice = gameData.interaction.multiGraveyardChoiceContext();
@@ -150,9 +149,8 @@ public class GraveyardChoiceHandlerService {
         int pendingXValue = gameData.graveyardTargetOperation.xValue;
 
         // Clear awaiting state
-        gameData.interaction.awaitingInput = null;
+        gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearMultiGraveyardChoice();
-        gameData.interaction.clearContext();
         gameData.graveyardTargetOperation.card = null;
         gameData.graveyardTargetOperation.controllerId = null;
         gameData.graveyardTargetOperation.effects = null;

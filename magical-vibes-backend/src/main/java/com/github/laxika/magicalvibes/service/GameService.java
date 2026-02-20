@@ -51,7 +51,7 @@ public class GameService {
         }
 
         synchronized (gameData) {
-            if (gameData.interaction.awaitingInput != null) {
+            if (gameData.interaction.isAwaitingInput()) {
                 throw new IllegalStateException("Cannot pass priority while awaiting input");
             }
 
@@ -212,7 +212,7 @@ public class GameService {
 
     public void handleMultipleGraveyardCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
         synchronized (gameData) {
-            if (gameData.interaction.awaitingInput == AwaitingInput.LIBRARY_REVEAL_CHOICE) {
+            if (gameData.interaction.awaitingInputType() == AwaitingInput.LIBRARY_REVEAL_CHOICE) {
                 libraryChoiceHandlerService.handleLibraryRevealChoice(gameData, player, cardIds);
             } else {
                 graveyardChoiceHandlerService.handleMultipleGraveyardCardsChosen(gameData, player, cardIds);

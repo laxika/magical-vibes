@@ -56,7 +56,7 @@ public class GameBroadcastService {
         List<Integer> deckSizes = getDeckSizes(gameData);
         List<Integer> handSizes = getHandSizes(gameData);
         List<Integer> lifeTotals = getLifeTotals(gameData);
-        UUID priorityPlayerId = gameData.interaction.awaitingInput != null ? null : gameQueryService.getPriorityPlayerId(gameData);
+        UUID priorityPlayerId = gameData.interaction.isAwaitingInput() ? null : gameQueryService.getPriorityPlayerId(gameData);
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<CardView> hand = gameData.playerHands.getOrDefault(playerId, List.of())
@@ -174,7 +174,7 @@ public class GameBroadcastService {
 
     List<Integer> getPlayableCardIndices(GameData gameData, UUID playerId, int extraConvokeMana) {
         List<Integer> playable = new ArrayList<>();
-        if (gameData.status != GameStatus.RUNNING || gameData.interaction.awaitingInput != null) {
+        if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()) {
             return playable;
         }
 
@@ -242,7 +242,7 @@ public class GameBroadcastService {
 
     List<Integer> getPlayableGraveyardLandIndices(GameData gameData, UUID playerId) {
         List<Integer> playable = new ArrayList<>();
-        if (gameData.status != GameStatus.RUNNING || gameData.interaction.awaitingInput != null) {
+        if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()) {
             return playable;
         }
 

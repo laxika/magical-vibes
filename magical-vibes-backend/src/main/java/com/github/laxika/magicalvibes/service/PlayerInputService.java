@@ -116,13 +116,10 @@ public class PlayerInputService {
     }
 
     public void beginRevealedHandChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId, List<Integer> validIndices, String prompt) {
-        gameData.interaction.beginRevealedHandChoice(
+        gameData.interaction.beginRevealedHandChoiceFromCurrentState(
                 choosingPlayerId,
                 targetPlayerId,
-                new HashSet<>(validIndices),
-                gameData.interaction.awaitingRevealedHandChoiceRemainingCount,
-                gameData.interaction.awaitingRevealedHandChoiceDiscardMode,
-                gameData.interaction.awaitingRevealedHandChosenCards
+                new HashSet<>(validIndices)
         );
 
         List<Card> targetHand = gameData.playerHands.get(targetPlayerId);

@@ -61,7 +61,7 @@ public class MayAbilityHandlerService {
     private final TurnProgressionService turnProgressionService;
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
-        if (gameData.interaction.awaitingInput != AwaitingInput.MAY_ABILITY_CHOICE) {
+        if (!gameData.interaction.isAwaitingInput(AwaitingInput.MAY_ABILITY_CHOICE)) {
             throw new IllegalStateException("Not awaiting may ability choice");
         }
         InteractionContext.MayAbilityChoice mayAbilityChoice = gameData.interaction.mayAbilityChoiceContext();
@@ -70,9 +70,8 @@ public class MayAbilityHandlerService {
         }
 
         PendingMayAbility ability = gameData.pendingMayAbilities.removeFirst();
-        gameData.interaction.awaitingInput = null;
+        gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearMayAbilityChoice();
-        gameData.interaction.clearContext();
 
         // Counter-unless-pays — handled via the may ability system
         boolean isCounterUnlessPays = ability.effects().stream().anyMatch(e -> e instanceof CounterUnlessPaysEffect);
@@ -126,7 +125,7 @@ public class MayAbilityHandlerService {
 
                 if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
                     gameHelper.processNextDeathTriggerTarget(gameData);
-                    if (gameData.interaction.awaitingInput != null) {
+                    if (gameData.interaction.isAwaitingInput()) {
                         return;
                     }
                 }
@@ -161,7 +160,7 @@ public class MayAbilityHandlerService {
 
         playerInputService.processNextMayAbility(gameData);
 
-        if (gameData.pendingMayAbilities.isEmpty() && gameData.interaction.awaitingInput == null) {
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
             gameData.priorityPassedBy.clear();
             gameBroadcastService.broadcastGameState(gameData);
             turnProgressionService.resolveAutoPass(gameData);
@@ -186,7 +185,7 @@ public class MayAbilityHandlerService {
         if (targetEntry == null) {
             log.info("Game {} - Counter-unless-pays target no longer on stack", gameData.id);
             playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && gameData.interaction.awaitingInput == null) {
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
                 gameData.priorityPassedBy.clear();
                 gameBroadcastService.broadcastGameState(gameData);
                 turnProgressionService.resolveAutoPass(gameData);
@@ -219,7 +218,7 @@ public class MayAbilityHandlerService {
 
         gameHelper.performStateBasedActions(gameData);
         playerInputService.processNextMayAbility(gameData);
-        if (gameData.pendingMayAbilities.isEmpty() && gameData.interaction.awaitingInput == null) {
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
             gameData.priorityPassedBy.clear();
             gameBroadcastService.broadcastGameState(gameData);
             turnProgressionService.resolveAutoPass(gameData);
@@ -263,7 +262,7 @@ public class MayAbilityHandlerService {
             if (!validIndices.isEmpty()) {
                 String typeName = effect.requiredType().name().toLowerCase();
                 gameData.discardCausedByOpponent = false;
-                gameData.interaction.awaitingDiscardRemainingCount = 1;
+                gameData.interaction.setDiscardRemainingCount(1);
                 playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
                         "Choose a " + typeName + " card to discard.");
 
@@ -290,7 +289,7 @@ public class MayAbilityHandlerService {
 
         gameHelper.performStateBasedActions(gameData);
         playerInputService.processNextMayAbility(gameData);
-        if (gameData.pendingMayAbilities.isEmpty() && gameData.interaction.awaitingInput == null) {
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
             gameData.priorityPassedBy.clear();
             gameBroadcastService.broadcastGameState(gameData);
             turnProgressionService.resolveAutoPass(gameData);
@@ -304,7 +303,7 @@ public class MayAbilityHandlerService {
             log.info("Game {} - {} declines to retarget copy", gameData.id, player.getUsername());
 
             playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && gameData.interaction.awaitingInput == null) {
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
                 gameData.priorityPassedBy.clear();
                 gameBroadcastService.broadcastGameState(gameData);
                 turnProgressionService.resolveAutoPass(gameData);
@@ -325,7 +324,7 @@ public class MayAbilityHandlerService {
         if (copyEntry == null) {
             log.info("Game {} - Copy no longer on stack for retarget", gameData.id);
             playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && gameData.interaction.awaitingInput == null) {
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
                 gameData.priorityPassedBy.clear();
                 gameBroadcastService.broadcastGameState(gameData);
                 turnProgressionService.resolveAutoPass(gameData);
@@ -432,7 +431,7 @@ public class MayAbilityHandlerService {
             log.info("Game {} - No valid targets for copy retarget", gameData.id);
 
             playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && gameData.interaction.awaitingInput == null) {
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
                 gameData.priorityPassedBy.clear();
                 gameBroadcastService.broadcastGameState(gameData);
                 turnProgressionService.resolveAutoPass(gameData);
@@ -461,4 +460,5 @@ public class MayAbilityHandlerService {
         return false;
     }
 }
+
 

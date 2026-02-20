@@ -209,7 +209,7 @@ public class AiDecisionEngine {
         }
 
         // If awaiting some input, don't try to act on priority
-        if (gameData.interaction.awaitingInput != null) {
+        if (gameData.interaction.isAwaitingInput()) {
             return;
         }
 

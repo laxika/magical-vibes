@@ -37,7 +37,7 @@ public class ColorChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
 
     public void handleColorChosen(GameData gameData, Player player, String colorName) {
-        if (gameData.interaction.awaitingInput != AwaitingInput.COLOR_CHOICE) {
+        if (!gameData.interaction.isAwaitingInput(AwaitingInput.COLOR_CHOICE)) {
             throw new IllegalStateException("Not awaiting color choice");
         }
         InteractionContext.ColorChoice colorChoice = gameData.interaction.colorChoiceContextView();
@@ -65,9 +65,8 @@ public class ColorChoiceHandlerService {
         UUID permanentId = colorChoice.permanentId();
         UUID etbTargetId = colorChoice.etbTargetPermanentId();
 
-        gameData.interaction.awaitingInput = null;
+        gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearColorChoice();
-        gameData.interaction.clearContext();
 
         Permanent perm = gameQueryService.findPermanentById(gameData, permanentId);
         if (perm != null) {
@@ -90,9 +89,8 @@ public class ColorChoiceHandlerService {
     private void handleManaColorChosen(GameData gameData, Player player, String colorName, ColorChoiceContext.ManaColorChoice ctx) {
         ManaColor manaColor = ManaColor.valueOf(colorName);
 
-        gameData.interaction.awaitingInput = null;
+        gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearColorChoice();
-        gameData.interaction.clearContext();
 
         ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
         manaPool.add(manaColor);
@@ -146,9 +144,8 @@ public class ColorChoiceHandlerService {
             }
         }
 
-        gameData.interaction.awaitingInput = null;
+        gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearColorChoice();
-        gameData.interaction.clearContext();
 
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
         if (target != null) {

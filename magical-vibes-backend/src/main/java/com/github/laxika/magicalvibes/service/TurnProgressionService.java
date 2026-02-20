@@ -45,8 +45,7 @@ public class TurnProgressionService {
         }
 
         gameData.priorityPassedBy.clear();
-        gameData.interaction.awaitingInput = null;
-        gameData.interaction.clearContext();
+        gameData.interaction.clearAwaitingInput();
         TurnStep next = gameData.currentStep.next();
 
         if (gameData.currentStep == TurnStep.POSTCOMBAT_MAIN && gameData.additionalCombatMainPhasePairs > 0) {
@@ -388,8 +387,7 @@ public class TurnProgressionService {
         gameData.activePlayerId = nextActive;
         gameData.turnNumber++;
         gameData.currentStep = TurnStep.first();
-        gameData.interaction.awaitingInput = null;
-        gameData.interaction.clearContext();
+        gameData.interaction.clearAwaitingInput();
         gameData.priorityPassedBy.clear();
         gameData.landsPlayedThisTurn.clear();
         gameData.spellsCastThisTurn.clear();
@@ -450,7 +448,7 @@ public class TurnProgressionService {
         }
 
         for (int safety = 0; safety < 100; safety++) {
-            if (gameData.interaction.awaitingInput != null) {
+            if (gameData.interaction.isAwaitingInput()) {
                 gameBroadcastService.broadcastGameState(gameData);
                 return;
             }

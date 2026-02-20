@@ -56,6 +56,37 @@ public class InteractionState {
         this.context = null;
     }
 
+    public boolean isAwaitingInput() {
+        return this.awaitingInput != null;
+    }
+
+    public AwaitingInput awaitingInputType() {
+        return this.awaitingInput;
+    }
+
+    public boolean isAwaitingInput(AwaitingInput inputType) {
+        return this.awaitingInput == inputType;
+    }
+
+    public InteractionContext currentContext() {
+        return this.context;
+    }
+
+    public void clearAwaitingInput() {
+        this.awaitingInput = null;
+        this.context = null;
+    }
+
+    public void beginAttackerDeclaration(UUID activePlayerId) {
+        this.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        this.context = new InteractionContext.AttackerDeclaration(activePlayerId);
+    }
+
+    public void beginBlockerDeclaration(UUID defenderId) {
+        this.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        this.context = new InteractionContext.BlockerDeclaration(defenderId);
+    }
+
     public void beginCardChoice(AwaitingInput type, UUID playerId, Set<Integer> validIndices, UUID targetPermanentId) {
         this.awaitingInput = type;
         this.awaitingCardChoicePlayerId = playerId;
@@ -235,6 +266,63 @@ public class InteractionState {
                 discardMode,
                 new ArrayList<>(this.awaitingRevealedHandChosenCards)
         );
+    }
+
+    public void beginRevealedHandChoiceFromCurrentState(UUID choosingPlayerId, UUID targetPlayerId, Set<Integer> validIndices) {
+        List<Card> chosenCardsSnapshot = new ArrayList<>(this.awaitingRevealedHandChosenCards);
+        beginRevealedHandChoice(
+                choosingPlayerId,
+                targetPlayerId,
+                validIndices,
+                this.awaitingRevealedHandChoiceRemainingCount,
+                this.awaitingRevealedHandChoiceDiscardMode,
+                chosenCardsSnapshot
+        );
+    }
+
+    public void setDiscardRemainingCount(int remainingCount) {
+        this.awaitingDiscardRemainingCount = Math.max(remainingCount, 0);
+    }
+
+    public int decrementDiscardRemainingCount() {
+        if (this.awaitingDiscardRemainingCount > 0) {
+            this.awaitingDiscardRemainingCount--;
+        }
+        return this.awaitingDiscardRemainingCount;
+    }
+
+    public int discardRemainingCount() {
+        return this.awaitingDiscardRemainingCount;
+    }
+
+    public void addRevealedHandChosenCard(Card card) {
+        this.awaitingRevealedHandChosenCards.add(card);
+    }
+
+    public int decrementRevealedHandChoiceRemainingCount() {
+        if (this.awaitingRevealedHandChoiceRemainingCount > 0) {
+            this.awaitingRevealedHandChoiceRemainingCount--;
+        }
+        return this.awaitingRevealedHandChoiceRemainingCount;
+    }
+
+    public int revealedHandChoiceRemainingCount() {
+        return this.awaitingRevealedHandChoiceRemainingCount;
+    }
+
+    public boolean revealedHandChoiceDiscardMode() {
+        return this.awaitingRevealedHandChoiceDiscardMode;
+    }
+
+    public List<Card> revealedHandChosenCardsSnapshot() {
+        return new ArrayList<>(this.awaitingRevealedHandChosenCards);
+    }
+
+    public void clearRevealedHandChoiceProgress() {
+        this.awaitingRevealedHandChoiceTargetPlayerId = null;
+        this.awaitingRevealedHandChoiceRemainingCount = 0;
+        this.awaitingRevealedHandChoiceDiscardMode = false;
+        this.awaitingRevealedHandChosenCards.clear();
     }
 
     public InteractionContext.CardChoice cardChoiceContext() {

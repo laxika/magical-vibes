@@ -38,7 +38,7 @@ public class EffectResolutionService {
             } else {
                 log.warn("No handler for effect: {}", effect.getClass().getSimpleName());
             }
-            if (gameData.interaction.awaitingInput != null || !gameData.pendingMayAbilities.isEmpty()) {
+            if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
                 break;
             }
         }

@@ -314,7 +314,7 @@ public class GameHelper {
             }
         }
 
-        if (gameData.interaction.awaitingInput == null && gameData.warpWorldOperation.needsLegendChecks) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.warpWorldOperation.needsLegendChecks) {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 checkLegendRule(gameData, playerId);
             }
@@ -640,7 +640,7 @@ public class GameHelper {
 
         handleCreatureEnteredBattlefield(gameData, controllerId, perm.getCard(), etbTargetId);
 
-        if (gameData.interaction.awaitingInput == null) {
+        if (!gameData.interaction.isAwaitingInput()) {
             checkLegendRule(gameData, controllerId);
         }
     }

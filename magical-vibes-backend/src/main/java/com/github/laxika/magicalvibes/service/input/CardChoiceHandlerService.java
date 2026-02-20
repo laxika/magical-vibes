@@ -34,21 +34,22 @@ public class CardChoiceHandlerService {
     private final AbilityActivationService abilityActivationService;
 
     public void handleCardChosen(GameData gameData, Player player, int cardIndex) {
-        if (gameData.interaction.awaitingInput == AwaitingInput.DISCARD_CHOICE) {
+        AwaitingInput awaitingInput = gameData.interaction.awaitingInputType();
+        if (awaitingInput == AwaitingInput.DISCARD_CHOICE) {
             handleDiscardCardChosen(gameData, player, cardIndex);
             return;
         }
-        if (gameData.interaction.awaitingInput == AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE) {
+        if (awaitingInput == AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE) {
             abilityActivationService.handleActivatedAbilityDiscardCostChosen(gameData, player, cardIndex);
             return;
         }
 
-        if (gameData.interaction.awaitingInput == AwaitingInput.REVEALED_HAND_CHOICE) {
+        if (awaitingInput == AwaitingInput.REVEALED_HAND_CHOICE) {
             handleRevealedHandCardChosen(gameData, player, cardIndex);
             return;
         }
 
-        if (gameData.interaction.awaitingInput != AwaitingInput.CARD_CHOICE && gameData.interaction.awaitingInput != AwaitingInput.TARGETED_CARD_CHOICE) {
+        if (awaitingInput != AwaitingInput.CARD_CHOICE && awaitingInput != AwaitingInput.TARGETED_CARD_CHOICE) {
             throw new IllegalStateException("Not awaiting card choice");
         }
         InteractionContext.CardChoice cardChoice = gameData.interaction.cardChoiceContext();
@@ -58,11 +59,10 @@ public class CardChoiceHandlerService {
 
         UUID playerId = player.getId();
         Set<Integer> validIndices = cardChoice.validIndices();
-        boolean isTargeted = gameData.interaction.awaitingInput == AwaitingInput.TARGETED_CARD_CHOICE;
+        boolean isTargeted = awaitingInput == AwaitingInput.TARGETED_CARD_CHOICE;
 
-        gameData.interaction.awaitingInput = null;
+        gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearCardChoice();
-        gameData.interaction.clearContext();
 
         UUID targetPermanentId = cardChoice.targetPermanentId();
 
@@ -111,15 +111,14 @@ public class CardChoiceHandlerService {
 
         gameHelper.checkDiscardTriggers(gameData, playerId, card);
 
-        gameData.interaction.awaitingDiscardRemainingCount--;
+        int remainingDiscards = gameData.interaction.decrementDiscardRemainingCount();
 
-        if (gameData.interaction.awaitingDiscardRemainingCount > 0 && !hand.isEmpty()) {
+        if (remainingDiscards > 0 && !hand.isEmpty()) {
             playerInputService.beginDiscardChoice(gameData, playerId);
         } else {
-            gameData.interaction.awaitingInput = null;
+            gameData.interaction.clearAwaitingInput();
             gameData.interaction.clearCardChoice();
-            gameData.interaction.awaitingDiscardRemainingCount = 0;
-            gameData.interaction.clearContext();
+            gameData.interaction.setDiscardRemainingCount(0);
 
             // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
             if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
@@ -147,17 +146,16 @@ public class CardChoiceHandlerService {
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
         Card chosenCard = targetHand.remove(cardIndex);
-        gameData.interaction.awaitingRevealedHandChosenCards.add(chosenCard);
+        gameData.interaction.addRevealedHandChosenCard(chosenCard);
 
         String logEntry = player.getUsername() + " chooses " + chosenCard.getName() + " from " + targetName + "'s hand.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} chooses {} from {}'s hand", gameData.id, player.getUsername(), chosenCard.getName(), targetName);
 
-        gameData.interaction.awaitingRevealedHandChoiceRemainingCount--;
+        int remainingChoices = gameData.interaction.decrementRevealedHandChoiceRemainingCount();
+        boolean discardMode = gameData.interaction.revealedHandChoiceDiscardMode();
 
-        boolean discardMode = gameData.interaction.awaitingRevealedHandChoiceDiscardMode;
-
-        if (gameData.interaction.awaitingRevealedHandChoiceRemainingCount > 0 && !targetHand.isEmpty()) {
+        if (remainingChoices > 0 && !targetHand.isEmpty()) {
             // More cards to choose — update valid indices and prompt again
             List<Integer> newValidIndices = new ArrayList<>();
             for (int i = 0; i < targetHand.size(); i++) {
@@ -170,11 +168,10 @@ public class CardChoiceHandlerService {
             playerInputService.beginRevealedHandChoice(gameData, player.getId(), targetPlayerId, newValidIndices, prompt);
         } else {
             // All cards chosen
-            gameData.interaction.awaitingInput = null;
+            gameData.interaction.clearAwaitingInput();
             gameData.interaction.clearCardChoice();
-            gameData.interaction.clearContext();
 
-            List<Card> chosenCards = new ArrayList<>(gameData.interaction.awaitingRevealedHandChosenCards);
+            List<Card> chosenCards = gameData.interaction.revealedHandChosenCardsSnapshot();
 
             if (discardMode) {
                 // Discard chosen cards to graveyard
@@ -205,10 +202,7 @@ public class CardChoiceHandlerService {
                 log.info("Game {} - {} puts {} on top of {}'s library", gameData.id, player.getUsername(), cardNames, targetName);
             }
 
-            gameData.interaction.awaitingRevealedHandChoiceTargetPlayerId = null;
-            gameData.interaction.awaitingRevealedHandChoiceRemainingCount = 0;
-            gameData.interaction.awaitingRevealedHandChoiceDiscardMode = false;
-            gameData.interaction.awaitingRevealedHandChosenCards.clear();
+            gameData.interaction.clearRevealedHandChoiceProgress();
 
             // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
             if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {

@@ -40,7 +40,7 @@ public class PermanentChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
-        if (gameData.interaction.awaitingInput != AwaitingInput.PERMANENT_CHOICE) {
+        if (!gameData.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)) {
             throw new IllegalStateException("Not awaiting permanent choice");
         }
         InteractionContext.PermanentChoice permanentChoice = gameData.interaction.permanentChoiceContextView();
@@ -51,9 +51,8 @@ public class PermanentChoiceHandlerService {
         UUID playerId = player.getId();
         Set<UUID> validIds = permanentChoice.validIds();
 
-        gameData.interaction.awaitingInput = null;
+        gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearPermanentChoice();
-        gameData.interaction.clearContext();
 
         if (!validIds.contains(permanentId)) {
             throw new IllegalStateException("Invalid permanent: " + permanentId);
@@ -71,12 +70,12 @@ public class PermanentChoiceHandlerService {
             gameHelper.completeCloneEntry(gameData, permanentId);
 
             // If no legend rule or other awaiting input pending, do SBA + auto-pass
-            if (gameData.interaction.awaitingInput == null) {
+            if (!gameData.interaction.isAwaitingInput()) {
                 gameHelper.performStateBasedActions(gameData);
 
                 if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
                     gameHelper.processNextDeathTriggerTarget(gameData);
-                    if (gameData.interaction.awaitingInput != null) {
+                    if (gameData.interaction.isAwaitingInput()) {
                         return;
                     }
                 }
@@ -292,7 +291,7 @@ public class PermanentChoiceHandlerService {
                     return;
                 }
                 gameHelper.finalizePendingWarpWorld(gameData);
-                if (gameData.interaction.awaitingInput != null) {
+                if (gameData.interaction.isAwaitingInput()) {
                     return;
                 }
             } else {
@@ -321,7 +320,7 @@ public class PermanentChoiceHandlerService {
     }
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
-        if (gameData.interaction.awaitingInput != AwaitingInput.MULTI_PERMANENT_CHOICE) {
+        if (!gameData.interaction.isAwaitingInput(AwaitingInput.MULTI_PERMANENT_CHOICE)) {
             throw new IllegalStateException("Not awaiting multi-permanent choice");
         }
         InteractionContext.MultiPermanentChoice multiPermanentChoice = gameData.interaction.multiPermanentChoiceContext();
@@ -333,9 +332,8 @@ public class PermanentChoiceHandlerService {
         Set<UUID> validIds = multiPermanentChoice.validIds();
         int maxCount = multiPermanentChoice.maxCount();
 
-        gameData.interaction.awaitingInput = null;
+        gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearMultiPermanentChoice();
-        gameData.interaction.clearContext();
 
         if (permanentIds == null) {
             permanentIds = List.of();
