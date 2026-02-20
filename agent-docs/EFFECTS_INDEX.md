@@ -34,6 +34,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `gain life`: `GainLifeEffect`, `GainLifePerGraveyardCardEffect`, `GainLifeEqualToTargetToughnessEffect`
 - `lose life / drain`: `TargetPlayerLosesLifeAndControllerGainsLifeEffect`, `EnchantedCreatureControllerLosesLifeEffect`
 - `target opponent gains control of this creature (ETB)`: `TargetPlayerGainsControlOfSourceCreatureEffect`
+- `each player loses life for each creature they control`: `EachPlayerLosesLifePerCreatureControlledEffect`
 - `target player loses the game`: `TargetPlayerLosesGameEffect`
 - `lose the game if not cast from hand (ETB check)`: `LoseGameIfNotCastFromHandEffect`
 - `win the game if condition is met`: `WinGameIfCreaturesInGraveyardEffect`

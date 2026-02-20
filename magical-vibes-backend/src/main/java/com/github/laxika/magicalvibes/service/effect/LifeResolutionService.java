@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifePerCreatureControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
@@ -42,6 +44,9 @@ public class LifeResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveEnchantedCreatureControllerLosesLife(gd, entry, (EnchantedCreatureControllerLosesLifeEffect) effect));
         registry.register(LoseLifeEffect.class,
                 (gd, entry, effect) -> resolveLoseLife(gd, entry, (LoseLifeEffect) effect));
+        registry.register(EachPlayerLosesLifePerCreatureControlledEffect.class,
+                (gd, entry, effect) -> resolveEachPlayerLosesLifePerCreatureControlled(gd, entry,
+                        (EachPlayerLosesLifePerCreatureControlledEffect) effect));
         registry.register(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class,
                 (gd, entry, effect) -> resolveTargetPlayerLosesLifeAndControllerGainsLife(gd, entry, (TargetPlayerLosesLifeAndControllerGainsLifeEffect) effect));
     }
@@ -121,14 +126,37 @@ public class LifeResolutionService implements EffectHandlerProvider {
     }
 
     private void resolveLoseLife(GameData gameData, StackEntry entry, LoseLifeEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
-        gameData.playerLifeTotals.put(controllerId, currentLife - effect.amount());
+        applyLifeLoss(gameData, entry.getControllerId(), effect.amount(), entry.getCard().getName());
+    }
 
-        String playerName = gameData.playerIdToName.get(controllerId);
-        String logEntry = playerName + " loses " + effect.amount() + " life (" + entry.getCard().getName() + ").";
+    private void resolveEachPlayerLosesLifePerCreatureControlled(GameData gameData, StackEntry entry,
+                                                                 EachPlayerLosesLifePerCreatureControlledEffect effect) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            int creatureCount = 0;
+            if (battlefield != null) {
+                for (Permanent permanent : battlefield) {
+                    if (permanent.getCard().getType() == CardType.CREATURE) {
+                        creatureCount++;
+                    }
+                }
+            }
+
+            int lifeLoss = creatureCount * effect.lifePerCreature();
+            if (lifeLoss > 0) {
+                applyLifeLoss(gameData, playerId, lifeLoss, entry.getCard().getName());
+            }
+        }
+    }
+
+    private void applyLifeLoss(GameData gameData, UUID playerId, int amount, String sourceName) {
+        int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+        gameData.playerLifeTotals.put(playerId, currentLife - amount);
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        String logEntry = playerName + " loses " + amount + " life (" + sourceName + ").";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, effect.amount(), entry.getCard().getName());
+        log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, amount, sourceName);
     }
 
     private void resolveTargetPlayerLosesLifeAndControllerGainsLife(GameData gameData, StackEntry entry, TargetPlayerLosesLifeAndControllerGainsLifeEffect effect) {
