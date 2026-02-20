@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.filter.NonArtifactNonColorCreatureTargetFilter;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -513,14 +512,15 @@ public class AiDecisionEngine {
     }
 
     private boolean passesTargetFilter(Card card, Permanent target) {
-        if (card.getTargetFilter() instanceof NonArtifactNonColorCreatureTargetFilter f) {
-            if (target.getCard().getType() == CardType.ARTIFACT
-                    || target.getCard().getAdditionalTypes().contains(CardType.ARTIFACT)) {
-                return false;
-            }
-            return !f.excludedColors().contains(target.getCard().getColor());
+        if (card.getTargetFilter() == null) {
+            return true;
         }
-        return true;
+        try {
+            gameQueryService.validateTargetFilter(gameRegistry.get(gameId), card.getTargetFilter(), target);
+            return true;
+        } catch (IllegalStateException e) {
+            return false;
+        }
     }
 
     // ===== Combat =====

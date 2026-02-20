@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenWithColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.filter.TappedTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
 import java.util.Set;
@@ -36,7 +37,10 @@ public class AjaniOutlandChaperone extends Card {
                 List.of(new DealDamageToTargetCreatureEffect(4)),
                 true,
                 "\u22122: Ajani deals 4 damage to target tapped creature.",
-                new TappedTargetFilter()
+                new PermanentPredicateTargetFilter(
+                        new PermanentIsTappedPredicate(),
+                        "Target must be a tapped creature"
+                )
         ));
 
         // −8: Look at the top X cards of your library, where X is your life total. You may put

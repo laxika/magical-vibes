@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.CreatureYouControlTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -19,7 +20,10 @@ public class NantukoHusk extends Card {
                 List.of(new SacrificeCreatureCost(), new BoostSelfEffect(2, 2)),
                 true,
                 "Sacrifice a creature: Nantuko Husk gets +2/+2 until end of turn.",
-                new CreatureYouControlTargetFilter()
+                new ControlledPermanentPredicateTargetFilter(
+                        new PermanentIsCreaturePredicate(),
+                        "Target must be a creature you control"
+                )
         ));
     }
 }

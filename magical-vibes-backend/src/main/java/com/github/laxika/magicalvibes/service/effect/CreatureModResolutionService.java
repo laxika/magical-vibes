@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAttackedCreaturesEffect;
-import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -318,19 +317,18 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
     }
 
     private void resolveTapCreatures(GameData gameData, StackEntry entry, TapCreaturesEffect tap) {
-        boolean controllerOnly = tap.filters().stream().anyMatch(f -> f instanceof ControllerOnlyTargetFilter);
-
-        List<UUID> playerIds = controllerOnly
-                ? List.of(entry.getControllerId())
-                : gameData.orderedPlayerIds;
-
-        for (UUID playerId : playerIds) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
 
             for (Permanent p : battlefield) {
                 if (!gameQueryService.isCreature(gameData, p)) continue;
-                if (!gameQueryService.matchesFilters(gameData, p, tap.filters())) continue;
+                if (!gameQueryService.matchesFilters(
+                        gameData,
+                        p,
+                        tap.filters(),
+                        entry.getCard().getId(),
+                        entry.getControllerId())) continue;
 
                 p.tap();
 

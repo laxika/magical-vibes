@@ -15,8 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandOnCoinFlipLos
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
-import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.ExcludeSelfTargetFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -105,17 +103,8 @@ public class BounceResolutionService implements EffectHandlerProvider {
     }
 
     void resolveReturnCreaturesToOwnersHand(GameData gameData, StackEntry entry, ReturnCreaturesToOwnersHandEffect bounce) {
-        UUID controllerId = entry.getControllerId();
         Set<UUID> affectedPlayers = new HashSet<>();
-
-        boolean controllerOnly = bounce.filters().stream().anyMatch(f -> f instanceof ControllerOnlyTargetFilter);
-        boolean excludeSelf = bounce.filters().stream().anyMatch(f -> f instanceof ExcludeSelfTargetFilter);
-
-        List<UUID> playerIds = controllerOnly
-                ? List.of(controllerId)
-                : gameData.orderedPlayerIds;
-
-        for (UUID playerId : playerIds) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) {
                 continue;
@@ -123,7 +112,12 @@ public class BounceResolutionService implements EffectHandlerProvider {
 
             List<Permanent> creaturesToReturn = battlefield.stream()
                     .filter(p -> gameQueryService.isCreature(gameData, p))
-                    .filter(p -> !excludeSelf || !p.getOriginalCard().getId().equals(entry.getCard().getId()))
+                    .filter(p -> gameQueryService.matchesFilters(
+                            gameData,
+                            p,
+                            bounce.filters(),
+                            entry.getCard().getId(),
+                            entry.getControllerId()))
                     .toList();
 
             for (Permanent creature : creaturesToReturn) {

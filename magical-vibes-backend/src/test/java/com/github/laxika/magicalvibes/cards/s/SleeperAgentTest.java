@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
-import com.github.laxika.magicalvibes.model.filter.OpponentPlayerTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -64,7 +64,7 @@ class SleeperAgentTest {
         assertThat(card.getPower()).isEqualTo(3);
         assertThat(card.getToughness()).isEqualTo(3);
         assertThat(card.isNeedsTarget()).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(OpponentPlayerTargetFilter.class);
+        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
                 .isInstanceOf(TargetPlayerGainsControlOfSourceCreatureEffect.class);

@@ -12,7 +12,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.filter.CreatureColorTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -20,6 +23,9 @@ import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -61,9 +67,13 @@ class SpiritWeaverTest {
         assertThat(effect.powerBoost()).isEqualTo(0);
         assertThat(effect.toughnessBoost()).isEqualTo(1);
         assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}");
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter()).isInstanceOf(CreatureColorTargetFilter.class);
-        CreatureColorTargetFilter filter = (CreatureColorTargetFilter) card.getActivatedAbilities().get(0).getTargetFilter();
-        assertThat(filter.colors()).containsExactlyInAnyOrder(CardColor.GREEN, CardColor.BLUE);
+        assertThat(card.getActivatedAbilities().get(0).getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentColorInPredicate(Set.of(CardColor.GREEN, CardColor.BLUE))
+                )),
+                "Target must be a green or blue creature"
+        ));
     }
 
     // ===== Activation =====

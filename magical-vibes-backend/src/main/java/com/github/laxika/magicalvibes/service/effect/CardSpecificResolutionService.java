@@ -219,7 +219,7 @@ public class CardSpecificResolutionService implements EffectHandlerProvider {
                 }
                 if (auraCard.getTargetFilter() != null) {
                     try {
-                        gameQueryService.validateTargetFilter(auraCard.getTargetFilter(), candidate);
+                        gameQueryService.validateTargetFilter(gameData, auraCard.getTargetFilter(), candidate);
                     } catch (IllegalStateException ignored) {
                         continue;
                     }

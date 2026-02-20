@@ -16,10 +16,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.BlockOnlyFlyersEffect;
-import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFlyingOrSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsLandTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.CantBeBlockedBySubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
+import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -68,7 +67,7 @@ public class CombatService {
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent p = battlefield.get(i);
             if (gameQueryService.isCreature(gameData, p) && !p.isTapped() && (!p.isSummoningSick() || gameQueryService.hasKeyword(gameData, p, Keyword.HASTE)) && !gameQueryService.hasKeyword(gameData, p, Keyword.DEFENDER) && !gameQueryService.hasAuraWithEffect(gameData, p, EnchantedCreatureCantAttackOrBlockEffect.class)) {
-                if (isCantAttackDueToLandRestriction(p, defenderBattlefield)) {
+                if (isCantAttackDueToLandRestriction(gameData, p, defenderBattlefield)) {
                     continue;
                 }
                 indices.add(i);
@@ -77,12 +76,12 @@ public class CombatService {
         return indices;
     }
 
-    private boolean isCantAttackDueToLandRestriction(Permanent attacker, List<Permanent> defenderBattlefield) {
+    private boolean isCantAttackDueToLandRestriction(GameData gameData, Permanent attacker, List<Permanent> defenderBattlefield) {
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof CantAttackUnlessDefenderControlsLandTypeEffect restriction) {
-                boolean defenderHasLand = defenderBattlefield != null && defenderBattlefield.stream()
-                        .anyMatch(p -> p.getCard().getSubtypes().contains(restriction.landType()));
-                if (!defenderHasLand) {
+            if (effect instanceof CantAttackUnlessDefenderControlsMatchingPermanentEffect restriction) {
+                boolean defenderMatches = defenderBattlefield != null && defenderBattlefield.stream()
+                        .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, restriction.defenderPermanentPredicate()));
+                if (!defenderMatches) {
                     return true;
                 }
             }
@@ -419,24 +418,17 @@ public class CombatService {
                     && blocker.getCard().getColor() != CardColor.BLACK) {
                 throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (fear)");
             }
-            boolean blockOnlyFlyers = blocker.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(e -> e instanceof BlockOnlyFlyersEffect);
-            if (blockOnlyFlyers && !gameQueryService.hasKeyword(gameData, attacker, Keyword.FLYING)) {
-                throw new IllegalStateException(blocker.getCard().getName() + " can only block creatures with flying");
+            for (CardEffect blockerStaticEffect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
+                if (blockerStaticEffect instanceof CanBlockOnlyIfAttackerMatchesPredicateEffect restriction
+                        && !gameQueryService.matchesPermanentPredicate(gameData, attacker, restriction.attackerPredicate())) {
+                    throw new IllegalStateException(blocker.getCard().getName() + " can only block " + restriction.allowedAttackersDescription());
+                }
             }
             for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof CantBeBlockedBySubtypeEffect restriction) {
-                    if (blocker.getCard().getSubtypes().contains(restriction.subtype())
-                            || gameQueryService.hasKeyword(gameData, blocker, Keyword.CHANGELING)) {
-                        throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked by " + restriction.subtype().getDisplayName() + "s");
-                    }
-                } else if (effect instanceof CanBeBlockedOnlyByFlyingOrSubtypeEffect restriction) {
-                    boolean blockerHasAllowedSubtype = blocker.getCard().getSubtypes().contains(restriction.subtype())
-                            || gameQueryService.hasKeyword(gameData, blocker, Keyword.CHANGELING);
-                    boolean blockerHasFlying = gameQueryService.hasKeyword(gameData, blocker, Keyword.FLYING);
-                    if (!blockerHasAllowedSubtype && !blockerHasFlying) {
+                if (effect instanceof CanBeBlockedOnlyByFilterEffect restriction) {
+                    if (!gameQueryService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
                         throw new IllegalStateException(attacker.getCard().getName()
-                                + " can only be blocked by creatures with flying or by " + restriction.subtype().getDisplayName() + "s");
+                                + " can only be blocked by " + restriction.allowedBlockersDescription());
                     }
                 }
             }
@@ -1220,6 +1212,7 @@ public class CombatService {
 
 
     }
+
 }
 
 

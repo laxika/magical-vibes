@@ -14,7 +14,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFlyingOrSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -59,8 +60,10 @@ class ElvenRidersTest {
         assertThat(card.getToughness()).isEqualTo(3);
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.ELF);
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CanBeBlockedOnlyByFlyingOrSubtypeEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(CanBeBlockedOnlyByFilterEffect.class);
+        CanBeBlockedOnlyByFilterEffect effect = (CanBeBlockedOnlyByFilterEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(effect.blockerPredicate()).isInstanceOf(PermanentAnyOfPredicate.class);
+        assertThat(effect.allowedBlockersDescription()).isEqualTo("creatures with flying or Walls");
     }
 
     @Test
@@ -77,7 +80,7 @@ class ElvenRidersTest {
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can only be blocked by creatures with flying or by Walls");
+                .hasMessageContaining("can only be blocked by creatures with flying or Walls");
     }
 
     @Test
@@ -126,7 +129,7 @@ class ElvenRidersTest {
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can only be blocked by creatures with flying or by Walls");
+                .hasMessageContaining("can only be blocked by creatures with flying or Walls");
     }
 
     private Permanent attackingRiders() {

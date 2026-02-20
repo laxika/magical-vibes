@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TargetFilter;
-import com.github.laxika.magicalvibes.model.filter.LandSubtypeTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
@@ -31,13 +30,21 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndContr
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.CreatureColorTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class CardViewFactory {
@@ -96,9 +103,9 @@ public class CardViewFactory {
             }
         }
 
-        List<String> allowedTargetColors = new ArrayList<>();
-        if (ability.getTargetFilter() instanceof CreatureColorTargetFilter colorFilter) {
-            colorFilter.colors().forEach(c -> allowedTargetColors.add(c.name()));
+        Set<String> allowedTargetColors = new LinkedHashSet<>();
+        if (ability.getTargetFilter() instanceof PermanentPredicateTargetFilter predicateFilter) {
+            collectAllowedColors(predicateFilter.predicate(), allowedTargetColors);
         }
 
         boolean targetsBlockingThis = ability.getEffects().stream()
@@ -111,7 +118,7 @@ public class CardViewFactory {
                 ability.isNeedsSpellTarget(),
                 targetsPlayer,
                 allowedTargetTypes,
-                allowedTargetColors,
+                List.copyOf(allowedTargetColors),
                 ability.getManaCost(),
                 ability.getLoyaltyCost(),
                 targetsBlockingThis
@@ -187,11 +194,45 @@ public class CardViewFactory {
 
     private List<String> computeSpellAllowedTargetSubtypes(Card card) {
         TargetFilter filter = card.getTargetFilter();
-        if (filter instanceof LandSubtypeTargetFilter f) {
-            return f.subtypes().stream()
-                    .map(CardSubtype::getDisplayName)
-                    .toList();
+        if (filter instanceof PermanentPredicateTargetFilter f) {
+            Set<String> subtypeNames = new LinkedHashSet<>();
+            collectAllowedSubtypes(f.predicate(), subtypeNames);
+            return List.copyOf(subtypeNames);
         }
         return List.of();
+    }
+
+    private void collectAllowedColors(PermanentPredicate predicate, Set<String> out) {
+        if (predicate instanceof PermanentColorInPredicate colorInPredicate) {
+            colorInPredicate.colors().forEach(c -> out.add(c.name()));
+            return;
+        }
+        if (predicate instanceof PermanentAnyOfPredicate anyOfPredicate) {
+            anyOfPredicate.predicates().forEach(p -> collectAllowedColors(p, out));
+            return;
+        }
+        if (predicate instanceof PermanentAllOfPredicate allOfPredicate) {
+            allOfPredicate.predicates().forEach(p -> collectAllowedColors(p, out));
+        }
+    }
+
+    private void collectAllowedSubtypes(PermanentPredicate predicate, Set<String> out) {
+        if (predicate instanceof PermanentHasSubtypePredicate subtypePredicate) {
+            out.add(subtypePredicate.subtype().getDisplayName());
+            return;
+        }
+        if (predicate instanceof PermanentHasAnySubtypePredicate anySubtypePredicate) {
+            anySubtypePredicate.subtypes().stream()
+                    .map(CardSubtype::getDisplayName)
+                    .forEach(out::add);
+            return;
+        }
+        if (predicate instanceof PermanentAnyOfPredicate anyOfPredicate) {
+            anyOfPredicate.predicates().forEach(p -> collectAllowedSubtypes(p, out));
+            return;
+        }
+        if (predicate instanceof PermanentAllOfPredicate allOfPredicate) {
+            allOfPredicate.predicates().forEach(p -> collectAllowedSubtypes(p, out));
+        }
     }
 }

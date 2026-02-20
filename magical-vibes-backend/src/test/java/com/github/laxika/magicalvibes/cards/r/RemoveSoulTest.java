@@ -12,13 +12,15 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.filter.SpellTypeTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -50,7 +52,10 @@ class RemoveSoulTest {
         assertThat(card.getManaCost()).isEqualTo("{1}{U}");
         assertThat(card.getColor()).isEqualTo(CardColor.BLUE);
         assertThat(card.isNeedsSpellTarget()).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(SpellTypeTargetFilter.class);
+        assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
+                new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL)),
+                "Target must be a creature spell."
+        ));
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterSpellEffect.class);
     }

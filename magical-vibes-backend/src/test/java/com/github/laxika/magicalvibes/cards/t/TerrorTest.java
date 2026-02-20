@@ -13,7 +13,12 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.NonArtifactNonColorCreatureTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -50,10 +55,14 @@ class TerrorTest {
         assertThat(card.getManaCost()).isEqualTo("{1}{B}");
         assertThat(card.getColor()).isEqualTo(CardColor.BLACK);
         assertThat(card.isNeedsTarget()).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(NonArtifactNonColorCreatureTargetFilter.class);
-        NonArtifactNonColorCreatureTargetFilter filter =
-                (NonArtifactNonColorCreatureTargetFilter) card.getTargetFilter();
-        assertThat(filter.excludedColors()).isEqualTo(Set.of(CardColor.BLACK));
+        assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentNotPredicate(new PermanentIsArtifactPredicate()),
+                        new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))
+                )),
+                "Target must be a nonartifact, nonblack creature"
+        ));
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
         DestroyTargetPermanentEffect effect = (DestroyTargetPermanentEffect) card.getEffects(EffectSlot.SPELL).getFirst();

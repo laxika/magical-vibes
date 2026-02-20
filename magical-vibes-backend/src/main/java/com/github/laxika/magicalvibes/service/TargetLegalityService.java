@@ -12,12 +12,19 @@ import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
-import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.CreatureYouControlTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.OpponentPlayerTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.SingleTargetSpellTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.SpellColorTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.SpellTypeTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import lombok.RequiredArgsConstructor;
@@ -43,22 +50,9 @@ public class TargetLegalityService {
             throw new IllegalStateException("Target must be a spell on the stack");
         }
 
-        if (targetFilter instanceof SpellColorTargetFilter colorFilter
-                && !colorFilter.colors().contains(targetSpell.getCard().getColor())) {
-            throw new IllegalStateException("Target spell must be "
-                    + colorFilter.colors().stream()
-                    .map(c -> c.name().toLowerCase())
-                    .reduce((a, b) -> a + " or " + b).orElse("") + ".");
-        }
-
-        if (targetFilter instanceof SpellTypeTargetFilter typeFilter
-                && !typeFilter.spellTypes().contains(targetSpell.getEntryType())) {
-            throw new IllegalStateException("Target must be a creature spell.");
-        }
-
-        if (targetFilter instanceof SingleTargetSpellTargetFilter
-                && !isSingleTargetSpell(targetSpell)) {
-            throw new IllegalStateException("Target spell must have a single target.");
+        if (targetFilter instanceof StackEntryPredicateTargetFilter filter
+                && !matchesStackEntryPredicate(targetSpell, filter.predicate())) {
+            throw new IllegalStateException(filter.errorMessage());
         }
     }
 
@@ -75,19 +69,16 @@ public class TargetLegalityService {
         if (ability.getTargetFilter() != null && targetPermanentId != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
             if (target != null) {
-                gameQueryService.validateTargetFilter(ability.getTargetFilter(), target);
-
-                if (ability.getTargetFilter() instanceof ControllerOnlyTargetFilter
-                        || ability.getTargetFilter() instanceof CreatureYouControlTargetFilter) {
+                if (ability.getTargetFilter() instanceof ControlledPermanentPredicateTargetFilter controlledFilter) {
                     List<Permanent> playerBattlefield = gameData.playerBattlefields.get(playerId);
                     if (playerBattlefield == null || !playerBattlefield.contains(target)) {
                         throw new IllegalStateException("Target must be a permanent you control");
                     }
-                }
-
-                if (ability.getTargetFilter() instanceof CreatureYouControlTargetFilter
-                        && !gameQueryService.isCreature(gameData, target)) {
-                    throw new IllegalStateException("Target must be a creature you control");
+                    if (!gameQueryService.matchesPermanentPredicate(gameData, target, controlledFilter.predicate())) {
+                        throw new IllegalStateException(controlledFilter.errorMessage());
+                    }
+                } else {
+                    gameQueryService.validateTargetFilter(gameData, ability.getTargetFilter(), target);
                 }
             }
         }
@@ -115,14 +106,23 @@ public class TargetLegalityService {
         }
 
         if (target == null
-                && card.getTargetFilter() instanceof OpponentPlayerTargetFilter
-                && controllerId != null
-                && controllerId.equals(targetPermanentId)) {
-            throw new IllegalStateException("Target must be an opponent");
+                && card.getTargetFilter() instanceof PlayerPredicateTargetFilter playerFilter
+                && !matchesPlayerPredicate(controllerId, targetPermanentId, playerFilter.predicate())) {
+            throw new IllegalStateException(playerFilter.errorMessage());
         }
 
         if (card.getTargetFilter() != null && target != null) {
-            gameQueryService.validateTargetFilter(card.getTargetFilter(), target);
+            if (card.getTargetFilter() instanceof ControlledPermanentPredicateTargetFilter controlledFilter) {
+                List<Permanent> playerBattlefield = gameData.playerBattlefields.get(controllerId);
+                if (playerBattlefield == null || !playerBattlefield.contains(target)) {
+                    throw new IllegalStateException("Target must be a permanent you control");
+                }
+                if (!gameQueryService.matchesPermanentPredicate(gameData, target, controlledFilter.predicate())) {
+                    throw new IllegalStateException(controlledFilter.errorMessage());
+                }
+            } else {
+                gameQueryService.validateTargetFilter(gameData, card.getTargetFilter(), target);
+            }
         }
 
         targetValidationService.validateEffectTargets(card.getEffects(EffectSlot.SPELL),
@@ -191,7 +191,7 @@ public class TargetLegalityService {
                                     : entry.getCard() != null ? entry.getCard().getTargetFilter() : null;
                     if (effectiveTargetFilter != null) {
                         try {
-                            gameQueryService.validateTargetFilter(effectiveTargetFilter, targetPerm);
+                            gameQueryService.validateTargetFilter(gameData, effectiveTargetFilter, targetPerm);
                         } catch (IllegalStateException e) {
                             targetFizzled = true;
                         }
@@ -255,6 +255,50 @@ public class TargetLegalityService {
         return stackEntry.getTargetPermanentId() != null
                 && stackEntry.getTargetPermanentIds().isEmpty()
                 && stackEntry.getTargetCardIds().isEmpty();
+    }
+
+    public boolean matchesStackEntryPredicate(StackEntry stackEntry, StackEntryPredicate predicate) {
+        if (predicate instanceof StackEntryTypeInPredicate typeInPredicate) {
+            return typeInPredicate.spellTypes().contains(stackEntry.getEntryType());
+        }
+        if (predicate instanceof StackEntryColorInPredicate colorInPredicate) {
+            return colorInPredicate.colors().contains(stackEntry.getCard().getColor());
+        }
+        if (predicate instanceof StackEntryIsSingleTargetPredicate) {
+            return isSingleTargetSpell(stackEntry);
+        }
+        if (predicate instanceof StackEntryAnyOfPredicate anyOfPredicate) {
+            for (StackEntryPredicate nested : anyOfPredicate.predicates()) {
+                if (matchesStackEntryPredicate(stackEntry, nested)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        if (predicate instanceof StackEntryAllOfPredicate allOfPredicate) {
+            for (StackEntryPredicate nested : allOfPredicate.predicates()) {
+                if (!matchesStackEntryPredicate(stackEntry, nested)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        if (predicate instanceof StackEntryNotPredicate notPredicate) {
+            return !matchesStackEntryPredicate(stackEntry, notPredicate.predicate());
+        }
+        return false;
+    }
+
+    private boolean matchesPlayerPredicate(UUID controllerId, UUID targetPlayerId, PlayerPredicate predicate) {
+        if (predicate instanceof PlayerRelationPredicate relationPredicate) {
+            if (relationPredicate.relation() == PlayerRelation.SELF) {
+                return controllerId != null && controllerId.equals(targetPlayerId);
+            }
+            if (relationPredicate.relation() == PlayerRelation.OPPONENT) {
+                return controllerId != null && !controllerId.equals(targetPlayerId);
+            }
+        }
+        return false;
     }
 }
 

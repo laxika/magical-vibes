@@ -37,7 +37,7 @@ public class ExampleCard extends Card {
 
 - Spell that targets stack entries:
   - `setNeedsSpellTarget(true)`
-  - `setTargetFilter(new SpellTypeTargetFilter(...))`
+  - `setTargetFilter(new StackEntryPredicateTargetFilter(...))`
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/t/Twincast.java`
 
 - Static combat restriction on self:
@@ -57,7 +57,7 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SiegeGangCommander.java`
 
 - ETB target-opponent control handoff:
-  - `setNeedsTarget(true)` + `setTargetFilter(new OpponentPlayerTargetFilter())`
+  - `setNeedsTarget(true)` + `setTargetFilter(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT), ...))`
   - `addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TargetPlayerGainsControlOfSourceCreatureEffect())`
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SleeperAgent.java`
 
@@ -74,8 +74,12 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/a/AvatarOfMight.java`
 
 - Attacker blocked-only-by-flying-or-subtype:
-  - add static evasion restriction on attacker: `addEffect(EffectSlot.STATIC, new CanBeBlockedOnlyByFlyingOrSubtypeEffect(CardSubtype.X))`
+  - prefer composed permanent predicates on attacker: `addEffect(EffectSlot.STATIC, new CanBeBlockedOnlyByFilterEffect(new PermanentAnyOfPredicate(List.of(new PermanentHasKeywordPredicate(Keyword.FLYING), new PermanentHasSubtypePredicate(CardSubtype.X))), "creatures with flying or Xs"))`
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/e/ElvenRiders.java`
+
+- Predicate-based targeting:
+  - prefer `setTargetFilter(new PermanentPredicateTargetFilter(...))` over ad-hoc `TargetFilter` permutations
+  - compose with `PermanentAllOfPredicate`, `PermanentAnyOfPredicate`, and atoms like `PermanentIsCreaturePredicate`, `PermanentIsTappedPredicate`, `PermanentColorInPredicate`, `PermanentHasSubtypePredicate`
 
 ## Targeting checklist
 

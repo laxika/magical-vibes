@@ -36,7 +36,6 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEf
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.SpellTypeTargetFilter;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -44,6 +43,7 @@ import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.StateBasedActionService;
+import com.github.laxika.magicalvibes.service.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,6 +65,7 @@ public class MayAbilityHandlerService {
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
+    private final TargetLegalityService targetLegalityService;
     private final SessionManager sessionManager;
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
@@ -355,11 +356,14 @@ public class MayAbilityHandlerService {
 
         if (copiedCard.isNeedsSpellTarget()) {
             // Targets a spell on the stack
-            SpellTypeTargetFilter spellFilter = copiedCard.getTargetFilter() instanceof SpellTypeTargetFilter stf ? stf : null;
             for (StackEntry se : gameData.stack) {
                 if (se.getCard().getId().equals(copyCardId)) continue; // exclude the copy itself
-                if (spellFilter != null && !spellFilter.spellTypes().contains(se.getEntryType())) continue;
-                validTargets.add(se.getCard().getId());
+                try {
+                    targetLegalityService.validateSpellTargetOnStack(gameData, se.getCard().getId(), copiedCard.getTargetFilter());
+                    validTargets.add(se.getCard().getId());
+                } catch (IllegalStateException ignored) {
+                    // Invalid target for copied spell filter; skip.
+                }
             }
         } else if (copiedCard.isNeedsTarget()) {
             List<CardEffect> effects = copyEntry.getEffectsToResolve();

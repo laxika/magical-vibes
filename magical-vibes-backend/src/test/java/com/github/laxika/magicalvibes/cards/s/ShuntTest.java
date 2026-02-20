@@ -15,7 +15,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
-import com.github.laxika.magicalvibes.model.filter.SingleTargetSpellTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -52,7 +53,10 @@ class ShuntTest {
         assertThat(card.getManaCost()).isEqualTo("{1}{R}{R}");
         assertThat(card.getColor()).isEqualTo(CardColor.RED);
         assertThat(card.isNeedsSpellTarget()).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(SingleTargetSpellTargetFilter.class);
+        assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
+                new StackEntryIsSingleTargetPredicate(),
+                "Target spell must have a single target."
+        ));
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ChangeTargetOfTargetSpellWithSingleTargetEffect.class);
     }

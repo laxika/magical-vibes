@@ -13,7 +13,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
-import com.github.laxika.magicalvibes.model.filter.CreatureColorTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -21,6 +24,9 @@ import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -63,9 +69,13 @@ class SkyWeaverTest {
         assertThat(ability.getEffects().getFirst()).isInstanceOf(GrantKeywordToTargetEffect.class);
         GrantKeywordToTargetEffect effect = (GrantKeywordToTargetEffect) ability.getEffects().getFirst();
         assertThat(effect.keyword()).isEqualTo(Keyword.FLYING);
-        assertThat(ability.getTargetFilter()).isInstanceOf(CreatureColorTargetFilter.class);
-        CreatureColorTargetFilter filter = (CreatureColorTargetFilter) ability.getTargetFilter();
-        assertThat(filter.colors()).containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLACK);
+        assertThat(ability.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentColorInPredicate(Set.of(CardColor.WHITE, CardColor.BLACK))
+                )),
+                "Target must be a white or black creature"
+        ));
     }
 
     // ===== Activation =====

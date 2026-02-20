@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.filter.CreatureYouControlTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -100,7 +100,7 @@ class BarkOfDoranTest {
         assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
         assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
         assertThat(card.getActivatedAbilities().get(0).getTargetFilter())
-                .isInstanceOf(CreatureYouControlTargetFilter.class);
+                .isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
         assertThat(card.getActivatedAbilities().get(0).getTimingRestriction())
                 .isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
         assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);

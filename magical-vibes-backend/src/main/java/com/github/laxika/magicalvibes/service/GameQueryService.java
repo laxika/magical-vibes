@@ -17,15 +17,25 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
-import com.github.laxika.magicalvibes.model.filter.AttackingOrBlockingTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.AttackingTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.CreatureColorTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.CreatureTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.LandSubtypeTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.MaxPowerTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.NonArtifactNonColorCreatureTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.TappedTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.WithoutKeywordTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandler;
@@ -121,6 +131,97 @@ public class GameQueryService {
 
     public boolean hasKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
         return permanent.hasKeyword(keyword) || computeStaticBonus(gameData, permanent).keywords().contains(keyword);
+    }
+
+    public boolean matchesPermanentPredicate(GameData gameData, Permanent permanent, PermanentPredicate predicate) {
+        return matchesPermanentPredicate(gameData, permanent, predicate, null, null);
+    }
+
+    public boolean matchesPermanentPredicate(GameData gameData,
+                                             Permanent permanent,
+                                             PermanentPredicate predicate,
+                                             UUID sourceCardId,
+                                             UUID sourceControllerId) {
+        if (predicate instanceof PermanentHasKeywordPredicate hasKeywordPredicate) {
+            if (gameData == null) {
+                return permanent.hasKeyword(hasKeywordPredicate.keyword());
+            }
+            return hasKeyword(gameData, permanent, hasKeywordPredicate.keyword());
+        }
+        if (predicate instanceof PermanentHasSubtypePredicate hasSubtypePredicate) {
+            return permanent.getCard().getSubtypes().contains(hasSubtypePredicate.subtype())
+                    || (gameData == null
+                    ? permanent.hasKeyword(Keyword.CHANGELING)
+                    : hasKeyword(gameData, permanent, Keyword.CHANGELING));
+        }
+        if (predicate instanceof PermanentHasAnySubtypePredicate hasAnySubtypePredicate) {
+            boolean hasSubtype = permanent.getCard().getSubtypes().stream().anyMatch(hasAnySubtypePredicate.subtypes()::contains);
+            return hasSubtype || (gameData == null
+                    ? permanent.hasKeyword(Keyword.CHANGELING)
+                    : hasKeyword(gameData, permanent, Keyword.CHANGELING));
+        }
+        if (predicate instanceof PermanentIsCreaturePredicate) {
+            if (gameData == null) {
+                return permanent.getCard().getType() == CardType.CREATURE
+                        || permanent.getCard().getAdditionalTypes().contains(CardType.CREATURE)
+                        || permanent.isAnimatedUntilEndOfTurn();
+            }
+            return isCreature(gameData, permanent);
+        }
+        if (predicate instanceof PermanentIsArtifactPredicate) {
+            return isArtifact(permanent);
+        }
+        if (predicate instanceof PermanentIsTappedPredicate) {
+            return permanent.isTapped();
+        }
+        if (predicate instanceof PermanentIsAttackingPredicate) {
+            return permanent.isAttacking();
+        }
+        if (predicate instanceof PermanentIsBlockingPredicate) {
+            return permanent.isBlocking();
+        }
+        if (predicate instanceof PermanentPowerAtMostPredicate powerAtMostPredicate) {
+            if (gameData == null) {
+                return permanent.getEffectivePower() <= powerAtMostPredicate.maxPower();
+            }
+            return getEffectivePower(gameData, permanent) <= powerAtMostPredicate.maxPower();
+        }
+        if (predicate instanceof PermanentColorInPredicate colorInPredicate) {
+            return colorInPredicate.colors().contains(permanent.getCard().getColor());
+        }
+        if (predicate instanceof PermanentAnyOfPredicate anyOfPredicate) {
+            for (PermanentPredicate nested : anyOfPredicate.predicates()) {
+                if (matchesPermanentPredicate(gameData, permanent, nested, sourceCardId, sourceControllerId)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        if (predicate instanceof PermanentAllOfPredicate allOfPredicate) {
+            for (PermanentPredicate nested : allOfPredicate.predicates()) {
+                if (!matchesPermanentPredicate(gameData, permanent, nested, sourceCardId, sourceControllerId)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        if (predicate instanceof PermanentNotPredicate notPredicate) {
+            return !matchesPermanentPredicate(gameData, permanent, notPredicate.predicate(), sourceCardId, sourceControllerId);
+        }
+        if (predicate instanceof PermanentIsSourceCardPredicate) {
+            return sourceCardId != null && permanent.getOriginalCard().getId().equals(sourceCardId);
+        }
+        if (predicate instanceof PermanentControlledBySourceControllerPredicate) {
+            if (sourceControllerId == null || gameData == null) {
+                return false;
+            }
+            List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
+            return controllerBattlefield != null && controllerBattlefield.contains(permanent);
+        }
+        if (predicate instanceof PermanentTruePredicate) {
+            return true;
+        }
+        return false;
     }
 
     public int getEffectivePower(GameData gameData, Permanent permanent) {
@@ -275,9 +376,30 @@ public class GameQueryService {
     }
 
     public boolean matchesFilters(GameData gameData, Permanent permanent, Set<TargetFilter> filters) {
+        return matchesFilters(gameData, permanent, filters, null, null);
+    }
+
+    public boolean matchesFilters(GameData gameData,
+                                  Permanent permanent,
+                                  Set<TargetFilter> filters,
+                                  UUID sourceCardId,
+                                  UUID sourceControllerId) {
         for (TargetFilter filter : filters) {
-            if (filter instanceof WithoutKeywordTargetFilter f) {
-                if (hasKeyword(gameData, permanent, f.keyword())) {
+            if (filter instanceof ControlledPermanentPredicateTargetFilter controlledFilter) {
+                if (sourceControllerId == null || gameData == null) {
+                    return false;
+                }
+                List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
+                if (controllerBattlefield == null || !controllerBattlefield.contains(permanent)) {
+                    return false;
+                }
+                if (!matchesPermanentPredicate(gameData, permanent, controlledFilter.predicate(), sourceCardId, sourceControllerId)) {
+                    return false;
+                }
+                continue;
+            }
+            if (filter instanceof PermanentPredicateTargetFilter f) {
+                if (!matchesPermanentPredicate(gameData, permanent, f.predicate(), sourceCardId, sourceControllerId)) {
                     return false;
                 }
             }
@@ -286,59 +408,13 @@ public class GameQueryService {
     }
 
     public void validateTargetFilter(TargetFilter filter, Permanent target) {
-        if (filter instanceof MaxPowerTargetFilter f) {
-            if (target.getEffectivePower() > f.maxPower()) {
-                throw new IllegalStateException("Target creature's power must be " + f.maxPower() + " or less");
-            }
-        } else if (filter instanceof AttackingOrBlockingTargetFilter) {
-            if (!target.isAttacking() && !target.isBlocking()) {
-                throw new IllegalStateException("Target must be an attacking or blocking creature");
-            }
-        } else if (filter instanceof AttackingTargetFilter) {
-            if (!target.isAttacking()) {
-                throw new IllegalStateException("Target must be an attacking creature");
-            }
-        } else if (filter instanceof CreatureColorTargetFilter f) {
-            if (!f.colors().contains(target.getCard().getColor())) {
-                String colorNames = f.colors().stream()
-                        .map(c -> c.name().toLowerCase())
-                        .sorted()
-                        .reduce((a, b) -> a + " or " + b)
-                        .orElse("");
-                throw new IllegalStateException("Target must be a " + colorNames + " creature");
-            }
-        } else if (filter instanceof CreatureTargetFilter) {
-            boolean isCreatureTarget = target.getCard().getType() == CardType.CREATURE
-                    || target.getCard().getAdditionalTypes().contains(CardType.CREATURE)
-                    || target.isAnimatedUntilEndOfTurn();
-            if (!isCreatureTarget) {
-                throw new IllegalStateException("Target must be a creature");
-            }
-        } else if (filter instanceof TappedTargetFilter) {
-            if (!target.isTapped()) {
-                throw new IllegalStateException("Target must be a tapped creature");
-            }
-        } else if (filter instanceof NonArtifactNonColorCreatureTargetFilter f) {
-            if (isArtifact(target)) {
-                throw new IllegalStateException("Target must be a nonartifact creature");
-            }
-            if (f.excludedColors().contains(target.getCard().getColor())) {
-                String colorNames = f.excludedColors().stream()
-                        .map(c -> c.name().toLowerCase())
-                        .sorted()
-                        .reduce((a, b) -> a + " or " + b)
-                        .orElse("");
-                throw new IllegalStateException("Target must be a non" + colorNames + " creature");
-            }
-        } else if (filter instanceof LandSubtypeTargetFilter f) {
-            if (target.getCard().getType() != CardType.LAND
-                    || target.getCard().getSubtypes().stream().noneMatch(f.subtypes()::contains)) {
-                String subtypeNames = f.subtypes().stream()
-                        .map(CardSubtype::getDisplayName)
-                        .sorted()
-                        .reduce((a, b) -> a + " or " + b)
-                        .orElse("");
-                throw new IllegalStateException("Target must be a " + subtypeNames);
+        validateTargetFilter(null, filter, target);
+    }
+
+    public void validateTargetFilter(GameData gameData, TargetFilter filter, Permanent target) {
+        if (filter instanceof PermanentPredicateTargetFilter f) {
+            if (!matchesPermanentPredicate(gameData, target, f.predicate())) {
+                throw new IllegalStateException(f.errorMessage());
             }
         }
     }

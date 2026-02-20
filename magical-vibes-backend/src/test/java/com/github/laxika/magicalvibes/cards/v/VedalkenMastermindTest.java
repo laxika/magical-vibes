@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
-import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -57,7 +57,7 @@ class VedalkenMastermindTest {
         assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
                 .isInstanceOf(ReturnTargetPermanentToHandEffect.class);
         assertThat(card.getActivatedAbilities().get(0).getTargetFilter())
-                .isInstanceOf(ControllerOnlyTargetFilter.class);
+                .isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
     }
 
     // ===== Activating ability =====

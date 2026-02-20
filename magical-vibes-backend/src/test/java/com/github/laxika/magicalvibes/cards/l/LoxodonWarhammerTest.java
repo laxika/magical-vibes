@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatureEffect;
-import com.github.laxika.magicalvibes.model.filter.CreatureYouControlTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
@@ -101,7 +101,7 @@ class LoxodonWarhammerTest {
         assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
         assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
         assertThat(card.getActivatedAbilities().get(0).getTargetFilter())
-                .isInstanceOf(CreatureYouControlTargetFilter.class);
+                .isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
         assertThat(card.getActivatedAbilities().get(0).getTimingRestriction())
                 .isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
         assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);

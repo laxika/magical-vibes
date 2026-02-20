@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BlockOnlyFlyersEffect;
+import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -64,7 +64,7 @@ class CloudSpriteTest {
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.FAERIE);
         assertThat(card.getKeywords()).isEqualTo(Set.of(Keyword.FLYING));
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(BlockOnlyFlyersEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(CanBlockOnlyIfAttackerMatchesPredicateEffect.class);
     }
 
     // ===== Casting and resolving =====

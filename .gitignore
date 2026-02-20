@@ -1,5 +1,6 @@
 .idea
 .gradle
+.gradle-local
 magic-ruleset.txt
 nul
 

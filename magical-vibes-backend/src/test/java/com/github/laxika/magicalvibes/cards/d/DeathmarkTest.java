@@ -10,7 +10,10 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.CreatureColorTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -51,9 +54,13 @@ class DeathmarkTest {
         assertThat(card.getManaCost()).isEqualTo("{B}");
         assertThat(card.getColor()).isEqualTo(CardColor.BLACK);
         assertThat(card.isNeedsTarget()).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(CreatureColorTargetFilter.class);
-        CreatureColorTargetFilter filter = (CreatureColorTargetFilter) card.getTargetFilter();
-        assertThat(filter.colors()).containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
+        assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentColorInPredicate(Set.of(CardColor.GREEN, CardColor.WHITE))
+                )),
+                "Target must be a green or white creature"
+        ));
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
     }

@@ -13,7 +13,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsLandTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,10 +60,10 @@ class SeaMonsterTest {
         assertThat(card.getToughness()).isEqualTo(6);
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.SERPENT);
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(CantAttackUnlessDefenderControlsLandTypeEffect.class);
-        CantAttackUnlessDefenderControlsLandTypeEffect effect =
-                (CantAttackUnlessDefenderControlsLandTypeEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.landType()).isEqualTo(CardSubtype.ISLAND);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(CantAttackUnlessDefenderControlsMatchingPermanentEffect.class);
+        CantAttackUnlessDefenderControlsMatchingPermanentEffect effect =
+                (CantAttackUnlessDefenderControlsMatchingPermanentEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(effect.defenderPermanentPredicate()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.ISLAND));
     }
 
     // ===== Casting and resolving =====

@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.TappedTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,7 +50,10 @@ class AssassinateTest {
         assertThat(card.getManaCost()).isEqualTo("{2}{B}");
         assertThat(card.getColor()).isEqualTo(CardColor.BLACK);
         assertThat(card.isNeedsTarget()).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(TappedTargetFilter.class);
+        assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
+                new PermanentIsTappedPredicate(),
+                "Target must be a tapped creature"
+        ));
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
     }

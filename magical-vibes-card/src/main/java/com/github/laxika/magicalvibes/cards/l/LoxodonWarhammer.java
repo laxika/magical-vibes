@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatureEffect;
-import com.github.laxika.magicalvibes.model.filter.CreatureYouControlTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -27,7 +28,10 @@ public class LoxodonWarhammer extends Card {
                 true,
                 false,
                 "Equip {3}",
-                new CreatureYouControlTargetFilter(),
+                new ControlledPermanentPredicateTargetFilter(
+                        new PermanentIsCreaturePredicate(),
+                        "Target must be a creature you control"
+                ),
                 null,
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.filter.TappedTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
 
@@ -18,7 +19,10 @@ public class RoyalAssassin extends Card {
                 List.of(new DestroyTargetCreatureEffect(false)),
                 true,
                 "{T}: Destroy target tapped creature.",
-                new TappedTargetFilter()
+                new PermanentPredicateTargetFilter(
+                        new PermanentIsTappedPredicate(),
+                        "Target must be a tapped creature"
+                )
         ));
     }
 }

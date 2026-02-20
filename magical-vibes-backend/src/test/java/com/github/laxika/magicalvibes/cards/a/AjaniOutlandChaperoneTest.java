@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenWithColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.filter.TappedTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -74,7 +75,10 @@ class AjaniOutlandChaperoneTest {
 
         assertThat(ability.getLoyaltyCost()).isEqualTo(-2);
         assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getTargetFilter()).isInstanceOf(TappedTargetFilter.class);
+        assertThat(ability.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
+                new PermanentIsTappedPredicate(),
+                "Target must be a tapped creature"
+        ));
         assertThat(ability.getEffects()).hasSize(1);
         assertThat(ability.getEffects().getFirst()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
     }

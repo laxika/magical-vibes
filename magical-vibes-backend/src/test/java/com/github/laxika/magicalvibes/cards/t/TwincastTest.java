@@ -18,7 +18,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
-import com.github.laxika.magicalvibes.model.filter.SpellTypeTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -60,10 +61,10 @@ class TwincastTest {
         assertThat(card.isNeedsSpellTarget()).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(CopySpellEffect.class);
-        assertThat(card.getTargetFilter()).isInstanceOf(SpellTypeTargetFilter.class);
-        SpellTypeTargetFilter filter = (SpellTypeTargetFilter) card.getTargetFilter();
-        assertThat(filter.spellTypes()).containsExactlyInAnyOrder(
-                StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL);
+        assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
+                new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
+                "Target must be an instant or sorcery spell."
+        ));
     }
 
     // ===== Casting =====

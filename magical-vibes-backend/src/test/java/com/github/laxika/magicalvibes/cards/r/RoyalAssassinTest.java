@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.filter.TappedTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -49,7 +50,10 @@ class RoyalAssassinTest {
         assertThat(card.getActivatedAbilities()).hasSize(1);
         assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
         assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getTargetFilter()).isInstanceOf(TappedTargetFilter.class);
+        assertThat(card.getActivatedAbilities().getFirst().getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
+                new PermanentIsTappedPredicate(),
+                "Target must be a tapped creature"
+        ));
         assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
         assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
                 .isInstanceOf(DestroyTargetCreatureEffect.class);
