@@ -280,9 +280,11 @@ public class ReconnectionService {
                     return;
                 }
                 List<CardView> cardViews = ls.cards().stream().map(cardViewFactory::create).toList();
-                String prompt = ls.canFailToFind()
-                        ? "Search your library for a basic land card to put into your hand."
-                        : "Search your library for a card to put into your hand.";
+                String prompt = ls.prompt() != null && !ls.prompt().isBlank()
+                        ? ls.prompt()
+                        : ls.canFailToFind()
+                            ? "Search your library for a basic land card to put into your hand."
+                            : "Search your library for a card to put into your hand.";
                 sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(
                         cardViews, prompt, ls.canFailToFind()));
             }

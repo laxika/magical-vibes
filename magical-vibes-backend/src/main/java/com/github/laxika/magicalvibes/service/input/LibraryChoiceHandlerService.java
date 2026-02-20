@@ -184,86 +184,145 @@ public class LibraryChoiceHandlerService {
         boolean canFailToFind = librarySearch.canFailToFind();
         UUID targetPlayerId = librarySearch.targetPlayerId();
         int remainingCount = librarySearch.remainingCount();
+        List<Card> sourceCards = librarySearch.sourceCards();
+        boolean reorderRemainingToBottom = librarySearch.reorderRemainingToBottom();
+        boolean shuffleAfterSelection = librarySearch.shuffleAfterSelection();
 
-        // Determine whose library/hand to use
         UUID deckOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
         UUID handOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
 
-        // Clear all state
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearLibrarySearch();
 
         List<Card> deck = gameData.playerDecks.get(deckOwnerId);
 
-        if (cardIndex == -1) {
-            // Player declined (fail to find) — only allowed for restricted searches (e.g. basic land)
-            if (!canFailToFind) {
-                throw new IllegalStateException("Cannot fail to find with an unrestricted search");
-            }
-            Collections.shuffle(deck);
-            String logEntry = player.getUsername() + " chooses not to take a card. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} declines to take a card from library", gameData.id, player.getUsername());
-        } else {
-            if (cardIndex < 0 || cardIndex >= searchCards.size()) {
-                throw new IllegalStateException("Invalid card index: " + cardIndex);
+        if (reorderRemainingToBottom) {
+            if (sourceCards == null) {
+                throw new IllegalStateException("Missing source cards for revealed-card choice");
             }
 
-            Card chosenCard = searchCards.get(cardIndex);
-
-            // Remove the chosen card from the library by identity
-            boolean removed = false;
-            for (int i = 0; i < deck.size(); i++) {
-                if (deck.get(i).getId().equals(chosenCard.getId())) {
-                    deck.remove(i);
-                    removed = true;
-                    break;
+            Card chosenCard = null;
+            if (cardIndex == -1) {
+                if (!canFailToFind) {
+                    throw new IllegalStateException("Cannot fail to find with an unrestricted search");
+                }
+            } else {
+                if (cardIndex < 0 || cardIndex >= searchCards.size()) {
+                    throw new IllegalStateException("Invalid card index: " + cardIndex);
+                }
+                chosenCard = searchCards.get(cardIndex);
+                gameData.playerHands.get(handOwnerId).add(chosenCard);
+                for (int i = 0; i < sourceCards.size(); i++) {
+                    if (sourceCards.get(i).getId().equals(chosenCard.getId())) {
+                        sourceCards.remove(i);
+                        break;
+                    }
                 }
             }
 
-            if (!removed) {
-                throw new IllegalStateException("Chosen card not found in library");
+            if (sourceCards.size() > 1) {
+                gameData.interaction.beginLibraryReorder(deckOwnerId, sourceCards, true);
+                List<CardView> cardViews = sourceCards.stream().map(cardViewFactory::create).toList();
+                sessionManager.sendToPlayer(deckOwnerId, new com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage(
+                        cardViews,
+                        "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."
+                ));
+            } else if (sourceCards.size() == 1) {
+                deck.add(sourceCards.getFirst());
             }
 
-            gameData.playerHands.get(handOwnerId).add(chosenCard);
+            String logEntry = chosenCard == null
+                    ? player.getUsername() + " does not reveal a creature card."
+                    : player.getUsername() + " reveals " + chosenCard.getName() + " and puts it into their hand.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
-            // Head Games multi-pick: more cards to choose
-            if (targetPlayerId != null && remainingCount > 1) {
-                int newRemaining = remainingCount - 1;
-                List<Card> newSearchCards = new ArrayList<>(deck);
-
-                gameData.interaction.beginLibrarySearch(playerId, newSearchCards, false, false, targetPlayerId, newRemaining);
-
-                String targetName = gameData.playerIdToName.get(targetPlayerId);
-                List<CardView> cardViews = newSearchCards.stream().map(cardViewFactory::create).toList();
-                sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(
-                        cardViews,
-                        "Search " + targetName + "'s library for a card to put into their hand (" + newRemaining + " remaining).",
-                        false
-                ));
-
-                log.info("Game {} - {} picks for Head Games, {} remaining", gameData.id, player.getUsername(), newRemaining);
+            if (sourceCards.size() > 1) {
                 return;
             }
 
-            Collections.shuffle(deck);
-
-            String logEntry;
-            if (targetPlayerId != null) {
-                String targetName = gameData.playerIdToName.get(targetPlayerId);
-                logEntry = player.getUsername() + " puts cards into " + targetName + "'s hand. " + targetName + "'s library is shuffled.";
-            } else if (reveals) {
-                logEntry = player.getUsername() + " reveals " + chosenCard.getName() + " and puts it into their hand. Library is shuffled.";
-            } else {
-                logEntry = player.getUsername() + " puts a card into their hand. Library is shuffled.";
-            }
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} searches library and puts {} into hand", gameData.id, player.getUsername(), chosenCard.getName());
+            turnProgressionService.resolveAutoPass(gameData);
+            return;
         }
+
+        if (cardIndex == -1) {
+            if (!canFailToFind) {
+                throw new IllegalStateException("Cannot fail to find with an unrestricted search");
+            }
+            if (shuffleAfterSelection) {
+                Collections.shuffle(deck);
+            }
+            String logEntry = shuffleAfterSelection
+                    ? player.getUsername() + " chooses not to take a card. Library is shuffled."
+                    : player.getUsername() + " chooses not to take a card.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines to take a card from library", gameData.id, player.getUsername());
+            turnProgressionService.resolveAutoPass(gameData);
+            return;
+        }
+
+        if (cardIndex < 0 || cardIndex >= searchCards.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        Card chosenCard = searchCards.get(cardIndex);
+
+        boolean removed = false;
+        for (int i = 0; i < deck.size(); i++) {
+            if (deck.get(i).getId().equals(chosenCard.getId())) {
+                deck.remove(i);
+                removed = true;
+                break;
+            }
+        }
+
+        if (!removed) {
+            throw new IllegalStateException("Chosen card not found in library");
+        }
+
+        gameData.playerHands.get(handOwnerId).add(chosenCard);
+
+        if (targetPlayerId != null && remainingCount > 1) {
+            int newRemaining = remainingCount - 1;
+            List<Card> newSearchCards = new ArrayList<>(deck);
+
+            gameData.interaction.beginLibrarySearch(playerId, newSearchCards, false, false, targetPlayerId, newRemaining);
+
+            String targetName = gameData.playerIdToName.get(targetPlayerId);
+            List<CardView> cardViews = newSearchCards.stream().map(cardViewFactory::create).toList();
+            sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(
+                    cardViews,
+                    "Search " + targetName + "'s library for a card to put into their hand (" + newRemaining + " remaining).",
+                    false
+            ));
+
+            log.info("Game {} - {} picks for Head Games, {} remaining", gameData.id, player.getUsername(), newRemaining);
+            return;
+        }
+
+        if (shuffleAfterSelection) {
+            Collections.shuffle(deck);
+        }
+
+        String logEntry;
+        if (targetPlayerId != null) {
+            String targetName = gameData.playerIdToName.get(targetPlayerId);
+            logEntry = shuffleAfterSelection
+                    ? player.getUsername() + " puts cards into " + targetName + "'s hand. " + targetName + "'s library is shuffled."
+                    : player.getUsername() + " puts cards into " + targetName + "'s hand.";
+        } else if (reveals) {
+            logEntry = shuffleAfterSelection
+                    ? player.getUsername() + " reveals " + chosenCard.getName() + " and puts it into their hand. Library is shuffled."
+                    : player.getUsername() + " reveals " + chosenCard.getName() + " and puts it into their hand.";
+        } else {
+            logEntry = shuffleAfterSelection
+                    ? player.getUsername() + " puts a card into their hand. Library is shuffled."
+                    : player.getUsername() + " puts a card into their hand.";
+        }
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} searches library and puts {} into hand", gameData.id, player.getUsername(), chosenCard.getName());
 
         turnProgressionService.resolveAutoPass(gameData);
     }
-
     public void handleLibraryRevealChoice(GameData gameData, Player player, List<UUID> cardIds) {
         InteractionContext.LibraryRevealChoice libraryRevealChoice = gameData.interaction.libraryRevealChoiceContext();
         if (libraryRevealChoice == null || !player.getId().equals(libraryRevealChoice.playerId())) {
@@ -347,5 +406,6 @@ public class LibraryChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 }
+
 
 

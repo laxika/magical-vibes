@@ -31,6 +31,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `discard`: `DiscardCardEffect`, `TargetPlayerDiscardsEffect`, `RandomDiscardEffect`
 - `mill`: `MillTargetPlayerEffect`, `MillHalfLibraryEffect`, `MillByHandSizeEffect`
 - `search library`: `SearchLibraryForCardToHandEffect`, `SearchLibraryForBasicLandToHandEffect`
+- `look at top N cards, may reveal a card of specified type(s) and put it into hand, rest on bottom`: `LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect`
 - `shuffle into library`: `ShuffleIntoLibraryEffect`, `ShuffleGraveyardIntoLibraryEffect`
 - `create creature tokens`: `CreateCreatureTokenEffect`, `CreateCreatureTokenWithColorsEffect`
 - `gain life`: `GainLifeEffect`, `GainLifePerGraveyardCardEffect`, `GainLifeEqualToTargetToughnessEffect`

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
 import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.MillByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
@@ -69,6 +70,9 @@ public class LibraryResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveSearchLibraryForCreatureWithMVXOrLessToHand(gd, entry));
         registry.register(LookAtTopCardsHandTopBottomEffect.class,
                 (gd, entry, effect) -> resolveLookAtTopCardsHandTopBottom(gd, entry, (LookAtTopCardsHandTopBottomEffect) effect));
+        registry.register(LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect.class,
+                (gd, entry, effect) -> resolveLookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottom(
+                        gd, entry, (LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect) effect));
         registry.register(HeadGamesEffect.class,
                 (gd, entry, effect) -> resolveHeadGames(gd, entry));
         registry.register(AjaniUltimateEffect.class,
@@ -473,6 +477,69 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         String logMsg = playerName + " looks at the top " + count + " cards of their library.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} resolving {} with {} cards", gameData.id, playerName, entry.getCard().getName(), count);
+    }
+
+    void resolveLookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottom(
+            GameData gameData,
+            StackEntry entry,
+            LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect effect
+    ) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        int count = Math.min(effect.count(), deck.size());
+        if (count == 0) {
+            String logMsg = entry.getCard().getName() + ": " + playerName + "'s library is empty.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> topCards = new ArrayList<>(deck.subList(0, count));
+        deck.subList(0, count).clear();
+
+        List<Card> creatureCards = topCards.stream()
+                .filter(card -> effect.cardTypes().contains(card.getType())
+                        || card.getAdditionalTypes().stream().anyMatch(effect.cardTypes()::contains))
+                .toList();
+
+        String logMsg = playerName + " looks at the top " + count + " cards of their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+
+        if (creatureCards.isEmpty()) {
+            if (topCards.size() == 1) {
+                deck.add(topCards.getFirst());
+                return;
+            }
+
+            gameData.interaction.beginLibraryReorder(controllerId, topCards, true);
+            List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
+            sessionManager.sendToPlayer(controllerId, new ReorderLibraryCardsMessage(
+                    cardViews,
+                    "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."
+            ));
+            return;
+        }
+
+        gameData.interaction.beginLibrarySearch(
+                controllerId,
+                creatureCards,
+                true,
+                true,
+                null,
+                0,
+                topCards,
+                true,
+                false,
+                "You may reveal a creature card from among them and put it into your hand."
+        );
+
+        List<CardView> cardViews = creatureCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
+                cardViews,
+                "You may reveal a creature card from among them and put it into your hand.",
+                true
+        ));
     }
 }
 
