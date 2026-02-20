@@ -1,0 +1,5 @@
+[[approval_rules]]
+# Matches any gradlew command targeting the backend test suite
+command_pattern = "^./gradlew :magical-vibes-backend:test --tests .*"
+decision = "always-allow"
+reason = "Allow targeted backend tests to manage Gradle wrapper locks and artifacts."
