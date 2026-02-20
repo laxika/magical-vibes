@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandler;
@@ -144,14 +145,16 @@ public class GameQueryService {
     }
 
     public boolean matchesPermanentPredicate(GameData gameData, Permanent permanent, PermanentPredicate predicate) {
-        return matchesPermanentPredicate(gameData, permanent, predicate, null, null);
+        return matchesPermanentPredicate(permanent, predicate, FilterContext.of(gameData));
     }
 
-    public boolean matchesPermanentPredicate(GameData gameData,
-                                             Permanent permanent,
+    public boolean matchesPermanentPredicate(Permanent permanent,
                                              PermanentPredicate predicate,
-                                             UUID sourceCardId,
-                                             UUID sourceControllerId) {
+                                             FilterContext filterContext) {
+        GameData gameData = filterContext != null ? filterContext.gameData() : null;
+        UUID sourceCardId = filterContext != null ? filterContext.sourceCardId() : null;
+        UUID sourceControllerId = filterContext != null ? filterContext.sourceControllerId() : null;
+
         if (predicate instanceof PermanentHasKeywordPredicate hasKeywordPredicate) {
             if (gameData == null) {
                 return permanent.hasKeyword(hasKeywordPredicate.keyword());
@@ -203,7 +206,7 @@ public class GameQueryService {
         }
         if (predicate instanceof PermanentAnyOfPredicate anyOfPredicate) {
             for (PermanentPredicate nested : anyOfPredicate.predicates()) {
-                if (matchesPermanentPredicate(gameData, permanent, nested, sourceCardId, sourceControllerId)) {
+                if (matchesPermanentPredicate(permanent, nested, filterContext)) {
                     return true;
                 }
             }
@@ -211,14 +214,14 @@ public class GameQueryService {
         }
         if (predicate instanceof PermanentAllOfPredicate allOfPredicate) {
             for (PermanentPredicate nested : allOfPredicate.predicates()) {
-                if (!matchesPermanentPredicate(gameData, permanent, nested, sourceCardId, sourceControllerId)) {
+                if (!matchesPermanentPredicate(permanent, nested, filterContext)) {
                     return false;
                 }
             }
             return true;
         }
         if (predicate instanceof PermanentNotPredicate notPredicate) {
-            return !matchesPermanentPredicate(gameData, permanent, notPredicate.predicate(), sourceCardId, sourceControllerId);
+            return !matchesPermanentPredicate(permanent, notPredicate.predicate(), filterContext);
         }
         if (predicate instanceof PermanentIsSourceCardPredicate) {
             return sourceCardId != null && permanent.getOriginalCard().getId().equals(sourceCardId);
@@ -388,14 +391,15 @@ public class GameQueryService {
     }
 
     public boolean matchesFilters(GameData gameData, Permanent permanent, Set<TargetFilter> filters) {
-        return matchesFilters(gameData, permanent, filters, null, null);
+        return matchesFilters(permanent, filters, FilterContext.of(gameData));
     }
 
-    public boolean matchesFilters(GameData gameData,
-                                  Permanent permanent,
+    public boolean matchesFilters(Permanent permanent,
                                   Set<TargetFilter> filters,
-                                  UUID sourceCardId,
-                                  UUID sourceControllerId) {
+                                  FilterContext filterContext) {
+        GameData gameData = filterContext != null ? filterContext.gameData() : null;
+        UUID sourceControllerId = filterContext != null ? filterContext.sourceControllerId() : null;
+
         for (TargetFilter filter : filters) {
             if (filter instanceof ControlledPermanentPredicateTargetFilter controlledFilter) {
                 if (sourceControllerId == null || gameData == null) {
@@ -405,13 +409,13 @@ public class GameQueryService {
                 if (controllerBattlefield == null || !controllerBattlefield.contains(permanent)) {
                     return false;
                 }
-                if (!matchesPermanentPredicate(gameData, permanent, controlledFilter.predicate(), sourceCardId, sourceControllerId)) {
+                if (!matchesPermanentPredicate(permanent, controlledFilter.predicate(), filterContext)) {
                     return false;
                 }
                 continue;
             }
             if (filter instanceof PermanentPredicateTargetFilter f) {
-                if (!matchesPermanentPredicate(gameData, permanent, f.predicate(), sourceCardId, sourceControllerId)) {
+                if (!matchesPermanentPredicate(permanent, f.predicate(), filterContext)) {
                     return false;
                 }
             }
@@ -420,18 +424,19 @@ public class GameQueryService {
     }
 
     public void validateTargetFilter(TargetFilter filter, Permanent target) {
-        validateTargetFilter(null, filter, target, null, null);
+        validateTargetFilter(filter, target, FilterContext.empty());
     }
 
     public void validateTargetFilter(GameData gameData, TargetFilter filter, Permanent target) {
-        validateTargetFilter(gameData, filter, target, null, null);
+        validateTargetFilter(filter, target, FilterContext.of(gameData));
     }
 
-    public void validateTargetFilter(GameData gameData,
-                                     TargetFilter filter,
+    public void validateTargetFilter(TargetFilter filter,
                                      Permanent target,
-                                     UUID sourceCardId,
-                                     UUID sourceControllerId) {
+                                     FilterContext filterContext) {
+        GameData gameData = filterContext != null ? filterContext.gameData() : null;
+        UUID sourceControllerId = filterContext != null ? filterContext.sourceControllerId() : null;
+
         if (filter instanceof ControlledPermanentPredicateTargetFilter controlledFilter) {
             if (gameData == null || sourceControllerId == null) {
                 throw new IllegalStateException(controlledFilter.errorMessage());
@@ -440,13 +445,13 @@ public class GameQueryService {
             if (controllerBattlefield == null || !controllerBattlefield.contains(target)) {
                 throw new IllegalStateException(controlledFilter.errorMessage());
             }
-            if (!matchesPermanentPredicate(gameData, target, controlledFilter.predicate(), sourceCardId, sourceControllerId)) {
+            if (!matchesPermanentPredicate(target, controlledFilter.predicate(), filterContext)) {
                 throw new IllegalStateException(controlledFilter.errorMessage());
             }
             return;
         }
         if (filter instanceof PermanentPredicateTargetFilter f) {
-            if (!matchesPermanentPredicate(gameData, target, f.predicate(), sourceCardId, sourceControllerId)) {
+            if (!matchesPermanentPredicate(target, f.predicate(), filterContext)) {
                 throw new IllegalStateException(f.errorMessage());
             }
         }

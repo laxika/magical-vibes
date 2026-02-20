@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandOnCoinFlipLos
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -113,11 +114,11 @@ public class BounceResolutionService implements EffectHandlerProvider {
             List<Permanent> creaturesToReturn = battlefield.stream()
                     .filter(p -> gameQueryService.isCreature(gameData, p))
                     .filter(p -> gameQueryService.matchesFilters(
-                            gameData,
                             p,
                             bounce.filters(),
-                            entry.getCard().getId(),
-                            entry.getControllerId()))
+                            FilterContext.of(gameData)
+                                    .withSourceCardId(entry.getCard().getId())
+                                    .withSourceControllerId(entry.getControllerId())))
                     .toList();
 
             for (Permanent creature : creaturesToReturn) {

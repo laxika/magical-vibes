@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.WarpWorldAuraChoiceRequest;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -219,11 +220,11 @@ public class CardSpecificResolutionService implements EffectHandlerProvider {
                 }
                 if (auraCard.getTargetFilter() != null) {
                     try {
-                        gameQueryService.validateTargetFilter(gameData,
-                                auraCard.getTargetFilter(),
+                        gameQueryService.validateTargetFilter(auraCard.getTargetFilter(),
                                 candidate,
-                                auraCard.getId(),
-                                auraControllerId);
+                                FilterContext.of(gameData)
+                                        .withSourceCardId(auraCard.getId())
+                                        .withSourceControllerId(auraControllerId));
                     } catch (IllegalStateException ignored) {
                         continue;
                     }

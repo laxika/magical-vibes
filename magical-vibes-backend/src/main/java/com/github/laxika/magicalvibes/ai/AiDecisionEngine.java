@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -516,11 +517,11 @@ public class AiDecisionEngine {
             return true;
         }
         try {
-            gameQueryService.validateTargetFilter(gameRegistry.get(gameId),
-                    card.getTargetFilter(),
+            gameQueryService.validateTargetFilter(card.getTargetFilter(),
                     target,
-                    card.getId(),
-                    aiPlayer.getId());
+                    FilterContext.of(gameRegistry.get(gameId))
+                            .withSourceCardId(card.getId())
+                            .withSourceControllerId(aiPlayer.getId()));
             return true;
         } catch (IllegalStateException e) {
             return false;

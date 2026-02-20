@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import lombok.RequiredArgsConstructor;
@@ -68,11 +69,11 @@ public class TargetLegalityService {
         if (ability.getTargetFilter() != null && targetPermanentId != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
             if (target != null) {
-                gameQueryService.validateTargetFilter(gameData,
-                        ability.getTargetFilter(),
+                gameQueryService.validateTargetFilter(ability.getTargetFilter(),
                         target,
-                        sourceCard.getId(),
-                        playerId);
+                        FilterContext.of(gameData)
+                                .withSourceCardId(sourceCard.getId())
+                                .withSourceControllerId(playerId));
             }
         }
 
@@ -105,7 +106,11 @@ public class TargetLegalityService {
         }
 
         if (card.getTargetFilter() != null && target != null) {
-            gameQueryService.validateTargetFilter(gameData, card.getTargetFilter(), target, card.getId(), controllerId);
+            gameQueryService.validateTargetFilter(card.getTargetFilter(),
+                    target,
+                    FilterContext.of(gameData)
+                            .withSourceCardId(card.getId())
+                            .withSourceControllerId(controllerId));
         }
 
         targetValidationService.validateEffectTargets(card.getEffects(EffectSlot.SPELL),
@@ -174,12 +179,10 @@ public class TargetLegalityService {
                                     : entry.getCard() != null ? entry.getCard().getTargetFilter() : null;
                     if (effectiveTargetFilter != null) {
                         try {
-                            UUID sourceCardId = entry.getCard() != null ? entry.getCard().getId() : null;
-                            gameQueryService.validateTargetFilter(gameData,
-                                    effectiveTargetFilter,
-                                    targetPerm,
-                                    sourceCardId,
-                                    entry.getControllerId());
+                            FilterContext filterContext = FilterContext.of(gameData)
+                                    .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                                    .withSourceControllerId(entry.getControllerId());
+                            gameQueryService.validateTargetFilter(effectiveTargetFilter, targetPerm, filterContext);
                         } catch (IllegalStateException e) {
                             targetFizzled = true;
                         }

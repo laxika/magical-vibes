@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAttackedCreaturesEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -324,11 +325,11 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
             for (Permanent p : battlefield) {
                 if (!gameQueryService.isCreature(gameData, p)) continue;
                 if (!gameQueryService.matchesFilters(
-                        gameData,
                         p,
                         tap.filters(),
-                        entry.getCard().getId(),
-                        entry.getControllerId())) continue;
+                        FilterContext.of(gameData)
+                                .withSourceCardId(entry.getCard().getId())
+                                .withSourceControllerId(entry.getControllerId()))) continue;
 
                 p.tap();
 
