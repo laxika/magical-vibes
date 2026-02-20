@@ -71,6 +71,30 @@ public enum PrebuiltDeck {
             new DeckEntry("242", 1),   // Threaten
             new DeckEntry("322", 1),   // Dragon's Claw
             new DeckEntry("337", 1)    // Phyrexian Vault
+    )),
+
+    EVINCARS_TYRANNY("evincars-tyranny", "Evincar's Tyranny (Tenth Edition Theme Deck)", CardSet.TENTH_EDITION, List.of(
+            new DeckEntry("372", 17),  // Swamp
+            new DeckEntry("186", 2),   // Vampire Bats
+            new DeckEntry("139", 1),   // Drudge Skeletons
+            new DeckEntry("183", 1),   // Thrull Surgeon
+            new DeckEntry("153", 1),   // Looming Shade
+            new DeckEntry("177", 2),   // Severed Legion
+            new DeckEntry("138", 1),   // Dross Crocodile
+            new DeckEntry("146", 1),   // Gravedigger
+            new DeckEntry("161", 1),   // Mortivore
+            new DeckEntry("156", 1),   // Mass of Ghouls
+            new DeckEntry("127", 1),   // Ascendant Evincar
+            new DeckEntry("185", 1),   // Unholy Strength
+            new DeckEntry("182", 1),   // Terror
+            new DeckEntry("133", 1),   // Cruel Edict
+            new DeckEntry("135", 1),   // Diabolic Tutor
+            new DeckEntry("141", 1),   // Essence Drain
+            new DeckEntry("131", 1),   // Consume Spirit
+            new DeckEntry("128", 1),   // Assassinate
+            new DeckEntry("159", 2),   // Mind Rot
+            new DeckEntry("312", 1),   // Bottle Gnomes
+            new DeckEntry("320", 1)    // Demon's Horn
     ));
 
     public record DeckEntry(String collectorNumber, int count) {}
