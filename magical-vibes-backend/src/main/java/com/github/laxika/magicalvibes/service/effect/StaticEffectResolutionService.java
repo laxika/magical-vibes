@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreaturePerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostNonColorCreaturesEffect;
@@ -37,6 +38,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         registry.register(AnimateNoncreatureArtifactsEffect.class, this::resolveAnimateNoncreatureArtifacts);
         registry.register(BoostCreaturesBySubtypeEffect.class, this::resolveBoostCreaturesBySubtype);
         registry.register(BoostEnchantedCreatureEffect.class, this::resolveBoostEnchantedCreature);
+        registry.register(BoostEnchantedCreaturePerControlledSubtypeEffect.class, this::resolveBoostEnchantedCreaturePerControlledSubtype);
         registry.register(BoostEquippedCreatureEffect.class, this::resolveBoostEquippedCreature);
         registry.register(GrantKeywordToEnchantedCreatureEffect.class, this::resolveGrantKeywordToEnchantedCreature);
         registry.register(GrantKeywordToEquippedCreatureEffect.class, this::resolveGrantKeywordToEquippedCreature);
@@ -75,6 +77,34 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
             accumulator.addPower(boost.powerBoost());
             accumulator.addToughness(boost.toughnessBoost());
         }
+    }
+
+    private void resolveBoostEnchantedCreaturePerControlledSubtype(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostEnchantedCreaturePerControlledSubtypeEffect) effect;
+        if (context.source().getAttachedTo() == null
+                || !context.source().getAttachedTo().equals(context.target().getId())) {
+            return;
+        }
+
+        UUID controllerId = findControllerId(context.gameData(), context.source());
+        if (controllerId == null) {
+            return;
+        }
+
+        List<Permanent> battlefield = context.gameData().playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (permanent.getCard().getSubtypes().contains(boost.subtype())) {
+                count++;
+            }
+        }
+
+        accumulator.addPower(count * boost.powerPerSubtype());
+        accumulator.addToughness(count * boost.toughnessPerSubtype());
     }
 
     private void resolveBoostEquippedCreature(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {

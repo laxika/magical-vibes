@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.filter.AttackingOrBlockingTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AttackingTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CreatureColorTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.CreatureTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.LandSubtypeTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.MaxPowerTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.NonArtifactNonColorCreatureTargetFilter;
@@ -305,6 +306,13 @@ public class GameQueryService {
                         .reduce((a, b) -> a + " or " + b)
                         .orElse("");
                 throw new IllegalStateException("Target must be a " + colorNames + " creature");
+            }
+        } else if (filter instanceof CreatureTargetFilter) {
+            boolean isCreatureTarget = target.getCard().getType() == CardType.CREATURE
+                    || target.getCard().getAdditionalTypes().contains(CardType.CREATURE)
+                    || target.isAnimatedUntilEndOfTurn();
+            if (!isCreatureTarget) {
+                throw new IllegalStateException("Target must be a creature");
             }
         } else if (filter instanceof TappedTargetFilter) {
             if (!target.isTapped()) {
