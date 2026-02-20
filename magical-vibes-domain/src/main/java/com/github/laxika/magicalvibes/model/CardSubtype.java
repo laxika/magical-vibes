@@ -79,6 +79,7 @@ public enum CardSubtype {
     WURM("Wurm"),
     JUGGERNAUT("Juggernaut"),
     THOPTER("Thopter"),
+    THRULL("Thrull"),
     EQUIPMENT("Equipment"),
     LIZARD("Lizard"),
     LHURGOYF("Lhurgoyf"),
