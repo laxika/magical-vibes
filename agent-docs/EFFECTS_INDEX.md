@@ -37,6 +37,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `lose the game if not cast from hand (ETB check)`: `LoseGameIfNotCastFromHandEffect`
 - `win the game if condition is met`: `WinGameIfCreaturesInGraveyardEffect`
 - `pump target/self/all`: `BoostTargetCreatureEffect`, `BoostSelfEffect`, `BoostAllOwnCreaturesEffect`, `BoostAllCreaturesXEffect`
+- `gets +N/+N for each other creature with same name`: `BoostByOtherCreaturesWithSameNameEffect`
 - `grant keyword`: `GrantKeywordToTargetEffect`, `GrantKeywordToSelfEffect`, `GrantKeywordToEnchantedCreatureEffect`
 - `tap/untap`: `TapTargetCreatureEffect`, `TapTargetPermanentEffect`, `TapOrUntapTargetPermanentEffect`, `UntapTargetPermanentEffect`, `UntapSelfEffect`
 - `prevent damage`: `PreventDamageToTargetEffect`, `PreventNextDamageEffect`, `PreventAllCombatDamageEffect`, `PreventDamageFromColorsEffect`

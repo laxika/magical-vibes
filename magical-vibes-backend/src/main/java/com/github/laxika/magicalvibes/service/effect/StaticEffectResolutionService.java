@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostNonColorCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOtherCreaturesByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
@@ -46,6 +47,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         registry.register(GrantActivatedAbilityToEnchantedCreatureEffect.class, this::resolveGrantActivatedAbilityToEnchantedCreature);
         registry.register(BoostBySharedCreatureTypeEffect.class, this::resolveBoostBySharedCreatureType);
 
+        registry.registerSelfHandler(BoostByOtherCreaturesWithSameNameEffect.class, this::resolveBoostByOtherCreaturesWithSameName);
         registry.registerSelfHandler(PowerToughnessEqualToControlledSubtypeCountEffect.class, this::resolvePowerToughnessEqualToControlledSubtypeCount);
         registry.registerSelfHandler(PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect.class, this::resolvePowerToughnessEqualToCreatureCardsInAllGraveyards);
     }
@@ -199,6 +201,28 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         }
         accumulator.addPower(count);
         accumulator.addToughness(count);
+    }
+
+    private void resolveBoostByOtherCreaturesWithSameName(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostByOtherCreaturesWithSameNameEffect) effect;
+        String sourceName = context.source().getCard().getName();
+        GameData gameData = context.gameData();
+        boolean hasAnimateArtifacts = hasAnimateArtifactEffect(gameData);
+
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (permanent.getId().equals(context.source().getId())) continue;
+                if (!isEffectivelyCreature(permanent, hasAnimateArtifacts)) continue;
+                if (!sourceName.equals(permanent.getCard().getName())) continue;
+                count++;
+            }
+        }
+
+        accumulator.addPower(count * boost.powerPerCreature());
+        accumulator.addToughness(count * boost.toughnessPerCreature());
     }
 
     private void resolvePowerToughnessEqualToControlledSubtypeCount(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
