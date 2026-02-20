@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBatt
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
@@ -124,6 +125,10 @@ public class TargetValidationService {
         });
 
         registry.register(RevealTopCardOfLibraryEffect.class, (ctx, effect) -> {
+            requireTargetPlayer(ctx);
+        });
+
+        registry.register(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class, (ctx, effect) -> {
             requireTargetPlayer(ctx);
         });
 
