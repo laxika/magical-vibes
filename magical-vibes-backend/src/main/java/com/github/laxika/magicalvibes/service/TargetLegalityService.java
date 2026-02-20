@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CreatureYouControlTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.OpponentPlayerTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.SingleTargetSpellTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.SpellColorTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.SpellTypeTargetFilter;
@@ -94,7 +95,7 @@ public class TargetLegalityService {
         validateShroudTargeting(gameData, targetPermanentId);
     }
 
-    public void validateSpellTargeting(GameData gameData, Card card, UUID targetPermanentId, Zone targetZone) {
+    public void validateSpellTargeting(GameData gameData, Card card, UUID targetPermanentId, Zone targetZone, UUID controllerId) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
         if (target == null && !gameData.playerIds.contains(targetPermanentId)) {
             throw new IllegalStateException("Invalid target");
@@ -111,6 +112,13 @@ public class TargetLegalityService {
         if (target == null && card.isNeedsTarget() && gameData.playerIds.contains(targetPermanentId)
                 && gameQueryService.playerHasShroud(gameData, targetPermanentId)) {
             throw new IllegalStateException(gameData.playerIdToName.get(targetPermanentId) + " has shroud and can't be targeted");
+        }
+
+        if (target == null
+                && card.getTargetFilter() instanceof OpponentPlayerTargetFilter
+                && controllerId != null
+                && controllerId.equals(targetPermanentId)) {
+            throw new IllegalStateException("Target must be an opponent");
         }
 
         if (card.getTargetFilter() != null && target != null) {

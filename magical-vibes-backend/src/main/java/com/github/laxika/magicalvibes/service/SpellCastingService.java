@@ -123,7 +123,7 @@ public class SpellCastingService {
 
         // Validate target if specified (can be a permanent or a player)
         if (targetPermanentId != null && !card.isNeedsSpellTarget()) {
-            targetLegalityService.validateSpellTargeting(gameData, card, targetPermanentId, null);
+            targetLegalityService.validateSpellTargeting(gameData, card, targetPermanentId, null, playerId);
         }
 
         // Validate multi-target permanent targeting

@@ -113,7 +113,13 @@ public class TargetRedirectionResolutionService implements EffectHandlerProvider
                 return true;
             }
 
-            targetLegalityService.validateSpellTargeting(gameData, spellCard, candidateTargetId, null);
+            targetLegalityService.validateSpellTargeting(
+                    gameData,
+                    spellCard,
+                    candidateTargetId,
+                    null,
+                    targetSpell.getControllerId()
+            );
             return true;
         } catch (IllegalStateException ignored) {
             return false;
