@@ -429,7 +429,7 @@ public class AbilityActivationService {
             return false;
         }
 
-        gameData.interaction.permanentChoiceContext = new PermanentChoiceContext.ActivatedAbilitySacrificeSubtype(
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilitySacrificeSubtype(
                 playerId,
                 sourcePermanent.getId(),
                 abilityIndex,
@@ -437,7 +437,7 @@ public class AbilityActivationService {
                 targetPermanentId,
                 targetZone,
                 subtypeCost.subtype()
-        );
+        ));
         playerInputService.beginPermanentChoice(gameData, playerId, validSacrificeIds,
                 "Choose a " + subtypeCost.subtype().getDisplayName() + " to sacrifice.");
         gameBroadcastService.broadcastGameState(gameData);
@@ -755,8 +755,8 @@ public class AbilityActivationService {
                     }
                 }
             } else if (effect instanceof AwardAnyColorManaEffect) {
-                gameData.interaction.colorChoiceContext = new ColorChoiceContext.ManaColorChoice(playerId);
-                gameData.interaction.beginColorChoice(playerId, null, null, gameData.interaction.colorChoiceContext);
+                ColorChoiceContext.ManaColorChoice choiceContext = new ColorChoiceContext.ManaColorChoice(playerId);
+                gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 sessionManager.sendToPlayer(playerId, new ChooseColorMessage(colors, "Choose a color of mana to add."));
                 log.info("Game {} - Awaiting {} to choose a mana color", gameData.id, player.getUsername());

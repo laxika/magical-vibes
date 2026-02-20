@@ -197,7 +197,7 @@ public class BounceResolutionService implements EffectHandlerProvider {
             return;
         }
 
-        gameData.interaction.permanentChoiceContext = new PermanentChoiceContext.BounceCreature(targetPlayerId);
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.BounceCreature(targetPlayerId));
         playerInputService.beginPermanentChoice(gameData, targetPlayerId, creatureIds,
                 "Choose a creature you control to return to its owner's hand.");
     }

@@ -279,7 +279,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         }
 
         if (!validCreatureIds.isEmpty()) {
-            gameData.interaction.permanentChoiceContext = new PermanentChoiceContext.AuraGraft(aura.getId());
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.AuraGraft(aura.getId()));
             playerInputService.beginPermanentChoice(gameData, casterId, validCreatureIds,
                     "Attach " + aura.getCard().getName() + " to another permanent it can enchant.");
         } else {

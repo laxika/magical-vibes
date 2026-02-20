@@ -46,7 +46,7 @@ public class PlayerInputService {
     }
 
     public void beginPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, String prompt) {
-        gameData.interaction.beginPermanentChoice(playerId, new HashSet<>(validIds), gameData.interaction.permanentChoiceContext);
+        gameData.interaction.beginPermanentChoice(playerId, new HashSet<>(validIds), gameData.interaction.permanentChoiceContext());
         sessionManager.sendToPlayer(playerId, new ChoosePermanentMessage(validIds, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -56,7 +56,7 @@ public class PlayerInputService {
     public void beginAnyTargetChoice(GameData gameData, UUID playerId, List<UUID> validPermanentIds, List<UUID> validPlayerIds, String prompt) {
         Set<UUID> allValidIds = new HashSet<>(validPermanentIds);
         allValidIds.addAll(validPlayerIds);
-        gameData.interaction.beginPermanentChoice(playerId, allValidIds, gameData.interaction.permanentChoiceContext);
+        gameData.interaction.beginPermanentChoice(playerId, allValidIds, gameData.interaction.permanentChoiceContext());
         sessionManager.sendToPlayer(playerId, new ChoosePermanentMessage(validPermanentIds, validPlayerIds, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -65,7 +65,7 @@ public class PlayerInputService {
 
     void beginGraveyardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         gameData.interaction.beginGraveyardChoice(playerId, new HashSet<>(validIndices),
-                gameData.interaction.graveyardChoiceDestination, gameData.interaction.graveyardChoiceCardPool);
+                gameData.interaction.graveyardChoiceDestination(), gameData.interaction.graveyardChoiceCardPool());
         sessionManager.sendToPlayer(playerId, new ChooseCardFromGraveyardMessage(validIndices, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -89,7 +89,7 @@ public class PlayerInputService {
     }
 
     void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetPermanentId) {
-        gameData.interaction.beginColorChoice(playerId, permanentId, etbTargetPermanentId, gameData.interaction.colorChoiceContext);
+        gameData.interaction.beginColorChoice(playerId, permanentId, etbTargetPermanentId, gameData.interaction.colorChoiceContext());
         List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
         sessionManager.sendToPlayer(playerId, new ChooseColorMessage(colors, "Choose a color."));
 

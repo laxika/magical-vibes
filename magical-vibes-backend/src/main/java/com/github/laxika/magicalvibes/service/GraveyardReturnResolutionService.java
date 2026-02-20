@@ -92,7 +92,7 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
         }
 
         gameHelper.removeCardFromGraveyardById(gameData, auraCard.getId());
-        gameData.interaction.pendingAuraCard = auraCard;
+        gameData.interaction.setPendingAuraCard(auraCard);
 
         playerInputService.beginPermanentChoice(gameData, controllerId, creatureIds, "Choose a creature you control to attach " + auraCard.getName() + " to.");
     }
@@ -122,7 +122,7 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
             return;
         }
 
-        gameData.interaction.graveyardChoiceDestination = destination;
+        gameData.interaction.prepareGraveyardChoice(destination, null);
         playerInputService.beginGraveyardChoice(gameData, controllerId, matchingIndices, prompt);
     }
 
@@ -151,7 +151,7 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
             return;
         }
 
-        gameData.interaction.graveyardChoiceDestination = GraveyardChoiceDestination.HAND;
+        gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.HAND, null);
         playerInputService.beginGraveyardChoice(gameData, controllerId, matchingIndices,
                 "Return a " + subtypeName + " card from your graveyard to your hand.");
     }
@@ -204,8 +204,7 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
             indices.add(i);
         }
 
-        gameData.interaction.graveyardChoiceCardPool = cardPool;
-        gameData.interaction.graveyardChoiceDestination = GraveyardChoiceDestination.BATTLEFIELD;
+        gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.BATTLEFIELD, cardPool);
         playerInputService.beginGraveyardChoice(gameData, controllerId, indices,
                 "Choose an artifact or creature card from a graveyard to put onto the battlefield under your control.");
     }

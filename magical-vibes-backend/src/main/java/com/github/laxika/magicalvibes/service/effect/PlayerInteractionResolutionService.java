@@ -278,8 +278,8 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
             return;
         }
 
-        gameData.interaction.colorChoiceContext = new ColorChoiceContext.TextChangeFromWord(targetPermanentId);
-        gameData.interaction.beginColorChoice(entry.getControllerId(), null, null, gameData.interaction.colorChoiceContext);
+        ColorChoiceContext.TextChangeFromWord choiceContext = new ColorChoiceContext.TextChangeFromWord(targetPermanentId);
+        gameData.interaction.beginColorChoice(entry.getControllerId(), null, null, choiceContext);
 
         List<String> options = new ArrayList<>();
         options.addAll(GameQueryService.TEXT_CHANGE_COLOR_WORDS);
@@ -291,8 +291,8 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
     }
 
     private void resolveAwardAnyColorMana(GameData gameData, StackEntry entry) {
-        gameData.interaction.colorChoiceContext = new ColorChoiceContext.ManaColorChoice(entry.getControllerId());
-        gameData.interaction.beginColorChoice(entry.getControllerId(), null, null, gameData.interaction.colorChoiceContext);
+        ColorChoiceContext.ManaColorChoice choiceContext = new ColorChoiceContext.ManaColorChoice(entry.getControllerId());
+        gameData.interaction.beginColorChoice(entry.getControllerId(), null, null, choiceContext);
         List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
         sessionManager.sendToPlayer(entry.getControllerId(), new ChooseColorMessage(colors, "Choose a color of mana to add."));
 

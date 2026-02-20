@@ -224,7 +224,7 @@ public class GameHelper {
 
             // Remove from queue and begin permanent choice
             gameData.pendingDeathTriggerTargets.removeFirst();
-            gameData.interaction.permanentChoiceContext = pending;
+            gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
                     pending.dyingCard().getName() + "'s ability — Choose target creature.");
 
@@ -269,7 +269,7 @@ public class GameHelper {
             return;
         }
 
-        gameData.interaction.pendingAuraCard = request.auraCard();
+        gameData.interaction.setPendingAuraCard(request.auraCard());
         playerInputService.beginPermanentChoice(
                 gameData,
                 request.controllerId(),
@@ -561,7 +561,7 @@ public class GameHelper {
 
         for (Map.Entry<String, List<UUID>> entry : legendaryByName.entrySet()) {
             if (entry.getValue().size() >= 2) {
-                gameData.interaction.permanentChoiceContext = new PermanentChoiceContext.LegendRule(entry.getKey());
+                gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.LegendRule(entry.getKey()));
                 playerInputService.beginPermanentChoice(gameData, controllerId, entry.getValue(),
                         "You control multiple legendary permanents named " + entry.getKey() + ". Choose one to keep.");
                 return true;
@@ -593,7 +593,7 @@ public class GameHelper {
         gameData.cloneOperation.card = card;
         gameData.cloneOperation.controllerId = controllerId;
         gameData.cloneOperation.etbTargetId = targetPermanentId;
-        gameData.interaction.permanentChoiceContext = new PermanentChoiceContext.CloneCopy();
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.CloneCopy());
 
         gameData.pendingMayAbilities.add(new PendingMayAbility(
                 card,
@@ -1134,7 +1134,7 @@ public class GameHelper {
 
             // There are always valid targets (at least the players)
             gameData.pendingDiscardSelfTriggers.removeFirst();
-            gameData.interaction.permanentChoiceContext = pending;
+            gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
                     validPermanentTargets, validPlayerTargets,
                     pending.discardedCard().getName() + "'s ability — Choose any target.");

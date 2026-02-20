@@ -59,7 +59,7 @@ public class PermanentChoiceHandlerService {
         }
 
         PermanentChoiceContext context = permanentChoice.context();
-        gameData.interaction.permanentChoiceContext = null;
+        gameData.interaction.clearPermanentChoiceContext();
 
         if (context instanceof PermanentChoiceContext.CloneCopy) {
             Permanent targetPerm = gameQueryService.findPermanentById(gameData, permanentId);
@@ -267,9 +267,8 @@ public class PermanentChoiceHandlerService {
 
             gameData.priorityPassedBy.clear();
             turnProgressionService.resolveAutoPass(gameData);
-        } else if (gameData.interaction.pendingAuraCard != null) {
-            Card auraCard = gameData.interaction.pendingAuraCard;
-            gameData.interaction.pendingAuraCard = null;
+        } else if (gameData.interaction.pendingAuraCard() != null) {
+            Card auraCard = gameData.interaction.consumePendingAuraCard();
 
             Permanent enchantTarget = gameQueryService.findPermanentById(gameData, permanentId);
             if (enchantTarget == null) {

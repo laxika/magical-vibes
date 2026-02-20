@@ -60,7 +60,7 @@ public class TargetRedirectionResolutionService implements EffectHandlerProvider
             return;
         }
 
-        gameData.interaction.permanentChoiceContext = new PermanentChoiceContext.SpellRetarget(targetSpell.getCard().getId());
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(targetSpell.getCard().getId()));
         playerInputService.beginPermanentChoice(
                 gameData,
                 entry.getControllerId(),

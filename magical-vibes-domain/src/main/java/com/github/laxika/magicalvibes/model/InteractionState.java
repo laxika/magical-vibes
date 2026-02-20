@@ -109,6 +109,18 @@ public class InteractionState {
         this.context = new InteractionContext.PermanentChoice(playerId, new HashSet<>(validIds), choiceContext);
     }
 
+    public void setPermanentChoiceContext(PermanentChoiceContext choiceContext) {
+        this.permanentChoiceContext = choiceContext;
+    }
+
+    public PermanentChoiceContext permanentChoiceContext() {
+        return this.permanentChoiceContext;
+    }
+
+    public void clearPermanentChoiceContext() {
+        this.permanentChoiceContext = null;
+    }
+
     public void clearPermanentChoice() {
         this.awaitingPermanentChoicePlayerId = null;
         this.awaitingPermanentChoiceValidIds = null;
@@ -131,6 +143,19 @@ public class InteractionState {
         this.graveyardChoiceCardPool = null;
     }
 
+    public void prepareGraveyardChoice(GraveyardChoiceDestination destination, List<Card> cardPool) {
+        this.graveyardChoiceDestination = destination;
+        this.graveyardChoiceCardPool = cardPool;
+    }
+
+    public GraveyardChoiceDestination graveyardChoiceDestination() {
+        return this.graveyardChoiceDestination;
+    }
+
+    public List<Card> graveyardChoiceCardPool() {
+        return this.graveyardChoiceCardPool;
+    }
+
     public void beginColorChoice(UUID playerId, UUID permanentId, UUID etbTargetPermanentId, ColorChoiceContext choiceContext) {
         this.awaitingInput = AwaitingInput.COLOR_CHOICE;
         this.awaitingColorChoicePlayerId = playerId;
@@ -145,6 +170,28 @@ public class InteractionState {
         this.awaitingColorChoicePermanentId = null;
         this.pendingColorChoiceETBTargetId = null;
         this.colorChoiceContext = null;
+    }
+
+    public void setColorChoiceContext(ColorChoiceContext choiceContext) {
+        this.colorChoiceContext = choiceContext;
+    }
+
+    public ColorChoiceContext colorChoiceContext() {
+        return this.colorChoiceContext;
+    }
+
+    public void setPendingAuraCard(Card auraCard) {
+        this.pendingAuraCard = auraCard;
+    }
+
+    public Card pendingAuraCard() {
+        return this.pendingAuraCard;
+    }
+
+    public Card consumePendingAuraCard() {
+        Card auraCard = this.pendingAuraCard;
+        this.pendingAuraCard = null;
+        return auraCard;
     }
 
     public void beginMultiPermanentChoice(UUID playerId, Set<UUID> validIds, int maxCount) {

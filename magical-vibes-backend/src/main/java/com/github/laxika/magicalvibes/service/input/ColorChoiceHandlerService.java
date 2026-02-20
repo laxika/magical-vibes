@@ -116,8 +116,9 @@ public class ColorChoiceHandlerService {
             throw new IllegalArgumentException("Invalid choice: " + chosenWord);
         }
 
-        gameData.interaction.colorChoiceContext = new ColorChoiceContext.TextChangeToWord(ctx.targetPermanentId(), chosenWord, isColor);
-        gameData.interaction.beginColorChoice(player.getId(), null, null, gameData.interaction.colorChoiceContext);
+        ColorChoiceContext.TextChangeToWord choiceContext =
+                new ColorChoiceContext.TextChangeToWord(ctx.targetPermanentId(), chosenWord, isColor);
+        gameData.interaction.beginColorChoice(player.getId(), null, null, choiceContext);
 
         List<String> remainingOptions;
         String promptType;

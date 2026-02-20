@@ -115,7 +115,7 @@ public class MayAbilityHandlerService {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} accepts clone copy", gameData.id, player.getUsername());
             } else {
-                gameData.interaction.permanentChoiceContext = null;
+                gameData.interaction.clearPermanentChoiceContext();
                 String logEntry = player.getUsername() + " declines to copy a creature. Clone enters as 0/0.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} declines clone copy", gameData.id, player.getUsername());
@@ -439,7 +439,7 @@ public class MayAbilityHandlerService {
             return;
         }
 
-        gameData.interaction.permanentChoiceContext = new PermanentChoiceContext.SpellRetarget(copyCardId);
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(copyCardId));
         playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
                 "Choose a new target for the copy of " + copiedCard.getName() + ".");
     }
