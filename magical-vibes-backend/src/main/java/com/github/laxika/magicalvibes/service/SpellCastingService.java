@@ -479,3 +479,4 @@ public class SpellCastingService {
                 && stackEntry.getTargetCardIds().isEmpty();
     }
 }
+

@@ -168,7 +168,7 @@ class DoomedNecromancerTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
 
         harness.handleGraveyardCardChosen(player1, 0);
 
@@ -224,7 +224,7 @@ class DoomedNecromancerTest {
         harness.passBothPriorities();
 
         // Should prompt graveyard choice since Doomed Necromancer (a creature) is in the graveyard
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
 
         // Choose the Doomed Necromancer itself
         harness.handleGraveyardCardChosen(player1, 0);
@@ -250,7 +250,7 @@ class DoomedNecromancerTest {
         harness.passBothPriorities();
 
         // Should still prompt for graveyard choice (Doomed Necromancer itself is a valid creature)
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
     }
 
     // ===== ETB on returned creature =====
@@ -392,4 +392,5 @@ class DoomedNecromancerTest {
         return necromancer;
     }
 }
+
 

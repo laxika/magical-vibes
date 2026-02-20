@@ -160,11 +160,11 @@ class NomadMythmakerTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.awaitingPermanentChoicePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.interaction.awaitingPermanentChoiceValidIds).contains(creature.getId());
-        assertThat(gd.interaction.pendingAuraCard).isNotNull();
-        assertThat(gd.interaction.pendingAuraCard.getName()).isEqualTo("Holy Strength");
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds()).contains(creature.getId());
+        assertThat(gd.interaction.pendingAuraCard()).isNotNull();
+        assertThat(gd.interaction.pendingAuraCard().getName()).isEqualTo("Holy Strength");
 
         // Aura removed from graveyard
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -187,8 +187,8 @@ class NomadMythmakerTest {
         harness.handlePermanentChosen(player1, creature.getId());
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.pendingAuraCard).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.pendingAuraCard()).isNull();
 
         // Aura should be on the battlefield attached to the creature
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
@@ -258,7 +258,7 @@ class NomadMythmakerTest {
 
         GameData gd = harness.getGameData();
         // Both creatures should be valid choices (Mythmaker is also a creature, so 3 total)
-        assertThat(gd.interaction.awaitingPermanentChoiceValidIds).contains(creature1.getId(), creature2.getId());
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds()).contains(creature1.getId(), creature2.getId());
     }
 
     // ===== Fizzle cases =====
@@ -281,7 +281,7 @@ class NomadMythmakerTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
     }
 
@@ -303,7 +303,7 @@ class NomadMythmakerTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
     }
 
@@ -446,4 +446,5 @@ class NomadMythmakerTest {
         harness.getGameData().playerGraveyards.get(player.getId()).add(card);
     }
 }
+
 

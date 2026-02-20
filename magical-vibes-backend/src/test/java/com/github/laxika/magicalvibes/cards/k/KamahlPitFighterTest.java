@@ -253,3 +253,4 @@ class KamahlPitFighterTest {
         return perm;
     }
 }
+

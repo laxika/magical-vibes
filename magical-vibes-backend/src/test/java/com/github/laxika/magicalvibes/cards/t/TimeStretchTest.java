@@ -347,3 +347,4 @@ class TimeStretchTest {
         assertThat(harness.getGameData().activePlayerId).isEqualTo(player2.getId());
     }
 }
+

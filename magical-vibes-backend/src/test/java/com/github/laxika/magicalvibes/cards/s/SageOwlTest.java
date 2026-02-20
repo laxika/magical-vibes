@@ -110,9 +110,9 @@ class SageOwlTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.awaitingLibraryReorderPlayerId).isEqualTo(player1.getId());
-        assertThat(gd.interaction.awaitingLibraryReorderCards).hasSize(4);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
+        assertThat(gd.interaction.awaitingLibraryReorderPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingLibraryReorderCards()).hasSize(4);
     }
 
     @Test
@@ -154,9 +154,9 @@ class SageOwlTest {
         GameData gd = harness.getGameData();
         harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2, 3));
 
-        assertThat(gd.interaction.awaitingInput).isNull();
-        assertThat(gd.interaction.awaitingLibraryReorderPlayerId).isNull();
-        assertThat(gd.interaction.awaitingLibraryReorderCards).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.awaitingLibraryReorderPlayerId()).isNull();
+        assertThat(gd.interaction.awaitingLibraryReorderCards()).isNull();
     }
 
     // ===== Library edge cases =====
@@ -179,8 +179,8 @@ class SageOwlTest {
         harness.passBothPriorities(); // resolve creature
         harness.passBothPriorities(); // resolve ETB
 
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.awaitingLibraryReorderCards).hasSize(2);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
+        assertThat(gd.interaction.awaitingLibraryReorderCards()).hasSize(2);
 
         harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(1, 0));
 
@@ -202,7 +202,7 @@ class SageOwlTest {
         harness.passBothPriorities(); // resolve creature
         harness.passBothPriorities(); // resolve ETB
 
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("looks at the top card"));
     }
 
@@ -219,7 +219,7 @@ class SageOwlTest {
         harness.passBothPriorities(); // resolve creature
         harness.passBothPriorities(); // resolve ETB
 
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("library is empty"));
     }
 
@@ -236,4 +236,5 @@ class SageOwlTest {
                         && p.getCard().getKeywords().contains(Keyword.FLYING));
     }
 }
+
 

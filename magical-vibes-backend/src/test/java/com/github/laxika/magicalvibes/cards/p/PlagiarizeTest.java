@@ -240,3 +240,4 @@ class PlagiarizeTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("Plagiarize") && log.contains("draws are replaced"));
     }
 }
+

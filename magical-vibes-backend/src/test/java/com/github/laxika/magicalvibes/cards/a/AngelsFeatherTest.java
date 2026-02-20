@@ -107,7 +107,7 @@ class AngelsFeatherTest {
 
         // Player1 should be prompted for may ability
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -165,7 +165,7 @@ class AngelsFeatherTest {
 
         // Player1 (controller of Angel's Feather) should be prompted
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -189,7 +189,7 @@ class AngelsFeatherTest {
 
         GameData gd = harness.getGameData();
         // Should not be awaiting may ability
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId).isNull();
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
         // Stack should only have the creature spell
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
@@ -241,9 +241,10 @@ class AngelsFeatherTest {
         harness.castCreature(player1, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId).isNull();
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
 }
+
 

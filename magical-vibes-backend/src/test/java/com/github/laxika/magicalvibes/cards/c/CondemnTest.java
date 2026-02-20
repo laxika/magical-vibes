@@ -257,3 +257,4 @@ class CondemnTest {
                 .anyMatch(c -> c.getName().equals("Condemn"));
     }
 }
+

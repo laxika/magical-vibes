@@ -137,7 +137,7 @@ class PhantomWarriorTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -164,4 +164,5 @@ class PhantomWarriorTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 }
+
 

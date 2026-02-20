@@ -302,3 +302,4 @@ class ScalpelexisTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("exiles cards from the top"));
     }
 }
+

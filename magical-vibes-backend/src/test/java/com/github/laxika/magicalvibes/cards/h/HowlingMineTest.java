@@ -212,3 +212,4 @@ class HowlingMineTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 3);
     }
 }
+

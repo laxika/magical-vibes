@@ -196,3 +196,4 @@ class FlashfreezeTest {
                 .anyMatch(c -> c.getName().equals("Flashfreeze"));
     }
 }
+

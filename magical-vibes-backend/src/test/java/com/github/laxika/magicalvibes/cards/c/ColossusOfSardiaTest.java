@@ -400,3 +400,4 @@ class ColossusOfSardiaTest {
         harness.passBothPriorities(); // CLEANUP -> next turn (advanceTurn)
     }
 }
+

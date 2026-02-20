@@ -67,9 +67,9 @@ class SeismicAssaultTest {
         harness.activateAbility(player1, 0, null, player2.getId());
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingCardChoiceValidIndices).containsExactly(1);
+        assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactly(1);
     }
 
     @Test
@@ -82,7 +82,7 @@ class SeismicAssaultTest {
         harness.handleCardChosen(player1, 2);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getName().equals("Plains"));
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Plains"));
@@ -128,7 +128,7 @@ class SeismicAssaultTest {
                 .isInstanceOf(IllegalStateException.class);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
@@ -173,4 +173,5 @@ class SeismicAssaultTest {
         return perm;
     }
 }
+
 

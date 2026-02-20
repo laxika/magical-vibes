@@ -350,3 +350,4 @@ class AscendantEvincarTest {
         assertThat(gqs.hasKeyword(gd, evincar, Keyword.FLYING)).isTrue();
     }
 }
+

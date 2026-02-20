@@ -320,3 +320,4 @@ class LuminesceTest {
         assertThat(gd.preventDamageFromColors).isEmpty();
     }
 }
+

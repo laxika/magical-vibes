@@ -12,3 +12,4 @@ public record TargetValidationContext(
         TargetZone targetZone,
         Card sourceCard
 ) {}
+

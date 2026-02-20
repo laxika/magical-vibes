@@ -6,3 +6,4 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 public interface TargetValidator {
     void validate(TargetValidationContext context, CardEffect effect);
 }
+

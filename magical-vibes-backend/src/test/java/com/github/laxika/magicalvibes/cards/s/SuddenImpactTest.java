@@ -125,3 +125,4 @@ class SuddenImpactTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 }
+

@@ -195,12 +195,12 @@ class CitanulFluteTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.awaitingLibrarySearchPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isEqualTo(player1.getId());
         // Library has: LlanowarElves (MV 1), GrizzlyBears (MV 2), AirElemental (MV 5), Plains, Swamp
         // X=2 → only creatures with MV <= 2: LlanowarElves (1) and GrizzlyBears (2)
-        assertThat(gd.interaction.awaitingLibrarySearchCards).hasSize(2);
-        assertThat(gd.interaction.awaitingLibrarySearchCards.stream().map(Card::getName))
+        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(2);
+        assertThat(gd.interaction.awaitingLibrarySearchCards().stream().map(Card::getName))
                 .containsExactlyInAnyOrder("Llanowar Elves", "Grizzly Bears");
     }
 
@@ -213,10 +213,10 @@ class CitanulFluteTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         // Only LlanowarElves (MV 1) qualifies
-        assertThat(gd.interaction.awaitingLibrarySearchCards).hasSize(1);
-        assertThat(gd.interaction.awaitingLibrarySearchCards.getFirst().getName()).isEqualTo("Llanowar Elves");
+        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(1);
+        assertThat(gd.interaction.awaitingLibrarySearchCards().getFirst().getName()).isEqualTo("Llanowar Elves");
     }
 
     @Test
@@ -228,10 +228,10 @@ class CitanulFluteTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         // LlanowarElves (MV 1), GrizzlyBears (MV 2), AirElemental (MV 5) — all qualify
-        assertThat(gd.interaction.awaitingLibrarySearchCards).hasSize(3);
-        assertThat(gd.interaction.awaitingLibrarySearchCards.stream().map(Card::getName))
+        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(3);
+        assertThat(gd.interaction.awaitingLibrarySearchCards().stream().map(Card::getName))
                 .containsExactlyInAnyOrder("Llanowar Elves", "Grizzly Bears", "Air Elemental");
     }
 
@@ -245,7 +245,7 @@ class CitanulFluteTest {
 
         GameData gd = harness.getGameData();
         // Plains (basic land) and Swamp (basic land) should NOT appear despite high X
-        assertThat(gd.interaction.awaitingLibrarySearchCards)
+        assertThat(gd.interaction.awaitingLibrarySearchCards())
                 .allMatch(c -> c.getType() == CardType.CREATURE);
     }
 
@@ -261,7 +261,7 @@ class CitanulFluteTest {
 
         GameData gd = harness.getGameData();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
-        String chosenName = gd.interaction.awaitingLibrarySearchCards.getFirst().getName();
+        String chosenName = gd.interaction.awaitingLibrarySearchCards().getFirst().getName();
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
@@ -273,9 +273,9 @@ class CitanulFluteTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
 
         // Awaiting state is cleared
-        assertThat(gd.interaction.awaitingInput).isNull();
-        assertThat(gd.interaction.awaitingLibrarySearchPlayerId).isNull();
-        assertThat(gd.interaction.awaitingLibrarySearchCards).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isNull();
+        assertThat(gd.interaction.awaitingLibrarySearchCards()).isNull();
     }
 
     @Test
@@ -287,7 +287,7 @@ class CitanulFluteTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingLibrarySearchReveals).isTrue();
+        assertThat(gd.interaction.awaitingLibrarySearchReveals()).isTrue();
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
@@ -306,7 +306,7 @@ class CitanulFluteTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingLibrarySearchCanFailToFind).isTrue();
+        assertThat(gd.interaction.awaitingLibrarySearchCanFailToFind()).isTrue();
     }
 
     @Test
@@ -330,7 +330,7 @@ class CitanulFluteTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
 
         // Awaiting state is cleared
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
 
         // Log mentions declining
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("chooses not to take a card"));
@@ -347,7 +347,7 @@ class CitanulFluteTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no creature card with mana value"));
     }
 
@@ -363,7 +363,7 @@ class CitanulFluteTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no creature card with mana value"));
     }
 
@@ -379,7 +379,7 @@ class CitanulFluteTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("it is empty"));
     }
 
@@ -399,4 +399,5 @@ class CitanulFluteTest {
         deck.addAll(List.of(new LlanowarElves(), new GrizzlyBears(), new AirElemental(), new Plains(), new Swamp()));
     }
 }
+
 

@@ -307,3 +307,4 @@ public class ScryfallOracleLoader {
         return null;
     }
 }
+

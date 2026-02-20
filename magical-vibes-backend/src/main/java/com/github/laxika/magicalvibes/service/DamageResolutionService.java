@@ -877,3 +877,4 @@ public class DamageResolutionService implements EffectHandlerProvider {
         gameHelper.checkWinCondition(gameData);
     }
 }
+

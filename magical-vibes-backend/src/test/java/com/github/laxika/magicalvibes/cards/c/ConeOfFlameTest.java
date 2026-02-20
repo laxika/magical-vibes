@@ -371,3 +371,4 @@ class ConeOfFlameTest {
                 .anyMatch(c -> c.getName().equals("Cone of Flame"));
     }
 }
+

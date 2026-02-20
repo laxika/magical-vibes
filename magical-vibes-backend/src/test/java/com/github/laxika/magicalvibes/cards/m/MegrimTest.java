@@ -304,3 +304,4 @@ class MegrimTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 }
+

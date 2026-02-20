@@ -294,3 +294,4 @@ class VedalkenMastermindTest {
         return perm;
     }
 }
+

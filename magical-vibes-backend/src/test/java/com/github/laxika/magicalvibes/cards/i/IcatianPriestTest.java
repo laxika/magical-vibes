@@ -219,3 +219,4 @@ class IcatianPriestTest {
         return perm;
     }
 }
+

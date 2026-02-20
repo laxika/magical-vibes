@@ -122,7 +122,7 @@ class LoyalSentryTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -151,7 +151,7 @@ class LoyalSentryTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -190,7 +190,7 @@ class LoyalSentryTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
@@ -224,7 +224,7 @@ class LoyalSentryTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         // Resolve the block trigger
@@ -251,7 +251,7 @@ class LoyalSentryTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -282,7 +282,7 @@ class LoyalSentryTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -315,7 +315,7 @@ class LoyalSentryTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -344,7 +344,7 @@ class LoyalSentryTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -368,4 +368,5 @@ class LoyalSentryTest {
         assertThat(perm.isSummoningSick()).isTrue();
     }
 }
+
 

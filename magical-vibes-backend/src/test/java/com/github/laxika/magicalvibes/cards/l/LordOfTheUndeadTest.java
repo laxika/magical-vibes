@@ -355,7 +355,7 @@ class LordOfTheUndeadTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
 
         harness.handleGraveyardCardChosen(player1, 0);
 
@@ -416,7 +416,7 @@ class LordOfTheUndeadTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no Zombie cards in graveyard"));
     }
 
@@ -430,7 +430,7 @@ class LordOfTheUndeadTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no Zombie cards in graveyard"));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -463,7 +463,7 @@ class LordOfTheUndeadTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no Zombie cards in graveyard"));
     }
 
@@ -550,4 +550,5 @@ class LordOfTheUndeadTest {
         return perm;
     }
 }
+
 

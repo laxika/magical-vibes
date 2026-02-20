@@ -324,3 +324,4 @@ class FieldMarshalTest {
         assertThat(gqs.hasKeyword(gd, cloudchaser, Keyword.FIRST_STRIKE)).isTrue();
     }
 }
+

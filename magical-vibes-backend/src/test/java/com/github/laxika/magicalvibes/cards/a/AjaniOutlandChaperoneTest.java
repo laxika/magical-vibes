@@ -322,8 +322,8 @@ class AjaniOutlandChaperoneTest {
         long ajaniCount = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Ajani, Outland Chaperone"))
                 .count();
-        // Either legend rule triggers a choice (interaction.awaitingInput != null) or only one remains
-        assertThat(ajaniCount <= 1 || gd.interaction.awaitingInput != null).isTrue();
+        // Either legend rule triggers a choice (interaction.awaitingInputType() != null) or only one remains
+        assertThat(ajaniCount <= 1 || gd.interaction.awaitingInputType() != null).isTrue();
     }
 
     // ===== Helpers =====
@@ -339,5 +339,6 @@ class AjaniOutlandChaperoneTest {
         return perm;
     }
 }
+
 
 

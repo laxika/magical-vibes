@@ -147,3 +147,4 @@ class GravebornMuseTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
     }
 }
+

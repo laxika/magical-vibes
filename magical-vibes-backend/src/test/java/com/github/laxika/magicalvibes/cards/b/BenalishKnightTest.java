@@ -252,3 +252,4 @@ class BenalishKnightTest {
         assertThat(perm.isSummoningSick()).isTrue();
     }
 }
+

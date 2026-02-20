@@ -259,3 +259,4 @@ class SamiteHealerTest {
         return healer;
     }
 }
+

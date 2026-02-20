@@ -271,3 +271,4 @@ class ChoMannoRevolutionaryTest {
         assertThat(perm.isSummoningSick()).isTrue();
     }
 }
+

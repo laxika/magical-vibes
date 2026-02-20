@@ -154,3 +154,4 @@ class HighwayRobberTest {
         harness.getGameService().playCard(gd, player1, 0, 0, player2.getId(), null);
     }
 }
+

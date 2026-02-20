@@ -229,3 +229,4 @@ class IncinerateTest {
                 .anyMatch(c -> c.getName().equals("Incinerate"));
     }
 }
+

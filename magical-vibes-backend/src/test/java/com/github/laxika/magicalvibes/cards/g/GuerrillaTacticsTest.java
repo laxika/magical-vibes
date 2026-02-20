@@ -181,8 +181,8 @@ class GuerrillaTacticsTest {
         harness.handleCardChosen(player1, 0);
 
         // Guerrilla Tactics' discard trigger should prompt player2 to choose any target
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.awaitingPermanentChoicePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -286,8 +286,8 @@ class GuerrillaTacticsTest {
         harness.handleCardChosen(player2, 0);
 
         // Guerrilla Tactics' discard trigger should prompt player2 to choose any target
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.awaitingPermanentChoicePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isEqualTo(player2.getId());
 
         // Player2 chooses player1 as target
         harness.handlePermanentChosen(player2, player1.getId());
@@ -320,7 +320,7 @@ class GuerrillaTacticsTest {
         harness.handleCardChosen(player1, 0); // Discard the Guerrilla Tactics
 
         // No trigger — self-discard does not activate the ability
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
@@ -399,7 +399,7 @@ class GuerrillaTacticsTest {
 
         // Megrim deals 2 damage to player2 (the discarding player)
         // Guerrilla Tactics trigger prompts player2 to choose any target
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
 
         // Player2 targets player1 with the 4 damage
         harness.handlePermanentChosen(player2, player1.getId());
@@ -411,4 +411,5 @@ class GuerrillaTacticsTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 }
+
 

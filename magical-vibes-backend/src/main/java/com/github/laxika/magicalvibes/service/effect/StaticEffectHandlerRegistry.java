@@ -26,3 +26,4 @@ public class StaticEffectHandlerRegistry {
         return selfHandlers.get(effect.getClass());
     }
 }
+

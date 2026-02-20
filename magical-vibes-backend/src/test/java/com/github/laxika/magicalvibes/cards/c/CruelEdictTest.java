@@ -108,9 +108,9 @@ class CruelEdictTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.awaitingPermanentChoicePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.interaction.permanentChoiceContext).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
     }
 
     @Test
@@ -171,4 +171,5 @@ class CruelEdictTest {
                 .anyMatch(c -> c.getName().equals("Cruel Edict"));
     }
 }
+
 

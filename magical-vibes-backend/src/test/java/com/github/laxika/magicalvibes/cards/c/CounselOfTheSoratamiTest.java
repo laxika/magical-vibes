@@ -137,3 +137,4 @@ class CounselOfTheSoratamiTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 }
+

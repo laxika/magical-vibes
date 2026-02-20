@@ -178,3 +178,4 @@ class ConsumeSpiritTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 }
+

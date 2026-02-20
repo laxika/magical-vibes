@@ -244,3 +244,4 @@ public class CardSpecificResolutionService implements EffectHandlerProvider {
         return apnap;
     }
 }
+

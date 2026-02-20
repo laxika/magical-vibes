@@ -372,3 +372,4 @@ class TwitchTest {
         return perm;
     }
 }
+

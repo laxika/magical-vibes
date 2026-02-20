@@ -101,9 +101,9 @@ class MindRotTest {
         harness.passBothPriorities();
 
         // Target player (player2) should be prompted to discard, NOT the caster
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.interaction.awaitingDiscardRemainingCount).isEqualTo(2);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.discardRemainingCount()).isEqualTo(2);
     }
 
     @Test
@@ -120,14 +120,14 @@ class MindRotTest {
         harness.handleCardChosen(player2, 0); // discard Grizzly Bears
 
         // Still awaiting second discard
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player2.getId());
 
         // Target player chooses second discard
         harness.handleCardChosen(player2, 0); // discard Peek (now at index 0)
 
         // Discard complete
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId()).getFirst().getName()).isEqualTo("Forest");
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -147,7 +147,7 @@ class MindRotTest {
         harness.passBothPriorities();
 
         // All indices should be valid — Mind Rot doesn't restrict card types
-        assertThat(gd.interaction.awaitingCardChoiceValidIndices).containsExactlyInAnyOrder(0, 1, 2);
+        assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactlyInAnyOrder(0, 1, 2);
 
         harness.handleCardChosen(player2, 0); // discard Forest
         harness.handleCardChosen(player2, 0); // discard GrizzlyBears (now index 0)
@@ -185,12 +185,12 @@ class MindRotTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
 
         harness.handleCardChosen(player2, 0); // discard the only card
 
         // Hand is now empty, so the second discard is skipped
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -209,7 +209,7 @@ class MindRotTest {
         harness.passBothPriorities();
 
         // No discard prompt — hand is empty
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to discard"));
     }
@@ -226,13 +226,13 @@ class MindRotTest {
         harness.passBothPriorities();
 
         // Player1 is prompted to discard from their own hand
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player1.getId());
 
         harness.handleCardChosen(player1, 0); // discard GrizzlyBears
         harness.handleCardChosen(player1, 0); // discard Peek
 
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Forest");
     }
@@ -272,4 +272,5 @@ class MindRotTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("discards") && log.contains("Peek"));
     }
 }
+
 

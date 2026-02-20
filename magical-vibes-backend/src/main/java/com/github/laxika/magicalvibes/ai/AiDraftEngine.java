@@ -241,3 +241,4 @@ public class AiDraftEngine {
 
     private record IndexedCard(int index, Card card, double score) {}
 }
+

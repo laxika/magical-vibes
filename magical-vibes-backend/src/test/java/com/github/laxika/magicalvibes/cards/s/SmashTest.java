@@ -166,3 +166,4 @@ class SmashTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
     }
 }
+

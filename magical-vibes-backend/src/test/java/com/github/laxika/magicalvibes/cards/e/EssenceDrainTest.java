@@ -157,3 +157,4 @@ class EssenceDrainTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
     }
 }
+

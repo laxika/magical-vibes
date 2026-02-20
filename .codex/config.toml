@@ -3,3 +3,12 @@
 command_pattern = "^./gradlew :magical-vibes-backend:test --tests .*"
 decision = "always-allow"
 reason = "Allow targeted backend tests to manage Gradle wrapper locks and artifacts."
+
+[sandbox]
+# Ensures the sandbox doesn't block Gradle from writing to its own build/cache dirs
+mode = "relaxed"
+extra_writable_paths = [
+    "~/.gradle",
+    "./.gradle",
+    "./build"
+]

@@ -163,7 +163,7 @@ class HypnoticSpecterTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
     }
 
@@ -182,4 +182,5 @@ class HypnoticSpecterTest {
                 log.contains("Hypnotic Specter") && log.contains("Grizzly Bears") && log.contains("at random"));
     }
 }
+
 

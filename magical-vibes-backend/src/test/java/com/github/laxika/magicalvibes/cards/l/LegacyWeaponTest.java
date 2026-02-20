@@ -420,3 +420,4 @@ class LegacyWeaponTest {
         harness.addMana(player, ManaColor.GREEN, 1);
     }
 }
+

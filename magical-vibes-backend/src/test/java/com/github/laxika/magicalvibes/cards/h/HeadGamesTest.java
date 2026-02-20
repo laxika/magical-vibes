@@ -105,13 +105,13 @@ class HeadGamesTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
 
         // Library search state should be set up for caster
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.awaitingLibrarySearchPlayerId).isEqualTo(player1.getId());
-        assertThat(gd.interaction.awaitingLibrarySearchTargetPlayerId).isEqualTo(player2.getId());
-        assertThat(gd.interaction.awaitingLibrarySearchRemainingCount).isEqualTo(2);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingLibrarySearchTargetPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.awaitingLibrarySearchRemainingCount()).isEqualTo(2);
 
         // Search cards should contain the full library (including former hand cards)
-        assertThat(gd.interaction.awaitingLibrarySearchCards).hasSize(4); // 2 library + 2 from hand
+        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(4); // 2 library + 2 from hand
     }
 
     @Test
@@ -131,9 +131,9 @@ class HeadGamesTest {
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
         // Should still be in library search mode (1 remaining)
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.awaitingLibrarySearchRemainingCount).isEqualTo(1);
-        assertThat(gd.interaction.awaitingLibrarySearchTargetPlayerId).isEqualTo(player2.getId());
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.awaitingLibrarySearchRemainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.awaitingLibrarySearchTargetPlayerId()).isEqualTo(player2.getId());
 
         // One card should be in opponent's hand now
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -160,11 +160,11 @@ class HeadGamesTest {
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
         // State should be fully cleared
-        assertThat(gd.interaction.awaitingInput).isNull();
-        assertThat(gd.interaction.awaitingLibrarySearchPlayerId).isNull();
-        assertThat(gd.interaction.awaitingLibrarySearchCards).isNull();
-        assertThat(gd.interaction.awaitingLibrarySearchTargetPlayerId).isNull();
-        assertThat(gd.interaction.awaitingLibrarySearchRemainingCount).isZero();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isNull();
+        assertThat(gd.interaction.awaitingLibrarySearchCards()).isNull();
+        assertThat(gd.interaction.awaitingLibrarySearchTargetPlayerId()).isNull();
+        assertThat(gd.interaction.awaitingLibrarySearchRemainingCount()).isZero();
 
         // Opponent's hand should have exactly 2 cards
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
@@ -190,13 +190,13 @@ class HeadGamesTest {
         harness.passBothPriorities();
 
         // Library now has 3 cards (1 from hand + 2 original)
-        assertThat(gd.interaction.awaitingLibrarySearchCards).hasSize(3);
-        assertThat(gd.interaction.awaitingLibrarySearchRemainingCount).isEqualTo(1);
+        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(3);
+        assertThat(gd.interaction.awaitingLibrarySearchRemainingCount()).isEqualTo(1);
 
         // Find the Swamp in search cards
         int swampIndex = -1;
-        for (int i = 0; i < gd.interaction.awaitingLibrarySearchCards.size(); i++) {
-            if (gd.interaction.awaitingLibrarySearchCards.get(i).getName().equals("Swamp")) {
+        for (int i = 0; i < gd.interaction.awaitingLibrarySearchCards().size(); i++) {
+            if (gd.interaction.awaitingLibrarySearchCards().get(i).getName().equals("Swamp")) {
                 swampIndex = i;
                 break;
             }
@@ -222,8 +222,8 @@ class HeadGamesTest {
         harness.passBothPriorities();
 
         // No library search should be initiated
-        assertThat(gd.interaction.awaitingInput).isNull();
-        assertThat(gd.interaction.awaitingLibrarySearchPlayerId).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isNull();
 
         // Opponent's hand is still empty
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
@@ -245,13 +245,13 @@ class HeadGamesTest {
         harness.passBothPriorities();
 
         // Should be in library search with 1 remaining
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.awaitingLibrarySearchRemainingCount).isEqualTo(1);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.awaitingLibrarySearchRemainingCount()).isEqualTo(1);
 
         // Pick a card — this is the only pick, so state should be cleared
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
@@ -297,7 +297,7 @@ class HeadGamesTest {
         castHeadGames();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingLibrarySearchCanFailToFind).isFalse();
+        assertThat(gd.interaction.awaitingLibrarySearchCanFailToFind()).isFalse();
 
         assertThatThrownBy(() -> harness.getGameService().handleLibraryCardChosen(gd, player1, -1))
                 .isInstanceOf(IllegalStateException.class)
@@ -405,13 +405,13 @@ class HeadGamesTest {
         castHeadGames();
         harness.passBothPriorities();
 
-        int initialSearchSize = gd.interaction.awaitingLibrarySearchCards.size();
+        int initialSearchSize = gd.interaction.awaitingLibrarySearchCards().size();
 
         // First pick
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
         // Search cards should have one fewer card
-        assertThat(gd.interaction.awaitingLibrarySearchCards).hasSize(initialSearchSize - 1);
+        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(initialSearchSize - 1);
     }
 
     // ===== Helpers =====
@@ -428,4 +428,5 @@ class HeadGamesTest {
         deck.addAll(List.of(new Plains(), new Swamp()));
     }
 }
+
 

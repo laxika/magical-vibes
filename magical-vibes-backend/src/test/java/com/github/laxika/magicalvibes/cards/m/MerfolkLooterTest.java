@@ -201,8 +201,8 @@ class MerfolkLooterTest {
         // After drawing, hand should have 2 cards (original + drawn)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         // Should be awaiting discard
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player1.getId());
         assertThat(gd.gameLog).anyMatch(log -> log.contains("draws a card"));
     }
 
@@ -227,7 +227,7 @@ class MerfolkLooterTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         // No longer awaiting input
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("discards") && log.contains("Grizzly Bears"));
     }
 
@@ -265,7 +265,7 @@ class MerfolkLooterTest {
         // No card drawn, hand still has 1 card
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         // Should still be awaiting discard
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to draw"));
     }
 
@@ -280,7 +280,7 @@ class MerfolkLooterTest {
         harness.passBothPriorities();
 
         // No card drawn, hand still empty - discard should be skipped
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to discard"));
     }
 
@@ -336,4 +336,5 @@ class MerfolkLooterTest {
         gd.playerDecks.get(player.getId()).addAll(cards);
     }
 }
+
 

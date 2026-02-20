@@ -223,3 +223,4 @@ class GloriousAnthemTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }
 }
+

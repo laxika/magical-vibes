@@ -216,3 +216,4 @@ class BeaconOfDestructionTest {
         assertThat(harness.getGameData().stack).isEmpty();
     }
 }
+

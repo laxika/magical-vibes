@@ -321,3 +321,4 @@ class TimeStopTest {
         assertThat(gd.permanentsToSacrificeAtEndOfCombat).isEmpty();
     }
 }
+

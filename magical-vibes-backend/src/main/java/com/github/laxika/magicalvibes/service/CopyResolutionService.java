@@ -107,3 +107,4 @@ public class CopyResolutionService implements EffectHandlerProvider {
         return copy;
     }
 }
+

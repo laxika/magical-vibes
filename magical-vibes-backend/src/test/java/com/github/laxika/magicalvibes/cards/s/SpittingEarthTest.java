@@ -137,3 +137,4 @@ class SpittingEarthTest {
                 .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
     }
 }
+

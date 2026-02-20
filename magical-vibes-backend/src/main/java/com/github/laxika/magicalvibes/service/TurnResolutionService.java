@@ -116,3 +116,4 @@ public class TurnResolutionService implements EffectHandlerProvider {
                 gameData.id, entry.getCard().getName(), effect.count());
     }
 }
+

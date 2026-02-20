@@ -108,3 +108,4 @@ public class ScryfallTypeLineParser {
         return new ParsedTypeLine(supertypes, type, additionalTypes, subtypes);
     }
 }
+

@@ -145,7 +145,7 @@ class FearTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -174,7 +174,7 @@ class FearTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
         // declareBlockers succeeds without throwing — black creature can block fear
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -204,7 +204,7 @@ class FearTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
         // declareBlockers succeeds without throwing — artifact creature can block fear
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -300,11 +300,12 @@ class FearTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("(fear)");
     }
 }
+
 

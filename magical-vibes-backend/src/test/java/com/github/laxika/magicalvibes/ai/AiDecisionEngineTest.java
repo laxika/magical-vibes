@@ -56,7 +56,7 @@ class AiDecisionEngineTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.awaitingInput = null;
+        gd.interaction.setAwaitingInput(null);
         gd.stack.clear();
     }
 
@@ -232,7 +232,7 @@ class AiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
     }
 
     @Test
@@ -340,4 +340,5 @@ class AiDecisionEngineTest {
         assertThat(gd.stack).isEmpty();
     }
 }
+
 

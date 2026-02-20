@@ -140,3 +140,4 @@ class DoublingCubeTest {
                 harness.activateAbility(player1, 0, null, null));
     }
 }
+

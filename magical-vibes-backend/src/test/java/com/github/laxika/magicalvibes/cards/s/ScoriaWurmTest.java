@@ -103,3 +103,4 @@ class ScoriaWurmTest {
                 .anyMatch(log -> log.contains("coin flip for Scoria Wurm"));
     }
 }
+

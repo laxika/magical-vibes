@@ -104,8 +104,8 @@ class FesteringGoblinTest {
                 .anyMatch(c -> c.getName().equals("Festering Goblin"));
 
         // Player1 should be prompted to choose a target creature
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.awaitingPermanentChoicePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -123,7 +123,7 @@ class FesteringGoblinTest {
         GameData gd = harness.getGameData();
 
         // Player1 should be prompted to choose a target
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
 
         // Choose the surviving Grizzly Bears
         harness.handlePermanentChosen(player1, bearsId);
@@ -160,7 +160,7 @@ class FesteringGoblinTest {
         harness.passBothPriorities(); // Combat damage — FG dies
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
 
         // Choose own Grizzly Bears
         harness.handlePermanentChosen(player1, ownBearsId);
@@ -194,7 +194,7 @@ class FesteringGoblinTest {
         harness.passBothPriorities(); // FG dies
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
 
         // Choose the 1/1 bear
         harness.handlePermanentChosen(player1, weakBearId);
@@ -266,7 +266,7 @@ class FesteringGoblinTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // No permanent choice should be prompted (no valid creature targets after Wrath)
-        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
 
         // Log should mention no valid targets
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
@@ -317,7 +317,7 @@ class FesteringGoblinTest {
         GameData gd = harness.getGameData();
 
         // Should be prompted — survivor is a valid target
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
 
         // Choose the survivor
         harness.handlePermanentChosen(player1, survivorId);
@@ -329,4 +329,5 @@ class FesteringGoblinTest {
                 && e.getTargetPermanentId().equals(survivorId));
     }
 }
+
 

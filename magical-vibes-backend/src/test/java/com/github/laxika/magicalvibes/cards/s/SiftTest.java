@@ -107,8 +107,8 @@ class SiftTest {
         // Deck should have lost 3 cards
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 3);
         // Should be awaiting discard choice
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -126,7 +126,7 @@ class SiftTest {
         // Hand should have 2 cards (drew 3, discarded 1)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         // No longer awaiting input
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
     }
 
     @Test
@@ -171,4 +171,5 @@ class SiftTest {
         gd.playerDecks.get(player.getId()).addAll(cards);
     }
 }
+
 

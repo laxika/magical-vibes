@@ -235,3 +235,4 @@ class AngelicChorusTest {
                 .isEqualTo(6);
     }
 }
+

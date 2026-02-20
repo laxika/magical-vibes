@@ -101,10 +101,10 @@ class DistressTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.interaction.awaitingRevealedHandChoiceRemainingCount).isEqualTo(1);
-        assertThat(gd.interaction.awaitingRevealedHandChoiceDiscardMode).isTrue();
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
+        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.revealedHandChoiceRemainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.revealedHandChoiceDiscardMode()).isTrue();
     }
 
     @Test
@@ -124,8 +124,8 @@ class DistressTest {
         harness.handleCardChosen(player1, 0);
 
         // Choice is complete
-        assertThat(gd.interaction.awaitingInput).isNull();
-        assertThat(gd.interaction.awaitingRevealedHandChoiceDiscardMode).isFalse();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.revealedHandChoiceDiscardMode()).isFalse();
 
         // Grizzly Bears should be in player2's graveyard
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -149,10 +149,10 @@ class DistressTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
 
         // Only index 0 (Grizzly Bears) should be valid, index 1 (Forest) is a land
-        assertThat(gd.interaction.awaitingCardChoiceValidIndices).containsExactly(0);
+        assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactly(0);
     }
 
     @Test
@@ -188,7 +188,7 @@ class DistressTest {
         harness.passBothPriorities();
 
         // No valid choices, so the effect should complete without prompting
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
 
         // Lands should remain in hand
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
@@ -207,7 +207,7 @@ class DistressTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("empty"));
     }
 
@@ -225,14 +225,14 @@ class DistressTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
         // Only index 1 (Grizzly Bears) should be valid
-        assertThat(gd.interaction.awaitingCardChoiceValidIndices).containsExactly(1);
+        assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactly(1);
 
         // Choose the only nonland card
         harness.handleCardChosen(player1, 1);
 
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
@@ -293,12 +293,12 @@ class DistressTest {
         harness.castSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
 
         // Choose Grizzly Bears (index 0 after Distress left hand)
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
@@ -381,4 +381,5 @@ class DistressTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("discards") && log.contains("Grizzly Bears"));
     }
 }
+
 

@@ -281,3 +281,4 @@ class SpiritWeaverTest {
         return perm;
     }
 }
+

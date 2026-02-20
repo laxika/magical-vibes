@@ -10,3 +10,4 @@ public class MagicalVibesApplication {
         SpringApplication.run(MagicalVibesApplication.class, args);
     }
 }
+

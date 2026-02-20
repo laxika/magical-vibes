@@ -229,3 +229,4 @@ class MarchOfTheMachinesTest {
         assertThat(gqs.isCreature(gd, anthem)).isFalse();
     }
 }
+

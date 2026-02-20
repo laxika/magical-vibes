@@ -141,7 +141,7 @@ class CloudSpriteTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
         // Should not throw — Cloud Sprite can block flyers
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -168,7 +168,7 @@ class CloudSpriteTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -230,4 +230,5 @@ class CloudSpriteTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 }
+
 

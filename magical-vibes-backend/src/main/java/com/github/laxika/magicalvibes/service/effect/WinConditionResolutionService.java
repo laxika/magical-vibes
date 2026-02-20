@@ -57,3 +57,4 @@ public class WinConditionResolutionService implements EffectHandlerProvider {
         }
     }
 }
+

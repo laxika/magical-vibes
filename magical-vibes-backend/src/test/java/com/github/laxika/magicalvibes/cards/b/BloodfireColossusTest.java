@@ -259,3 +259,4 @@ class BloodfireColossusTest {
                 .anyMatch(p -> p.getCard().getName().equals("Test Enchantment"));
     }
 }
+

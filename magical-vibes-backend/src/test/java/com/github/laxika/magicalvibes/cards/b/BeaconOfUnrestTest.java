@@ -96,7 +96,7 @@ class BeaconOfUnrestTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
 
         harness.handleGraveyardCardChosen(player1, 0);
 
@@ -119,7 +119,7 @@ class BeaconOfUnrestTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
 
         harness.handleGraveyardCardChosen(player1, 0);
 
@@ -143,7 +143,7 @@ class BeaconOfUnrestTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
 
         // The only card in the pool is the opponent's Grizzly Bears at index 0
         harness.handleGraveyardCardChosen(player1, 0);
@@ -201,7 +201,7 @@ class BeaconOfUnrestTest {
 
         GameData gd = harness.getGameData();
         // Should not be awaiting graveyard choice since no valid targets
-        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no artifact or creature cards in any graveyard"));
         // Per Magic rules: spell fizzles when no legal targets — Beacon goes to graveyard, NOT shuffled into library
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -224,9 +224,9 @@ class BeaconOfUnrestTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         // Pool should have 2 cards (Grizzly Bears from player1 + Angel's Feather from player2)
-        assertThat(gd.interaction.graveyardChoiceCardPool).hasSize(2);
+        assertThat(gd.interaction.graveyardChoiceCardPool()).hasSize(2);
 
         // Choose the artifact from opponent's graveyard (index 1)
         harness.handleGraveyardCardChosen(player1, 1);
@@ -256,4 +256,5 @@ class BeaconOfUnrestTest {
         assertThat(harness.getGameData().stack).isEmpty();
     }
 }
+
 

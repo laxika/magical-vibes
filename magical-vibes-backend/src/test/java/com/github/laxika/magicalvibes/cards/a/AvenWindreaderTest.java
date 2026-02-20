@@ -197,3 +197,4 @@ class AvenWindreaderTest {
                 .hasMessageContaining("must be a player");
     }
 }
+

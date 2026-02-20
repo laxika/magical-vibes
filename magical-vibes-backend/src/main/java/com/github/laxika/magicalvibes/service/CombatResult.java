@@ -6,3 +6,4 @@ public enum CombatResult {
     ADVANCE_ONLY,
     DONE
 }
+

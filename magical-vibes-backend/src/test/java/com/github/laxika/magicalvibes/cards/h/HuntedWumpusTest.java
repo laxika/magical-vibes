@@ -114,9 +114,9 @@ class HuntedWumpusTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.CARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.interaction.awaitingCardChoiceValidIndices).containsExactly(0);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.CARD_CHOICE);
+        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactly(0);
     }
 
     @Test
@@ -131,9 +131,9 @@ class HuntedWumpusTest {
         harness.passBothPriorities(); // resolve ETB → awaiting card choice
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.CARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.CARD_CHOICE);
         // Valid indices should be [1] (Grizzly Bears is at index 1)
-        assertThat(gd.interaction.awaitingCardChoiceValidIndices).containsExactly(1);
+        assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactly(1);
 
         int handSizeBefore = gd.playerHands.get(player2.getId()).size();
 
@@ -162,7 +162,7 @@ class HuntedWumpusTest {
         harness.passBothPriorities(); // resolve ETB → awaiting card choice
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.CARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.CARD_CHOICE);
 
         int handSizeBefore = gd.playerHands.get(player2.getId()).size();
         int battlefieldSizeBefore = gd.playerBattlefields.get(player2.getId()).size();
@@ -190,7 +190,7 @@ class HuntedWumpusTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.CARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.CARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("has no creature cards in hand"));
     }
 
@@ -206,7 +206,7 @@ class HuntedWumpusTest {
         harness.passBothPriorities(); // resolve ETB → awaiting card choice
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.CARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.CARD_CHOICE);
 
         // Opponent puts their Wumpus
         harness.handleCardChosen(player2, 0);
@@ -252,9 +252,9 @@ class HuntedWumpusTest {
         // Resolve second ETB → player1 (opponent of controller player2) is asked to choose
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.CARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.interaction.awaitingCardChoiceValidIndices).containsExactly(0);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.CARD_CHOICE);
+        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactly(0);
 
         // Player1 puts their Grizzly Bears
         harness.handleCardChosen(player1, 0);
@@ -290,4 +290,5 @@ class HuntedWumpusTest {
                 .hasMessageContaining("not playable");
     }
 }
+
 

@@ -49,3 +49,4 @@ public class FakeConnection implements Connection {
         sentMessages.clear();
     }
 }
+

@@ -185,3 +185,4 @@ class ReminisceTest {
         assertThat(harness.getGameData().stack).isEmpty();
     }
 }
+

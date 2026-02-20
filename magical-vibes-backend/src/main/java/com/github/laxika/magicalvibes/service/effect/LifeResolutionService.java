@@ -134,3 +134,4 @@ public class LifeResolutionService implements EffectHandlerProvider {
         resolveGainLife(gameData, controllerId, effect.lifeGain());
     }
 }
+

@@ -321,3 +321,4 @@ class ArcaneTeachingsTest {
         assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(4);
     }
 }
+

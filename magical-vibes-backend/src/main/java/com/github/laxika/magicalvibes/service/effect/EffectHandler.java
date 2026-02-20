@@ -8,3 +8,4 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 public interface EffectHandler {
     void resolve(GameData gameData, StackEntry entry, CardEffect effect);
 }
+

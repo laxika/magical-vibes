@@ -34,3 +34,4 @@ public class DraftRegistry {
         drafts.remove(draftId);
     }
 }
+

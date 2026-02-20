@@ -247,3 +247,4 @@ class OrcishArtilleryTest {
         return perm;
     }
 }
+

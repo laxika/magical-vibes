@@ -174,3 +174,4 @@ class RemoveSoulTest {
                 .anyMatch(c -> c.getName().equals("Remove Soul"));
     }
 }
+

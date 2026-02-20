@@ -373,3 +373,4 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} untaps {} attacked creature(s)", gameData.id, entry.getCard().getName(), count);
     }
 }
+

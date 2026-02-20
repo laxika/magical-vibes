@@ -198,3 +198,4 @@ class FlamewaveInvokerTest {
         return perm;
     }
 }
+

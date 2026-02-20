@@ -159,3 +159,4 @@ class ShatterstormTest {
                 .anyMatch(p -> p.getCard().getName().equals("Darksteel Relic"));
     }
 }
+

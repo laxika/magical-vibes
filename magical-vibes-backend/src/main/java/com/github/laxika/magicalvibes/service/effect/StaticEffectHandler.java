@@ -6,3 +6,4 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 public interface StaticEffectHandler {
     void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator);
 }
+

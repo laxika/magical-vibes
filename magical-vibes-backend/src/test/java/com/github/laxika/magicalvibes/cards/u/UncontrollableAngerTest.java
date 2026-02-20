@@ -129,7 +129,7 @@ class UncontrollableAngerTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
                 .isInstanceOf(IllegalStateException.class)
@@ -148,7 +148,7 @@ class UncontrollableAngerTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
 
         gs.declareAttackers(gd, player1, List.of());
 
@@ -169,11 +169,12 @@ class UncontrollableAngerTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
 
         gs.declareAttackers(gd, player1, List.of());
 
         assertThat(bears.isAttacking()).isFalse();
     }
 }
+
 

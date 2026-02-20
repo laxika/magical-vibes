@@ -92,9 +92,9 @@ class MindBendTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.awaitingColorChoicePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.interaction.colorChoiceContext).isInstanceOf(ColorChoiceContext.TextChangeFromWord.class);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
+        assertThat(gd.interaction.awaitingColorChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.colorChoiceContext()).isInstanceOf(ColorChoiceContext.TextChangeFromWord.class);
     }
 
     @Test
@@ -111,9 +111,9 @@ class MindBendTest {
         harness.handleColorChosen(player1, "BLACK");
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.colorChoiceContext).isInstanceOf(ColorChoiceContext.TextChangeToWord.class);
-        ColorChoiceContext.TextChangeToWord ctx = (ColorChoiceContext.TextChangeToWord) gd.interaction.colorChoiceContext;
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
+        assertThat(gd.interaction.colorChoiceContext()).isInstanceOf(ColorChoiceContext.TextChangeToWord.class);
+        ColorChoiceContext.TextChangeToWord ctx = (ColorChoiceContext.TextChangeToWord) gd.interaction.colorChoiceContext();
         assertThat(ctx.fromWord()).isEqualTo("BLACK");
         assertThat(ctx.isColor()).isTrue();
     }
@@ -133,8 +133,8 @@ class MindBendTest {
         harness.handleColorChosen(player1, "GREEN");
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isNull();
-        assertThat(gd.interaction.colorChoiceContext).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.colorChoiceContext()).isNull();
 
         Permanent perm = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Paladin en-Vec"))
@@ -178,7 +178,7 @@ class MindBendTest {
         harness.handleColorChosen(player1, "FOREST");
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
 
         Permanent perm = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
@@ -201,7 +201,7 @@ class MindBendTest {
         harness.handleColorChosen(player1, "ISLAND");
 
         GameData gd = harness.getGameData();
-        ColorChoiceContext.TextChangeToWord ctx = (ColorChoiceContext.TextChangeToWord) gd.interaction.colorChoiceContext;
+        ColorChoiceContext.TextChangeToWord ctx = (ColorChoiceContext.TextChangeToWord) gd.interaction.colorChoiceContext();
         assertThat(ctx.isColor()).isFalse();
         assertThat(ctx.fromWord()).isEqualTo("ISLAND");
     }
@@ -292,7 +292,7 @@ class MindBendTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Mind Bend"));
     }
@@ -385,4 +385,5 @@ class MindBendTest {
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }
+
 

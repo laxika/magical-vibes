@@ -159,3 +159,4 @@ class LavaAxeTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(0);
     }
 }
+

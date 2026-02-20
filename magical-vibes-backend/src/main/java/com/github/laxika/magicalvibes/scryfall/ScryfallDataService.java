@@ -15,3 +15,4 @@ public class ScryfallDataService {
         ScryfallOracleLoader.loadAll(cacheDir);
     }
 }
+

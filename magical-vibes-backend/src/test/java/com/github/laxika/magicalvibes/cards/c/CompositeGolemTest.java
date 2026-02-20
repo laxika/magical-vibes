@@ -113,3 +113,4 @@ class CompositeGolemTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(5);
     }
 }
+

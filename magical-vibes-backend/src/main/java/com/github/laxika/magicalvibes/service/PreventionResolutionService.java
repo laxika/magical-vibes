@@ -101,3 +101,4 @@ public class PreventionResolutionService implements EffectHandlerProvider {
                 .merge(chosenColor, 1, Integer::sum);
     }
 }
+

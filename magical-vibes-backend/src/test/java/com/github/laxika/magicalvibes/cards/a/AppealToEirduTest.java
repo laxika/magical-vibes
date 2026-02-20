@@ -225,3 +225,4 @@ class AppealToEirduTest {
         assertThat(entry.getCard().getName()).isEqualTo("Appeal to Eirdu");
     }
 }
+

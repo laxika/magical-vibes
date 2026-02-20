@@ -368,3 +368,4 @@ public class GameQueryService {
         return sourceColor != null && gameData.preventDamageFromColors.contains(sourceColor);
     }
 }
+

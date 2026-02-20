@@ -188,3 +188,4 @@ class TraumatizeTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(firstCard, secondCard);
     }
 }
+

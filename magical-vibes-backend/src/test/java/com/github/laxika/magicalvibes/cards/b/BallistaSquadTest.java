@@ -326,3 +326,4 @@ class BallistaSquadTest {
         return perm;
     }
 }
+

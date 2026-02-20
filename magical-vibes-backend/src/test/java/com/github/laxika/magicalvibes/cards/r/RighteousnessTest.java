@@ -308,3 +308,4 @@ class RighteousnessTest {
         assertThat(blockerPerm.getEffectiveToughness()).isEqualTo(9);
     }
 }
+

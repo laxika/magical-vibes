@@ -323,3 +323,4 @@ class NekrataalTest {
                 .hasMessageContaining("not playable");
     }
 }
+

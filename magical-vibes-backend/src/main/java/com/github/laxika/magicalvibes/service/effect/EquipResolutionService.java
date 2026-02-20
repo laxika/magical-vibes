@@ -63,3 +63,4 @@ public class EquipResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} equipped to {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
     }
 }
+

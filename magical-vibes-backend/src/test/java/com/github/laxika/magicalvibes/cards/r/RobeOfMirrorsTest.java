@@ -256,3 +256,4 @@ class RobeOfMirrorsTest {
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 }
+

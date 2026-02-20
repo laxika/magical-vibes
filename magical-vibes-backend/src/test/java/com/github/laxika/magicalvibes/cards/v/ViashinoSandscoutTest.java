@@ -79,3 +79,4 @@ class ViashinoSandscoutTest {
                 .anyMatch(c -> c.getName().equals("Viashino Sandscout"));
     }
 }
+

@@ -100,8 +100,9 @@ public class CounterResolutionService implements EffectHandlerProvider {
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     entry.getCard(), targetControllerId, List.of(effect), prompt, targetCardId
             ));
-            // processNextMayAbility (called by resolveTopOfStack) will set interaction.awaitingInput and send the message
+            // processNextMayAbility (called by resolveTopOfStack) will set interaction.awaitingInputType() and send the message
         }
     }
 }
+
 

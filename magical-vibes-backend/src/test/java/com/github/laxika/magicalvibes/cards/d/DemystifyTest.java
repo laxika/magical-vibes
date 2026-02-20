@@ -168,3 +168,4 @@ class DemystifyTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
     }
 }
+

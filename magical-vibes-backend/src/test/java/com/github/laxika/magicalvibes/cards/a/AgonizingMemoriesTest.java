@@ -101,9 +101,9 @@ class AgonizingMemoriesTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.interaction.awaitingRevealedHandChoiceRemainingCount).isEqualTo(2);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
+        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.revealedHandChoiceRemainingCount()).isEqualTo(2);
     }
 
     @Test
@@ -124,15 +124,15 @@ class AgonizingMemoriesTest {
         harness.handleCardChosen(player1, 0);
 
         // Should still be awaiting another choice
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-        assertThat(gd.interaction.awaitingRevealedHandChoiceRemainingCount).isEqualTo(1);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
+        assertThat(gd.interaction.revealedHandChoiceRemainingCount()).isEqualTo(1);
 
         // After removing Grizzly Bears, hand is [Peek, Agonizing Memories]
         // Choose index 0 = Peek
         harness.handleCardChosen(player1, 0);
 
         // Choice is complete
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
 
         // The two chosen cards should be on top of player2's library
         List<Card> deck = gd.playerDecks.get(player2.getId());
@@ -155,7 +155,7 @@ class AgonizingMemoriesTest {
         harness.passBothPriorities();
 
         // Should not be awaiting any choice
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("empty"));
     }
 
@@ -172,13 +172,13 @@ class AgonizingMemoriesTest {
         harness.passBothPriorities();
 
         // Should prompt for 1 card (min of 2 and hand size 1)
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-        assertThat(gd.interaction.awaitingRevealedHandChoiceRemainingCount).isEqualTo(1);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
+        assertThat(gd.interaction.revealedHandChoiceRemainingCount()).isEqualTo(1);
 
         // Choose the only card
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
 
         List<Card> deck = gd.playerDecks.get(player2.getId());
@@ -233,13 +233,13 @@ class AgonizingMemoriesTest {
         harness.castSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
 
         // Choose cards from own hand
         harness.handleCardChosen(player1, 0);  // Grizzly Bears
         harness.handleCardChosen(player1, 0);  // Peek
 
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         assertThat(deck.get(0).getName()).isEqualTo("Grizzly Bears");
@@ -307,4 +307,5 @@ class AgonizingMemoriesTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("chooses") && log.contains("Grizzly Bears"));
     }
 }
+
 

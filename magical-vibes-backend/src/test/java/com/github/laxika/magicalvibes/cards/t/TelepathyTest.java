@@ -233,3 +233,4 @@ class TelepathyTest {
         assertThat(p1Messages).anyMatch(m -> m.contains("\"opponentHand\"") && m.contains("Grizzly Bears"));
     }
 }
+

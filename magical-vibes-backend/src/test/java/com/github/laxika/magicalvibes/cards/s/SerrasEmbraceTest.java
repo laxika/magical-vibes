@@ -207,3 +207,4 @@ class SerrasEmbraceTest {
         assertThat(gqs.hasKeyword(gd, otherBears, Keyword.VIGILANCE)).isFalse();
     }
 }
+

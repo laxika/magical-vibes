@@ -172,3 +172,4 @@ class PyroclasmTest {
                 .hasMessageContaining("Card is not playable");
     }
 }
+

@@ -128,3 +128,4 @@ class LumengridWardenTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 }
+

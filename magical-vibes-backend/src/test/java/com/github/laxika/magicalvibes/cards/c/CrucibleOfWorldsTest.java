@@ -336,3 +336,4 @@ class CrucibleOfWorldsTest {
                 .anyMatch(p -> p.getCard().getName().equals("Forest"));
     }
 }
+

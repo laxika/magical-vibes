@@ -136,7 +136,7 @@ class FogElementalTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
 
         gs.declareAttackers(gd, player1, List.of(0));
 
@@ -164,7 +164,7 @@ class FogElementalTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -189,7 +189,7 @@ class FogElementalTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
 
         gs.declareAttackers(gd, player1, List.of(0));
         // Resolve attack trigger
@@ -214,7 +214,7 @@ class FogElementalTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
 
         gs.declareAttackers(gd, player1, List.of(0));
         harness.passBothPriorities();
@@ -245,7 +245,7 @@ class FogElementalTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         // Resolve block trigger
@@ -273,7 +273,7 @@ class FogElementalTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
 
         gs.declareAttackers(gd, player1, List.of(0));
 
@@ -300,7 +300,7 @@ class FogElementalTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
 
         gs.declareAttackers(gd, player1, List.of(0));
 
@@ -319,7 +319,7 @@ class FogElementalTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
 
         gs.declareAttackers(gd, player1, List.of(0));
 
@@ -330,4 +330,5 @@ class FogElementalTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("Fog Elemental") && log.contains("sacrificed"));
     }
 }
+
 

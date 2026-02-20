@@ -180,3 +180,4 @@ class RuleOfLawTest {
                 .anyMatch(p -> p.getCard().getName().equals("Plains"));
     }
 }
+

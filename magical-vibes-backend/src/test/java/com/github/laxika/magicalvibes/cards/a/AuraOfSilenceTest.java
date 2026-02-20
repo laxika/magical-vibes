@@ -389,3 +389,4 @@ class AuraOfSilenceTest {
                 .anyMatch(c -> c.getName().equals("Angel's Feather"));
     }
 }
+

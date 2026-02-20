@@ -187,3 +187,4 @@ class HurkylsRecallTest {
                 .anyMatch(c -> c.getName().equals("Hurkyl's Recall"));
     }
 }
+

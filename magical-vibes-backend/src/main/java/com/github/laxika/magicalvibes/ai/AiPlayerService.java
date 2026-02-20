@@ -62,3 +62,4 @@ public class AiPlayerService {
         log.info("AI opponent joined game {} with deck {}", gameData.id, aiDeckId);
     }
 }
+

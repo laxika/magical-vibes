@@ -96,8 +96,8 @@ class AcademyResearchersTest {
                 .anyMatch(p -> p.getCard().getName().equals("Academy Researchers"));
 
         // May ability prompt is pending
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 
         // Accept the may ability
         harness.handleMayAbilityChosen(player1, true);
@@ -123,9 +123,9 @@ class AcademyResearchersTest {
         harness.passBothPriorities(); // resolve ETB
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.interaction.awaitingCardChoiceValidIndices).containsExactly(0);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
+        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactly(0);
     }
 
     @Test
@@ -141,9 +141,9 @@ class AcademyResearchersTest {
         harness.passBothPriorities(); // resolve ETB
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
         // Only indices 1 (HolyStrength) and 2 (Pacifism) should be valid
-        assertThat(gd.interaction.awaitingCardChoiceValidIndices).containsExactlyInAnyOrder(1, 2);
+        assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactlyInAnyOrder(1, 2);
     }
 
     @Test
@@ -225,7 +225,7 @@ class AcademyResearchersTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldSizeBefore);
-        assertThat(gd.interaction.pendingCardChoiceTargetPermanentId).isNull();
+        assertThat(gd.interaction.pendingCardChoiceTargetPermanentId()).isNull();
     }
 
     // ===== No Auras in hand =====
@@ -243,7 +243,7 @@ class AcademyResearchersTest {
         harness.passBothPriorities(); // resolve ETB
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("has no Aura cards in hand"));
     }
 
@@ -259,7 +259,7 @@ class AcademyResearchersTest {
         harness.passBothPriorities(); // resolve ETB
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("has no Aura cards in hand"));
     }
 
@@ -281,7 +281,7 @@ class AcademyResearchersTest {
         harness.passBothPriorities(); // resolve ETB → should fizzle
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("fizzles"));
     }
 
@@ -299,8 +299,8 @@ class AcademyResearchersTest {
         harness.passBothPriorities(); // resolve ETB
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoiceValidIndices).containsExactlyInAnyOrder(0, 1);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
+        assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactlyInAnyOrder(0, 1);
 
         // Choose Spirit Link (index 1)
         harness.handleCardChosen(player1, 1);
@@ -330,4 +330,5 @@ class AcademyResearchersTest {
         harness.castCreature(player1, 0);
     }
 }
+
 

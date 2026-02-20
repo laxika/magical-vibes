@@ -212,3 +212,4 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         return false;
     }
 }
+

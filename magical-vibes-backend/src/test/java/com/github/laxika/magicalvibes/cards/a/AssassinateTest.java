@@ -204,3 +204,4 @@ class AssassinateTest {
                 .anyMatch(c -> c.getName().equals("Assassinate"));
     }
 }
+

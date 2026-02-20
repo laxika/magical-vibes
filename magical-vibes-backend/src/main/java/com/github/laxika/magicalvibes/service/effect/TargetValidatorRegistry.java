@@ -17,3 +17,4 @@ public class TargetValidatorRegistry {
         return validators.get(effect.getClass());
     }
 }
+

@@ -204,3 +204,4 @@ class TempestOfLightTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("Rule of Law") && log.contains("destroyed"));
     }
 }
+

@@ -278,3 +278,4 @@ class TheHiveTest {
         return perm;
     }
 }
+

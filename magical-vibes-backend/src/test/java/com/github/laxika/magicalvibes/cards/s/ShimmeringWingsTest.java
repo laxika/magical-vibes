@@ -289,12 +289,12 @@ class ShimmeringWingsTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
 
         gs.declareAttackers(gd, player1, List.of(0));
 
         // Enchanted creature blocks and dies
-        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         // Shimmering Wings should be in graveyard (orphaned aura cleanup)
@@ -304,4 +304,5 @@ class ShimmeringWingsTest {
                 .anyMatch(c -> c.getName().equals("Shimmering Wings"));
     }
 }
+
 

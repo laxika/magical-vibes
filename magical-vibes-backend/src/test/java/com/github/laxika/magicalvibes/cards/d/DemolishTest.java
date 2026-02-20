@@ -205,3 +205,4 @@ class DemolishTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
     }
 }
+

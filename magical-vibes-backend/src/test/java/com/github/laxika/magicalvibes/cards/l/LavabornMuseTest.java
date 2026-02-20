@@ -147,3 +147,4 @@ class LavabornMuseTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
     }
 }
+

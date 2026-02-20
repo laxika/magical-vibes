@@ -17,3 +17,4 @@ public class EffectHandlerRegistry {
         return handlers.get(effect.getClass());
     }
 }
+

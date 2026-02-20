@@ -415,3 +415,4 @@ class CoatOfArmsTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }
 }
+

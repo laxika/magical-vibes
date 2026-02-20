@@ -8,53 +8,49 @@ import java.util.UUID;
 
 public class InteractionState {
 
-    public AwaitingInput awaitingInput;
-    public InteractionContext context;
-    public UUID awaitingCardChoicePlayerId;
-    public Set<Integer> awaitingCardChoiceValidIndices;
-    public UUID awaitingPermanentChoicePlayerId;
-    public Set<UUID> awaitingPermanentChoiceValidIds;
-    public Card pendingAuraCard;
-    public PermanentChoiceContext permanentChoiceContext;
-    public UUID pendingCardChoiceTargetPermanentId;
-    public UUID awaitingGraveyardChoicePlayerId;
-    public Set<Integer> awaitingGraveyardChoiceValidIndices;
-    public GraveyardChoiceDestination graveyardChoiceDestination;
-    public List<Card> graveyardChoiceCardPool;
-    public UUID awaitingColorChoicePlayerId;
-    public UUID awaitingColorChoicePermanentId;
-    public UUID pendingColorChoiceETBTargetId;
-    public ColorChoiceContext colorChoiceContext;
-    public UUID awaitingMayAbilityPlayerId;
-    public UUID awaitingMultiPermanentChoicePlayerId;
-    public Set<UUID> awaitingMultiPermanentChoiceValidIds;
-    public int awaitingMultiPermanentChoiceMaxCount;
-    public UUID awaitingMultiGraveyardChoicePlayerId;
-    public Set<UUID> awaitingMultiGraveyardChoiceValidCardIds;
-    public int awaitingMultiGraveyardChoiceMaxCount;
-    public UUID awaitingLibraryReorderPlayerId;
-    public List<Card> awaitingLibraryReorderCards;
-    public boolean awaitingLibraryReorderToBottom;
-    public UUID awaitingLibrarySearchPlayerId;
-    public List<Card> awaitingLibrarySearchCards;
-    public boolean awaitingLibrarySearchReveals;
-    public boolean awaitingLibrarySearchCanFailToFind;
-    public UUID awaitingLibrarySearchTargetPlayerId;
-    public int awaitingLibrarySearchRemainingCount;
-    public int awaitingDiscardRemainingCount;
-    public UUID awaitingRevealedHandChoiceTargetPlayerId;
-    public int awaitingRevealedHandChoiceRemainingCount;
-    public final List<Card> awaitingRevealedHandChosenCards = new ArrayList<>();
-    public boolean awaitingRevealedHandChoiceDiscardMode;
-    public UUID awaitingHandTopBottomPlayerId;
-    public List<Card> awaitingHandTopBottomCards;
-    public UUID awaitingLibraryRevealPlayerId;
-    public List<Card> awaitingLibraryRevealAllCards;
-    public Set<UUID> awaitingLibraryRevealValidCardIds;
-
-    public void clearContext() {
-        this.context = null;
-    }
+    private AwaitingInput awaitingInput;
+    private InteractionContext context;
+    private UUID awaitingCardChoicePlayerId;
+    private Set<Integer> awaitingCardChoiceValidIndices;
+    private UUID awaitingPermanentChoicePlayerId;
+    private Set<UUID> awaitingPermanentChoiceValidIds;
+    private Card pendingAuraCard;
+    private PermanentChoiceContext permanentChoiceContext;
+    private UUID pendingCardChoiceTargetPermanentId;
+    private UUID awaitingGraveyardChoicePlayerId;
+    private Set<Integer> awaitingGraveyardChoiceValidIndices;
+    private GraveyardChoiceDestination graveyardChoiceDestination;
+    private List<Card> graveyardChoiceCardPool;
+    private UUID awaitingColorChoicePlayerId;
+    private UUID awaitingColorChoicePermanentId;
+    private UUID pendingColorChoiceETBTargetId;
+    private ColorChoiceContext colorChoiceContext;
+    private UUID awaitingMayAbilityPlayerId;
+    private UUID awaitingMultiPermanentChoicePlayerId;
+    private Set<UUID> awaitingMultiPermanentChoiceValidIds;
+    private int awaitingMultiPermanentChoiceMaxCount;
+    private UUID awaitingMultiGraveyardChoicePlayerId;
+    private Set<UUID> awaitingMultiGraveyardChoiceValidCardIds;
+    private int awaitingMultiGraveyardChoiceMaxCount;
+    private UUID awaitingLibraryReorderPlayerId;
+    private List<Card> awaitingLibraryReorderCards;
+    private boolean awaitingLibraryReorderToBottom;
+    private UUID awaitingLibrarySearchPlayerId;
+    private List<Card> awaitingLibrarySearchCards;
+    private boolean awaitingLibrarySearchReveals;
+    private boolean awaitingLibrarySearchCanFailToFind;
+    private UUID awaitingLibrarySearchTargetPlayerId;
+    private int awaitingLibrarySearchRemainingCount;
+    private int awaitingDiscardRemainingCount;
+    private UUID awaitingRevealedHandChoiceTargetPlayerId;
+    private int awaitingRevealedHandChoiceRemainingCount;
+    private final List<Card> awaitingRevealedHandChosenCards = new ArrayList<>();
+    private boolean awaitingRevealedHandChoiceDiscardMode;
+    private UUID awaitingHandTopBottomPlayerId;
+    private List<Card> awaitingHandTopBottomCards;
+    private UUID awaitingLibraryRevealPlayerId;
+    private List<Card> awaitingLibraryRevealAllCards;
+    private Set<UUID> awaitingLibraryRevealValidCardIds;
 
     public boolean isAwaitingInput() {
         return this.awaitingInput != null;
@@ -62,6 +58,10 @@ public class InteractionState {
 
     public AwaitingInput awaitingInputType() {
         return this.awaitingInput;
+    }
+
+    public void setAwaitingInput(AwaitingInput inputType) {
+        this.awaitingInput = inputType;
     }
 
     public boolean isAwaitingInput(AwaitingInput inputType) {
@@ -101,6 +101,18 @@ public class InteractionState {
         this.pendingCardChoiceTargetPermanentId = null;
     }
 
+    public UUID awaitingCardChoicePlayerId() {
+        return this.awaitingCardChoicePlayerId;
+    }
+
+    public Set<Integer> awaitingCardChoiceValidIndices() {
+        return this.awaitingCardChoiceValidIndices;
+    }
+
+    public UUID pendingCardChoiceTargetPermanentId() {
+        return this.pendingCardChoiceTargetPermanentId;
+    }
+
     public void beginPermanentChoice(UUID playerId, Set<UUID> validIds, PermanentChoiceContext choiceContext) {
         this.awaitingInput = AwaitingInput.PERMANENT_CHOICE;
         this.awaitingPermanentChoicePlayerId = playerId;
@@ -125,6 +137,14 @@ public class InteractionState {
         this.awaitingPermanentChoicePlayerId = null;
         this.awaitingPermanentChoiceValidIds = null;
         this.permanentChoiceContext = null;
+    }
+
+    public UUID awaitingPermanentChoicePlayerId() {
+        return this.awaitingPermanentChoicePlayerId;
+    }
+
+    public Set<UUID> awaitingPermanentChoiceValidIds() {
+        return this.awaitingPermanentChoiceValidIds;
     }
 
     public void beginGraveyardChoice(UUID playerId, Set<Integer> validIndices, GraveyardChoiceDestination destination, List<Card> cardPool) {
@@ -172,8 +192,12 @@ public class InteractionState {
         this.colorChoiceContext = null;
     }
 
-    public void setColorChoiceContext(ColorChoiceContext choiceContext) {
-        this.colorChoiceContext = choiceContext;
+    public UUID awaitingColorChoicePlayerId() {
+        return this.awaitingColorChoicePlayerId;
+    }
+
+    public UUID awaitingColorChoicePermanentId() {
+        return this.awaitingColorChoicePermanentId;
     }
 
     public ColorChoiceContext colorChoiceContext() {
@@ -208,6 +232,18 @@ public class InteractionState {
         this.awaitingMultiPermanentChoiceMaxCount = 0;
     }
 
+    public int awaitingMultiPermanentChoiceMaxCount() {
+        return this.awaitingMultiPermanentChoiceMaxCount;
+    }
+
+    public UUID awaitingMultiPermanentChoicePlayerId() {
+        return this.awaitingMultiPermanentChoicePlayerId;
+    }
+
+    public Set<UUID> awaitingMultiPermanentChoiceValidIds() {
+        return this.awaitingMultiPermanentChoiceValidIds;
+    }
+
     public void beginMultiGraveyardChoice(UUID playerId, Set<UUID> validCardIds, int maxCount) {
         this.awaitingInput = AwaitingInput.MULTI_GRAVEYARD_CHOICE;
         this.awaitingMultiGraveyardChoicePlayerId = playerId;
@@ -222,6 +258,18 @@ public class InteractionState {
         this.awaitingMultiGraveyardChoiceMaxCount = 0;
     }
 
+    public UUID awaitingMultiGraveyardChoicePlayerId() {
+        return this.awaitingMultiGraveyardChoicePlayerId;
+    }
+
+    public Set<UUID> awaitingMultiGraveyardChoiceValidCardIds() {
+        return this.awaitingMultiGraveyardChoiceValidCardIds;
+    }
+
+    public int awaitingMultiGraveyardChoiceMaxCount() {
+        return this.awaitingMultiGraveyardChoiceMaxCount;
+    }
+
     public void beginLibraryReorder(UUID playerId, List<Card> cards, boolean toBottom) {
         this.awaitingInput = AwaitingInput.LIBRARY_REORDER;
         this.awaitingLibraryReorderPlayerId = playerId;
@@ -234,6 +282,18 @@ public class InteractionState {
         this.awaitingLibraryReorderPlayerId = null;
         this.awaitingLibraryReorderCards = null;
         this.awaitingLibraryReorderToBottom = false;
+    }
+
+    public UUID awaitingLibraryReorderPlayerId() {
+        return this.awaitingLibraryReorderPlayerId;
+    }
+
+    public List<Card> awaitingLibraryReorderCards() {
+        return this.awaitingLibraryReorderCards;
+    }
+
+    public boolean awaitingLibraryReorderToBottom() {
+        return this.awaitingLibraryReorderToBottom;
     }
 
     public void beginLibrarySearch(UUID playerId, List<Card> cards, boolean reveals, boolean canFailToFind,
@@ -255,6 +315,30 @@ public class InteractionState {
         this.awaitingLibrarySearchCanFailToFind = false;
         this.awaitingLibrarySearchTargetPlayerId = null;
         this.awaitingLibrarySearchRemainingCount = 0;
+    }
+
+    public UUID awaitingLibrarySearchPlayerId() {
+        return this.awaitingLibrarySearchPlayerId;
+    }
+
+    public List<Card> awaitingLibrarySearchCards() {
+        return this.awaitingLibrarySearchCards;
+    }
+
+    public boolean awaitingLibrarySearchReveals() {
+        return this.awaitingLibrarySearchReveals;
+    }
+
+    public boolean awaitingLibrarySearchCanFailToFind() {
+        return this.awaitingLibrarySearchCanFailToFind;
+    }
+
+    public UUID awaitingLibrarySearchTargetPlayerId() {
+        return this.awaitingLibrarySearchTargetPlayerId;
+    }
+
+    public int awaitingLibrarySearchRemainingCount() {
+        return this.awaitingLibrarySearchRemainingCount;
     }
 
     public void beginLibraryRevealChoice(UUID playerId, List<Card> allCards, Set<UUID> validCardIds) {
@@ -283,6 +367,14 @@ public class InteractionState {
         this.awaitingHandTopBottomCards = null;
     }
 
+    public UUID awaitingHandTopBottomPlayerId() {
+        return this.awaitingHandTopBottomPlayerId;
+    }
+
+    public List<Card> awaitingHandTopBottomCards() {
+        return this.awaitingHandTopBottomCards;
+    }
+
     public void beginMayAbilityChoice(UUID playerId, String description) {
         this.awaitingInput = AwaitingInput.MAY_ABILITY_CHOICE;
         this.awaitingMayAbilityPlayerId = playerId;
@@ -291,6 +383,10 @@ public class InteractionState {
 
     public void clearMayAbilityChoice() {
         this.awaitingMayAbilityPlayerId = null;
+    }
+
+    public UUID awaitingMayAbilityPlayerId() {
+        return this.awaitingMayAbilityPlayerId;
     }
 
     public void beginRevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId, Set<Integer> validIndices,
@@ -353,12 +449,12 @@ public class InteractionState {
         return this.awaitingRevealedHandChoiceRemainingCount;
     }
 
-    public int revealedHandChoiceRemainingCount() {
-        return this.awaitingRevealedHandChoiceRemainingCount;
-    }
-
     public boolean revealedHandChoiceDiscardMode() {
         return this.awaitingRevealedHandChoiceDiscardMode;
+    }
+
+    public int revealedHandChoiceRemainingCount() {
+        return this.awaitingRevealedHandChoiceRemainingCount;
     }
 
     public List<Card> revealedHandChosenCardsSnapshot() {

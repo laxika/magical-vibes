@@ -450,7 +450,7 @@ class AdeptWatershaperTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
 
         gs.declareAttackers(gd, player1, List.of(1)); // Index 1 (Watershaper at 0)
 
@@ -490,4 +490,5 @@ class AdeptWatershaperTest {
                 .findFirst().orElseThrow();
     }
 }
+
 

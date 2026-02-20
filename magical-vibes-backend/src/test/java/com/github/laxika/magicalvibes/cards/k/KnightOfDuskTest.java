@@ -304,3 +304,4 @@ class KnightOfDuskTest {
         harness.clearPriorityPassed();
     }
 }
+

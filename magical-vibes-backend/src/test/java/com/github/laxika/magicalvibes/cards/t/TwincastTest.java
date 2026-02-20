@@ -555,8 +555,8 @@ class TwincastTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId).isEqualTo(player2.getId());
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -587,7 +587,7 @@ class TwincastTest {
         harness.handleMayAbilityChosen(player2, true);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
 
         // Choose player2's bears as new target
         harness.handlePermanentChosen(player2, bears2PermId);
@@ -626,7 +626,7 @@ class TwincastTest {
 
         GameData gd = harness.getGameData();
         // Should NOT be awaiting may-ability choice
-        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
         // Copy should be on the stack
         assertThat(gd.stack).anySatisfy(se ->
                 assertThat(se.getDescription()).isEqualTo("Copy of Counsel of the Soratami"));
@@ -663,10 +663,10 @@ class TwincastTest {
         harness.handleMayAbilityChosen(player2, true);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
         // Valid targets should include the creature but NOT the enchantment
-        assertThat(gd.interaction.awaitingPermanentChoiceValidIds).contains(bearsPermId);
-        assertThat(gd.interaction.awaitingPermanentChoiceValidIds).doesNotContain(anthemPermId);
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds()).contains(bearsPermId);
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds()).doesNotContain(anthemPermId);
     }
 
     @Test
@@ -694,11 +694,12 @@ class TwincastTest {
         harness.handleMayAbilityChosen(player2, true);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
         // Valid targets should include the creature AND both players
-        assertThat(gd.interaction.awaitingPermanentChoiceValidIds).contains(bearsPermId);
-        assertThat(gd.interaction.awaitingPermanentChoiceValidIds).contains(player1.getId());
-        assertThat(gd.interaction.awaitingPermanentChoiceValidIds).contains(player2.getId());
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds()).contains(bearsPermId);
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds()).contains(player1.getId());
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds()).contains(player2.getId());
     }
 }
+
 

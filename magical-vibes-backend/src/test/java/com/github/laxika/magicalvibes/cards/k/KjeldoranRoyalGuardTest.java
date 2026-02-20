@@ -368,3 +368,4 @@ class KjeldoranRoyalGuardTest {
         return perm;
     }
 }
+

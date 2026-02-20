@@ -177,3 +177,4 @@ class HurricaneTest {
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 }
+

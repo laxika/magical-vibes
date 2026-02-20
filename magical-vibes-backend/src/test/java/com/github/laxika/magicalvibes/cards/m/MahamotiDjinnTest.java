@@ -131,3 +131,4 @@ class MahamotiDjinnTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
 }
+

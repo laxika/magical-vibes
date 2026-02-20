@@ -82,8 +82,8 @@ class ChromaticStarTest {
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Chromatic Star");
 
         // Should be immediately awaiting color choice (mana ability, no priority pass needed)
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.awaitingColorChoicePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
+        assertThat(gd.interaction.awaitingColorChoicePlayerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -104,7 +104,7 @@ class ChromaticStarTest {
 
         // Red mana should have been added immediately
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
-        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInputType()).isNull();
     }
 
     @Test
@@ -177,4 +177,5 @@ class ChromaticStarTest {
                 .anyMatch(p -> p.getCard().getName().equals("Chromatic Star"));
     }
 }
+
 

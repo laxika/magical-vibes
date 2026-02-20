@@ -144,3 +144,4 @@ class SoulblastTest {
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
     }
 }
+

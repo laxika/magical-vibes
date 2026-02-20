@@ -192,3 +192,4 @@ class AfflictTest {
                 .anyMatch(card -> card.getName().equals("Afflict"));
     }
 }
+

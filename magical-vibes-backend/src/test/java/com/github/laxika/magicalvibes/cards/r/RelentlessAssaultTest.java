@@ -157,8 +157,9 @@ class RelentlessAssaultTest {
         harness.forceActivePlayer(attacker);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
         harness.getGameService().declareAttackers(gd, attacker, attackers);
     }
 }
+
 

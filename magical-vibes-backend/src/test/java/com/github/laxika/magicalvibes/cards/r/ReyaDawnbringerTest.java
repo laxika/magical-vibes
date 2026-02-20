@@ -187,7 +187,7 @@ class ReyaDawnbringerTest {
 
         // Resolve trigger → graveyard choice prompt
         harness.passBothPriorities();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
 
         // Choose the creature (index 0)
         harness.handleGraveyardCardChosen(player1, 0);
@@ -209,7 +209,7 @@ class ReyaDawnbringerTest {
 
         advanceToUpkeepAndTrigger();
         harness.passBothPriorities();
-        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
 
         // Decline with -1
         harness.handleGraveyardCardChosen(player1, -1);
@@ -260,7 +260,7 @@ class ReyaDawnbringerTest {
         // Resolve trigger — should resolve without graveyard choice
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature cards in graveyard"));
     }
 
@@ -276,7 +276,7 @@ class ReyaDawnbringerTest {
         advanceToUpkeepAndTrigger();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature cards in graveyard"));
         // HolyDay stays in graveyard untouched
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -344,4 +344,5 @@ class ReyaDawnbringerTest {
                 .hasMessageContaining("Not your turn to choose");
     }
 }
+
 

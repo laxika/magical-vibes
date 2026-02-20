@@ -243,3 +243,4 @@ class MortalCombatTest {
         assertThat(gd.gameLog).anyMatch(l -> l.contains("20 creature cards") && l.contains("wins the game"));
     }
 }
+

@@ -163,3 +163,4 @@ class BeaconOfImmortalityTest {
         assertThat(harness.getGameData().stack).isEmpty();
     }
 }
+

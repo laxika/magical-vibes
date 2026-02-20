@@ -182,3 +182,4 @@ class WarriorsHonorTest {
                 .anyMatch(c -> c.getName().equals("Warrior's Honor"));
     }
 }
+
