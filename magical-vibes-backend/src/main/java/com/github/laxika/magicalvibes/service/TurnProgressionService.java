@@ -258,32 +258,7 @@ public class TurnProgressionService {
         }
 
         // Normal draw (turn-based action, rule 504.1)
-        UUID replacementController = gameData.drawReplacementTargetToController.get(activePlayerId);
-        if (replacementController != null) {
-            String playerName = gameData.playerIdToName.get(activePlayerId);
-            String controllerName = gameData.playerIdToName.get(replacementController);
-            String logEntry = playerName + "'s draw is redirected — " + controllerName + " draws a card instead.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - Draw redirect: {}'s draw step draw goes to {} instead",
-                    gameData.id, playerName, controllerName);
-            gameHelper.resolveDrawCard(gameData, replacementController);
-        } else {
-            List<Card> deck = gameData.playerDecks.get(activePlayerId);
-            List<Card> hand = gameData.playerHands.get(activePlayerId);
-
-            if (deck == null || deck.isEmpty()) {
-                log.warn("Game {} - {} has no cards to draw", gameData.id, gameData.playerIdToName.get(activePlayerId));
-            } else {
-                Card drawn = deck.removeFirst();
-                hand.add(drawn);
-
-                String playerName = gameData.playerIdToName.get(activePlayerId);
-                String logEntry = playerName + " draws a card.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-
-                log.info("Game {} - {} draws a card (hand: {}, deck: {})", gameData.id, playerName, hand.size(), deck.size());
-            }
-        }
+        gameHelper.resolveDrawCard(gameData, activePlayerId);
 
         // Check for draw step triggered abilities (e.g. Howling Mine)
         handleDrawStepTriggers(gameData);
@@ -504,5 +479,3 @@ public class TurnProgressionService {
         gameBroadcastService.broadcastGameState(gameData);
     }
 }
-
-

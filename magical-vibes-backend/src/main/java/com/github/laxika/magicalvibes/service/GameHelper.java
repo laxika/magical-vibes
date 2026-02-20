@@ -1046,6 +1046,36 @@ public class GameHelper {
         }
     }
 
+    public void checkOpponentDrawTriggers(GameData gameData, UUID drawingPlayerId) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(drawingPlayerId)) continue;
+
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+
+            for (Permanent perm : battlefield) {
+                List<CardEffect> drawEffects = perm.getCard().getEffects(EffectSlot.ON_OPPONENT_DRAWS);
+                if (drawEffects == null || drawEffects.isEmpty()) continue;
+
+                for (CardEffect effect : drawEffects) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            playerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(effect)),
+                            drawingPlayerId,
+                            perm.getId()
+                    ));
+
+                    String logEntry = perm.getCard().getName() + "'s ability triggers.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} triggers on opponent draw", gameData.id, perm.getCard().getName());
+                }
+            }
+        }
+    }
+
     public void processNextDiscardSelfTrigger(GameData gameData) {
         triggeredAbilityQueueService.processNextDiscardSelfTrigger(gameData);
     }
@@ -1084,6 +1114,8 @@ public class GameHelper {
         String logEntry = gameData.playerIdToName.get(playerId) + " draws a card.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} draws a card from effect", gameData.id, gameData.playerIdToName.get(playerId));
+
+        checkOpponentDrawTriggers(gameData, playerId);
     }
 
     // ===== Regeneration =====

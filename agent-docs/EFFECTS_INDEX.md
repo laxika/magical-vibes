@@ -26,13 +26,14 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `return target permanent/creature`: `ReturnTargetPermanentToHandEffect`, `ReturnTargetCreatureToHandEffect`
 - `return all creatures to hand`: `ReturnCreaturesToOwnersHandEffect`
 - `draw cards`: `DrawCardEffect`, `DrawCardForTargetPlayerEffect`
+- `when an opponent draws a card, deal damage to that player`: `DealDamageToTargetPlayerEffect` on `EffectSlot.ON_OPPONENT_DRAWS`
 - `discard`: `DiscardCardEffect`, `TargetPlayerDiscardsEffect`, `RandomDiscardEffect`
 - `mill`: `MillTargetPlayerEffect`, `MillHalfLibraryEffect`, `MillByHandSizeEffect`
 - `search library`: `SearchLibraryForCardToHandEffect`, `SearchLibraryForBasicLandToHandEffect`
 - `shuffle into library`: `ShuffleIntoLibraryEffect`, `ShuffleGraveyardIntoLibraryEffect`
 - `create creature tokens`: `CreateCreatureTokenEffect`, `CreateCreatureTokenWithColorsEffect`
 - `gain life`: `GainLifeEffect`, `GainLifePerGraveyardCardEffect`, `GainLifeEqualToTargetToughnessEffect`
-- `lose life / drain`: `TargetPlayerLosesLifeAndControllerGainsLifeEffect`, `EnchantedCreatureControllerLosesLifeEffect`
+- `lose life / drain`: `LoseLifeEffect`, `TargetPlayerLosesLifeAndControllerGainsLifeEffect`, `EnchantedCreatureControllerLosesLifeEffect`
 - `target opponent gains control of this creature (ETB)`: `TargetPlayerGainsControlOfSourceCreatureEffect`
 - `each player loses life for each creature they control`: `EachPlayerLosesLifePerCreatureControlledEffect`
 - `target player loses the game`: `TargetPlayerLosesGameEffect`
@@ -77,3 +78,4 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - Static "can't block" creature: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SpinelessThug.java`
 - ETB token + activated cost/effect composition: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SiegeGangCommander.java`
 - ETB control handoff + upkeep drawback: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SleeperAgent.java`
+- Opponent draw trigger damage: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/u/UnderworldDreams.java`

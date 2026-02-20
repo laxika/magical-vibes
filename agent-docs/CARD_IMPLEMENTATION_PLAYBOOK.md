@@ -65,6 +65,10 @@ public class ExampleCard extends Card {
   - combine multiple existing effects in one ability/spell
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/o/OrcishArtillery.java`
 
+- Opponent draw trigger:
+  - use `addEffect(EffectSlot.ON_OPPONENT_DRAWS, new DealDamageToTargetPlayerEffect(N))` when the effect should hit the player who drew
+  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/u/UnderworldDreams.java`
+
 ## Targeting checklist
 
 - `setNeedsTarget(true)` for permanent/player target resolution.
