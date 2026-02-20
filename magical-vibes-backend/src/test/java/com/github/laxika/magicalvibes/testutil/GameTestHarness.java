@@ -68,6 +68,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class GameTestHarness {
 
     private static boolean oracleLoaded = false;
@@ -285,6 +287,41 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetPermanentIds, convokeCreatureIds);
     }
 
+    public void castAndResolveInstant(Player player, int cardIndex) {
+        castInstant(player, cardIndex);
+        passBothPriorities();
+    }
+
+    public void castAndResolveInstant(Player player, int cardIndex, UUID targetPermanentId) {
+        castInstant(player, cardIndex, targetPermanentId);
+        passBothPriorities();
+    }
+
+    public void castAndResolveInstant(Player player, int cardIndex, List<UUID> targetPermanentIds) {
+        castInstant(player, cardIndex, targetPermanentIds);
+        passBothPriorities();
+    }
+
+    public void castAndResolveSorcery(Player player, int cardIndex, int xValue) {
+        castSorcery(player, cardIndex, xValue);
+        passBothPriorities();
+    }
+
+    public void castAndResolveSorcery(Player player, int cardIndex, UUID targetPlayerId) {
+        castSorcery(player, cardIndex, targetPlayerId);
+        passBothPriorities();
+    }
+
+    public void castAndResolveSorcery(Player player, int cardIndex, int xValue, UUID targetId) {
+        castSorcery(player, cardIndex, xValue, targetId);
+        passBothPriorities();
+    }
+
+    public void castAndResolveSorcery(Player player, int cardIndex, List<UUID> targetPermanentIds) {
+        castSorcery(player, cardIndex, targetPermanentIds);
+        passBothPriorities();
+    }
+
     public void sacrificePermanent(Player player, int permanentIndex, UUID targetPermanentId) {
         gameService.sacrificePermanent(gameData, player, permanentIndex, targetPermanentId);
     }
@@ -380,6 +417,40 @@ public class GameTestHarness {
 
     public void clearPriorityPassed() {
         gameData.priorityPassedBy.clear();
+    }
+
+    public void assertLife(Player player, int expectedLife) {
+        assertThat(gameData.playerLifeTotals.get(player.getId())).isEqualTo(expectedLife);
+    }
+
+    public void assertOnBattlefield(Player player, String cardName) {
+        assertThat(gameData.playerBattlefields.get(player.getId()))
+                .anyMatch(p -> p.getCard().getName().equals(cardName));
+    }
+
+    public void assertNotOnBattlefield(Player player, String cardName) {
+        assertThat(gameData.playerBattlefields.get(player.getId()))
+                .noneMatch(p -> p.getCard().getName().equals(cardName));
+    }
+
+    public void assertInGraveyard(Player player, String cardName) {
+        assertThat(gameData.playerGraveyards.get(player.getId()))
+                .anyMatch(c -> c.getName().equals(cardName));
+    }
+
+    public void assertNotInGraveyard(Player player, String cardName) {
+        assertThat(gameData.playerGraveyards.get(player.getId()))
+                .noneMatch(c -> c.getName().equals(cardName));
+    }
+
+    public void assertInHand(Player player, String cardName) {
+        assertThat(gameData.playerHands.get(player.getId()))
+                .anyMatch(c -> c.getName().equals(cardName));
+    }
+
+    public void assertNotInHand(Player player, String cardName) {
+        assertThat(gameData.playerHands.get(player.getId()))
+                .noneMatch(c -> c.getName().equals(cardName));
     }
 
     public GameData getGameData() {
