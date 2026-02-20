@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesYouDontControlEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
@@ -38,6 +39,9 @@ public class DestructionResolutionService implements EffectHandlerProvider {
     public void registerHandlers(EffectHandlerRegistry registry) {
         registry.register(DestroyAllCreaturesEffect.class,
                 (gd, entry, effect) -> resolveDestroyAllCreatures(gd, ((DestroyAllCreaturesEffect) effect).cannotBeRegenerated()));
+        registry.register(DestroyAllCreaturesYouDontControlEffect.class,
+                (gd, entry, effect) -> resolveDestroyAllCreaturesYouDontControl(gd, entry,
+                        ((DestroyAllCreaturesYouDontControlEffect) effect).cannotBeRegenerated()));
         registry.register(DestroyAllArtifactsEffect.class,
                 (gd, entry, effect) -> resolveDestroyAllArtifacts(gd, ((DestroyAllArtifactsEffect) effect).cannotBeRegenerated()));
         registry.register(DestroyAllEnchantmentsEffect.class,
@@ -62,6 +66,45 @@ public class DestructionResolutionService implements EffectHandlerProvider {
         List<Permanent> toDestroy = new ArrayList<>();
 
         for (UUID playerId : gameData.orderedPlayerIds) {
+            for (Permanent perm : gameData.playerBattlefields.get(playerId)) {
+                if (gameQueryService.isCreature(gameData, perm)) {
+                    toDestroy.add(perm);
+                }
+            }
+        }
+
+        // Snapshot indestructible status before any removals (MTG rules: "destroy all" is simultaneous)
+        Set<Permanent> indestructible = new HashSet<>();
+        for (Permanent perm : toDestroy) {
+            if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
+                indestructible.add(perm);
+            }
+        }
+
+        for (Permanent perm : toDestroy) {
+            if (indestructible.contains(perm)) {
+                String logEntry = perm.getCard().getName() + " is indestructible.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                continue;
+            }
+            if (!cannotBeRegenerated && gameHelper.tryRegenerate(gameData, perm)) {
+                continue;
+            }
+            gameHelper.removePermanentToGraveyard(gameData, perm);
+            String logEntry = perm.getCard().getName() + " is destroyed.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} is destroyed", gameData.id, perm.getCard().getName());
+        }
+    }
+
+    void resolveDestroyAllCreaturesYouDontControl(GameData gameData, StackEntry entry, boolean cannotBeRegenerated) {
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> toDestroy = new ArrayList<>();
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) {
+                continue;
+            }
             for (Permanent perm : gameData.playerBattlefields.get(playerId)) {
                 if (gameQueryService.isCreature(gameData, perm)) {
                     toDestroy.add(perm);

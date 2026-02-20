@@ -19,6 +19,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `deal damage to yourself/controller`: `DealDamageToControllerEffect`
 - `destroy target permanent`: `DestroyTargetPermanentEffect`
 - `destroy all creatures/artifacts/enchantments`: `DestroyAllCreaturesEffect`, `DestroyAllArtifactsEffect`, `DestroyAllEnchantmentsEffect`
+- `destroy all creatures you don't control`: `DestroyAllCreaturesYouDontControlEffect`
 - `sacrifice creature`: `SacrificeCreatureEffect`, `EachOpponentSacrificesCreatureEffect`
 - `counter spell`: `CounterSpellEffect`, `CounterUnlessPaysEffect`
 - `return target permanent/creature`: `ReturnTargetPermanentToHandEffect`, `ReturnTargetCreatureToHandEffect`
@@ -66,4 +67,3 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - Spell-copy targeting stack: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/t/Twincast.java`
 - Aura static lock: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/p/Pacifism.java`
 - ETB token + activated cost/effect composition: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SiegeGangCommander.java`
-
