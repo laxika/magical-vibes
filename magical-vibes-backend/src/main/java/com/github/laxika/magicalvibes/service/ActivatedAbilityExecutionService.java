@@ -181,8 +181,13 @@ public class ActivatedAbilityExecutionService {
                     playerId,
                     permanent.getCard().getName() + "'s ability",
                     snapshotEffects,
+                    effectiveXValue,
                     effectiveTargetId,
-                    effectiveTargetZone
+                    permanent.getId(),
+                    Map.of(),
+                    effectiveTargetZone,
+                    List.of(),
+                    List.of()
             );
         } else {
             stackEntry = new StackEntry(
@@ -193,7 +198,11 @@ public class ActivatedAbilityExecutionService {
                     snapshotEffects,
                     effectiveXValue,
                     effectiveTargetId,
-                    Map.of()
+                    permanent.getId(),
+                    Map.of(),
+                    null,
+                    List.of(),
+                    List.of()
             );
         }
         stackEntry.setTargetFilter(ability.getTargetFilter());

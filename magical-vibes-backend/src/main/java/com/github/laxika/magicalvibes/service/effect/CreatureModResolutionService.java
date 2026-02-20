@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureEffect;
@@ -79,6 +80,8 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveUntapSelf(gd, entry));
         registry.register(UntapAttackedCreaturesEffect.class,
                 (gd, entry, effect) -> resolveUntapAttackedCreatures(gd, entry));
+        registry.register(PutPlusOnePlusOneCounterOnSourceEffect.class,
+                (gd, entry, effect) -> resolvePutPlusOnePlusOneCounterOnSource(gd, entry, (PutPlusOnePlusOneCounterOnSourceEffect) effect));
     }
 
     private void resolveAnimateSelf(GameData gameData, StackEntry entry, AnimateSelfEffect effect) {
@@ -371,6 +374,22 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         String logEntry = entry.getCard().getName() + " untaps " + count + " creature(s) that attacked this turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} untaps {} attacked creature(s)", gameData.id, entry.getCard().getName(), count);
+    }
+
+    private void resolvePutPlusOnePlusOneCounterOnSource(GameData gameData, StackEntry entry, PutPlusOnePlusOneCounterOnSourceEffect effect) {
+        if (entry.getSourcePermanentId() == null) {
+            return;
+        }
+
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            return;
+        }
+
+        source.setPlusOnePlusOneCounters(source.getPlusOnePlusOneCounters() + effect.amount());
+        String logEntry = source.getCard().getName() + " gets a +1/+1 counter.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} gets {} +1/+1 counter(s)", gameData.id, source.getCard().getName(), effect.amount());
     }
 }
 

@@ -648,7 +648,7 @@ public class CombatService {
                                 int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
                                 defDamageTaken.merge(blkIdx, actualDmg, Integer::sum);
                                 combatDamageDealt.merge(atk, actualDmg, Integer::sum);
-                                recordCombatDamageToCreature(combatDamageDealtToCreatures, combatDamageDealerControllers,
+                                recordCombatDamageToCreature(gameData, combatDamageDealtToCreatures, combatDamageDealerControllers,
                                         atk, activeId, blk, actualDmg);
                             }
                             remaining -= dmg;
@@ -674,7 +674,7 @@ public class CombatService {
                             int actualDmg = gameQueryService.applyDamageMultiplier(gameData, gameQueryService.getEffectiveCombatDamage(gameData, blk));
                             atkDamageTaken.merge(atkIdx, actualDmg, Integer::sum);
                             combatDamageDealt.merge(blk, actualDmg, Integer::sum);
-                            recordCombatDamageToCreature(combatDamageDealtToCreatures, combatDamageDealerControllers,
+                            recordCombatDamageToCreature(gameData, combatDamageDealtToCreatures, combatDamageDealerControllers,
                                     blk, defenderId, atk, actualDmg);
                         }
                     }
@@ -741,7 +741,7 @@ public class CombatService {
                             int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
                             defDamageTaken.merge(blkIdx, actualDmg, Integer::sum);
                             combatDamageDealt.merge(atk, actualDmg, Integer::sum);
-                            recordCombatDamageToCreature(combatDamageDealtToCreatures, combatDamageDealerControllers,
+                            recordCombatDamageToCreature(gameData, combatDamageDealtToCreatures, combatDamageDealerControllers,
                                     atk, activeId, blk, actualDmg);
                         }
                         remaining -= dmg;
@@ -769,7 +769,7 @@ public class CombatService {
                         int actualDmg = gameQueryService.applyDamageMultiplier(gameData, gameQueryService.getEffectiveCombatDamage(gameData, blk));
                         atkDamageTaken.merge(atkIdx, actualDmg, Integer::sum);
                         combatDamageDealt.merge(blk, actualDmg, Integer::sum);
-                        recordCombatDamageToCreature(combatDamageDealtToCreatures, combatDamageDealerControllers,
+                        recordCombatDamageToCreature(gameData, combatDamageDealtToCreatures, combatDamageDealerControllers,
                                 blk, defenderId, atk, actualDmg);
                     }
                 }
@@ -1063,7 +1063,8 @@ public class CombatService {
         }
     }
 
-    private void recordCombatDamageToCreature(Map<Permanent, List<UUID>> combatDamageDealtToCreatures,
+    private void recordCombatDamageToCreature(GameData gameData,
+                                              Map<Permanent, List<UUID>> combatDamageDealtToCreatures,
                                               Map<Permanent, UUID> combatDamageDealerControllers,
                                               Permanent source,
                                               UUID controllerId,
@@ -1074,6 +1075,7 @@ public class CombatService {
         }
         combatDamageDealerControllers.putIfAbsent(source, controllerId);
         combatDamageDealtToCreatures.computeIfAbsent(source, ignored -> new ArrayList<>()).add(target.getId());
+        gameHelper.recordCreatureDamagedByPermanent(gameData, source.getId(), target, damage);
     }
 
     // ===== Aura trigger helpers =====

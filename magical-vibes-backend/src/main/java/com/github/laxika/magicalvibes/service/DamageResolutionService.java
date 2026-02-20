@@ -91,6 +91,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         }
 
         int damage = gameHelper.applyCreaturePreventionShield(gameData, target, gameQueryService.applyDamageMultiplier(gameData, entry.getXValue()));
+        recordCreatureDamageFromPermanentSource(gameData, entry, target, damage);
         String logEntry = entry.getCard().getName() + " deals " + damage + " damage to " + target.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} deals {} damage to {}", gameData.id, entry.getCard().getName(), damage, target.getCard().getName());
@@ -125,6 +126,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         }
 
         int damage = gameHelper.applyCreaturePreventionShield(gameData, target, gameQueryService.applyDamageMultiplier(gameData, effect.damage()));
+        recordCreatureDamageFromPermanentSource(gameData, entry, target, damage);
         String logEntry = entry.getCard().getName() + " deals " + damage + " damage to " + target.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} deals {} damage to {}", gameData.id, entry.getCard().getName(), damage, target.getCard().getName());
@@ -168,6 +170,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
                 target,
                 gameQueryService.applyDamageMultiplier(gameData, controlledSubtypeCount)
         );
+        recordCreatureDamageFromPermanentSource(gameData, entry, target, damage);
         String logEntry = entry.getCard().getName() + " deals " + damage + " damage to " + target.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} deals {} damage to {}", gameData.id, entry.getCard().getName(), damage, target.getCard().getName());
@@ -226,6 +229,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
             }
 
             int damage = gameHelper.applyCreaturePreventionShield(gameData, target, gameQueryService.applyDamageMultiplier(gameData, assignment.getValue()));
+            recordCreatureDamageFromPermanentSource(gameData, entry, target, damage);
             String logEntry = entry.getCard().getName() + " deals " + damage + " damage to " + target.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} deals {} damage to {}", gameData.id, entry.getCard().getName(), damage, target.getCard().getName());
@@ -276,6 +280,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
                     continue;
                 }
                 int effectiveDamage = gameHelper.applyCreaturePreventionShield(gameData, p, damage);
+                recordCreatureDamageFromPermanentSource(gameData, entry, p, effectiveDamage);
                 int toughness = gameQueryService.getEffectiveToughness(gameData, p);
                 if (effectiveDamage >= toughness
                         && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)
@@ -323,6 +328,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
                     continue;
                 }
                 int effectiveDamage = gameHelper.applyCreaturePreventionShield(gameData, p, damage);
+                recordCreatureDamageFromPermanentSource(gameData, entry, p, effectiveDamage);
                 int toughness = gameQueryService.getEffectiveToughness(gameData, p);
                 if (effectiveDamage >= toughness
                         && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)
@@ -384,6 +390,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
                         continue;
                     }
                     int effectiveDamage = gameHelper.applyCreaturePreventionShield(gameData, p, damage);
+                    recordCreatureDamageFromPermanentSource(gameData, entry, p, effectiveDamage);
                     int toughness = gameQueryService.getEffectiveToughness(gameData, p);
                     if (effectiveDamage >= toughness
                             && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)
@@ -458,6 +465,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         } else {
             if (!gameQueryService.hasProtectionFrom(gameData, targetPermanent, entry.getCard().getColor())) {
                 int damage = gameHelper.applyCreaturePreventionShield(gameData, targetPermanent, xValue);
+                recordCreatureDamageFromPermanentSource(gameData, entry, targetPermanent, damage);
                 String logEntry = cardName + " deals " + damage + " damage to " + targetPermanent.getCard().getName() + ".";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} deals {} damage to {}", gameData.id, cardName, damage, targetPermanent.getCard().getName());
@@ -516,6 +524,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         } else {
             if (!gameQueryService.hasProtectionFrom(gameData, targetPermanent, entry.getCard().getColor())) {
                 int damage = gameHelper.applyCreaturePreventionShield(gameData, targetPermanent, damageValue);
+                recordCreatureDamageFromPermanentSource(gameData, entry, targetPermanent, damage);
                 String logEntry = cardName + " deals " + damage + " damage to " + targetPermanent.getCard().getName() + ".";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} deals {} damage to {}", gameData.id, cardName, damage, targetPermanent.getCard().getName());
@@ -683,6 +692,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         } else {
             if (!gameQueryService.hasProtectionFrom(gameData, targetPermanent, entry.getCard().getColor())) {
                 int effectiveDamage = gameHelper.applyCreaturePreventionShield(gameData, targetPermanent, damage);
+                recordCreatureDamageFromPermanentSource(gameData, entry, targetPermanent, effectiveDamage);
 
                 if (effect.cantRegenerate() && effectiveDamage > 0) {
                     targetPermanent.setCantRegenerateThisTurn(true);
@@ -754,6 +764,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
             } else {
                 if (!gameQueryService.hasProtectionFrom(gameData, targetPermanent, entry.getCard().getColor())) {
                     int effectiveDamage = gameHelper.applyCreaturePreventionShield(gameData, targetPermanent, damage);
+                    recordCreatureDamageFromPermanentSource(gameData, entry, targetPermanent, effectiveDamage);
                     String logEntry = cardName + " deals " + effectiveDamage + " damage to " + targetPermanent.getCard().getName() + ".";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} deals {} damage to {}", gameData.id, cardName, effectiveDamage, targetPermanent.getCard().getName());
@@ -820,6 +831,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         } else {
             if (!gameQueryService.hasProtectionFrom(gameData, targetPermanent, entry.getCard().getColor())) {
                 int effectiveDamage = gameHelper.applyCreaturePreventionShield(gameData, targetPermanent, damage);
+                recordCreatureDamageFromPermanentSource(gameData, entry, targetPermanent, effectiveDamage);
                 String logEntry = cardName + " deals " + effectiveDamage + " damage to " + targetPermanent.getCard().getName() + ".";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} deals {} damage to {}", gameData.id, cardName, effectiveDamage, targetPermanent.getCard().getName());
@@ -851,6 +863,13 @@ public class DamageResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} gains {} life", gameData.id, controllerName, lifeGain);
 
         gameHelper.checkWinCondition(gameData);
+    }
+
+    private void recordCreatureDamageFromPermanentSource(GameData gameData, StackEntry entry, Permanent targetCreature, int damage) {
+        if (entry.getSourcePermanentId() == null) {
+            return;
+        }
+        gameHelper.recordCreatureDamagedByPermanent(gameData, entry.getSourcePermanentId(), targetCreature, damage);
     }
 
     void resolveDealDamageToController(GameData gameData, StackEntry entry, DealDamageToControllerEffect effect) {

@@ -34,6 +34,7 @@ public class Permanent {
     @Setter private int animatedPower;
     @Setter private int animatedToughness;
     @Setter private int loyaltyCounters;
+    @Setter private int plusOnePlusOneCounters;
     @Setter private boolean loyaltyAbilityUsedThisTurn;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
     private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
@@ -96,16 +97,16 @@ public class Permanent {
 
     public int getEffectivePower() {
         if (animatedUntilEndOfTurn) {
-            return animatedPower + powerModifier;
+            return animatedPower + powerModifier + plusOnePlusOneCounters;
         }
-        return (card.getPower() != null ? card.getPower() : 0) + powerModifier;
+        return (card.getPower() != null ? card.getPower() : 0) + powerModifier + plusOnePlusOneCounters;
     }
 
     public int getEffectiveToughness() {
         if (animatedUntilEndOfTurn) {
-            return animatedToughness + toughnessModifier;
+            return animatedToughness + toughnessModifier + plusOnePlusOneCounters;
         }
-        return (card.getToughness() != null ? card.getToughness() : 0) + toughnessModifier;
+        return (card.getToughness() != null ? card.getToughness() : 0) + toughnessModifier + plusOnePlusOneCounters;
     }
 
     public boolean hasKeyword(Keyword keyword) {

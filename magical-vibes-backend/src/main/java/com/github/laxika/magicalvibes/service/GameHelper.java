@@ -168,9 +168,86 @@ public class GameHelper {
                 && !card.isToken()
                 && (card.getType() == CardType.CREATURE || card.getAdditionalTypes().contains(CardType.CREATURE))) {
             tracked.add(card.getId());
+            triggerDamagedCreatureDiesAbilities(gameData, card.getId());
         } else {
             tracked.remove(card.getId());
         }
+    }
+
+    public void recordCreatureDamagedByPermanent(GameData gameData, UUID sourcePermanentId, Permanent damagedCreature, int damage) {
+        if (sourcePermanentId == null || damagedCreature == null || damage <= 0) {
+            return;
+        }
+        if (!gameQueryService.isCreature(gameData, damagedCreature)) {
+            return;
+        }
+
+        gameData.creatureCardsDamagedThisTurnBySourcePermanent
+                .computeIfAbsent(sourcePermanentId, ignored -> ConcurrentHashMap.newKeySet())
+                .add(damagedCreature.getCard().getId());
+    }
+
+    private void triggerDamagedCreatureDiesAbilities(GameData gameData, UUID dyingCreatureCardId) {
+        if (dyingCreatureCardId == null) {
+            return;
+        }
+
+        for (Map.Entry<UUID, Set<UUID>> entry : gameData.creatureCardsDamagedThisTurnBySourcePermanent.entrySet()) {
+            UUID sourcePermanentId = entry.getKey();
+            Set<UUID> damagedCreatureIds = entry.getValue();
+            if (!damagedCreatureIds.contains(dyingCreatureCardId)) {
+                continue;
+            }
+
+            Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+            if (source == null) {
+                continue;
+            }
+
+            UUID controllerId = findPermanentController(gameData, sourcePermanentId);
+            if (controllerId == null) {
+                continue;
+            }
+
+            List<CardEffect> effects = source.getCard().getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES);
+            if (effects == null || effects.isEmpty()) {
+                continue;
+            }
+
+            for (CardEffect effect : effects) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        source.getCard(),
+                        controllerId,
+                        source.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        sourcePermanentId
+                ));
+                String triggerLog = source.getCard().getName() + "'s ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                log.info("Game {} - {} triggers (damaged creature died this turn)", gameData.id, source.getCard().getName());
+            }
+        }
+
+        for (Set<UUID> damagedCreatureIds : gameData.creatureCardsDamagedThisTurnBySourcePermanent.values()) {
+            damagedCreatureIds.remove(dyingCreatureCardId);
+        }
+    }
+
+    private UUID findPermanentController(GameData gameData, UUID permanentId) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (permanent.getId().equals(permanentId)) {
+                    return playerId;
+                }
+            }
+        }
+        return null;
     }
 
     public void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature) {
