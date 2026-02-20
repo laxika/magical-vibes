@@ -184,11 +184,17 @@ public class TargetLegalityService {
                 Permanent targetPerm = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
                 if (targetPerm == null && !gameData.playerIds.contains(entry.getTargetPermanentId())) {
                     targetFizzled = true;
-                } else if (targetPerm != null && entry.getCard() != null && entry.getCard().getTargetFilter() != null) {
-                    try {
-                        gameQueryService.validateTargetFilter(entry.getCard().getTargetFilter(), targetPerm);
-                    } catch (IllegalStateException e) {
-                        targetFizzled = true;
+                } else if (targetPerm != null) {
+                    TargetFilter effectiveTargetFilter =
+                            entry.getTargetFilter() != null
+                                    ? entry.getTargetFilter()
+                                    : entry.getCard() != null ? entry.getCard().getTargetFilter() : null;
+                    if (effectiveTargetFilter != null) {
+                        try {
+                            gameQueryService.validateTargetFilter(effectiveTargetFilter, targetPerm);
+                        } catch (IllegalStateException e) {
+                            targetFizzled = true;
+                        }
                     }
                 }
             }

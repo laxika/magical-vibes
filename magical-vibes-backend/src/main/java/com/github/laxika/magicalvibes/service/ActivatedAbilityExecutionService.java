@@ -170,11 +170,12 @@ public class ActivatedAbilityExecutionService {
                                     UUID effectiveTargetId,
                                     Zone targetZone) {
         Zone effectiveTargetZone = targetZone;
+        StackEntry stackEntry;
         if (ability.isNeedsSpellTarget()) {
             effectiveTargetZone = Zone.STACK;
         }
         if (effectiveTargetZone != null && effectiveTargetZone != Zone.BATTLEFIELD) {
-            gameData.stack.add(new StackEntry(
+            stackEntry = new StackEntry(
                     StackEntryType.ACTIVATED_ABILITY,
                     permanent.getCard(),
                     playerId,
@@ -182,9 +183,9 @@ public class ActivatedAbilityExecutionService {
                     snapshotEffects,
                     effectiveTargetId,
                     effectiveTargetZone
-            ));
+            );
         } else {
-            gameData.stack.add(new StackEntry(
+            stackEntry = new StackEntry(
                     StackEntryType.ACTIVATED_ABILITY,
                     permanent.getCard(),
                     playerId,
@@ -193,8 +194,10 @@ public class ActivatedAbilityExecutionService {
                     effectiveXValue,
                     effectiveTargetId,
                     Map.of()
-            ));
+            );
         }
+        stackEntry.setTargetFilter(ability.getTargetFilter());
+        gameData.stack.add(stackEntry);
         stateBasedActionService.performStateBasedActions(gameData);
         gameData.priorityPassedBy.clear();
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingDeathTriggerTargets.isEmpty()) {

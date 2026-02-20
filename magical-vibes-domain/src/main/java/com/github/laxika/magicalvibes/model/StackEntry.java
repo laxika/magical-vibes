@@ -22,6 +22,7 @@ public class StackEntry {
     private final Map<UUID, Integer> damageAssignments;
     private final Zone targetZone;
     private final List<UUID> targetCardIds;
+    @Setter private TargetFilter targetFilter;
     @Setter private boolean copy;
     @Setter private boolean nonTargeting;
     private final List<UUID> targetPermanentIds;
@@ -39,6 +40,7 @@ public class StackEntry {
         this.damageAssignments = Map.of();
         this.targetZone = null;
         this.targetCardIds = List.of();
+        this.targetFilter = null;
         this.targetPermanentIds = List.of();
     }
 
@@ -55,6 +57,7 @@ public class StackEntry {
         this.damageAssignments = Map.of();
         this.targetZone = null;
         this.targetCardIds = List.of();
+        this.targetFilter = null;
         this.targetPermanentIds = List.of();
     }
 
@@ -71,6 +74,7 @@ public class StackEntry {
         this.damageAssignments = Map.of();
         this.targetZone = null;
         this.targetCardIds = List.of();
+        this.targetFilter = null;
         this.targetPermanentIds = List.of();
     }
 
@@ -87,6 +91,7 @@ public class StackEntry {
         this.damageAssignments = damageAssignments != null ? damageAssignments : Map.of();
         this.targetZone = null;
         this.targetCardIds = List.of();
+        this.targetFilter = null;
         this.targetPermanentIds = List.of();
     }
 
@@ -103,6 +108,7 @@ public class StackEntry {
         this.damageAssignments = Map.of();
         this.targetZone = null;
         this.targetCardIds = List.of();
+        this.targetFilter = null;
         this.targetPermanentIds = List.of();
     }
 
@@ -119,6 +125,7 @@ public class StackEntry {
         this.damageAssignments = Map.of();
         this.targetZone = targetZone;
         this.targetCardIds = List.of();
+        this.targetFilter = null;
         this.targetPermanentIds = List.of();
     }
 
@@ -138,6 +145,7 @@ public class StackEntry {
         this.damageAssignments = damageAssignments != null ? damageAssignments : Map.of();
         this.targetZone = targetZone;
         this.targetCardIds = targetCardIds != null ? targetCardIds : List.of();
+        this.targetFilter = null;
         this.targetPermanentIds = targetPermanentIds != null ? targetPermanentIds : List.of();
     }
 
@@ -154,6 +162,7 @@ public class StackEntry {
         this.damageAssignments = Map.of();
         this.targetZone = null;
         this.targetCardIds = targetCardIds != null ? targetCardIds : List.of();
+        this.targetFilter = null;
         this.targetPermanentIds = List.of();
     }
 
@@ -170,6 +179,7 @@ public class StackEntry {
         this.damageAssignments = Map.of();
         this.targetZone = null;
         this.targetCardIds = List.of();
+        this.targetFilter = null;
         this.targetPermanentIds = targetPermanentIds != null ? targetPermanentIds : List.of();
     }
 }
