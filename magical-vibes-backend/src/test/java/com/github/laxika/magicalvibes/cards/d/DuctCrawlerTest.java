@@ -192,7 +192,7 @@ class DuctCrawlerTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         // Attempting to block Duct Crawler with the targeted creature should fail
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
@@ -218,7 +218,7 @@ class DuctCrawlerTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         // Blocker at index 0 blocks attacker at index 1 (otherAttacker)
         // Duct Crawler is at index 0 (not attacking), otherAttacker is at index 1
@@ -244,7 +244,7 @@ class DuctCrawlerTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         // otherBlocker (index 1) blocks Duct Crawler (index 0)
         // declareBlockers succeeds without throwing — non-targeted creature can block Duct Crawler
@@ -278,7 +278,7 @@ class DuctCrawlerTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         // Neither blocker can block Duct Crawler
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
@@ -346,3 +346,4 @@ class DuctCrawlerTest {
         return perm;
     }
 }
+

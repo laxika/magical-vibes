@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -208,7 +209,7 @@ public class AiDecisionEngine {
         }
 
         // If awaiting some input, don't try to act on priority
-        if (gameData.awaitingInput != null) {
+        if (gameData.interaction.awaitingInput != null) {
             return;
         }
 
@@ -810,13 +811,19 @@ public class AiDecisionEngine {
     // ===== Choice Handlers =====
 
     private void handleCardChoice(GameData gameData) {
+        InteractionContext.CardChoice cardChoice = gameData.interaction.cardChoiceContext();
+        if (cardChoice == null) {
+            return;
+        }
+        UUID choicePlayerId = cardChoice.playerId();
+        Set<Integer> validIndices = cardChoice.validIndices();
+
         // Discard: pick highest mana cost card
-        if (!aiPlayer.getId().equals(gameData.awaitingCardChoicePlayerId)) {
+        if (!aiPlayer.getId().equals(choicePlayerId)) {
             return;
         }
 
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
-        Set<Integer> validIndices = gameData.awaitingCardChoiceValidIndices;
         if (hand == null || validIndices == null || validIndices.isEmpty()) {
             return;
         }
@@ -830,11 +837,17 @@ public class AiDecisionEngine {
     }
 
     private void handlePermanentChoice(GameData gameData) {
-        if (!aiPlayer.getId().equals(gameData.awaitingPermanentChoicePlayerId)) {
+        InteractionContext.PermanentChoice permanentChoice = gameData.interaction.permanentChoiceContextView();
+        if (permanentChoice == null) {
+            return;
+        }
+        UUID choicePlayerId = permanentChoice.playerId();
+        Set<UUID> validIds = permanentChoice.validIds();
+
+        if (!aiPlayer.getId().equals(choicePlayerId)) {
             return;
         }
 
-        Set<UUID> validIds = gameData.awaitingPermanentChoiceValidIds;
         if (validIds == null || validIds.isEmpty()) {
             return;
         }
@@ -876,12 +889,18 @@ public class AiDecisionEngine {
     }
 
     private void handleMultiPermanentChoice(GameData gameData) {
-        if (!aiPlayer.getId().equals(gameData.awaitingMultiPermanentChoicePlayerId)) {
+        InteractionContext.MultiPermanentChoice multiPermanentChoice = gameData.interaction.multiPermanentChoiceContext();
+        if (multiPermanentChoice == null) {
+            return;
+        }
+        UUID choicePlayerId = multiPermanentChoice.playerId();
+        Set<UUID> validIds = multiPermanentChoice.validIds();
+        int maxCount = multiPermanentChoice.maxCount();
+
+        if (!aiPlayer.getId().equals(choicePlayerId)) {
             return;
         }
 
-        Set<UUID> validIds = gameData.awaitingMultiPermanentChoiceValidIds;
-        int maxCount = gameData.awaitingMultiPermanentChoiceMaxCount;
         if (validIds == null || validIds.isEmpty()) {
             return;
         }
@@ -908,7 +927,13 @@ public class AiDecisionEngine {
     }
 
     private void handleColorChoice(GameData gameData) {
-        if (!aiPlayer.getId().equals(gameData.awaitingColorChoicePlayerId)) {
+        InteractionContext.ColorChoice colorChoice = gameData.interaction.colorChoiceContextView();
+        if (colorChoice == null) {
+            return;
+        }
+        UUID choicePlayerId = colorChoice.playerId();
+
+        if (!aiPlayer.getId().equals(choicePlayerId)) {
             return;
         }
 
@@ -939,7 +964,13 @@ public class AiDecisionEngine {
     }
 
     private void handleMayAbilityChoice(GameData gameData) {
-        if (!aiPlayer.getId().equals(gameData.awaitingMayAbilityPlayerId)) {
+        InteractionContext.MayAbilityChoice mayAbilityChoice = gameData.interaction.mayAbilityChoiceContext();
+        if (mayAbilityChoice == null) {
+            return;
+        }
+        UUID choicePlayerId = mayAbilityChoice.playerId();
+
+        if (!aiPlayer.getId().equals(choicePlayerId)) {
             return;
         }
 
@@ -949,11 +980,17 @@ public class AiDecisionEngine {
     }
 
     private void handleReorderCards(GameData gameData) {
-        if (!aiPlayer.getId().equals(gameData.awaitingLibraryReorderPlayerId)) {
+        InteractionContext.LibraryReorder libraryReorder = gameData.interaction.libraryReorderContext();
+        if (libraryReorder == null) {
+            return;
+        }
+        UUID choicePlayerId = libraryReorder.playerId();
+        List<Card> cards = libraryReorder.cards();
+
+        if (!aiPlayer.getId().equals(choicePlayerId)) {
             return;
         }
 
-        List<Card> cards = gameData.awaitingLibraryReorderCards;
         if (cards == null || cards.isEmpty()) {
             return;
         }
@@ -974,11 +1011,17 @@ public class AiDecisionEngine {
     }
 
     private void handleLibrarySearch(GameData gameData) {
-        if (!aiPlayer.getId().equals(gameData.awaitingLibrarySearchPlayerId)) {
+        InteractionContext.LibrarySearch librarySearch = gameData.interaction.librarySearchContext();
+        if (librarySearch == null) {
+            return;
+        }
+        UUID choicePlayerId = librarySearch.playerId();
+        List<Card> searchCards = librarySearch.cards();
+
+        if (!aiPlayer.getId().equals(choicePlayerId)) {
             return;
         }
 
-        List<Card> searchCards = gameData.awaitingLibrarySearchCards;
         if (searchCards == null || searchCards.isEmpty()) {
             return;
         }
@@ -1001,17 +1044,23 @@ public class AiDecisionEngine {
     }
 
     private void handleGraveyardChoice(GameData gameData) {
-        if (!aiPlayer.getId().equals(gameData.awaitingGraveyardChoicePlayerId)) {
+        InteractionContext.GraveyardChoice graveyardChoice = gameData.interaction.graveyardChoiceContext();
+        if (graveyardChoice == null) {
+            return;
+        }
+        UUID choicePlayerId = graveyardChoice.playerId();
+        Set<Integer> validIndices = graveyardChoice.validIndices();
+
+        if (!aiPlayer.getId().equals(choicePlayerId)) {
             return;
         }
 
-        Set<Integer> validIndices = gameData.awaitingGraveyardChoiceValidIndices;
         if (validIndices == null || validIndices.isEmpty()) {
             return;
         }
 
         // Pick highest mana value card
-        List<Card> graveyard = gameData.graveyardChoiceCardPool;
+        List<Card> graveyard = graveyardChoice.cardPool();
         if (graveyard == null) {
             graveyard = gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of());
         }
@@ -1026,12 +1075,18 @@ public class AiDecisionEngine {
     }
 
     private void handleMultiGraveyardChoice(GameData gameData) {
-        if (!aiPlayer.getId().equals(gameData.awaitingMultiGraveyardChoicePlayerId)) {
+        InteractionContext.MultiGraveyardChoice multiGraveyardChoice = gameData.interaction.multiGraveyardChoiceContext();
+        if (multiGraveyardChoice == null) {
+            return;
+        }
+        UUID choicePlayerId = multiGraveyardChoice.playerId();
+        Set<UUID> validIds = multiGraveyardChoice.validCardIds();
+        int maxCount = multiGraveyardChoice.maxCount();
+
+        if (!aiPlayer.getId().equals(choicePlayerId)) {
             return;
         }
 
-        Set<UUID> validIds = gameData.awaitingMultiGraveyardChoiceValidCardIds;
-        int maxCount = gameData.awaitingMultiGraveyardChoiceMaxCount;
         if (validIds == null || validIds.isEmpty()) {
             return;
         }
@@ -1043,11 +1098,17 @@ public class AiDecisionEngine {
     }
 
     private void handleHandTopBottom(GameData gameData) {
-        if (!aiPlayer.getId().equals(gameData.awaitingHandTopBottomPlayerId)) {
+        InteractionContext.HandTopBottomChoice handTopBottomChoice = gameData.interaction.handTopBottomChoiceContext();
+        if (handTopBottomChoice == null) {
+            return;
+        }
+        UUID choicePlayerId = handTopBottomChoice.playerId();
+        List<Card> cards = handTopBottomChoice.cards();
+
+        if (!aiPlayer.getId().equals(choicePlayerId)) {
             return;
         }
 
-        List<Card> cards = gameData.awaitingHandTopBottomCards;
         if (cards == null || cards.size() < 2) {
             return;
         }
@@ -1084,18 +1145,24 @@ public class AiDecisionEngine {
     }
 
     private void handleRevealedHandChoice(GameData gameData) {
+        InteractionContext.RevealedHandChoice revealedHandChoice = gameData.interaction.revealedHandChoiceContext();
+        if (revealedHandChoice == null) {
+            return;
+        }
+        UUID choosingPlayerId = revealedHandChoice.choosingPlayerId();
+
         // We're choosing a card from the opponent's revealed hand
-        if (!aiPlayer.getId().equals(gameData.awaitingCardChoicePlayerId)) {
+        if (!aiPlayer.getId().equals(choosingPlayerId)) {
             return;
         }
 
-        UUID targetPlayerId = gameData.awaitingRevealedHandChoiceTargetPlayerId;
+        UUID targetPlayerId = revealedHandChoice.targetPlayerId();
         if (targetPlayerId == null) {
             return;
         }
 
         List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
-        Set<Integer> validIndices = gameData.awaitingCardChoiceValidIndices;
+        Set<Integer> validIndices = revealedHandChoice.validIndices();
         if (targetHand == null || validIndices == null || validIndices.isEmpty()) {
             return;
         }
@@ -1148,3 +1215,4 @@ public class AiDecisionEngine {
         void execute() throws Exception;
     }
 }
+

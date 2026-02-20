@@ -99,10 +99,10 @@ class ShuntTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.awaitingPermanentChoicePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.awaitingPermanentChoiceValidIds).contains(bears2PermId);
-        assertThat(gd.awaitingPermanentChoiceValidIds).doesNotContain(bears1PermId);
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingPermanentChoicePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds).contains(bears2PermId);
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds).doesNotContain(bears1PermId);
 
         harness.handlePermanentChosen(player2, bears2PermId);
         harness.passBothPriorities();
@@ -134,7 +134,7 @@ class ShuntTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
 
         StackEntry boomerangEntry = gd.stack.getLast();
         assertThat(boomerangEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
@@ -161,9 +161,9 @@ class ShuntTest {
         harness.castInstant(player2, 0, lavaAxe.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.awaitingPermanentChoiceValidIds).contains(player1.getId());
-        assertThat(gd.awaitingPermanentChoiceValidIds).doesNotContain(player2.getId());
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds).contains(player1.getId());
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds).doesNotContain(player2.getId());
 
         harness.handlePermanentChosen(player2, player1.getId());
         harness.passBothPriorities();
@@ -204,7 +204,7 @@ class ShuntTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
 
         harness.handlePermanentChosen(player2, boomerangB.getId());
         harness.passBothPriorities();
@@ -219,3 +219,4 @@ class ShuntTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("Cancel") && log.contains("fizzles"));
     }
 }
+

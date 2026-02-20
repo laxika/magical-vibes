@@ -100,7 +100,7 @@ class SparkElementalTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         gs.declareAttackers(gd, player1, List.of(0));
 
@@ -124,7 +124,7 @@ class SparkElementalTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -160,3 +160,4 @@ class SparkElementalTest {
                 .anyMatch(c -> c.getName().equals("Spark Elemental"));
     }
 }
+

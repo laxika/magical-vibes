@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.input;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -38,14 +39,15 @@ public class LibraryChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
 
     public void handleLibraryCardsReordered(GameData gameData, Player player, List<Integer> cardOrder) {
-        if (gameData.awaitingInput != AwaitingInput.LIBRARY_REORDER) {
+        if (gameData.interaction.awaitingInput != AwaitingInput.LIBRARY_REORDER) {
             throw new IllegalStateException("Not awaiting library reorder");
         }
-        if (!player.getId().equals(gameData.awaitingLibraryReorderPlayerId)) {
+        InteractionContext.LibraryReorder libraryReorder = gameData.interaction.libraryReorderContext();
+        if (libraryReorder == null || !player.getId().equals(libraryReorder.playerId())) {
             throw new IllegalStateException("Not your turn to reorder");
         }
 
-        List<Card> reorderCards = gameData.awaitingLibraryReorderCards;
+        List<Card> reorderCards = libraryReorder.cards();
         int count = reorderCards.size();
 
         if (cardOrder.size() != count) {
@@ -66,7 +68,7 @@ public class LibraryChoiceHandlerService {
         // Apply the reorder: replace top N cards of deck with the reordered ones
         List<Card> deck = gameData.playerDecks.get(player.getId());
 
-        if (gameData.awaitingLibraryReorderToBottom) {
+        if (libraryReorder.toBottom()) {
             for (int i = 0; i < count; i++) {
                 deck.add(reorderCards.get(cardOrder.get(i)));
             }
@@ -77,11 +79,12 @@ public class LibraryChoiceHandlerService {
         }
 
         // Clear awaiting state
-        gameData.awaitingInput = null;
-        gameData.awaitingLibraryReorderPlayerId = null;
-        gameData.awaitingLibraryReorderCards = null;
-        boolean reorderedToBottom = gameData.awaitingLibraryReorderToBottom;
-        gameData.awaitingLibraryReorderToBottom = false;
+        gameData.interaction.awaitingInput = null;
+        gameData.interaction.awaitingLibraryReorderPlayerId = null;
+        gameData.interaction.awaitingLibraryReorderCards = null;
+        boolean reorderedToBottom = libraryReorder.toBottom();
+        gameData.interaction.awaitingLibraryReorderToBottom = false;
+        gameData.interaction.clearContext();
 
         String logMsg = reorderedToBottom
                 ? player.getUsername() + " puts " + count + " cards on the bottom of their library."
@@ -94,7 +97,7 @@ public class LibraryChoiceHandlerService {
             gameHelper.beginNextPendingLibraryBottomReorder(gameData);
             return;
         }
-        if (reorderedToBottom && gameData.pendingWarpWorldSourceName != null) {
+        if (reorderedToBottom && gameData.warpWorldOperation.sourceName != null) {
             gameHelper.finalizePendingWarpWorld(gameData);
         }
 
@@ -102,14 +105,15 @@ public class LibraryChoiceHandlerService {
     }
 
     public void handleHandTopBottomChosen(GameData gameData, Player player, int handCardIndex, int topCardIndex) {
-        if (gameData.awaitingInput != AwaitingInput.HAND_TOP_BOTTOM_CHOICE) {
+        if (gameData.interaction.awaitingInput != AwaitingInput.HAND_TOP_BOTTOM_CHOICE) {
             throw new IllegalStateException("Not awaiting hand/top/bottom choice");
         }
-        if (!player.getId().equals(gameData.awaitingHandTopBottomPlayerId)) {
+        InteractionContext.HandTopBottomChoice handTopBottomChoice = gameData.interaction.handTopBottomChoiceContext();
+        if (handTopBottomChoice == null || !player.getId().equals(handTopBottomChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
-        List<Card> handTopBottomCards = gameData.awaitingHandTopBottomCards;
+        List<Card> handTopBottomCards = handTopBottomChoice.cards();
         int count = handTopBottomCards.size();
 
         if (handCardIndex < 0 || handCardIndex >= count) {
@@ -141,9 +145,10 @@ public class LibraryChoiceHandlerService {
         }
 
         // Clear awaiting state
-        gameData.awaitingInput = null;
-        gameData.awaitingHandTopBottomPlayerId = null;
-        gameData.awaitingHandTopBottomCards = null;
+        gameData.interaction.awaitingInput = null;
+        gameData.interaction.awaitingHandTopBottomPlayerId = null;
+        gameData.interaction.awaitingHandTopBottomCards = null;
+        gameData.interaction.clearContext();
 
         String logMsg;
         if (count == 2) {
@@ -158,33 +163,35 @@ public class LibraryChoiceHandlerService {
     }
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
-        if (gameData.awaitingInput != AwaitingInput.LIBRARY_SEARCH) {
+        if (gameData.interaction.awaitingInput != AwaitingInput.LIBRARY_SEARCH) {
             throw new IllegalStateException("Not awaiting library search");
         }
-        if (!player.getId().equals(gameData.awaitingLibrarySearchPlayerId)) {
+        InteractionContext.LibrarySearch librarySearch = gameData.interaction.librarySearchContext();
+        if (librarySearch == null || !player.getId().equals(librarySearch.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
         UUID playerId = player.getId();
-        List<Card> searchCards = gameData.awaitingLibrarySearchCards;
+        List<Card> searchCards = librarySearch.cards();
 
-        boolean reveals = gameData.awaitingLibrarySearchReveals;
-        boolean canFailToFind = gameData.awaitingLibrarySearchCanFailToFind;
-        UUID targetPlayerId = gameData.awaitingLibrarySearchTargetPlayerId;
-        int remainingCount = gameData.awaitingLibrarySearchRemainingCount;
+        boolean reveals = librarySearch.reveals();
+        boolean canFailToFind = librarySearch.canFailToFind();
+        UUID targetPlayerId = librarySearch.targetPlayerId();
+        int remainingCount = librarySearch.remainingCount();
 
         // Determine whose library/hand to use
         UUID deckOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
         UUID handOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
 
         // Clear all state
-        gameData.awaitingInput = null;
-        gameData.awaitingLibrarySearchPlayerId = null;
-        gameData.awaitingLibrarySearchCards = null;
-        gameData.awaitingLibrarySearchReveals = false;
-        gameData.awaitingLibrarySearchCanFailToFind = false;
-        gameData.awaitingLibrarySearchTargetPlayerId = null;
-        gameData.awaitingLibrarySearchRemainingCount = 0;
+        gameData.interaction.awaitingInput = null;
+        gameData.interaction.awaitingLibrarySearchPlayerId = null;
+        gameData.interaction.awaitingLibrarySearchCards = null;
+        gameData.interaction.awaitingLibrarySearchReveals = false;
+        gameData.interaction.awaitingLibrarySearchCanFailToFind = false;
+        gameData.interaction.awaitingLibrarySearchTargetPlayerId = null;
+        gameData.interaction.awaitingLibrarySearchRemainingCount = 0;
+        gameData.interaction.clearContext();
 
         List<Card> deck = gameData.playerDecks.get(deckOwnerId);
 
@@ -225,13 +232,16 @@ public class LibraryChoiceHandlerService {
                 int newRemaining = remainingCount - 1;
                 List<Card> newSearchCards = new ArrayList<>(deck);
 
-                gameData.awaitingInput = AwaitingInput.LIBRARY_SEARCH;
-                gameData.awaitingLibrarySearchPlayerId = playerId;
-                gameData.awaitingLibrarySearchCards = newSearchCards;
-                gameData.awaitingLibrarySearchReveals = false;
-                gameData.awaitingLibrarySearchCanFailToFind = false;
-                gameData.awaitingLibrarySearchTargetPlayerId = targetPlayerId;
-                gameData.awaitingLibrarySearchRemainingCount = newRemaining;
+                gameData.interaction.awaitingInput = AwaitingInput.LIBRARY_SEARCH;
+                gameData.interaction.awaitingLibrarySearchPlayerId = playerId;
+                gameData.interaction.awaitingLibrarySearchCards = newSearchCards;
+                gameData.interaction.awaitingLibrarySearchReveals = false;
+                gameData.interaction.awaitingLibrarySearchCanFailToFind = false;
+                gameData.interaction.awaitingLibrarySearchTargetPlayerId = targetPlayerId;
+                gameData.interaction.awaitingLibrarySearchRemainingCount = newRemaining;
+                gameData.interaction.context = new InteractionContext.LibrarySearch(
+                        playerId, newSearchCards, false, false, targetPlayerId, newRemaining
+                );
 
                 String targetName = gameData.playerIdToName.get(targetPlayerId);
                 List<CardView> cardViews = newSearchCards.stream().map(cardViewFactory::create).toList();
@@ -264,11 +274,12 @@ public class LibraryChoiceHandlerService {
     }
 
     public void handleLibraryRevealChoice(GameData gameData, Player player, List<UUID> cardIds) {
-        if (!player.getId().equals(gameData.awaitingLibraryRevealPlayerId)) {
+        InteractionContext.LibraryRevealChoice libraryRevealChoice = gameData.interaction.libraryRevealChoiceContext();
+        if (libraryRevealChoice == null || !player.getId().equals(libraryRevealChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
-        Set<UUID> validIds = gameData.awaitingLibraryRevealValidCardIds;
+        Set<UUID> validIds = libraryRevealChoice.validCardIds();
         if (cardIds == null) {
             cardIds = List.of();
         }
@@ -284,15 +295,16 @@ public class LibraryChoiceHandlerService {
             throw new IllegalStateException("Duplicate card IDs in selection");
         }
 
-        UUID controllerId = gameData.awaitingLibraryRevealPlayerId;
-        List<Card> allRevealedCards = gameData.awaitingLibraryRevealAllCards;
+        UUID controllerId = libraryRevealChoice.playerId();
+        List<Card> allRevealedCards = libraryRevealChoice.allCards();
         String playerName = gameData.playerIdToName.get(controllerId);
 
         // Clear awaiting state
-        gameData.awaitingInput = null;
-        gameData.awaitingLibraryRevealPlayerId = null;
-        gameData.awaitingLibraryRevealValidCardIds = null;
-        gameData.awaitingLibraryRevealAllCards = null;
+        gameData.interaction.awaitingInput = null;
+        gameData.interaction.awaitingLibraryRevealPlayerId = null;
+        gameData.interaction.awaitingLibraryRevealValidCardIds = null;
+        gameData.interaction.awaitingLibraryRevealAllCards = null;
+        gameData.interaction.clearContext();
 
         // Separate selected cards from the rest
         Set<UUID> selectedIds = new HashSet<>(cardIds);
@@ -322,7 +334,7 @@ public class LibraryChoiceHandlerService {
                 perm.setLoyaltyCounters(card.getLoyalty());
                 perm.setSummoningSick(false);
             }
-            if (gameData.awaitingInput == null) {
+            if (gameData.interaction.awaitingInput == null) {
                 gameHelper.checkLegendRule(gameData, controllerId);
             }
         }
@@ -347,3 +359,4 @@ public class LibraryChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 }
+

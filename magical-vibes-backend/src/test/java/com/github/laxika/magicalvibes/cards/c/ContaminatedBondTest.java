@@ -253,7 +253,7 @@ class ContaminatedBondTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
         gs.declareAttackers(gd, player, attackerIndices);
     }
 
@@ -261,7 +261,8 @@ class ContaminatedBondTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
         gs.declareBlockers(gd, player, assignments);
     }
 }
+

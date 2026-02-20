@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -36,23 +37,25 @@ public class GraveyardChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
-        if (gameData.awaitingInput != AwaitingInput.GRAVEYARD_CHOICE) {
+        if (gameData.interaction.awaitingInput != AwaitingInput.GRAVEYARD_CHOICE) {
             throw new IllegalStateException("Not awaiting graveyard choice");
         }
-        if (!player.getId().equals(gameData.awaitingGraveyardChoicePlayerId)) {
+        InteractionContext.GraveyardChoice graveyardChoice = gameData.interaction.graveyardChoiceContext();
+        if (graveyardChoice == null || !player.getId().equals(graveyardChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
         UUID playerId = player.getId();
-        Set<Integer> validIndices = gameData.awaitingGraveyardChoiceValidIndices;
-        List<Card> cardPool = gameData.graveyardChoiceCardPool;
+        Set<Integer> validIndices = graveyardChoice.validIndices();
+        List<Card> cardPool = graveyardChoice.cardPool();
 
-        gameData.awaitingInput = null;
-        gameData.awaitingGraveyardChoicePlayerId = null;
-        gameData.awaitingGraveyardChoiceValidIndices = null;
-        GraveyardChoiceDestination destination = gameData.graveyardChoiceDestination;
-        gameData.graveyardChoiceDestination = null;
-        gameData.graveyardChoiceCardPool = null;
+        gameData.interaction.awaitingInput = null;
+        gameData.interaction.awaitingGraveyardChoicePlayerId = null;
+        gameData.interaction.awaitingGraveyardChoiceValidIndices = null;
+        GraveyardChoiceDestination destination = graveyardChoice.destination();
+        gameData.interaction.graveyardChoiceDestination = null;
+        gameData.interaction.graveyardChoiceCardPool = null;
+        gameData.interaction.clearContext();
 
         if (cardIndex == -1) {
             // Player declined
@@ -94,7 +97,7 @@ public class GraveyardChoiceHandlerService {
                     if (card.getType() == CardType.CREATURE) {
                         gameHelper.handleCreatureEnteredBattlefield(gameData, playerId, card, null);
                     }
-                    if (gameData.awaitingInput == null) {
+                    if (gameData.interaction.awaitingInput == null) {
                         gameHelper.checkLegendRule(gameData, playerId);
                     }
                 }
@@ -105,15 +108,16 @@ public class GraveyardChoiceHandlerService {
     }
 
     public void handleMultipleGraveyardCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
-        if (gameData.awaitingInput != AwaitingInput.MULTI_GRAVEYARD_CHOICE) {
+        if (gameData.interaction.awaitingInput != AwaitingInput.MULTI_GRAVEYARD_CHOICE) {
             throw new IllegalStateException("Not awaiting multi-graveyard choice");
         }
-        if (!player.getId().equals(gameData.awaitingMultiGraveyardChoicePlayerId)) {
+        InteractionContext.MultiGraveyardChoice multiGraveyardChoice = gameData.interaction.multiGraveyardChoiceContext();
+        if (multiGraveyardChoice == null || !player.getId().equals(multiGraveyardChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
-        Set<UUID> validIds = gameData.awaitingMultiGraveyardChoiceValidCardIds;
-        int maxCount = gameData.awaitingMultiGraveyardChoiceMaxCount;
+        Set<UUID> validIds = multiGraveyardChoice.validCardIds();
+        int maxCount = multiGraveyardChoice.maxCount();
 
         if (cardIds == null) {
             cardIds = List.of();
@@ -124,8 +128,8 @@ public class GraveyardChoiceHandlerService {
         }
 
         // Spell targeting (e.g. Midnight Ritual) requires exactly X targets — "X target" is not "up to X target"
-        StackEntryType pendingEntryTypeCheck = gameData.pendingGraveyardTargetEntryType;
-        int pendingXValueCheck = gameData.pendingGraveyardTargetXValue;
+        StackEntryType pendingEntryTypeCheck = gameData.graveyardTargetOperation.entryType;
+        int pendingXValueCheck = gameData.graveyardTargetOperation.xValue;
         if (pendingEntryTypeCheck != null && cardIds.size() != pendingXValueCheck) {
             throw new IllegalStateException("Must choose exactly " + pendingXValueCheck + " targets, but chose " + cardIds.size());
         }
@@ -142,22 +146,23 @@ public class GraveyardChoiceHandlerService {
         }
 
         // Retrieve the pending info
-        Card pendingCard = gameData.pendingGraveyardTargetCard;
-        UUID controllerId = gameData.pendingGraveyardTargetControllerId;
-        List<CardEffect> pendingEffects = gameData.pendingGraveyardTargetEffects;
-        StackEntryType pendingEntryType = gameData.pendingGraveyardTargetEntryType;
-        int pendingXValue = gameData.pendingGraveyardTargetXValue;
+        Card pendingCard = gameData.graveyardTargetOperation.card;
+        UUID controllerId = gameData.graveyardTargetOperation.controllerId;
+        List<CardEffect> pendingEffects = gameData.graveyardTargetOperation.effects;
+        StackEntryType pendingEntryType = gameData.graveyardTargetOperation.entryType;
+        int pendingXValue = gameData.graveyardTargetOperation.xValue;
 
         // Clear awaiting state
-        gameData.awaitingInput = null;
-        gameData.awaitingMultiGraveyardChoicePlayerId = null;
-        gameData.awaitingMultiGraveyardChoiceValidCardIds = null;
-        gameData.awaitingMultiGraveyardChoiceMaxCount = 0;
-        gameData.pendingGraveyardTargetCard = null;
-        gameData.pendingGraveyardTargetControllerId = null;
-        gameData.pendingGraveyardTargetEffects = null;
-        gameData.pendingGraveyardTargetEntryType = null;
-        gameData.pendingGraveyardTargetXValue = 0;
+        gameData.interaction.awaitingInput = null;
+        gameData.interaction.awaitingMultiGraveyardChoicePlayerId = null;
+        gameData.interaction.awaitingMultiGraveyardChoiceValidCardIds = null;
+        gameData.interaction.awaitingMultiGraveyardChoiceMaxCount = 0;
+        gameData.interaction.clearContext();
+        gameData.graveyardTargetOperation.card = null;
+        gameData.graveyardTargetOperation.controllerId = null;
+        gameData.graveyardTargetOperation.effects = null;
+        gameData.graveyardTargetOperation.entryType = null;
+        gameData.graveyardTargetOperation.xValue = 0;
 
         List<String> targetNames = new ArrayList<>();
         for (UUID cardId : cardIds) {
@@ -210,3 +215,4 @@ public class GraveyardChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 }
+

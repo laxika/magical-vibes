@@ -101,9 +101,9 @@ class RooftopPercherTest {
                 .anyMatch(p -> p.getCard().getName().equals("Rooftop Percher"));
 
         // Graveyard target selection is pending (at trigger time, before ability goes on stack)
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.awaitingMultiGraveyardChoicePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.awaitingMultiGraveyardChoiceMaxCount).isEqualTo(2);
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingMultiGraveyardChoicePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingMultiGraveyardChoiceMaxCount).isEqualTo(2);
 
         // ETB ability is NOT yet on the stack (waiting for target selection)
         assertThat(gd.stack).isEmpty();
@@ -123,7 +123,7 @@ class RooftopPercherTest {
         harness.passBothPriorities(); // resolve creature → target prompt
 
         // Pick two card IDs from the valid set
-        List<UUID> validIds = new ArrayList<>(gd.awaitingMultiGraveyardChoiceValidCardIds);
+        List<UUID> validIds = new ArrayList<>(gd.interaction.awaitingMultiGraveyardChoiceValidCardIds);
         List<UUID> chosenIds = validIds.subList(0, 2);
 
         int totalGraveyardBefore = gd.playerGraveyards.get(player1.getId()).size()
@@ -147,7 +147,7 @@ class RooftopPercherTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
 
         // Awaiting state is cleared
-        assertThat(gd.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInput).isNull();
 
         // Log mentions exile
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("exiles") && entry.contains("from graveyard"));
@@ -164,12 +164,12 @@ class RooftopPercherTest {
 
         harness.passBothPriorities(); // resolve creature → target prompt
 
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
 
         // All valid IDs should be from player2's graveyard
         List<UUID> p2GraveyardIds = gd.playerGraveyards.get(player2.getId()).stream()
                 .map(Card::getId).toList();
-        assertThat(gd.awaitingMultiGraveyardChoiceValidCardIds).containsAll(p2GraveyardIds);
+        assertThat(gd.interaction.awaitingMultiGraveyardChoiceValidCardIds).containsAll(p2GraveyardIds);
 
         // Exile both → ability goes on stack
         harness.handleMultipleGraveyardCardsChosen(player1, p2GraveyardIds);
@@ -190,7 +190,7 @@ class RooftopPercherTest {
 
         harness.passBothPriorities(); // resolve creature → target prompt
 
-        List<UUID> validIds = new ArrayList<>(gd.awaitingMultiGraveyardChoiceValidCardIds);
+        List<UUID> validIds = new ArrayList<>(gd.interaction.awaitingMultiGraveyardChoiceValidCardIds);
 
         // Choose only one card → ability goes on stack
         harness.handleMultipleGraveyardCardsChosen(player1, List.of(validIds.getFirst()));
@@ -200,7 +200,7 @@ class RooftopPercherTest {
                 + gd.playerExiledCards.get(player2.getId()).size();
         assertThat(totalExiled).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
-        assertThat(gd.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInput).isNull();
     }
 
     // ===== ETB: choosing zero targets =====
@@ -226,7 +226,7 @@ class RooftopPercherTest {
 
         // Life was still gained (ability resolves normally with 0 targets)
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
-        assertThat(gd.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInput).isNull();
     }
 
     // ===== ETB with empty graveyards =====
@@ -246,7 +246,7 @@ class RooftopPercherTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
 
         // No graveyard choice was needed
-        assertThat(gd.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInput).isNull();
     }
 
     // ===== Max count capping =====
@@ -262,9 +262,9 @@ class RooftopPercherTest {
 
         harness.passBothPriorities(); // resolve creature → target prompt
 
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.awaitingMultiGraveyardChoiceMaxCount).isEqualTo(1);
-        assertThat(gd.awaitingMultiGraveyardChoiceValidCardIds).hasSize(1);
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingMultiGraveyardChoiceMaxCount).isEqualTo(1);
+        assertThat(gd.interaction.awaitingMultiGraveyardChoiceValidCardIds).hasSize(1);
     }
 
     // ===== Fizzle: all targets removed before resolution =====
@@ -316,7 +316,7 @@ class RooftopPercherTest {
 
         harness.passBothPriorities(); // resolve creature → target prompt
 
-        List<UUID> allIds = new ArrayList<>(gd.awaitingMultiGraveyardChoiceValidCardIds);
+        List<UUID> allIds = new ArrayList<>(gd.interaction.awaitingMultiGraveyardChoiceValidCardIds);
         assertThat(allIds).hasSize(3);
 
         // Try to select all 3 (max is 2)
@@ -351,7 +351,7 @@ class RooftopPercherTest {
 
         harness.passBothPriorities(); // resolve creature → target prompt
 
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
 
         assertThatThrownBy(() -> harness.handleMultipleGraveyardCardsChosen(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
@@ -388,3 +388,4 @@ class RooftopPercherTest {
         harness.setGraveyard(player2, List.of(new GrizzlyBears()));
     }
 }
+

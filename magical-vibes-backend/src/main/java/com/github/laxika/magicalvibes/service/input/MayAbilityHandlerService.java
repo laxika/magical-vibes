@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.input;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -60,16 +61,18 @@ public class MayAbilityHandlerService {
     private final TurnProgressionService turnProgressionService;
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
-        if (gameData.awaitingInput != AwaitingInput.MAY_ABILITY_CHOICE) {
+        if (gameData.interaction.awaitingInput != AwaitingInput.MAY_ABILITY_CHOICE) {
             throw new IllegalStateException("Not awaiting may ability choice");
         }
-        if (!player.getId().equals(gameData.awaitingMayAbilityPlayerId)) {
+        InteractionContext.MayAbilityChoice mayAbilityChoice = gameData.interaction.mayAbilityChoiceContext();
+        if (mayAbilityChoice == null || !player.getId().equals(mayAbilityChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
         PendingMayAbility ability = gameData.pendingMayAbilities.removeFirst();
-        gameData.awaitingInput = null;
-        gameData.awaitingMayAbilityPlayerId = null;
+        gameData.interaction.awaitingInput = null;
+        gameData.interaction.awaitingMayAbilityPlayerId = null;
+        gameData.interaction.clearContext();
 
         // Counter-unless-pays — handled via the may ability system
         boolean isCounterUnlessPays = ability.effects().stream().anyMatch(e -> e instanceof CounterUnlessPaysEffect);
@@ -113,7 +116,7 @@ public class MayAbilityHandlerService {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} accepts clone copy", gameData.id, player.getUsername());
             } else {
-                gameData.permanentChoiceContext = null;
+                gameData.interaction.permanentChoiceContext = null;
                 String logEntry = player.getUsername() + " declines to copy a creature. Clone enters as 0/0.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} declines clone copy", gameData.id, player.getUsername());
@@ -123,7 +126,7 @@ public class MayAbilityHandlerService {
 
                 if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
                     gameHelper.processNextDeathTriggerTarget(gameData);
-                    if (gameData.awaitingInput != null) {
+                    if (gameData.interaction.awaitingInput != null) {
                         return;
                     }
                 }
@@ -158,7 +161,7 @@ public class MayAbilityHandlerService {
 
         playerInputService.processNextMayAbility(gameData);
 
-        if (gameData.pendingMayAbilities.isEmpty() && gameData.awaitingInput == null) {
+        if (gameData.pendingMayAbilities.isEmpty() && gameData.interaction.awaitingInput == null) {
             gameData.priorityPassedBy.clear();
             gameBroadcastService.broadcastGameState(gameData);
             turnProgressionService.resolveAutoPass(gameData);
@@ -183,7 +186,7 @@ public class MayAbilityHandlerService {
         if (targetEntry == null) {
             log.info("Game {} - Counter-unless-pays target no longer on stack", gameData.id);
             playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && gameData.awaitingInput == null) {
+            if (gameData.pendingMayAbilities.isEmpty() && gameData.interaction.awaitingInput == null) {
                 gameData.priorityPassedBy.clear();
                 gameBroadcastService.broadcastGameState(gameData);
                 turnProgressionService.resolveAutoPass(gameData);
@@ -216,7 +219,7 @@ public class MayAbilityHandlerService {
 
         gameHelper.performStateBasedActions(gameData);
         playerInputService.processNextMayAbility(gameData);
-        if (gameData.pendingMayAbilities.isEmpty() && gameData.awaitingInput == null) {
+        if (gameData.pendingMayAbilities.isEmpty() && gameData.interaction.awaitingInput == null) {
             gameData.priorityPassedBy.clear();
             gameBroadcastService.broadcastGameState(gameData);
             turnProgressionService.resolveAutoPass(gameData);
@@ -260,7 +263,7 @@ public class MayAbilityHandlerService {
             if (!validIndices.isEmpty()) {
                 String typeName = effect.requiredType().name().toLowerCase();
                 gameData.discardCausedByOpponent = false;
-                gameData.awaitingDiscardRemainingCount = 1;
+                gameData.interaction.awaitingDiscardRemainingCount = 1;
                 playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
                         "Choose a " + typeName + " card to discard.");
 
@@ -287,7 +290,7 @@ public class MayAbilityHandlerService {
 
         gameHelper.performStateBasedActions(gameData);
         playerInputService.processNextMayAbility(gameData);
-        if (gameData.pendingMayAbilities.isEmpty() && gameData.awaitingInput == null) {
+        if (gameData.pendingMayAbilities.isEmpty() && gameData.interaction.awaitingInput == null) {
             gameData.priorityPassedBy.clear();
             gameBroadcastService.broadcastGameState(gameData);
             turnProgressionService.resolveAutoPass(gameData);
@@ -301,7 +304,7 @@ public class MayAbilityHandlerService {
             log.info("Game {} - {} declines to retarget copy", gameData.id, player.getUsername());
 
             playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && gameData.awaitingInput == null) {
+            if (gameData.pendingMayAbilities.isEmpty() && gameData.interaction.awaitingInput == null) {
                 gameData.priorityPassedBy.clear();
                 gameBroadcastService.broadcastGameState(gameData);
                 turnProgressionService.resolveAutoPass(gameData);
@@ -322,7 +325,7 @@ public class MayAbilityHandlerService {
         if (copyEntry == null) {
             log.info("Game {} - Copy no longer on stack for retarget", gameData.id);
             playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && gameData.awaitingInput == null) {
+            if (gameData.pendingMayAbilities.isEmpty() && gameData.interaction.awaitingInput == null) {
                 gameData.priorityPassedBy.clear();
                 gameBroadcastService.broadcastGameState(gameData);
                 turnProgressionService.resolveAutoPass(gameData);
@@ -429,7 +432,7 @@ public class MayAbilityHandlerService {
             log.info("Game {} - No valid targets for copy retarget", gameData.id);
 
             playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && gameData.awaitingInput == null) {
+            if (gameData.pendingMayAbilities.isEmpty() && gameData.interaction.awaitingInput == null) {
                 gameData.priorityPassedBy.clear();
                 gameBroadcastService.broadcastGameState(gameData);
                 turnProgressionService.resolveAutoPass(gameData);
@@ -437,7 +440,7 @@ public class MayAbilityHandlerService {
             return;
         }
 
-        gameData.permanentChoiceContext = new PermanentChoiceContext.SpellRetarget(copyCardId);
+        gameData.interaction.permanentChoiceContext = new PermanentChoiceContext.SpellRetarget(copyCardId);
         playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
                 "Choose a new target for the copy of " + copiedCard.getName() + ".");
     }
@@ -458,3 +461,4 @@ public class MayAbilityHandlerService {
         return false;
     }
 }
+

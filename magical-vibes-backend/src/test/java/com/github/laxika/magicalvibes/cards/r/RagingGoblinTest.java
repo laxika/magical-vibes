@@ -110,7 +110,7 @@ class RagingGoblinTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         gs.declareAttackers(gd, player1, List.of(0));
 
@@ -120,3 +120,4 @@ class RagingGoblinTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 }
+

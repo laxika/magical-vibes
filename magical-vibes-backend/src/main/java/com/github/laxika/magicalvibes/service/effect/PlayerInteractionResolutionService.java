@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
@@ -135,7 +136,7 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
             return;
         }
 
-        gameData.awaitingDiscardRemainingCount = amount;
+        gameData.interaction.awaitingDiscardRemainingCount = amount;
         playerInputService.beginDiscardChoice(gameData, playerId);
     }
 
@@ -215,10 +216,10 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
             validIndices.add(i);
         }
 
-        gameData.awaitingRevealedHandChoiceTargetPlayerId = targetPlayerId;
-        gameData.awaitingRevealedHandChoiceRemainingCount = cardsToChoose;
-        gameData.awaitingRevealedHandChoiceDiscardMode = false;
-        gameData.awaitingRevealedHandChosenCards.clear();
+        gameData.interaction.awaitingRevealedHandChoiceTargetPlayerId = targetPlayerId;
+        gameData.interaction.awaitingRevealedHandChoiceRemainingCount = cardsToChoose;
+        gameData.interaction.awaitingRevealedHandChoiceDiscardMode = false;
+        gameData.interaction.awaitingRevealedHandChosenCards.clear();
 
         playerInputService.beginRevealedHandChoice(gameData, casterId, targetPlayerId, validIndices,
                 "Choose a card to put on top of " + targetName + "'s library.");
@@ -263,10 +264,10 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
 
         int cardsToChoose = Math.min(effect.count(), validIndices.size());
 
-        gameData.awaitingRevealedHandChoiceTargetPlayerId = targetPlayerId;
-        gameData.awaitingRevealedHandChoiceRemainingCount = cardsToChoose;
-        gameData.awaitingRevealedHandChoiceDiscardMode = true;
-        gameData.awaitingRevealedHandChosenCards.clear();
+        gameData.interaction.awaitingRevealedHandChoiceTargetPlayerId = targetPlayerId;
+        gameData.interaction.awaitingRevealedHandChoiceRemainingCount = cardsToChoose;
+        gameData.interaction.awaitingRevealedHandChoiceDiscardMode = true;
+        gameData.interaction.awaitingRevealedHandChosenCards.clear();
 
         playerInputService.beginRevealedHandChoice(gameData, casterId, targetPlayerId, validIndices,
                 "Choose a nonland card to discard.");
@@ -282,9 +283,12 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
             return;
         }
 
-        gameData.colorChoiceContext = new ColorChoiceContext.TextChangeFromWord(targetPermanentId);
-        gameData.awaitingInput = AwaitingInput.COLOR_CHOICE;
-        gameData.awaitingColorChoicePlayerId = entry.getControllerId();
+        gameData.interaction.colorChoiceContext = new ColorChoiceContext.TextChangeFromWord(targetPermanentId);
+        gameData.interaction.awaitingInput = AwaitingInput.COLOR_CHOICE;
+        gameData.interaction.awaitingColorChoicePlayerId = entry.getControllerId();
+        gameData.interaction.context = new InteractionContext.ColorChoice(
+                entry.getControllerId(), null, null, gameData.interaction.colorChoiceContext
+        );
 
         List<String> options = new ArrayList<>();
         options.addAll(GameQueryService.TEXT_CHANGE_COLOR_WORDS);
@@ -296,9 +300,12 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
     }
 
     private void resolveAwardAnyColorMana(GameData gameData, StackEntry entry) {
-        gameData.colorChoiceContext = new ColorChoiceContext.ManaColorChoice(entry.getControllerId());
-        gameData.awaitingInput = AwaitingInput.COLOR_CHOICE;
-        gameData.awaitingColorChoicePlayerId = entry.getControllerId();
+        gameData.interaction.colorChoiceContext = new ColorChoiceContext.ManaColorChoice(entry.getControllerId());
+        gameData.interaction.awaitingInput = AwaitingInput.COLOR_CHOICE;
+        gameData.interaction.awaitingColorChoicePlayerId = entry.getControllerId();
+        gameData.interaction.context = new InteractionContext.ColorChoice(
+                entry.getControllerId(), null, null, gameData.interaction.colorChoiceContext
+        );
         List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
         sessionManager.sendToPlayer(entry.getControllerId(), new ChooseColorMessage(colors, "Choose a color of mana to add."));
 
@@ -441,3 +448,4 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
         ));
     }
 }
+

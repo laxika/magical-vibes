@@ -75,9 +75,9 @@ class MidnightRitualTest {
         harness.castSorcery(player1, 0, 2);
 
         // Should be awaiting multi-graveyard choice
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.awaitingMultiGraveyardChoicePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.awaitingMultiGraveyardChoiceMaxCount).isEqualTo(2);
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingMultiGraveyardChoicePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingMultiGraveyardChoiceMaxCount).isEqualTo(2);
 
         // Spell is NOT yet on the stack (targets must be chosen first)
         assertThat(gd.stack).isEmpty();
@@ -100,9 +100,9 @@ class MidnightRitualTest {
         harness.castSorcery(player1, 0, 1);
 
         // Only player1's creature card should be valid (not Plains, not opponent's card)
-        assertThat(gd.awaitingMultiGraveyardChoiceValidCardIds).containsExactly(bears.getId());
-        assertThat(gd.awaitingMultiGraveyardChoiceValidCardIds).doesNotContain(plains.getId());
-        assertThat(gd.awaitingMultiGraveyardChoiceValidCardIds).doesNotContain(opponentBears.getId());
+        assertThat(gd.interaction.awaitingMultiGraveyardChoiceValidCardIds).containsExactly(bears.getId());
+        assertThat(gd.interaction.awaitingMultiGraveyardChoiceValidCardIds).doesNotContain(plains.getId());
+        assertThat(gd.interaction.awaitingMultiGraveyardChoiceValidCardIds).doesNotContain(opponentBears.getId());
     }
 
     // ===== Target selection puts spell on stack =====
@@ -128,7 +128,7 @@ class MidnightRitualTest {
         assertThat(entry.getTargetCardIds()).containsExactly(bears1.getId(), bears2.getId());
 
         // Awaiting state is cleared
-        assertThat(gd.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInput).isNull();
 
         // Log mentions casting
         assertThat(gd.gameLog).anyMatch(l -> l.contains("casts Midnight Ritual"));
@@ -207,7 +207,7 @@ class MidnightRitualTest {
         harness.castSorcery(player1, 0, 0);
 
         // No graveyard choice — spell goes directly on stack
-        assertThat(gd.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInput).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(gd.stack.getFirst().getTargetCardIds()).isEmpty();
@@ -281,7 +281,7 @@ class MidnightRitualTest {
         harness.castSorcery(player1, 0, 0);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInput).isNull();
     }
 
     // ===== Multiple tokens =====
@@ -297,7 +297,7 @@ class MidnightRitualTest {
         harness.addMana(player1, ManaColor.BLACK, 6); // X=3, costs 6
 
         harness.castSorcery(player1, 0, 3);
-        List<UUID> allIds = new ArrayList<>(gd.awaitingMultiGraveyardChoiceValidCardIds);
+        List<UUID> allIds = new ArrayList<>(gd.interaction.awaitingMultiGraveyardChoiceValidCardIds);
         assertThat(allIds).hasSize(3);
 
         harness.handleMultipleGraveyardCardsChosen(player1, allIds);
@@ -469,9 +469,9 @@ class MidnightRitualTest {
         harness.castSorcery(player1, 0, 2);
 
         // Only the 2 creatures should be valid
-        assertThat(gd.awaitingMultiGraveyardChoiceValidCardIds).hasSize(2);
-        assertThat(gd.awaitingMultiGraveyardChoiceValidCardIds).contains(bears.getId(), angel.getId());
-        assertThat(gd.awaitingMultiGraveyardChoiceValidCardIds).doesNotContain(plains1.getId(), plains2.getId());
+        assertThat(gd.interaction.awaitingMultiGraveyardChoiceValidCardIds).hasSize(2);
+        assertThat(gd.interaction.awaitingMultiGraveyardChoiceValidCardIds).contains(bears.getId(), angel.getId());
+        assertThat(gd.interaction.awaitingMultiGraveyardChoiceValidCardIds).doesNotContain(plains1.getId(), plains2.getId());
     }
 
     // ===== Sorcery goes to graveyard after resolution =====
@@ -493,3 +493,4 @@ class MidnightRitualTest {
                 .anyMatch(c -> c.getName().equals("Midnight Ritual"));
     }
 }
+

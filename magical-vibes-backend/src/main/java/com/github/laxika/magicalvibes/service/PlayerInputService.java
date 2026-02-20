@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -30,9 +31,15 @@ public class PlayerInputService {
     private final CardViewFactory cardViewFactory;
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
-        gameData.awaitingInput = AwaitingInput.CARD_CHOICE;
-        gameData.awaitingCardChoicePlayerId = playerId;
-        gameData.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
+        gameData.interaction.awaitingInput = AwaitingInput.CARD_CHOICE;
+        gameData.interaction.awaitingCardChoicePlayerId = playerId;
+        gameData.interaction.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
+        gameData.interaction.context = new InteractionContext.CardChoice(
+                AwaitingInput.CARD_CHOICE,
+                playerId,
+                new HashSet<>(validIndices),
+                null
+        );
         sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(validIndices, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -40,10 +47,16 @@ public class PlayerInputService {
     }
 
     public void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID targetPermanentId) {
-        gameData.awaitingInput = AwaitingInput.TARGETED_CARD_CHOICE;
-        gameData.awaitingCardChoicePlayerId = playerId;
-        gameData.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
-        gameData.pendingCardChoiceTargetPermanentId = targetPermanentId;
+        gameData.interaction.awaitingInput = AwaitingInput.TARGETED_CARD_CHOICE;
+        gameData.interaction.awaitingCardChoicePlayerId = playerId;
+        gameData.interaction.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
+        gameData.interaction.pendingCardChoiceTargetPermanentId = targetPermanentId;
+        gameData.interaction.context = new InteractionContext.CardChoice(
+                AwaitingInput.TARGETED_CARD_CHOICE,
+                playerId,
+                new HashSet<>(validIndices),
+                targetPermanentId
+        );
         sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(validIndices, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -51,9 +64,14 @@ public class PlayerInputService {
     }
 
     public void beginPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, String prompt) {
-        gameData.awaitingInput = AwaitingInput.PERMANENT_CHOICE;
-        gameData.awaitingPermanentChoicePlayerId = playerId;
-        gameData.awaitingPermanentChoiceValidIds = new HashSet<>(validIds);
+        gameData.interaction.awaitingInput = AwaitingInput.PERMANENT_CHOICE;
+        gameData.interaction.awaitingPermanentChoicePlayerId = playerId;
+        gameData.interaction.awaitingPermanentChoiceValidIds = new HashSet<>(validIds);
+        gameData.interaction.context = new InteractionContext.PermanentChoice(
+                playerId,
+                new HashSet<>(validIds),
+                gameData.interaction.permanentChoiceContext
+        );
         sessionManager.sendToPlayer(playerId, new ChoosePermanentMessage(validIds, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -63,9 +81,14 @@ public class PlayerInputService {
     public void beginAnyTargetChoice(GameData gameData, UUID playerId, List<UUID> validPermanentIds, List<UUID> validPlayerIds, String prompt) {
         Set<UUID> allValidIds = new HashSet<>(validPermanentIds);
         allValidIds.addAll(validPlayerIds);
-        gameData.awaitingInput = AwaitingInput.PERMANENT_CHOICE;
-        gameData.awaitingPermanentChoicePlayerId = playerId;
-        gameData.awaitingPermanentChoiceValidIds = allValidIds;
+        gameData.interaction.awaitingInput = AwaitingInput.PERMANENT_CHOICE;
+        gameData.interaction.awaitingPermanentChoicePlayerId = playerId;
+        gameData.interaction.awaitingPermanentChoiceValidIds = allValidIds;
+        gameData.interaction.context = new InteractionContext.PermanentChoice(
+                playerId,
+                new HashSet<>(allValidIds),
+                gameData.interaction.permanentChoiceContext
+        );
         sessionManager.sendToPlayer(playerId, new ChoosePermanentMessage(validPermanentIds, validPlayerIds, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -73,9 +96,15 @@ public class PlayerInputService {
     }
 
     void beginGraveyardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
-        gameData.awaitingInput = AwaitingInput.GRAVEYARD_CHOICE;
-        gameData.awaitingGraveyardChoicePlayerId = playerId;
-        gameData.awaitingGraveyardChoiceValidIndices = new HashSet<>(validIndices);
+        gameData.interaction.awaitingInput = AwaitingInput.GRAVEYARD_CHOICE;
+        gameData.interaction.awaitingGraveyardChoicePlayerId = playerId;
+        gameData.interaction.awaitingGraveyardChoiceValidIndices = new HashSet<>(validIndices);
+        gameData.interaction.context = new InteractionContext.GraveyardChoice(
+                playerId,
+                new HashSet<>(validIndices),
+                gameData.interaction.graveyardChoiceDestination,
+                gameData.interaction.graveyardChoiceCardPool
+        );
         sessionManager.sendToPlayer(playerId, new ChooseCardFromGraveyardMessage(validIndices, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -83,10 +112,15 @@ public class PlayerInputService {
     }
 
     void beginMultiPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, int maxCount, String prompt) {
-        gameData.awaitingInput = AwaitingInput.MULTI_PERMANENT_CHOICE;
-        gameData.awaitingMultiPermanentChoicePlayerId = playerId;
-        gameData.awaitingMultiPermanentChoiceValidIds = new HashSet<>(validIds);
-        gameData.awaitingMultiPermanentChoiceMaxCount = maxCount;
+        gameData.interaction.awaitingInput = AwaitingInput.MULTI_PERMANENT_CHOICE;
+        gameData.interaction.awaitingMultiPermanentChoicePlayerId = playerId;
+        gameData.interaction.awaitingMultiPermanentChoiceValidIds = new HashSet<>(validIds);
+        gameData.interaction.awaitingMultiPermanentChoiceMaxCount = maxCount;
+        gameData.interaction.context = new InteractionContext.MultiPermanentChoice(
+                playerId,
+                new HashSet<>(validIds),
+                maxCount
+        );
         sessionManager.sendToPlayer(playerId, new ChooseMultiplePermanentsMessage(validIds, maxCount, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -94,10 +128,15 @@ public class PlayerInputService {
     }
 
     void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<UUID> validCardIds, List<CardView> cardViews, int maxCount, String prompt) {
-        gameData.awaitingInput = AwaitingInput.MULTI_GRAVEYARD_CHOICE;
-        gameData.awaitingMultiGraveyardChoicePlayerId = playerId;
-        gameData.awaitingMultiGraveyardChoiceValidCardIds = new HashSet<>(validCardIds);
-        gameData.awaitingMultiGraveyardChoiceMaxCount = maxCount;
+        gameData.interaction.awaitingInput = AwaitingInput.MULTI_GRAVEYARD_CHOICE;
+        gameData.interaction.awaitingMultiGraveyardChoicePlayerId = playerId;
+        gameData.interaction.awaitingMultiGraveyardChoiceValidCardIds = new HashSet<>(validCardIds);
+        gameData.interaction.awaitingMultiGraveyardChoiceMaxCount = maxCount;
+        gameData.interaction.context = new InteractionContext.MultiGraveyardChoice(
+                playerId,
+                new HashSet<>(validCardIds),
+                maxCount
+        );
         sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsFromGraveyardsMessage(validCardIds, cardViews, maxCount, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -105,10 +144,16 @@ public class PlayerInputService {
     }
 
     void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetPermanentId) {
-        gameData.awaitingInput = AwaitingInput.COLOR_CHOICE;
-        gameData.awaitingColorChoicePlayerId = playerId;
-        gameData.awaitingColorChoicePermanentId = permanentId;
-        gameData.pendingColorChoiceETBTargetId = etbTargetPermanentId;
+        gameData.interaction.awaitingInput = AwaitingInput.COLOR_CHOICE;
+        gameData.interaction.awaitingColorChoicePlayerId = playerId;
+        gameData.interaction.awaitingColorChoicePermanentId = permanentId;
+        gameData.interaction.pendingColorChoiceETBTargetId = etbTargetPermanentId;
+        gameData.interaction.context = new InteractionContext.ColorChoice(
+                playerId,
+                permanentId,
+                etbTargetPermanentId,
+                gameData.interaction.colorChoiceContext
+        );
         List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
         sessionManager.sendToPlayer(playerId, new ChooseColorMessage(colors, "Choose a color."));
 
@@ -127,9 +172,15 @@ public class PlayerInputService {
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
-        gameData.awaitingInput = AwaitingInput.DISCARD_CHOICE;
-        gameData.awaitingCardChoicePlayerId = playerId;
-        gameData.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
+        gameData.interaction.awaitingInput = AwaitingInput.DISCARD_CHOICE;
+        gameData.interaction.awaitingCardChoicePlayerId = playerId;
+        gameData.interaction.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
+        gameData.interaction.context = new InteractionContext.CardChoice(
+                AwaitingInput.DISCARD_CHOICE,
+                playerId,
+                new HashSet<>(validIndices),
+                null
+        );
         sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(validIndices, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -137,9 +188,17 @@ public class PlayerInputService {
     }
 
     public void beginRevealedHandChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId, List<Integer> validIndices, String prompt) {
-        gameData.awaitingInput = AwaitingInput.REVEALED_HAND_CHOICE;
-        gameData.awaitingCardChoicePlayerId = choosingPlayerId;
-        gameData.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
+        gameData.interaction.awaitingInput = AwaitingInput.REVEALED_HAND_CHOICE;
+        gameData.interaction.awaitingCardChoicePlayerId = choosingPlayerId;
+        gameData.interaction.awaitingCardChoiceValidIndices = new HashSet<>(validIndices);
+        gameData.interaction.context = new InteractionContext.RevealedHandChoice(
+                choosingPlayerId,
+                targetPlayerId,
+                new HashSet<>(validIndices),
+                gameData.interaction.awaitingRevealedHandChoiceRemainingCount,
+                gameData.interaction.awaitingRevealedHandChoiceDiscardMode,
+                new ArrayList<>(gameData.interaction.awaitingRevealedHandChosenCards)
+        );
 
         List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
         List<CardView> cardViews = targetHand.stream().map(cardViewFactory::create).toList();
@@ -155,11 +214,13 @@ public class PlayerInputService {
         }
 
         PendingMayAbility next = gameData.pendingMayAbilities.getFirst();
-        gameData.awaitingInput = AwaitingInput.MAY_ABILITY_CHOICE;
-        gameData.awaitingMayAbilityPlayerId = next.controllerId();
+        gameData.interaction.awaitingInput = AwaitingInput.MAY_ABILITY_CHOICE;
+        gameData.interaction.awaitingMayAbilityPlayerId = next.controllerId();
+        gameData.interaction.context = new InteractionContext.MayAbilityChoice(next.controllerId(), next.description());
         sessionManager.sendToPlayer(next.controllerId(), new MayAbilityMessage(next.description()));
 
         String playerName = gameData.playerIdToName.get(next.controllerId());
         log.info("Game {} - Awaiting {} to decide on may ability: {}", gameData.id, playerName, next.description());
     }
 }
+

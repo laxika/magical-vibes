@@ -172,7 +172,7 @@ class MightOfOaksTest {
         // Move to declare attackers
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        harness.getGameData().awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        harness.getGameData().interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
         harness.getGameService().declareAttackers(harness.getGameData(), player1, List.of(0));
 
         // Opponent life should be reduced by 9 (boosted power)
@@ -225,3 +225,4 @@ class MightOfOaksTest {
                 .hasMessageContaining("Invalid target");
     }
 }
+

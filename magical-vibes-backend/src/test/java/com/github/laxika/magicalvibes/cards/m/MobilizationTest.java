@@ -259,7 +259,7 @@ class MobilizationTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         // Soldier is at index 1 (Mobilization is at 0)
         gs.declareAttackers(gd, player1, List.of(1));
@@ -281,7 +281,7 @@ class MobilizationTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         // Bears is at index 1 (Mobilization is at 0)
         gs.declareAttackers(gd, player1, List.of(1));
@@ -300,3 +300,4 @@ class MobilizationTest {
         return perm;
     }
 }
+

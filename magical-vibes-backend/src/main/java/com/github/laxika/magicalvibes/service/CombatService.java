@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -208,13 +209,16 @@ public class CombatService {
         }
 
         List<Integer> mustAttack = getMustAttackIndices(gameData, activeId, attackable);
-        gameData.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gameData.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gameData.interaction.context = new InteractionContext.AttackerDeclaration(activeId);
         sessionManager.sendToPlayer(activeId, new AvailableAttackersMessage(attackable, mustAttack));
     }
 
     void skipToEndOfCombat(GameData gameData) {
         gameData.currentStep = TurnStep.END_OF_COMBAT;
-        gameData.awaitingInput = null;
+        gameData.interaction.awaitingInput = null;
+        gameData.interaction.clearContext();
+        gameData.interaction.clearContext();
         clearCombatState(gameData);
 
         String logEntry = "Step: " + TurnStep.END_OF_COMBAT.getDisplayName();
@@ -223,7 +227,7 @@ public class CombatService {
     }
 
     CombatResult declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices) {
-        if (gameData.awaitingInput != AwaitingInput.ATTACKER_DECLARATION) {
+        if (gameData.interaction.awaitingInput != AwaitingInput.ATTACKER_DECLARATION) {
             throw new IllegalStateException("Not awaiting attacker declaration");
         }
         if (!player.getId().equals(gameData.activePlayerId)) {
@@ -248,7 +252,8 @@ public class CombatService {
         // Validate attack requirements (CR 508.1d: satisfy as many as possible)
         validateMaximumAttackRequirements(gameData, playerId, attackable, uniqueIndices);
 
-        gameData.awaitingInput = null;
+        gameData.interaction.awaitingInput = null;
+        gameData.interaction.clearContext();
 
         if (attackerIndices.isEmpty()) {
             log.info("Game {} - {} declares no attackers", gameData.id, player.getUsername());
@@ -339,13 +344,14 @@ public class CombatService {
             return CombatResult.ADVANCE_ONLY;
         }
 
-        gameData.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gameData.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gameData.interaction.context = new InteractionContext.BlockerDeclaration(defenderId);
         sessionManager.sendToPlayer(defenderId, new AvailableBlockersMessage(blockable, attackerIndices));
         return CombatResult.DONE;
     }
 
     CombatResult declareBlockers(GameData gameData, Player player, List<BlockerAssignment> blockerAssignments) {
-        if (gameData.awaitingInput != AwaitingInput.BLOCKER_DECLARATION) {
+        if (gameData.interaction.awaitingInput != AwaitingInput.BLOCKER_DECLARATION) {
             throw new IllegalStateException("Not awaiting blocker declaration");
         }
 
@@ -458,7 +464,7 @@ public class CombatService {
             }
         }
 
-        gameData.awaitingInput = null;
+        gameData.interaction.awaitingInput = null;
 
         // Mark creatures as blocking
         for (BlockerAssignment assignment : blockerAssignments) {
@@ -872,7 +878,7 @@ public class CombatService {
 
         // Process combat damage to player triggers (e.g. Cephalid Constable) after all combat is resolved
         processCombatDamageToPlayerTriggers(gameData, combatDamageDealtToPlayer, activeId, defenderId);
-        if (gameData.awaitingInput != null) {
+        if (gameData.interaction.awaitingInput != null) {
             return CombatResult.DONE;
         }
 
@@ -1124,3 +1130,4 @@ public class CombatService {
 
     }
 }
+

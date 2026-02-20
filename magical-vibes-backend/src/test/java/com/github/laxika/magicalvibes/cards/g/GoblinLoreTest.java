@@ -107,7 +107,7 @@ class GoblinLoreTest {
         // 3 cards should have been discarded at random (graveyard has Goblin Lore + 3 discarded)
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
         // Should NOT be awaiting any input (random discard doesn't prompt)
-        assertThat(gd.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInput).isNull();
         // Log should mention discards at random
         long randomDiscardLogs = gd.gameLog.stream()
                 .filter(log -> log.contains("discards") && log.contains("at random"))
@@ -150,3 +150,4 @@ class GoblinLoreTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
     }
 }
+

@@ -168,8 +168,8 @@ class SpiketailHatchlingTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
 
         // Player1 pays
         harness.handleMayAbilityChosen(player1, true);
@@ -205,8 +205,8 @@ class SpiketailHatchlingTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
 
         // Player1 declines
         harness.handleMayAbilityChosen(player1, false);
@@ -347,3 +347,4 @@ class SpiketailHatchlingTest {
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
     }
 }
+

@@ -107,7 +107,7 @@ class BloodrockCyclopsTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         // No exception means declaration is valid; combat auto-resolves
         gs.declareAttackers(gd, player1, List.of(0));
@@ -125,7 +125,7 @@ class BloodrockCyclopsTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
                 .isInstanceOf(IllegalStateException.class)
@@ -146,7 +146,7 @@ class BloodrockCyclopsTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         // Declare only Grizzly Bears (index 1), omitting Bloodrock Cyclops (index 0)
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(1)))
@@ -170,7 +170,7 @@ class BloodrockCyclopsTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         // No exception means declaration is valid; 3 + 2 = 5 damage
         gs.declareAttackers(gd, player1, List.of(0, 1));
@@ -189,7 +189,7 @@ class BloodrockCyclopsTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         // Tapped creature cannot attack, so empty declaration is fine
         // (no attackable creatures means combat skips automatically)
@@ -213,7 +213,7 @@ class BloodrockCyclopsTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         // Only Grizzly Bears can attack (index 1), Cyclops has summoning sickness
         // so declaring just bears should succeed — only 2 damage from bears
@@ -239,7 +239,7 @@ class BloodrockCyclopsTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         // Per CR 508.1d, the player is not required to pay the attack tax
         // so Bloodrock Cyclops is not forced to attack — empty declaration is valid
@@ -268,7 +268,7 @@ class BloodrockCyclopsTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         gs.declareAttackers(gd, player1, List.of(0));
         harness.passBothPriorities(); // through declare blockers (no blockers)
@@ -292,7 +292,7 @@ class BloodrockCyclopsTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities(); // through combat damage
@@ -320,7 +320,7 @@ class BloodrockCyclopsTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         // Only declaring one of the two should fail
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
@@ -344,7 +344,7 @@ class BloodrockCyclopsTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         // No exception means declaration is valid; 3 + 3 = 6 damage
         gs.declareAttackers(gd, player1, List.of(0, 1));
@@ -352,3 +352,4 @@ class BloodrockCyclopsTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
 }
+

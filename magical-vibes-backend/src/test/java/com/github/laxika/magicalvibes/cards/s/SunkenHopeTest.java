@@ -82,10 +82,10 @@ class SunkenHopeTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.awaitingPermanentChoicePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.awaitingPermanentChoiceValidIds).contains(creature.getId());
-        assertThat(gd.permanentChoiceContext).isInstanceOf(PermanentChoiceContext.BounceCreature.class);
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingPermanentChoicePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds).contains(creature.getId());
+        assertThat(gd.interaction.permanentChoiceContext).isInstanceOf(PermanentChoiceContext.BounceCreature.class);
     }
 
     @Test
@@ -103,8 +103,8 @@ class SunkenHopeTest {
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.permanentChoiceContext).isNull();
+        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.permanentChoiceContext).isNull();
     }
 
     // ===== Triggering during opponent's upkeep =====
@@ -118,9 +118,9 @@ class SunkenHopeTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.awaitingPermanentChoicePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.awaitingPermanentChoiceValidIds).contains(creature.getId());
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingPermanentChoicePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds).contains(creature.getId());
     }
 
     @Test
@@ -152,7 +152,7 @@ class SunkenHopeTest {
         harness.passBothPriorities(); // resolve trigger
 
         // No choice prompted — enchantment is the only permanent and it's not a creature
-        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
     }
 
     @Test
@@ -164,7 +164,7 @@ class SunkenHopeTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
     }
 
     // ===== Multiple creatures =====
@@ -179,7 +179,7 @@ class SunkenHopeTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.awaitingPermanentChoiceValidIds).containsExactly(creature.getId());
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds).containsExactly(creature.getId());
     }
 
     @Test
@@ -192,7 +192,7 @@ class SunkenHopeTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.awaitingPermanentChoiceValidIds).contains(creature1.getId(), creature2.getId());
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds).contains(creature1.getId(), creature2.getId());
     }
 
     @Test
@@ -230,8 +230,9 @@ class SunkenHopeTest {
         harness.passBothPriorities(); // resolve trigger
 
         // Should prompt player1, not player2
-        assertThat(gd.awaitingPermanentChoicePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingPermanentChoicePlayerId).isEqualTo(player1.getId());
         // Opponent's creature should not be in valid choices
-        assertThat(gd.awaitingPermanentChoiceValidIds).doesNotContain(theirCreature.getId());
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds).doesNotContain(theirCreature.getId());
     }
 }
+

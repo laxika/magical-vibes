@@ -60,7 +60,7 @@ public class TargetRedirectionResolutionService implements EffectHandlerProvider
             return;
         }
 
-        gameData.permanentChoiceContext = new PermanentChoiceContext.SpellRetarget(targetSpell.getCard().getId());
+        gameData.interaction.permanentChoiceContext = new PermanentChoiceContext.SpellRetarget(targetSpell.getCard().getId());
         playerInputService.beginPermanentChoice(
                 gameData,
                 entry.getControllerId(),
@@ -193,3 +193,4 @@ public class TargetRedirectionResolutionService implements EffectHandlerProvider
                 && stackEntry.getTargetCardIds().isEmpty();
     }
 }
+

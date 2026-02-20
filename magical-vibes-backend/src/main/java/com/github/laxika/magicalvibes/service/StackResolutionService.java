@@ -52,7 +52,7 @@ public class StackResolutionService {
 
         // If the ETB handler already set up a user interaction (e.g. Clone copy choice),
         // skip post-resolution SBA — the creature must remain alive until the choice resolves.
-        if (gameData.awaitingInput != null) {
+        if (gameData.interaction.awaitingInput != null) {
             return;
         }
 
@@ -61,14 +61,14 @@ public class StackResolutionService {
 
         if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
             gameHelper.processNextDiscardSelfTrigger(gameData);
-            if (gameData.awaitingInput != null) {
+            if (gameData.interaction.awaitingInput != null) {
                 return;
             }
         }
 
         if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
             gameHelper.processNextDeathTriggerTarget(gameData);
-            if (gameData.awaitingInput != null) {
+            if (gameData.interaction.awaitingInput != null) {
                 return;
             }
         }
@@ -98,7 +98,7 @@ public class StackResolutionService {
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
 
         gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId());
-        if (gameData.awaitingInput == null) {
+        if (gameData.interaction.awaitingInput == null) {
             gameHelper.checkLegendRule(gameData, controllerId);
         }
     }
@@ -149,7 +149,7 @@ public class StackResolutionService {
                 Permanent justEntered = bf.get(bf.size() - 1);
                 playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), null);
             }
-            if (gameData.awaitingInput == null) {
+            if (gameData.interaction.awaitingInput == null) {
                 gameHelper.checkLegendRule(gameData, controllerId);
             }
         }
@@ -166,7 +166,7 @@ public class StackResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
-        if (gameData.awaitingInput == null) {
+        if (gameData.interaction.awaitingInput == null) {
             gameHelper.checkLegendRule(gameData, controllerId);
         }
     }
@@ -185,7 +185,7 @@ public class StackResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
-        if (gameData.awaitingInput == null) {
+        if (gameData.interaction.awaitingInput == null) {
             gameHelper.checkLegendRule(gameData, controllerId);
         }
     }
@@ -311,3 +311,4 @@ public class StackResolutionService {
         return targetFizzled;
     }
 }
+

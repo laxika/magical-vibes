@@ -124,8 +124,8 @@ public class CardSpecificResolutionService implements EffectHandlerProvider {
         List<UUID> choiceOrder = getApnapOrder(gameData);
 
         // Then, put enchantment cards onto the battlefield.
-        gameData.pendingWarpWorldAuraChoices.clear();
-        gameData.pendingWarpWorldEnchantmentPlacements.clear();
+        gameData.warpWorldOperation.pendingAuraChoices.clear();
+        gameData.warpWorldOperation.pendingEnchantmentPlacements.clear();
         for (UUID playerId : choiceOrder) {
             List<Card> revealed = revealedByPlayer.getOrDefault(playerId, List.of());
 
@@ -135,19 +135,19 @@ public class CardSpecificResolutionService implements EffectHandlerProvider {
                         List<UUID> validTargets = findLegalAuraAttachments(gameData, card, auraLegalBaseTargetIds);
                         if (validTargets.size() == 1) {
                             UUID attachmentTargetId = validTargets.getFirst();
-                            gameData.pendingWarpWorldEnchantmentPlacements.add(
+                            gameData.warpWorldOperation.pendingEnchantmentPlacements.add(
                                     new WarpWorldEnchantmentPlacement(playerId, card, attachmentTargetId)
                             );
                             putOntoBattlefieldByPlayer.get(playerId).add(card);
                         } else if (!validTargets.isEmpty()) {
-                            gameData.pendingWarpWorldAuraChoices.addLast(
+                            gameData.warpWorldOperation.pendingAuraChoices.addLast(
                                     new WarpWorldAuraChoiceRequest(playerId, card, validTargets)
                             );
                             // Will be put onto battlefield after choosing what it enchants.
                             putOntoBattlefieldByPlayer.get(playerId).add(card);
                         }
                     } else {
-                        gameData.pendingWarpWorldEnchantmentPlacements.add(
+                        gameData.warpWorldOperation.pendingEnchantmentPlacements.add(
                                 new WarpWorldEnchantmentPlacement(playerId, card, null)
                         );
                         putOntoBattlefieldByPlayer.get(playerId).add(card);
@@ -178,17 +178,17 @@ public class CardSpecificResolutionService implements EffectHandlerProvider {
         }
 
         // Save post-resolution work until bottom-order choices are complete.
-        gameData.pendingWarpWorldCreaturesByPlayer.clear();
+        gameData.warpWorldOperation.pendingCreaturesByPlayer.clear();
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> creatures = putOntoBattlefieldByPlayer.get(playerId).stream()
                     .filter(card -> card.getType() == CardType.CREATURE)
                     .toList();
-            gameData.pendingWarpWorldCreaturesByPlayer.put(playerId, new ArrayList<>(creatures));
+            gameData.warpWorldOperation.pendingCreaturesByPlayer.put(playerId, new ArrayList<>(creatures));
         }
-        gameData.pendingWarpWorldNeedsLegendChecks = true;
-        gameData.pendingWarpWorldSourceName = entry.getCard().getName();
+        gameData.warpWorldOperation.needsLegendChecks = true;
+        gameData.warpWorldOperation.sourceName = entry.getCard().getName();
 
-        if (!gameData.pendingWarpWorldAuraChoices.isEmpty()) {
+        if (!gameData.warpWorldOperation.pendingAuraChoices.isEmpty()) {
             gameHelper.beginNextPendingWarpWorldAuraChoice(gameData);
             return;
         }

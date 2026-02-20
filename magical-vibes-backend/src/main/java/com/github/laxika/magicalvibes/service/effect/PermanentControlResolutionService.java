@@ -91,7 +91,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
             gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
-            if (gameData.awaitingInput == null) {
+            if (gameData.interaction.awaitingInput == null) {
                 gameHelper.checkLegendRule(gameData, controllerId);
             }
         }
@@ -120,7 +120,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
-        if (gameData.awaitingInput == null) {
+        if (gameData.interaction.awaitingInput == null) {
             gameHelper.checkLegendRule(gameData, controllerId);
         }
 
@@ -279,7 +279,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         }
 
         if (!validCreatureIds.isEmpty()) {
-            gameData.permanentChoiceContext = new PermanentChoiceContext.AuraGraft(aura.getId());
+            gameData.interaction.permanentChoiceContext = new PermanentChoiceContext.AuraGraft(aura.getId());
             playerInputService.beginPermanentChoice(gameData, casterId, validCreatureIds,
                     "Attach " + aura.getCard().getName() + " to another permanent it can enchant.");
         } else {
@@ -326,3 +326,4 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
     }
 
 }
+

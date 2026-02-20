@@ -309,7 +309,7 @@ public class DestructionResolutionService implements EffectHandlerProvider {
         }
 
         // Multiple creatures — prompt player to choose
-        gameData.permanentChoiceContext = new PermanentChoiceContext.SacrificeCreature(targetPlayerId);
+        gameData.interaction.permanentChoiceContext = new PermanentChoiceContext.SacrificeCreature(targetPlayerId);
         playerInputService.beginPermanentChoice(gameData, targetPlayerId, creatureIds,
                 "Choose a creature to sacrifice.");
     }
@@ -367,7 +367,7 @@ public class DestructionResolutionService implements EffectHandlerProvider {
         }
 
         // Multiple other creatures — prompt player to choose
-        gameData.permanentChoiceContext = new PermanentChoiceContext.SacrificeCreature(controllerId);
+        gameData.interaction.permanentChoiceContext = new PermanentChoiceContext.SacrificeCreature(controllerId);
         playerInputService.beginPermanentChoice(gameData, controllerId, otherCreatureIds,
                 "Choose a creature other than " + cardName + " to sacrifice.");
     }
@@ -432,3 +432,4 @@ public class DestructionResolutionService implements EffectHandlerProvider {
         }
     }
 }
+

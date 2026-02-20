@@ -95,7 +95,7 @@ class SiegeGangCommanderTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.activateAbility(player1, 0, null, targetPlayerId);
 
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -197,3 +197,4 @@ class SiegeGangCommanderTest {
                 .getId();
     }
 }
+

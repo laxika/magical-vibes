@@ -125,7 +125,7 @@ class AvenFisherTest {
                 .anyMatch(c -> c.getName().equals("Aven Fisher"));
 
         // Player1 should be prompted for the may ability
-        assertThat(gd.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -220,7 +220,7 @@ class AvenFisherTest {
                 .anyMatch(c -> c.getName().equals("Aven Fisher"));
 
         // Accept the may ability
-        assertThat(gd.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
 
         // Resolve the triggered ability
@@ -258,7 +258,7 @@ class AvenFisherTest {
                 .anyMatch(c -> c.getName().equals("Aven Fisher"));
 
         // Player1 should be prompted for Aven Fisher's death trigger
-        assertThat(gd.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -326,6 +326,7 @@ class AvenFisherTest {
                 .anyMatch(p -> p.getCard().getName().equals("Aven Fisher"));
 
         // No may ability prompt
-        assertThat(gd.awaitingMayAbilityPlayerId).isNull();
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId).isNull();
     }
 }
+

@@ -92,7 +92,7 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
         }
 
         gameHelper.removeCardFromGraveyardById(gameData, auraCard.getId());
-        gameData.pendingAuraCard = auraCard;
+        gameData.interaction.pendingAuraCard = auraCard;
 
         playerInputService.beginPermanentChoice(gameData, controllerId, creatureIds, "Choose a creature you control to attach " + auraCard.getName() + " to.");
     }
@@ -122,7 +122,7 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
             return;
         }
 
-        gameData.graveyardChoiceDestination = destination;
+        gameData.interaction.graveyardChoiceDestination = destination;
         playerInputService.beginGraveyardChoice(gameData, controllerId, matchingIndices, prompt);
     }
 
@@ -151,7 +151,7 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
             return;
         }
 
-        gameData.graveyardChoiceDestination = GraveyardChoiceDestination.HAND;
+        gameData.interaction.graveyardChoiceDestination = GraveyardChoiceDestination.HAND;
         playerInputService.beginGraveyardChoice(gameData, controllerId, matchingIndices,
                 "Return a " + subtypeName + " card from your graveyard to your hand.");
     }
@@ -204,8 +204,8 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
             indices.add(i);
         }
 
-        gameData.graveyardChoiceCardPool = cardPool;
-        gameData.graveyardChoiceDestination = GraveyardChoiceDestination.BATTLEFIELD;
+        gameData.interaction.graveyardChoiceCardPool = cardPool;
+        gameData.interaction.graveyardChoiceDestination = GraveyardChoiceDestination.BATTLEFIELD;
         playerInputService.beginGraveyardChoice(gameData, controllerId, indices,
                 "Choose an artifact or creature card from a graveyard to put onto the battlefield under your control.");
     }
@@ -289,7 +289,7 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
             gameBroadcastService.logAndBroadcast(gameData, tokenLog);
 
             gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
-            if (gameData.awaitingInput == null) {
+            if (gameData.interaction.awaitingInput == null) {
                 gameHelper.checkLegendRule(gameData, controllerId);
             }
 
@@ -297,3 +297,4 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
         }
     }
 }
+

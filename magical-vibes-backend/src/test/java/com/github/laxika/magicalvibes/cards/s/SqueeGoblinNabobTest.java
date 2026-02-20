@@ -68,8 +68,8 @@ class SqueeGoblinNabobTest {
 
         advanceToUpkeep(player1);
 
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
         assertThat(gd.pendingMayAbilities).hasSize(1);
         assertThat(gd.pendingMayAbilities.getFirst().sourceCard().getName()).isEqualTo("Squee, Goblin Nabob");
     }
@@ -82,7 +82,7 @@ class SqueeGoblinNabobTest {
         advanceToUpkeep(player2);
 
         assertThat(gd.pendingMayAbilities).isEmpty();
-        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
     }
 
     @Test
@@ -115,3 +115,4 @@ class SqueeGoblinNabobTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getId().equals(squee.getId()));
     }
 }
+

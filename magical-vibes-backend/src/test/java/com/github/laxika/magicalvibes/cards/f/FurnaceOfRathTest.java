@@ -182,7 +182,7 @@ class FurnaceOfRathTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         gs.declareAttackers(gd, player1, List.of(1)); // bear is at index 1 (Furnace at 0)
 
@@ -209,7 +209,7 @@ class FurnaceOfRathTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.passBothPriorities();
@@ -260,7 +260,7 @@ class FurnaceOfRathTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.passBothPriorities();
@@ -295,7 +295,7 @@ class FurnaceOfRathTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.passBothPriorities();
@@ -347,7 +347,7 @@ class FurnaceOfRathTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.passBothPriorities();
@@ -380,7 +380,7 @@ class FurnaceOfRathTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.passBothPriorities();
@@ -458,7 +458,7 @@ class FurnaceOfRathTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
 
         gs.declareAttackers(gd, player1, List.of(1)); // bear is at index 1 (Furnace at 0; other Furnace is on player2's side)
 
@@ -534,7 +534,8 @@ class FurnaceOfRathTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
         gs.declareAttackers(gd, player, attackerIndices);
     }
 }
+

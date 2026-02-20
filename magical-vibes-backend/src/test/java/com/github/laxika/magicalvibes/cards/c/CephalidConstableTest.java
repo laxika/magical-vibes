@@ -82,9 +82,9 @@ class CephalidConstableTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
-        assertThat(gd.awaitingMultiPermanentChoicePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.awaitingMultiPermanentChoiceMaxCount).isEqualTo(1);
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingMultiPermanentChoicePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingMultiPermanentChoiceMaxCount).isEqualTo(1);
     }
 
     @Test
@@ -136,7 +136,7 @@ class CephalidConstableTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInput).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("has no permanents"));
     }
 
@@ -152,7 +152,7 @@ class CephalidConstableTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
     }
 
     @Test
@@ -166,7 +166,7 @@ class CephalidConstableTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingMultiPermanentChoiceMaxCount).isEqualTo(1);
+        assertThat(gd.interaction.awaitingMultiPermanentChoiceMaxCount).isEqualTo(1);
 
         List<UUID> allIds = List.of(bears1.getId(), bears2.getId());
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, allIds))
@@ -184,12 +184,12 @@ class CephalidConstableTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
 
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
         // Game should have advanced past combat damage (auto-passes through END_OF_COMBAT)
-        assertThat(gd.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInput).isNull();
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
     }
 
@@ -209,3 +209,4 @@ class CephalidConstableTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 }
+

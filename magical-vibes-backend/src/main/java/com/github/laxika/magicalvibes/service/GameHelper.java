@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -225,7 +226,7 @@ public class GameHelper {
 
             // Remove from queue and begin permanent choice
             gameData.pendingDeathTriggerTargets.removeFirst();
-            gameData.permanentChoiceContext = pending;
+            gameData.interaction.permanentChoiceContext = pending;
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
                     pending.dyingCard().getName() + "'s ability — Choose target creature.");
 
@@ -252,10 +253,11 @@ public class GameHelper {
             return;
         }
 
-        gameData.awaitingInput = AwaitingInput.LIBRARY_REORDER;
-        gameData.awaitingLibraryReorderPlayerId = playerId;
-        gameData.awaitingLibraryReorderCards = cards;
-        gameData.awaitingLibraryReorderToBottom = true;
+        gameData.interaction.awaitingInput = AwaitingInput.LIBRARY_REORDER;
+        gameData.interaction.awaitingLibraryReorderPlayerId = playerId;
+        gameData.interaction.awaitingLibraryReorderCards = cards;
+        gameData.interaction.awaitingLibraryReorderToBottom = true;
+        gameData.interaction.context = new InteractionContext.LibraryReorder(playerId, cards, true);
 
         List<CardView> cardViews = cards.stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(playerId, new ReorderLibraryCardsMessage(
@@ -268,12 +270,12 @@ public class GameHelper {
     }
 
     public void beginNextPendingWarpWorldAuraChoice(GameData gameData) {
-        WarpWorldAuraChoiceRequest request = gameData.pendingWarpWorldAuraChoices.pollFirst();
+        WarpWorldAuraChoiceRequest request = gameData.warpWorldOperation.pendingAuraChoices.pollFirst();
         if (request == null) {
             return;
         }
 
-        gameData.pendingAuraCard = request.auraCard();
+        gameData.interaction.pendingAuraCard = request.auraCard();
         playerInputService.beginPermanentChoice(
                 gameData,
                 request.controllerId(),
@@ -283,7 +285,7 @@ public class GameHelper {
     }
 
     public void placePendingWarpWorldEnchantments(GameData gameData) {
-        for (WarpWorldEnchantmentPlacement placement : gameData.pendingWarpWorldEnchantmentPlacements) {
+        for (WarpWorldEnchantmentPlacement placement : gameData.warpWorldOperation.pendingEnchantmentPlacements) {
             UUID controllerId = placement.controllerId();
             Card card = placement.card();
             Permanent permanent = new Permanent(card);
@@ -303,35 +305,35 @@ public class GameHelper {
                 }
             }
         }
-        gameData.pendingWarpWorldEnchantmentPlacements.clear();
+        gameData.warpWorldOperation.pendingEnchantmentPlacements.clear();
     }
 
     public void finalizePendingWarpWorld(GameData gameData) {
-        if (gameData.pendingWarpWorldSourceName == null) {
+        if (gameData.warpWorldOperation.sourceName == null) {
             return;
         }
 
         for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> creatures = gameData.pendingWarpWorldCreaturesByPlayer.getOrDefault(playerId, List.of());
+            List<Card> creatures = gameData.warpWorldOperation.pendingCreaturesByPlayer.getOrDefault(playerId, List.of());
             for (Card card : creatures) {
                 processCreatureETBEffects(gameData, playerId, card, null);
             }
         }
 
-        if (gameData.awaitingInput == null && gameData.pendingWarpWorldNeedsLegendChecks) {
+        if (gameData.interaction.awaitingInput == null && gameData.warpWorldOperation.needsLegendChecks) {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 checkLegendRule(gameData, playerId);
             }
         }
 
         gameBroadcastService.logAndBroadcast(gameData,
-                gameData.pendingWarpWorldSourceName + " shuffles all permanents into libraries and warps the world.");
+                gameData.warpWorldOperation.sourceName + " shuffles all permanents into libraries and warps the world.");
 
-        gameData.pendingWarpWorldCreaturesByPlayer.clear();
-        gameData.pendingWarpWorldAuraChoices.clear();
-        gameData.pendingWarpWorldEnchantmentPlacements.clear();
-        gameData.pendingWarpWorldNeedsLegendChecks = false;
-        gameData.pendingWarpWorldSourceName = null;
+        gameData.warpWorldOperation.pendingCreaturesByPlayer.clear();
+        gameData.warpWorldOperation.pendingAuraChoices.clear();
+        gameData.warpWorldOperation.pendingEnchantmentPlacements.clear();
+        gameData.warpWorldOperation.needsLegendChecks = false;
+        gameData.warpWorldOperation.sourceName = null;
     }
 
     boolean checkWinCondition(GameData gameData) {
@@ -565,7 +567,7 @@ public class GameHelper {
 
         for (Map.Entry<String, List<UUID>> entry : legendaryByName.entrySet()) {
             if (entry.getValue().size() >= 2) {
-                gameData.permanentChoiceContext = new PermanentChoiceContext.LegendRule(entry.getKey());
+                gameData.interaction.permanentChoiceContext = new PermanentChoiceContext.LegendRule(entry.getKey());
                 playerInputService.beginPermanentChoice(gameData, controllerId, entry.getValue(),
                         "You control multiple legendary permanents named " + entry.getKey() + ". Choose one to keep.");
                 return true;
@@ -594,10 +596,10 @@ public class GameHelper {
 
         if (creatureIds.isEmpty()) return false;
 
-        gameData.pendingCloneCard = card;
-        gameData.pendingCloneControllerId = controllerId;
-        gameData.pendingCloneETBTargetId = targetPermanentId;
-        gameData.permanentChoiceContext = new PermanentChoiceContext.CloneCopy();
+        gameData.cloneOperation.card = card;
+        gameData.cloneOperation.controllerId = controllerId;
+        gameData.cloneOperation.etbTargetId = targetPermanentId;
+        gameData.interaction.permanentChoiceContext = new PermanentChoiceContext.CloneCopy();
 
         gameData.pendingMayAbilities.add(new PendingMayAbility(
                 card,
@@ -610,13 +612,13 @@ public class GameHelper {
     }
 
     public void completeCloneEntry(GameData gameData, UUID targetPermanentId) {
-        Card card = gameData.pendingCloneCard;
-        UUID controllerId = gameData.pendingCloneControllerId;
-        UUID etbTargetId = gameData.pendingCloneETBTargetId;
+        Card card = gameData.cloneOperation.card;
+        UUID controllerId = gameData.cloneOperation.controllerId;
+        UUID etbTargetId = gameData.cloneOperation.etbTargetId;
 
-        gameData.pendingCloneCard = null;
-        gameData.pendingCloneControllerId = null;
-        gameData.pendingCloneETBTargetId = null;
+        gameData.cloneOperation.card = null;
+        gameData.cloneOperation.controllerId = null;
+        gameData.cloneOperation.etbTargetId = null;
 
         Permanent perm = new Permanent(card);
 
@@ -644,7 +646,7 @@ public class GameHelper {
 
         handleCreatureEnteredBattlefield(gameData, controllerId, perm.getCard(), etbTargetId);
 
-        if (gameData.awaitingInput == null) {
+        if (gameData.interaction.awaitingInput == null) {
             checkLegendRule(gameData, controllerId);
         }
     }
@@ -751,9 +753,9 @@ public class GameHelper {
         } else {
             // Prompt player to choose targets before putting ability on the stack
             int maxTargets = Math.min(exile.maxTargets(), allCardIds.size());
-            gameData.pendingGraveyardTargetCard = card;
-            gameData.pendingGraveyardTargetControllerId = controllerId;
-            gameData.pendingGraveyardTargetEffects = new ArrayList<>(allEffects);
+            gameData.graveyardTargetOperation.card = card;
+            gameData.graveyardTargetOperation.controllerId = controllerId;
+            gameData.graveyardTargetOperation.effects = new ArrayList<>(allEffects);
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, allCardIds, allCardViews, maxTargets,
                     "Choose up to " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "") + " from graveyards to exile.");
         }
@@ -774,11 +776,11 @@ public class GameHelper {
             }
         }
 
-        gameData.pendingGraveyardTargetCard = card;
-        gameData.pendingGraveyardTargetControllerId = controllerId;
-        gameData.pendingGraveyardTargetEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
-        gameData.pendingGraveyardTargetEntryType = entryType;
-        gameData.pendingGraveyardTargetXValue = xValue;
+        gameData.graveyardTargetOperation.card = card;
+        gameData.graveyardTargetOperation.controllerId = controllerId;
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        gameData.graveyardTargetOperation.entryType = entryType;
+        gameData.graveyardTargetOperation.xValue = xValue;
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, creatureCardIds, cardViews, xValue,
                 "Choose " + xValue + " target creature card" + (xValue != 1 ? "s" : "") + " from your graveyard to exile.");
     }
@@ -1138,7 +1140,7 @@ public class GameHelper {
 
             // There are always valid targets (at least the players)
             gameData.pendingDiscardSelfTriggers.removeFirst();
-            gameData.permanentChoiceContext = pending;
+            gameData.interaction.permanentChoiceContext = pending;
             playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
                     validPermanentTargets, validPlayerTargets,
                     pending.discardedCard().getName() + "'s ability — Choose any target.");
@@ -1262,3 +1264,4 @@ public class GameHelper {
         log.info("Game {} - {} exile trigger resolved for {}", gameData.id, creatureName, playerName);
     }
 }
+

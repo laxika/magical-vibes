@@ -128,7 +128,7 @@ class GravediggerTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve → may prompt
 
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
     }
 
     @Test
@@ -174,7 +174,7 @@ class GravediggerTest {
 
         // Resolve ETB trigger → graveyard choice prompt
         harness.passBothPriorities();
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
 
         // Choose the creature (index 0)
         harness.handleGraveyardCardChosen(player1, 0);
@@ -193,7 +193,7 @@ class GravediggerTest {
         castAndAcceptMay();
 
         harness.passBothPriorities();
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
 
         // Decline with -1
         harness.handleGraveyardCardChosen(player1, -1);
@@ -236,7 +236,7 @@ class GravediggerTest {
         // Resolve ETB trigger — should resolve without graveyard choice
         harness.passBothPriorities();
 
-        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature cards in graveyard"));
     }
 
@@ -248,7 +248,7 @@ class GravediggerTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature cards in graveyard"));
         // Holy Day stays in graveyard untouched
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -311,3 +311,4 @@ class GravediggerTest {
                 .anyMatch(p -> p.getCard().getName().equals("Gravedigger"));
     }
 }
+

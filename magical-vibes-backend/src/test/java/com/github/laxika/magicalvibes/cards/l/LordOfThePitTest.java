@@ -161,10 +161,10 @@ class LordOfThePitTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.awaitingPermanentChoicePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.permanentChoiceContext).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
-        assertThat(gd.awaitingPermanentChoiceValidIds).contains(bears.getId(), spider.getId());
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingPermanentChoicePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.permanentChoiceContext).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds).contains(bears.getId(), spider.getId());
     }
 
     @Test
@@ -181,7 +181,7 @@ class LordOfThePitTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.awaitingPermanentChoiceValidIds).doesNotContain(lordPerm.getId());
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds).doesNotContain(lordPerm.getId());
     }
 
     @Test
@@ -222,7 +222,7 @@ class LordOfThePitTest {
 
         // No trigger — no damage, no sacrifice prompt
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
-        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
     }
 
     // ===== Edge cases =====
@@ -304,3 +304,4 @@ class LordOfThePitTest {
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 }
+

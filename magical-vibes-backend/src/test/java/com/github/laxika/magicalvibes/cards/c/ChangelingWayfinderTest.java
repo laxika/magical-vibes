@@ -101,8 +101,8 @@ class ChangelingWayfinderTest {
                 .anyMatch(p -> p.getCard().getName().equals("Changeling Wayfinder"));
 
         // May ability prompt is pending
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
     }
 
     // ===== ETB: Accept and search =====
@@ -132,10 +132,10 @@ class ChangelingWayfinderTest {
         harness.passBothPriorities(); // resolve ETB → library search prompt
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.awaitingLibrarySearchPlayerId).isEqualTo(player1.getId());
-        assertThat(gd.awaitingLibrarySearchCards).hasSize(3);
-        assertThat(gd.awaitingLibrarySearchCards.stream().map(Card::getName))
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.awaitingLibrarySearchPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingLibrarySearchCards).hasSize(3);
+        assertThat(gd.interaction.awaitingLibrarySearchCards.stream().map(Card::getName))
                 .containsExactlyInAnyOrder("Plains", "Forest", "Island");
     }
 
@@ -163,9 +163,9 @@ class ChangelingWayfinderTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
 
         // Awaiting state is cleared
-        assertThat(gd.awaitingInput).isNull();
-        assertThat(gd.awaitingLibrarySearchPlayerId).isNull();
-        assertThat(gd.awaitingLibrarySearchCards).isNull();
+        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingLibrarySearchPlayerId).isNull();
+        assertThat(gd.interaction.awaitingLibrarySearchCards).isNull();
 
         // Log mentions the reveal
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("reveals") && entry.contains("puts it into their hand"));
@@ -182,7 +182,7 @@ class ChangelingWayfinderTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        List<Card> searchCards = gd.awaitingLibrarySearchCards;
+        List<Card> searchCards = gd.interaction.awaitingLibrarySearchCards;
         String chosenName = searchCards.get(2).getName(); // pick the third card
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 2);
@@ -215,7 +215,7 @@ class ChangelingWayfinderTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
 
         // Awaiting state is cleared
-        assertThat(gd.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInput).isNull();
 
         // Log mentions declining
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("chooses not to take a card"));
@@ -233,7 +233,7 @@ class ChangelingWayfinderTest {
         harness.handleMayAbilityChosen(player1, false); // decline
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.gameLog).noneMatch(entry -> entry.contains("searches their library"));
     }
 
@@ -254,7 +254,7 @@ class ChangelingWayfinderTest {
         harness.passBothPriorities(); // resolve ETB → no basic lands
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no basic land cards"));
     }
 
@@ -271,7 +271,7 @@ class ChangelingWayfinderTest {
         harness.passBothPriorities(); // resolve ETB → empty library
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("it is empty"));
     }
 
@@ -291,9 +291,9 @@ class ChangelingWayfinderTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.awaitingLibrarySearchCards).hasSize(2);
-        assertThat(gd.awaitingLibrarySearchCards).allMatch(c -> c.getType() == CardType.LAND && c.getSupertypes().contains(CardSupertype.BASIC));
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.awaitingLibrarySearchCards).hasSize(2);
+        assertThat(gd.interaction.awaitingLibrarySearchCards).allMatch(c -> c.getType() == CardType.LAND && c.getSupertypes().contains(CardSupertype.BASIC));
     }
 
     // ===== Changeling keyword: counts as every creature type =====
@@ -345,3 +345,4 @@ class ChangelingWayfinderTest {
         deck.addAll(List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears(), new GrizzlyBears()));
     }
 }
+

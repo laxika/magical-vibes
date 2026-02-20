@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
@@ -39,26 +40,28 @@ public class PermanentChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
-        if (gameData.awaitingInput != AwaitingInput.PERMANENT_CHOICE) {
+        if (gameData.interaction.awaitingInput != AwaitingInput.PERMANENT_CHOICE) {
             throw new IllegalStateException("Not awaiting permanent choice");
         }
-        if (!player.getId().equals(gameData.awaitingPermanentChoicePlayerId)) {
+        InteractionContext.PermanentChoice permanentChoice = gameData.interaction.permanentChoiceContextView();
+        if (permanentChoice == null || !player.getId().equals(permanentChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
         UUID playerId = player.getId();
-        Set<UUID> validIds = gameData.awaitingPermanentChoiceValidIds;
+        Set<UUID> validIds = permanentChoice.validIds();
 
-        gameData.awaitingInput = null;
-        gameData.awaitingPermanentChoicePlayerId = null;
-        gameData.awaitingPermanentChoiceValidIds = null;
+        gameData.interaction.awaitingInput = null;
+        gameData.interaction.awaitingPermanentChoicePlayerId = null;
+        gameData.interaction.awaitingPermanentChoiceValidIds = null;
+        gameData.interaction.clearContext();
 
         if (!validIds.contains(permanentId)) {
             throw new IllegalStateException("Invalid permanent: " + permanentId);
         }
 
-        PermanentChoiceContext context = gameData.permanentChoiceContext;
-        gameData.permanentChoiceContext = null;
+        PermanentChoiceContext context = permanentChoice.context();
+        gameData.interaction.permanentChoiceContext = null;
 
         if (context instanceof PermanentChoiceContext.CloneCopy) {
             Permanent targetPerm = gameQueryService.findPermanentById(gameData, permanentId);
@@ -69,12 +72,12 @@ public class PermanentChoiceHandlerService {
             gameHelper.completeCloneEntry(gameData, permanentId);
 
             // If no legend rule or other awaiting input pending, do SBA + auto-pass
-            if (gameData.awaitingInput == null) {
+            if (gameData.interaction.awaitingInput == null) {
                 gameHelper.performStateBasedActions(gameData);
 
                 if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
                     gameHelper.processNextDeathTriggerTarget(gameData);
-                    if (gameData.awaitingInput != null) {
+                    if (gameData.interaction.awaitingInput != null) {
                         return;
                     }
                 }
@@ -266,21 +269,21 @@ public class PermanentChoiceHandlerService {
 
             gameData.priorityPassedBy.clear();
             turnProgressionService.resolveAutoPass(gameData);
-        } else if (gameData.pendingAuraCard != null) {
-            Card auraCard = gameData.pendingAuraCard;
-            gameData.pendingAuraCard = null;
+        } else if (gameData.interaction.pendingAuraCard != null) {
+            Card auraCard = gameData.interaction.pendingAuraCard;
+            gameData.interaction.pendingAuraCard = null;
 
             Permanent enchantTarget = gameQueryService.findPermanentById(gameData, permanentId);
             if (enchantTarget == null) {
                 throw new IllegalStateException("Target permanent no longer exists");
             }
 
-            if (gameData.pendingWarpWorldSourceName != null) {
-                gameData.pendingWarpWorldEnchantmentPlacements.add(
+            if (gameData.warpWorldOperation.sourceName != null) {
+                gameData.warpWorldOperation.pendingEnchantmentPlacements.add(
                         new com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement(playerId, auraCard, enchantTarget.getId())
                 );
 
-                if (!gameData.pendingWarpWorldAuraChoices.isEmpty()) {
+                if (!gameData.warpWorldOperation.pendingAuraChoices.isEmpty()) {
                     gameHelper.beginNextPendingWarpWorldAuraChoice(gameData);
                     return;
                 }
@@ -290,7 +293,7 @@ public class PermanentChoiceHandlerService {
                     return;
                 }
                 gameHelper.finalizePendingWarpWorld(gameData);
-                if (gameData.awaitingInput != null) {
+                if (gameData.interaction.awaitingInput != null) {
                     return;
                 }
             } else {
@@ -319,21 +322,23 @@ public class PermanentChoiceHandlerService {
     }
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
-        if (gameData.awaitingInput != AwaitingInput.MULTI_PERMANENT_CHOICE) {
+        if (gameData.interaction.awaitingInput != AwaitingInput.MULTI_PERMANENT_CHOICE) {
             throw new IllegalStateException("Not awaiting multi-permanent choice");
         }
-        if (!player.getId().equals(gameData.awaitingMultiPermanentChoicePlayerId)) {
+        InteractionContext.MultiPermanentChoice multiPermanentChoice = gameData.interaction.multiPermanentChoiceContext();
+        if (multiPermanentChoice == null || !player.getId().equals(multiPermanentChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
         UUID playerId = player.getId();
-        Set<UUID> validIds = gameData.awaitingMultiPermanentChoiceValidIds;
-        int maxCount = gameData.awaitingMultiPermanentChoiceMaxCount;
+        Set<UUID> validIds = multiPermanentChoice.validIds();
+        int maxCount = multiPermanentChoice.maxCount();
 
-        gameData.awaitingInput = null;
-        gameData.awaitingMultiPermanentChoicePlayerId = null;
-        gameData.awaitingMultiPermanentChoiceValidIds = null;
-        gameData.awaitingMultiPermanentChoiceMaxCount = 0;
+        gameData.interaction.awaitingInput = null;
+        gameData.interaction.awaitingMultiPermanentChoicePlayerId = null;
+        gameData.interaction.awaitingMultiPermanentChoiceValidIds = null;
+        gameData.interaction.awaitingMultiPermanentChoiceMaxCount = 0;
+        gameData.interaction.clearContext();
 
         if (permanentIds == null) {
             permanentIds = List.of();
@@ -428,3 +433,4 @@ public class PermanentChoiceHandlerService {
         return targetId.toString();
     }
 }
+

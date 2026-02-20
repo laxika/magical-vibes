@@ -104,8 +104,8 @@ class StoryCircleTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Story Circle"));
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.awaitingColorChoicePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.COLOR_CHOICE);
+        assertThat(gd.interaction.awaitingColorChoicePlayerId).isEqualTo(player1.getId());
     }
 
     @Test
@@ -134,9 +134,9 @@ class StoryCircleTest {
         harness.passBothPriorities();
         harness.handleColorChosen(player1, "BLUE");
 
-        assertThat(gd.awaitingInput).isNull();
-        assertThat(gd.awaitingColorChoicePlayerId).isNull();
-        assertThat(gd.awaitingColorChoicePermanentId).isNull();
+        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingColorChoicePlayerId).isNull();
+        assertThat(gd.interaction.awaitingColorChoicePermanentId).isNull();
     }
 
     @Test
@@ -333,3 +333,4 @@ class StoryCircleTest {
         return perm;
     }
 }
+

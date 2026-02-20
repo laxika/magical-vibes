@@ -149,7 +149,7 @@ class FistsOfTheAnvilTest {
         // Move to declare attackers
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        harness.getGameData().awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
+        harness.getGameData().interaction.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
         harness.getGameService().declareAttackers(harness.getGameData(), player1, List.of(0));
 
         // Opponent life should be reduced by 6 (2 base + 4 boost)
@@ -219,3 +219,4 @@ class FistsOfTheAnvilTest {
                 .hasMessageContaining("Invalid target");
     }
 }
+

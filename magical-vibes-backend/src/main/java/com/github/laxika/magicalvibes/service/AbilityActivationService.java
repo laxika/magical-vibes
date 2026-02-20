@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -176,13 +177,14 @@ public class AbilityActivationService {
     }
 
     public void handleActivatedAbilityDiscardCostChosen(GameData gameData, Player player, int cardIndex) {
-        if (!player.getId().equals(gameData.awaitingCardChoicePlayerId)) {
+        InteractionContext.CardChoice cardChoice = gameData.interaction.cardChoiceContext();
+        if (cardChoice == null || !player.getId().equals(cardChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
         if (gameData.pendingAbilityActivation == null) {
             throw new IllegalStateException("No pending ability activation");
         }
-        if (gameData.awaitingCardChoiceValidIndices == null || !gameData.awaitingCardChoiceValidIndices.contains(cardIndex)) {
+        if (cardChoice.validIndices() == null || !cardChoice.validIndices().contains(cardIndex)) {
             throw new IllegalStateException("Invalid card index: " + cardIndex);
         }
 
@@ -427,7 +429,7 @@ public class AbilityActivationService {
             return false;
         }
 
-        gameData.permanentChoiceContext = new PermanentChoiceContext.ActivatedAbilitySacrificeSubtype(
+        gameData.interaction.permanentChoiceContext = new PermanentChoiceContext.ActivatedAbilitySacrificeSubtype(
                 playerId,
                 sourcePermanent.getId(),
                 abilityIndex,
@@ -685,9 +687,15 @@ public class AbilityActivationService {
                 targetZone,
                 requiredType
         );
-        gameData.awaitingInput = AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE;
-        gameData.awaitingCardChoicePlayerId = playerId;
-        gameData.awaitingCardChoiceValidIndices = new HashSet<>(validDiscardIndices);
+        gameData.interaction.awaitingInput = AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE;
+        gameData.interaction.awaitingCardChoicePlayerId = playerId;
+        gameData.interaction.awaitingCardChoiceValidIndices = new HashSet<>(validDiscardIndices);
+        gameData.interaction.context = new InteractionContext.CardChoice(
+                AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE,
+                playerId,
+                new HashSet<>(validDiscardIndices),
+                null
+        );
         sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(
                 validDiscardIndices,
                 "Choose a " + requiredType.name().toLowerCase() + " card to discard as an activation cost."
@@ -718,9 +726,10 @@ public class AbilityActivationService {
 
     private void clearPendingAbilityActivation(GameData gameData) {
         gameData.pendingAbilityActivation = null;
-        gameData.awaitingInput = null;
-        gameData.awaitingCardChoicePlayerId = null;
-        gameData.awaitingCardChoiceValidIndices = null;
+        gameData.interaction.awaitingInput = null;
+        gameData.interaction.awaitingCardChoicePlayerId = null;
+        gameData.interaction.awaitingCardChoiceValidIndices = null;
+        gameData.interaction.clearContext();
     }
 
     private List<CardEffect> snapshotEffects(List<CardEffect> abilityEffects, Permanent permanent) {
@@ -756,9 +765,12 @@ public class AbilityActivationService {
                     }
                 }
             } else if (effect instanceof AwardAnyColorManaEffect) {
-                gameData.colorChoiceContext = new ColorChoiceContext.ManaColorChoice(playerId);
-                gameData.awaitingInput = AwaitingInput.COLOR_CHOICE;
-                gameData.awaitingColorChoicePlayerId = playerId;
+                gameData.interaction.colorChoiceContext = new ColorChoiceContext.ManaColorChoice(playerId);
+                gameData.interaction.awaitingInput = AwaitingInput.COLOR_CHOICE;
+                gameData.interaction.awaitingColorChoicePlayerId = playerId;
+                gameData.interaction.context = new InteractionContext.ColorChoice(
+                        playerId, null, null, gameData.interaction.colorChoiceContext
+                );
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 sessionManager.sendToPlayer(playerId, new ChooseColorMessage(colors, "Choose a color of mana to add."));
                 log.info("Game {} - Awaiting {} to choose a mana color", gameData.id, player.getUsername());
@@ -766,10 +778,10 @@ public class AbilityActivationService {
         }
         gameHelper.performStateBasedActions(gameData);
         gameData.priorityPassedBy.clear();
-        if (gameData.awaitingInput == null && !gameData.pendingDeathTriggerTargets.isEmpty()) {
+        if (gameData.interaction.awaitingInput == null && !gameData.pendingDeathTriggerTargets.isEmpty()) {
             gameHelper.processNextDeathTriggerTarget(gameData);
         }
-        if (gameData.awaitingInput == null && !gameData.pendingMayAbilities.isEmpty()) {
+        if (gameData.interaction.awaitingInput == null && !gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
         }
         gameBroadcastService.broadcastGameState(gameData);
@@ -805,9 +817,10 @@ public class AbilityActivationService {
         }
         gameHelper.performStateBasedActions(gameData);
         gameData.priorityPassedBy.clear();
-        if (gameData.awaitingInput == null && !gameData.pendingDeathTriggerTargets.isEmpty()) {
+        if (gameData.interaction.awaitingInput == null && !gameData.pendingDeathTriggerTargets.isEmpty()) {
             gameHelper.processNextDeathTriggerTarget(gameData);
         }
         gameBroadcastService.broadcastGameState(gameData);
     }
 }
+

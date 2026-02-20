@@ -87,9 +87,9 @@ class TellingTimeTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
-        assertThat(gd.awaitingHandTopBottomPlayerId).isEqualTo(player1.getId());
-        assertThat(gd.awaitingHandTopBottomCards).hasSize(3);
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
+        assertThat(gd.interaction.awaitingHandTopBottomPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingHandTopBottomCards).hasSize(3);
     }
 
     @Test
@@ -176,9 +176,9 @@ class TellingTimeTest {
         GameData gd = harness.getGameData();
         harness.getGameService().handleHandTopBottomChosen(gd, player1, 0, 1);
 
-        assertThat(gd.awaitingInput).isNull();
-        assertThat(gd.awaitingHandTopBottomPlayerId).isNull();
-        assertThat(gd.awaitingHandTopBottomCards).isNull();
+        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingHandTopBottomPlayerId).isNull();
+        assertThat(gd.interaction.awaitingHandTopBottomCards).isNull();
     }
 
     // ===== Library edge cases =====
@@ -200,8 +200,8 @@ class TellingTimeTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
-        assertThat(gd.awaitingHandTopBottomCards).hasSize(2);
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
+        assertThat(gd.interaction.awaitingHandTopBottomCards).hasSize(2);
 
         // Choose cardA for hand, cardB for top
         harness.getGameService().handleHandTopBottomChosen(gd, player1, 0, 1);
@@ -226,7 +226,7 @@ class TellingTimeTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInput).isNull();
         assertThat(gd.playerHands.get(player1.getId())).contains(singleCard);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("looks at the top card"));
@@ -244,7 +244,7 @@ class TellingTimeTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInput).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("library is empty"));
     }
@@ -364,3 +364,4 @@ class TellingTimeTest {
                         && !log.contains("bottom"));
     }
 }
+

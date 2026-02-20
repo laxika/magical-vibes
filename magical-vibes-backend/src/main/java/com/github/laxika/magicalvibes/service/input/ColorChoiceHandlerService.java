@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.input;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -36,37 +37,39 @@ public class ColorChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
 
     public void handleColorChosen(GameData gameData, Player player, String colorName) {
-        if (gameData.awaitingInput != AwaitingInput.COLOR_CHOICE) {
+        if (gameData.interaction.awaitingInput != AwaitingInput.COLOR_CHOICE) {
             throw new IllegalStateException("Not awaiting color choice");
         }
-        if (!player.getId().equals(gameData.awaitingColorChoicePlayerId)) {
+        InteractionContext.ColorChoice colorChoice = gameData.interaction.colorChoiceContextView();
+        if (colorChoice == null || !player.getId().equals(colorChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
         // Mana color choice (Chromatic Star, etc.)
-        if (gameData.colorChoiceContext instanceof ColorChoiceContext.ManaColorChoice ctx) {
+        if (colorChoice.context() instanceof ColorChoiceContext.ManaColorChoice ctx) {
             handleManaColorChosen(gameData, player, colorName, ctx);
             return;
         }
 
         // Text-changing effects (Mind Bend, etc.) — two-step color/land-type choice
-        if (gameData.colorChoiceContext instanceof ColorChoiceContext.TextChangeFromWord ctx) {
+        if (colorChoice.context() instanceof ColorChoiceContext.TextChangeFromWord ctx) {
             handleTextChangeFromWordChosen(gameData, player, colorName, ctx);
             return;
         }
-        if (gameData.colorChoiceContext instanceof ColorChoiceContext.TextChangeToWord ctx) {
+        if (colorChoice.context() instanceof ColorChoiceContext.TextChangeToWord ctx) {
             handleTextChangeToWordChosen(gameData, player, colorName, ctx);
             return;
         }
 
         CardColor color = CardColor.valueOf(colorName);
-        UUID permanentId = gameData.awaitingColorChoicePermanentId;
-        UUID etbTargetId = gameData.pendingColorChoiceETBTargetId;
+        UUID permanentId = colorChoice.permanentId();
+        UUID etbTargetId = colorChoice.etbTargetPermanentId();
 
-        gameData.awaitingInput = null;
-        gameData.awaitingColorChoicePlayerId = null;
-        gameData.awaitingColorChoicePermanentId = null;
-        gameData.pendingColorChoiceETBTargetId = null;
+        gameData.interaction.awaitingInput = null;
+        gameData.interaction.awaitingColorChoicePlayerId = null;
+        gameData.interaction.awaitingColorChoicePermanentId = null;
+        gameData.interaction.pendingColorChoiceETBTargetId = null;
+        gameData.interaction.clearContext();
 
         Permanent perm = gameQueryService.findPermanentById(gameData, permanentId);
         if (perm != null) {
@@ -89,9 +92,10 @@ public class ColorChoiceHandlerService {
     private void handleManaColorChosen(GameData gameData, Player player, String colorName, ColorChoiceContext.ManaColorChoice ctx) {
         ManaColor manaColor = ManaColor.valueOf(colorName);
 
-        gameData.colorChoiceContext = null;
-        gameData.awaitingInput = null;
-        gameData.awaitingColorChoicePlayerId = null;
+        gameData.interaction.colorChoiceContext = null;
+        gameData.interaction.awaitingInput = null;
+        gameData.interaction.awaitingColorChoicePlayerId = null;
+        gameData.interaction.clearContext();
 
         ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
         manaPool.add(manaColor);
@@ -117,7 +121,10 @@ public class ColorChoiceHandlerService {
             throw new IllegalArgumentException("Invalid choice: " + chosenWord);
         }
 
-        gameData.colorChoiceContext = new ColorChoiceContext.TextChangeToWord(ctx.targetPermanentId(), chosenWord, isColor);
+        gameData.interaction.colorChoiceContext = new ColorChoiceContext.TextChangeToWord(ctx.targetPermanentId(), chosenWord, isColor);
+        gameData.interaction.context = new InteractionContext.ColorChoice(
+                player.getId(), null, null, gameData.interaction.colorChoiceContext
+        );
 
         List<String> remainingOptions;
         String promptType;
@@ -144,9 +151,10 @@ public class ColorChoiceHandlerService {
             }
         }
 
-        gameData.awaitingInput = null;
-        gameData.awaitingColorChoicePlayerId = null;
-        gameData.colorChoiceContext = null;
+        gameData.interaction.awaitingInput = null;
+        gameData.interaction.awaitingColorChoicePlayerId = null;
+        gameData.interaction.colorChoiceContext = null;
+        gameData.interaction.clearContext();
 
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
         if (target != null) {
@@ -189,3 +197,4 @@ public class ColorChoiceHandlerService {
         };
     }
 }
+

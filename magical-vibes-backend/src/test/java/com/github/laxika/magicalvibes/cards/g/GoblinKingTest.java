@@ -283,7 +283,7 @@ class GoblinKingTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(goblinAttacker);
@@ -310,7 +310,7 @@ class GoblinKingTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(goblinAttacker);
@@ -339,7 +339,7 @@ class GoblinKingTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(king);
@@ -371,3 +371,4 @@ class GoblinKingTest {
         assertThat(gqs.hasKeyword(gd, goblinAttacker, Keyword.MOUNTAINWALK)).isFalse();
     }
 }
+

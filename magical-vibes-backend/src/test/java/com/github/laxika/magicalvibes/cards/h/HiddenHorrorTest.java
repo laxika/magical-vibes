@@ -117,8 +117,8 @@ class HiddenHorrorTest {
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB → may ability prompt
 
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
     }
 
     @Test
@@ -128,8 +128,8 @@ class HiddenHorrorTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.awaitingCardChoicePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.awaitingCardChoicePlayerId).isEqualTo(player1.getId());
     }
 
     @Test
@@ -197,7 +197,7 @@ class HiddenHorrorTest {
                 .anyMatch(c -> c.getName().equals("Hidden Horror"));
 
         // No may ability prompt — it was automatic
-        assertThat(gd.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInput).isNull();
 
         // Hand is untouched
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -239,13 +239,13 @@ class HiddenHorrorTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB → may ability
 
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
 
         harness.handleMayAbilityChosen(player1, true);
 
         // Only creature indices should be valid (index 1 = GrizzlyBears, index 3 = LlanowarElves)
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.awaitingCardChoiceValidIndices).containsExactlyInAnyOrder(1, 3);
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.awaitingCardChoiceValidIndices).containsExactlyInAnyOrder(1, 3);
     }
 
     // ===== Hidden Horror leaves battlefield before ETB resolves =====
@@ -269,8 +269,8 @@ class HiddenHorrorTest {
         harness.passBothPriorities(); // resolve ETB → may ability prompt (creature gone but still offered)
 
         // Player is still offered the choice to discard
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
     }
 
     @Test
@@ -292,7 +292,7 @@ class HiddenHorrorTest {
         harness.passBothPriorities(); // resolve ETB
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.DISCARD_CHOICE);
 
         harness.handleCardChosen(player1, 0); // discard Grizzly Bears
 
@@ -347,7 +347,7 @@ class HiddenHorrorTest {
         harness.passBothPriorities(); // resolve ETB → no creature cards, permanent gone, nothing
 
         // No prompt — nothing to sacrifice and nothing valid to discard
-        assertThat(gd.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInput).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
     }
 
@@ -367,7 +367,8 @@ class HiddenHorrorTest {
         harness.passBothPriorities(); // resolve ETB → may ability prompt
 
         // Sanity check
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
     }
 }
+

@@ -135,8 +135,8 @@ class VoiceOfAllTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Voice of All"));
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.awaitingColorChoicePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.COLOR_CHOICE);
+        assertThat(gd.interaction.awaitingColorChoicePlayerId).isEqualTo(player1.getId());
     }
 
     @Test
@@ -165,9 +165,9 @@ class VoiceOfAllTest {
         harness.passBothPriorities();
         harness.handleColorChosen(player1, "BLUE");
 
-        assertThat(gd.awaitingInput).isNull();
-        assertThat(gd.awaitingColorChoicePlayerId).isNull();
-        assertThat(gd.awaitingColorChoicePermanentId).isNull();
+        assertThat(gd.interaction.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingColorChoicePlayerId).isNull();
+        assertThat(gd.interaction.awaitingColorChoicePermanentId).isNull();
     }
 
     @Test
@@ -309,7 +309,7 @@ class VoiceOfAllTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -332,7 +332,7 @@ class VoiceOfAllTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
+        gd.interaction.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -482,3 +482,4 @@ class VoiceOfAllTest {
                 .anyMatch(c -> c.getName().equals("Voice of All"));
     }
 }
+

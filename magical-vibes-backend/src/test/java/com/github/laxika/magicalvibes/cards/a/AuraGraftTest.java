@@ -146,10 +146,10 @@ class AuraGraftTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(aura);
 
         // Should prompt for permanent choice to reattach
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.awaitingPermanentChoicePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.permanentChoiceContext).isInstanceOf(PermanentChoiceContext.AuraGraft.class);
-        assertThat(((PermanentChoiceContext.AuraGraft) gd.permanentChoiceContext).auraPermanentId()).isEqualTo(aura.getId());
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingPermanentChoicePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.permanentChoiceContext).isInstanceOf(PermanentChoiceContext.AuraGraft.class);
+        assertThat(((PermanentChoiceContext.AuraGraft) gd.interaction.permanentChoiceContext).auraPermanentId()).isEqualTo(aura.getId());
     }
 
     @Test
@@ -169,8 +169,8 @@ class AuraGraftTest {
         harness.handlePermanentChosen(player1, myCreature.getId());
 
         assertThat(aura.getAttachedTo()).isEqualTo(myCreature.getId());
-        assertThat(gd.permanentChoiceContext).isNull();
-        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.permanentChoiceContext).isNull();
+        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
     }
 
     @Test
@@ -206,9 +206,9 @@ class AuraGraftTest {
         harness.passBothPriorities();
 
         // The currently enchanted creature should NOT be a valid choice
-        assertThat(gd.awaitingPermanentChoiceValidIds).doesNotContain(opponentCreature.getId());
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds).doesNotContain(opponentCreature.getId());
         // My creature should be valid
-        assertThat(gd.awaitingPermanentChoiceValidIds).contains(myCreature.getId());
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds).contains(myCreature.getId());
     }
 
     @Test
@@ -253,7 +253,7 @@ class AuraGraftTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
 
         // Should prompt for reattachment
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
 
         harness.handlePermanentChosen(player1, myCreature2.getId());
 
@@ -278,8 +278,8 @@ class AuraGraftTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
 
         // No permanent choice should be prompted (only creature is the current target)
-        assertThat(gd.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.permanentChoiceContext).isNull();
+        assertThat(gd.interaction.awaitingInput).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.permanentChoiceContext).isNull();
 
         // Aura stays attached to the same creature
         assertThat(aura.getAttachedTo()).isEqualTo(opponentCreature.getId());
@@ -384,7 +384,7 @@ class AuraGraftTest {
         harness.castInstant(player1, 0, aura.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.awaitingPermanentChoiceValidIds)
+        assertThat(gd.interaction.awaitingPermanentChoiceValidIds)
                 .contains(opponentCreature2.getId(), myCreature1.getId(), myCreature2.getId())
                 .doesNotContain(opponentCreature1.getId());
     }
@@ -429,3 +429,4 @@ class AuraGraftTest {
         return auraPerm;
     }
 }
+

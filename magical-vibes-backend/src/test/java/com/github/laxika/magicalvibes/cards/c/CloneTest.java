@@ -81,11 +81,11 @@ class CloneTest {
         harness.passBothPriorities();
 
         // Should be prompted for may ability
-        assertThat(gd.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
 
         // Should be prompted to choose a creature
-        assertThat(gd.awaitingPermanentChoicePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingPermanentChoicePlayerId).isEqualTo(player1.getId());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.handlePermanentChosen(player1, bearsId);
 
@@ -245,9 +245,9 @@ class CloneTest {
         GameData gd = harness.getGameData();
 
         // Legend rule should be triggered — player should be asked to choose which to keep
-        assertThat(gd.permanentChoiceContext).isInstanceOf(PermanentChoiceContext.LegendRule.class);
-        assertThat(((PermanentChoiceContext.LegendRule) gd.permanentChoiceContext).cardName()).isEqualTo("Cho-Manno, Revolutionary");
-        assertThat(gd.awaitingPermanentChoicePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.permanentChoiceContext).isInstanceOf(PermanentChoiceContext.LegendRule.class);
+        assertThat(((PermanentChoiceContext.LegendRule) gd.interaction.permanentChoiceContext).cardName()).isEqualTo("Cho-Manno, Revolutionary");
+        assertThat(gd.interaction.awaitingPermanentChoicePlayerId).isEqualTo(player1.getId());
     }
 
     // ===== Declining / no creatures =====
@@ -386,7 +386,7 @@ class CloneTest {
 
         // First may prompt: Clone's own "you may copy" prompt
         GameData gd = harness.getGameData();
-        assertThat(gd.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
 
         // Choose to copy Treasure Hunter
@@ -401,13 +401,14 @@ class CloneTest {
         assertThat(clonePerm.getCard().getName()).isEqualTo("Treasure Hunter");
 
         // Second may prompt: copied Treasure Hunter's may ETB should now be presented
-        assertThat(gd.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.awaitingInput).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId).isEqualTo(player1.getId());
 
         // Decline it (no artifacts in graveyard anyway)
         harness.handleMayAbilityChosen(player1, false);
 
         // Game should proceed normally — no awaiting input
-        assertThat(gd.awaitingInput).isNull();
+        assertThat(gd.interaction.awaitingInput).isNull();
     }
 }
+
