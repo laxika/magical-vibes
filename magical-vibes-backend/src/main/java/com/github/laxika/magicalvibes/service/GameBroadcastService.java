@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -222,7 +223,7 @@ public class GameBroadcastService {
                 if (canCastTiming) {
                     ManaCost cost = new ManaCost(card.getManaCost());
                     ManaPool pool = gameData.playerManaPools.get(playerId);
-                    int additionalCost = getOpponentCostIncrease(gameData, playerId, card.getType());
+                    int additionalCost = getCastCostModifier(gameData, playerId, card);
                     if (cost.canPay(pool, additionalCost)) {
                         playable.add(i);
                     } else if (card.getKeywords().contains(Keyword.CONVOKE)) {
@@ -323,6 +324,51 @@ public class GameBroadcastService {
             }
         }
         return totalIncrease;
+    }
+
+    int getCastCostModifier(GameData gameData, UUID playerId, Card card) {
+        int increase = getOpponentCostIncrease(gameData, playerId, card.getType());
+        int reduction = getOwnCostReduction(gameData, playerId, card);
+        return increase - reduction;
+    }
+
+    private int getOwnCostReduction(GameData gameData, UUID playerId, Card card) {
+        int reduction = 0;
+        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect reduceEffect
+                    && anyOpponentControlsAtLeastNMoreCreatures(gameData, playerId, reduceEffect.minimumCreatureDifference())) {
+                reduction += reduceEffect.amount();
+            }
+        }
+        return reduction;
+    }
+
+    private boolean anyOpponentControlsAtLeastNMoreCreatures(GameData gameData, UUID playerId, int minimumDifference) {
+        int yourCreatures = countCreaturesControlled(gameData, playerId);
+        for (UUID candidateOpponentId : gameData.orderedPlayerIds) {
+            if (candidateOpponentId.equals(playerId)) {
+                continue;
+            }
+            int opponentCreatures = countCreaturesControlled(gameData, candidateOpponentId);
+            if (opponentCreatures >= yourCreatures + minimumDifference) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int countCreaturesControlled(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return 0;
+        }
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (gameQueryService.isCreature(gameData, permanent)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     int getAttackPaymentPerCreature(GameData gameData, UUID attackingPlayerId) {

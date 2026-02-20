@@ -48,6 +48,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `copy or retarget spell`: `CopySpellEffect`, `ChangeTargetOfTargetSpellWithSingleTargetEffect`
 - `extra turn / additional combat / end turn`: `ExtraTurnEffect`, `AdditionalCombatMainPhaseEffect`, `EndTurnEffect`
 - `equip`: `EquipEffect`
+- `this spell costs {N} less to cast if an opponent controls M more creatures`: `ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect`
 
 ## Provider map (where effects are resolved)
 
@@ -79,3 +80,4 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - ETB token + activated cost/effect composition: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SiegeGangCommander.java`
 - ETB control handoff + upkeep drawback: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SleeperAgent.java`
 - Opponent draw trigger damage: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/u/UnderworldDreams.java`
+- Conditional self cast-cost reduction: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/a/AvatarOfMight.java`

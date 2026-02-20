@@ -106,7 +106,7 @@ public class SpellCastingService {
                     throw new IllegalStateException("X value cannot be negative");
                 }
                 ManaPool pool = gameData.playerManaPools.get(playerId);
-                int additionalCost = gameBroadcastService.getOpponentCostIncrease(gameData, playerId, card.getType());
+                int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
                 if (card.getXColorRestriction() != null) {
                     if (!cost.canPay(pool, effectiveXValue, card.getXColorRestriction(), additionalCost)) {
                         throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
@@ -365,7 +365,7 @@ public class SpellCastingService {
         if (card.getManaCost() == null) return;
         ManaCost cost = new ManaCost(card.getManaCost());
         ManaPool pool = gameData.playerManaPools.get(playerId);
-        int additionalCost = gameBroadcastService.getOpponentCostIncrease(gameData, playerId, card.getType());
+        int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
         if (!convokeContributions.isEmpty()) {
             cost.payWithConvoke(pool, additionalCost, convokeContributions);
         } else if (cost.hasX() && card.getXColorRestriction() != null) {

@@ -69,6 +69,10 @@ public class ExampleCard extends Card {
   - use `addEffect(EffectSlot.ON_OPPONENT_DRAWS, new DealDamageToTargetPlayerEffect(N))` when the effect should hit the player who drew
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/u/UnderworldDreams.java`
 
+- Conditional self cast-cost reduction:
+  - add static effect on the card itself (in hand-relevant card logic): `addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect(M, N))`
+  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/a/AvatarOfMight.java`
+
 ## Targeting checklist
 
 - `setNeedsTarget(true)` for permanent/player target resolution.
