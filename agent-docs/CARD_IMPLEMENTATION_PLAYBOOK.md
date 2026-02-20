@@ -73,6 +73,10 @@ public class ExampleCard extends Card {
   - add static effect on the card itself (in hand-relevant card logic): `addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect(M, N))`
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/a/AvatarOfMight.java`
 
+- Attacker blocked-only-by-flying-or-subtype:
+  - add static evasion restriction on attacker: `addEffect(EffectSlot.STATIC, new CanBeBlockedOnlyByFlyingOrSubtypeEffect(CardSubtype.X))`
+  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/e/ElvenRiders.java`
+
 ## Targeting checklist
 
 - `setNeedsTarget(true)` for permanent/player target resolution.

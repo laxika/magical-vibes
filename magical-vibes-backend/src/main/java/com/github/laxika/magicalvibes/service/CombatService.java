@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BlockOnlyFlyersEffect;
+import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFlyingOrSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsLandTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
@@ -428,6 +429,14 @@ public class CombatService {
                     if (blocker.getCard().getSubtypes().contains(restriction.subtype())
                             || gameQueryService.hasKeyword(gameData, blocker, Keyword.CHANGELING)) {
                         throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked by " + restriction.subtype().getDisplayName() + "s");
+                    }
+                } else if (effect instanceof CanBeBlockedOnlyByFlyingOrSubtypeEffect restriction) {
+                    boolean blockerHasAllowedSubtype = blocker.getCard().getSubtypes().contains(restriction.subtype())
+                            || gameQueryService.hasKeyword(gameData, blocker, Keyword.CHANGELING);
+                    boolean blockerHasFlying = gameQueryService.hasKeyword(gameData, blocker, Keyword.FLYING);
+                    if (!blockerHasAllowedSubtype && !blockerHasFlying) {
+                        throw new IllegalStateException(attacker.getCard().getName()
+                                + " can only be blocked by creatures with flying or by " + restriction.subtype().getDisplayName() + "s");
                     }
                 }
             }
