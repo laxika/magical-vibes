@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ColorChoiceContext;
+import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
@@ -224,6 +225,10 @@ public class ReconnectionService {
                         options = GameQueryService.TEXT_CHANGE_LAND_TYPES.stream().filter(t -> !t.equals(tc.fromWord())).toList();
                         prompt = "Choose the replacement basic land type.";
                     }
+                } else if (cc.context() instanceof ColorChoiceContext.DrawReplacementChoice drc
+                        && drc.kind() == DrawReplacementKind.ABUNDANCE) {
+                    options = List.of("LAND", "NONLAND");
+                    prompt = "Choose land or nonland for Abundance.";
                 } else {
                     options = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                     prompt = "Choose a color.";

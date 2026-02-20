@@ -262,6 +262,10 @@ public class TurnProgressionService {
 
         // Check for draw step triggered abilities (e.g. Howling Mine)
         handleDrawStepTriggers(gameData);
+
+        if (!gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            playerInputService.processNextMayAbility(gameData);
+        }
     }
 
     private void handleDrawStepTriggers(GameData gameData) {

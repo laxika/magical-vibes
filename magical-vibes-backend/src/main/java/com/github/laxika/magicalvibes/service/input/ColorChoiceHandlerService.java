@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ColorChoiceContext;
+import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
+import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.ArrayList;
 
 @Slf4j
 @Service
@@ -58,6 +63,10 @@ public class ColorChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ColorChoiceContext.TextChangeToWord ctx) {
             handleTextChangeToWordChosen(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ColorChoiceContext.DrawReplacementChoice ctx) {
+            handleDrawReplacementChoice(gameData, colorName, ctx);
             return;
         }
 
@@ -187,6 +196,85 @@ public class ColorChoiceHandlerService {
             case "FOREST" -> "Forest";
             default -> throw new IllegalArgumentException("Invalid choice: " + choice);
         };
+    }
+
+    private void handleDrawReplacementChoice(GameData gameData, String chosenKind, ColorChoiceContext.DrawReplacementChoice ctx) {
+        if (ctx.kind() != DrawReplacementKind.ABUNDANCE) {
+            throw new IllegalStateException("Unsupported draw replacement choice kind: " + ctx.kind());
+        }
+        boolean chooseLand;
+        if ("LAND".equals(chosenKind)) {
+            chooseLand = true;
+        } else if ("NONLAND".equals(chosenKind)) {
+            chooseLand = false;
+        } else {
+            throw new IllegalArgumentException("Invalid Abundance choice: " + chosenKind);
+        }
+
+        UUID playerId = ctx.playerId();
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        List<Card> hand = gameData.playerHands.get(playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.interaction.clearColorChoice();
+
+        if (deck == null || deck.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData, playerName + " has no cards to reveal for Abundance.");
+            finalizeAfterDrawReplacementChoice(gameData);
+            return;
+        }
+
+        List<Card> revealed = new ArrayList<>();
+        Card chosenCard = null;
+        while (!deck.isEmpty()) {
+            Card top = deck.removeFirst();
+            revealed.add(top);
+            boolean isLand = top.getType() == CardType.LAND || top.getAdditionalTypes().contains(CardType.LAND);
+            if ((chooseLand && isLand) || (!chooseLand && !isLand)) {
+                chosenCard = top;
+                break;
+            }
+        }
+
+        String revealedNames = String.join(", ", revealed.stream().map(Card::getName).toList());
+        gameBroadcastService.logAndBroadcast(gameData, playerName + " reveals " + revealedNames + " for Abundance.");
+
+        List<Card> toBottom = new ArrayList<>(revealed);
+        if (chosenCard != null) {
+            hand.add(chosenCard);
+            toBottom.remove(chosenCard);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " puts " + chosenCard.getName() + " into their hand.");
+        } else {
+            String missingKind = chooseLand ? "land" : "nonland";
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " reveals no " + missingKind + " card for Abundance.");
+        }
+
+        if (toBottom.size() == 1) {
+            deck.add(toBottom.getFirst());
+        } else if (toBottom.size() > 1) {
+            gameData.pendingLibraryBottomReorders.addLast(new LibraryBottomReorderRequest(playerId, toBottom));
+            if (!gameData.interaction.isAwaitingInput()) {
+                gameHelper.beginNextPendingLibraryBottomReorder(gameData);
+            }
+        }
+
+        finalizeAfterDrawReplacementChoice(gameData);
+    }
+
+    private void finalizeAfterDrawReplacementChoice(GameData gameData) {
+        gameData.priorityPassedBy.clear();
+        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            gameBroadcastService.broadcastGameState(gameData);
+            return;
+        }
+        gameBroadcastService.broadcastGameState(gameData);
+        if (!gameData.interaction.isAwaitingInput()) {
+            turnProgressionService.resolveAutoPass(gameData);
+        }
     }
 }
 

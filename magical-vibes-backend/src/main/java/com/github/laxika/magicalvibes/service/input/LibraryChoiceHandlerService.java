@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.LegendRuleService;
+import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class LibraryChoiceHandlerService {
     private final GameBroadcastService gameBroadcastService;
     private final CardViewFactory cardViewFactory;
     private final TurnProgressionService turnProgressionService;
+    private final PlayerInputService playerInputService;
 
     public void handleLibraryCardsReordered(GameData gameData, Player player, List<Integer> cardOrder) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.LIBRARY_REORDER)) {
@@ -100,6 +102,11 @@ public class LibraryChoiceHandlerService {
         }
         if (reorderedToBottom && gameData.warpWorldOperation.sourceName != null) {
             gameHelper.finalizePendingWarpWorld(gameData);
+        }
+
+        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
         }
 
         turnProgressionService.resolveAutoPass(gameData);

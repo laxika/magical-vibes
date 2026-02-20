@@ -163,10 +163,10 @@ public class GameTestHarness {
                 gameQueryService, gameHelper, legendRuleService, gameBroadcastService, turnProgressionService);
         MayAbilityHandlerService mayAbilityHandlerService = new MayAbilityHandlerService(
                 gameQueryService, gameHelper, stateBasedActionService, gameBroadcastService,
-                playerInputService, turnProgressionService);
+                playerInputService, turnProgressionService, sessionManager);
         LibraryChoiceHandlerService libraryChoiceHandlerService = new LibraryChoiceHandlerService(
                 sessionManager, gameQueryService, gameHelper, legendRuleService, stateBasedActionService, gameBroadcastService,
-                cardViewFactory, turnProgressionService);
+                cardViewFactory, turnProgressionService, playerInputService);
         StackResolutionService stackResolutionService = new StackResolutionService(
                 gameHelper, legendRuleService, stateBasedActionService, gameQueryService, targetLegalityService,
                 gameBroadcastService, effectResolutionService, playerInputService);

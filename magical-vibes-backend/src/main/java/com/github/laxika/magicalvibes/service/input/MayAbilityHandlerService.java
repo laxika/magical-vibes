@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
@@ -35,6 +37,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndContr
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.SpellTypeTargetFilter;
+import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
@@ -61,6 +65,7 @@ public class MayAbilityHandlerService {
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
+    private final SessionManager sessionManager;
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.MAY_ABILITY_CHOICE)) {
@@ -86,6 +91,17 @@ public class MayAbilityHandlerService {
         boolean isSacrificeUnlessDiscard = ability.effects().stream().anyMatch(e -> e instanceof SacrificeUnlessDiscardCardTypeEffect);
         if (isSacrificeUnlessDiscard) {
             handleSacrificeUnlessDiscardChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Generic single-draw replacement
+        ReplaceSingleDrawEffect replaceSingleDrawEffect = ability.effects().stream()
+                .filter(e -> e instanceof ReplaceSingleDrawEffect)
+                .map(e -> (ReplaceSingleDrawEffect) e)
+                .findFirst()
+                .orElse(null);
+        if (replaceSingleDrawEffect != null) {
+            handleSingleDrawReplacementChoice(gameData, player, accepted, ability, replaceSingleDrawEffect);
             return;
         }
 
@@ -460,6 +476,44 @@ public class MayAbilityHandlerService {
             }
         }
         return false;
+    }
+
+    private void handleSingleDrawReplacementChoice(GameData gameData, Player player, boolean accepted,
+                                                   PendingMayAbility ability,
+                                                   ReplaceSingleDrawEffect effect) {
+        UUID drawingPlayerId = effect.playerId();
+        String playerName = gameData.playerIdToName.get(drawingPlayerId);
+
+        if (!accepted) {
+            gameHelper.resolveDrawCardWithoutStaticReplacementCheck(gameData, drawingPlayerId);
+            String logEntry = player.getUsername() + " declines to use " + ability.sourceCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                gameData.priorityPassedBy.clear();
+                gameBroadcastService.broadcastGameState(gameData);
+                turnProgressionService.resolveAutoPass(gameData);
+            }
+            return;
+        }
+
+        if (effect.kind() == DrawReplacementKind.ABUNDANCE) {
+            gameData.interaction.beginColorChoice(
+                    drawingPlayerId,
+                    null,
+                    null,
+                    new com.github.laxika.magicalvibes.model.ColorChoiceContext.DrawReplacementChoice(drawingPlayerId, effect.kind())
+            );
+            sessionManager.sendToPlayer(drawingPlayerId, new ChooseColorMessage(
+                    List.of("LAND", "NONLAND"),
+                    "Choose land or nonland for Abundance."
+            ));
+            log.info("Game {} - Awaiting {} to choose land or nonland for Abundance", gameData.id, playerName);
+            return;
+        }
+
+        throw new IllegalStateException("Unsupported draw replacement kind: " + effect.kind());
     }
 }
 

@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ColorChoiceContext;
+import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -934,6 +936,13 @@ public class AiDecisionEngine {
         UUID choicePlayerId = colorChoice.playerId();
 
         if (!aiPlayer.getId().equals(choicePlayerId)) {
+            return;
+        }
+
+        if (colorChoice.context() instanceof ColorChoiceContext.DrawReplacementChoice drc
+                && drc.kind() == DrawReplacementKind.ABUNDANCE) {
+            log.info("AI: Choosing NONLAND for Abundance in game {}", gameId);
+            send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, "NONLAND")));
             return;
         }
 

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
+import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
 import com.github.laxika.magicalvibes.model.WarpWorldAuraChoiceRequest;
@@ -28,6 +29,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
@@ -1083,6 +1086,17 @@ public class GameHelper {
     // ===== Draw =====
 
     public void resolveDrawCard(GameData gameData, UUID playerId) {
+        Card abundanceSource = findAbundanceSourceCard(gameData, playerId);
+        if (abundanceSource != null) {
+            gameData.pendingMayAbilities.add(new PendingMayAbility(
+                    abundanceSource,
+                    playerId,
+                    List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.ABUNDANCE)),
+                    "Replace this draw with Abundance?"
+            ));
+            return;
+        }
+
         UUID replacementController = gameData.drawReplacementTargetToController.get(playerId);
         if (replacementController != null) {
             String playerName = gameData.playerIdToName.get(playerId);
@@ -1096,6 +1110,43 @@ public class GameHelper {
         }
 
         performDrawCard(gameData, playerId);
+    }
+
+    public void resolveDrawCardWithoutStaticReplacementCheck(GameData gameData, UUID playerId) {
+        UUID replacementController = gameData.drawReplacementTargetToController.get(playerId);
+        if (replacementController != null) {
+            String playerName = gameData.playerIdToName.get(playerId);
+            String controllerName = gameData.playerIdToName.get(replacementController);
+            String logEntry = playerName + "'s draw is redirected — " + controllerName + " draws a card instead.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - Draw redirect: {}'s draw goes to {} instead",
+                    gameData.id, playerName, controllerName);
+
+            if (replacementController.equals(playerId)) {
+                performDrawCard(gameData, replacementController);
+            } else {
+                resolveDrawCard(gameData, replacementController);
+            }
+            return;
+        }
+
+        performDrawCard(gameData, playerId);
+    }
+
+    private Card findAbundanceSourceCard(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasAbundanceEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof AbundanceDrawReplacementEffect);
+            if (hasAbundanceEffect) {
+                return permanent.getCard();
+            }
+        }
+        return null;
     }
 
     void performDrawCard(GameData gameData, UUID playerId) {
