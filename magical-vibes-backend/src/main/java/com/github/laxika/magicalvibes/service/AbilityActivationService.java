@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingAbilityActivation;
@@ -19,31 +18,15 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
-import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.CreatureYouControlTargetFilter;
-import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
-import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
-import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -62,10 +45,10 @@ import java.util.UUID;
 public class AbilityActivationService {
 
     private final GameHelper gameHelper;
-    private final StateBasedActionService stateBasedActionService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
-    private final TargetValidationService targetValidationService;
+    private final TargetLegalityService targetLegalityService;
+    private final ActivatedAbilityExecutionService activatedAbilityExecutionService;
     private final PlayerInputService playerInputService;
     private final SessionManager sessionManager;
 
@@ -264,7 +247,7 @@ public class AbilityActivationService {
 
         // Validate spell target for abilities that counter spells
         if (ability.isNeedsSpellTarget()) {
-            validateSpellTarget(gameData, targetPermanentId);
+            targetLegalityService.validateSpellTargetOnStack(gameData, targetPermanentId, ability.getTargetFilter());
         }
 
         boolean hasSacCreatureCost = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeCreatureCost);
@@ -275,7 +258,8 @@ public class AbilityActivationService {
 
         // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
         if (!hasSacCreatureCost) {
-            validateAbilityTargeting(gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard());
+            targetLegalityService.validateActivatedAbilityTargeting(
+                    gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard());
         }
         if (sacSubtypeCost.isPresent() && !hasSubtypeCreatureToSacrifice(gameData, playerId, sacSubtypeCost.get())) {
             throw new IllegalStateException("Must choose a " + sacSubtypeCost.get().subtype().getDisplayName() + " to sacrifice");
@@ -347,9 +331,11 @@ public class AbilityActivationService {
         // Sacrifice-a-creature cost abilities use target selection as UI for cost payment.
         // Validate any remaining real targets after the cost has been paid.
         if (hasSacCreatureCost) {
-            validateAbilityTargeting(gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard());
+            targetLegalityService.validateActivatedAbilityTargeting(
+                    gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard());
         }
-        completeAbilityActivationAfterCosts(gameData, player, permanent, ability, abilityEffects, effectiveXValue, targetPermanentId, targetZone, hasSacCreatureCost);
+        activatedAbilityExecutionService.completeActivationAfterCosts(
+                gameData, player, permanent, ability, abilityEffects, effectiveXValue, targetPermanentId, targetZone, hasSacCreatureCost);
     }
 
     public void completeActivatedAbilitySubtypeSacrificeChoice(GameData gameData,
@@ -396,7 +382,8 @@ public class AbilityActivationService {
         }
 
         sacrificeCreatureAsCost(gameData, player, sacrificed);
-        completeAbilityActivationAfterCosts(gameData, player, sourcePermanent, ability, abilityEffects,
+        activatedAbilityExecutionService.completeActivationAfterCosts(
+                gameData, player, sourcePermanent, ability, abilityEffects,
                 context.xValue() != null ? context.xValue() : 0, context.targetPermanentId(), context.targetZone(), false);
     }
 
@@ -469,79 +456,6 @@ public class AbilityActivationService {
         gameBroadcastService.logAndBroadcast(gameData, sacLog);
     }
 
-    private void completeAbilityActivationAfterCosts(GameData gameData,
-                                                     Player player,
-                                                     Permanent permanent,
-                                                     ActivatedAbility ability,
-                                                     List<CardEffect> abilityEffects,
-                                                     int effectiveXValue,
-                                                     UUID targetPermanentId,
-                                                     TargetZone targetZone,
-                                                     boolean markAsNonTargetingForSacCreatureCost) {
-        UUID playerId = player.getId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            throw new IllegalStateException("Invalid battlefield");
-        }
-
-        // Self-target if effects need the source permanent
-        UUID effectiveTargetId = targetPermanentId;
-        if (effectiveTargetId == null) {
-            boolean needsSelfTarget = abilityEffects.stream().anyMatch(e ->
-                    e instanceof RegenerateEffect || e instanceof BoostSelfEffect || e instanceof UntapSelfEffect
-                            || e instanceof AnimateSelfEffect || e instanceof GrantKeywordToSelfEffect);
-            if (needsSelfTarget) {
-                effectiveTargetId = permanent.getId();
-            }
-        }
-
-        // Tap the permanent (only for tap abilities)
-        if (ability.isRequiresTap()) {
-            permanent.tap();
-        }
-
-        // Sacrifice the permanent (for sacrifice-as-cost abilities)
-        boolean shouldSacrifice = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeSelfCost);
-        if (shouldSacrifice) {
-            boolean wasCreature = gameQueryService.isCreature(gameData, permanent);
-            battlefield.remove(permanent);
-            gameHelper.addCardToGraveyard(gameData, playerId, permanent.getCard());
-            gameHelper.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature);
-            if (wasCreature) {
-                gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
-            }
-        }
-
-        String logEntry = player.getUsername() + " activates " + permanent.getCard().getName() + "'s ability.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} activates {}'s ability", gameData.id, player.getUsername(), permanent.getCard().getName());
-
-        // Snapshot permanent state into effects so the ability resolves independently of its source
-        // Filter out SacrificeSelfCost since it's already been paid as a cost
-        List<CardEffect> snapshotEffects = snapshotEffects(abilityEffects, permanent);
-
-        // Check if this is a mana ability (CR 605.1a: doesn't target, could produce mana, not loyalty)
-        // Mana abilities resolve immediately without using the stack (CR 605.3a)
-        boolean isManaAbility = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget()
-                && ability.getLoyaltyCost() == null
-                && !snapshotEffects.isEmpty()
-                && snapshotEffects.stream().allMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof DoubleManaPoolEffect);
-
-        if (isManaAbility) {
-            resolveManaAbility(gameData, playerId, player, snapshotEffects);
-        } else {
-            pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId, targetZone);
-
-            // Sacrifice-a-creature cost uses needsTarget for UI (player picks creature to sacrifice),
-            // but the ability itself doesn't target — the effect references "this creature" without
-            // the "target" keyword. Mark as non-targeting so it doesn't incorrectly fizzle if the
-            // source gains shroud/protection in response (per MTG rule 608.2b).
-            if (markAsNonTargetingForSacCreatureCost && !gameData.stack.isEmpty()) {
-                gameData.stack.getLast().setNonTargeting(true);
-            }
-        }
-    }
-
     private void validateTimingRestrictions(GameData gameData, UUID playerId, ActivatedAbility ability) {
         if (ability.getTimingRestriction() != null) {
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP) {
@@ -591,19 +505,6 @@ public class AbilityActivationService {
         permanent.setLoyaltyAbilityUsedThisTurn(true);
     }
 
-    private void validateSpellTarget(GameData gameData, UUID targetPermanentId) {
-        if (targetPermanentId == null) {
-            throw new IllegalStateException("Ability requires a spell target");
-        }
-        boolean foundSpellOnStack = gameData.stack.stream()
-                .anyMatch(se -> se.getCard().getId().equals(targetPermanentId)
-                        && se.getEntryType() != StackEntryType.TRIGGERED_ABILITY
-                        && se.getEntryType() != StackEntryType.ACTIVATED_ABILITY);
-        if (!foundSpellOnStack) {
-            throw new IllegalStateException("Target must be a spell on the stack");
-        }
-    }
-
     private void payManaCost(GameData gameData, UUID playerId, String abilityCost, int effectiveXValue) {
         ManaCost cost = new ManaCost(abilityCost);
         ManaPool pool = gameData.playerManaPools.get(playerId);
@@ -620,48 +521,6 @@ public class AbilityActivationService {
                 throw new IllegalStateException("Not enough mana to activate ability");
             }
             cost.pay(pool);
-        }
-    }
-
-    private void validateAbilityTargeting(GameData gameData, UUID playerId, ActivatedAbility ability, List<CardEffect> abilityEffects,
-                                          UUID targetPermanentId, TargetZone targetZone, Card sourceCard) {
-        // Validate target for effects that need one
-        targetValidationService.validateEffectTargets(abilityEffects,
-                new TargetValidationContext(gameData, targetPermanentId, targetZone, sourceCard));
-
-        // Generic target filter validation
-        if (ability.getTargetFilter() != null && targetPermanentId != null) {
-            Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
-            if (target != null) {
-                gameQueryService.validateTargetFilter(ability.getTargetFilter(), target);
-
-                if (ability.getTargetFilter() instanceof ControllerOnlyTargetFilter
-                        || ability.getTargetFilter() instanceof CreatureYouControlTargetFilter) {
-                    List<Permanent> playerBf = gameData.playerBattlefields.get(playerId);
-                    if (playerBf == null || !playerBf.contains(target)) {
-                        throw new IllegalStateException("Target must be a permanent you control");
-                    }
-                }
-
-                if (ability.getTargetFilter() instanceof CreatureYouControlTargetFilter
-                        && !gameQueryService.isCreature(gameData, target)) {
-                    throw new IllegalStateException("Target must be a creature you control");
-                }
-            }
-        }
-
-        // Creature shroud validation for abilities
-        if (targetPermanentId != null) {
-            Permanent shroudTarget = gameQueryService.findPermanentById(gameData, targetPermanentId);
-            if (shroudTarget != null && gameQueryService.hasKeyword(gameData, shroudTarget, Keyword.SHROUD)) {
-                throw new IllegalStateException(shroudTarget.getCard().getName() + " has shroud and can't be targeted");
-            }
-        }
-
-        // Player shroud validation for abilities
-        if (targetPermanentId != null && gameData.playerIds.contains(targetPermanentId)
-                && gameQueryService.playerHasShroud(gameData, targetPermanentId)) {
-            throw new IllegalStateException(gameData.playerIdToName.get(targetPermanentId) + " has shroud and can't be targeted");
         }
     }
 
@@ -722,93 +581,7 @@ public class AbilityActivationService {
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearCardChoice();
     }
-
-    private List<CardEffect> snapshotEffects(List<CardEffect> abilityEffects, Permanent permanent) {
-        List<CardEffect> snapshotEffects = new ArrayList<>();
-        for (CardEffect effect : abilityEffects) {
-            if (effect instanceof SacrificeSelfCost
-                    || effect instanceof SacrificeCreatureCost
-                    || effect instanceof SacrificeSubtypeCreatureCost
-                    || effect instanceof DiscardCardTypeCost) {
-                continue;
-            }
-            if (effect instanceof CantBlockSourceEffect) {
-                snapshotEffects.add(new CantBlockSourceEffect(permanent.getId()));
-            } else if (effect instanceof PreventNextColorDamageToControllerEffect && permanent.getChosenColor() != null) {
-                snapshotEffects.add(new PreventNextColorDamageToControllerEffect(permanent.getChosenColor()));
-            } else {
-                snapshotEffects.add(effect);
-            }
-        }
-        return snapshotEffects;
-    }
-
-    private void resolveManaAbility(GameData gameData, UUID playerId, Player player, List<CardEffect> snapshotEffects) {
-        for (CardEffect effect : snapshotEffects) {
-            if (effect instanceof AwardManaEffect award) {
-                gameData.playerManaPools.get(playerId).add(award.color());
-            } else if (effect instanceof DoubleManaPoolEffect) {
-                ManaPool pool = gameData.playerManaPools.get(playerId);
-                for (ManaColor color : ManaColor.values()) {
-                    int current = pool.get(color);
-                    for (int i = 0; i < current; i++) {
-                        pool.add(color);
-                    }
-                }
-            } else if (effect instanceof AwardAnyColorManaEffect) {
-                ColorChoiceContext.ManaColorChoice choiceContext = new ColorChoiceContext.ManaColorChoice(playerId);
-                gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
-                List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-                sessionManager.sendToPlayer(playerId, new ChooseColorMessage(colors, "Choose a color of mana to add."));
-                log.info("Game {} - Awaiting {} to choose a mana color", gameData.id, player.getUsername());
-            }
-        }
-        stateBasedActionService.performStateBasedActions(gameData);
-        gameData.priorityPassedBy.clear();
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingDeathTriggerTargets.isEmpty()) {
-            gameHelper.processNextDeathTriggerTarget(gameData);
-        }
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-        }
-        gameBroadcastService.broadcastGameState(gameData);
-    }
-
-    private void pushAbilityOnStack(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability,
-                                     List<CardEffect> snapshotEffects, int effectiveXValue, UUID effectiveTargetId, TargetZone targetZone) {
-        TargetZone effectiveTargetZone = targetZone;
-        if (ability.isNeedsSpellTarget()) {
-            effectiveTargetZone = TargetZone.STACK;
-        }
-        if (effectiveTargetZone != null && effectiveTargetZone != TargetZone.BATTLEFIELD) {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.ACTIVATED_ABILITY,
-                    permanent.getCard(),
-                    playerId,
-                    permanent.getCard().getName() + "'s ability",
-                    snapshotEffects,
-                    effectiveTargetId,
-                    effectiveTargetZone
-            ));
-        } else {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.ACTIVATED_ABILITY,
-                    permanent.getCard(),
-                    playerId,
-                    permanent.getCard().getName() + "'s ability",
-                    snapshotEffects,
-                    effectiveXValue,
-                    effectiveTargetId,
-                    Map.of()
-            ));
-        }
-        stateBasedActionService.performStateBasedActions(gameData);
-        gameData.priorityPassedBy.clear();
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingDeathTriggerTargets.isEmpty()) {
-            gameHelper.processNextDeathTriggerTarget(gameData);
-        }
-        gameBroadcastService.broadcastGameState(gameData);
-    }
 }
+
 
 

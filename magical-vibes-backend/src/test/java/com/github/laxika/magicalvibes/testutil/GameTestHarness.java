@@ -35,11 +35,13 @@ import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.LobbyService;
 import com.github.laxika.magicalvibes.service.PreventionResolutionService;
 import com.github.laxika.magicalvibes.service.AbilityActivationService;
+import com.github.laxika.magicalvibes.service.ActivatedAbilityExecutionService;
 import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.ReconnectionService;
 import com.github.laxika.magicalvibes.service.SpellCastingService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.StateBasedActionService;
+import com.github.laxika.magicalvibes.service.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.TurnResolutionService;
@@ -116,6 +118,7 @@ public class GameTestHarness {
         CombatService combatService = new CombatService(
                 gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager);
         TargetValidationService targetValidationService = new TargetValidationService(gameQueryService);
+        TargetLegalityService targetLegalityService = new TargetLegalityService(gameQueryService, targetValidationService);
         List<EffectHandlerProvider> providers = List.of(
                 new DamageResolutionService(gameHelper, gameQueryService, gameBroadcastService),
                 new DestructionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),
@@ -124,7 +127,7 @@ public class GameTestHarness {
                 new CounterResolutionService(gameHelper, gameBroadcastService),
                 new ExileResolutionService(gameHelper, gameQueryService, gameBroadcastService),
                 new CopyResolutionService(gameBroadcastService),
-                new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetValidationService),
+                new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
                 new GraveyardReturnResolutionService(gameHelper, legendRuleService, gameQueryService, gameBroadcastService, playerInputService),
                 new BounceResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),
                 new LifeResolutionService(gameQueryService, gameBroadcastService),
@@ -141,9 +144,11 @@ public class GameTestHarness {
         TurnProgressionService turnProgressionService = new TurnProgressionService(
                 combatService, gameHelper, gameQueryService, gameBroadcastService, playerInputService);
         SpellCastingService spellCastingService = new SpellCastingService(
-                gameQueryService, gameHelper, gameBroadcastService, turnProgressionService, targetValidationService);
+                gameQueryService, gameHelper, gameBroadcastService, turnProgressionService, targetLegalityService);
+        ActivatedAbilityExecutionService activatedAbilityExecutionService = new ActivatedAbilityExecutionService(
+                gameHelper, stateBasedActionService, gameQueryService, gameBroadcastService, playerInputService, sessionManager);
         AbilityActivationService abilityActivationService = new AbilityActivationService(
-                gameHelper, stateBasedActionService, gameQueryService, gameBroadcastService, targetValidationService,
+                gameHelper, gameQueryService, gameBroadcastService, targetLegalityService, activatedAbilityExecutionService,
                 playerInputService, sessionManager);
         ColorChoiceHandlerService colorChoiceHandlerService = new ColorChoiceHandlerService(
                 sessionManager, gameQueryService, gameHelper, gameBroadcastService,
@@ -163,7 +168,8 @@ public class GameTestHarness {
                 sessionManager, gameQueryService, gameHelper, legendRuleService, stateBasedActionService, gameBroadcastService,
                 cardViewFactory, turnProgressionService);
         StackResolutionService stackResolutionService = new StackResolutionService(
-                gameHelper, legendRuleService, stateBasedActionService, gameQueryService, gameBroadcastService, effectResolutionService, playerInputService);
+                gameHelper, legendRuleService, stateBasedActionService, gameQueryService, targetLegalityService,
+                gameBroadcastService, effectResolutionService, playerInputService);
         MulliganService mulliganService = new MulliganService(
                 sessionManager, gameBroadcastService, turnProgressionService);
         ReconnectionService reconnectionService = new ReconnectionService(

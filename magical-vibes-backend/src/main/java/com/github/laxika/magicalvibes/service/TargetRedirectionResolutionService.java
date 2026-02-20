@@ -1,22 +1,14 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
-import com.github.laxika.magicalvibes.model.filter.SingleTargetSpellTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.SpellColorTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.SpellTypeTargetFilter;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
-import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
-import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,7 +25,7 @@ public class TargetRedirectionResolutionService implements EffectHandlerProvider
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
-    private final TargetValidationService targetValidationService;
+    private final TargetLegalityService targetLegalityService;
 
     @Override
     public void registerHandlers(EffectHandlerRegistry registry) {
@@ -109,28 +101,7 @@ public class TargetRedirectionResolutionService implements EffectHandlerProvider
 
         try {
             if (spellCard.isNeedsSpellTarget()) {
-                StackEntry candidateSpell = findStackEntryByCardId(gameData, candidateTargetId);
-                if (candidateSpell == null) return false;
-                if (candidateSpell.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        || candidateSpell.getEntryType() == StackEntryType.ACTIVATED_ABILITY) {
-                    return false;
-                }
-
-                if (spellCard.getTargetFilter() instanceof SpellColorTargetFilter colorFilter
-                        && !colorFilter.colors().contains(candidateSpell.getCard().getColor())) {
-                    return false;
-                }
-
-                if (spellCard.getTargetFilter() instanceof SpellTypeTargetFilter typeFilter
-                        && !typeFilter.spellTypes().contains(candidateSpell.getEntryType())) {
-                    return false;
-                }
-
-                if (spellCard.getTargetFilter() instanceof SingleTargetSpellTargetFilter
-                        && !isSingleTargetSpell(candidateSpell)) {
-                    return false;
-                }
-
+                targetLegalityService.validateSpellTargetOnStack(gameData, candidateTargetId, spellCard.getTargetFilter());
                 return true;
             }
 
@@ -138,39 +109,11 @@ public class TargetRedirectionResolutionService implements EffectHandlerProvider
                 if (gameQueryService.findCardInGraveyardById(gameData, candidateTargetId) == null) {
                     return false;
                 }
-                targetValidationService.validateEffectTargets(
-                        spellCard.getEffects(EffectSlot.SPELL),
-                        new TargetValidationContext(gameData, candidateTargetId, TargetZone.GRAVEYARD, spellCard)
-                );
+                targetLegalityService.validateEffectTargetInZone(gameData, spellCard, candidateTargetId, TargetZone.GRAVEYARD);
                 return true;
             }
 
-            Permanent permanentTarget = gameQueryService.findPermanentById(gameData, candidateTargetId);
-            boolean playerTarget = gameData.playerIds.contains(candidateTargetId);
-            if (permanentTarget == null && !playerTarget) {
-                return false;
-            }
-
-            if (permanentTarget != null) {
-                if (gameQueryService.hasProtectionFrom(gameData, permanentTarget, spellCard.getColor())) {
-                    return false;
-                }
-                if (gameQueryService.hasKeyword(gameData, permanentTarget, Keyword.SHROUD)) {
-                    return false;
-                }
-                if (spellCard.getTargetFilter() != null) {
-                    gameQueryService.validateTargetFilter(spellCard.getTargetFilter(), permanentTarget);
-                }
-            } else {
-                if (gameQueryService.playerHasShroud(gameData, candidateTargetId)) {
-                    return false;
-                }
-            }
-
-            targetValidationService.validateEffectTargets(
-                    spellCard.getEffects(EffectSlot.SPELL),
-                    new TargetValidationContext(gameData, candidateTargetId, null, spellCard)
-            );
+            targetLegalityService.validateSpellTargeting(gameData, spellCard, candidateTargetId, null);
             return true;
         } catch (IllegalStateException ignored) {
             return false;

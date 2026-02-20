@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
@@ -27,6 +26,7 @@ public class StackResolutionService {
     private final LegendRuleService legendRuleService;
     private final StateBasedActionService stateBasedActionService;
     private final GameQueryService gameQueryService;
+    private final TargetLegalityService targetLegalityService;
     private final GameBroadcastService gameBroadcastService;
     private final EffectResolutionService effectResolutionService;
     private final PlayerInputService playerInputService;
@@ -194,7 +194,7 @@ public class StackResolutionService {
 
     private void resolveSpellOrAbility(GameData gameData, StackEntry entry) {
         // Check if targeted spell/ability fizzles due to illegal target
-        boolean targetFizzled = checkTargetFizzle(gameData, entry);
+        boolean targetFizzled = targetLegalityService.isTargetIllegalOnResolution(gameData, entry);
 
         if (targetFizzled) {
             String fizzleLog = entry.getDescription() + " fizzles (illegal target).";
@@ -251,67 +251,6 @@ public class StackResolutionService {
         }
     }
 
-    private boolean checkTargetFizzle(GameData gameData, StackEntry entry) {
-        // Non-targeting abilities (e.g. "destroy that creature and Loyal Sentry") reference
-        // permanents without using the "target" keyword — they resolve even if the referenced
-        // permanent is gone (per MTG rule 608.2b: only check legality for actual targets).
-        if (entry.isNonTargeting()) {
-            return false;
-        }
-
-        boolean targetFizzled = false;
-
-        if (entry.getTargetPermanentId() != null) {
-            if (entry.getTargetZone() == TargetZone.GRAVEYARD) {
-                targetFizzled = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetPermanentId()) == null;
-            } else if (entry.getTargetZone() == TargetZone.STACK) {
-                targetFizzled = gameData.stack.stream()
-                        .noneMatch(se -> se.getCard().getId().equals(entry.getTargetPermanentId()));
-            } else {
-                Permanent targetPerm = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
-                if (targetPerm == null && !gameData.playerIds.contains(entry.getTargetPermanentId())) {
-                    targetFizzled = true;
-                } else if (targetPerm != null && entry.getCard() != null && entry.getCard().getTargetFilter() != null) {
-                    try {
-                        gameQueryService.validateTargetFilter(entry.getCard().getTargetFilter(), targetPerm);
-                    } catch (IllegalStateException e) {
-                        targetFizzled = true;
-                    }
-                }
-            }
-        }
-
-        // Check multi-target permanent fizzle: if ALL targeted permanents/players are gone, fizzle
-        if (!targetFizzled && entry.getTargetPermanentIds() != null && !entry.getTargetPermanentIds().isEmpty()) {
-            boolean allGone = true;
-            for (UUID permId : entry.getTargetPermanentIds()) {
-                if (gameQueryService.findPermanentById(gameData, permId) != null
-                        || gameData.playerIds.contains(permId)) {
-                    allGone = false;
-                    break;
-                }
-            }
-            if (allGone) {
-                targetFizzled = true;
-            }
-        }
-
-        // Check multi-target graveyard fizzle: if ALL targeted cards are gone, fizzle
-        if (!targetFizzled && entry.getTargetCardIds() != null && !entry.getTargetCardIds().isEmpty()) {
-            boolean allGone = true;
-            for (UUID cardId : entry.getTargetCardIds()) {
-                if (gameQueryService.findCardInGraveyardById(gameData, cardId) != null) {
-                    allGone = false;
-                    break;
-                }
-            }
-            if (allGone) {
-                targetFizzled = true;
-            }
-        }
-
-        return targetFizzled;
-    }
 }
 
 
