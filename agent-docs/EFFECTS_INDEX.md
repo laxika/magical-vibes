@@ -33,6 +33,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `create creature tokens`: `CreateCreatureTokenEffect`, `CreateCreatureTokenWithColorsEffect`
 - `gain life`: `GainLifeEffect`, `GainLifePerGraveyardCardEffect`, `GainLifeEqualToTargetToughnessEffect`
 - `lose life / drain`: `TargetPlayerLosesLifeAndControllerGainsLifeEffect`, `EnchantedCreatureControllerLosesLifeEffect`
+- `target opponent gains control of this creature (ETB)`: `TargetPlayerGainsControlOfSourceCreatureEffect`
 - `target player loses the game`: `TargetPlayerLosesGameEffect`
 - `lose the game if not cast from hand (ETB check)`: `LoseGameIfNotCastFromHandEffect`
 - `win the game if condition is met`: `WinGameIfCreaturesInGraveyardEffect`
@@ -74,3 +75,4 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - Aura static lock: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/p/Pacifism.java`
 - Static "can't block" creature: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SpinelessThug.java`
 - ETB token + activated cost/effect composition: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SiegeGangCommander.java`
+- ETB control handoff + upkeep drawback: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SleeperAgent.java`

@@ -78,6 +78,11 @@ public class AuraAttachmentService {
                 it.remove();
                 gameData.enchantmentDependentStolenCreatures.remove(creatureId);
                 gameData.untilEndOfTurnStolenCreatures.remove(creatureId);
+                gameData.permanentControlStolenCreatures.remove(creatureId);
+                continue;
+            }
+
+            if (gameData.permanentControlStolenCreatures.contains(creatureId)) {
                 continue;
             }
 
@@ -113,6 +118,7 @@ public class AuraAttachmentService {
             }
             it.remove();
             gameData.untilEndOfTurnStolenCreatures.remove(creatureId);
+            gameData.permanentControlStolenCreatures.remove(creatureId);
         }
         if (anyReturned) {
 

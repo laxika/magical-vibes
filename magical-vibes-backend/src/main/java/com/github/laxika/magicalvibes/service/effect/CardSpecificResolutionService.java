@@ -65,6 +65,7 @@ public class CardSpecificResolutionService implements EffectHandlerProvider {
                 gameData.stolenCreatures.remove(permanent.getId());
                 gameData.untilEndOfTurnStolenCreatures.remove(permanent.getId());
                 gameData.enchantmentDependentStolenCreatures.remove(permanent.getId());
+                gameData.permanentControlStolenCreatures.remove(permanent.getId());
                 iterator.remove();
             }
         }

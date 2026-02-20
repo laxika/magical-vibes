@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamage
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
@@ -66,6 +67,8 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
                 (gd, entry, effect) -> resolveGainControlOfEnchantedTarget(gd, entry));
         registry.register(GainControlOfTargetCreatureUntilEndOfTurnEffect.class,
                 (gd, entry, effect) -> resolveGainControlOfTargetCreatureUntilEndOfTurn(gd, entry));
+        registry.register(TargetPlayerGainsControlOfSourceCreatureEffect.class,
+                (gd, entry, effect) -> resolveTargetPlayerGainsControlOfSourceCreature(gd, entry));
     }
 
     private void resolveCreateCreatureToken(GameData gameData, UUID controllerId, CreateCreatureTokenEffect token) {
@@ -315,6 +318,37 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
 
         gameHelper.stealCreature(gameData, entry.getControllerId(), target);
         gameData.untilEndOfTurnStolenCreatures.add(target.getId());
+    }
+
+    private void resolveTargetPlayerGainsControlOfSourceCreature(GameData gameData, StackEntry entry) {
+        if (entry.getTargetPermanentId() == null || !gameData.playerIds.contains(entry.getTargetPermanentId())) {
+            return;
+        }
+
+        UUID newControllerId = entry.getTargetPermanentId();
+        Permanent source = null;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getId().equals(entry.getCard().getId())) {
+                    source = permanent;
+                    break;
+                }
+            }
+            if (source != null) {
+                break;
+            }
+        }
+
+        if (source == null) {
+            String fizzleLog = entry.getCard().getName() + "'s ability has no effect (it is no longer on the battlefield).";
+            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+            return;
+        }
+
+        gameHelper.stealCreature(gameData, newControllerId, source);
+        gameData.permanentControlStolenCreatures.add(source.getId());
     }
 
     private UUID findControllerId(GameData gameData, Permanent permanent) {

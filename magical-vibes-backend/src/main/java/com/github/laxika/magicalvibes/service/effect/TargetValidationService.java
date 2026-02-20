@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
@@ -115,6 +116,10 @@ public class TargetValidationService {
         });
 
         registry.register(SacrificeCreatureEffect.class, (ctx, effect) -> {
+            requireTargetPlayer(ctx);
+        });
+
+        registry.register(TargetPlayerGainsControlOfSourceCreatureEffect.class, (ctx, effect) -> {
             requireTargetPlayer(ctx);
         });
 

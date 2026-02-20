@@ -56,6 +56,11 @@ public class ExampleCard extends Card {
   - add ETB effect + ability containing cost-like effect first, then outcome effect
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SiegeGangCommander.java`
 
+- ETB target-opponent control handoff:
+  - `setNeedsTarget(true)` + `setTargetFilter(new OpponentPlayerTargetFilter())`
+  - `addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TargetPlayerGainsControlOfSourceCreatureEffect())`
+  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SleeperAgent.java`
+
 - Composition before custom effect:
   - combine multiple existing effects in one ability/spell
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/o/OrcishArtillery.java`
