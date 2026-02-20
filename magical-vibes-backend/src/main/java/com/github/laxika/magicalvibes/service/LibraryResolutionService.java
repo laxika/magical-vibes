@@ -213,6 +213,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
 
         gameData.awaitingLibraryReorderPlayerId = controllerId;
         gameData.awaitingLibraryReorderCards = topCards;
+        gameData.awaitingLibraryReorderToBottom = false;
         gameData.awaitingInput = AwaitingInput.LIBRARY_REORDER;
 
         List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();

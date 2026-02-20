@@ -72,6 +72,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
             tokenCard.setName(token.tokenName());
             tokenCard.setType(CardType.CREATURE);
             tokenCard.setManaCost("");
+            tokenCard.setToken(true);
             tokenCard.setColor(token.color());
             tokenCard.setPower(token.power());
             tokenCard.setToughness(token.toughness());
@@ -103,6 +104,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         tokenCard.setName(token.tokenName());
         tokenCard.setType(CardType.CREATURE);
         tokenCard.setManaCost("");
+        tokenCard.setToken(true);
         tokenCard.setColor(token.primaryColor());
         tokenCard.setPower(token.power());
         tokenCard.setToughness(token.toughness());

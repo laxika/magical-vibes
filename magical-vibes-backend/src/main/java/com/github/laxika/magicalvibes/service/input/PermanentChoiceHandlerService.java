@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
@@ -268,21 +270,47 @@ public class PermanentChoiceHandlerService {
             Card auraCard = gameData.pendingAuraCard;
             gameData.pendingAuraCard = null;
 
-            Permanent creatureTarget = gameQueryService.findPermanentById(gameData, permanentId);
-            if (creatureTarget == null) {
-                throw new IllegalStateException("Target creature no longer exists");
+            Permanent enchantTarget = gameQueryService.findPermanentById(gameData, permanentId);
+            if (enchantTarget == null) {
+                throw new IllegalStateException("Target permanent no longer exists");
             }
 
-            // Create Aura permanent attached to the creature, under controller's control
-            Permanent auraPerm = new Permanent(auraCard);
-            auraPerm.setAttachedTo(creatureTarget.getId());
-            gameData.playerBattlefields.get(playerId).add(auraPerm);
+            if (gameData.pendingWarpWorldSourceName != null) {
+                gameData.pendingWarpWorldEnchantmentPlacements.add(
+                        new com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement(playerId, auraCard, enchantTarget.getId())
+                );
 
-            String playerName = gameData.playerIdToName.get(playerId);
-            String logEntry = auraCard.getName() + " enters the battlefield from graveyard attached to " + creatureTarget.getCard().getName() + " under " + playerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} returned {} from graveyard to battlefield attached to {}",
-                    gameData.id, playerName, auraCard.getName(), creatureTarget.getCard().getName());
+                if (!gameData.pendingWarpWorldAuraChoices.isEmpty()) {
+                    gameHelper.beginNextPendingWarpWorldAuraChoice(gameData);
+                    return;
+                }
+                gameHelper.placePendingWarpWorldEnchantments(gameData);
+                if (!gameData.pendingLibraryBottomReorders.isEmpty()) {
+                    gameHelper.beginNextPendingLibraryBottomReorder(gameData);
+                    return;
+                }
+                gameHelper.finalizePendingWarpWorld(gameData);
+                if (gameData.awaitingInput != null) {
+                    return;
+                }
+            } else {
+                // Create Aura permanent attached to the chosen permanent, under controller's control
+                Permanent auraPerm = new Permanent(auraCard);
+                auraPerm.setAttachedTo(enchantTarget.getId());
+                gameData.playerBattlefields.get(playerId).add(auraPerm);
+
+                boolean hasControlEffect = auraCard.getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
+                if (hasControlEffect) {
+                    gameHelper.stealCreature(gameData, playerId, enchantTarget);
+                }
+
+                String playerName = gameData.playerIdToName.get(playerId);
+                String logEntry = auraCard.getName() + " enters the battlefield attached to " + enchantTarget.getCard().getName() + " under " + playerName + "'s control.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} puts {} onto battlefield attached to {}",
+                        gameData.id, playerName, auraCard.getName(), enchantTarget.getCard().getName());
+            }
 
             turnProgressionService.resolveAutoPass(gameData);
         } else {

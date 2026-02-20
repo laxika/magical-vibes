@@ -49,6 +49,7 @@ public class Card {
     @Setter private String setCode;
     @Setter private String collectorNumber;
     @Setter private boolean shufflesIntoLibraryFromGraveyard;
+    @Setter private boolean token;
 
     private Map<EffectSlot, List<CardEffect>> effects = new EnumMap<>(EffectSlot.class);
     private List<ActivatedAbility> activatedAbilities = new ArrayList<>();

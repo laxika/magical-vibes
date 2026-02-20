@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.effect.CreatureModResolutionService;
+import com.github.laxika.magicalvibes.service.effect.CardSpecificResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EquipResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
 import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
@@ -120,6 +121,7 @@ public class GameTestHarness {
                 new PermanentControlResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),
                 new TurnResolutionService(gameHelper, combatService, gameBroadcastService),
                 new EquipResolutionService(gameQueryService, gameBroadcastService),
+                new CardSpecificResolutionService(gameHelper, gameQueryService),
                 new WinConditionResolutionService(gameHelper, gameBroadcastService)
         );
         EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper, providers);

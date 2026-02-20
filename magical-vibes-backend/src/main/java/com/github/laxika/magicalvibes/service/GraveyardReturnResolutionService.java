@@ -276,6 +276,7 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
             tokenCard.setName("Zombie");
             tokenCard.setType(CardType.CREATURE);
             tokenCard.setManaCost("");
+            tokenCard.setToken(true);
             tokenCard.setColor(CardColor.BLACK);
             tokenCard.setPower(2);
             tokenCard.setToughness(2);

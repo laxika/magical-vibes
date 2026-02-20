@@ -87,6 +87,7 @@ public class GameData {
     public UUID pendingCombatDamageBounceTargetPlayerId;
     public UUID awaitingLibraryReorderPlayerId;
     public List<Card> awaitingLibraryReorderCards;
+    public boolean awaitingLibraryReorderToBottom;
     public UUID awaitingLibrarySearchPlayerId;
     public List<Card> awaitingLibrarySearchCards;
     public boolean awaitingLibrarySearchReveals;
@@ -117,6 +118,12 @@ public class GameData {
     public int additionalCombatMainPhasePairs;
     public int lastBroadcastedLogSize = 0;
     public UUID draftId;
+    public final Deque<LibraryBottomReorderRequest> pendingLibraryBottomReorders = new ArrayDeque<>();
+    public final Deque<WarpWorldAuraChoiceRequest> pendingWarpWorldAuraChoices = new ArrayDeque<>();
+    public final List<WarpWorldEnchantmentPlacement> pendingWarpWorldEnchantmentPlacements = Collections.synchronizedList(new ArrayList<>());
+    public final Map<UUID, List<Card>> pendingWarpWorldCreaturesByPlayer = new ConcurrentHashMap<>();
+    public boolean pendingWarpWorldNeedsLegendChecks;
+    public String pendingWarpWorldSourceName;
 
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {
         this.id = id;

@@ -157,8 +157,11 @@ public class ReconnectionService {
             case LIBRARY_REORDER -> {
                 if (playerId.equals(gameData.awaitingLibraryReorderPlayerId) && gameData.awaitingLibraryReorderCards != null) {
                     List<CardView> cardViews = gameData.awaitingLibraryReorderCards.stream().map(cardViewFactory::create).toList();
+                    String prompt = gameData.awaitingLibraryReorderToBottom
+                            ? "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."
+                            : "Put these cards back on top of your library in any order (top to bottom).";
                     sessionManager.sendToPlayer(playerId, new ReorderLibraryCardsMessage(
-                            cardViews, "Put these cards back on top of your library in any order (top to bottom)."));
+                            cardViews, prompt));
                 }
             }
             case LIBRARY_SEARCH -> {

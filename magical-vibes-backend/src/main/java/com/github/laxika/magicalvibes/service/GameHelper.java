@@ -2,8 +2,13 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
+import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
+import com.github.laxika.magicalvibes.model.WarpWorldAuraChoiceRequest;
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
+import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -30,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicat
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeOnColorSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
@@ -228,6 +234,104 @@ public class GameHelper {
             log.info("Game {} - {} death trigger awaiting target selection", gameData.id, pending.dyingCard().getName());
             return;
         }
+    }
+
+    public void beginNextPendingLibraryBottomReorder(GameData gameData) {
+        LibraryBottomReorderRequest request = gameData.pendingLibraryBottomReorders.pollFirst();
+        if (request == null) {
+            return;
+        }
+
+        UUID playerId = request.playerId();
+        List<Card> cards = request.cards();
+        if (cards == null || cards.size() <= 1) {
+            if (cards != null && cards.size() == 1) {
+                gameData.playerDecks.get(playerId).add(cards.getFirst());
+            }
+            beginNextPendingLibraryBottomReorder(gameData);
+            return;
+        }
+
+        gameData.awaitingInput = AwaitingInput.LIBRARY_REORDER;
+        gameData.awaitingLibraryReorderPlayerId = playerId;
+        gameData.awaitingLibraryReorderCards = cards;
+        gameData.awaitingLibraryReorderToBottom = true;
+
+        List<CardView> cardViews = cards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(playerId, new ReorderLibraryCardsMessage(
+                cardViews,
+                "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."
+        ));
+
+        String logMsg = gameData.playerIdToName.get(playerId) + " orders cards for the bottom of their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+    }
+
+    public void beginNextPendingWarpWorldAuraChoice(GameData gameData) {
+        WarpWorldAuraChoiceRequest request = gameData.pendingWarpWorldAuraChoices.pollFirst();
+        if (request == null) {
+            return;
+        }
+
+        gameData.pendingAuraCard = request.auraCard();
+        playerInputService.beginPermanentChoice(
+                gameData,
+                request.controllerId(),
+                request.validTargetIds(),
+                "Choose a permanent for " + request.auraCard().getName() + " to enchant."
+        );
+    }
+
+    public void placePendingWarpWorldEnchantments(GameData gameData) {
+        for (WarpWorldEnchantmentPlacement placement : gameData.pendingWarpWorldEnchantmentPlacements) {
+            UUID controllerId = placement.controllerId();
+            Card card = placement.card();
+            Permanent permanent = new Permanent(card);
+            if (placement.attachmentTargetId() != null) {
+                permanent.setAttachedTo(placement.attachmentTargetId());
+            }
+            gameData.playerBattlefields.get(controllerId).add(permanent);
+
+            if (placement.attachmentTargetId() != null) {
+                boolean hasControlEffect = card.getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
+                if (hasControlEffect) {
+                    Permanent target = gameQueryService.findPermanentById(gameData, placement.attachmentTargetId());
+                    if (target != null) {
+                        stealCreature(gameData, controllerId, target);
+                    }
+                }
+            }
+        }
+        gameData.pendingWarpWorldEnchantmentPlacements.clear();
+    }
+
+    public void finalizePendingWarpWorld(GameData gameData) {
+        if (gameData.pendingWarpWorldSourceName == null) {
+            return;
+        }
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> creatures = gameData.pendingWarpWorldCreaturesByPlayer.getOrDefault(playerId, List.of());
+            for (Card card : creatures) {
+                processCreatureETBEffects(gameData, playerId, card, null);
+            }
+        }
+
+        if (gameData.awaitingInput == null && gameData.pendingWarpWorldNeedsLegendChecks) {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                checkLegendRule(gameData, playerId);
+            }
+        }
+
+        gameBroadcastService.logAndBroadcast(gameData,
+                gameData.pendingWarpWorldSourceName + " shuffles all permanents into libraries and warps the world.");
+
+        gameData.pendingWarpWorldCreaturesByPlayer.clear();
+        gameData.pendingWarpWorldAuraChoices.clear();
+        gameData.pendingWarpWorldEnchantmentPlacements.clear();
+        gameData.pendingWarpWorldNeedsLegendChecks = false;
+        gameData.pendingWarpWorldSourceName = null;
     }
 
     boolean checkWinCondition(GameData gameData) {

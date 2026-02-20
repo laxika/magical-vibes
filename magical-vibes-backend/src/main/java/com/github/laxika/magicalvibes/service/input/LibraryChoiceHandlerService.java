@@ -65,18 +65,38 @@ public class LibraryChoiceHandlerService {
 
         // Apply the reorder: replace top N cards of deck with the reordered ones
         List<Card> deck = gameData.playerDecks.get(player.getId());
-        for (int i = 0; i < count; i++) {
-            deck.set(i, reorderCards.get(cardOrder.get(i)));
+
+        if (gameData.awaitingLibraryReorderToBottom) {
+            for (int i = 0; i < count; i++) {
+                deck.add(reorderCards.get(cardOrder.get(i)));
+            }
+        } else {
+            for (int i = 0; i < count; i++) {
+                deck.set(i, reorderCards.get(cardOrder.get(i)));
+            }
         }
 
         // Clear awaiting state
         gameData.awaitingInput = null;
         gameData.awaitingLibraryReorderPlayerId = null;
         gameData.awaitingLibraryReorderCards = null;
+        boolean reorderedToBottom = gameData.awaitingLibraryReorderToBottom;
+        gameData.awaitingLibraryReorderToBottom = false;
 
-        String logMsg = player.getUsername() + " puts " + count + " cards back on top of their library.";
+        String logMsg = reorderedToBottom
+                ? player.getUsername() + " puts " + count + " cards on the bottom of their library."
+                : player.getUsername() + " puts " + count + " cards back on top of their library.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
-        log.info("Game {} - {} reordered top {} cards", gameData.id, player.getUsername(), count);
+        log.info("Game {} - {} reordered {} {} cards", gameData.id, player.getUsername(), count,
+                reorderedToBottom ? "bottom" : "top");
+
+        if (reorderedToBottom && !gameData.pendingLibraryBottomReorders.isEmpty()) {
+            gameHelper.beginNextPendingLibraryBottomReorder(gameData);
+            return;
+        }
+        if (reorderedToBottom && gameData.pendingWarpWorldSourceName != null) {
+            gameHelper.finalizePendingWarpWorld(gameData);
+        }
 
         turnProgressionService.resolveAutoPass(gameData);
     }

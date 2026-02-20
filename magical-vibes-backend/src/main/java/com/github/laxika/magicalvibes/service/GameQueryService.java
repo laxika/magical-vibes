@@ -284,7 +284,7 @@ public class GameQueryService {
         return true;
     }
 
-    void validateTargetFilter(TargetFilter filter, Permanent target) {
+    public void validateTargetFilter(TargetFilter filter, Permanent target) {
         if (filter instanceof MaxPowerTargetFilter f) {
             if (target.getEffectivePower() > f.maxPower()) {
                 throw new IllegalStateException("Target creature's power must be " + f.maxPower() + " or less");
