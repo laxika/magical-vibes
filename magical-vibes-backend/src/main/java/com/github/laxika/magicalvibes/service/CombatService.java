@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BlockOnlyFlyersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsLandTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedBySubtypeEffect;
@@ -830,7 +831,7 @@ public class CombatService {
             // Stolen creatures go to their owner's graveyard
             UUID atkGraveyardOwner = gameData.stolenCreatures.getOrDefault(dead.getId(), activeId);
             gameData.stolenCreatures.remove(dead.getId());
-            gameHelper.addCardToGraveyard(gameData, atkGraveyardOwner, dead.getOriginalCard());
+            gameHelper.addCardToGraveyard(gameData, atkGraveyardOwner, dead.getOriginalCard(), Zone.BATTLEFIELD);
             gameHelper.collectDeathTrigger(gameData, dead.getCard(), activeId, true);
             gameHelper.checkAllyCreatureDeathTriggers(gameData, activeId);
             atkBf.remove(idx);
@@ -841,7 +842,7 @@ public class CombatService {
             // Stolen creatures go to their owner's graveyard
             UUID defGraveyardOwner = gameData.stolenCreatures.getOrDefault(dead.getId(), defenderId);
             gameData.stolenCreatures.remove(dead.getId());
-            gameHelper.addCardToGraveyard(gameData, defGraveyardOwner, dead.getOriginalCard());
+            gameHelper.addCardToGraveyard(gameData, defGraveyardOwner, dead.getOriginalCard(), Zone.BATTLEFIELD);
             gameHelper.collectDeathTrigger(gameData, dead.getCard(), defenderId, true);
             gameHelper.checkAllyCreatureDeathTriggers(gameData, defenderId);
             defBf.remove(idx);
@@ -1185,7 +1186,7 @@ public class CombatService {
                 for (Permanent perm : toSacrifice) {
                     boolean wasCreature = gameQueryService.isCreature(gameData, perm);
                     battlefield.remove(perm);
-                    gameHelper.addCardToGraveyard(gameData, playerId, perm.getOriginalCard());
+                    gameHelper.addCardToGraveyard(gameData, playerId, perm.getOriginalCard(), Zone.BATTLEFIELD);
                     gameHelper.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature);
                     if (wasCreature) {
                         gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);

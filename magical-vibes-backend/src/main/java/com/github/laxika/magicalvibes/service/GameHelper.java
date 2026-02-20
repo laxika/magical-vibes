@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
 import com.github.laxika.magicalvibes.model.WarpWorldAuraChoiceRequest;
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
@@ -48,6 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
@@ -92,6 +94,10 @@ public class GameHelper {
     // ===== Lifecycle methods =====
 
     public void addCardToGraveyard(GameData gameData, UUID ownerId, Card card) {
+        addCardToGraveyard(gameData, ownerId, card, null);
+    }
+
+    public void addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
         if (card.isShufflesIntoLibraryFromGraveyard()) {
             List<Card> deck = gameData.playerDecks.get(ownerId);
             deck.add(card);
@@ -99,8 +105,10 @@ public class GameHelper {
             String shuffleLog = card.getName() + " is revealed and shuffled into its owner's library instead.";
             gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
             log.info("Game {} - {} replacement effect: shuffled into library instead of graveyard", gameData.id, card.getName());
+            updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
         } else {
             gameData.playerGraveyards.get(ownerId).add(card);
+            updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone);
         }
     }
 
@@ -110,7 +118,7 @@ public class GameHelper {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
                 UUID graveyardOwnerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
-                addCardToGraveyard(gameData, graveyardOwnerId, target.getOriginalCard());
+                addCardToGraveyard(gameData, graveyardOwnerId, target.getOriginalCard(), Zone.BATTLEFIELD);
                 gameData.stolenCreatures.remove(target.getId());
                 collectDeathTrigger(gameData, target.getCard(), playerId, wasCreature);
                 if (wasCreature) {
@@ -144,8 +152,24 @@ public class GameHelper {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
             if (graveyard.removeIf(c -> c.getId().equals(cardId))) {
+                Set<UUID> tracked = gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.get(playerId);
+                if (tracked != null) {
+                    tracked.remove(cardId);
+                }
                 return;
             }
+        }
+    }
+
+    private void updateThisTurnBattlefieldToGraveyardTracking(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
+        Set<UUID> tracked = gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn
+                .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet());
+        if (sourceZone == Zone.BATTLEFIELD
+                && !card.isToken()
+                && (card.getType() == CardType.CREATURE || card.getAdditionalTypes().contains(CardType.CREATURE))) {
+            tracked.add(card.getId());
+        } else {
+            tracked.remove(card.getId());
         }
     }
 

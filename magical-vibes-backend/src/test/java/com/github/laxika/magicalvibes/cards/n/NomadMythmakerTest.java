@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TargetZone;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
@@ -104,7 +104,7 @@ class NomadMythmakerTest {
         addCreatureReady(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player1, 0, null, holyStrength.getId(), TargetZone.GRAVEYARD);
+        harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -112,7 +112,7 @@ class NomadMythmakerTest {
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Nomad Mythmaker");
         assertThat(entry.getTargetPermanentId()).isEqualTo(holyStrength.getId());
-        assertThat(entry.getTargetZone()).isEqualTo(TargetZone.GRAVEYARD);
+        assertThat(entry.getTargetZone()).isEqualTo(Zone.GRAVEYARD);
     }
 
     @Test
@@ -124,7 +124,7 @@ class NomadMythmakerTest {
         addCreatureReady(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player1, 0, null, holyStrength.getId(), TargetZone.GRAVEYARD);
+        harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
 
         assertThat(mythmakerPerm.isTapped()).isTrue();
     }
@@ -138,7 +138,7 @@ class NomadMythmakerTest {
         addCreatureReady(player1);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.activateAbility(player1, 0, null, holyStrength.getId(), TargetZone.GRAVEYARD);
+        harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
@@ -155,7 +155,7 @@ class NomadMythmakerTest {
         Permanent creature = addCreatureReady(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player1, 0, null, holyStrength.getId(), TargetZone.GRAVEYARD);
+        harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -180,7 +180,7 @@ class NomadMythmakerTest {
         Permanent creature = addCreatureReady(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player1, 0, null, holyStrength.getId(), TargetZone.GRAVEYARD);
+        harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
         // Choose the creature
@@ -209,7 +209,7 @@ class NomadMythmakerTest {
         Permanent creature = addCreatureReady(player1); // GrizzlyBears 2/2
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player1, 0, null, holyStrength.getId(), TargetZone.GRAVEYARD);
+        harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, creature.getId());
 
@@ -229,7 +229,7 @@ class NomadMythmakerTest {
         Permanent creature = addCreatureReady(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player1, 0, null, pacifism.getId(), TargetZone.GRAVEYARD);
+        harness.activateAbility(player1, 0, null, pacifism.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, creature.getId());
 
@@ -253,7 +253,7 @@ class NomadMythmakerTest {
         Permanent creature2 = addCreatureReady(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player1, 0, null, holyStrength.getId(), TargetZone.GRAVEYARD);
+        harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -272,7 +272,7 @@ class NomadMythmakerTest {
         addCreatureReady(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player1, 0, null, holyStrength.getId(), TargetZone.GRAVEYARD);
+        harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
 
         // Remove the Aura from graveyard before resolution
         harness.getGameData().playerGraveyards.get(player1.getId()).clear();
@@ -294,7 +294,7 @@ class NomadMythmakerTest {
         // Only creature is the Mythmaker itself — remove it before resolution
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player1, 0, null, holyStrength.getId(), TargetZone.GRAVEYARD);
+        harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
 
         // Remove all creatures before resolution
         harness.getGameData().playerBattlefields.get(player1.getId()).clear();
@@ -315,7 +315,7 @@ class NomadMythmakerTest {
         addMythmakerReady(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null, TargetZone.GRAVEYARD))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null, Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("target");
     }
@@ -341,7 +341,7 @@ class NomadMythmakerTest {
         addToGraveyard(player1, bears);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId(), TargetZone.GRAVEYARD))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Aura");
     }
@@ -355,7 +355,7 @@ class NomadMythmakerTest {
         addToGraveyard(player1, holyStrength);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, holyStrength.getId(), TargetZone.GRAVEYARD))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
@@ -371,7 +371,7 @@ class NomadMythmakerTest {
         addToGraveyard(player1, holyStrength);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, holyStrength.getId(), TargetZone.GRAVEYARD))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sickness");
     }
@@ -384,7 +384,7 @@ class NomadMythmakerTest {
         addToGraveyard(player1, holyStrength);
         // No mana added
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, holyStrength.getId(), TargetZone.GRAVEYARD))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
@@ -398,7 +398,7 @@ class NomadMythmakerTest {
         addCreatureReady(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player1, 0, null, holyStrength.getId(), TargetZone.GRAVEYARD);
+        harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
         // Try to choose a non-existent permanent
@@ -416,7 +416,7 @@ class NomadMythmakerTest {
         Permanent creature = addCreatureReady(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player1, 0, null, holyStrength.getId(), TargetZone.GRAVEYARD);
+        harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player2, creature.getId()))

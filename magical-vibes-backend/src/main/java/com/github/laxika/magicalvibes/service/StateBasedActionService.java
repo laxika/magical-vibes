@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,7 @@ public class StateBasedActionService {
                     it.remove();
                     UUID graveyardOwnerId = gameData.stolenCreatures.getOrDefault(p.getId(), playerId);
                     gameData.stolenCreatures.remove(p.getId());
-                    gameHelper.addCardToGraveyard(gameData, graveyardOwnerId, p.getOriginalCard());
+                    gameHelper.addCardToGraveyard(gameData, graveyardOwnerId, p.getOriginalCard(), Zone.BATTLEFIELD);
                     gameHelper.collectDeathTrigger(gameData, p.getCard(), playerId, true);
                     gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
                     String logEntry = p.getCard().getName() + " is put into the graveyard (0 toughness).";
@@ -41,7 +42,7 @@ public class StateBasedActionService {
                     anyDied = true;
                 } else if (p.getCard().getType() == CardType.PLANESWALKER && p.getLoyaltyCounters() <= 0) {
                     it.remove();
-                    gameHelper.addCardToGraveyard(gameData, playerId, p.getOriginalCard());
+                    gameHelper.addCardToGraveyard(gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD);
                     String logEntry = p.getCard().getName() + " has no loyalty counters and is put into the graveyard.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} dies to state-based actions (0 loyalty)", gameData.id, p.getCard().getName());

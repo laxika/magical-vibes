@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesAndPlayersEffect;
@@ -288,7 +289,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
                 Permanent dead = battlefield.get(idx);
                 String logEntry = playerName + "'s " + dead.getCard().getName() + " is destroyed by " + cardName + ".";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                gameHelper.addCardToGraveyard(gameData, playerId, dead.getOriginalCard());
+                gameHelper.addCardToGraveyard(gameData, playerId, dead.getOriginalCard(), Zone.BATTLEFIELD);
                 gameHelper.collectDeathTrigger(gameData, dead.getCard(), playerId, true);
                 gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
                 battlefield.remove(idx);
@@ -335,7 +336,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
                 Permanent dead = battlefield.get(idx);
                 String logEntry = playerName + "'s " + dead.getCard().getName() + " is destroyed by " + cardName + ".";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                gameHelper.addCardToGraveyard(gameData, playerId, dead.getOriginalCard());
+                gameHelper.addCardToGraveyard(gameData, playerId, dead.getOriginalCard(), Zone.BATTLEFIELD);
                 gameHelper.collectDeathTrigger(gameData, dead.getCard(), playerId, true);
                 gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
                 battlefield.remove(idx);
@@ -397,7 +398,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
                 Permanent dead = battlefield.get(idx);
                 String logEntry = playerName + "'s " + dead.getCard().getName() + " is destroyed by Hurricane.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                gameHelper.addCardToGraveyard(gameData, playerId, dead.getOriginalCard());
+                gameHelper.addCardToGraveyard(gameData, playerId, dead.getOriginalCard(), Zone.BATTLEFIELD);
                 gameHelper.collectDeathTrigger(gameData, dead.getCard(), playerId, true);
                 gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
                 battlefield.remove(idx);

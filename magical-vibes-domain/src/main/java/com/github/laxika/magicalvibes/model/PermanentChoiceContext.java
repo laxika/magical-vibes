@@ -24,7 +24,7 @@ public sealed interface PermanentChoiceContext {
                                             Integer abilityIndex,
                                             Integer xValue,
                                             UUID targetPermanentId,
-                                            TargetZone targetZone,
+                                            Zone targetZone,
                                             CardSubtype subtype) implements PermanentChoiceContext {}
 
     record DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}

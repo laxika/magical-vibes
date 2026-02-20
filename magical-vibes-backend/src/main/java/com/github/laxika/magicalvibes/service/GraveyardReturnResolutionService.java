@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBatt
 import com.github.laxika.magicalvibes.model.effect.ReturnCardOfSubtypeFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +54,8 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveReturnCardFromGraveyardToZone(gd, entry, CardType.CREATURE,
                         GraveyardChoiceDestination.HAND,
                         "You may return a creature card from your graveyard to your hand."));
+        registry.register(ReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHandEffect.class,
+                (gd, entry, effect) -> resolveReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHand(gd, entry));
         registry.register(ReturnSelfFromGraveyardToHandEffect.class,
                 (gd, entry, effect) -> resolveReturnSelfFromGraveyardToHand(gd, entry));
         registry.register(ReturnCardOfSubtypeFromGraveyardToHandEffect.class,
@@ -175,6 +178,48 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
         String logEntry = playerName + " returns " + sourceCard.getName() + " from graveyard to hand.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} returns {} from graveyard to hand", gameData.id, playerName, sourceCard.getName());
+    }
+
+    void resolveReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHand(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        Set<UUID> trackedIds = gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.getOrDefault(controllerId, Set.of());
+
+        if (graveyard == null || graveyard.isEmpty() || trackedIds.isEmpty()) {
+            String logEntry = entry.getDescription() + " - no creature cards were put into your graveyard from the battlefield this turn.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        List<Card> toReturn = new ArrayList<>();
+        for (Card card : graveyard) {
+            boolean isCreatureCard = card.getType() == CardType.CREATURE || card.getAdditionalTypes().contains(CardType.CREATURE);
+            if (!card.isToken() && isCreatureCard && trackedIds.contains(card.getId())) {
+                toReturn.add(card);
+            }
+        }
+
+        if (toReturn.isEmpty()) {
+            String logEntry = entry.getDescription() + " - no creature cards were put into your graveyard from the battlefield this turn.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        List<String> returnedNames = new ArrayList<>();
+        for (Card card : toReturn) {
+            graveyard.remove(card);
+            hand.add(card);
+            returnedNames.add(card.getName());
+            trackedIds.remove(card.getId());
+        }
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String logEntry = playerName + " returns " + String.join(", ", returnedNames)
+                + " from graveyard to hand.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} returns {} creature card(s) from graveyard to hand",
+                gameData.id, playerName, returnedNames.size());
     }
 
     void resolveReturnArtifactOrCreatureFromAnyGraveyardToBattlefield(GameData gameData, StackEntry entry) {

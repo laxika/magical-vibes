@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TargetZone;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -55,7 +55,7 @@ public class ActivatedAbilityExecutionService {
                                              List<CardEffect> abilityEffects,
                                              int effectiveXValue,
                                              UUID targetPermanentId,
-                                             TargetZone targetZone,
+                                             Zone targetZone,
                                              boolean markAsNonTargetingForSacCreatureCost) {
         UUID playerId = player.getId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -81,7 +81,7 @@ public class ActivatedAbilityExecutionService {
         if (shouldSacrifice) {
             boolean wasCreature = gameQueryService.isCreature(gameData, permanent);
             battlefield.remove(permanent);
-            gameHelper.addCardToGraveyard(gameData, playerId, permanent.getCard());
+            gameHelper.addCardToGraveyard(gameData, playerId, permanent.getCard(), Zone.BATTLEFIELD);
             gameHelper.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature);
             if (wasCreature) {
                 gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
@@ -168,12 +168,12 @@ public class ActivatedAbilityExecutionService {
                                     List<CardEffect> snapshotEffects,
                                     int effectiveXValue,
                                     UUID effectiveTargetId,
-                                    TargetZone targetZone) {
-        TargetZone effectiveTargetZone = targetZone;
+                                    Zone targetZone) {
+        Zone effectiveTargetZone = targetZone;
         if (ability.isNeedsSpellTarget()) {
-            effectiveTargetZone = TargetZone.STACK;
+            effectiveTargetZone = Zone.STACK;
         }
-        if (effectiveTargetZone != null && effectiveTargetZone != TargetZone.BATTLEFIELD) {
+        if (effectiveTargetZone != null && effectiveTargetZone != Zone.BATTLEFIELD) {
             gameData.stack.add(new StackEntry(
                     StackEntryType.ACTIVATED_ABILITY,
                     permanent.getCard(),
@@ -203,3 +203,4 @@ public class ActivatedAbilityExecutionService {
         gameBroadcastService.broadcastGameState(gameData);
     }
 }
+

@@ -20,7 +20,7 @@ public class StackEntry {
     @Setter private UUID targetPermanentId;
     private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
-    private final TargetZone targetZone;
+    private final Zone targetZone;
     private final List<UUID> targetCardIds;
     @Setter private boolean copy;
     @Setter private boolean nonTargeting;
@@ -107,7 +107,7 @@ public class StackEntry {
     }
 
     // Zone-aware targeted ability constructor (e.g. target a card in graveyard)
-    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, UUID targetPermanentId, TargetZone targetZone) {
+    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, UUID targetPermanentId, Zone targetZone) {
         this.entryType = entryType;
         this.card = card;
         this.controllerId = controllerId;
@@ -122,11 +122,11 @@ public class StackEntry {
         this.targetPermanentIds = List.of();
     }
 
-    // Spell copy constructor — preserves all fields from the original stack entry
+    // Spell copy constructor - preserves all fields from the original stack entry
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description,
                       List<CardEffect> effectsToResolve, int xValue, UUID targetPermanentId,
                       UUID sourcePermanentId, Map<UUID, Integer> damageAssignments,
-                      TargetZone targetZone, List<UUID> targetCardIds, List<UUID> targetPermanentIds) {
+                      Zone targetZone, List<UUID> targetCardIds, List<UUID> targetPermanentIds) {
         this.entryType = entryType;
         this.card = card;
         this.controllerId = controllerId;

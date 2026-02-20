@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.TargetZone;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
@@ -65,12 +65,12 @@ public class TargetRedirectionResolutionService implements EffectHandlerProvider
         UUID currentTargetId = targetSpell.getTargetPermanentId();
         List<UUID> candidates = new ArrayList<>();
 
-        if (targetSpell.getTargetZone() == TargetZone.STACK) {
+        if (targetSpell.getTargetZone() == Zone.STACK) {
             for (StackEntry se : gameData.stack) {
                 if (se.getCard().getId().equals(targetSpell.getCard().getId())) continue;
                 candidates.add(se.getCard().getId());
             }
-        } else if (targetSpell.getTargetZone() == TargetZone.GRAVEYARD) {
+        } else if (targetSpell.getTargetZone() == Zone.GRAVEYARD) {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 gameData.playerGraveyards.getOrDefault(playerId, List.of())
                         .forEach(card -> candidates.add(card.getId()));
@@ -105,11 +105,11 @@ public class TargetRedirectionResolutionService implements EffectHandlerProvider
                 return true;
             }
 
-            if (targetSpell.getTargetZone() == TargetZone.GRAVEYARD) {
+            if (targetSpell.getTargetZone() == Zone.GRAVEYARD) {
                 if (gameQueryService.findCardInGraveyardById(gameData, candidateTargetId) == null) {
                     return false;
                 }
-                targetLegalityService.validateEffectTargetInZone(gameData, spellCard, candidateTargetId, TargetZone.GRAVEYARD);
+                targetLegalityService.validateEffectTargetInZone(gameData, spellCard, candidateTargetId, Zone.GRAVEYARD);
                 return true;
             }
 

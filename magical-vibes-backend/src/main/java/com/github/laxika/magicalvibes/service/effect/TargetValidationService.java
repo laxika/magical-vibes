@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TargetZone;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureEffect;
@@ -132,7 +132,7 @@ public class TargetValidationService {
         });
 
         registry.register(ReturnAuraFromGraveyardToBattlefieldEffect.class, (ctx, effect) -> {
-            if (ctx.targetZone() != TargetZone.GRAVEYARD) {
+            if (ctx.targetZone() != Zone.GRAVEYARD) {
                 throw new IllegalStateException("Ability requires a graveyard target");
             }
             if (ctx.targetPermanentId() == null) {
@@ -263,4 +263,5 @@ public class TargetValidationService {
         return -1;
     }
 }
+
 

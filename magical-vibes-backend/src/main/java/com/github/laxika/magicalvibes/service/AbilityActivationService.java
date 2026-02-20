@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TargetZone;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -126,7 +126,7 @@ public class AbilityActivationService {
         // Sacrifice: remove from battlefield, add to graveyard
         boolean wasCreature = gameQueryService.isCreature(gameData, permanent);
         battlefield.remove(permanentIndex);
-        gameHelper.addCardToGraveyard(gameData, playerId, permanent.getOriginalCard());
+        gameHelper.addCardToGraveyard(gameData, playerId, permanent.getOriginalCard(), Zone.BATTLEFIELD);
         gameHelper.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature);
         if (wasCreature) {
             gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
@@ -156,7 +156,7 @@ public class AbilityActivationService {
         gameBroadcastService.broadcastGameState(gameData);
     }
 
-    public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetPermanentId, TargetZone targetZone) {
+    public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetPermanentId, Zone targetZone) {
         activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetPermanentId, targetZone, null);
     }
 
@@ -199,7 +199,7 @@ public class AbilityActivationService {
     }
 
     private void activateAbilityInternal(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue,
-                                         UUID targetPermanentId, TargetZone targetZone, Integer discardCardIndex) {
+                                         UUID targetPermanentId, Zone targetZone, Integer discardCardIndex) {
         int effectiveXValue = xValue != null ? xValue : 0;
 
         UUID playerId = player.getId();
@@ -317,7 +317,7 @@ public class AbilityActivationService {
 
             // Sacrifice the creature as cost
             playerBf.remove(sacTarget);
-            gameHelper.addCardToGraveyard(gameData, playerId, sacTarget.getCard());
+            gameHelper.addCardToGraveyard(gameData, playerId, sacTarget.getCard(), Zone.BATTLEFIELD);
             gameHelper.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true);
             gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
 
@@ -393,7 +393,7 @@ public class AbilityActivationService {
                                                         int abilityIndex,
                                                         int xValue,
                                                         UUID targetPermanentId,
-                                                        TargetZone targetZone,
+                                                        Zone targetZone,
                                                         SacrificeSubtypeCreatureCost subtypeCost) {
         UUID playerId = player.getId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -449,7 +449,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("Must sacrifice a creature you control");
         }
         playerBf.remove(sacTarget);
-        gameHelper.addCardToGraveyard(gameData, playerId, sacTarget.getCard());
+        gameHelper.addCardToGraveyard(gameData, playerId, sacTarget.getCard(), Zone.BATTLEFIELD);
         gameHelper.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true);
         gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
         String sacLog = player.getUsername() + " sacrifices " + sacTarget.getCard().getName() + ".";
@@ -538,7 +538,7 @@ public class AbilityActivationService {
     }
 
     private void beginDiscardCostChoice(GameData gameData, UUID playerId, Permanent permanent, int abilityIndex, int xValue,
-                                        UUID targetPermanentId, TargetZone targetZone, CardType requiredType, List<Integer> validDiscardIndices) {
+                                        UUID targetPermanentId, Zone targetZone, CardType requiredType, List<Integer> validDiscardIndices) {
         gameData.pendingAbilityActivation = new PendingAbilityActivation(
                 permanent.getId(),
                 abilityIndex,
@@ -582,6 +582,7 @@ public class AbilityActivationService {
         gameData.interaction.clearCardChoice();
     }
 }
+
 
 
 

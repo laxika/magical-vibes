@@ -391,6 +391,7 @@ public class TurnProgressionService {
         gameData.priorityPassedBy.clear();
         gameData.landsPlayedThisTurn.clear();
         gameData.spellsCastThisTurn.clear();
+        gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.clear();
         gameData.additionalCombatMainPhasePairs = 0;
 
         gameHelper.drainManaPools(gameData);

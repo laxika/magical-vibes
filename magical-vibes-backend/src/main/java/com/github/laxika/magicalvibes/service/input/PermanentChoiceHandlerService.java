@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
@@ -119,7 +120,7 @@ public class PermanentChoiceHandlerService {
             for (Permanent perm : toRemove) {
                 boolean wasCreature = gameQueryService.isCreature(gameData, perm);
                 battlefield.remove(perm);
-                gameHelper.addCardToGraveyard(gameData, playerId, perm.getOriginalCard());
+                gameHelper.addCardToGraveyard(gameData, playerId, perm.getOriginalCard(), Zone.BATTLEFIELD);
                 gameHelper.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature);
                 if (wasCreature) {
                     gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);

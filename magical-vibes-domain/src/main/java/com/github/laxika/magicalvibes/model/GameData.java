@@ -44,6 +44,7 @@ public class GameData {
     public final InteractionState interaction = new InteractionState();
     public final List<StackEntry> stack = Collections.synchronizedList(new ArrayList<>());
     public final Map<UUID, List<Card>> playerGraveyards = new ConcurrentHashMap<>();
+    public final Map<UUID, Set<UUID>> creatureCardsPutIntoGraveyardFromBattlefieldThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, List<Card>> playerExiledCards = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
     public int globalDamagePreventionShield;

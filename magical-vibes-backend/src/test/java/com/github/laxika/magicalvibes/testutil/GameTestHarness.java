@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TargetZone;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -336,8 +336,8 @@ public class GameTestHarness {
         gameService.activateAbility(gameData, player, permanentIndex, 0, xValue, targetPermanentId, null);
     }
 
-    public void activateAbility(Player player, int permanentIndex, Integer xValue, UUID targetPermanentId, TargetZone targetZone) {
-        gameService.activateAbility(gameData, player, permanentIndex, 0, xValue, targetPermanentId, targetZone);
+    public void activateAbility(Player player, int permanentIndex, Integer xValue, UUID targetPermanentId, Zone Zone) {
+        gameService.activateAbility(gameData, player, permanentIndex, 0, xValue, targetPermanentId, Zone);
     }
 
     public void activateAbility(Player player, int permanentIndex, int abilityIndex, Integer xValue, UUID targetPermanentId) {

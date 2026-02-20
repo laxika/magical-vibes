@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TargetZone;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import lombok.RequiredArgsConstructor;
@@ -293,7 +293,7 @@ public class SpellCastingService {
             } else if (card.isNeedsSpellTarget()) {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.INSTANT_SPELL, card, playerId, card.getName(),
-                        filteredSpellEffects, targetPermanentId, TargetZone.STACK
+                        filteredSpellEffects, targetPermanentId, Zone.STACK
                 ));
             } else if (!targetPermanentIds.isEmpty() && !usesSacrificeAllCreaturesCost) {
                 // Multi-target spell (e.g. "one or two target creatures each get +2/+1")

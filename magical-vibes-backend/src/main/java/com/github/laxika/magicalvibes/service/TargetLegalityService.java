@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetFilter;
-import com.github.laxika.magicalvibes.model.TargetZone;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.filter.ControllerOnlyTargetFilter;
@@ -66,7 +66,7 @@ public class TargetLegalityService {
                                                   ActivatedAbility ability,
                                                   List<CardEffect> abilityEffects,
                                                   UUID targetPermanentId,
-                                                  TargetZone targetZone,
+                                                  Zone targetZone,
                                                   Card sourceCard) {
         targetValidationService.validateEffectTargets(abilityEffects,
                 new TargetValidationContext(gameData, targetPermanentId, targetZone, sourceCard));
@@ -94,7 +94,7 @@ public class TargetLegalityService {
         validateShroudTargeting(gameData, targetPermanentId);
     }
 
-    public void validateSpellTargeting(GameData gameData, Card card, UUID targetPermanentId, TargetZone targetZone) {
+    public void validateSpellTargeting(GameData gameData, Card card, UUID targetPermanentId, Zone targetZone) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
         if (target == null && !gameData.playerIds.contains(targetPermanentId)) {
             throw new IllegalStateException("Invalid target");
@@ -121,7 +121,7 @@ public class TargetLegalityService {
                 new TargetValidationContext(gameData, targetPermanentId, targetZone, card));
     }
 
-    public void validateEffectTargetInZone(GameData gameData, Card card, UUID targetId, TargetZone targetZone) {
+    public void validateEffectTargetInZone(GameData gameData, Card card, UUID targetId, Zone targetZone) {
         targetValidationService.validateEffectTargets(card.getEffects(EffectSlot.SPELL),
                 new TargetValidationContext(gameData, targetId, targetZone, card));
     }
@@ -168,9 +168,9 @@ public class TargetLegalityService {
 
         boolean targetFizzled = false;
         if (entry.getTargetPermanentId() != null) {
-            if (entry.getTargetZone() == TargetZone.GRAVEYARD) {
+            if (entry.getTargetZone() == Zone.GRAVEYARD) {
                 targetFizzled = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetPermanentId()) == null;
-            } else if (entry.getTargetZone() == TargetZone.STACK) {
+            } else if (entry.getTargetZone() == Zone.STACK) {
                 targetFizzled = gameData.stack.stream().noneMatch(se -> se.getCard().getId().equals(entry.getTargetPermanentId()));
             } else {
                 Permanent targetPerm = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
@@ -243,3 +243,4 @@ public class TargetLegalityService {
                 && stackEntry.getTargetCardIds().isEmpty();
     }
 }
+

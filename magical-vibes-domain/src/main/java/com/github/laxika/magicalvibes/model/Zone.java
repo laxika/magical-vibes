@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
-public enum TargetZone {
+public enum Zone {
     BATTLEFIELD,
     GRAVEYARD,
     STACK
