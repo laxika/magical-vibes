@@ -149,7 +149,7 @@ public class TargetValidationService {
         });
 
         registry.register(ReturnCreatureFromGraveyardToHandEffect.class, (ctx, effect) -> {
-            if (ctx.targetZone() != TargetZone.GRAVEYARD) {
+            if (ctx.targetZone() != Zone.GRAVEYARD) {
                 throw new IllegalStateException("Spell requires a graveyard target");
             }
             if (ctx.targetPermanentId() == null) {

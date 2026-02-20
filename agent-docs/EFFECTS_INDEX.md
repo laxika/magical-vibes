@@ -39,6 +39,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `pump target/self/all`: `BoostTargetCreatureEffect`, `BoostSelfEffect`, `BoostAllOwnCreaturesEffect`, `BoostAllCreaturesXEffect`
 - `gets +N/+N for each other creature with same name`: `BoostByOtherCreaturesWithSameNameEffect`
 - `grant keyword`: `GrantKeywordToTargetEffect`, `GrantKeywordToSelfEffect`, `GrantKeywordToEnchantedCreatureEffect`
+- `can't block (static on creature)`: `CantBlockEffect`
 - `tap/untap`: `TapTargetCreatureEffect`, `TapTargetPermanentEffect`, `TapOrUntapTargetPermanentEffect`, `UntapTargetPermanentEffect`, `UntapSelfEffect`
 - `prevent damage`: `PreventDamageToTargetEffect`, `PreventNextDamageEffect`, `PreventAllCombatDamageEffect`, `PreventDamageFromColorsEffect`
 - `copy or retarget spell`: `CopySpellEffect`, `ChangeTargetOfTargetSpellWithSingleTargetEffect`
@@ -71,4 +72,5 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - Effect composition in activated ability: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/o/OrcishArtillery.java`
 - Spell-copy targeting stack: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/t/Twincast.java`
 - Aura static lock: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/p/Pacifism.java`
+- Static "can't block" creature: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SpinelessThug.java`
 - ETB token + activated cost/effect composition: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SiegeGangCommander.java`

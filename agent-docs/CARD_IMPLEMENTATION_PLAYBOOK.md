@@ -40,6 +40,10 @@ public class ExampleCard extends Card {
   - `setTargetFilter(new SpellTypeTargetFilter(...))`
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/t/Twincast.java`
 
+- Static combat restriction on self:
+  - `addEffect(EffectSlot.STATIC, new CantBlockEffect())`
+  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SpinelessThug.java`
+
 - Aura with static effect:
   - `setNeedsTarget(true)` + static aura effect
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/p/Pacifism.java`
@@ -60,6 +64,7 @@ public class ExampleCard extends Card {
 
 - `setNeedsTarget(true)` for permanent/player target resolution.
 - `setNeedsSpellTarget(true)` for stack target resolution.
+- For non-battlefield targets on stack entries, use `Zone` (`Zone.GRAVEYARD`, `Zone.STACK`), not `TargetZone`.
 - Add `setTargetFilter(...)` when target legality is restricted.
 - For activated abilities, use `new ActivatedAbility(..., needsTarget, ..., optionalFilter)` when per-ability targeting differs.
 

@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -71,7 +71,7 @@ class RecoverTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getTargetPermanentId()).isEqualTo(target.getId());
-        assertThat(entry.getTargetZone()).isEqualTo(TargetZone.GRAVEYARD);
+        assertThat(entry.getTargetZone()).isEqualTo(Zone.GRAVEYARD);
     }
 
     @Test

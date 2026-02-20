@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.BlockOnlyFlyersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsLandTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureEffect;
@@ -178,6 +179,7 @@ public class CombatService {
             if (gameQueryService.isCreature(gameData, p)
                     && !p.isTapped()
                     && !p.isCantBlockThisTurn()
+                    && p.getCard().getEffects(EffectSlot.STATIC).stream().noneMatch(CantBlockEffect.class::isInstance)
                     && !gameQueryService.hasAuraWithEffect(gameData, p, EnchantedCreatureCantAttackOrBlockEffect.class)) {
                 indices.add(i);
             }
@@ -441,6 +443,11 @@ public class CombatService {
             }
             if (blocker.isCantBlockThisTurn()) {
                 throw new IllegalStateException(blocker.getCard().getName() + " can't block this turn");
+            }
+            boolean hasCantBlockStatic = blocker.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(CantBlockEffect.class::isInstance);
+            if (hasCantBlockStatic) {
+                throw new IllegalStateException(blocker.getCard().getName() + " can't block");
             }
             if (blocker.getCantBlockIds().contains(attacker.getId())) {
                 throw new IllegalStateException(blocker.getCard().getName() + " can't block " + attacker.getCard().getName() + " this turn");
