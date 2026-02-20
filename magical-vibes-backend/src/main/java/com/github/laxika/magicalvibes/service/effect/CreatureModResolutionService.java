@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesXEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfPerBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -46,6 +47,8 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveAnimateSelf(gd, entry, (AnimateSelfEffect) effect));
         registry.register(BoostSelfEffect.class,
                 (gd, entry, effect) -> resolveBoostSelf(gd, entry, (BoostSelfEffect) effect));
+        registry.register(BoostSelfPerBlockingCreatureEffect.class,
+                (gd, entry, effect) -> resolveBoostSelfPerBlockingCreature(gd, entry, (BoostSelfPerBlockingCreatureEffect) effect));
         registry.register(BoostTargetCreatureEffect.class,
                 (gd, entry, effect) -> resolveBoostTargetCreature(gd, entry, (BoostTargetCreatureEffect) effect));
         registry.register(BoostTargetBlockingCreatureEffect.class, (gd, entry, effect) -> {
@@ -116,6 +119,51 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gets +{}/+{}", gameData.id, self.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
+    }
+
+    private void resolveBoostSelfPerBlockingCreature(GameData gameData, StackEntry entry, BoostSelfPerBlockingCreatureEffect boost) {
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (self == null) {
+            return;
+        }
+
+        List<Permanent> selfBattlefield = null;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null && battlefield.contains(self)) {
+                selfBattlefield = battlefield;
+                break;
+            }
+        }
+        if (selfBattlefield == null) return;
+
+        int selfIndex = selfBattlefield.indexOf(self);
+        if (selfIndex < 0) {
+            return;
+        }
+
+        int blockerCount = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (permanent.isBlocking() && permanent.getBlockingTargets().contains(selfIndex)) {
+                    blockerCount++;
+                }
+            }
+        }
+
+        int powerBoost = blockerCount * boost.powerPerBlockingCreature();
+        int toughnessBoost = blockerCount * boost.toughnessPerBlockingCreature();
+        self.setPowerModifier(self.getPowerModifier() + powerBoost);
+        self.setToughnessModifier(self.getToughnessModifier() + toughnessBoost);
+
+        String logEntry = self.getCard().getName() + " gets +" + powerBoost + "/+" + toughnessBoost
+                + " until end of turn (" + blockerCount + " blocker(s)).";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} gets +{}/+{} from {} blocker(s)",
+                gameData.id, self.getCard().getName(), powerBoost, toughnessBoost, blockerCount);
     }
 
     private void resolveBoostTargetCreature(GameData gameData, StackEntry entry, BoostTargetCreatureEffect boost) {
