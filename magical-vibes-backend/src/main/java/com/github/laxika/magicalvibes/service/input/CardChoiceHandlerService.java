@@ -61,12 +61,10 @@ public class CardChoiceHandlerService {
         boolean isTargeted = gameData.interaction.awaitingInput == AwaitingInput.TARGETED_CARD_CHOICE;
 
         gameData.interaction.awaitingInput = null;
-        gameData.interaction.awaitingCardChoicePlayerId = null;
-        gameData.interaction.awaitingCardChoiceValidIndices = null;
+        gameData.interaction.clearCardChoice();
         gameData.interaction.clearContext();
 
         UUID targetPermanentId = cardChoice.targetPermanentId();
-        gameData.interaction.pendingCardChoiceTargetPermanentId = null;
 
         if (cardIndex == -1) {
             String logEntry = player.getUsername() + " chooses not to put a card onto the battlefield.";
@@ -119,8 +117,7 @@ public class CardChoiceHandlerService {
             playerInputService.beginDiscardChoice(gameData, playerId);
         } else {
             gameData.interaction.awaitingInput = null;
-            gameData.interaction.awaitingCardChoicePlayerId = null;
-            gameData.interaction.awaitingCardChoiceValidIndices = null;
+            gameData.interaction.clearCardChoice();
             gameData.interaction.awaitingDiscardRemainingCount = 0;
             gameData.interaction.clearContext();
 
@@ -174,8 +171,7 @@ public class CardChoiceHandlerService {
         } else {
             // All cards chosen
             gameData.interaction.awaitingInput = null;
-            gameData.interaction.awaitingCardChoicePlayerId = null;
-            gameData.interaction.awaitingCardChoiceValidIndices = null;
+            gameData.interaction.clearCardChoice();
             gameData.interaction.clearContext();
 
             List<Card> chosenCards = new ArrayList<>(gameData.interaction.awaitingRevealedHandChosenCards);

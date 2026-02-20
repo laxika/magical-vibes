@@ -687,15 +687,7 @@ public class AbilityActivationService {
                 targetZone,
                 requiredType
         );
-        gameData.interaction.awaitingInput = AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE;
-        gameData.interaction.awaitingCardChoicePlayerId = playerId;
-        gameData.interaction.awaitingCardChoiceValidIndices = new HashSet<>(validDiscardIndices);
-        gameData.interaction.context = new InteractionContext.CardChoice(
-                AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE,
-                playerId,
-                new HashSet<>(validDiscardIndices),
-                null
-        );
+        gameData.interaction.beginCardChoice(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE, playerId, new HashSet<>(validDiscardIndices), null);
         sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(
                 validDiscardIndices,
                 "Choose a " + requiredType.name().toLowerCase() + " card to discard as an activation cost."
@@ -727,8 +719,7 @@ public class AbilityActivationService {
     private void clearPendingAbilityActivation(GameData gameData) {
         gameData.pendingAbilityActivation = null;
         gameData.interaction.awaitingInput = null;
-        gameData.interaction.awaitingCardChoicePlayerId = null;
-        gameData.interaction.awaitingCardChoiceValidIndices = null;
+        gameData.interaction.clearCardChoice();
         gameData.interaction.clearContext();
     }
 
@@ -766,11 +757,7 @@ public class AbilityActivationService {
                 }
             } else if (effect instanceof AwardAnyColorManaEffect) {
                 gameData.interaction.colorChoiceContext = new ColorChoiceContext.ManaColorChoice(playerId);
-                gameData.interaction.awaitingInput = AwaitingInput.COLOR_CHOICE;
-                gameData.interaction.awaitingColorChoicePlayerId = playerId;
-                gameData.interaction.context = new InteractionContext.ColorChoice(
-                        playerId, null, null, gameData.interaction.colorChoiceContext
-                );
+                gameData.interaction.beginColorChoice(playerId, null, null, gameData.interaction.colorChoiceContext);
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 sessionManager.sendToPlayer(playerId, new ChooseColorMessage(colors, "Choose a color of mana to add."));
                 log.info("Game {} - Awaiting {} to choose a mana color", gameData.id, player.getUsername());

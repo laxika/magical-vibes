@@ -71,7 +71,7 @@ public class MayAbilityHandlerService {
 
         PendingMayAbility ability = gameData.pendingMayAbilities.removeFirst();
         gameData.interaction.awaitingInput = null;
-        gameData.interaction.awaitingMayAbilityPlayerId = null;
+        gameData.interaction.clearMayAbilityChoice();
         gameData.interaction.clearContext();
 
         // Counter-unless-pays — handled via the may ability system

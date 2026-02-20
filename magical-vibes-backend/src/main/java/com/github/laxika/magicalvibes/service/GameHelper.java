@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.WarpWorldAuraChoiceRequest;
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -18,7 +17,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -253,11 +251,7 @@ public class GameHelper {
             return;
         }
 
-        gameData.interaction.awaitingInput = AwaitingInput.LIBRARY_REORDER;
-        gameData.interaction.awaitingLibraryReorderPlayerId = playerId;
-        gameData.interaction.awaitingLibraryReorderCards = cards;
-        gameData.interaction.awaitingLibraryReorderToBottom = true;
-        gameData.interaction.context = new InteractionContext.LibraryReorder(playerId, cards, true);
+        gameData.interaction.beginLibraryReorder(playerId, cards, true);
 
         List<CardView> cardViews = cards.stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(playerId, new ReorderLibraryCardsMessage(

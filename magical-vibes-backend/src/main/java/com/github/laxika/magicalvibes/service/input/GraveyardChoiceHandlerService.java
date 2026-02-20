@@ -50,11 +50,8 @@ public class GraveyardChoiceHandlerService {
         List<Card> cardPool = graveyardChoice.cardPool();
 
         gameData.interaction.awaitingInput = null;
-        gameData.interaction.awaitingGraveyardChoicePlayerId = null;
-        gameData.interaction.awaitingGraveyardChoiceValidIndices = null;
         GraveyardChoiceDestination destination = graveyardChoice.destination();
-        gameData.interaction.graveyardChoiceDestination = null;
-        gameData.interaction.graveyardChoiceCardPool = null;
+        gameData.interaction.clearGraveyardChoice();
         gameData.interaction.clearContext();
 
         if (cardIndex == -1) {
@@ -154,9 +151,7 @@ public class GraveyardChoiceHandlerService {
 
         // Clear awaiting state
         gameData.interaction.awaitingInput = null;
-        gameData.interaction.awaitingMultiGraveyardChoicePlayerId = null;
-        gameData.interaction.awaitingMultiGraveyardChoiceValidCardIds = null;
-        gameData.interaction.awaitingMultiGraveyardChoiceMaxCount = 0;
+        gameData.interaction.clearMultiGraveyardChoice();
         gameData.interaction.clearContext();
         gameData.graveyardTargetOperation.card = null;
         gameData.graveyardTargetOperation.controllerId = null;

@@ -52,8 +52,7 @@ public class PermanentChoiceHandlerService {
         Set<UUID> validIds = permanentChoice.validIds();
 
         gameData.interaction.awaitingInput = null;
-        gameData.interaction.awaitingPermanentChoicePlayerId = null;
-        gameData.interaction.awaitingPermanentChoiceValidIds = null;
+        gameData.interaction.clearPermanentChoice();
         gameData.interaction.clearContext();
 
         if (!validIds.contains(permanentId)) {
@@ -335,9 +334,7 @@ public class PermanentChoiceHandlerService {
         int maxCount = multiPermanentChoice.maxCount();
 
         gameData.interaction.awaitingInput = null;
-        gameData.interaction.awaitingMultiPermanentChoicePlayerId = null;
-        gameData.interaction.awaitingMultiPermanentChoiceValidIds = null;
-        gameData.interaction.awaitingMultiPermanentChoiceMaxCount = 0;
+        gameData.interaction.clearMultiPermanentChoice();
         gameData.interaction.clearContext();
 
         if (permanentIds == null) {

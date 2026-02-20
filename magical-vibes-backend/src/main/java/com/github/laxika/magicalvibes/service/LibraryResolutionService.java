@@ -2,12 +2,10 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
@@ -212,11 +210,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
 
         List<Card> topCards = new ArrayList<>(deck.subList(0, count));
 
-        gameData.interaction.awaitingLibraryReorderPlayerId = controllerId;
-        gameData.interaction.awaitingLibraryReorderCards = topCards;
-        gameData.interaction.awaitingLibraryReorderToBottom = false;
-        gameData.interaction.awaitingInput = AwaitingInput.LIBRARY_REORDER;
-        gameData.interaction.context = new InteractionContext.LibraryReorder(controllerId, topCards, false);
+        gameData.interaction.beginLibraryReorder(controllerId, topCards, false);
 
         List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(controllerId, new ReorderLibraryCardsMessage(
@@ -255,14 +249,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
             return;
         }
 
-        gameData.interaction.awaitingLibrarySearchPlayerId = controllerId;
-        gameData.interaction.awaitingLibrarySearchCards = basicLands;
-        gameData.interaction.awaitingLibrarySearchReveals = true;
-        gameData.interaction.awaitingLibrarySearchCanFailToFind = true;
-        gameData.interaction.awaitingInput = AwaitingInput.LIBRARY_SEARCH;
-        gameData.interaction.context = new InteractionContext.LibrarySearch(
-                controllerId, basicLands, true, true, null, 0
-        );
+        gameData.interaction.beginLibrarySearch(controllerId, basicLands, true, true, null, 0);
 
         List<CardView> cardViews = basicLands.stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
@@ -289,14 +276,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
 
         List<Card> allCards = new ArrayList<>(deck);
 
-        gameData.interaction.awaitingLibrarySearchPlayerId = controllerId;
-        gameData.interaction.awaitingLibrarySearchCards = allCards;
-        gameData.interaction.awaitingLibrarySearchReveals = false;
-        gameData.interaction.awaitingLibrarySearchCanFailToFind = false;
-        gameData.interaction.awaitingInput = AwaitingInput.LIBRARY_SEARCH;
-        gameData.interaction.context = new InteractionContext.LibrarySearch(
-                controllerId, allCards, false, false, null, 0
-        );
+        gameData.interaction.beginLibrarySearch(controllerId, allCards, false, false, null, 0);
 
         List<CardView> cardViews = allCards.stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
@@ -337,14 +317,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
             return;
         }
 
-        gameData.interaction.awaitingLibrarySearchPlayerId = controllerId;
-        gameData.interaction.awaitingLibrarySearchCards = eligibleCreatures;
-        gameData.interaction.awaitingLibrarySearchReveals = true;
-        gameData.interaction.awaitingLibrarySearchCanFailToFind = true;
-        gameData.interaction.awaitingInput = AwaitingInput.LIBRARY_SEARCH;
-        gameData.interaction.context = new InteractionContext.LibrarySearch(
-                controllerId, eligibleCreatures, true, true, null, 0
-        );
+        gameData.interaction.beginLibrarySearch(controllerId, eligibleCreatures, true, true, null, 0);
 
         List<CardView> cardViews = eligibleCreatures.stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
@@ -389,16 +362,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         // Step 2: Caster searches target's library for that many cards
         List<Card> allCards = new ArrayList<>(targetDeck);
 
-        gameData.interaction.awaitingLibrarySearchPlayerId = casterId;
-        gameData.interaction.awaitingLibrarySearchCards = allCards;
-        gameData.interaction.awaitingLibrarySearchReveals = false;
-        gameData.interaction.awaitingLibrarySearchCanFailToFind = false;
-        gameData.interaction.awaitingLibrarySearchTargetPlayerId = targetPlayerId;
-        gameData.interaction.awaitingLibrarySearchRemainingCount = handSize;
-        gameData.interaction.awaitingInput = AwaitingInput.LIBRARY_SEARCH;
-        gameData.interaction.context = new InteractionContext.LibrarySearch(
-                casterId, allCards, false, false, targetPlayerId, handSize
-        );
+        gameData.interaction.beginLibrarySearch(casterId, allCards, false, false, targetPlayerId, handSize);
 
         List<CardView> cardViews = allCards.stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(casterId, new ChooseCardFromLibraryMessage(
@@ -461,11 +425,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
             validCardIds.add(card.getId());
         }
 
-        gameData.interaction.awaitingLibraryRevealPlayerId = controllerId;
-        gameData.interaction.awaitingLibraryRevealAllCards = revealedCards;
-        gameData.interaction.awaitingLibraryRevealValidCardIds = validCardIds;
-        gameData.interaction.awaitingInput = AwaitingInput.LIBRARY_REVEAL_CHOICE;
-        gameData.interaction.context = new InteractionContext.LibraryRevealChoice(controllerId, revealedCards, validCardIds);
+        gameData.interaction.beginLibraryRevealChoice(controllerId, revealedCards, validCardIds);
 
         List<CardView> cardViews = eligibleCards.stream().map(cardViewFactory::create).toList();
         List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();
@@ -502,10 +462,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         // Remove the top cards from the deck temporarily
         deck.subList(0, count).clear();
 
-        gameData.interaction.awaitingHandTopBottomPlayerId = controllerId;
-        gameData.interaction.awaitingHandTopBottomCards = topCards;
-        gameData.interaction.awaitingInput = AwaitingInput.HAND_TOP_BOTTOM_CHOICE;
-        gameData.interaction.context = new InteractionContext.HandTopBottomChoice(controllerId, topCards);
+        gameData.interaction.beginHandTopBottomChoice(controllerId, topCards);
 
         List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(controllerId, new ChooseHandTopBottomMessage(

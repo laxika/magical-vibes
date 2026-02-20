@@ -66,9 +66,7 @@ public class ColorChoiceHandlerService {
         UUID etbTargetId = colorChoice.etbTargetPermanentId();
 
         gameData.interaction.awaitingInput = null;
-        gameData.interaction.awaitingColorChoicePlayerId = null;
-        gameData.interaction.awaitingColorChoicePermanentId = null;
-        gameData.interaction.pendingColorChoiceETBTargetId = null;
+        gameData.interaction.clearColorChoice();
         gameData.interaction.clearContext();
 
         Permanent perm = gameQueryService.findPermanentById(gameData, permanentId);
@@ -92,9 +90,8 @@ public class ColorChoiceHandlerService {
     private void handleManaColorChosen(GameData gameData, Player player, String colorName, ColorChoiceContext.ManaColorChoice ctx) {
         ManaColor manaColor = ManaColor.valueOf(colorName);
 
-        gameData.interaction.colorChoiceContext = null;
         gameData.interaction.awaitingInput = null;
-        gameData.interaction.awaitingColorChoicePlayerId = null;
+        gameData.interaction.clearColorChoice();
         gameData.interaction.clearContext();
 
         ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
@@ -122,9 +119,7 @@ public class ColorChoiceHandlerService {
         }
 
         gameData.interaction.colorChoiceContext = new ColorChoiceContext.TextChangeToWord(ctx.targetPermanentId(), chosenWord, isColor);
-        gameData.interaction.context = new InteractionContext.ColorChoice(
-                player.getId(), null, null, gameData.interaction.colorChoiceContext
-        );
+        gameData.interaction.beginColorChoice(player.getId(), null, null, gameData.interaction.colorChoiceContext);
 
         List<String> remainingOptions;
         String promptType;
@@ -152,8 +147,7 @@ public class ColorChoiceHandlerService {
         }
 
         gameData.interaction.awaitingInput = null;
-        gameData.interaction.awaitingColorChoicePlayerId = null;
-        gameData.interaction.colorChoiceContext = null;
+        gameData.interaction.clearColorChoice();
         gameData.interaction.clearContext();
 
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());

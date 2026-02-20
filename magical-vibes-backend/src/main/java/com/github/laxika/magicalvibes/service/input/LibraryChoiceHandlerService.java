@@ -80,10 +80,8 @@ public class LibraryChoiceHandlerService {
 
         // Clear awaiting state
         gameData.interaction.awaitingInput = null;
-        gameData.interaction.awaitingLibraryReorderPlayerId = null;
-        gameData.interaction.awaitingLibraryReorderCards = null;
         boolean reorderedToBottom = libraryReorder.toBottom();
-        gameData.interaction.awaitingLibraryReorderToBottom = false;
+        gameData.interaction.clearLibraryReorder();
         gameData.interaction.clearContext();
 
         String logMsg = reorderedToBottom
@@ -146,8 +144,7 @@ public class LibraryChoiceHandlerService {
 
         // Clear awaiting state
         gameData.interaction.awaitingInput = null;
-        gameData.interaction.awaitingHandTopBottomPlayerId = null;
-        gameData.interaction.awaitingHandTopBottomCards = null;
+        gameData.interaction.clearHandTopBottomChoice();
         gameData.interaction.clearContext();
 
         String logMsg;
@@ -185,12 +182,7 @@ public class LibraryChoiceHandlerService {
 
         // Clear all state
         gameData.interaction.awaitingInput = null;
-        gameData.interaction.awaitingLibrarySearchPlayerId = null;
-        gameData.interaction.awaitingLibrarySearchCards = null;
-        gameData.interaction.awaitingLibrarySearchReveals = false;
-        gameData.interaction.awaitingLibrarySearchCanFailToFind = false;
-        gameData.interaction.awaitingLibrarySearchTargetPlayerId = null;
-        gameData.interaction.awaitingLibrarySearchRemainingCount = 0;
+        gameData.interaction.clearLibrarySearch();
         gameData.interaction.clearContext();
 
         List<Card> deck = gameData.playerDecks.get(deckOwnerId);
@@ -232,16 +224,7 @@ public class LibraryChoiceHandlerService {
                 int newRemaining = remainingCount - 1;
                 List<Card> newSearchCards = new ArrayList<>(deck);
 
-                gameData.interaction.awaitingInput = AwaitingInput.LIBRARY_SEARCH;
-                gameData.interaction.awaitingLibrarySearchPlayerId = playerId;
-                gameData.interaction.awaitingLibrarySearchCards = newSearchCards;
-                gameData.interaction.awaitingLibrarySearchReveals = false;
-                gameData.interaction.awaitingLibrarySearchCanFailToFind = false;
-                gameData.interaction.awaitingLibrarySearchTargetPlayerId = targetPlayerId;
-                gameData.interaction.awaitingLibrarySearchRemainingCount = newRemaining;
-                gameData.interaction.context = new InteractionContext.LibrarySearch(
-                        playerId, newSearchCards, false, false, targetPlayerId, newRemaining
-                );
+                gameData.interaction.beginLibrarySearch(playerId, newSearchCards, false, false, targetPlayerId, newRemaining);
 
                 String targetName = gameData.playerIdToName.get(targetPlayerId);
                 List<CardView> cardViews = newSearchCards.stream().map(cardViewFactory::create).toList();
@@ -301,9 +284,7 @@ public class LibraryChoiceHandlerService {
 
         // Clear awaiting state
         gameData.interaction.awaitingInput = null;
-        gameData.interaction.awaitingLibraryRevealPlayerId = null;
-        gameData.interaction.awaitingLibraryRevealValidCardIds = null;
-        gameData.interaction.awaitingLibraryRevealAllCards = null;
+        gameData.interaction.clearLibraryRevealChoice();
         gameData.interaction.clearContext();
 
         // Separate selected cards from the rest

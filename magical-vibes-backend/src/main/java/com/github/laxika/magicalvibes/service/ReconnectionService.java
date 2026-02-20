@@ -73,130 +73,82 @@ public class ReconnectionService {
                     sessionManager.sendToPlayer(defenderId, new AvailableBlockersMessage(blockable, attackerIndices));
                 }
             }
-            case CARD_CHOICE, TARGETED_CARD_CHOICE -> {
-                if (playerId.equals(gameData.interaction.awaitingCardChoicePlayerId)) {
-                    sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(
-                            new ArrayList<>(gameData.interaction.awaitingCardChoiceValidIndices), "Choose a card from your hand."));
-                }
-            }
-            case DISCARD_CHOICE -> {
-                if (playerId.equals(gameData.interaction.awaitingCardChoicePlayerId)) {
-                    sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(
-                            new ArrayList<>(gameData.interaction.awaitingCardChoiceValidIndices), "Choose a card to discard."));
-                }
-            }
-            case ACTIVATED_ABILITY_DISCARD_COST_CHOICE -> {
-                if (playerId.equals(gameData.interaction.awaitingCardChoicePlayerId) && gameData.pendingAbilityActivation != null) {
-                    String typeName = gameData.pendingAbilityActivation.discardCostType().name().toLowerCase();
-                    sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(
-                            new ArrayList<>(gameData.interaction.awaitingCardChoiceValidIndices),
-                            "Choose a " + typeName + " card to discard as an activation cost."));
+            case CARD_CHOICE, TARGETED_CARD_CHOICE, DISCARD_CHOICE, ACTIVATED_ABILITY_DISCARD_COST_CHOICE -> {
+                InteractionContext.CardChoice cc = gameData.interaction.cardChoiceContext();
+                if (cc != null) {
+                    resendFromContext(gameData, playerId, cc);
                 }
             }
             case PERMANENT_CHOICE -> {
-                if (playerId.equals(gameData.interaction.awaitingPermanentChoicePlayerId)) {
-                    sessionManager.sendToPlayer(playerId, new ChoosePermanentMessage(
-                            new ArrayList<>(gameData.interaction.awaitingPermanentChoiceValidIds), "Choose a permanent."));
+                InteractionContext.PermanentChoice pc = gameData.interaction.permanentChoiceContextView();
+                if (pc != null) {
+                    resendFromContext(gameData, playerId, pc);
                 }
             }
             case GRAVEYARD_CHOICE -> {
-                if (playerId.equals(gameData.interaction.awaitingGraveyardChoicePlayerId)) {
-                    sessionManager.sendToPlayer(playerId, new ChooseCardFromGraveyardMessage(
-                            new ArrayList<>(gameData.interaction.awaitingGraveyardChoiceValidIndices), "Choose a card from the graveyard."));
+                InteractionContext.GraveyardChoice gc = gameData.interaction.graveyardChoiceContext();
+                if (gc != null) {
+                    resendFromContext(gameData, playerId, gc);
                 }
             }
             case COLOR_CHOICE -> {
-                if (playerId.equals(gameData.interaction.awaitingColorChoicePlayerId)) {
-                    List<String> options;
-                    String prompt;
-                    if (gameData.interaction.colorChoiceContext instanceof ColorChoiceContext.TextChangeFromWord) {
-                        options = new ArrayList<>();
-                        options.addAll(GameQueryService.TEXT_CHANGE_COLOR_WORDS);
-                        options.addAll(GameQueryService.TEXT_CHANGE_LAND_TYPES);
-                        prompt = "Choose a color word or basic land type to replace.";
-                    } else if (gameData.interaction.colorChoiceContext instanceof ColorChoiceContext.TextChangeToWord ctx) {
-                        if (ctx.isColor()) {
-                            options = GameQueryService.TEXT_CHANGE_COLOR_WORDS.stream().filter(c -> !c.equals(ctx.fromWord())).toList();
-                            prompt = "Choose the replacement color word.";
-                        } else {
-                            options = GameQueryService.TEXT_CHANGE_LAND_TYPES.stream().filter(t -> !t.equals(ctx.fromWord())).toList();
-                            prompt = "Choose the replacement basic land type.";
-                        }
-                    } else {
-                        options = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-                        prompt = "Choose a color.";
-                    }
-                    sessionManager.sendToPlayer(playerId, new ChooseColorMessage(options, prompt));
+                InteractionContext.ColorChoice cc = gameData.interaction.colorChoiceContextView();
+                if (cc != null) {
+                    resendFromContext(gameData, playerId, cc);
                 }
             }
             case MAY_ABILITY_CHOICE -> {
-                if (playerId.equals(gameData.interaction.awaitingMayAbilityPlayerId) && !gameData.pendingMayAbilities.isEmpty()) {
-                    PendingMayAbility next = gameData.pendingMayAbilities.getFirst();
-                    sessionManager.sendToPlayer(playerId, new MayAbilityMessage(next.description()));
+                InteractionContext.MayAbilityChoice mc = gameData.interaction.mayAbilityChoiceContext();
+                if (mc != null) {
+                    // keep legacy description when context was not populated
+                    if (mc.description().isBlank() && !gameData.pendingMayAbilities.isEmpty()) {
+                        resendFromContext(gameData, playerId, new InteractionContext.MayAbilityChoice(mc.playerId(),
+                                gameData.pendingMayAbilities.getFirst().description()));
+                    } else {
+                        resendFromContext(gameData, playerId, mc);
+                    }
                 }
             }
             case MULTI_PERMANENT_CHOICE -> {
-                if (playerId.equals(gameData.interaction.awaitingMultiPermanentChoicePlayerId)) {
-                    sessionManager.sendToPlayer(playerId, new ChooseMultiplePermanentsMessage(
-                            new ArrayList<>(gameData.interaction.awaitingMultiPermanentChoiceValidIds),
-                            gameData.interaction.awaitingMultiPermanentChoiceMaxCount, "Choose permanents."));
+                InteractionContext.MultiPermanentChoice mpc = gameData.interaction.multiPermanentChoiceContext();
+                if (mpc != null) {
+                    resendFromContext(gameData, playerId, mpc);
                 }
             }
             case MULTI_GRAVEYARD_CHOICE -> {
-                if (playerId.equals(gameData.interaction.awaitingMultiGraveyardChoicePlayerId)) {
-                    List<UUID> validCardIds = new ArrayList<>(gameData.interaction.awaitingMultiGraveyardChoiceValidCardIds);
-                    List<CardView> cardViews = new ArrayList<>();
-                    for (UUID pid : gameData.orderedPlayerIds) {
-                        List<Card> graveyard = gameData.playerGraveyards.get(pid);
-                        if (graveyard == null) continue;
-                        for (Card card : graveyard) {
-                            if (gameData.interaction.awaitingMultiGraveyardChoiceValidCardIds.contains(card.getId())) {
-                                cardViews.add(cardViewFactory.create(card));
-                            }
-                        }
-                    }
-                    sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsFromGraveyardsMessage(
-                            validCardIds, cardViews, gameData.interaction.awaitingMultiGraveyardChoiceMaxCount,
-                            "Exile up to " + gameData.interaction.awaitingMultiGraveyardChoiceMaxCount + " cards from graveyards."));
+                InteractionContext.MultiGraveyardChoice mgc = gameData.interaction.multiGraveyardChoiceContext();
+                if (mgc != null) {
+                    resendFromContext(gameData, playerId, mgc);
                 }
             }
             case LIBRARY_REORDER -> {
-                if (playerId.equals(gameData.interaction.awaitingLibraryReorderPlayerId) && gameData.interaction.awaitingLibraryReorderCards != null) {
-                    List<CardView> cardViews = gameData.interaction.awaitingLibraryReorderCards.stream().map(cardViewFactory::create).toList();
-                    String prompt = gameData.interaction.awaitingLibraryReorderToBottom
-                            ? "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."
-                            : "Put these cards back on top of your library in any order (top to bottom).";
-                    sessionManager.sendToPlayer(playerId, new ReorderLibraryCardsMessage(
-                            cardViews, prompt));
+                InteractionContext.LibraryReorder lr = gameData.interaction.libraryReorderContext();
+                if (lr != null) {
+                    resendFromContext(gameData, playerId, lr);
                 }
             }
             case LIBRARY_SEARCH -> {
-                if (playerId.equals(gameData.interaction.awaitingLibrarySearchPlayerId) && gameData.interaction.awaitingLibrarySearchCards != null) {
-                    List<CardView> cardViews = gameData.interaction.awaitingLibrarySearchCards.stream().map(cardViewFactory::create).toList();
-                    String prompt = gameData.interaction.awaitingLibrarySearchCanFailToFind
-                            ? "Search your library for a basic land card to put into your hand."
-                            : "Search your library for a card to put into your hand.";
-                    sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(
-                            cardViews, prompt, gameData.interaction.awaitingLibrarySearchCanFailToFind));
+                InteractionContext.LibrarySearch ls = gameData.interaction.librarySearchContext();
+                if (ls != null) {
+                    resendFromContext(gameData, playerId, ls);
+                }
+            }
+            case LIBRARY_REVEAL_CHOICE -> {
+                InteractionContext.LibraryRevealChoice lrc = gameData.interaction.libraryRevealChoiceContext();
+                if (lrc != null) {
+                    resendFromContext(gameData, playerId, lrc);
                 }
             }
             case HAND_TOP_BOTTOM_CHOICE -> {
-                if (playerId.equals(gameData.interaction.awaitingHandTopBottomPlayerId) && gameData.interaction.awaitingHandTopBottomCards != null) {
-                    List<CardView> cardViews = gameData.interaction.awaitingHandTopBottomCards.stream().map(cardViewFactory::create).toList();
-                    int count = gameData.interaction.awaitingHandTopBottomCards.size();
-                    sessionManager.sendToPlayer(playerId, new ChooseHandTopBottomMessage(
-                            cardViews, "Look at the top " + count + " cards of your library. Choose one to put into your hand."));
+                InteractionContext.HandTopBottomChoice htbc = gameData.interaction.handTopBottomChoiceContext();
+                if (htbc != null) {
+                    resendFromContext(gameData, playerId, htbc);
                 }
             }
             case REVEALED_HAND_CHOICE -> {
-                if (playerId.equals(gameData.interaction.awaitingCardChoicePlayerId) && gameData.interaction.awaitingRevealedHandChoiceTargetPlayerId != null) {
-                    UUID targetPlayerId = gameData.interaction.awaitingRevealedHandChoiceTargetPlayerId;
-                    List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
-                    String targetName = gameData.playerIdToName.get(targetPlayerId);
-                    List<CardView> cardViews = targetHand.stream().map(cardViewFactory::create).toList();
-                    List<Integer> validIndices = new ArrayList<>(gameData.interaction.awaitingCardChoiceValidIndices);
-                    sessionManager.sendToPlayer(playerId, new ChooseFromRevealedHandMessage(
-                            cardViews, validIndices, "Choose a card to put on top of " + targetName + "'s library."));
+                InteractionContext.RevealedHandChoice rhc = gameData.interaction.revealedHandChoiceContext();
+                if (rhc != null) {
+                    resendFromContext(gameData, playerId, rhc);
                 }
             }
         }
