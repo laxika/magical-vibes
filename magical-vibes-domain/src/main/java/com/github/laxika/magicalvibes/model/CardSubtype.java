@@ -82,6 +82,8 @@ public enum CardSubtype {
     LIZARD("Lizard"),
     LHURGOYF("Lhurgoyf"),
     SCOUT("Scout"),
+    AVATAR("Avatar"),
+    MINION("Minion"),
     VIASHINO("Viashino");
 
     @Getter

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
@@ -172,6 +173,11 @@ public class TargetValidationService {
             if (sourceIndex < 0 || !target.getBlockingTargets().contains(sourceIndex)) {
                 throw new IllegalStateException("Target must be a creature blocking this creature");
             }
+        });
+
+        registry.register(DestroyTargetCreatureEffect.class, (ctx, effect) -> {
+            Permanent target = requireBattlefieldTarget(ctx);
+            requireCreature(ctx, target);
         });
 
         registry.register(ReturnTargetCreatureToHandEffect.class, (ctx, effect) -> {

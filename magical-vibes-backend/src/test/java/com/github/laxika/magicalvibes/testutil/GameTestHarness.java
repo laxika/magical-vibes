@@ -137,7 +137,7 @@ public class GameTestHarness {
                 new TurnResolutionService(gameHelper, combatService, gameBroadcastService),
                 new EquipResolutionService(gameQueryService, gameBroadcastService),
                 new CardSpecificResolutionService(gameHelper, gameQueryService),
-                new WinConditionResolutionService(gameHelper, gameBroadcastService)
+                new WinConditionResolutionService(gameHelper, gameBroadcastService, gameQueryService)
         );
         EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper, providers);
         effectResolutionService.init();

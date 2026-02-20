@@ -309,7 +309,7 @@ public class LibraryChoiceHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
             if (card.getType() == CardType.CREATURE) {
-                gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, null);
+                gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
             }
             if (card.getType() == CardType.PLANESWALKER && card.getLoyalty() != null) {
                 perm.setLoyaltyCounters(card.getLoyalty());

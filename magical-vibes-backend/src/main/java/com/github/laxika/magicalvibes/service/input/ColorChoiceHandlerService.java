@@ -77,7 +77,7 @@ public class ColorChoiceHandlerService {
             log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), color, perm.getCard().getName());
 
             if (gameQueryService.isCreature(gameData, perm)) {
-                gameHelper.processCreatureETBEffects(gameData, player.getId(), perm.getCard(), etbTargetId);
+                gameHelper.processCreatureETBEffects(gameData, player.getId(), perm.getCard(), etbTargetId, false);
             }
         }
 

@@ -92,7 +92,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
             String logEntry = "A " + token.power() + "/" + token.toughness() + " " + token.tokenName() + " creature token enters the battlefield.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
-            gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
+            gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
             if (!gameData.interaction.isAwaitingInput()) {
                 legendRuleService.checkLegendRule(gameData, controllerId);
             }
@@ -121,7 +121,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         String logEntry = "A " + token.power() + "/" + token.toughness() + " " + colorNames + " " + token.tokenName() + " creature token enters the battlefield.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
-        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
+        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
         if (!gameData.interaction.isAwaitingInput()) {
             legendRuleService.checkLegendRule(gameData, controllerId);
         }

@@ -18,6 +18,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `deal N damage then gain life`: `DealDamageToAnyTargetAndGainLifeEffect`, `DealXDamageToAnyTargetAndGainXLifeEffect`
 - `deal damage to yourself/controller`: `DealDamageToControllerEffect`
 - `destroy target permanent`: `DestroyTargetPermanentEffect`
+- `destroy target creature`: `DestroyTargetCreatureEffect`
 - `destroy all creatures/artifacts/enchantments`: `DestroyAllCreaturesEffect`, `DestroyAllArtifactsEffect`, `DestroyAllEnchantmentsEffect`
 - `destroy all creatures you don't control`: `DestroyAllCreaturesYouDontControlEffect`
 - `sacrifice creature`: `SacrificeCreatureEffect`, `EachOpponentSacrificesCreatureEffect`
@@ -32,6 +33,9 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `create creature tokens`: `CreateCreatureTokenEffect`, `CreateCreatureTokenWithColorsEffect`
 - `gain life`: `GainLifeEffect`, `GainLifePerGraveyardCardEffect`, `GainLifeEqualToTargetToughnessEffect`
 - `lose life / drain`: `TargetPlayerLosesLifeAndControllerGainsLifeEffect`, `EnchantedCreatureControllerLosesLifeEffect`
+- `target player loses the game`: `TargetPlayerLosesGameEffect`
+- `lose the game if not cast from hand (ETB check)`: `LoseGameIfNotCastFromHandEffect`
+- `win the game if condition is met`: `WinGameIfCreaturesInGraveyardEffect`
 - `pump target/self/all`: `BoostTargetCreatureEffect`, `BoostSelfEffect`, `BoostAllOwnCreaturesEffect`, `BoostAllCreaturesXEffect`
 - `grant keyword`: `GrantKeywordToTargetEffect`, `GrantKeywordToSelfEffect`, `GrantKeywordToEnchantedCreatureEffect`
 - `tap/untap`: `TapTargetCreatureEffect`, `TapTargetPermanentEffect`, `TapOrUntapTargetPermanentEffect`, `UntapTargetPermanentEffect`, `UntapSelfEffect`

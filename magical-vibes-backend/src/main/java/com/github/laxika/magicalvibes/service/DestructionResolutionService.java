@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesYouDontControlEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -48,6 +49,8 @@ public class DestructionResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveDestroyAllEnchantments(gd));
         registry.register(DestroyTargetPermanentEffect.class,
                 (gd, entry, effect) -> resolveDestroyTargetPermanent(gd, entry, (DestroyTargetPermanentEffect) effect));
+        registry.register(DestroyTargetCreatureEffect.class,
+                (gd, entry, effect) -> resolveDestroyTargetCreature(gd, entry, (DestroyTargetCreatureEffect) effect));
         registry.register(DestroyTargetLandAndDamageControllerEffect.class,
                 (gd, entry, effect) -> resolveDestroyTargetLandAndDamageController(gd, entry, (DestroyTargetLandAndDamageControllerEffect) effect));
         registry.register(DestroyCreatureBlockingThisEffect.class,
@@ -234,6 +237,29 @@ public class DestructionResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} is destroyed by {}'s ability",
                 gameData.id, target.getCard().getName(), entry.getCard().getName());
 
+        gameHelper.removeOrphanedAuras(gameData);
+    }
+
+    void resolveDestroyTargetCreature(GameData gameData, StackEntry entry, DestroyTargetCreatureEffect destroy) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null || !gameQueryService.isCreature(gameData, target)) {
+            return;
+        }
+
+        if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
+            String logEntry = target.getCard().getName() + " is indestructible.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        if (!destroy.cannotBeRegenerated() && gameHelper.tryRegenerate(gameData, target)) {
+            return;
+        }
+
+        gameHelper.removePermanentToGraveyard(gameData, target);
+        String logEntry = target.getCard().getName() + " is destroyed.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} is destroyed by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
         gameHelper.removeOrphanedAuras(gameData);
     }
 

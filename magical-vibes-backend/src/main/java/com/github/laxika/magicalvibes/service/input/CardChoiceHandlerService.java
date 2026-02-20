@@ -239,7 +239,7 @@ public class CardChoiceHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} puts {} onto the battlefield", gameData.id, player.getUsername(), card.getName());
 
-        gameHelper.handleCreatureEnteredBattlefield(gameData, playerId, card, null);
+        gameHelper.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
     }
 }
 

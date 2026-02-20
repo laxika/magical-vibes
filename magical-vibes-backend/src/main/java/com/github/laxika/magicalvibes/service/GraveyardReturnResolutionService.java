@@ -288,7 +288,7 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
             String tokenLog = "A 2/2 Zombie creature token enters the battlefield.";
             gameBroadcastService.logAndBroadcast(gameData, tokenLog);
 
-            gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
+            gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
             if (!gameData.interaction.isAwaitingInput()) {
                 legendRuleService.checkLegendRule(gameData, controllerId);
             }

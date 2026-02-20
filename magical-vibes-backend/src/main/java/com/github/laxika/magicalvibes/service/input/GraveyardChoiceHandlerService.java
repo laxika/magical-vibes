@@ -93,7 +93,7 @@ public class GraveyardChoiceHandlerService {
                     log.info("Game {} - {} puts {} from graveyard onto battlefield", gameData.id, player.getUsername(), card.getName());
 
                     if (card.getType() == CardType.CREATURE) {
-                        gameHelper.handleCreatureEnteredBattlefield(gameData, playerId, card, null);
+                        gameHelper.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
                     }
                     if (!gameData.interaction.isAwaitingInput()) {
                         legendRuleService.checkLegendRule(gameData, playerId);

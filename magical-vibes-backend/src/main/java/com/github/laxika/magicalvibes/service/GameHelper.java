@@ -34,12 +34,13 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicat
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeOnColorSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -256,7 +257,7 @@ public class GameHelper {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> creatures = gameData.warpWorldOperation.pendingCreaturesByPlayer.getOrDefault(playerId, List.of());
             for (Card card : creatures) {
-                processCreatureETBEffects(gameData, playerId, card, null);
+                processCreatureETBEffects(gameData, playerId, card, null, false);
             }
         }
 
@@ -528,7 +529,7 @@ public class GameHelper {
             log.info("Game {} - {} enters battlefield as 0/0 for {}", gameData.id, card.getName(), playerName);
         }
 
-        handleCreatureEnteredBattlefield(gameData, controllerId, perm.getCard(), etbTargetId);
+        handleCreatureEnteredBattlefield(gameData, controllerId, perm.getCard(), etbTargetId, true);
 
         if (!gameData.interaction.isAwaitingInput()) {
             legendRuleService.checkLegendRule(gameData, controllerId);
@@ -537,7 +538,7 @@ public class GameHelper {
 
     // ===== ETB pipeline =====
 
-    public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId) {
+    public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId, boolean wasCastFromHand) {
         boolean needsColorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof ChooseColorEffect);
         if (needsColorChoice) {
@@ -547,17 +548,26 @@ public class GameHelper {
             return;
         }
 
-        processCreatureETBEffects(gameData, controllerId, card, targetPermanentId);
+        processCreatureETBEffects(gameData, controllerId, card, targetPermanentId, wasCastFromHand);
     }
 
-    public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId) {
+    public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId, boolean wasCastFromHand) {
         List<CardEffect> triggeredEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> !(e instanceof ChooseColorEffect))
                 .filter(e -> !(e instanceof CopyCreatureOnEnterEffect))
                 .toList();
         if (!triggeredEffects.isEmpty()) {
             List<CardEffect> mayEffects = triggeredEffects.stream().filter(e -> e instanceof MayEffect).toList();
-            List<CardEffect> mandatoryEffects = triggeredEffects.stream().filter(e -> !(e instanceof MayEffect)).toList();
+            List<CardEffect> mandatoryEffects = triggeredEffects.stream()
+                    .filter(e -> !(e instanceof MayEffect))
+                    .map(e -> {
+                        if (e instanceof LoseGameIfNotCastFromHandEffect) {
+                            return wasCastFromHand ? null : new TargetPlayerLosesGameEffect(controllerId);
+                        }
+                        return e;
+                    })
+                    .filter(Objects::nonNull)
+                    .toList();
 
             for (CardEffect effect : mayEffects) {
                 MayEffect may = (MayEffect) effect;
