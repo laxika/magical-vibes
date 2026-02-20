@@ -58,6 +58,9 @@ public class GameHelper {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
+    private final LegendRuleService legendRuleService;
+    private final AuraAttachmentService auraAttachmentService;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final DraftRegistry draftRegistry;
     private final DraftService draftService;
 
@@ -67,6 +70,9 @@ public class GameHelper {
                       GameQueryService gameQueryService,
                       GameBroadcastService gameBroadcastService,
                       PlayerInputService playerInputService,
+                      LegendRuleService legendRuleService,
+                      AuraAttachmentService auraAttachmentService,
+                      TriggeredAbilityQueueService triggeredAbilityQueueService,
                       DraftRegistry draftRegistry,
                       DraftService draftService) {
         this.sessionManager = sessionManager;
@@ -75,6 +81,9 @@ public class GameHelper {
         this.gameQueryService = gameQueryService;
         this.gameBroadcastService = gameBroadcastService;
         this.playerInputService = playerInputService;
+        this.legendRuleService = legendRuleService;
+        this.auraAttachmentService = auraAttachmentService;
+        this.triggeredAbilityQueueService = triggeredAbilityQueueService;
         this.draftRegistry = draftRegistry;
         this.draftService = draftService;
     }
@@ -126,35 +135,7 @@ public class GameHelper {
     }
 
     public void removeOrphanedAuras(GameData gameData) {
-        boolean anyRemoved = false;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-            Iterator<Permanent> it = battlefield.iterator();
-            while (it.hasNext()) {
-                Permanent p = it.next();
-                if (p.getAttachedTo() != null && gameQueryService.findPermanentById(gameData, p.getAttachedTo()) == null) {
-                    if (p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
-                        // Equipment stays on the battlefield unattached when the equipped creature leaves
-                        p.setAttachedTo(null);
-                        String logEntry = p.getCard().getName() + " becomes unattached (equipped creature left the battlefield).";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                        log.info("Game {} - {} unattached (equipped creature left)", gameData.id, p.getCard().getName());
-                    } else {
-                        it.remove();
-                        addCardToGraveyard(gameData, playerId, p.getOriginalCard());
-                        String logEntry = p.getCard().getName() + " is put into the graveyard (enchanted creature left the battlefield).";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                        log.info("Game {} - {} removed (orphaned aura)", gameData.id, p.getCard().getName());
-                        anyRemoved = true;
-                    }
-                }
-            }
-        }
-        if (anyRemoved) {
-
-        }
-        returnStolenCreatures(gameData);
+        auraAttachmentService.removeOrphanedAuras(gameData);
     }
 
     public void removeCardFromGraveyardById(GameData gameData, UUID cardId) {
@@ -197,42 +178,7 @@ public class GameHelper {
     }
 
     public void processNextDeathTriggerTarget(GameData gameData) {
-        while (!gameData.pendingDeathTriggerTargets.isEmpty()) {
-            PermanentChoiceContext.DeathTriggerTarget pending = gameData.pendingDeathTriggerTargets.peekFirst();
-
-            // Collect valid creature targets from all battlefields
-            List<UUID> validTargets = new ArrayList<>();
-            for (UUID pid : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                if (battlefield == null) continue;
-                for (Permanent p : battlefield) {
-                    if (gameQueryService.isCreature(gameData, p)) {
-                        validTargets.add(p.getId());
-                    }
-                }
-            }
-
-            if (validTargets.isEmpty()) {
-                // No valid targets — trigger can't go on the stack, skip it
-                gameData.pendingDeathTriggerTargets.removeFirst();
-                String logEntry = pending.dyingCard().getName() + "'s death trigger has no valid targets.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} death trigger skipped (no valid creature targets)",
-                        gameData.id, pending.dyingCard().getName());
-                continue;
-            }
-
-            // Remove from queue and begin permanent choice
-            gameData.pendingDeathTriggerTargets.removeFirst();
-            gameData.interaction.setPermanentChoiceContext(pending);
-            playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
-                    pending.dyingCard().getName() + "'s ability — Choose target creature.");
-
-            String logEntry = pending.dyingCard().getName() + "'s death trigger — choose a target creature.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} death trigger awaiting target selection", gameData.id, pending.dyingCard().getName());
-            return;
-        }
+        triggeredAbilityQueueService.processNextDeathTriggerTarget(gameData);
     }
 
     public void beginNextPendingLibraryBottomReorder(GameData gameData) {
@@ -316,7 +262,7 @@ public class GameHelper {
 
         if (!gameData.interaction.isAwaitingInput() && gameData.warpWorldOperation.needsLegendChecks) {
             for (UUID playerId : gameData.orderedPlayerIds) {
-                checkLegendRule(gameData, playerId);
+                legendRuleService.checkLegendRule(gameData, playerId);
             }
         }
 
@@ -402,7 +348,7 @@ public class GameHelper {
 
         }
 
-        returnStolenCreatures(gameData, true);
+        auraAttachmentService.returnStolenCreatures(gameData, true);
 
         gameData.playerDamagePreventionShields.clear();
         gameData.globalDamagePreventionShield = 0;
@@ -411,40 +357,6 @@ public class GameHelper {
         gameData.combatDamageRedirectTarget = null;
         gameData.playerColorDamagePreventionCount.clear();
         gameData.drawReplacementTargetToController.clear();
-    }
-
-    public void performStateBasedActions(GameData gameData) {
-        boolean anyDied = false;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-            Iterator<Permanent> it = battlefield.iterator();
-            while (it.hasNext()) {
-                Permanent p = it.next();
-                if (gameQueryService.isCreature(gameData, p) && gameQueryService.getEffectiveToughness(gameData, p) <= 0) {
-                    it.remove();
-                    UUID graveyardOwnerId = gameData.stolenCreatures.getOrDefault(p.getId(), playerId);
-                    gameData.stolenCreatures.remove(p.getId());
-                    addCardToGraveyard(gameData, graveyardOwnerId, p.getOriginalCard());
-                    collectDeathTrigger(gameData, p.getCard(), playerId, true);
-                    checkAllyCreatureDeathTriggers(gameData, playerId);
-                    String logEntry = p.getCard().getName() + " is put into the graveyard (0 toughness).";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - {} dies to state-based actions (0 toughness)", gameData.id, p.getCard().getName());
-                    anyDied = true;
-                } else if (p.getCard().getType() == CardType.PLANESWALKER && p.getLoyaltyCounters() <= 0) {
-                    it.remove();
-                    addCardToGraveyard(gameData, playerId, p.getOriginalCard());
-                    String logEntry = p.getCard().getName() + " has no loyalty counters and is put into the graveyard.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - {} dies to state-based actions (0 loyalty)", gameData.id, p.getCard().getName());
-                    anyDied = true;
-                }
-            }
-        }
-        if (anyDied) {
-            removeOrphanedAuras(gameData);
-        }
     }
 
     void drainManaPools(GameData gameData) {
@@ -548,28 +460,6 @@ public class GameHelper {
         clonePerm.setCard(copy);
     }
 
-    public boolean checkLegendRule(GameData gameData, UUID controllerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) return false;
-
-        Map<String, List<UUID>> legendaryByName = new HashMap<>();
-        for (Permanent perm : battlefield) {
-            if (perm.getCard().getSupertypes().contains(com.github.laxika.magicalvibes.model.CardSupertype.LEGENDARY)) {
-                legendaryByName.computeIfAbsent(perm.getCard().getName(), k -> new ArrayList<>()).add(perm.getId());
-            }
-        }
-
-        for (Map.Entry<String, List<UUID>> entry : legendaryByName.entrySet()) {
-            if (entry.getValue().size() >= 2) {
-                gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.LegendRule(entry.getKey()));
-                playerInputService.beginPermanentChoice(gameData, controllerId, entry.getValue(),
-                        "You control multiple legendary permanents named " + entry.getKey() + ". Choose one to keep.");
-                return true;
-            }
-        }
-        return false;
-    }
-
     // ===== Clone replacement effect =====
 
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId) {
@@ -641,7 +531,7 @@ public class GameHelper {
         handleCreatureEnteredBattlefield(gameData, controllerId, perm.getCard(), etbTargetId);
 
         if (!gameData.interaction.isAwaitingInput()) {
-            checkLegendRule(gameData, controllerId);
+            legendRuleService.checkLegendRule(gameData, controllerId);
         }
     }
 
@@ -889,74 +779,6 @@ public class GameHelper {
         log.info("Game {} - {} gains control of {}", gameData.id, newControllerName, creature.getCard().getName());
     }
 
-    void returnStolenCreatures(GameData gameData) {
-        returnStolenCreatures(gameData, false);
-    }
-
-    private void returnStolenCreatures(GameData gameData, boolean includeUntilEndOfTurn) {
-        if (gameData.stolenCreatures.isEmpty()) return;
-
-        boolean anyReturned = false;
-        Iterator<Map.Entry<UUID, UUID>> it = gameData.stolenCreatures.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<UUID, UUID> entry = it.next();
-            UUID creatureId = entry.getKey();
-            UUID ownerId = entry.getValue();
-            boolean isUntilEndOfTurnSteal = gameData.untilEndOfTurnStolenCreatures.contains(creatureId);
-
-            if (includeUntilEndOfTurn && !isUntilEndOfTurnSteal) {
-                continue;
-            }
-            if (!includeUntilEndOfTurn && isUntilEndOfTurnSteal) {
-                continue;
-            }
-
-            Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
-            if (creature == null) {
-                it.remove();
-                gameData.enchantmentDependentStolenCreatures.remove(creatureId);
-                gameData.untilEndOfTurnStolenCreatures.remove(creatureId);
-                continue;
-            }
-
-            if (gameQueryService.hasAuraWithEffect(gameData, creature, ControlEnchantedCreatureEffect.class)) {
-                if (includeUntilEndOfTurn) {
-                    gameData.untilEndOfTurnStolenCreatures.remove(creatureId);
-                }
-                continue;
-            }
-
-            if (gameData.enchantmentDependentStolenCreatures.contains(creatureId)
-                    && gameQueryService.isEnchanted(gameData, creature)) {
-                if (includeUntilEndOfTurn) {
-                    gameData.untilEndOfTurnStolenCreatures.remove(creatureId);
-                }
-                continue;
-            }
-            gameData.enchantmentDependentStolenCreatures.remove(creatureId);
-
-            for (UUID pid : gameData.orderedPlayerIds) {
-                List<Permanent> bf = gameData.playerBattlefields.get(pid);
-                if (bf != null && bf.remove(creature)) {
-                    gameData.playerBattlefields.get(ownerId).add(creature);
-                    creature.setSummoningSick(true);
-
-                    String ownerName = gameData.playerIdToName.get(ownerId);
-                    String logEntry = creature.getCard().getName() + " returns to " + ownerName + "'s control.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - {} returns to {}'s control", gameData.id, creature.getCard().getName(), ownerName);
-                    anyReturned = true;
-                    break;
-                }
-            }
-            it.remove();
-            gameData.untilEndOfTurnStolenCreatures.remove(creatureId);
-        }
-        if (anyReturned) {
-
-        }
-    }
-
     int redirectPlayerDamageToEnchantedCreature(GameData gameData, UUID playerId, int damage, String sourceName) {
         if (damage <= 0) return damage;
         Permanent target = gameQueryService.findEnchantedCreatureByAuraEffect(gameData, playerId, RedirectPlayerDamageToEnchantedCreatureEffect.class);
@@ -1114,36 +936,7 @@ public class GameHelper {
     }
 
     public void processNextDiscardSelfTrigger(GameData gameData) {
-        while (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
-            PermanentChoiceContext.DiscardTriggerAnyTarget pending = gameData.pendingDiscardSelfTriggers.peekFirst();
-
-            // Collect valid targets: all creatures and planeswalkers on all battlefields + all players
-            List<UUID> validPermanentTargets = new ArrayList<>();
-            for (UUID pid : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                if (battlefield == null) continue;
-                for (Permanent p : battlefield) {
-                    if (gameQueryService.isCreature(gameData, p)
-                            || p.getCard().getType() == CardType.PLANESWALKER) {
-                        validPermanentTargets.add(p.getId());
-                    }
-                }
-            }
-
-            List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
-
-            // There are always valid targets (at least the players)
-            gameData.pendingDiscardSelfTriggers.removeFirst();
-            gameData.interaction.setPermanentChoiceContext(pending);
-            playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
-                    validPermanentTargets, validPlayerTargets,
-                    pending.discardedCard().getName() + "'s ability — Choose any target.");
-
-            String logEntry = pending.discardedCard().getName() + "'s discard trigger — choose a target.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} discard trigger awaiting target selection", gameData.id, pending.discardedCard().getName());
-            return;
-        }
+        triggeredAbilityQueueService.processNextDiscardSelfTrigger(gameData);
     }
 
     // ===== Draw =====
@@ -1258,5 +1051,7 @@ public class GameHelper {
         log.info("Game {} - {} exile trigger resolved for {}", gameData.id, creatureName, playerName);
     }
 }
+
+
 
 

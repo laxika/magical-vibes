@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
+import com.github.laxika.magicalvibes.service.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,7 @@ public class PermanentChoiceHandlerService {
     private final GameBroadcastService gameBroadcastService;
     private final AbilityActivationService abilityActivationService;
     private final PlayerInputService playerInputService;
+    private final StateBasedActionService stateBasedActionService;
     private final TurnProgressionService turnProgressionService;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
@@ -71,7 +73,7 @@ public class PermanentChoiceHandlerService {
 
             // If no legend rule or other awaiting input pending, do SBA + auto-pass
             if (!gameData.interaction.isAwaitingInput()) {
-                gameHelper.performStateBasedActions(gameData);
+                stateBasedActionService.performStateBasedActions(gameData);
 
                 if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
                     gameHelper.processNextDeathTriggerTarget(gameData);
@@ -144,7 +146,7 @@ public class PermanentChoiceHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} sacrifices {}", gameData.id, playerName, target.getCard().getName());
 
-            gameHelper.performStateBasedActions(gameData);
+            stateBasedActionService.performStateBasedActions(gameData);
             turnProgressionService.resolveAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.ActivatedAbilitySacrificeSubtype activatedAbilitySacrificeSubtype) {
             abilityActivationService.completeActivatedAbilitySubtypeSacrificeChoice(gameData, player, activatedAbilitySacrificeSubtype, permanentId);
@@ -168,7 +170,7 @@ public class PermanentChoiceHandlerService {
                 log.info("Game {} - {} returned to owner's hand by Sunken Hope", gameData.id, target.getCard().getName());
             }
 
-            gameHelper.performStateBasedActions(gameData);
+            stateBasedActionService.performStateBasedActions(gameData);
 
             turnProgressionService.resolveAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.SpellRetarget retarget) {

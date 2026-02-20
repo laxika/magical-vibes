@@ -62,6 +62,7 @@ import java.util.UUID;
 public class AbilityActivationService {
 
     private final GameHelper gameHelper;
+    private final StateBasedActionService stateBasedActionService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final TargetValidationService targetValidationService;
@@ -762,7 +763,7 @@ public class AbilityActivationService {
                 log.info("Game {} - Awaiting {} to choose a mana color", gameData.id, player.getUsername());
             }
         }
-        gameHelper.performStateBasedActions(gameData);
+        stateBasedActionService.performStateBasedActions(gameData);
         gameData.priorityPassedBy.clear();
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingDeathTriggerTargets.isEmpty()) {
             gameHelper.processNextDeathTriggerTarget(gameData);
@@ -801,7 +802,7 @@ public class AbilityActivationService {
                     Map.of()
             ));
         }
-        gameHelper.performStateBasedActions(gameData);
+        stateBasedActionService.performStateBasedActions(gameData);
         gameData.priorityPassedBy.clear();
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingDeathTriggerTargets.isEmpty()) {
             gameHelper.processNextDeathTriggerTarget(gameData);

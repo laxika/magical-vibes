@@ -32,6 +32,7 @@ import java.util.*;
 public class GraveyardReturnResolutionService implements EffectHandlerProvider {
 
     private final GameHelper gameHelper;
+    private final LegendRuleService legendRuleService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
@@ -289,7 +290,7 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
 
             gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
             if (!gameData.interaction.isAwaitingInput()) {
-                gameHelper.checkLegendRule(gameData, controllerId);
+                legendRuleService.checkLegendRule(gameData, controllerId);
             }
 
             log.info("Game {} - Zombie token created for player {}", gameData.id, controllerId);

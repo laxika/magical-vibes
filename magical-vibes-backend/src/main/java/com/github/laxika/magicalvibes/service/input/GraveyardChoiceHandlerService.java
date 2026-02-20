@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
+import com.github.laxika.magicalvibes.service.LegendRuleService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,7 @@ public class GraveyardChoiceHandlerService {
 
     private final GameQueryService gameQueryService;
     private final GameHelper gameHelper;
+    private final LegendRuleService legendRuleService;
     private final GameBroadcastService gameBroadcastService;
     private final TurnProgressionService turnProgressionService;
 
@@ -94,7 +96,7 @@ public class GraveyardChoiceHandlerService {
                         gameHelper.handleCreatureEnteredBattlefield(gameData, playerId, card, null);
                     }
                     if (!gameData.interaction.isAwaitingInput()) {
-                        gameHelper.checkLegendRule(gameData, playerId);
+                        legendRuleService.checkLegendRule(gameData, playerId);
                     }
                 }
             }

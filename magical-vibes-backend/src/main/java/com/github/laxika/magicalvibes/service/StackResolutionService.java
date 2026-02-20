@@ -24,6 +24,8 @@ import java.util.UUID;
 public class StackResolutionService {
 
     private final GameHelper gameHelper;
+    private final LegendRuleService legendRuleService;
+    private final StateBasedActionService stateBasedActionService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final EffectResolutionService effectResolutionService;
@@ -57,7 +59,7 @@ public class StackResolutionService {
         }
 
         // Check SBA after resolution — creatures may have 0 toughness from effects (e.g. -1/-1)
-        gameHelper.performStateBasedActions(gameData);
+        stateBasedActionService.performStateBasedActions(gameData);
 
         if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
             gameHelper.processNextDiscardSelfTrigger(gameData);
@@ -99,7 +101,7 @@ public class StackResolutionService {
 
         gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId());
         if (!gameData.interaction.isAwaitingInput()) {
-            gameHelper.checkLegendRule(gameData, controllerId);
+            legendRuleService.checkLegendRule(gameData, controllerId);
         }
     }
 
@@ -150,7 +152,7 @@ public class StackResolutionService {
                 playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), null);
             }
             if (!gameData.interaction.isAwaitingInput()) {
-                gameHelper.checkLegendRule(gameData, controllerId);
+                legendRuleService.checkLegendRule(gameData, controllerId);
             }
         }
     }
@@ -167,7 +169,7 @@ public class StackResolutionService {
 
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
         if (!gameData.interaction.isAwaitingInput()) {
-            gameHelper.checkLegendRule(gameData, controllerId);
+            legendRuleService.checkLegendRule(gameData, controllerId);
         }
     }
 
@@ -186,7 +188,7 @@ public class StackResolutionService {
 
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
         if (!gameData.interaction.isAwaitingInput()) {
-            gameHelper.checkLegendRule(gameData, controllerId);
+            legendRuleService.checkLegendRule(gameData, controllerId);
         }
     }
 

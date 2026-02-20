@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
+import com.github.laxika.magicalvibes.service.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +57,7 @@ public class MayAbilityHandlerService {
 
     private final GameQueryService gameQueryService;
     private final GameHelper gameHelper;
+    private final StateBasedActionService stateBasedActionService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
@@ -121,7 +123,7 @@ public class MayAbilityHandlerService {
                 log.info("Game {} - {} declines clone copy", gameData.id, player.getUsername());
 
                 gameHelper.completeCloneEntry(gameData, null);
-                gameHelper.performStateBasedActions(gameData);
+                stateBasedActionService.performStateBasedActions(gameData);
 
                 if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
                     gameHelper.processNextDeathTriggerTarget(gameData);
@@ -216,7 +218,7 @@ public class MayAbilityHandlerService {
             log.info("Game {} - {} declines to pay {} — spell countered", gameData.id, player.getUsername(), amount);
         }
 
-        gameHelper.performStateBasedActions(gameData);
+        stateBasedActionService.performStateBasedActions(gameData);
         playerInputService.processNextMayAbility(gameData);
         if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
             gameData.priorityPassedBy.clear();
@@ -287,7 +289,7 @@ public class MayAbilityHandlerService {
             log.info("Game {} - {} is no longer on the battlefield, decline is a no-op", gameData.id, sourceCard.getName());
         }
 
-        gameHelper.performStateBasedActions(gameData);
+        stateBasedActionService.performStateBasedActions(gameData);
         playerInputService.processNextMayAbility(gameData);
         if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
             gameData.priorityPassedBy.clear();

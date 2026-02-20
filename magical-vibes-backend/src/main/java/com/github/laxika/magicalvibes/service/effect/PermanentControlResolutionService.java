@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
+import com.github.laxika.magicalvibes.service.LegendRuleService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ import java.util.UUID;
 public class PermanentControlResolutionService implements EffectHandlerProvider {
 
     private final GameHelper gameHelper;
+    private final LegendRuleService legendRuleService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
@@ -92,7 +94,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
 
             gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
             if (!gameData.interaction.isAwaitingInput()) {
-                gameHelper.checkLegendRule(gameData, controllerId);
+                legendRuleService.checkLegendRule(gameData, controllerId);
             }
         }
 
@@ -121,7 +123,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
 
         gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null);
         if (!gameData.interaction.isAwaitingInput()) {
-            gameHelper.checkLegendRule(gameData, controllerId);
+            legendRuleService.checkLegendRule(gameData, controllerId);
         }
 
         log.info("Game {} - {} token created for player {}", gameData.id, token.tokenName(), controllerId);

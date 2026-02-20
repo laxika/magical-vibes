@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
+import com.github.laxika.magicalvibes.service.LegendRuleService;
+import com.github.laxika.magicalvibes.service.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +36,8 @@ public class LibraryChoiceHandlerService {
     private final SessionManager sessionManager;
     private final GameQueryService gameQueryService;
     private final GameHelper gameHelper;
+    private final LegendRuleService legendRuleService;
+    private final StateBasedActionService stateBasedActionService;
     private final GameBroadcastService gameBroadcastService;
     private final CardViewFactory cardViewFactory;
     private final TurnProgressionService turnProgressionService;
@@ -312,7 +316,7 @@ public class LibraryChoiceHandlerService {
                 perm.setSummoningSick(false);
             }
             if (!gameData.interaction.isAwaitingInput()) {
-                gameHelper.checkLegendRule(gameData, controllerId);
+                legendRuleService.checkLegendRule(gameData, controllerId);
             }
         }
 
@@ -332,7 +336,7 @@ public class LibraryChoiceHandlerService {
 
         log.info("Game {} - {} resolves library reveal choice, {} cards to battlefield", gameData.id, playerName, selectedCards.size());
 
-        gameHelper.performStateBasedActions(gameData);
+        stateBasedActionService.performStateBasedActions(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 }
