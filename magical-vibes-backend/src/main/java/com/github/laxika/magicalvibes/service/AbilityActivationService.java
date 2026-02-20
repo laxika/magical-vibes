@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -229,6 +230,7 @@ public class AbilityActivationService {
 
         // Validate activation timing restrictions (e.g. "Activate only during your upkeep")
         validateTimingRestrictions(gameData, playerId, ability);
+        validateActivationLimitPerTurn(gameData, permanent, ability, effectiveIndex);
 
         // Validate loyalty ability restrictions
         if (ability.getLoyaltyCost() != null) {
@@ -336,6 +338,7 @@ public class AbilityActivationService {
         }
         activatedAbilityExecutionService.completeActivationAfterCosts(
                 gameData, player, permanent, ability, abilityEffects, effectiveXValue, targetPermanentId, targetZone, hasSacCreatureCost);
+        recordAbilityActivationUse(gameData, permanent, effectiveIndex);
     }
 
     public void completeActivatedAbilitySubtypeSacrificeChoice(GameData gameData,
@@ -385,6 +388,7 @@ public class AbilityActivationService {
         activatedAbilityExecutionService.completeActivationAfterCosts(
                 gameData, player, sourcePermanent, ability, abilityEffects,
                 context.xValue() != null ? context.xValue() : 0, context.targetPermanentId(), context.targetZone(), false);
+        recordAbilityActivationUse(gameData, sourcePermanent, effectiveIndex);
     }
 
     private boolean handleSubtypeSacrificeCostSelection(GameData gameData,
@@ -580,6 +584,25 @@ public class AbilityActivationService {
         gameData.pendingAbilityActivation = null;
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearCardChoice();
+    }
+
+    private void validateActivationLimitPerTurn(GameData gameData, Permanent permanent, ActivatedAbility ability, int abilityIndex) {
+        Integer maxActivationsPerTurn = ability.getMaxActivationsPerTurn();
+        if (maxActivationsPerTurn == null) {
+            return;
+        }
+
+        Map<Integer, Integer> perAbilityCounts = gameData.activatedAbilityUsesThisTurn.get(permanent.getId());
+        int currentCount = perAbilityCounts != null ? perAbilityCounts.getOrDefault(abilityIndex, 0) : 0;
+        if (currentCount >= maxActivationsPerTurn) {
+            throw new IllegalStateException("This ability can be activated no more than " + maxActivationsPerTurn + " times each turn");
+        }
+    }
+
+    private void recordAbilityActivationUse(GameData gameData, Permanent permanent, int abilityIndex) {
+        Map<Integer, Integer> perAbilityCounts = gameData.activatedAbilityUsesThisTurn
+                .computeIfAbsent(permanent.getId(), ignored -> new ConcurrentHashMap<>());
+        perAbilityCounts.merge(abilityIndex, 1, Integer::sum);
     }
 }
 
