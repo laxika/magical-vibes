@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffe
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnTappedCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledSubtypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect;
 import org.springframework.stereotype.Service;
 
@@ -45,6 +46,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         registry.register(GrantActivatedAbilityToEnchantedCreatureEffect.class, this::resolveGrantActivatedAbilityToEnchantedCreature);
         registry.register(BoostBySharedCreatureTypeEffect.class, this::resolveBoostBySharedCreatureType);
 
+        registry.registerSelfHandler(PowerToughnessEqualToControlledSubtypeCountEffect.class, this::resolvePowerToughnessEqualToControlledSubtypeCount);
         registry.registerSelfHandler(PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect.class, this::resolvePowerToughnessEqualToCreatureCardsInAllGraveyards);
     }
 
@@ -197,6 +199,39 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         }
         accumulator.addPower(count);
         accumulator.addToughness(count);
+    }
+
+    private void resolvePowerToughnessEqualToControlledSubtypeCount(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var pt = (PowerToughnessEqualToControlledSubtypeCountEffect) effect;
+        UUID controllerId = findControllerId(context.gameData(), context.source());
+        if (controllerId == null) {
+            return;
+        }
+
+        List<Permanent> battlefield = context.gameData().playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (permanent.getCard().getSubtypes().contains(pt.subtype())) {
+                count++;
+            }
+        }
+
+        accumulator.addPower(count);
+        accumulator.addToughness(count);
+    }
+
+    private UUID findControllerId(GameData gameData, Permanent permanent) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null && battlefield.contains(permanent)) {
+                return playerId;
+            }
+        }
+        return null;
     }
 
     private boolean hasAnimateArtifactEffect(GameData gameData) {
