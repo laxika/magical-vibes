@@ -60,6 +60,7 @@ public class ScryfallOracleLoader {
         KEYWORD_MAP.put("Haste", Keyword.HASTE);
         KEYWORD_MAP.put("Lifelink", Keyword.LIFELINK);
         KEYWORD_MAP.put("Trample", Keyword.TRAMPLE);
+        KEYWORD_MAP.put("Forestwalk", Keyword.FORESTWALK);
         KEYWORD_MAP.put("Mountainwalk", Keyword.MOUNTAINWALK);
         KEYWORD_MAP.put("Islandwalk", Keyword.ISLANDWALK);
         KEYWORD_MAP.put("Swampwalk", Keyword.SWAMPWALK);

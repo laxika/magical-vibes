@@ -433,6 +433,7 @@ public class CombatService {
                 }
             }
             for (var entry : Map.of(
+                    Keyword.FORESTWALK, CardSubtype.FOREST,
                     Keyword.MOUNTAINWALK, CardSubtype.MOUNTAIN,
                     Keyword.ISLANDWALK, CardSubtype.ISLAND,
                     Keyword.SWAMPWALK, CardSubtype.SWAMP
