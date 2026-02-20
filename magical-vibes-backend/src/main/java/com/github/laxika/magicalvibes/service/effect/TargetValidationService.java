@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -188,6 +189,11 @@ public class TargetValidationService {
             if (target == null || !gameQueryService.isCreature(ctx.gameData(), target) || !target.isBlocking()) {
                 throw new IllegalStateException("Target must be a blocking creature");
             }
+        });
+
+        registry.register(BoostTargetCreatureEffect.class, (ctx, effect) -> {
+            Permanent target = requireBattlefieldTarget(ctx);
+            requireCreature(ctx, target);
         });
 
         registry.register(DestroyCreatureBlockingThisEffect.class, (ctx, effect) -> {
