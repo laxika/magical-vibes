@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -108,6 +110,18 @@ public class TargetRedirectionResolutionService implements EffectHandlerProvider
             if (targetSpell.getTargetZone() == Zone.GRAVEYARD) {
                 if (gameQueryService.findCardInGraveyardById(gameData, candidateTargetId) == null) {
                     return false;
+                }
+                boolean spellTargetsOwnGraveyardCreature = spellCard.getEffects(EffectSlot.SPELL)
+                        .stream()
+                        .anyMatch(e -> e instanceof ReturnCreatureFromGraveyardToHandEffect);
+                if (spellTargetsOwnGraveyardCreature) {
+                    boolean inControllersGraveyard = gameData.playerGraveyards
+                            .getOrDefault(targetSpell.getControllerId(), List.of())
+                            .stream()
+                            .anyMatch(c -> c.getId().equals(candidateTargetId));
+                    if (!inControllersGraveyard) {
+                        return false;
+                    }
                 }
                 targetLegalityService.validateEffectTargetInZone(gameData, spellCard, candidateTargetId, Zone.GRAVEYARD);
                 return true;

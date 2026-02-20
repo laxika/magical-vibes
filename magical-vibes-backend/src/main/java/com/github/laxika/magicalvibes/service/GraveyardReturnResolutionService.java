@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TargetZone;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactFromGraveyardToHandEffect;
@@ -106,6 +107,23 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
         UUID controllerId = entry.getControllerId();
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         String typeName = cardType.name().toLowerCase();
+        if (entry.getTargetZone() == TargetZone.GRAVEYARD && entry.getTargetPermanentId() != null) {
+            Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetPermanentId());
+            if (targetCard == null || targetCard.getType() != cardType) {
+                String fizzleLog = entry.getDescription() + " fizzles (target " + typeName + " card is no longer in a graveyard).";
+                gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+                return;
+            }
+
+            gameHelper.removeCardFromGraveyardById(gameData, targetCard.getId());
+            if (destination == GraveyardChoiceDestination.HAND) {
+                gameData.playerHands.get(controllerId).add(targetCard);
+                String playerName = gameData.playerIdToName.get(controllerId);
+                String logEntry = playerName + " returns " + targetCard.getName() + " from graveyard to hand.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                return;
+            }
+        }
 
         if (graveyard == null || graveyard.isEmpty()) {
             String logEntry = entry.getDescription() + " — no " + typeName + " cards in graveyard.";

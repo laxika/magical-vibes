@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEff
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
@@ -144,6 +145,22 @@ public class TargetValidationService {
             }
             if (!graveyardCard.isAura()) {
                 throw new IllegalStateException("Target card must be an Aura");
+            }
+        });
+
+        registry.register(ReturnCreatureFromGraveyardToHandEffect.class, (ctx, effect) -> {
+            if (ctx.targetZone() != TargetZone.GRAVEYARD) {
+                throw new IllegalStateException("Spell requires a graveyard target");
+            }
+            if (ctx.targetPermanentId() == null) {
+                throw new IllegalStateException("Spell requires a target creature card");
+            }
+            Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetPermanentId());
+            if (graveyardCard == null) {
+                throw new IllegalStateException("Target card not found in any graveyard");
+            }
+            if (graveyardCard.getType() != CardType.CREATURE) {
+                throw new IllegalStateException("Target card must be a creature");
             }
         });
 
