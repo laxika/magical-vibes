@@ -21,5 +21,6 @@ public enum Keyword {
     FORESTWALK,
     MOUNTAINWALK,
     ISLANDWALK,
-    SWAMPWALK
+    SWAMPWALK,
+    HEXPROOF
 }

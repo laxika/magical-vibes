@@ -97,6 +97,20 @@ public class GameQueryService {
         return null;
     }
 
+    public UUID findPermanentController(GameData gameData, UUID permanentId) {
+        if (permanentId == null) return null;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (p.getId().equals(permanentId)) {
+                    return playerId;
+                }
+            }
+        }
+        return null;
+    }
+
     public Card findCardInGraveyardById(GameData gameData, UUID cardId) {
         if (cardId == null) return null;
         for (UUID playerId : gameData.orderedPlayerIds) {

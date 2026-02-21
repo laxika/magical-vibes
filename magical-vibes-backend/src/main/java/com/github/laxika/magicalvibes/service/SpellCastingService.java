@@ -159,7 +159,7 @@ public class SpellCastingService {
 
         // Validate multi-target permanent targeting
         if (card.getMaxTargets() > 0 && !targetPermanentIds.isEmpty()) {
-            targetLegalityService.validateMultiSpellTargets(gameData, card, targetPermanentIds);
+            targetLegalityService.validateMultiSpellTargets(gameData, card, targetPermanentIds, playerId);
         }
 
         // Validate and apply convoke

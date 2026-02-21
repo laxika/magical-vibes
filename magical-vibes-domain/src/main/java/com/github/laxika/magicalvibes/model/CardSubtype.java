@@ -96,7 +96,8 @@ public enum CardSubtype {
     AVATAR("Avatar"),
     MINION("Minion"),
     VIASHINO("Viashino"),
-    SAPROLING("Saproling");
+    SAPROLING("Saproling"),
+    TROLL("Troll");
 
     @Getter
     private final String displayName;
