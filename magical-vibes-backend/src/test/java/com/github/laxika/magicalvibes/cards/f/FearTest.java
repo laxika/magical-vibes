@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -64,7 +64,10 @@ class FearTest {
         assertThat(card.isNeedsTarget()).isTrue();
         assertThat(card.isAura()).isTrue();
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordToEnchantedCreatureEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
+        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(effect.keyword()).isEqualTo(Keyword.FEAR);
+        assertThat(effect.scope()).isEqualTo(GrantKeywordEffect.Scope.ENCHANTED_CREATURE);
     }
 
     // ===== Casting and resolving =====
@@ -307,5 +310,6 @@ class FearTest {
                 .hasMessageContaining("(fear)");
     }
 }
+
 
 

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -71,9 +71,11 @@ class MantisEngineTest {
         assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
         assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
         assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(GrantKeywordToSelfEffect.class);
-        assertThat(((GrantKeywordToSelfEffect) card.getActivatedAbilities().get(0).getEffects().getFirst()).keyword())
+                .isInstanceOf(GrantKeywordEffect.class);
+        GrantKeywordEffect flying = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
+        assertThat(flying.keyword())
                 .isEqualTo(Keyword.FLYING);
+        assertThat(flying.scope()).isEqualTo(GrantKeywordEffect.Scope.SELF);
 
         // Second ability: {2} grants first strike
         assertThat(card.getActivatedAbilities().get(1).getManaCost()).isEqualTo("{2}");
@@ -81,9 +83,11 @@ class MantisEngineTest {
         assertThat(card.getActivatedAbilities().get(1).isNeedsTarget()).isFalse();
         assertThat(card.getActivatedAbilities().get(1).getEffects()).hasSize(1);
         assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isInstanceOf(GrantKeywordToSelfEffect.class);
-        assertThat(((GrantKeywordToSelfEffect) card.getActivatedAbilities().get(1).getEffects().getFirst()).keyword())
+                .isInstanceOf(GrantKeywordEffect.class);
+        GrantKeywordEffect firstStrike = (GrantKeywordEffect) card.getActivatedAbilities().get(1).getEffects().getFirst();
+        assertThat(firstStrike.keyword())
                 .isEqualTo(Keyword.FIRST_STRIKE);
+        assertThat(firstStrike.scope()).isEqualTo(GrantKeywordEffect.Scope.SELF);
     }
 
     // ===== Casting =====
@@ -417,4 +421,5 @@ class MantisEngineTest {
         return perm;
     }
 }
+
 

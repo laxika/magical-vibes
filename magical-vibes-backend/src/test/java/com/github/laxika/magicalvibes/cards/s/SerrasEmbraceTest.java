@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
@@ -63,8 +63,14 @@ class SerrasEmbraceTest {
         assertThat(card.getCardText()).isEqualTo("Enchant creature\nEnchanted creature gets +2/+2 and has flying and vigilance.");
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(3);
         assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(BoostEnchantedCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordToEnchantedCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(2)).isInstanceOf(GrantKeywordToEnchantedCreatureEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC).get(2)).isInstanceOf(GrantKeywordEffect.class);
+        GrantKeywordEffect firstKeyword = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);
+        GrantKeywordEffect secondKeyword = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(2);
+        assertThat(firstKeyword.scope()).isEqualTo(GrantKeywordEffect.Scope.ENCHANTED_CREATURE);
+        assertThat(secondKeyword.scope()).isEqualTo(GrantKeywordEffect.Scope.ENCHANTED_CREATURE);
+        assertThat(List.of(firstKeyword.keyword(), secondKeyword.keyword()))
+                .containsExactlyInAnyOrder(Keyword.FLYING, Keyword.VIGILANCE);
     }
 
     // ===== Casting and resolving =====
@@ -207,4 +213,5 @@ class SerrasEmbraceTest {
         assertThat(gqs.hasKeyword(gd, otherBears, Keyword.VIGILANCE)).isFalse();
     }
 }
+
 

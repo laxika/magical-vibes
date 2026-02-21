@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -63,10 +63,11 @@ class RobeOfMirrorsTest {
         assertThat(card.isAura()).isTrue();
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GrantKeywordToEnchantedCreatureEffect.class);
-        GrantKeywordToEnchantedCreatureEffect effect =
-                (GrantKeywordToEnchantedCreatureEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+                .isInstanceOf(GrantKeywordEffect.class);
+        GrantKeywordEffect effect =
+                (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(effect.keyword()).isEqualTo(Keyword.SHROUD);
+        assertThat(effect.scope()).isEqualTo(GrantKeywordEffect.Scope.ENCHANTED_CREATURE);
     }
 
     // ===== Casting and resolving =====
@@ -256,4 +257,5 @@ class RobeOfMirrorsTest {
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 }
+
 

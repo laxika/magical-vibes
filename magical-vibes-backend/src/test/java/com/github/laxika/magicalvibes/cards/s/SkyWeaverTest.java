@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -66,9 +66,10 @@ class SkyWeaverTest {
         assertThat(ability.isRequiresTap()).isFalse();
         assertThat(ability.getManaCost()).isEqualTo("{2}");
         assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(GrantKeywordToTargetEffect.class);
-        GrantKeywordToTargetEffect effect = (GrantKeywordToTargetEffect) ability.getEffects().getFirst();
+        assertThat(ability.getEffects().getFirst()).isInstanceOf(GrantKeywordEffect.class);
+        GrantKeywordEffect effect = (GrantKeywordEffect) ability.getEffects().getFirst();
         assertThat(effect.keyword()).isEqualTo(Keyword.FLYING);
+        assertThat(effect.scope()).isEqualTo(GrantKeywordEffect.Scope.TARGET);
         assertThat(ability.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -283,4 +284,5 @@ class SkyWeaverTest {
         return perm;
     }
 }
+
 

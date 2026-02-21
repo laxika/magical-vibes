@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnTappedCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.service.GameQueryService;
@@ -63,7 +63,10 @@ class AdeptWatershaperTest {
         assertThat(card.getToughness()).isEqualTo(4);
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.MERFOLK, CardSubtype.CLERIC);
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordToOwnTappedCreaturesEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
+        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(effect.keyword()).isEqualTo(Keyword.INDESTRUCTIBLE);
+        assertThat(effect.scope()).isEqualTo(GrantKeywordEffect.Scope.OWN_TAPPED_CREATURES);
     }
 
     // ===== Casting and resolving =====
@@ -490,5 +493,6 @@ class AdeptWatershaperTest {
                 .findFirst().orElseThrow();
     }
 }
+
 
 
