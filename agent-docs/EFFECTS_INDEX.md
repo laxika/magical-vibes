@@ -39,6 +39,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `shuffle into library`: `ShuffleIntoLibraryEffect`, `ShuffleGraveyardIntoLibraryEffect`
 - `create creature tokens`: `CreateCreatureTokenEffect`, `CreateCreatureTokenWithColorsEffect`
 - `gain life`: `GainLifeEffect`, `GainLifePerGraveyardCardEffect`, `GainLifeEqualToTargetToughnessEffect`
+- `target player gains N life`: `TargetPlayerGainsLifeEffect`
 - `lose life / drain`: `LoseLifeEffect`, `TargetPlayerLosesLifeAndControllerGainsLifeEffect`, `EnchantedCreatureControllerLosesLifeEffect`
 - `target opponent gains control of this creature (ETB)`: `TargetPlayerGainsControlOfSourceCreatureEffect`
 - `each player loses life for each creature they control`: `EachPlayerLosesLifePerCreatureControlledEffect`

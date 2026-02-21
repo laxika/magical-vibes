@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnes
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameQueryService;
@@ -49,6 +50,8 @@ public class LifeResolutionService implements EffectHandlerProvider {
                         (EachPlayerLosesLifePerCreatureControlledEffect) effect));
         registry.register(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class,
                 (gd, entry, effect) -> resolveTargetPlayerLosesLifeAndControllerGainsLife(gd, entry, (TargetPlayerLosesLifeAndControllerGainsLifeEffect) effect));
+        registry.register(TargetPlayerGainsLifeEffect.class,
+                (gd, entry, effect) -> resolveTargetPlayerGainsLife(gd, entry, (TargetPlayerGainsLifeEffect) effect));
     }
 
     private void resolveGainLife(GameData gameData, UUID controllerId, int amount) {
@@ -174,6 +177,14 @@ public class LifeResolutionService implements EffectHandlerProvider {
 
         // Controller gains life
         resolveGainLife(gameData, controllerId, effect.lifeGain());
+    }
+
+    private void resolveTargetPlayerGainsLife(GameData gameData, StackEntry entry, TargetPlayerGainsLifeEffect effect) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        if (targetPlayerId == null) {
+            return;
+        }
+        resolveGainLife(gameData, targetPlayerId, effect.amount());
     }
 }
 
