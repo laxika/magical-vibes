@@ -239,7 +239,15 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
     }
 
     private void resolveRegenerate(GameData gameData, StackEntry entry) {
-        Permanent perm = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        UUID regenerationTargetId = entry.getTargetPermanentId();
+        if (regenerationTargetId == null && entry.getSourcePermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source != null) {
+                regenerationTargetId = source.getAttachedTo();
+            }
+        }
+
+        Permanent perm = gameQueryService.findPermanentById(gameData, regenerationTargetId);
         if (perm == null) {
             return;
         }
