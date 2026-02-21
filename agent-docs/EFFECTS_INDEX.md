@@ -19,8 +19,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `deal damage to yourself/controller`: `DealDamageToControllerEffect`
 - `destroy target permanent`: `DestroyTargetPermanentEffect`
 - `destroy target creature`: `DestroyTargetPermanentEffect` + `PermanentPredicateTargetFilter(PermanentIsCreaturePredicate)`
-- `destroy all creatures/artifacts/enchantments`: `DestroyAllCreaturesEffect`, `DestroyAllArtifactsEffect`, `DestroyAllEnchantmentsEffect`
-- `destroy all creatures you don't control`: `DestroyAllCreaturesYouDontControlEffect`
+- `destroy all creatures/artifacts/enchantments` (optionally only opponents' permanents): `DestroyAllPermanentsEffect`
 - `sacrifice creature`: `SacrificeCreatureEffect`, `EachOpponentSacrificesCreatureEffect`
 - `counter spell`: `CounterSpellEffect`, `CounterUnlessPaysEffect`
 - `creature spells can't be countered`: `CreatureSpellsCantBeCounteredEffect`

@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllArtifactsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -61,8 +61,10 @@ class ShatterstormTest {
         assertThat(card.getManaCost()).isEqualTo("{2}{R}{R}");
         assertThat(card.getColor()).isEqualTo(CardColor.RED);
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyAllArtifactsEffect.class);
-        DestroyAllArtifactsEffect effect = (DestroyAllArtifactsEffect) card.getEffects(EffectSlot.SPELL).getFirst();
+        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyAllPermanentsEffect.class);
+        DestroyAllPermanentsEffect effect = (DestroyAllPermanentsEffect) card.getEffects(EffectSlot.SPELL).getFirst();
+        assertThat(effect.targetTypes()).containsExactly(CardType.ARTIFACT);
+        assertThat(effect.onlyOpponents()).isFalse();
         assertThat(effect.cannotBeRegenerated()).isTrue();
     }
 

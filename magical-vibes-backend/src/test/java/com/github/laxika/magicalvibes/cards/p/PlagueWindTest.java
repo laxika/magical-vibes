@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesYouDontControlEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -63,9 +63,11 @@ class PlagueWindTest {
         assertThat(card.getColor()).isEqualTo(CardColor.BLACK);
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(DestroyAllCreaturesYouDontControlEffect.class);
-        DestroyAllCreaturesYouDontControlEffect effect =
-                (DestroyAllCreaturesYouDontControlEffect) card.getEffects(EffectSlot.SPELL).getFirst();
+                .isInstanceOf(DestroyAllPermanentsEffect.class);
+        DestroyAllPermanentsEffect effect =
+                (DestroyAllPermanentsEffect) card.getEffects(EffectSlot.SPELL).getFirst();
+        assertThat(effect.targetTypes()).containsExactly(CardType.CREATURE);
+        assertThat(effect.onlyOpponents()).isTrue();
         assertThat(effect.cannotBeRegenerated()).isTrue();
     }
 
