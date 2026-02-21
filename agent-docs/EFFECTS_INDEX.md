@@ -17,6 +17,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `deal N damage to all creatures and each player`: `DealDamageToAllCreaturesAndPlayersEffect`
 - `deal N damage then gain life`: `DealDamageToAnyTargetAndGainLifeEffect`, `DealXDamageToAnyTargetAndGainXLifeEffect`
 - `deal damage to yourself/controller`: `DealDamageToControllerEffect`
+- `when enchanted land is tapped for mana, add mana`: `AddManaOnEnchantedLandTapEffect`
 - `destroy target permanent`: `DestroyTargetPermanentEffect`
 - `destroy target creature`: `DestroyTargetPermanentEffect` + `PermanentPredicateTargetFilter(PermanentIsCreaturePredicate)`
 - `destroy all creatures/artifacts/enchantments` (optionally only opponents' permanents): `DestroyAllPermanentsEffect`
@@ -79,6 +80,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - Copy/retarget: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/CopyResolutionService.java`, `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/TargetRedirectionResolutionService.java`
 - Exile target permanent: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/ExileResolutionService.java`
 - Card-specific one-offs: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/effect/CardSpecificResolutionService.java`
+- Land-tap triggered handling (e.g. Manabarbs / Overgrowth): `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/GameHelper.java` (`checkLandTapTriggers`)
 - Win conditions: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/effect/WinConditionResolutionService.java`
 
 ## Canonical card examples

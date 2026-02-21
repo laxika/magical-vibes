@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -1012,7 +1013,7 @@ public class GameHelper {
         }
     }
 
-    public void checkLandTapTriggers(GameData gameData, UUID tappingPlayerId) {
+    public void checkLandTapTriggers(GameData gameData, UUID tappingPlayerId, UUID tappedLandId) {
         boolean anyTriggered = false;
 
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -1038,6 +1039,20 @@ public class GameHelper {
                             gameData.playerLifeTotals.put(tappingPlayerId, currentLife - effectiveDamage);
                         }
 
+                        anyTriggered = true;
+                    } else if (effect instanceof AddManaOnEnchantedLandTapEffect trigger) {
+                        if (perm.getAttachedTo() == null || !perm.getAttachedTo().equals(tappedLandId)) {
+                            continue;
+                        }
+
+                        ManaPool pool = gameData.playerManaPools.get(tappingPlayerId);
+                        for (int i = 0; i < trigger.amount(); i++) {
+                            pool.add(trigger.color());
+                        }
+
+                        String logEntry = perm.getCard().getName() + " triggers - " + gameData.playerIdToName.get(tappingPlayerId)
+                                + " adds " + trigger.amount() + " " + trigger.color().name().toLowerCase() + " mana.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
                         anyTriggered = true;
                     }
                 }
