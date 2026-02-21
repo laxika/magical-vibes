@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
@@ -177,6 +178,19 @@ public class TargetValidationService {
             }
             if (graveyardCard.getType() != CardType.CREATURE) {
                 throw new IllegalStateException("Target card must be a creature");
+            }
+        });
+
+        registry.register(ReturnCardFromGraveyardToHandEffect.class, (ctx, effect) -> {
+            if (ctx.targetZone() != Zone.GRAVEYARD) {
+                throw new IllegalStateException("Spell requires a graveyard target");
+            }
+            if (ctx.targetPermanentId() == null) {
+                throw new IllegalStateException("Spell requires a target card");
+            }
+            Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetPermanentId());
+            if (graveyardCard == null) {
+                throw new IllegalStateException("Target card not found in any graveyard");
             }
         });
 

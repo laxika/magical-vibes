@@ -26,6 +26,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `creature spells can't be countered`: `CreatureSpellsCantBeCounteredEffect`
 - `stack/spell target restrictions`: `StackEntryPredicateTargetFilter` + stack predicates (`StackEntryTypeInPredicate`, `StackEntryColorInPredicate`, `StackEntryIsSingleTargetPredicate`, `StackEntryAnyOfPredicate`, `StackEntryAllOfPredicate`, `StackEntryNotPredicate`)
 - `return target permanent/creature`: `ReturnTargetPermanentToHandEffect` (+ creature target filter when needed)
+- `return target card from your graveyard to your hand`: `ReturnCardFromGraveyardToHandEffect`
 - `return all creatures to hand`: `ReturnCreaturesToOwnersHandEffect`
 - `draw cards`: `DrawCardEffect`, `DrawCardForTargetPlayerEffect`
 - `when an opponent draws a card, deal damage to that player`: `DealDamageToTargetPlayerEffect` on `EffectSlot.ON_OPPONENT_DRAWS`

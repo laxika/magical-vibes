@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
@@ -114,7 +115,10 @@ public class TargetRedirectionResolutionService implements EffectHandlerProvider
                 boolean spellTargetsOwnGraveyardCreature = spellCard.getEffects(EffectSlot.SPELL)
                         .stream()
                         .anyMatch(e -> e instanceof ReturnCreatureFromGraveyardToHandEffect);
-                if (spellTargetsOwnGraveyardCreature) {
+                boolean spellTargetsOwnGraveyardCard = spellCard.getEffects(EffectSlot.SPELL)
+                        .stream()
+                        .anyMatch(e -> e instanceof ReturnCardFromGraveyardToHandEffect);
+                if (spellTargetsOwnGraveyardCreature || spellTargetsOwnGraveyardCard) {
                     boolean inControllersGraveyard = gameData.playerGraveyards
                             .getOrDefault(targetSpell.getControllerId(), List.of())
                             .stream()

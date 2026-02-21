@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAn
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardOfSubtypeFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToHandEffect;
@@ -55,6 +56,10 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveReturnCardFromGraveyardToZone(gd, entry, CardType.CREATURE,
                         GraveyardChoiceDestination.HAND,
                         "You may return a creature card from your graveyard to your hand."));
+        registry.register(ReturnCardFromGraveyardToHandEffect.class,
+                (gd, entry, effect) -> resolveReturnCardFromGraveyardToZone(gd, entry, null,
+                        GraveyardChoiceDestination.HAND,
+                        "You may return a card from your graveyard to your hand."));
         registry.register(ReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHandEffect.class,
                 (gd, entry, effect) -> resolveReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHand(gd, entry));
         registry.register(ReturnSelfFromGraveyardToHandEffect.class,
@@ -106,11 +111,12 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
             CardType cardType, GraveyardChoiceDestination destination, String prompt) {
         UUID controllerId = entry.getControllerId();
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-        String typeName = cardType.name().toLowerCase();
+        String typeName = cardType != null ? cardType.name().toLowerCase() : "card";
+        String targetLabel = cardType != null ? typeName + " card" : "card";
         if (entry.getTargetZone() == Zone.GRAVEYARD && entry.getTargetPermanentId() != null) {
             Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetPermanentId());
-            if (targetCard == null || targetCard.getType() != cardType) {
-                String fizzleLog = entry.getDescription() + " fizzles (target " + typeName + " card is no longer in a graveyard).";
+            if (targetCard == null || (cardType != null && targetCard.getType() != cardType)) {
+                String fizzleLog = entry.getDescription() + " fizzles (target " + targetLabel + " is no longer in a graveyard).";
                 gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
                 return;
             }
@@ -126,20 +132,20 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
         }
 
         if (graveyard == null || graveyard.isEmpty()) {
-            String logEntry = entry.getDescription() + " — no " + typeName + " cards in graveyard.";
+            String logEntry = entry.getDescription() + " — no " + targetLabel + "s in graveyard.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
         }
 
         List<Integer> matchingIndices = new ArrayList<>();
         for (int i = 0; i < graveyard.size(); i++) {
-            if (graveyard.get(i).getType() == cardType) {
+            if (cardType == null || graveyard.get(i).getType() == cardType) {
                 matchingIndices.add(i);
             }
         }
 
         if (matchingIndices.isEmpty()) {
-            String logEntry = entry.getDescription() + " — no " + typeName + " cards in graveyard.";
+            String logEntry = entry.getDescription() + " — no " + targetLabel + "s in graveyard.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
         }
