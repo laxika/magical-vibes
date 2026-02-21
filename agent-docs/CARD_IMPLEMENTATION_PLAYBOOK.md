@@ -65,6 +65,16 @@ public class ExampleCard extends Card {
   - combine multiple existing effects in one ability/spell
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/o/OrcishArtillery.java`
 
+- Upkeep sacrifice-unless-discard (any card):
+  - `addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificeUnlessDiscardCardTypeEffect(null))`
+  - Pass `CardType.X` instead of `null` to restrict to a specific card type
+  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/r/RazormaneMasticore.java`
+
+- Controller draw step may-trigger with targeting:
+  - `addEffect(EffectSlot.DRAW_TRIGGERED, new MayEffect(new DealDamageToTargetCreatureEffect(N), "prompt"))`
+  - `DRAW_TRIGGERED` fires only on the controller's draw step; use `EACH_DRAW_TRIGGERED` for all draw steps
+  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/r/RazormaneMasticore.java`
+
 - Opponent draw trigger:
   - use `addEffect(EffectSlot.ON_OPPONENT_DRAWS, new DealDamageToTargetPlayerEffect(N))` when the effect should hit the player who drew
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/u/UnderworldDreams.java`

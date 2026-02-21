@@ -443,26 +443,26 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
         boolean hasValidCard = false;
         if (hand != null) {
             for (Card card : hand) {
-                if (card.getType() == effect.requiredType()) {
+                if (effect.requiredType() == null || card.getType() == effect.requiredType()) {
                     hasValidCard = true;
                     break;
                 }
             }
         }
 
-        String typeName = effect.requiredType().name().toLowerCase();
+        String typeName = effect.requiredType() == null ? "card" : effect.requiredType().name().toLowerCase() + " card";
 
         if (!hasValidCard) {
             if (sourcePermanent != null) {
                 // No valid cards to discard — sacrifice immediately
                 gameHelper.removePermanentToGraveyard(gameData, sourcePermanent);
                 String logEntry = playerName + " has no " + typeName
-                        + " card to discard. " + sourceCard.getName() + " is sacrificed.";
+                        + " to discard. " + sourceCard.getName() + " is sacrificed.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} sacrificed (no {} card to discard)", gameData.id, sourceCard.getName(), effect.requiredType());
+                log.info("Game {} - {} sacrificed (no {} to discard)", gameData.id, sourceCard.getName(), typeName);
             } else {
                 // Permanent already gone and no valid cards — nothing to do
-                log.info("Game {} - {} is no longer on the battlefield and no {} card to discard", gameData.id, sourceCard.getName(), effect.requiredType());
+                log.info("Game {} - {} is no longer on the battlefield and no {} to discard", gameData.id, sourceCard.getName(), typeName);
             }
             return;
         }
@@ -472,9 +472,9 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
         // may still choose to discard if they want.
         String prompt;
         if (sourcePermanent != null) {
-            prompt = "Discard a " + typeName + " card? If you don't, " + sourceCard.getName() + " will be sacrificed.";
+            prompt = "Discard a " + typeName + "? If you don't, " + sourceCard.getName() + " will be sacrificed.";
         } else {
-            prompt = sourceCard.getName() + " is no longer on the battlefield. Discard a " + typeName + " card anyway?";
+            prompt = sourceCard.getName() + " is no longer on the battlefield. Discard a " + typeName + " anyway?";
         }
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 sourceCard, controllerId, List.of(effect), prompt

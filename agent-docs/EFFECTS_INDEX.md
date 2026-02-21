@@ -11,6 +11,8 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 
 ## Common intents -> effect classes
 
+- `deal N damage to target creature`: `DealDamageToTargetCreatureEffect`
+- `at your draw step, you may deal N damage to target creature`: `MayEffect(DealDamageToTargetCreatureEffect(N), ...)` on `DRAW_TRIGGERED`
 - `deal N damage to any target`: `DealDamageToAnyTargetEffect`, `DealXDamageToAnyTargetEffect`
 - `deal N damage to target player`: `DealDamageToTargetPlayerEffect`, `DealDamageToTargetPlayerByHandSizeEffect`
 - `deal N damage to all creatures`: `DealDamageToAllCreaturesEffect`
@@ -21,6 +23,8 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `destroy target permanent`: `DestroyTargetPermanentEffect`
 - `destroy target creature`: `DestroyTargetPermanentEffect` + `PermanentPredicateTargetFilter(PermanentIsCreaturePredicate)`
 - `destroy all creatures/artifacts/enchantments` (optionally only opponents' permanents): `DestroyAllPermanentsEffect`
+- `sacrifice unless discard a card (any type)`: `SacrificeUnlessDiscardCardTypeEffect(null)` on `UPKEEP_TRIGGERED`
+- `sacrifice unless discard a specific card type`: `SacrificeUnlessDiscardCardTypeEffect(CardType.X)` on `UPKEEP_TRIGGERED` or `ON_ENTER_BATTLEFIELD`
 - `sacrifice creature`: `SacrificeCreatureEffect`, `EachOpponentSacrificesCreatureEffect`
 - `counter spell`: `CounterSpellEffect`, `CounterUnlessPaysEffect`
 - `creature spells can't be countered`: `CreatureSpellsCantBeCounteredEffect`

@@ -280,6 +280,41 @@ public class TurnProgressionService {
     private void handleDrawStepTriggers(GameData gameData) {
         UUID activePlayerId = gameData.activePlayerId;
 
+        // Check active player's battlefield for DRAW_TRIGGERED effects (controller's own draw step only)
+        List<Permanent> activeBattlefield = gameData.playerBattlefields.get(activePlayerId);
+        if (activeBattlefield != null) {
+            for (Permanent perm : activeBattlefield) {
+                List<CardEffect> drawEffects = perm.getCard().getEffects(EffectSlot.DRAW_TRIGGERED);
+                if (drawEffects == null || drawEffects.isEmpty()) continue;
+
+                for (CardEffect effect : drawEffects) {
+                    if (effect instanceof MayEffect may) {
+                        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                                perm.getCard(),
+                                activePlayerId,
+                                List.of(may.wrapped()),
+                                perm.getCard().getName() + " — " + may.prompt()
+                        ));
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                activePlayerId,
+                                perm.getCard().getName() + "'s draw step ability",
+                                new ArrayList<>(List.of(effect)),
+                                activePlayerId,
+                                perm.getId()
+                        ));
+
+                        String logEntry = perm.getCard().getName() + "'s draw step ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} draw-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                    }
+                }
+            }
+        }
+
+        // Check all battlefields for EACH_DRAW_TRIGGERED effects (all players' draw steps)
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> playerBattlefield = gameData.playerBattlefields.get(playerId);
             if (playerBattlefield == null) continue;

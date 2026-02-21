@@ -270,6 +270,36 @@ public class PermanentChoiceHandlerService {
 
             gameData.priorityPassedBy.clear();
             turnProgressionService.resolveAutoPass(gameData);
+        } else if (context instanceof PermanentChoiceContext.MayAbilityTriggerTarget mat) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+            if (target != null) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        mat.sourceCard(),
+                        mat.controllerId(),
+                        mat.sourceCard().getName() + "'s ability",
+                        new ArrayList<>(mat.effects())
+                );
+                entry.setTargetPermanentId(permanentId);
+                gameData.stack.add(entry);
+
+                String logEntry = mat.sourceCard().getName() + "'s ability targets " + target.getCard().getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} may-ability trigger targets {}", gameData.id, mat.sourceCard().getName(), target.getCard().getName());
+            } else {
+                String logEntry = mat.sourceCard().getName() + "'s ability has no valid target.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} may-ability trigger target no longer exists", gameData.id, mat.sourceCard().getName());
+            }
+
+            if (!gameData.pendingMayAbilities.isEmpty()) {
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+
+            gameData.priorityPassedBy.clear();
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
         } else if (gameData.interaction.pendingAuraCard() != null) {
             Card auraCard = gameData.interaction.consumePendingAuraCard();
 

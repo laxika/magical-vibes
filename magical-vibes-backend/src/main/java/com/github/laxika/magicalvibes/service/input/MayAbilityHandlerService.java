@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTo
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
@@ -157,6 +158,15 @@ public class MayAbilityHandlerService {
             return;
         }
 
+        // Targeted may ability (e.g. "you may deal 3 damage to target creature")
+        boolean isTargetedCreatureEffect = ability.effects().stream()
+                .anyMatch(e -> e instanceof DealDamageToTargetCreatureEffect);
+
+        if (accepted && isTargetedCreatureEffect) {
+            handleTargetedMayAbilityAccepted(gameData, player, ability);
+            return;
+        }
+
         if (accepted) {
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -182,6 +192,44 @@ public class MayAbilityHandlerService {
             gameBroadcastService.broadcastGameState(gameData);
             turnProgressionService.resolveAutoPass(gameData);
         }
+    }
+
+    private void handleTargetedMayAbilityAccepted(GameData gameData, Player player, PendingMayAbility ability) {
+        // Collect valid creature targets from all battlefields
+        List<UUID> validTargets = new ArrayList<>();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (gameQueryService.isCreature(gameData, p)) {
+                    validTargets.add(p.getId());
+                }
+            }
+        }
+
+        if (validTargets.isEmpty()) {
+            String logEntry = ability.sourceCard().getName() + "'s ability has no valid targets.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} may ability has no valid creature targets", gameData.id, ability.sourceCard().getName());
+
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                gameData.priorityPassedBy.clear();
+                gameBroadcastService.broadcastGameState(gameData);
+                turnProgressionService.resolveAutoPass(gameData);
+            }
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
+                ability.sourceCard(), ability.controllerId(), new ArrayList<>(ability.effects())
+        ));
+        playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
+                ability.sourceCard().getName() + "'s ability — Choose target creature.");
+
+        String logEntry = player.getUsername() + " accepts — choosing a target for " + ability.sourceCard().getName() + "'s ability.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} accepts targeted may ability from {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
     }
 
     private void handleCounterUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
@@ -281,20 +329,20 @@ public class MayAbilityHandlerService {
             List<Integer> validIndices = new ArrayList<>();
             if (hand != null) {
                 for (int i = 0; i < hand.size(); i++) {
-                    if (hand.get(i).getType() == effect.requiredType()) {
+                    if (effect.requiredType() == null || hand.get(i).getType() == effect.requiredType()) {
                         validIndices.add(i);
                     }
                 }
             }
 
             if (!validIndices.isEmpty()) {
-                String typeName = effect.requiredType().name().toLowerCase();
+                String typeName = effect.requiredType() == null ? "card" : effect.requiredType().name().toLowerCase() + " card";
                 gameData.discardCausedByOpponent = false;
                 gameData.interaction.setDiscardRemainingCount(1);
                 playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
-                        "Choose a " + typeName + " card to discard.");
+                        "Choose a " + typeName + " to discard.");
 
-                String logEntry = player.getUsername() + " chooses to discard a " + typeName + " card.";
+                String logEntry = player.getUsername() + " chooses to discard a " + typeName + ".";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} accepts sacrifice-unless-discard for {}", gameData.id, player.getUsername(), sourceCard.getName());
                 return;
