@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
@@ -65,8 +64,6 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveTapCreatures(gd, entry, (TapCreaturesEffect) effect));
         registry.register(TapOrUntapTargetPermanentEffect.class,
                 (gd, entry, effect) -> resolveTapOrUntapTargetPermanent(gd, entry));
-        registry.register(TapTargetCreatureEffect.class,
-                (gd, entry, effect) -> resolveTapTargetPermanent(gd, entry));
         registry.register(TapTargetPermanentEffect.class,
                 (gd, entry, effect) -> resolveTapTargetPermanent(gd, entry));
         registry.register(UntapTargetPermanentEffect.class,

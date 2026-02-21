@@ -20,6 +20,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -64,6 +65,10 @@ class RoyalAssassinTest {
         assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
         assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
                 .isInstanceOf(DestroyTargetPermanentEffect.class);
+        DestroyTargetPermanentEffect effect =
+                (DestroyTargetPermanentEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
+        assertThat(effect.targetTypes()).isEqualTo(Set.of(CardType.CREATURE));
+        assertThat(effect.cannotBeRegenerated()).isFalse();
     }
 
     @Test

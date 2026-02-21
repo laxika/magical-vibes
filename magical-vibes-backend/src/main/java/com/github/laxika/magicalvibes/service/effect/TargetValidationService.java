@@ -218,7 +218,6 @@ public class TargetValidationService {
             }
             checkProtection(ctx, target);
         });
-
         registry.register(TargetCreatureCantBlockThisTurnEffect.class, (ctx, effect) -> {
             Permanent target = requireBattlefieldTarget(ctx);
             requireCreature(ctx, target);

@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
@@ -162,6 +163,10 @@ public class CardViewFactory {
                 return List.of(CardType.ENCHANTMENT.getDisplayName());
             }
             if (effect instanceof ReturnTargetPermanentToHandEffect) {
+                if (card.getTargetFilter() instanceof PermanentPredicateTargetFilter filter
+                        && containsCreaturePredicate(filter.predicate())) {
+                    return List.of(CardType.CREATURE.getDisplayName());
+                }
                 return List.of(
                         CardType.CREATURE.getDisplayName(),
                         CardType.ENCHANTMENT.getDisplayName(),
@@ -230,5 +235,18 @@ public class CardViewFactory {
         if (predicate instanceof PermanentAllOfPredicate allOfPredicate) {
             allOfPredicate.predicates().forEach(p -> collectAllowedSubtypes(p, out));
         }
+    }
+
+    private boolean containsCreaturePredicate(PermanentPredicate predicate) {
+        if (predicate instanceof PermanentIsCreaturePredicate) {
+            return true;
+        }
+        if (predicate instanceof PermanentAnyOfPredicate anyOfPredicate) {
+            return anyOfPredicate.predicates().stream().anyMatch(this::containsCreaturePredicate);
+        }
+        if (predicate instanceof PermanentAllOfPredicate allOfPredicate) {
+            return allOfPredicate.predicates().stream().anyMatch(this::containsCreaturePredicate);
+        }
+        return false;
     }
 }

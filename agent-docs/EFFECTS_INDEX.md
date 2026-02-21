@@ -53,7 +53,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `can be blocked only by permanents matching a composed predicate`: `CanBeBlockedOnlyByFilterEffect` + permanent predicates (`PermanentHasKeywordPredicate`, `PermanentHasSubtypePredicate`, `PermanentAnyOfPredicate`, `PermanentAllOfPredicate`, `PermanentNotPredicate`)
 - `target restrictions based on permanent properties`: `PermanentPredicateTargetFilter` + permanent predicates (`PermanentIsCreaturePredicate`, `PermanentIsTappedPredicate`, `PermanentColorInPredicate`, `PermanentPowerAtMostPredicate`, etc.)
 - `can't be the target of [color] spells`: `CantBeTargetedBySpellColorsEffect`
-- `tap/untap`: `TapTargetCreatureEffect`, `TapTargetPermanentEffect`, `TapOrUntapTargetPermanentEffect`, `UntapTargetPermanentEffect`, `UntapSelfEffect`
+- `tap/untap`: `TapTargetPermanentEffect` (use `Set.of(CardType.CREATURE)` for creature-only), `TapOrUntapTargetPermanentEffect`, `UntapTargetPermanentEffect`, `UntapSelfEffect`
 - `prevent damage`: `PreventDamageToTargetEffect`, `PreventNextDamageEffect`, `PreventAllCombatDamageEffect`, `PreventDamageFromColorsEffect`
 - `copy or retarget spell`: `CopySpellEffect`, `ChangeTargetOfTargetSpellWithSingleTargetEffect`
 - `extra turn / additional combat / end turn`: `ExtraTurnEffect`, `AdditionalCombatMainPhaseEffect`, `EndTurnEffect`
