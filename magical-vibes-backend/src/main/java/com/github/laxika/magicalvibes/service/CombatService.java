@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
+import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsMatchingPermanentEffect;
@@ -469,6 +470,14 @@ public class CombatService {
             Permanent attacker = attackerBattlefield.get(attackerIdx);
             if (gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE) && blockerCount == 1) {
                 throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked except by two or more creatures");
+            }
+            for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CanBeBlockedByAtMostNCreaturesEffect restriction
+                        && blockerCount > restriction.maxBlockers()) {
+                    throw new IllegalStateException(attacker.getCard().getName()
+                            + " can't be blocked by more than " + restriction.maxBlockers()
+                            + " creature" + (restriction.maxBlockers() == 1 ? "" : "s"));
+                }
             }
         }
 
