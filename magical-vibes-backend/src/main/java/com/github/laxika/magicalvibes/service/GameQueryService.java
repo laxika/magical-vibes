@@ -293,7 +293,13 @@ public class GameQueryService {
         }
 
         boolean isSelfAnimated = target.isAnimatedUntilEndOfTurn();
-        if (!isNaturalCreature && !accumulator.isAnimatedCreature() && !isSelfAnimated) return StaticBonus.NONE;
+        if (!isNaturalCreature
+                && !accumulator.isAnimatedCreature()
+                && !isSelfAnimated
+                && accumulator.getKeywords().isEmpty()
+                && accumulator.getGrantedActivatedAbilities().isEmpty()) {
+            return StaticBonus.NONE;
+        }
 
         int power = accumulator.getPower();
         int toughness = accumulator.getToughness();

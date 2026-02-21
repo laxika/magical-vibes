@@ -48,6 +48,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `enchanted creature gets +X/+X per controlled subtype`: `BoostEnchantedCreaturePerControlledSubtypeEffect`
 - `gets +N/+N for each other creature with same name`: `BoostByOtherCreaturesWithSameNameEffect`
 - `grant keyword`: `GrantKeywordToTargetEffect`, `GrantKeywordToSelfEffect`, `GrantKeywordToEnchantedCreatureEffect`
+- `grant activated mana ability to lands you control`: `GrantActivatedAbilityToOwnLandsEffect` (typically with `AwardAnyColorManaEffect`)
 - `can't block (static on creature)`: `CantBlockEffect`
 - `can be blocked only by permanents matching a composed predicate`: `CanBeBlockedOnlyByFilterEffect` + permanent predicates (`PermanentHasKeywordPredicate`, `PermanentHasSubtypePredicate`, `PermanentAnyOfPredicate`, `PermanentAllOfPredicate`, `PermanentNotPredicate`)
 - `target restrictions based on permanent properties`: `PermanentPredicateTargetFilter` + permanent predicates (`PermanentIsCreaturePredicate`, `PermanentIsTappedPredicate`, `PermanentColorInPredicate`, `PermanentPowerAtMostPredicate`, etc.)
@@ -70,6 +71,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - Life: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/effect/LifeResolutionService.java`
 - Creature mods (tap/pump/temp keyword): `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/effect/CreatureModResolutionService.java`
 - Permanent control/tokens/regeneration: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/effect/PermanentControlResolutionService.java`
+- Static continuous effects (keywords/stats/granted abilities): `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/effect/StaticEffectResolutionService.java`
 - Prevention: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/PreventionResolutionService.java`
 - Turn effects: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/TurnResolutionService.java`
 - Copy/retarget: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/CopyResolutionService.java`, `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/TargetRedirectionResolutionService.java`

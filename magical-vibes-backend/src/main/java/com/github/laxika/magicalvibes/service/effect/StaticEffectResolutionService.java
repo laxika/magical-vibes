@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostOtherCreaturesByColorEff
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityToOwnLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatureEffect;
@@ -47,6 +48,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         registry.register(BoostNonColorCreaturesEffect.class, this::resolveBoostNonColorCreatures);
         registry.register(GrantKeywordToOwnTappedCreaturesEffect.class, this::resolveGrantKeywordToOwnTappedCreatures);
         registry.register(GrantActivatedAbilityToEnchantedCreatureEffect.class, this::resolveGrantActivatedAbilityToEnchantedCreature);
+        registry.register(GrantActivatedAbilityToOwnLandsEffect.class, this::resolveGrantActivatedAbilityToOwnLands);
         registry.register(BoostBySharedCreatureTypeEffect.class, this::resolveBoostBySharedCreatureType);
 
         registry.registerSelfHandler(BoostByOtherCreaturesWithSameNameEffect.class, this::resolveBoostByOtherCreaturesWithSameName);
@@ -167,6 +169,17 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         var grant = (GrantActivatedAbilityToEnchantedCreatureEffect) effect;
         if (context.source().getAttachedTo() != null
                 && context.source().getAttachedTo().equals(context.target().getId())) {
+            accumulator.addActivatedAbility(grant.ability());
+        }
+    }
+
+    private void resolveGrantActivatedAbilityToOwnLands(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var grant = (GrantActivatedAbilityToOwnLandsEffect) effect;
+        if (!context.targetOnSameBattlefield()) {
+            return;
+        }
+        if (context.target().getCard().getType() == CardType.LAND
+                || context.target().getCard().getAdditionalTypes().contains(CardType.LAND)) {
             accumulator.addActivatedAbility(grant.ability());
         }
     }
