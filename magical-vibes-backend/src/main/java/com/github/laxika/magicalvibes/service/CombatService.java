@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 
 import com.github.laxika.magicalvibes.model.effect.RandomDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
@@ -470,6 +471,9 @@ public class CombatService {
             }
         }
 
+        validateMaximumBlockRequirements(gameData, attackerBattlefield, defenderBattlefield, blockable,
+                blockerAssignments, maxBlocksPerCreature);
+
         gameData.interaction.clearAwaitingInput();
 
         // Mark creatures as blocking
@@ -554,6 +558,105 @@ public class CombatService {
         log.info("Game {} - {} declares {} blockers", gameData.id, player.getUsername(), blockerAssignments.size());
 
         return CombatResult.AUTO_PASS_ONLY;
+    }
+
+    private void validateMaximumBlockRequirements(GameData gameData,
+                                                  List<Permanent> attackerBattlefield,
+                                                  List<Permanent> defenderBattlefield,
+                                                  List<Integer> blockable,
+                                                  List<BlockerAssignment> blockerAssignments,
+                                                  int maxBlocksPerCreature) {
+        Set<Integer> lureAttackerIndices = new HashSet<>();
+        for (int i = 0; i < attackerBattlefield.size(); i++) {
+            Permanent attacker = attackerBattlefield.get(i);
+            if (!attacker.isAttacking()) continue;
+            boolean hasRequirement = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(MustBeBlockedByAllCreaturesEffect.class::isInstance)
+                    || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedByAllCreaturesEffect.class);
+            if (hasRequirement) {
+                lureAttackerIndices.add(i);
+            }
+        }
+        if (lureAttackerIndices.isEmpty()) {
+            return;
+        }
+
+        for (int blockerIdx : blockable) {
+            Permanent blocker = defenderBattlefield.get(blockerIdx);
+            int currentLureBlocks = 0;
+            for (BlockerAssignment assignment : blockerAssignments) {
+                if (assignment.blockerIndex() == blockerIdx && lureAttackerIndices.contains(assignment.attackerIndex())) {
+                    currentLureBlocks++;
+                }
+            }
+
+            int possibleLureBlocks = 0;
+            for (int attackerIdx : lureAttackerIndices) {
+                Permanent attacker = attackerBattlefield.get(attackerIdx);
+                if (canBlockAttacker(gameData, blocker, attacker, defenderBattlefield)) {
+                    possibleLureBlocks++;
+                }
+            }
+
+            int maxSatisfiable = Math.min(maxBlocksPerCreature, possibleLureBlocks);
+            if (currentLureBlocks < maxSatisfiable) {
+                throw new IllegalStateException(blocker.getCard().getName() + " must block enchanted creature if able");
+            }
+        }
+    }
+
+    private boolean canBlockAttacker(GameData gameData,
+                                     Permanent blocker,
+                                     Permanent attacker,
+                                     List<Permanent> defenderBattlefield) {
+        if (attacker.isCantBeBlocked()) return false;
+        boolean hasCantBeBlockedStatic = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof CantBeBlockedEffect);
+        if (hasCantBeBlockedStatic) return false;
+
+        if (gameQueryService.hasKeyword(gameData, attacker, Keyword.FLYING)
+                && !gameQueryService.hasKeyword(gameData, blocker, Keyword.FLYING)
+                && !gameQueryService.hasKeyword(gameData, blocker, Keyword.REACH)) {
+            return false;
+        }
+        if (gameQueryService.hasKeyword(gameData, attacker, Keyword.FEAR)
+                && !gameQueryService.isArtifact(blocker)
+                && blocker.getCard().getColor() != CardColor.BLACK) {
+            return false;
+        }
+
+        for (CardEffect blockerStaticEffect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (blockerStaticEffect instanceof CanBlockOnlyIfAttackerMatchesPredicateEffect restriction
+                    && !gameQueryService.matchesPermanentPredicate(gameData, attacker, restriction.attackerPredicate())) {
+                return false;
+            }
+        }
+        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CanBeBlockedOnlyByFilterEffect restriction
+                    && !gameQueryService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
+                return false;
+            }
+        }
+
+        for (var entry : Map.of(
+                Keyword.FORESTWALK, CardSubtype.FOREST,
+                Keyword.MOUNTAINWALK, CardSubtype.MOUNTAIN,
+                Keyword.ISLANDWALK, CardSubtype.ISLAND,
+                Keyword.SWAMPWALK, CardSubtype.SWAMP
+        ).entrySet()) {
+            if (gameQueryService.hasKeyword(gameData, attacker, entry.getKey())
+                    && defenderBattlefield.stream().anyMatch(p -> p.getCard().getSubtypes().contains(entry.getValue()))) {
+                return false;
+            }
+        }
+
+        if (blocker.isCantBlockThisTurn()) return false;
+        boolean hasCantBlockStatic = blocker.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantBlockEffect.class::isInstance);
+        if (hasCantBlockStatic) return false;
+        if (blocker.getCantBlockIds().contains(attacker.getId())) return false;
+
+        return !gameQueryService.hasProtectionFrom(gameData, attacker, blocker.getCard().getColor());
     }
 
     // ===== Combat damage resolution =====
