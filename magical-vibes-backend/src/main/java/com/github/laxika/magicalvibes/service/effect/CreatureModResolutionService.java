@@ -233,6 +233,24 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
     }
 
     private void resolveGrantKeyword(GameData gameData, StackEntry entry, GrantKeywordEffect grant) {
+        if (grant.scope() == GrantKeywordEffect.Scope.OWN_CREATURES) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+            int count = 0;
+            for (Permanent permanent : battlefield) {
+                if (!gameQueryService.isCreature(gameData, permanent)) {
+                    continue;
+                }
+                permanent.getGrantedKeywords().add(grant.keyword());
+                count++;
+            }
+
+            String keywordName = grant.keyword().name().charAt(0) + grant.keyword().name().substring(1).toLowerCase().replace('_', ' ');
+            String logEntry = entry.getCard().getName() + " gives " + keywordName + " to " + count + " creature(s) until end of turn.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} grants {} to {} own creature(s)", gameData.id, entry.getCard().getName(), grant.keyword(), count);
+            return;
+        }
+
         UUID targetId = switch (grant.scope()) {
             case SELF -> entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetPermanentId();
             case TARGET -> entry.getTargetPermanentId();
