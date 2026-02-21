@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -403,10 +404,46 @@ public class TurnProgressionService {
         gameBroadcastService.logAndBroadcast(gameData, untapLog);
         log.info("Game {} - {} untaps their permanents", gameData.id, nextActiveName);
 
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(nextActive)) {
+                continue;
+            }
+            if (!controlsUntapOnEachOtherPlayersStep(gameData, playerId, TurnStep.UNTAP)) {
+                continue;
+            }
+
+            List<Permanent> playerBattlefield = gameData.playerBattlefields.get(playerId);
+            if (playerBattlefield == null) {
+                continue;
+            }
+            playerBattlefield.forEach(Permanent::untap);
+
+            String playerName = gameData.playerIdToName.get(playerId);
+            String seedbornLog = playerName + " untaps their permanents due to Seedborn Muse.";
+            gameBroadcastService.logAndBroadcast(gameData, seedbornLog);
+            log.info("Game {} - {} untaps permanents due to Seedborn Muse", gameData.id, playerName);
+        }
+
         String logEntry = "Turn " + gameData.turnNumber + " begins. " + nextActiveName + "'s turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - Turn {} begins. Active player: {}", gameData.id, gameData.turnNumber, nextActiveName);
         gameBroadcastService.broadcastGameState(gameData);
+    }
+
+    private boolean controlsUntapOnEachOtherPlayersStep(GameData gameData, UUID playerId, TurnStep step) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return false;
+        }
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect configuredEffect
+                            && configuredEffect.step() == step);
+            if (hasEffect) {
+                return true;
+            }
+        }
+        return false;
     }
 
     void handleCombatResult(CombatResult result, GameData gameData) {

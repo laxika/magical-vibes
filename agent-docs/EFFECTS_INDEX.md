@@ -63,6 +63,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `can't be the target of [color] spells`: `CantBeTargetedBySpellColorsEffect`
 - `all creatures able to block enchanted creature do so`: `MustBeBlockedByAllCreaturesEffect`
 - `tap/untap`: `TapTargetPermanentEffect` (use `Set.of(CardType.CREATURE)` for creature-only), `TapOrUntapTargetPermanentEffect`, `UntapTargetPermanentEffect`, `UntapSelfEffect`
+- `untap all permanents you control during each other player's [step]`: `UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect`
 - `prevent damage`: `PreventDamageToTargetEffect`, `PreventNextDamageEffect`, `PreventAllCombatDamageEffect`, `PreventDamageFromColorsEffect`
 - `copy or retarget spell`: `CopySpellEffect`, `ChangeTargetOfTargetSpellWithSingleTargetEffect`
 - `extra turn / additional combat / end turn`: `ExtraTurnEffect`, `AdditionalCombatMainPhaseEffect`, `EndTurnEffect`
