@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -55,8 +55,8 @@ class RighteousnessTest {
         assertThat(card.getColor()).isEqualTo(CardColor.WHITE);
         assertThat(card.isNeedsTarget()).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(BoostTargetBlockingCreatureEffect.class);
-        BoostTargetBlockingCreatureEffect effect = (BoostTargetBlockingCreatureEffect) card.getEffects(EffectSlot.SPELL).getFirst();
+        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(BoostTargetCreatureEffect.class);
+        BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).getFirst();
         assertThat(effect.powerBoost()).isEqualTo(7);
         assertThat(effect.toughnessBoost()).isEqualTo(7);
     }
@@ -113,7 +113,7 @@ class RighteousnessTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("blocking creature");
+                .hasMessageContaining("Invalid target permanent");
     }
 
     @Test

@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
@@ -1052,7 +1052,8 @@ public class CombatService {
 
             for (UUID damagedCreatureId : entry.getValue()) {
                 for (CardEffect effect : effects) {
-                    if (effect instanceof DestroyTargetCreatureEffect destroyEffect) {
+                    if (effect instanceof DestroyTargetPermanentEffect destroyEffect
+                            && destroyEffect.targetTypes().contains(CardType.CREATURE)) {
                         StackEntry trigger = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 source.getCard(),

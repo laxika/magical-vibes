@@ -18,14 +18,14 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `deal N damage then gain life`: `DealDamageToAnyTargetAndGainLifeEffect`, `DealXDamageToAnyTargetAndGainXLifeEffect`
 - `deal damage to yourself/controller`: `DealDamageToControllerEffect`
 - `destroy target permanent`: `DestroyTargetPermanentEffect`
-- `destroy target creature`: `DestroyTargetCreatureEffect`
+- `destroy target creature`: `DestroyTargetPermanentEffect` + `PermanentPredicateTargetFilter(PermanentIsCreaturePredicate)`
 - `destroy all creatures/artifacts/enchantments`: `DestroyAllCreaturesEffect`, `DestroyAllArtifactsEffect`, `DestroyAllEnchantmentsEffect`
 - `destroy all creatures you don't control`: `DestroyAllCreaturesYouDontControlEffect`
 - `sacrifice creature`: `SacrificeCreatureEffect`, `EachOpponentSacrificesCreatureEffect`
 - `counter spell`: `CounterSpellEffect`, `CounterUnlessPaysEffect`
 - `creature spells can't be countered`: `CreatureSpellsCantBeCounteredEffect`
 - `stack/spell target restrictions`: `StackEntryPredicateTargetFilter` + stack predicates (`StackEntryTypeInPredicate`, `StackEntryColorInPredicate`, `StackEntryIsSingleTargetPredicate`, `StackEntryAnyOfPredicate`, `StackEntryAllOfPredicate`, `StackEntryNotPredicate`)
-- `return target permanent/creature`: `ReturnTargetPermanentToHandEffect`, `ReturnTargetCreatureToHandEffect`
+- `return target permanent/creature`: `ReturnTargetPermanentToHandEffect` (+ creature target filter when needed)
 - `return all creatures to hand`: `ReturnCreaturesToOwnersHandEffect`
 - `draw cards`: `DrawCardEffect`, `DrawCardForTargetPlayerEffect`
 - `when an opponent draws a card, deal damage to that player`: `DealDamageToTargetPlayerEffect` on `EffectSlot.ON_OPPONENT_DRAWS`

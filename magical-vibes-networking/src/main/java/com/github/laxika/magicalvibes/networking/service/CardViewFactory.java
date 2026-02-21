@@ -22,7 +22,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTo
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
@@ -161,9 +160,6 @@ public class CardViewFactory {
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             if (effect instanceof GainControlOfTargetAuraEffect) {
                 return List.of(CardType.ENCHANTMENT.getDisplayName());
-            }
-            if (effect instanceof ReturnTargetCreatureToHandEffect) {
-                return List.of(CardType.CREATURE.getDisplayName());
             }
             if (effect instanceof ReturnTargetPermanentToHandEffect) {
                 return List.of(

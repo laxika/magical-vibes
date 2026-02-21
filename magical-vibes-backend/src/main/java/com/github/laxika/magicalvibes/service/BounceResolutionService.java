@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOw
 import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandOnCoinFlipLossEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import lombok.RequiredArgsConstructor;
@@ -38,8 +37,6 @@ public class BounceResolutionService implements EffectHandlerProvider {
         registry.register(ReturnSelfToHandEffect.class,
                 (gd, entry, effect) -> resolveReturnSelfToHand(gd, entry));
         registry.register(ReturnTargetPermanentToHandEffect.class,
-                (gd, entry, effect) -> resolveReturnTargetPermanentToHand(gd, entry));
-        registry.register(ReturnTargetCreatureToHandEffect.class,
                 (gd, entry, effect) -> resolveReturnTargetPermanentToHand(gd, entry));
         registry.register(ReturnCreaturesToOwnersHandEffect.class,
                 (gd, entry, effect) -> resolveReturnCreaturesToOwnersHand(gd, entry, (ReturnCreaturesToOwnersHandEffect) effect));

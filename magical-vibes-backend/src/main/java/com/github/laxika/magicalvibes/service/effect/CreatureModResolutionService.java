@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesXEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -50,10 +49,6 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveBoostSelfPerBlockingCreature(gd, entry, (BoostSelfPerBlockingCreatureEffect) effect));
         registry.register(BoostTargetCreatureEffect.class,
                 (gd, entry, effect) -> resolveBoostTargetCreature(gd, entry, (BoostTargetCreatureEffect) effect));
-        registry.register(BoostTargetBlockingCreatureEffect.class, (gd, entry, effect) -> {
-            var boost = (BoostTargetBlockingCreatureEffect) effect;
-            resolveBoostTargetCreature(gd, entry, new BoostTargetCreatureEffect(boost.powerBoost(), boost.toughnessBoost()));
-        });
         registry.register(BoostAllOwnCreaturesEffect.class,
                 (gd, entry, effect) -> resolveBoostAllOwnCreatures(gd, entry, (BoostAllOwnCreaturesEffect) effect));
         registry.register(BoostAllCreaturesXEffect.class,

@@ -5,12 +5,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreaturePerControlledSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
@@ -23,7 +22,6 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureUn
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
@@ -185,14 +183,6 @@ public class TargetValidationService {
             }
         });
 
-        registry.register(BoostTargetBlockingCreatureEffect.class, (ctx, effect) -> {
-            requireTarget(ctx);
-            Permanent target = gameQueryService.findPermanentById(ctx.gameData(), ctx.targetPermanentId());
-            if (target == null || !gameQueryService.isCreature(ctx.gameData(), target) || !target.isBlocking()) {
-                throw new IllegalStateException("Target must be a blocking creature");
-            }
-        });
-
         registry.register(BoostTargetCreatureEffect.class, (ctx, effect) -> {
             Permanent target = requireBattlefieldTarget(ctx);
             requireCreature(ctx, target);
@@ -220,14 +210,13 @@ public class TargetValidationService {
             }
         });
 
-        registry.register(DestroyTargetCreatureEffect.class, (ctx, effect) -> {
+        registry.register(DestroyTargetPermanentEffect.class, (ctx, effect) -> {
             Permanent target = requireBattlefieldTarget(ctx);
-            requireCreature(ctx, target);
-        });
-
-        registry.register(ReturnTargetCreatureToHandEffect.class, (ctx, effect) -> {
-            Permanent target = requireBattlefieldTarget(ctx);
-            requireCreature(ctx, target);
+            DestroyTargetPermanentEffect destroy = (DestroyTargetPermanentEffect) effect;
+            if (!destroy.targetTypes().contains(target.getCard().getType())) {
+                throw new IllegalStateException("Target has invalid type");
+            }
+            checkProtection(ctx, target);
         });
 
         registry.register(TargetCreatureCantBlockThisTurnEffect.class, (ctx, effect) -> {

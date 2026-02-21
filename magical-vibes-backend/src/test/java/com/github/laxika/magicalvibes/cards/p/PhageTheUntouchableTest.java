@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -62,7 +62,7 @@ class PhageTheUntouchableTest {
         assertThat(card.getToughness()).isEqualTo(4);
         assertThat(card.getSubtypes()).containsExactly(CardSubtype.AVATAR, CardSubtype.MINION);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(LoseGameIfNotCastFromHandEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE).getFirst()).isInstanceOf(DestroyTargetCreatureEffect.class);
+        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
         assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst()).isInstanceOf(TargetPlayerLosesGameEffect.class);
     }
 
