@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedBySpellColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
@@ -143,6 +144,18 @@ public class GameQueryService {
             return nonActive;
         }
         return null;
+    }
+
+    public boolean canPlayerLoseGame(GameData gameData, UUID playerId) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return true;
+        for (Permanent perm : bf) {
+            if (perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(CantLoseGameEffect.class::isInstance)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public boolean isCreature(GameData gameData, Permanent permanent) {

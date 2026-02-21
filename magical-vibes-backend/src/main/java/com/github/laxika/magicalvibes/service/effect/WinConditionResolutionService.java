@@ -48,6 +48,16 @@ public class WinConditionResolutionService implements EffectHandlerProvider {
         }
 
         if (creatureCount >= effect.threshold()) {
+            // Check if the opponent can't lose (e.g. Platinum Angel)
+            UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
+            if (!gameQueryService.canPlayerLoseGame(gameData, opponentId)) {
+                String logEntry = entry.getCard().getName() + "'s win condition is met but " +
+                        gameData.playerIdToName.get(opponentId) + " can't lose the game.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} win prevented — opponent can't lose", gameData.id, entry.getCard().getName());
+                return;
+            }
+
             String logEntry = playerName + " has " + creatureCount + " creature cards in their graveyard — " + entry.getCard().getName() + " wins the game!";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} wins via {} ({} creatures in graveyard)",
@@ -65,6 +75,15 @@ public class WinConditionResolutionService implements EffectHandlerProvider {
     private void resolveTargetPlayerLosesGame(GameData gameData, StackEntry entry, TargetPlayerLosesGameEffect effect) {
         UUID losingPlayerId = effect.playerId();
         if (losingPlayerId == null || !gameData.playerIds.contains(losingPlayerId)) {
+            return;
+        }
+
+        // Check if the player can't lose (e.g. Platinum Angel)
+        if (!gameQueryService.canPlayerLoseGame(gameData, losingPlayerId)) {
+            String logEntry = gameData.playerIdToName.get(losingPlayerId) + " can't lose the game.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} can't lose the game (protected)", gameData.id,
+                    gameData.playerIdToName.get(losingPlayerId));
             return;
         }
 

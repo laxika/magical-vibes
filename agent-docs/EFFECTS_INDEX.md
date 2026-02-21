@@ -80,6 +80,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `equip`: `EquipEffect`
 - `this spell costs {N} less to cast if an opponent controls M more creatures`: `ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect`
 - `players don't lose unspent mana as steps and phases end`: `PreventManaDrainEffect`
+- `you can't lose the game and your opponents can't win the game`: `CantLoseGameEffect`
 
 ## Provider map (where effects are resolved)
 

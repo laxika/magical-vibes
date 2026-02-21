@@ -444,6 +444,11 @@ public class GameHelper {
         for (UUID playerId : gameData.orderedPlayerIds) {
             int life = gameData.playerLifeTotals.getOrDefault(playerId, 20);
             if (life <= 0) {
+                // Check if the player is protected from losing (e.g. Platinum Angel)
+                if (!gameQueryService.canPlayerLoseGame(gameData, playerId)) {
+                    continue;
+                }
+
                 UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
                 String winnerName = gameData.playerIdToName.get(winnerId);
 
