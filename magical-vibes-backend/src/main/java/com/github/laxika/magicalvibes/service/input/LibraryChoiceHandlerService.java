@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -289,12 +290,11 @@ public class LibraryChoiceHandlerService {
         if (destination == LibrarySearchDestination.HAND) {
             gameData.playerHands.get(handOwnerId).add(chosenCard);
         } else {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(handOwnerId);
             Permanent perm = new Permanent(chosenCard);
+            gameHelper.putPermanentOntoBattlefield(gameData, handOwnerId, perm);
             if (toBattlefieldTapped) {
                 perm.tap();
             }
-            battlefield.add(perm);
 
             String battlefieldOwner = gameData.playerIdToName.get(handOwnerId);
             String entersLog = toBattlefieldTapped
@@ -409,10 +409,11 @@ public class LibraryChoiceHandlerService {
         }
 
         // Put selected cards onto the battlefield
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
+        enterTappedTypesSnapshot.addAll(gameHelper.snapshotEnterTappedTypes(gameData));
         for (Card card : selectedCards) {
             Permanent perm = new Permanent(card);
-            battlefield.add(perm);
+            gameHelper.putPermanentOntoBattlefield(gameData, controllerId, perm, enterTappedTypesSnapshot);
 
             String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);

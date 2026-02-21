@@ -300,7 +300,7 @@ public class PermanentChoiceHandlerService {
                 // Create Aura permanent attached to the chosen permanent, under controller's control
                 Permanent auraPerm = new Permanent(auraCard);
                 auraPerm.setAttachedTo(enchantTarget.getId());
-                gameData.playerBattlefields.get(playerId).add(auraPerm);
+                gameHelper.putPermanentOntoBattlefield(gameData, playerId, auraPerm);
 
                 boolean hasControlEffect = auraCard.getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);

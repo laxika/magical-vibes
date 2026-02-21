@@ -17,10 +17,12 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -100,6 +102,10 @@ public class CardSpecificResolutionService implements EffectHandlerProvider {
             putOntoBattlefieldByPlayer.put(playerId, new ArrayList<>());
         }
 
+        // Snapshot replacement effects from permanents that existed before this Warp World event.
+        Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
+        enterTappedTypesSnapshot.addAll(gameHelper.snapshotEnterTappedTypes(gameData));
+
         // First, put artifact/creature/land cards onto the battlefield.
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> revealed = revealedByPlayer.getOrDefault(playerId, List.of());
@@ -109,7 +115,7 @@ public class CardSpecificResolutionService implements EffectHandlerProvider {
                 CardType type = card.getType();
                 if (type == CardType.ARTIFACT || type == CardType.CREATURE || type == CardType.LAND) {
                     Permanent permanent = new Permanent(card);
-                    battlefield.add(permanent);
+                    gameHelper.putPermanentOntoBattlefield(gameData, playerId, permanent, enterTappedTypesSnapshot);
                     putOntoBattlefieldByPlayer.get(playerId).add(card);
                 }
             }
@@ -181,6 +187,8 @@ public class CardSpecificResolutionService implements EffectHandlerProvider {
 
         // Save post-resolution work until bottom-order choices are complete.
         gameData.warpWorldOperation.pendingCreaturesByPlayer.clear();
+        gameData.warpWorldOperation.enterTappedTypesSnapshot.clear();
+        gameData.warpWorldOperation.enterTappedTypesSnapshot.addAll(enterTappedTypesSnapshot);
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> creatures = putOntoBattlefieldByPlayer.get(playerId).stream()
                     .filter(card -> card.getType() == CardType.CREATURE)

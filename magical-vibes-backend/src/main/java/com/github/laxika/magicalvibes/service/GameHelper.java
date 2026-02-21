@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchan
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -116,6 +117,58 @@ public class GameHelper {
             gameData.playerGraveyards.get(ownerId).add(card);
             updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone);
         }
+    }
+
+    public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent) {
+        Set<CardType> enterTappedTypes = snapshotEnterTappedTypes(gameData);
+        applyEnterTappedEffects(permanent, enterTappedTypes);
+        gameData.playerBattlefields.get(controllerId).add(permanent);
+    }
+
+    public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes) {
+        applyEnterTappedEffects(permanent, enterTappedTypes);
+        gameData.playerBattlefields.get(controllerId).add(permanent);
+    }
+
+    public Set<CardType> snapshotEnterTappedTypes(GameData gameData) {
+        Set<CardType> enterTappedTypes = EnumSet.noneOf(CardType.class);
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent source : battlefield) {
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (!(effect instanceof EnterPermanentsOfTypesTappedEffect enterTapped)) {
+                        continue;
+                    }
+                    enterTappedTypes.addAll(enterTapped.cardTypes());
+                }
+            }
+        }
+        return enterTappedTypes;
+    }
+
+    private void applyEnterTappedEffects(Permanent enteringPermanent, Set<CardType> enterTappedTypes) {
+        if (enterTappedTypes == null || enterTappedTypes.isEmpty()) {
+            return;
+        }
+        if (matchesAnyType(enteringPermanent.getCard(), enterTappedTypes)) {
+            enteringPermanent.tap();
+        }
+    }
+
+    private boolean matchesAnyType(Card card, Set<CardType> types) {
+        if (types.contains(card.getType())) {
+            return true;
+        }
+        for (CardType additionalType : card.getAdditionalTypes()) {
+            if (types.contains(additionalType)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean removePermanentToGraveyard(GameData gameData, Permanent target) {
@@ -333,6 +386,7 @@ public class GameHelper {
     }
 
     public void placePendingWarpWorldEnchantments(GameData gameData) {
+        Set<CardType> enterTappedTypes = gameData.warpWorldOperation.enterTappedTypesSnapshot;
         for (WarpWorldEnchantmentPlacement placement : gameData.warpWorldOperation.pendingEnchantmentPlacements) {
             UUID controllerId = placement.controllerId();
             Card card = placement.card();
@@ -340,7 +394,7 @@ public class GameHelper {
             if (placement.attachmentTargetId() != null) {
                 permanent.setAttachedTo(placement.attachmentTargetId());
             }
-            gameData.playerBattlefields.get(controllerId).add(permanent);
+            putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
 
             if (placement.attachmentTargetId() != null) {
                 boolean hasControlEffect = card.getEffects(EffectSlot.STATIC).stream()
@@ -380,6 +434,7 @@ public class GameHelper {
         gameData.warpWorldOperation.pendingCreaturesByPlayer.clear();
         gameData.warpWorldOperation.pendingAuraChoices.clear();
         gameData.warpWorldOperation.pendingEnchantmentPlacements.clear();
+        gameData.warpWorldOperation.enterTappedTypesSnapshot.clear();
         gameData.warpWorldOperation.needsLegendChecks = false;
         gameData.warpWorldOperation.sourceName = null;
     }
@@ -621,7 +676,7 @@ public class GameHelper {
             }
         }
 
-        gameData.playerBattlefields.get(controllerId).add(perm);
+        putPermanentOntoBattlefield(gameData, controllerId, perm);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         if (targetPermanentId != null) {

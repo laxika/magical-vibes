@@ -86,7 +86,7 @@ public class GraveyardChoiceHandlerService {
                 }
                 case BATTLEFIELD -> {
                     Permanent perm = new Permanent(card);
-                    gameData.playerBattlefields.get(playerId).add(perm);
+                    gameHelper.putPermanentOntoBattlefield(gameData, playerId, perm);
 
                     String logEntry = player.getUsername() + " puts " + card.getName() + " from a graveyard onto the battlefield.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);

@@ -29,7 +29,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -72,6 +74,8 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
     }
 
     private void resolveCreateCreatureToken(GameData gameData, UUID controllerId, CreateCreatureTokenEffect token) {
+        Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
+        enterTappedTypesSnapshot.addAll(gameHelper.snapshotEnterTappedTypes(gameData));
         for (int i = 0; i < token.amount(); i++) {
             Card tokenCard = new Card();
             tokenCard.setName(token.tokenName());
@@ -90,7 +94,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
             }
 
             Permanent tokenPermanent = new Permanent(tokenCard);
-            gameData.playerBattlefields.get(controllerId).add(tokenPermanent);
+            gameHelper.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
 
             String logEntry = "A " + token.power() + "/" + token.toughness() + " " + token.tokenName() + " creature token enters the battlefield.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -116,7 +120,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         tokenCard.setSubtypes(token.subtypes());
 
         Permanent tokenPermanent = new Permanent(tokenCard);
-        gameData.playerBattlefields.get(controllerId).add(tokenPermanent);
+        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent);
 
         String colorNames = token.colors().stream()
                 .map(c -> c.name().charAt(0) + c.name().substring(1).toLowerCase())

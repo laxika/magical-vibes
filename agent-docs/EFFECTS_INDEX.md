@@ -28,6 +28,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `return target permanent/creature`: `ReturnTargetPermanentToHandEffect` (+ creature target filter when needed)
 - `return target card from your graveyard to your hand`: `ReturnCardFromGraveyardToHandEffect`
 - `return all creatures to hand`: `ReturnCreaturesToOwnersHandEffect`
+- `artifacts/lands enter tapped`: `EnterPermanentsOfTypesTappedEffect` (e.g. `Set.of(CardType.ARTIFACT, CardType.LAND)`)
 - `draw cards`: `DrawCardEffect`, `DrawCardForTargetPlayerEffect`
 - `when an opponent draws a card, deal damage to that player`: `DealDamageToTargetPlayerEffect` on `EffectSlot.ON_OPPONENT_DRAWS`
 - `discard`: `DiscardCardEffect`, `TargetPlayerDiscardsEffect`, `RandomDiscardEffect`

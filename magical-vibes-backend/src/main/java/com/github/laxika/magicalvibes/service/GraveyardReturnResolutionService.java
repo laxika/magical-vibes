@@ -322,6 +322,8 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
         UUID controllerId = entry.getControllerId();
         List<UUID> targetCardIds = entry.getTargetCardIds();
         String playerName = gameData.playerIdToName.get(controllerId);
+        Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
+        enterTappedTypesSnapshot.addAll(gameHelper.snapshotEnterTappedTypes(gameData));
 
         int tokensToCreate = 0;
         for (UUID cardId : targetCardIds) {
@@ -352,7 +354,7 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
             tokenCard.setSubtypes(List.of(CardSubtype.ZOMBIE));
 
             Permanent tokenPermanent = new Permanent(tokenCard);
-            gameData.playerBattlefields.get(controllerId).add(tokenPermanent);
+            gameHelper.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
 
             String tokenLog = "A 2/2 Zombie creature token enters the battlefield.";
             gameBroadcastService.logAndBroadcast(gameData, tokenLog);

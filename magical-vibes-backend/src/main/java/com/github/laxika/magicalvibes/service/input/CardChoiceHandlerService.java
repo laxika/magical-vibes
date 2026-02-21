@@ -219,7 +219,7 @@ public class CardChoiceHandlerService {
         if (target != null) {
             Permanent auraPerm = new Permanent(card);
             auraPerm.setAttachedTo(target.getId());
-            gameData.playerBattlefields.get(playerId).add(auraPerm);
+            gameHelper.putPermanentOntoBattlefield(gameData, playerId, auraPerm);
 
             String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield attached to " + target.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -233,7 +233,7 @@ public class CardChoiceHandlerService {
     }
 
     private void resolveUntargetedCardChoice(GameData gameData, Player player, UUID playerId, List<Card> hand, Card card) {
-        gameData.playerBattlefields.get(playerId).add(new Permanent(card));
+        gameHelper.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
 
         String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);

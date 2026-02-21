@@ -91,7 +91,7 @@ public class StackResolutionService {
             return;
         }
 
-        gameData.playerBattlefields.get(controllerId).add(new Permanent(card));
+        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(card));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
@@ -121,7 +121,7 @@ public class StackResolutionService {
             } else {
                 Permanent perm = new Permanent(card);
                 perm.setAttachedTo(entry.getTargetPermanentId());
-                gameData.playerBattlefields.get(controllerId).add(perm);
+                gameHelper.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
                 String playerName = gameData.playerIdToName.get(controllerId);
                 String logEntry = card.getName() + " enters the battlefield attached to " + target.getCard().getName() + " under " + playerName + "'s control.";
@@ -136,7 +136,7 @@ public class StackResolutionService {
                 }
             }
         } else {
-            gameData.playerBattlefields.get(controllerId).add(new Permanent(card));
+            gameHelper.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(card));
 
             String playerName = gameData.playerIdToName.get(controllerId);
             String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
@@ -161,7 +161,7 @@ public class StackResolutionService {
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
 
-        gameData.playerBattlefields.get(controllerId).add(new Permanent(card));
+        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(card));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
@@ -180,7 +180,7 @@ public class StackResolutionService {
         Permanent perm = new Permanent(card);
         perm.setLoyaltyCounters(card.getLoyalty() != null ? card.getLoyalty() : 0);
         perm.setSummoningSick(false);
-        gameData.playerBattlefields.get(controllerId).add(perm);
+        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = card.getName() + " enters the battlefield with " + perm.getLoyaltyCounters() + " loyalty under " + playerName + "'s control.";
