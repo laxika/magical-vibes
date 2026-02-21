@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffec
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithMVXOrLessToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
@@ -67,6 +68,9 @@ public class LibraryResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveReorderTopCardsOfLibrary(gd, entry, (ReorderTopCardsOfLibraryEffect) effect));
         registry.register(SearchLibraryForBasicLandToHandEffect.class,
                 (gd, entry, effect) -> resolveSearchLibraryForBasicLandToHand(gd, entry));
+        registry.register(SearchLibraryForCardTypesToBattlefieldEffect.class,
+                (gd, entry, effect) -> resolveSearchLibraryForCardTypesToBattlefield(
+                        gd, entry, (SearchLibraryForCardTypesToBattlefieldEffect) effect));
         registry.register(SearchLibraryForCardToHandEffect.class,
                 (gd, entry, effect) -> resolveSearchLibraryForCardToHand(gd, entry));
         registry.register(SearchLibraryForCreatureWithMVXOrLessToHandEffect.class,
@@ -271,6 +275,86 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         String logMsg = playerName + " searches their library.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} searching library for a basic land ({} found)", gameData.id, playerName, basicLands.size());
+    }
+
+    void resolveSearchLibraryForCardTypesToBattlefield(GameData gameData, StackEntry entry,
+                                                       SearchLibraryForCardTypesToBattlefieldEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        if (deck == null || deck.isEmpty()) {
+            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> matchingCards = new ArrayList<>();
+        for (Card card : deck) {
+            boolean matchesType = effect.cardTypes().contains(card.getType())
+                    || card.getAdditionalTypes().stream().anyMatch(effect.cardTypes()::contains);
+            if (!matchesType) {
+                continue;
+            }
+            if (effect.requiresBasicSupertype() && !card.getSupertypes().contains(CardSupertype.BASIC)) {
+                continue;
+            }
+            matchingCards.add(card);
+        }
+
+        boolean basicLandOnly = isBasicLandOnlyFilter(effect);
+        if (matchingCards.isEmpty()) {
+            Collections.shuffle(deck);
+            String logMsg = basicLandOnly
+                    ? playerName + " searches their library but finds no basic land cards. Library is shuffled."
+                    : playerName + " searches their library but finds no matching cards. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - {} searches library, no matching cards found", gameData.id, playerName);
+            return;
+        }
+
+        LibrarySearchDestination destination = effect.entersTapped()
+                ? LibrarySearchDestination.BATTLEFIELD_TAPPED
+                : LibrarySearchDestination.BATTLEFIELD;
+
+        String filterText = basicLandOnly
+                ? "basic land card"
+                : "matching card";
+        String prompt = effect.entersTapped()
+                ? "Search your library for a " + filterText + " and put it onto the battlefield tapped."
+                : "Search your library for a " + filterText + " and put it onto the battlefield.";
+
+        gameData.interaction.beginLibrarySearch(
+                controllerId,
+                matchingCards,
+                false,
+                true,
+                null,
+                0,
+                null,
+                false,
+                true,
+                prompt,
+                destination
+        );
+
+        List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
+                cardViews,
+                prompt,
+                true
+        ));
+
+        String logMsg = playerName + " searches their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} searching library for matching card to put onto battlefield ({} found, tapped={})",
+                gameData.id, playerName, matchingCards.size(), effect.entersTapped());
+    }
+
+    private boolean isBasicLandOnlyFilter(SearchLibraryForCardTypesToBattlefieldEffect effect) {
+        return effect.requiresBasicSupertype()
+                && effect.cardTypes().size() == 1
+                && effect.cardTypes().contains(CardType.LAND);
     }
 
     void resolveSearchLibraryForCardToHand(GameData gameData, StackEntry entry) {

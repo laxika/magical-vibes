@@ -191,6 +191,9 @@ public class LibraryChoiceHandlerService {
         LibrarySearchDestination destination = librarySearch.destination() != null
                 ? librarySearch.destination()
                 : LibrarySearchDestination.HAND;
+        boolean toBattlefield = destination == LibrarySearchDestination.BATTLEFIELD
+                || destination == LibrarySearchDestination.BATTLEFIELD_TAPPED;
+        boolean toBattlefieldTapped = destination == LibrarySearchDestination.BATTLEFIELD_TAPPED;
 
         UUID deckOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
         UUID handOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
@@ -288,10 +291,15 @@ public class LibraryChoiceHandlerService {
         } else {
             List<Permanent> battlefield = gameData.playerBattlefields.get(handOwnerId);
             Permanent perm = new Permanent(chosenCard);
+            if (toBattlefieldTapped) {
+                perm.tap();
+            }
             battlefield.add(perm);
 
             String battlefieldOwner = gameData.playerIdToName.get(handOwnerId);
-            String entersLog = chosenCard.getName() + " enters the battlefield under " + battlefieldOwner + "'s control.";
+            String entersLog = toBattlefieldTapped
+                    ? chosenCard.getName() + " enters the battlefield tapped under " + battlefieldOwner + "'s control."
+                    : chosenCard.getName() + " enters the battlefield under " + battlefieldOwner + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, entersLog);
 
             if (chosenCard.getType() == CardType.CREATURE) {
@@ -328,9 +336,11 @@ public class LibraryChoiceHandlerService {
             Collections.shuffle(deck);
         }
 
-        String destinationText = destination == LibrarySearchDestination.BATTLEFIELD
-                ? "onto the battlefield"
-                : "into their hand";
+        String destinationText = switch (destination) {
+            case BATTLEFIELD -> "onto the battlefield";
+            case BATTLEFIELD_TAPPED -> "onto the battlefield tapped";
+            case HAND -> "into their hand";
+        };
         String logEntry;
         if (targetPlayerId != null) {
             String targetName = gameData.playerIdToName.get(targetPlayerId);
@@ -350,7 +360,7 @@ public class LibraryChoiceHandlerService {
         log.info("Game {} - {} searches library and puts {} {}",
                 gameData.id, player.getUsername(), chosenCard.getName(), destinationText);
 
-        if (destination == LibrarySearchDestination.BATTLEFIELD) {
+        if (toBattlefield) {
             stateBasedActionService.performStateBasedActions(gameData);
         }
 
