@@ -84,6 +84,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `you can't lose the game and your opponents can't win the game`: `CantLoseGameEffect`
 - `as this enters, choose a card name`: `ChooseCardNameOnEnterEffect` (implements `ChooseCardNameEffect` marker interface; reuses color choice UI flow via `ColorChoiceContext.CardNameChoice`)
 - `activated abilities of sources with the chosen name can't be activated (static)`: `ActivatedAbilitiesOfChosenNameCantBeActivatedEffect` (checked in `AbilityActivationService`; exempts mana abilities)
+- `you have no maximum hand size (static)`: `NoMaximumHandSizeEffect`
 
 ## Provider map (where effects are resolved)
 

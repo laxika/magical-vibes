@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffe
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceEffect;
@@ -547,6 +548,18 @@ public class GameHelper {
                 manaPool.clear();
             }
         }
+    }
+
+    boolean hasNoMaximumHandSize(GameData gameData, UUID playerId) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return false;
+        for (Permanent perm : bf) {
+            if (perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(NoMaximumHandSizeEffect.class::isInstance)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // ===== Prevention methods =====

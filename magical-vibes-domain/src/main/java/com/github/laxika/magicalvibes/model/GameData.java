@@ -76,6 +76,7 @@ public class GameData {
     public UUID draftId;
     public final Deque<LibraryBottomReorderRequest> pendingLibraryBottomReorders = new ArrayDeque<>();
     public final WarpWorldOperationState warpWorldOperation = new WarpWorldOperationState();
+    public boolean cleanupDiscardPending;
 
     // Combat damage assignment state
     public final Map<Integer, Map<UUID, Integer>> combatDamagePlayerAssignments = new HashMap<>();

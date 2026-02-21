@@ -120,6 +120,12 @@ public class CardChoiceHandlerService {
             gameData.interaction.clearCardChoice();
             gameData.interaction.setDiscardRemainingCount(0);
 
+            // After cleanup discard, apply end-of-turn resets (CR 514.2)
+            if (gameData.cleanupDiscardPending) {
+                gameData.cleanupDiscardPending = false;
+                turnProgressionService.applyCleanupResets(gameData);
+            }
+
             // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
             if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
                 gameHelper.processNextDiscardSelfTrigger(gameData);

@@ -370,6 +370,9 @@ class DehydrationTest {
 
     private void advanceToNextTurn(Player currentActivePlayer) {
         harness.forceActivePlayer(currentActivePlayer);
+        // Clear hands so cleanup hand-size limit doesn't interrupt turn advancement
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // END_STEP -> CLEANUP

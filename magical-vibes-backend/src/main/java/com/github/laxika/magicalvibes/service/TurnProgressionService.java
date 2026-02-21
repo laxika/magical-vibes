@@ -88,6 +88,18 @@ public class TurnProgressionService {
             } else if (next == TurnStep.END_STEP) {
                 handleEndStepTriggers(gameData);
             } else if (next == TurnStep.CLEANUP) {
+                // CR 514.1: Active player discards down to maximum hand size (normally 7)
+                UUID activePlayerId = gameData.activePlayerId;
+                List<Card> hand = gameData.playerHands.get(activePlayerId);
+                if (hand != null && hand.size() > 7 && !gameHelper.hasNoMaximumHandSize(gameData, activePlayerId)) {
+                    int discardCount = hand.size() - 7;
+                    gameData.cleanupDiscardPending = true;
+                    gameData.discardCausedByOpponent = false;
+                    gameData.interaction.setDiscardRemainingCount(discardCount);
+                    playerInputService.beginDiscardChoice(gameData, activePlayerId);
+                    return;
+                }
+                // CR 514.2: Remove damage and end "until end of turn" effects
                 gameHelper.resetEndOfTurnModifiers(gameData);
             }
         } else {
@@ -418,6 +430,7 @@ public class TurnProgressionService {
         gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
         gameData.additionalCombatMainPhasePairs = 0;
+        gameData.cleanupDiscardPending = false;
 
         gameHelper.drainManaPools(gameData);
 
@@ -496,6 +509,10 @@ public class TurnProgressionService {
         if (result == CombatResult.ADVANCE_AND_AUTO_PASS || result == CombatResult.AUTO_PASS_ONLY) {
             resolveAutoPass(gameData);
         }
+    }
+
+    public void applyCleanupResets(GameData gameData) {
+        gameHelper.resetEndOfTurnModifiers(gameData);
     }
 
     public void resolveAutoPass(GameData gameData) {
