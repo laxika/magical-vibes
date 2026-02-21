@@ -116,6 +116,10 @@ class RelentlessAssaultTest {
         assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
 
         harness.getGameService().advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
+
+        // CR 508.8: no attacking creatures, skip directly to end of combat
+        harness.getGameService().advanceStep(gd);
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
 
         harness.getGameService().advanceStep(gd);

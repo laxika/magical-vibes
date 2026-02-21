@@ -212,23 +212,12 @@ public class CombatService {
         if (attackable.isEmpty()) {
             String playerName = gameData.playerIdToName.get(activeId);
             log.info("Game {} - {} has no creatures that can attack, skipping combat", gameData.id, playerName);
-            skipToEndOfCombat(gameData);
             return;
         }
 
         List<Integer> mustAttack = getMustAttackIndices(gameData, activeId, attackable);
         gameData.interaction.beginAttackerDeclaration(activeId);
         sessionManager.sendToPlayer(activeId, new AvailableAttackersMessage(attackable, mustAttack));
-    }
-
-    void skipToEndOfCombat(GameData gameData) {
-        gameData.currentStep = TurnStep.END_OF_COMBAT;
-        gameData.interaction.clearAwaitingInput();
-        clearCombatState(gameData);
-
-        String logEntry = "Step: " + TurnStep.END_OF_COMBAT.getDisplayName();
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        gameBroadcastService.broadcastGameState(gameData);
     }
 
     CombatResult declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices) {
@@ -261,7 +250,7 @@ public class CombatService {
 
         if (attackerIndices.isEmpty()) {
             log.info("Game {} - {} declares no attackers", gameData.id, player.getUsername());
-            skipToEndOfCombat(gameData);
+            gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " declares no attackers.");
             return CombatResult.AUTO_PASS_ONLY;
         }
 

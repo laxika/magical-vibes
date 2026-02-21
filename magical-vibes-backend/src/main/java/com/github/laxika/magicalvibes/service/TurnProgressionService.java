@@ -49,6 +49,14 @@ public class TurnProgressionService {
         gameData.interaction.clearAwaitingInput();
         TurnStep next = gameData.currentStep.next();
 
+        // CR 508.8: If no creatures are attacking, skip declare blockers and combat damage
+        if (gameData.currentStep == TurnStep.DECLARE_ATTACKERS) {
+            List<Integer> attackers = combatService.getAttackingCreatureIndices(gameData, gameData.activePlayerId);
+            if (attackers.isEmpty()) {
+                next = TurnStep.END_OF_COMBAT;
+            }
+        }
+
         if (gameData.currentStep == TurnStep.POSTCOMBAT_MAIN && gameData.additionalCombatMainPhasePairs > 0) {
             next = TurnStep.BEGINNING_OF_COMBAT;
             gameData.additionalCombatMainPhasePairs--;
