@@ -22,6 +22,7 @@ public enum CardSubtype {
     SHAMAN("Shaman"),
     DRUID("Druid"),
     DRYAD("Dryad"),
+    RANGER("Ranger"),
     SPIDER("Spider"),
     BEAST("Beast"),
     HUMAN("Human"),
