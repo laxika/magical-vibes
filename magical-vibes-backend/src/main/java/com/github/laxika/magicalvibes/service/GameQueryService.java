@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeTargetedBySpellColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
@@ -321,6 +322,19 @@ public class GameQueryService {
         }
         if (target.getChosenColor() != null && target.getChosenColor() == sourceColor) {
             return true;
+        }
+        return false;
+    }
+
+    public boolean cantBeTargetedBySpellColor(GameData gameData, Permanent target, CardColor spellColor) {
+        if (spellColor == null) {
+            return false;
+        }
+        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantBeTargetedBySpellColorsEffect cantBeTargeted
+                    && cantBeTargeted.colors().contains(spellColor)) {
+                return true;
+            }
         }
         return false;
     }

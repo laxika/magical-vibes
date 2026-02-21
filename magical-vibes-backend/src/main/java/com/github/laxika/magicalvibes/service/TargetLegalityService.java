@@ -93,6 +93,9 @@ public class TargetLegalityService {
         if (target != null && card.isNeedsTarget() && gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)) {
             throw new IllegalStateException(target.getCard().getName() + " has shroud and can't be targeted");
         }
+        if (target != null && card.isNeedsTarget() && gameQueryService.cantBeTargetedBySpellColor(gameData, target, card.getColor())) {
+            throw new IllegalStateException(target.getCard().getName() + " can't be the target of " + card.getColor().name().toLowerCase() + " spells");
+        }
 
         if (target == null && card.isNeedsTarget() && gameData.playerIds.contains(targetPermanentId)
                 && gameQueryService.playerHasShroud(gameData, targetPermanentId)) {
@@ -150,6 +153,9 @@ public class TargetLegalityService {
                 }
                 if (card.isNeedsTarget() && gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)) {
                     throw new IllegalStateException(target.getCard().getName() + " has shroud and can't be targeted");
+                }
+                if (card.isNeedsTarget() && gameQueryService.cantBeTargetedBySpellColor(gameData, target, card.getColor())) {
+                    throw new IllegalStateException(target.getCard().getName() + " can't be the target of " + card.getColor().name().toLowerCase() + " spells");
                 }
             } else if (card.isNeedsTarget() && gameQueryService.playerHasShroud(gameData, targetId)) {
                 throw new IllegalStateException(gameData.playerIdToName.get(targetId) + " has shroud and can't be targeted");

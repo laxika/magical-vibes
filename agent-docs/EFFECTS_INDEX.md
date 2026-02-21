@@ -52,6 +52,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `can't block (static on creature)`: `CantBlockEffect`
 - `can be blocked only by permanents matching a composed predicate`: `CanBeBlockedOnlyByFilterEffect` + permanent predicates (`PermanentHasKeywordPredicate`, `PermanentHasSubtypePredicate`, `PermanentAnyOfPredicate`, `PermanentAllOfPredicate`, `PermanentNotPredicate`)
 - `target restrictions based on permanent properties`: `PermanentPredicateTargetFilter` + permanent predicates (`PermanentIsCreaturePredicate`, `PermanentIsTappedPredicate`, `PermanentColorInPredicate`, `PermanentPowerAtMostPredicate`, etc.)
+- `can't be the target of [color] spells`: `CantBeTargetedBySpellColorsEffect`
 - `tap/untap`: `TapTargetCreatureEffect`, `TapTargetPermanentEffect`, `TapOrUntapTargetPermanentEffect`, `UntapTargetPermanentEffect`, `UntapSelfEffect`
 - `prevent damage`: `PreventDamageToTargetEffect`, `PreventNextDamageEffect`, `PreventAllCombatDamageEffect`, `PreventDamageFromColorsEffect`
 - `copy or retarget spell`: `CopySpellEffect`, `ChangeTargetOfTargetSpellWithSingleTargetEffect`
