@@ -23,6 +23,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `destroy all creatures you don't control`: `DestroyAllCreaturesYouDontControlEffect`
 - `sacrifice creature`: `SacrificeCreatureEffect`, `EachOpponentSacrificesCreatureEffect`
 - `counter spell`: `CounterSpellEffect`, `CounterUnlessPaysEffect`
+- `creature spells can't be countered`: `CreatureSpellsCantBeCounteredEffect`
 - `stack/spell target restrictions`: `StackEntryPredicateTargetFilter` + stack predicates (`StackEntryTypeInPredicate`, `StackEntryColorInPredicate`, `StackEntryIsSingleTargetPredicate`, `StackEntryAnyOfPredicate`, `StackEntryAllOfPredicate`, `StackEntryNotPredicate`)
 - `return target permanent/creature`: `ReturnTargetPermanentToHandEffect`, `ReturnTargetCreatureToHandEffect`
 - `return all creatures to hand`: `ReturnCreaturesToOwnersHandEffect`

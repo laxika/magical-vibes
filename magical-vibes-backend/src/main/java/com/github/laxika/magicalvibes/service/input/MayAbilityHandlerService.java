@@ -212,6 +212,17 @@ public class MayAbilityHandlerService {
             return;
         }
 
+        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())) {
+            log.info("Game {} - {} cannot be countered", gameData.id, targetEntry.getCard().getName());
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                gameData.priorityPassedBy.clear();
+                gameBroadcastService.broadcastGameState(gameData);
+                turnProgressionService.resolveAutoPass(gameData);
+            }
+            return;
+        }
+
         if (accepted) {
             ManaCost cost = new ManaCost("{" + amount + "}");
             ManaPool pool = gameData.playerManaPools.get(player.getId());

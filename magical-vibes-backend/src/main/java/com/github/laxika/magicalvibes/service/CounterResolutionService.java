@@ -23,6 +23,7 @@ public class CounterResolutionService implements EffectHandlerProvider {
 
     private final GameHelper gameHelper;
     private final GameBroadcastService gameBroadcastService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public void registerHandlers(EffectHandlerRegistry registry) {
@@ -46,6 +47,11 @@ public class CounterResolutionService implements EffectHandlerProvider {
 
         if (targetEntry == null) {
             log.info("Game {} - Counter target no longer on stack", gameData.id);
+            return;
+        }
+
+        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())) {
+            log.info("Game {} - {} cannot be countered", gameData.id, targetEntry.getCard().getName());
             return;
         }
 
@@ -76,6 +82,11 @@ public class CounterResolutionService implements EffectHandlerProvider {
 
         if (targetEntry == null) {
             log.info("Game {} - Counter-unless-pays target no longer on stack", gameData.id);
+            return;
+        }
+
+        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())) {
+            log.info("Game {} - {} cannot be countered", gameData.id, targetEntry.getCard().getName());
             return;
         }
 

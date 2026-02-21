@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
@@ -326,6 +327,25 @@ public class GameQueryService {
                     .anyMatch(e -> e instanceof GrantControllerShroudEffect);
             if (grantsControllerShroud) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isUncounterable(GameData gameData, Card card) {
+        if (card.getType() != CardType.CREATURE && !card.getAdditionalTypes().contains(CardType.CREATURE)) {
+            return false;
+        }
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent source : battlefield) {
+                boolean grantsUncounterable = source.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof CreatureSpellsCantBeCounteredEffect);
+                if (grantsUncounterable) {
+                    return true;
+                }
             }
         }
         return false;
