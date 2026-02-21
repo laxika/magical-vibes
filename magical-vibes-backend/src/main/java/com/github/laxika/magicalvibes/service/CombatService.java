@@ -436,6 +436,12 @@ public class CombatService {
                     }
                 }
             }
+            for (CanBeBlockedOnlyByFilterEffect restriction : getAuraGrantedBlockingRestrictions(gameData, attacker)) {
+                if (!gameQueryService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
+                    throw new IllegalStateException(attacker.getCard().getName()
+                            + " can only be blocked by " + restriction.allowedBlockersDescription());
+                }
+            }
             for (var entry : Map.of(
                     Keyword.FORESTWALK, CardSubtype.FOREST,
                     Keyword.MOUNTAINWALK, CardSubtype.MOUNTAIN,
@@ -679,6 +685,11 @@ public class CombatService {
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof CanBeBlockedOnlyByFilterEffect restriction
                     && !gameQueryService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
+                return false;
+            }
+        }
+        for (CanBeBlockedOnlyByFilterEffect restriction : getAuraGrantedBlockingRestrictions(gameData, attacker)) {
+            if (!gameQueryService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
                 return false;
             }
         }
@@ -1288,6 +1299,27 @@ public class CombatService {
                 }
             }
         }
+    }
+
+    private List<CanBeBlockedOnlyByFilterEffect> getAuraGrantedBlockingRestrictions(GameData gameData, Permanent creature) {
+        List<CanBeBlockedOnlyByFilterEffect> restrictions = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent aura : battlefield) {
+                if (aura.getAttachedTo() == null || !aura.getAttachedTo().equals(creature.getId())) {
+                    continue;
+                }
+                for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof CanBeBlockedOnlyByFilterEffect restriction) {
+                        restrictions.add(restriction);
+                    }
+                }
+            }
+        }
+        return restrictions;
     }
 
     // ===== APNAP trigger ordering =====
