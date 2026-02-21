@@ -44,6 +44,8 @@ import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffec
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -920,7 +922,7 @@ public class GameHelper {
 
     // ===== Triggers =====
 
-    public void checkSpellCastTriggers(GameData gameData, Card spellCard) {
+    public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId) {
         if (spellCard.getColor() == null) {
             return;
         }
@@ -951,6 +953,29 @@ public class GameHelper {
                                     playerId,
                                     perm.getCard().getName() + "'s ability",
                                     new ArrayList<>(resolvedEffects)
+                            ));
+                        }
+                    } else if (inner instanceof PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger
+                            && trigger.triggerColors().contains(spellCard.getColor())
+                            && (!trigger.onlyOwnSpells() || playerId.equals(castingPlayerId))) {
+                        List<CardEffect> resolvedEffects = List.of(new PutPlusOnePlusOneCounterOnSourceEffect(trigger.amount()));
+
+                        if (effect instanceof MayEffect may) {
+                            gameData.pendingMayAbilities.add(new PendingMayAbility(
+                                    perm.getCard(),
+                                    playerId,
+                                    resolvedEffects,
+                                    perm.getCard().getName() + " — " + may.prompt()
+                            ));
+                        } else {
+                            gameData.stack.add(new StackEntry(
+                                    StackEntryType.TRIGGERED_ABILITY,
+                                    perm.getCard(),
+                                    playerId,
+                                    perm.getCard().getName() + "'s ability",
+                                    new ArrayList<>(resolvedEffects),
+                                    null,
+                                    perm.getId()
                             ));
                         }
                     }

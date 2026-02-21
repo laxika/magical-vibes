@@ -184,7 +184,7 @@ public class GraveyardChoiceHandlerService {
             log.info("Game {} - {} casts {} with {} graveyard targets", gameData.id, pendingCard.getName(),
                     pendingCard.getName(), cardIds.size());
 
-            gameHelper.checkSpellCastTriggers(gameData, pendingCard);
+            gameHelper.checkSpellCastTriggers(gameData, pendingCard, controllerId);
             gameBroadcastService.broadcastGameState(gameData);
         } else {
             // ETB ability — put triggered ability on stack with targets

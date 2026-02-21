@@ -386,7 +386,7 @@ public class SpellCastingService {
 
         log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), card.getName());
 
-        gameHelper.checkSpellCastTriggers(gameData, card);
+        gameHelper.checkSpellCastTriggers(gameData, card, playerId);
         gameBroadcastService.broadcastGameState(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
