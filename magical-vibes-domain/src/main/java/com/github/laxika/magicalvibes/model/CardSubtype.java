@@ -18,6 +18,7 @@ public enum CardSubtype {
     BEAR("Bear"),
     BERSERKER("Berserker"),
     BADGER("Badger"),
+    RHINO("Rhino"),
     ELF("Elf"),
     SHAMAN("Shaman"),
     DRUID("Druid"),

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsMatchingPermanentEffect;
@@ -737,7 +738,8 @@ public class CombatService {
                 boolean atkHasFS = gameQueryService.hasKeyword(gameData, atk, Keyword.FIRST_STRIKE)
                         || gameQueryService.hasKeyword(gameData, atk, Keyword.DOUBLE_STRIKE);
 
-                if (blkIndices.isEmpty()) {
+                boolean assignAsUnblocked = !blkIndices.isEmpty() && assignsCombatDamageAsThoughUnblocked(atk);
+                if (blkIndices.isEmpty() || assignAsUnblocked) {
                     // Unblocked first striker deals damage to player (or redirect target)
                     if (atkHasFS && !gameQueryService.isPreventedFromDealingDamage(gameData, atk)) {
                         int power = gameQueryService.applyDamageMultiplier(gameData, gameQueryService.getEffectiveCombatDamage(gameData, atk));
@@ -777,6 +779,8 @@ public class CombatService {
                             combatDamageDealtToPlayer.merge(atk, doubledRemaining, Integer::sum);
                         }
                     }
+                }
+                if (!blkIndices.isEmpty()) {
                     // First strike / double strike blockers deal damage to attacker
                     for (int blkIdx : blkIndices) {
                         Permanent blk = defBf.get(blkIdx);
@@ -828,7 +832,8 @@ public class CombatService {
             boolean atkSkipPhase2 = gameQueryService.hasKeyword(gameData, atk, Keyword.FIRST_STRIKE)
                     && !gameQueryService.hasKeyword(gameData, atk, Keyword.DOUBLE_STRIKE);
 
-            if (blkIndices.isEmpty()) {
+            boolean assignAsUnblocked = !blkIndices.isEmpty() && assignsCombatDamageAsThoughUnblocked(atk);
+            if (blkIndices.isEmpty() || assignAsUnblocked) {
                 // Unblocked regular attacker deals damage to player (or redirect target)
                 if (!atkSkipPhase2 && !gameQueryService.isPreventedFromDealingDamage(gameData, atk)) {
                     int power = gameQueryService.applyDamageMultiplier(gameData, gameQueryService.getEffectiveCombatDamage(gameData, atk));
@@ -870,6 +875,8 @@ public class CombatService {
                         combatDamageDealtToPlayer.merge(atk, doubledRemaining, Integer::sum);
                     }
                 }
+            }
+            if (!blkIndices.isEmpty()) {
                 // Surviving blockers deal damage to attacker (skip first-strike-only, allow double strike)
                 for (int blkIdx : blkIndices) {
                     if (deadDefenderIndices.contains(blkIdx)) continue;
@@ -1277,6 +1284,11 @@ public class CombatService {
         }
         gameData.stack.addAll(apTriggers);
         gameData.stack.addAll(napTriggers);
+    }
+
+    private boolean assignsCombatDamageAsThoughUnblocked(Permanent attacker) {
+        return attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(AssignCombatDamageAsThoughUnblockedEffect.class::isInstance);
     }
 
     // ===== Combat state management =====
