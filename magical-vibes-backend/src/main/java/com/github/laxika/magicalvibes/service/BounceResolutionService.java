@@ -1,25 +1,29 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.BounceOwnCreatureOnUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.BounceCreatureOnUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandOnCoinFlipLossEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandOnCoinFlipLossEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
@@ -42,8 +46,8 @@ public class BounceResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveReturnCreaturesToOwnersHand(gd, entry, (ReturnCreaturesToOwnersHandEffect) effect));
         registry.register(ReturnArtifactsTargetPlayerOwnsToHandEffect.class,
                 (gd, entry, effect) -> resolveReturnArtifactsTargetPlayerOwnsToHand(gd, entry));
-        registry.register(BounceOwnCreatureOnUpkeepEffect.class,
-                (gd, entry, effect) -> resolveBounceOwnCreatureOnUpkeep(gd, entry));
+        registry.register(BounceCreatureOnUpkeepEffect.class,
+                (gd, entry, effect) -> resolveBounceCreatureOnUpkeep(gd, entry, (BounceCreatureOnUpkeepEffect) effect));
         registry.register(ReturnSelfToHandOnCoinFlipLossEffect.class,
                 (gd, entry, effect) -> resolveReturnSelfToHandOnCoinFlipLoss(gd, entry));
     }
@@ -149,7 +153,7 @@ public class BounceResolutionService implements EffectHandlerProvider {
         }
 
         List<Permanent> artifactsToReturn = battlefield.stream()
-                .filter(p -> gameQueryService.isArtifact(p))
+                .filter(gameQueryService::isArtifact)
                 .toList();
 
         if (artifactsToReturn.isEmpty()) {
@@ -169,29 +173,39 @@ public class BounceResolutionService implements EffectHandlerProvider {
         gameHelper.removeOrphanedAuras(gameData);
     }
 
-    void resolveBounceOwnCreatureOnUpkeep(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
-        String playerName = gameData.playerIdToName.get(targetPlayerId);
+    void resolveBounceCreatureOnUpkeep(GameData gameData, StackEntry entry, BounceCreatureOnUpkeepEffect bounceEffect) {
+        UUID choosingPlayerId = switch (bounceEffect.scope()) {
+            case SOURCE_CONTROLLER -> entry.getControllerId();
+            case TRIGGER_TARGET_PLAYER -> entry.getTargetPermanentId() != null
+                    ? entry.getTargetPermanentId()
+                    : entry.getControllerId();
+        };
+        String playerName = gameData.playerIdToName.get(choosingPlayerId);
 
-        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(choosingPlayerId);
         List<UUID> creatureIds = new ArrayList<>();
         if (battlefield != null) {
             for (Permanent p : battlefield) {
-                if (gameQueryService.isCreature(gameData, p)) {
+                if (gameQueryService.isCreature(gameData, p)
+                        && gameQueryService.matchesFilters(
+                        p,
+                        bounceEffect.filters(),
+                        FilterContext.of(gameData)
+                                .withSourceCardId(entry.getCard().getId())
+                                .withSourceControllerId(entry.getControllerId()))) {
                     creatureIds.add(p.getId());
                 }
             }
         }
 
         if (creatureIds.isEmpty()) {
-            String logEntry = playerName + " controls no creatures — nothing to return.";
+            String logEntry = playerName + " controls no valid creatures — nothing to return.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
         }
 
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.BounceCreature(targetPlayerId));
-        playerInputService.beginPermanentChoice(gameData, targetPlayerId, creatureIds,
-                "Choose a creature you control to return to its owner's hand.");
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.BounceCreature(choosingPlayerId));
+        playerInputService.beginPermanentChoice(gameData, choosingPlayerId, creatureIds, bounceEffect.prompt());
     }
 
     void resolveReturnSelfToHandOnCoinFlipLoss(GameData gameData, StackEntry entry) {
@@ -211,5 +225,3 @@ public class BounceResolutionService implements EffectHandlerProvider {
         resolveReturnSelfToHand(gameData, entry);
     }
 }
-
-

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BounceOwnCreatureOnUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.BounceCreatureOnUpkeepEffect;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -68,7 +68,7 @@ class SunkenHopeTest {
         assertThat(card.getManaCost()).isEqualTo("{3}{U}{U}");
         assertThat(card.getColor()).isEqualTo(CardColor.BLUE);
         assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst()).isInstanceOf(BounceOwnCreatureOnUpkeepEffect.class);
+        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst()).isInstanceOf(BounceCreatureOnUpkeepEffect.class);
     }
 
     // ===== Triggering during controller's upkeep =====

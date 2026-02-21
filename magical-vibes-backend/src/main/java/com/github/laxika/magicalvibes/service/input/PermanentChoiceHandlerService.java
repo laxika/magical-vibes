@@ -168,7 +168,7 @@ public class PermanentChoiceHandlerService {
 
                 String logEntry = target.getCard().getName() + " is returned to its owner's hand.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} returned to owner's hand by Sunken Hope", gameData.id, target.getCard().getName());
+                log.info("Game {} - {} returned to owner's hand by bounce effect", gameData.id, target.getCard().getName());
             }
 
             stateBasedActionService.performStateBasedActions(gameData);
