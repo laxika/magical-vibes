@@ -128,6 +128,13 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         }
         if (grant.scope() == Scope.OWN_TAPPED_CREATURES && context.targetOnSameBattlefield() && context.target().isTapped()) {
             accumulator.addKeyword(grant.keyword());
+            return;
+        }
+        if (grant.scope() == Scope.OWN_CREATURES && context.targetOnSameBattlefield()) {
+            boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
+            if (isEffectivelyCreature(context.target(), hasAnimateArtifacts)) {
+                accumulator.addKeyword(grant.keyword());
+            }
         }
     }
 

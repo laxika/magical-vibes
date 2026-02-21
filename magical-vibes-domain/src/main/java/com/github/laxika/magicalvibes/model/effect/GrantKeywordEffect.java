@@ -8,6 +8,7 @@ public record GrantKeywordEffect(Keyword keyword, Scope scope) implements CardEf
         TARGET,
         ENCHANTED_CREATURE,
         EQUIPPED_CREATURE,
-        OWN_TAPPED_CREATURES
+        OWN_TAPPED_CREATURES,
+        OWN_CREATURES
     }
 }
