@@ -73,6 +73,7 @@ public enum CardSubtype {
     VEDALKEN("Vedalken"),
     GIANT("Giant"),
     GOBLIN("Goblin"),
+    KAVU("Kavu"),
     CYCLOPS("Cyclops"),
     HORROR("Horror"),
     SPECTER("Specter"),
