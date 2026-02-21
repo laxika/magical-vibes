@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Persuasion;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.r.RootMaze;
 import com.github.laxika.magicalvibes.cards.r.RemoveSoul;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.effect.w.WarpWorldEffect;
@@ -425,6 +426,49 @@ class WarpWorldTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
                 .containsExactly("Plains", "Remove Soul");
+    }
+
+    @Test
+    @DisplayName("Root Maze entering during Warp World does not tap other same-event entrants")
+    void rootMazeEnteringDuringWarpWorldDoesNotTapSameEventEntrants() {
+        // Repeat to cover randomized reveal/order during Warp World.
+        for (int i = 0; i < 12; i++) {
+            GameTestHarness localHarness = new GameTestHarness();
+            Player p1 = localHarness.getPlayer1();
+            Player p2 = localHarness.getPlayer2();
+            GameData localGd = localHarness.getGameData();
+            localHarness.skipMulligan();
+            localHarness.clearMessages();
+
+            localHarness.setHand(p1, List.of(new WarpWorld()));
+            localHarness.addMana(p1, ManaColor.RED, 8);
+
+            localGd.playerDecks.get(p1.getId()).clear();
+            localGd.playerDecks.get(p2.getId()).clear();
+
+            localHarness.addToBattlefield(p1, new RootMaze());
+            localHarness.addToBattlefield(p1, newArtifactEnchantment("Test Relic Weave"));
+
+            localHarness.castSorcery(p1, 0, 0);
+            localHarness.passBothPriorities();
+
+            Permanent artifactEnchantment = localGd.playerBattlefields.get(p1.getId()).stream()
+                    .filter(p -> p.getCard().getName().equals("Test Relic Weave"))
+                    .findFirst()
+                    .orElseThrow();
+
+            assertThat(artifactEnchantment.isTapped()).isFalse();
+        }
+    }
+
+    private Card newArtifactEnchantment(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.ENCHANTMENT);
+        card.setAdditionalTypes(Set.of(CardType.ARTIFACT));
+        card.setManaCost("");
+        card.setCardText("");
+        return card;
     }
 }
 
