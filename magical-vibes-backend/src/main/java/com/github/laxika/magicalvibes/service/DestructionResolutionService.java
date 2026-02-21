@@ -118,13 +118,6 @@ public class DestructionResolutionService implements EffectHandlerProvider {
             return;
         }
 
-        if (!destroy.targetTypes().contains(target.getCard().getType())) {
-            String fizzleLog = entry.getCard().getName() + "'s ability fizzles (invalid target type).";
-            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
-            log.info("Game {} - {}'s ability fizzles, target type mismatch", gameData.id, entry.getCard().getName());
-            return;
-        }
-
         if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
             String logEntry = target.getCard().getName() + " is indestructible.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);

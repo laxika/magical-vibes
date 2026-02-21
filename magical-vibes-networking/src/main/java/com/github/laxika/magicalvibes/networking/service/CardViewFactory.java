@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -173,23 +174,28 @@ public class CardViewFactory {
                         CardType.LAND.getDisplayName()
                 );
             }
-            if (effect instanceof DestroyTargetPermanentEffect destroy) {
-                return destroy.targetTypes().stream()
-                        .map(CardType::getDisplayName)
-                        .toList();
+            if (effect instanceof DestroyTargetPermanentEffect) {
+                return getTargetTypesFromFilter(card.getTargetFilter());
             }
             if (effect instanceof DestroyTargetLandAndDamageControllerEffect) {
                 return List.of(CardType.LAND.getDisplayName());
             }
         }
         for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-            if (effect instanceof DestroyTargetPermanentEffect destroy) {
-                return destroy.targetTypes().stream()
-                        .map(CardType::getDisplayName)
-                        .toList();
+            if (effect instanceof DestroyTargetPermanentEffect) {
+                return getTargetTypesFromFilter(card.getTargetFilter());
             }
         }
         return List.of();
+    }
+
+    private List<String> getTargetTypesFromFilter(TargetFilter filter) {
+        if (!(filter instanceof PermanentPredicateTargetFilter predicateFilter)) {
+            return List.of();
+        }
+        Set<String> targetTypes = new LinkedHashSet<>();
+        collectAllowedTypes(predicateFilter.predicate(), targetTypes);
+        return List.copyOf(targetTypes);
     }
 
     private List<String> computeSpellAllowedTargetSubtypes(Card card) {
@@ -247,6 +253,10 @@ public class CardViewFactory {
         }
         if (predicate instanceof PermanentIsLandPredicate) {
             out.add(CardType.LAND.getDisplayName());
+            return;
+        }
+        if (predicate instanceof PermanentIsEnchantmentPredicate) {
+            out.add(CardType.ENCHANTMENT.getDisplayName());
             return;
         }
         if (predicate instanceof PermanentAnyOfPredicate anyOfPredicate) {

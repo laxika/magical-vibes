@@ -219,10 +219,6 @@ public class TargetValidationService {
 
         registry.register(DestroyTargetPermanentEffect.class, (ctx, effect) -> {
             Permanent target = requireBattlefieldTarget(ctx);
-            DestroyTargetPermanentEffect destroy = (DestroyTargetPermanentEffect) effect;
-            if (!destroy.targetTypes().contains(target.getCard().getType())) {
-                throw new IllegalStateException("Target has invalid type");
-            }
             checkProtection(ctx, target);
         });
         registry.register(TargetCreatureCantBlockThisTurnEffect.class, (ctx, effect) -> {

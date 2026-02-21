@@ -1206,8 +1206,7 @@ public class CombatService {
 
             for (UUID damagedCreatureId : entry.getValue()) {
                 for (CardEffect effect : effects) {
-                    if (effect instanceof DestroyTargetPermanentEffect destroyEffect
-                            && destroyEffect.targetTypes().contains(CardType.CREATURE)) {
+                    if (effect instanceof DestroyTargetPermanentEffect destroyEffect) {
                         StackEntry trigger = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 source.getCard(),

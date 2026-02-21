@@ -283,7 +283,7 @@ class AuraOfSilenceTest {
 
         assertThatThrownBy(() -> harness.sacrificePermanent(player1, 0, bearId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid target type");
+                .hasMessageContaining("artifact or enchantment");
     }
 
     @Test

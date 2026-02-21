@@ -10,8 +10,11 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,7 +54,10 @@ class AssassinateTest {
         assertThat(card.getColor()).isEqualTo(CardColor.BLACK);
         assertThat(card.isNeedsTarget()).isTrue();
         assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentIsTappedPredicate(),
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentIsTappedPredicate()
+                )),
                 "Target must be a tapped creature"
         ));
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
@@ -92,6 +98,21 @@ class AssassinateTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, untappedCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("tapped");
+    }
+
+    @Test
+    @DisplayName("Cannot target a tapped noncreature")
+    void cannotTargetTappedNonCreature() {
+        Permanent tappedLand = new Permanent(new Forest());
+        tappedLand.tap();
+        harness.getGameData().playerBattlefields.get(player2.getId()).add(tappedLand);
+
+        harness.setHand(player1, List.of(new Assassinate()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, tappedLand.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped creature");
     }
 
     // ===== Resolving =====

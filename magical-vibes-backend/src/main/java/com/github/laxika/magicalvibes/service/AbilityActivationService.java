@@ -115,8 +115,8 @@ public class AbilityActivationService {
                 if (target == null) {
                     throw new IllegalStateException("Invalid target permanent");
                 }
-                if (!destroy.targetTypes().contains(target.getCard().getType())) {
-                    throw new IllegalStateException("Invalid target type for sacrifice ability");
+                if (permanent.getCard().getTargetFilter() != null) {
+                    gameQueryService.validateTargetFilter(permanent.getCard().getTargetFilter(), target);
                 }
                 if (gameQueryService.hasProtectionFrom(gameData, target, permanent.getCard().getColor())) {
                     throw new IllegalStateException(target.getCard().getName() + " has protection from " + permanent.getCard().getColor().name().toLowerCase());

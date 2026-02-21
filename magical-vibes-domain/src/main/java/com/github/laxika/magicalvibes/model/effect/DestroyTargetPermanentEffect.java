@@ -1,12 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.CardType;
+public record DestroyTargetPermanentEffect(boolean cannotBeRegenerated) implements CardEffect {
 
-import java.util.Set;
-
-public record DestroyTargetPermanentEffect(Set<CardType> targetTypes, boolean cannotBeRegenerated) implements CardEffect {
-
-    public DestroyTargetPermanentEffect(Set<CardType> targetTypes) {
-        this(targetTypes, false);
+    public DestroyTargetPermanentEffect() {
+        this(false);
     }
 }

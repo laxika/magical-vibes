@@ -426,8 +426,8 @@ public class AiDecisionEngine {
 
         // Handle ETB destroy effects (e.g., Aven Cloudchaser targets enchantments, Nekrataal targets creatures)
         for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-            if (effect instanceof DestroyTargetPermanentEffect destroy) {
-                return chooseDestroyTarget(gameData, card, destroy.targetTypes(), opponentId);
+            if (effect instanceof DestroyTargetPermanentEffect) {
+                return chooseDestroyTarget(gameData, card, opponentId);
             }
         }
 
@@ -470,22 +470,21 @@ public class AiDecisionEngine {
         return null;
     }
 
-    private UUID chooseDestroyTarget(GameData gameData, Card card, Set<CardType> targetTypes, UUID opponentId) {
+    private UUID chooseDestroyTarget(GameData gameData, Card card, UUID opponentId) {
         // Search opponent's battlefield first (prefer destroying opponent's permanents)
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
-        UUID oppTarget = findDestroyCandidate(gameData, card, targetTypes, oppBattlefield);
+        UUID oppTarget = findDestroyCandidate(gameData, card, oppBattlefield);
         if (oppTarget != null) {
             return oppTarget;
         }
 
         // Fall back to own battlefield (e.g., destroying a negative enchantment on own creature)
         List<Permanent> ownBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
-        return findDestroyCandidate(gameData, card, targetTypes, ownBattlefield);
+        return findDestroyCandidate(gameData, card, ownBattlefield);
     }
 
-    private UUID findDestroyCandidate(GameData gameData, Card card, Set<CardType> targetTypes, List<Permanent> battlefield) {
+    private UUID findDestroyCandidate(GameData gameData, Card card, List<Permanent> battlefield) {
         List<Permanent> candidates = battlefield.stream()
-                .filter(p -> matchesPermanentType(gameData, p, targetTypes))
                 .filter(p -> card.getTargetFilter() == null || passesTargetFilter(card, p))
                 .toList();
 
@@ -493,25 +492,17 @@ public class AiDecisionEngine {
             return null;
         }
 
-        // For creature targets, prefer highest power
-        if (targetTypes.contains(CardType.CREATURE)) {
-            return candidates.stream()
-                    .max(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)))
-                    .map(Permanent::getId)
-                    .orElse(null);
+        // Prefer creature kills when legal, then choose the most threatening one.
+        UUID creatureTarget = candidates.stream()
+                .filter(p -> gameQueryService.isCreature(gameData, p))
+                .max(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)))
+                .map(Permanent::getId)
+                .orElse(null);
+        if (creatureTarget != null) {
+            return creatureTarget;
         }
 
-        // For non-creature targets, just pick the first one
-        return candidates.get(0).getId();
-    }
-
-    private boolean matchesPermanentType(GameData gameData, Permanent permanent, Set<CardType> targetTypes) {
-        for (CardType targetType : targetTypes) {
-            if (targetType == CardType.CREATURE && gameQueryService.isCreature(gameData, permanent)) return true;
-            if (permanent.getCard().getType() == targetType) return true;
-            if (permanent.getCard().getAdditionalTypes().contains(targetType)) return true;
-        }
-        return false;
+        return candidates.getFirst().getId();
     }
 
     private boolean passesTargetFilter(Card card, Permanent target) {

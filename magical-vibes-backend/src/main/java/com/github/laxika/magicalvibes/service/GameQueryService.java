@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -192,6 +193,10 @@ public class GameQueryService {
         }
         if (predicate instanceof PermanentIsArtifactPredicate) {
             return isArtifact(permanent);
+        }
+        if (predicate instanceof PermanentIsEnchantmentPredicate) {
+            return permanent.getCard().getType() == CardType.ENCHANTMENT
+                    || permanent.getCard().getAdditionalTypes().contains(CardType.ENCHANTMENT);
         }
         if (predicate instanceof PermanentIsTappedPredicate) {
             return permanent.isTapped();
