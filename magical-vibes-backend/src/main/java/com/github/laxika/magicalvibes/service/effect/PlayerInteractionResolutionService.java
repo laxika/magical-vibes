@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDiscardEffect;
@@ -16,7 +17,9 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RandomDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
@@ -56,6 +59,10 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
     public void registerHandlers(EffectHandlerRegistry registry) {
         registry.register(OpponentMayPlayCreatureEffect.class,
                 (gd, entry, effect) -> resolveOpponentMayPlayCreature(gd, entry.getControllerId()));
+        registry.register(PutCardToBattlefieldEffect.class,
+                (gd, entry, effect) -> resolvePutCardToBattlefield(gd, entry.getControllerId(), (PutCardToBattlefieldEffect) effect));
+        registry.register(MayEffect.class,
+                (gd, entry, effect) -> resolveMayEffect(gd, entry, (MayEffect) effect));
         registry.register(DrawCardEffect.class,
                 (gd, entry, effect) -> resolveDrawCards(gd, entry.getControllerId(), ((DrawCardEffect) effect).amount()));
         registry.register(DiscardCardEffect.class,
@@ -98,27 +105,66 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
 
     private void resolveOpponentMayPlayCreature(GameData gameData, UUID controllerId) {
         UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
-        List<Card> opponentHand = gameData.playerHands.get(opponentId);
+        resolvePlayerMayPlayCreature(gameData, opponentId);
+    }
+
+    private void resolveMayEffect(GameData gameData, StackEntry entry, MayEffect mayEffect) {
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                entry.getCard(),
+                entry.getControllerId(),
+                List.of(mayEffect.wrapped()),
+                entry.getCard().getName() + " - " + mayEffect.prompt()
+        ));
+    }
+
+    private void resolvePutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect) {
+        List<Card> hand = gameData.playerHands.get(playerId);
+        List<Integer> validIndices = new ArrayList<>();
+        if (hand != null) {
+            for (int i = 0; i < hand.size(); i++) {
+                Card handCard = hand.get(i);
+                if (handCard.getType() == effect.cardType() || handCard.getAdditionalTypes().contains(effect.cardType())) {
+                    validIndices.add(i);
+                }
+            }
+        }
+
+        if (validIndices.isEmpty()) {
+            String playerName = gameData.playerIdToName.get(playerId);
+            String typeName = effect.cardType().name().toLowerCase();
+            String logEntry = playerName + " has no " + typeName + " cards in hand.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} has no {} cards in hand for hand-to-battlefield effect", gameData.id, playerName, typeName);
+            return;
+        }
+
+        String typeName = effect.cardType().name().toLowerCase();
+        String prompt = "Choose a " + typeName + " card from your hand to put onto the battlefield.";
+        playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt);
+    }
+
+    private void resolvePlayerMayPlayCreature(GameData gameData, UUID playerId) {
+        List<Card> hand = gameData.playerHands.get(playerId);
 
         List<Integer> creatureIndices = new ArrayList<>();
-        if (opponentHand != null) {
-            for (int i = 0; i < opponentHand.size(); i++) {
-                if (opponentHand.get(i).getType() == CardType.CREATURE) {
+        if (hand != null) {
+            for (int i = 0; i < hand.size(); i++) {
+                if (hand.get(i).getType() == CardType.CREATURE) {
                     creatureIndices.add(i);
                 }
             }
         }
 
         if (creatureIndices.isEmpty()) {
-            String opponentName = gameData.playerIdToName.get(opponentId);
-            String logEntry = opponentName + " has no creature cards in hand.";
+            String playerName = gameData.playerIdToName.get(playerId);
+            String logEntry = playerName + " has no creature cards in hand.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} has no creatures in hand for ETB effect", gameData.id, opponentName);
+            log.info("Game {} - {} has no creatures in hand for creature-choice effect", gameData.id, playerName);
             return;
         }
 
         String prompt = "You may put a creature card from your hand onto the battlefield.";
-        playerInputService.beginCardChoice(gameData, opponentId, creatureIndices, prompt);
+        playerInputService.beginCardChoice(gameData, playerId, creatureIndices, prompt);
     }
 
     private void resolveDrawCards(GameData gameData, UUID playerId, int amount) {

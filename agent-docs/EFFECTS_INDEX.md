@@ -29,6 +29,8 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `draw cards`: `DrawCardEffect`, `DrawCardForTargetPlayerEffect`
 - `when an opponent draws a card, deal damage to that player`: `DealDamageToTargetPlayerEffect` on `EffectSlot.ON_OPPONENT_DRAWS`
 - `discard`: `DiscardCardEffect`, `TargetPlayerDiscardsEffect`, `RandomDiscardEffect`
+- `you may put a [type] card from hand onto battlefield`: `MayEffect(PutCardToBattlefieldEffect(CardType.X), "...")`
+- `opponent may put a creature card from hand onto battlefield`: `OpponentMayPlayCreatureEffect`
 - `mill`: `MillTargetPlayerEffect`, `MillHalfLibraryEffect`, `MillByHandSizeEffect`
 - `search library`: `SearchLibraryForCardToHandEffect`, `SearchLibraryForBasicLandToHandEffect`
 - `look at top N cards, may reveal a card of specified type(s) and put it into hand, rest on bottom`: `LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect`
