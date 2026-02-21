@@ -19,11 +19,15 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
@@ -103,6 +107,11 @@ public class AbilityActivationService {
         Permanent permanent = battlefield.get(permanentIndex);
         if (permanent.getCard().getEffects(EffectSlot.ON_SACRIFICE).isEmpty()) {
             throw new IllegalStateException("Permanent has no sacrifice abilities");
+        }
+
+        // Pithing Needle check: sacrifice abilities are activated abilities
+        if (isPithingNeedleBlockingCard(gameData, permanent.getCard().getName())) {
+            throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Pithing Needle)");
         }
 
         // Validate target for effects that need one
@@ -227,6 +236,9 @@ public class AbilityActivationService {
         List<CardEffect> abilityEffects = ability.getEffects();
         String abilityCost = ability.getManaCost();
         boolean isTapAbility = ability.isRequiresTap();
+
+        // Pithing Needle check: block non-mana activated abilities of the chosen name
+        validateNotBlockedByPithingNeedle(gameData, permanent, ability);
 
         // Validate activation timing restrictions (e.g. "Activate only during your upkeep")
         validateTimingRestrictions(gameData, playerId, ability);
@@ -603,6 +615,42 @@ public class AbilityActivationService {
         Map<Integer, Integer> perAbilityCounts = gameData.activatedAbilityUsesThisTurn
                 .computeIfAbsent(permanent.getId(), ignored -> new ConcurrentHashMap<>());
         perAbilityCounts.merge(abilityIndex, 1, Integer::sum);
+    }
+
+    private void validateNotBlockedByPithingNeedle(GameData gameData, Permanent permanent, ActivatedAbility ability) {
+        if (isManaAbility(ability)) {
+            return;
+        }
+        if (isPithingNeedleBlockingCard(gameData, permanent.getCard().getName())) {
+            throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Pithing Needle)");
+        }
+    }
+
+    private boolean isPithingNeedleBlockingCard(GameData gameData, String cardName) {
+        for (UUID pid : gameData.playerIds) {
+            for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
+                boolean hasNeedleEffect = p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof ActivatedAbilitiesOfChosenNameCantBeActivatedEffect);
+                if (hasNeedleEffect && cardName.equals(p.getChosenName())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isManaAbility(ActivatedAbility ability) {
+        if (ability.isNeedsTarget() || ability.isNeedsSpellTarget() || ability.getLoyaltyCost() != null) {
+            return false;
+        }
+        List<CardEffect> effects = ability.getEffects().stream()
+                .filter(e -> !(e instanceof SacrificeSelfCost)
+                        && !(e instanceof SacrificeCreatureCost)
+                        && !(e instanceof SacrificeSubtypeCreatureCost)
+                        && !(e instanceof DiscardCardTypeCost))
+                .toList();
+        return !effects.isEmpty() && effects.stream().allMatch(e ->
+                e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof DoubleManaPoolEffect);
     }
 }
 

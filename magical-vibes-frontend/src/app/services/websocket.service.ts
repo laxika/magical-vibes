@@ -178,6 +178,7 @@ export interface Permanent {
   effectivePower: number;
   effectiveToughness: number;
   chosenColor: string | null;
+  chosenName: string | null;
   regenerationShield: number;
   attachedTo: string | null;
   cantBeBlocked: boolean;

@@ -82,6 +82,8 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `this spell costs {N} less to cast if an opponent controls M more creatures`: `ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect`
 - `players don't lose unspent mana as steps and phases end`: `PreventManaDrainEffect`
 - `you can't lose the game and your opponents can't win the game`: `CantLoseGameEffect`
+- `as this enters, choose a card name`: `ChooseCardNameOnEnterEffect` (implements `ChooseCardNameEffect` marker interface; reuses color choice UI flow via `ColorChoiceContext.CardNameChoice`)
+- `activated abilities of sources with the chosen name can't be activated (static)`: `ActivatedAbilitiesOfChosenNameCantBeActivatedEffect` (checked in `AbilityActivationService`; exempts mana abilities)
 
 ## Provider map (where effects are resolved)
 
@@ -117,3 +119,4 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - Opponent draw trigger damage: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/u/UnderworldDreams.java`
 - Conditional self cast-cost reduction: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/a/AvatarOfMight.java`
 - Evasion blocked-only-by-wall-or-flying: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/e/ElvenRiders.java`
+- ETB card name choice + static ability lock: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/p/PithingNeedle.java`

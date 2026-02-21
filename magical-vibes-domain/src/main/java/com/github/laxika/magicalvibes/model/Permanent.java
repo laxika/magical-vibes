@@ -27,6 +27,7 @@ public class Permanent {
     @Setter private int regenerationShield;
     @Setter private UUID attachedTo;
     @Setter private CardColor chosenColor;
+    @Setter private String chosenName;
     @Setter private boolean cantBeBlocked;
     @Setter private boolean cantBlockThisTurn;
     @Setter private boolean cantRegenerateThisTurn;

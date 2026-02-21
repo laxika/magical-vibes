@@ -16,6 +16,7 @@ public record PermanentView(
         int effectivePower, int effectiveToughness,
         UUID attachedTo,
         CardColor chosenColor,
+        String chosenName,
         int regenerationShield,
         boolean cantBeBlocked,
         boolean animatedCreature,

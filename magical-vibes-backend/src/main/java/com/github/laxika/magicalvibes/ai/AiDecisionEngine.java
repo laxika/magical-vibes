@@ -948,6 +948,21 @@ public class AiDecisionEngine {
             return;
         }
 
+        // Card name choice (Pithing Needle, etc.) — pick the opponent's most threatening permanent
+        if (colorChoice.context() instanceof ColorChoiceContext.CardNameChoice) {
+            UUID opponentId = getOpponentId(gameData);
+            List<Permanent> opponentField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+            String chosenName = opponentField.stream()
+                    .filter(p -> !p.getCard().getActivatedAbilities().isEmpty())
+                    .map(p -> p.getCard().getName())
+                    .findFirst()
+                    .orElse(opponentField.isEmpty() ? "Pithing Needle" : opponentField.getFirst().getCard().getName());
+            log.info("AI: Choosing card name \"{}\" in game {}", chosenName, gameId);
+            final String finalName = chosenName;
+            send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, finalName)));
+            return;
+        }
+
         // Pick the color that appears most on opponent's battlefield
         UUID opponentId = getOpponentId(gameData);
         List<Permanent> opponentField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());

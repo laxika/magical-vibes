@@ -11,4 +11,6 @@ public sealed interface ColorChoiceContext {
     record ManaColorChoice(UUID playerId) implements ColorChoiceContext {}
 
     record DrawReplacementChoice(UUID playerId, DrawReplacementKind kind) implements ColorChoiceContext {}
+
+    record CardNameChoice(UUID permanentId) implements ColorChoiceContext {}
 }

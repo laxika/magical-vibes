@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -20,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 @Slf4j
 @Component
@@ -96,6 +98,35 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a color", gameData.id, playerName);
+    }
+
+    public void beginCardNameChoice(GameData gameData, UUID playerId, UUID permanentId) {
+        ColorChoiceContext.CardNameChoice choiceContext = new ColorChoiceContext.CardNameChoice(permanentId);
+        gameData.interaction.beginColorChoice(playerId, permanentId, null, choiceContext);
+
+        List<String> cardNames = collectAllCardNamesInGame(gameData);
+        sessionManager.sendToPlayer(playerId, new ChooseColorMessage(cardNames, "Choose a card name."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a card name", gameData.id, playerName);
+    }
+
+    private List<String> collectAllCardNamesInGame(GameData gameData) {
+        Set<String> names = new TreeSet<>();
+        for (UUID pid : gameData.playerIds) {
+            gameData.playerBattlefields.getOrDefault(pid, List.of())
+                    .forEach(p -> names.add(p.getCard().getName()));
+            gameData.playerHands.getOrDefault(pid, List.of())
+                    .forEach(c -> names.add(c.getName()));
+            gameData.playerGraveyards.getOrDefault(pid, List.of())
+                    .forEach(c -> names.add(c.getName()));
+            gameData.playerDecks.getOrDefault(pid, List.of())
+                    .forEach(c -> names.add(c.getName()));
+            gameData.playerExiledCards.getOrDefault(pid, List.of())
+                    .forEach(c -> names.add(c.getName()));
+        }
+        gameData.stack.forEach(se -> names.add(se.getCard().getName()));
+        return new ArrayList<>(names);
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId) {

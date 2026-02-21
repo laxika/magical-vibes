@@ -237,6 +237,9 @@ public class ReconnectionService {
                         && drc.kind() == DrawReplacementKind.ABUNDANCE) {
                     options = List.of("LAND", "NONLAND");
                     prompt = "Choose land or nonland for Abundance.";
+                } else if (cc.context() instanceof ColorChoiceContext.CardNameChoice) {
+                    options = collectAllCardNamesInGame(gameData);
+                    prompt = "Choose a card name.";
                 } else {
                     options = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                     prompt = "Choose a color.";
@@ -345,6 +348,22 @@ public class ReconnectionService {
             }
         }
     }
+
+    private List<String> collectAllCardNamesInGame(GameData gameData) {
+        java.util.Set<String> names = new java.util.TreeSet<>();
+        for (java.util.UUID pid : gameData.playerIds) {
+            gameData.playerBattlefields.getOrDefault(pid, List.of())
+                    .forEach(p -> names.add(p.getCard().getName()));
+            gameData.playerHands.getOrDefault(pid, List.of())
+                    .forEach(c -> names.add(c.getName()));
+            gameData.playerGraveyards.getOrDefault(pid, List.of())
+                    .forEach(c -> names.add(c.getName()));
+            gameData.playerDecks.getOrDefault(pid, List.of())
+                    .forEach(c -> names.add(c.getName()));
+            gameData.playerExiledCards.getOrDefault(pid, List.of())
+                    .forEach(c -> names.add(c.getName()));
+        }
+        gameData.stack.forEach(se -> names.add(se.getCard().getName()));
+        return new java.util.ArrayList<>(names);
+    }
 }
-
-

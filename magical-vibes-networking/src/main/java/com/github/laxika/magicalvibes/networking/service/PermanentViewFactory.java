@@ -40,6 +40,7 @@ public class PermanentViewFactory {
                 p.getEffectiveToughness() + bonusToughness,
                 p.getAttachedTo(),
                 p.getChosenColor(),
+                p.getChosenName(),
                 p.getRegenerationShield(),
                 p.isCantBeBlocked(),
                 animatedCreature,

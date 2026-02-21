@@ -56,6 +56,12 @@ public class ColorChoiceHandlerService {
             return;
         }
 
+        // Card name choice (Pithing Needle, etc.)
+        if (colorChoice.context() instanceof ColorChoiceContext.CardNameChoice ctx) {
+            handleCardNameChosen(gameData, player, colorName, ctx);
+            return;
+        }
+
         // Text-changing effects (Mind Bend, etc.) — two-step color/land-type choice
         if (colorChoice.context() instanceof ColorChoiceContext.TextChangeFromWord ctx) {
             handleTextChangeFromWordChosen(gameData, player, colorName, ctx);
@@ -196,6 +202,24 @@ public class ColorChoiceHandlerService {
             case "FOREST" -> "Forest";
             default -> throw new IllegalArgumentException("Invalid choice: " + choice);
         };
+    }
+
+    private void handleCardNameChosen(GameData gameData, Player player, String cardName, ColorChoiceContext.CardNameChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+        gameData.interaction.clearColorChoice();
+
+        Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
+        if (perm != null) {
+            perm.setChosenName(cardName);
+
+            String logEntry = player.getUsername() + " chooses \"" + cardName + "\" for " + perm.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} chooses card name \"{}\" for {}", gameData.id, player.getUsername(), cardName, perm.getCard().getName());
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
     }
 
     private void handleDrawReplacementChoice(GameData gameData, String chosenKind, ColorChoiceContext.DrawReplacementChoice ctx) {
