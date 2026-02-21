@@ -380,6 +380,7 @@ export interface ChooseCardFromGraveyardNotification {
   type: MessageType;
   cardIndices: number[];
   prompt: string;
+  allGraveyards: boolean;
 }
 
 export interface ChooseHandTopBottomNotification {

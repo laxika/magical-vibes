@@ -136,6 +136,7 @@ export class GameChoiceService {
   choosingFromGraveyard = false;
   graveyardChoiceIndices: number[] = [];
   graveyardChoicePrompt = '';
+  graveyardChoiceAllGraveyards = false;
 
   // --- Multi-target state (for spells like "one or two target creatures") ---
   multiTargeting = false;
@@ -245,6 +246,7 @@ export class GameChoiceService {
     this.choosingFromGraveyard = true;
     this.graveyardChoiceIndices = msg.cardIndices;
     this.graveyardChoicePrompt = msg.prompt;
+    this.graveyardChoiceAllGraveyards = msg.allGraveyards;
   }
 
   // ========== User actions ==========
@@ -1155,22 +1157,38 @@ export class GameChoiceService {
   get graveyardChoiceCards(): { card: Card; index: number; owner: string }[] {
     const g = this.gameSignal();
     if (!g) return [];
-    const allGraveyardCards: { card: Card; index: number; owner: string }[] = [];
     const validIndices = new Set(this.graveyardChoiceIndices);
-    let poolIndex = 0;
-    for (let playerIdx = 0; playerIdx < g.graveyards.length; playerIdx++) {
-      const graveyard = g.graveyards[playerIdx];
-      const ownerName = g.playerNames[playerIdx] ?? 'Unknown';
-      for (const card of graveyard) {
-        if (card.type === 'CREATURE' || card.type === 'ARTIFACT') {
-          if (validIndices.has(poolIndex)) {
-            allGraveyardCards.push({ card, index: poolIndex, owner: ownerName });
+    const result: { card: Card; index: number; owner: string }[] = [];
+
+    if (this.graveyardChoiceAllGraveyards) {
+      // Cross-graveyard choice: indices are into a pool of creature/artifact cards across all graveyards
+      let poolIndex = 0;
+      for (let playerIdx = 0; playerIdx < g.graveyards.length; playerIdx++) {
+        const graveyard = g.graveyards[playerIdx];
+        const ownerName = g.playerNames[playerIdx] ?? 'Unknown';
+        for (const card of graveyard) {
+          if (card.type === 'CREATURE' || card.type === 'ARTIFACT') {
+            if (validIndices.has(poolIndex)) {
+              result.push({ card, index: poolIndex, owner: ownerName });
+            }
+            poolIndex++;
           }
-          poolIndex++;
+        }
+      }
+    } else {
+      // Standard choice: indices are into the current player's own graveyard
+      const myId = this.websocketService.currentUser?.userId ?? '';
+      const myPlayerIdx = g.playerIds.indexOf(myId);
+      const graveyard = g.graveyards[myPlayerIdx] ?? [];
+      const ownerName = g.playerNames[myPlayerIdx] ?? 'Unknown';
+      for (const idx of this.graveyardChoiceIndices) {
+        if (idx >= 0 && idx < graveyard.length) {
+          result.push({ card: graveyard[idx], index: idx, owner: ownerName });
         }
       }
     }
-    return allGraveyardCards;
+
+    return result;
   }
 
   chooseGraveyardCard(index: number): void {
@@ -1182,5 +1200,6 @@ export class GameChoiceService {
     this.choosingFromGraveyard = false;
     this.graveyardChoiceIndices = [];
     this.graveyardChoicePrompt = '';
+    this.graveyardChoiceAllGraveyards = false;
   }
 }

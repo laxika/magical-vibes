@@ -203,7 +203,7 @@ public class ReconnectionService {
             case InteractionContext.GraveyardChoice gc -> {
                 if (playerId.equals(gc.playerId())) {
                     sessionManager.sendToPlayer(playerId, new ChooseCardFromGraveyardMessage(
-                            new ArrayList<>(gc.validIndices()), "Choose a card from the graveyard."));
+                            new ArrayList<>(gc.validIndices()), "Choose a card from the graveyard.", gc.cardPool() != null));
                 }
             }
             case InteractionContext.ColorChoice cc -> {
