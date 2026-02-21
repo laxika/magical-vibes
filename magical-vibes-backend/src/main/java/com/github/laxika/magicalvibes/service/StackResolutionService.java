@@ -161,6 +161,10 @@ public class StackResolutionService {
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
 
+        if (gameHelper.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetPermanentId())) {
+            return;
+        }
+
         gameHelper.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(card));
 
         String playerName = gameData.playerIdToName.get(controllerId);

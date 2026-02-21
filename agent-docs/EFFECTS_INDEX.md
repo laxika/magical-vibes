@@ -75,6 +75,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `tap/untap`: `TapTargetPermanentEffect` (use `Set.of(CardType.CREATURE)` for creature-only), `TapOrUntapTargetPermanentEffect`, `UntapTargetPermanentEffect`, `UntapSelfEffect`
 - `untap all permanents you control during each other player's [step]`: `UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect`
 - `prevent damage`: `PreventDamageToTargetEffect`, `PreventNextDamageEffect`, `PreventAllCombatDamageEffect`, `PreventDamageFromColorsEffect`
+- `enter as a copy of [type] permanent (Clone/Sculpting Steel)`: `CopyPermanentOnEnterEffect(PermanentPredicate, typeLabel)` — handled by `GameHelper` + `MayAbilityHandlerService`
 - `copy or retarget spell`: `CopySpellEffect`, `ChangeTargetOfTargetSpellWithSingleTargetEffect`
 - `extra turn / additional combat / end turn`: `ExtraTurnEffect`, `AdditionalCombatMainPhaseEffect`, `EndTurnEffect`
 - `equip`: `EquipEffect`

@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyCreatureOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -112,31 +112,35 @@ public class MayAbilityHandlerService {
             return;
         }
 
-        // Clone copy creature effect — handled as replacement effect (pre-entry)
-        boolean isCloneCopy = ability.effects().stream().anyMatch(e -> e instanceof CopyCreatureOnEnterEffect);
-        if (isCloneCopy) {
+        // Copy permanent effect (Clone / Sculpting Steel) — handled as replacement effect (pre-entry)
+        CopyPermanentOnEnterEffect copyEffect = ability.effects().stream()
+                .filter(e -> e instanceof CopyPermanentOnEnterEffect)
+                .map(e -> (CopyPermanentOnEnterEffect) e)
+                .findFirst().orElse(null);
+        if (copyEffect != null) {
+            String typeLabel = copyEffect.typeLabel();
             if (accepted) {
-                // Collect valid creature targets (Clone is NOT on the battlefield yet)
-                List<UUID> creatureIds = new ArrayList<>();
+                // Collect valid targets (the copying permanent is NOT on the battlefield yet)
+                List<UUID> validIds = new ArrayList<>();
                 for (UUID pid : gameData.orderedPlayerIds) {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
-                        if (gameQueryService.isCreature(gameData, p)) {
-                            creatureIds.add(p.getId());
+                        if (gameQueryService.matchesPermanentPredicate(gameData, p, copyEffect.filter())) {
+                            validIds.add(p.getId());
                         }
                     }
                 }
-                playerInputService.beginPermanentChoice(gameData, ability.controllerId(), creatureIds, "Choose a creature to copy.");
+                playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validIds, "Choose a " + typeLabel + " to copy.");
 
-                String logEntry = player.getUsername() + " accepts — choosing a creature to copy.";
+                String logEntry = player.getUsername() + " accepts — choosing a " + typeLabel + " to copy.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} accepts clone copy", gameData.id, player.getUsername());
+                log.info("Game {} - {} accepts copy {}", gameData.id, player.getUsername(), typeLabel);
             } else {
                 gameData.interaction.clearPermanentChoiceContext();
-                String logEntry = player.getUsername() + " declines to copy a creature. Clone enters as 0/0.";
+                String logEntry = player.getUsername() + " declines to copy a " + typeLabel + ". " + ability.sourceCard().getName() + " enters without copying.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} declines clone copy", gameData.id, player.getUsername());
+                log.info("Game {} - {} declines copy {}", gameData.id, player.getUsername(), typeLabel);
 
                 gameHelper.completeCloneEntry(gameData, null);
                 stateBasedActionService.performStateBasedActions(gameData);
