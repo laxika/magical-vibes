@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
@@ -15,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealCreatu
 import com.github.laxika.magicalvibes.model.effect.MillByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.PayManaAndSearchLibraryForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandToHandEffect;
@@ -68,6 +71,9 @@ public class LibraryResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveSearchLibraryForCardToHand(gd, entry));
         registry.register(SearchLibraryForCreatureWithMVXOrLessToHandEffect.class,
                 (gd, entry, effect) -> resolveSearchLibraryForCreatureWithMVXOrLessToHand(gd, entry));
+        registry.register(PayManaAndSearchLibraryForCardNamedToBattlefieldEffect.class,
+                (gd, entry, effect) -> resolvePayManaAndSearchLibraryForCardNamedToBattlefield(
+                        gd, entry, (PayManaAndSearchLibraryForCardNamedToBattlefieldEffect) effect));
         registry.register(LookAtTopCardsHandTopBottomEffect.class,
                 (gd, entry, effect) -> resolveLookAtTopCardsHandTopBottom(gd, entry, (LookAtTopCardsHandTopBottomEffect) effect));
         registry.register(LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect.class,
@@ -333,6 +339,67 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         String logMsg = playerName + " searches their library.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} searching library for creature with MV <= {} ({} found)", gameData.id, playerName, maxMV, eligibleCreatures.size());
+    }
+
+    void resolvePayManaAndSearchLibraryForCardNamedToBattlefield(GameData gameData, StackEntry entry,
+                                                                  PayManaAndSearchLibraryForCardNamedToBattlefieldEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+        ManaCost cost = new ManaCost(effect.manaCost());
+        if (!cost.canPay(gameData.playerManaPools.get(controllerId))) {
+            String logMsg = playerName + " can't pay " + effect.manaCost() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        cost.pay(gameData.playerManaPools.get(controllerId));
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+
+        if (deck == null || deck.isEmpty()) {
+            String logMsg = playerName + " pays " + effect.manaCost()
+                    + " but their library is empty. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> matchingCards = new ArrayList<>();
+        for (Card card : deck) {
+            if (effect.cardName().equals(card.getName())) {
+                matchingCards.add(card);
+            }
+        }
+
+        if (matchingCards.isEmpty()) {
+            Collections.shuffle(deck);
+            String logMsg = playerName + " pays " + effect.manaCost() + " and searches their library but finds no "
+                    + effect.cardName() + ". Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        gameData.interaction.beginLibrarySearch(
+                controllerId,
+                matchingCards,
+                false,
+                true,
+                null,
+                0,
+                null,
+                false,
+                true,
+                "Search your library for a card named " + effect.cardName() + " and put it onto the battlefield.",
+                LibrarySearchDestination.BATTLEFIELD
+        );
+
+        List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
+                cardViews,
+                "Search your library for a card named " + effect.cardName() + " and put it onto the battlefield.",
+                true
+        ));
+
+        String logMsg = playerName + " pays " + effect.manaCost() + " and searches their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
     }
 
     void resolveHeadGames(GameData gameData, StackEntry entry) {

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -187,6 +188,9 @@ public class LibraryChoiceHandlerService {
         List<Card> sourceCards = librarySearch.sourceCards();
         boolean reorderRemainingToBottom = librarySearch.reorderRemainingToBottom();
         boolean shuffleAfterSelection = librarySearch.shuffleAfterSelection();
+        LibrarySearchDestination destination = librarySearch.destination() != null
+                ? librarySearch.destination()
+                : LibrarySearchDestination.HAND;
 
         UUID deckOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
         UUID handOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
@@ -279,7 +283,28 @@ public class LibraryChoiceHandlerService {
             throw new IllegalStateException("Chosen card not found in library");
         }
 
-        gameData.playerHands.get(handOwnerId).add(chosenCard);
+        if (destination == LibrarySearchDestination.HAND) {
+            gameData.playerHands.get(handOwnerId).add(chosenCard);
+        } else {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(handOwnerId);
+            Permanent perm = new Permanent(chosenCard);
+            battlefield.add(perm);
+
+            String battlefieldOwner = gameData.playerIdToName.get(handOwnerId);
+            String entersLog = chosenCard.getName() + " enters the battlefield under " + battlefieldOwner + "'s control.";
+            gameBroadcastService.logAndBroadcast(gameData, entersLog);
+
+            if (chosenCard.getType() == CardType.CREATURE) {
+                gameHelper.handleCreatureEnteredBattlefield(gameData, handOwnerId, chosenCard, null, false);
+            }
+            if (chosenCard.getType() == CardType.PLANESWALKER && chosenCard.getLoyalty() != null) {
+                perm.setLoyaltyCounters(chosenCard.getLoyalty());
+                perm.setSummoningSick(false);
+            }
+            if (!gameData.interaction.isAwaitingInput()) {
+                legendRuleService.checkLegendRule(gameData, handOwnerId);
+            }
+        }
 
         if (targetPlayerId != null && remainingCount > 1) {
             int newRemaining = remainingCount - 1;
@@ -303,23 +328,31 @@ public class LibraryChoiceHandlerService {
             Collections.shuffle(deck);
         }
 
+        String destinationText = destination == LibrarySearchDestination.BATTLEFIELD
+                ? "onto the battlefield"
+                : "into their hand";
         String logEntry;
         if (targetPlayerId != null) {
             String targetName = gameData.playerIdToName.get(targetPlayerId);
             logEntry = shuffleAfterSelection
-                    ? player.getUsername() + " puts cards into " + targetName + "'s hand. " + targetName + "'s library is shuffled."
-                    : player.getUsername() + " puts cards into " + targetName + "'s hand.";
+                    ? player.getUsername() + " puts cards " + destinationText + " for " + targetName + ". " + targetName + "'s library is shuffled."
+                    : player.getUsername() + " puts cards " + destinationText + " for " + targetName + ".";
         } else if (reveals) {
             logEntry = shuffleAfterSelection
-                    ? player.getUsername() + " reveals " + chosenCard.getName() + " and puts it into their hand. Library is shuffled."
-                    : player.getUsername() + " reveals " + chosenCard.getName() + " and puts it into their hand.";
+                    ? player.getUsername() + " reveals " + chosenCard.getName() + " and puts it " + destinationText + ". Library is shuffled."
+                    : player.getUsername() + " reveals " + chosenCard.getName() + " and puts it " + destinationText + ".";
         } else {
             logEntry = shuffleAfterSelection
-                    ? player.getUsername() + " puts a card into their hand. Library is shuffled."
-                    : player.getUsername() + " puts a card into their hand.";
+                    ? player.getUsername() + " puts a card " + destinationText + ". Library is shuffled."
+                    : player.getUsername() + " puts a card " + destinationText + ".";
         }
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} searches library and puts {} into hand", gameData.id, player.getUsername(), chosenCard.getName());
+        log.info("Game {} - {} searches library and puts {} {}",
+                gameData.id, player.getUsername(), chosenCard.getName(), destinationText);
+
+        if (destination == LibrarySearchDestination.BATTLEFIELD) {
+            stateBasedActionService.performStateBasedActions(gameData);
+        }
 
         turnProgressionService.resolveAutoPass(gameData);
     }

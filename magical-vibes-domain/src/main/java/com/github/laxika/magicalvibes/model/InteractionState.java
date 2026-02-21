@@ -45,6 +45,7 @@ public class InteractionState {
     private boolean awaitingLibrarySearchReorderRemainingToBottom;
     private boolean awaitingLibrarySearchShuffleAfterSelection;
     private String awaitingLibrarySearchPrompt;
+    private LibrarySearchDestination awaitingLibrarySearchDestination = LibrarySearchDestination.HAND;
     private int awaitingDiscardRemainingCount;
     private UUID awaitingRevealedHandChoiceTargetPlayerId;
     private int awaitingRevealedHandChoiceRemainingCount;
@@ -303,12 +304,20 @@ public class InteractionState {
     public void beginLibrarySearch(UUID playerId, List<Card> cards, boolean reveals, boolean canFailToFind,
                                    UUID targetPlayerId, int remainingCount) {
         beginLibrarySearch(playerId, cards, reveals, canFailToFind, targetPlayerId, remainingCount,
-                null, false, true, null);
+                null, false, true, null, LibrarySearchDestination.HAND);
     }
 
     public void beginLibrarySearch(UUID playerId, List<Card> cards, boolean reveals, boolean canFailToFind,
                                    UUID targetPlayerId, int remainingCount, List<Card> sourceCards,
                                    boolean reorderRemainingToBottom, boolean shuffleAfterSelection, String prompt) {
+        beginLibrarySearch(playerId, cards, reveals, canFailToFind, targetPlayerId, remainingCount, sourceCards,
+                reorderRemainingToBottom, shuffleAfterSelection, prompt, LibrarySearchDestination.HAND);
+    }
+
+    public void beginLibrarySearch(UUID playerId, List<Card> cards, boolean reveals, boolean canFailToFind,
+                                   UUID targetPlayerId, int remainingCount, List<Card> sourceCards,
+                                   boolean reorderRemainingToBottom, boolean shuffleAfterSelection, String prompt,
+                                   LibrarySearchDestination destination) {
         this.awaitingInput = AwaitingInput.LIBRARY_SEARCH;
         this.awaitingLibrarySearchPlayerId = playerId;
         this.awaitingLibrarySearchCards = cards;
@@ -320,8 +329,9 @@ public class InteractionState {
         this.awaitingLibrarySearchReorderRemainingToBottom = reorderRemainingToBottom;
         this.awaitingLibrarySearchShuffleAfterSelection = shuffleAfterSelection;
         this.awaitingLibrarySearchPrompt = prompt;
+        this.awaitingLibrarySearchDestination = destination;
         this.context = new InteractionContext.LibrarySearch(playerId, cards, reveals, canFailToFind,
-                targetPlayerId, remainingCount, sourceCards, reorderRemainingToBottom, shuffleAfterSelection, prompt);
+                targetPlayerId, remainingCount, sourceCards, reorderRemainingToBottom, shuffleAfterSelection, prompt, destination);
     }
 
     public void clearLibrarySearch() {
@@ -335,6 +345,7 @@ public class InteractionState {
         this.awaitingLibrarySearchReorderRemainingToBottom = false;
         this.awaitingLibrarySearchShuffleAfterSelection = true;
         this.awaitingLibrarySearchPrompt = null;
+        this.awaitingLibrarySearchDestination = LibrarySearchDestination.HAND;
     }
 
     public UUID awaitingLibrarySearchPlayerId() {
@@ -359,6 +370,10 @@ public class InteractionState {
 
     public int awaitingLibrarySearchRemainingCount() {
         return this.awaitingLibrarySearchRemainingCount;
+    }
+
+    public LibrarySearchDestination awaitingLibrarySearchDestination() {
+        return this.awaitingLibrarySearchDestination;
     }
 
     public void beginLibraryRevealChoice(UUID playerId, List<Card> allCards, Set<UUID> validCardIds) {
@@ -549,7 +564,7 @@ public class InteractionState {
                 awaitingLibrarySearchReveals, awaitingLibrarySearchCanFailToFind,
                 awaitingLibrarySearchTargetPlayerId, awaitingLibrarySearchRemainingCount,
                 awaitingLibrarySearchSourceCards, awaitingLibrarySearchReorderRemainingToBottom,
-                awaitingLibrarySearchShuffleAfterSelection, awaitingLibrarySearchPrompt);
+                awaitingLibrarySearchShuffleAfterSelection, awaitingLibrarySearchPrompt, awaitingLibrarySearchDestination);
     }
 
     public InteractionContext.LibraryRevealChoice libraryRevealChoiceContext() {
