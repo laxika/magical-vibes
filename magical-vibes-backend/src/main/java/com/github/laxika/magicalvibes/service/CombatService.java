@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderContr
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
@@ -539,19 +540,53 @@ public class CombatService {
         }
         for (int atkIdx : blockedAttackerIndices) {
             Permanent attacker = attackerBattlefield.get(atkIdx);
-            if (!attacker.getCard().getEffects(EffectSlot.ON_BECOMES_BLOCKED).isEmpty()) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        attacker.getCard(),
-                        activeId,
-                        attacker.getCard().getName() + "'s becomes-blocked trigger",
-                        new ArrayList<>(attacker.getCard().getEffects(EffectSlot.ON_BECOMES_BLOCKED)),
-                        attacker.getId(),
-                        attacker.getId()
-                ));
-                String triggerLog = attacker.getCard().getName() + "'s becomes-blocked ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                log.info("Game {} - {} becomes-blocked trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+            List<CardEffect> becomesBlockedEffects = attacker.getCard().getEffects(EffectSlot.ON_BECOMES_BLOCKED);
+            if (!becomesBlockedEffects.isEmpty()) {
+                List<CardEffect> blockerSpecificEffects = becomesBlockedEffects.stream()
+                        .filter(DestroyCreatureBlockingThisEffect.class::isInstance)
+                        .toList();
+                List<CardEffect> regularEffects = becomesBlockedEffects.stream()
+                        .filter(effect -> !(effect instanceof DestroyCreatureBlockingThisEffect))
+                        .toList();
+
+                if (!regularEffects.isEmpty()) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            attacker.getCard(),
+                            activeId,
+                            attacker.getCard().getName() + "'s becomes-blocked trigger",
+                            new ArrayList<>(regularEffects),
+                            attacker.getId(),
+                            attacker.getId()
+                    ));
+                    String triggerLog = attacker.getCard().getName() + "'s becomes-blocked ability triggers.";
+                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                    log.info("Game {} - {} becomes-blocked trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+                }
+
+                if (!blockerSpecificEffects.isEmpty()) {
+                    for (BlockerAssignment assignment : blockerAssignments) {
+                        if (assignment.attackerIndex() != atkIdx) {
+                            continue;
+                        }
+                        Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
+                        StackEntry trigger = new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                attacker.getCard(),
+                                activeId,
+                                attacker.getCard().getName() + "'s becomes-blocked trigger",
+                                new ArrayList<>(blockerSpecificEffects),
+                                blocker.getId(),
+                                attacker.getId()
+                        );
+                        // "That creature" wording references a blocker without targeting it.
+                        trigger.setNonTargeting(true);
+                        gameData.stack.add(trigger);
+                        String triggerLog = attacker.getCard().getName() + "'s becomes-blocked ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                        log.info("Game {} - {} becomes-blocked trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+                    }
+                }
             }
 
             // Check for aura-based "when enchanted creature becomes blocked" triggers
