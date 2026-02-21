@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffe
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
@@ -523,6 +524,18 @@ public class GameHelper {
     }
 
     void drainManaPools(GameData gameData) {
+        // Check if any permanent on the battlefield prevents mana drain (e.g. Upwelling)
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                if (perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(PreventManaDrainEffect.class::isInstance)) {
+                    return;
+                }
+            }
+        }
+
         for (UUID playerId : gameData.orderedPlayerIds) {
             ManaPool manaPool = gameData.playerManaPools.get(playerId);
             if (manaPool != null) {
