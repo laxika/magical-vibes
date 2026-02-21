@@ -6,7 +6,7 @@ import {
   ChooseMultipleCardsFromGraveyardsNotification, ReorderLibraryCardsNotification,
   ChooseCardFromLibraryNotification, RevealHandNotification,
   ChooseFromRevealedHandNotification, ChooseCardFromGraveyardNotification,
-  ChooseHandTopBottomNotification
+  ChooseHandTopBottomNotification, CombatDamageTargetView, CombatDamageAssignmentNotification
 } from './websocket.service';
 import { isPermanentCreature } from '../components/game/battlefield.utils';
 
@@ -162,6 +162,15 @@ export class GameChoiceService {
   damageDistributionXValue = 0;
   damageAssignments: Map<string, number> = new Map();
 
+  // --- Combat damage assignment state ---
+  assigningCombatDamage = false;
+  combatDamageAttackerName = '';
+  combatDamageTotalDamage = 0;
+  combatDamageTargets: CombatDamageTargetView[] = [];
+  combatDamageAssignments: Map<string, number> = new Map();
+  combatDamageIsTrample = false;
+  combatDamageAttackerIndex = -1;
+
   // ========== Message handlers ==========
 
   handleChooseCardFromHand(msg: ChooseCardFromHandNotification): void {
@@ -247,6 +256,16 @@ export class GameChoiceService {
     this.graveyardChoiceIndices = msg.cardIndices;
     this.graveyardChoicePrompt = msg.prompt;
     this.graveyardChoiceAllGraveyards = msg.allGraveyards;
+  }
+
+  handleCombatDamageAssignment(msg: CombatDamageAssignmentNotification): void {
+    this.assigningCombatDamage = true;
+    this.combatDamageAttackerName = msg.attackerName;
+    this.combatDamageTotalDamage = msg.totalDamage;
+    this.combatDamageTargets = msg.validTargets;
+    this.combatDamageAssignments = new Map();
+    this.combatDamageIsTrample = msg.isTrample;
+    this.combatDamageAttackerIndex = msg.attackerIndex;
   }
 
   // ========== User actions ==========
@@ -556,6 +575,56 @@ export class GameChoiceService {
     this.damageDistributionCardName = '';
     this.damageDistributionXValue = 0;
     this.damageAssignments = new Map();
+  }
+
+  // ========== Combat damage assignment ==========
+
+  get combatDamageRemaining(): number {
+    let assigned = 0;
+    this.combatDamageAssignments.forEach(v => assigned += v);
+    return this.combatDamageTotalDamage - assigned;
+  }
+
+  assignCombatDamage(targetId: string): void {
+    if (!this.assigningCombatDamage || this.combatDamageRemaining <= 0) return;
+    const current = this.combatDamageAssignments.get(targetId) ?? 0;
+    this.combatDamageAssignments.set(targetId, current + 1);
+  }
+
+  unassignCombatDamage(targetId: string): void {
+    if (!this.assigningCombatDamage) return;
+    const current = this.combatDamageAssignments.get(targetId) ?? 0;
+    if (current <= 1) {
+      this.combatDamageAssignments.delete(targetId);
+    } else {
+      this.combatDamageAssignments.set(targetId, current - 1);
+    }
+  }
+
+  getCombatDamageAssigned(targetId: string): number {
+    return this.combatDamageAssignments.get(targetId) ?? 0;
+  }
+
+  confirmCombatDamageAssignment(): void {
+    if (this.combatDamageRemaining !== 0) return;
+    const assignments: Record<string, number> = {};
+    this.combatDamageAssignments.forEach((v, k) => assignments[k] = v);
+    this.websocketService.send({
+      type: MessageType.COMBAT_DAMAGE_ASSIGNED,
+      attackerIndex: this.combatDamageAttackerIndex,
+      damageAssignments: assignments
+    });
+    this.cancelCombatDamageAssignment();
+  }
+
+  cancelCombatDamageAssignment(): void {
+    this.assigningCombatDamage = false;
+    this.combatDamageAttackerName = '';
+    this.combatDamageTotalDamage = 0;
+    this.combatDamageTargets = [];
+    this.combatDamageAssignments = new Map();
+    this.combatDamageIsTrample = false;
+    this.combatDamageAttackerIndex = -1;
   }
 
   // ========== Multi-target selection ==========

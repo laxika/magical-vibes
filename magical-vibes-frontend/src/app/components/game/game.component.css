@@ -1761,3 +1761,85 @@
 .graveyard-tab-cards .card.graveyard-card:hover {
   z-index: 10;
 }
+
+/* Combat damage assignment */
+
+.combat-damage-targets {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 8px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+  min-width: 300px;
+}
+
+.combat-damage-target {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.combat-damage-target.is-player {
+  border: 1px solid #f59e0b;
+}
+
+.target-name {
+  flex: 1;
+  color: #e2e8f0;
+  font-weight: 500;
+}
+
+.target-toughness {
+  color: #94a3b8;
+  font-size: 0.85em;
+}
+
+.damage-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-damage {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #64748b;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-damage:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.btn-damage:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.damage-count {
+  min-width: 24px;
+  text-align: center;
+  color: #fbbf24;
+  font-weight: 600;
+  font-size: 1.1em;
+}
+
+.combat-damage-banner {
+  z-index: 101;
+}

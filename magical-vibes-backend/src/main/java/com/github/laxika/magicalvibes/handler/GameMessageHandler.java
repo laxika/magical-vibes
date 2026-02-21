@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
 import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.ColorChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedRequest;
 import com.github.laxika.magicalvibes.networking.message.CreateGameRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
@@ -743,6 +744,32 @@ public class GameMessageHandler implements MessageHandler {
 
         try {
             draftService.submitDeck(draftData, player.getId(), request.cardIndices(), request.basicLands());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            handleError(connection, e.getMessage());
+        }
+    }
+
+    @Override
+    public void handleCombatDamageAssigned(Connection connection, CombatDamageAssignedRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
+        try {
+            // Convert String UUIDs to UUID objects
+            java.util.Map<java.util.UUID, Integer> assignments = new java.util.HashMap<>();
+            for (var entry : request.damageAssignments().entrySet()) {
+                assignments.put(java.util.UUID.fromString(entry.getKey()), entry.getValue());
+            }
+            gameService.handleCombatDamageAssigned(gameData, player, request.attackerIndex(), assignments);
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

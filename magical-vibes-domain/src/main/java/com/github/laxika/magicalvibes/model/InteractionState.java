@@ -587,4 +587,21 @@ public class InteractionState {
                 awaitingCardChoiceValidIndices, awaitingRevealedHandChoiceRemainingCount,
                 awaitingRevealedHandChoiceDiscardMode, awaitingRevealedHandChosenCards);
     }
+
+    public void beginCombatDamageAssignment(UUID playerId, int attackerIndex, UUID attackerPermanentId,
+                                             String attackerName, int totalDamage,
+                                             List<CombatDamageTarget> validTargets, boolean isTrample) {
+        this.awaitingInput = AwaitingInput.COMBAT_DAMAGE_ASSIGNMENT;
+        this.context = new InteractionContext.CombatDamageAssignment(playerId, attackerIndex, attackerPermanentId,
+                attackerName, totalDamage, validTargets, isTrample);
+    }
+
+    public void clearCombatDamageAssignment() {
+        // No extra fields to clear — context is cleared by clearAwaitingInput()
+    }
+
+    public InteractionContext.CombatDamageAssignment combatDamageAssignmentContext() {
+        if (context instanceof InteractionContext.CombatDamageAssignment cda) return cda;
+        return null;
+    }
 }

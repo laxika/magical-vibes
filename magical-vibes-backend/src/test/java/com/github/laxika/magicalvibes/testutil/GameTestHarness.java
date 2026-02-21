@@ -68,6 +68,7 @@ import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -410,6 +411,10 @@ public class GameTestHarness {
 
     public void handleMayAbilityChosen(Player player, boolean accepted) {
         gameService.handleMayAbilityChosen(gameData, player, accepted);
+    }
+
+    public void handleCombatDamageAssigned(Player player, int attackerIndex, Map<UUID, Integer> assignments) {
+        gameService.handleCombatDamageAssigned(gameData, player, attackerIndex, assignments);
     }
 
     public void forceActivePlayer(Player player) {

@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CombatDamagePhase1State;
+import com.github.laxika.magicalvibes.model.CombatDamageTarget;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -43,6 +45,8 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentNotification;
+import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -720,6 +724,12 @@ public class CombatService {
         List<Permanent> atkBf = gameData.playerBattlefields.get(activeId);
         List<Permanent> defBf = gameData.playerBattlefields.get(defenderId);
 
+        // Re-entry: if pending damage assignments remain, send next assignment request
+        if (gameData.combatDamagePhase1Complete && !gameData.combatDamagePendingIndices.isEmpty()) {
+            sendNextCombatDamageAssignment(gameData, atkBf, defBf, activeId, defenderId);
+            return CombatResult.DONE;
+        }
+
         // Check for combat damage redirect (e.g. Kjeldoran Royal Guard)
         Permanent redirectTarget = gameData.combatDamageRedirectTarget != null
                 ? gameQueryService.findPermanentById(gameData, gameData.combatDamageRedirectTarget) : null;
@@ -773,8 +783,35 @@ public class CombatService {
         Map<Permanent, List<UUID>> combatDamageDealtToCreatures = new HashMap<>();
         Map<Permanent, UUID> combatDamageDealerControllers = new HashMap<>();
 
-        // Phase 1: First strike damage
-        if (anyFirstStrike) {
+        // Restore phase 1 state if re-entering after damage assignment
+        if (gameData.combatDamagePhase1Complete) {
+            CombatDamagePhase1State p1 = gameData.combatDamagePhase1State;
+            deadAttackerIndices.addAll(p1.deadAttackerIndices);
+            deadDefenderIndices.addAll(p1.deadDefenderIndices);
+            atkDamageTaken.putAll(p1.atkDamageTaken);
+            defDamageTaken.putAll(p1.defDamageTaken);
+            damageToDefendingPlayer = p1.damageToDefendingPlayer;
+            damageRedirectedToGuard = p1.damageRedirectedToGuard;
+            for (var e : p1.combatDamageDealt.entrySet()) {
+                Permanent perm = gameQueryService.findPermanentById(gameData, e.getKey());
+                if (perm != null) combatDamageDealt.put(perm, e.getValue());
+            }
+            for (var e : p1.combatDamageDealtToPlayer.entrySet()) {
+                Permanent perm = gameQueryService.findPermanentById(gameData, e.getKey());
+                if (perm != null) combatDamageDealtToPlayer.put(perm, e.getValue());
+            }
+            for (var e : p1.combatDamageDealtToCreatures.entrySet()) {
+                Permanent perm = gameQueryService.findPermanentById(gameData, e.getKey());
+                if (perm != null) combatDamageDealtToCreatures.put(perm, new ArrayList<>(e.getValue()));
+            }
+            for (var e : p1.combatDamageDealerControllers.entrySet()) {
+                Permanent perm = gameQueryService.findPermanentById(gameData, e.getKey());
+                if (perm != null) combatDamageDealerControllers.put(perm, e.getValue());
+            }
+        }
+
+        // Phase 1: First strike damage (skip on re-entry)
+        if (!gameData.combatDamagePhase1Complete && anyFirstStrike) {
             for (var entry : blockerMap.entrySet()) {
                 int atkIdx = entry.getKey();
                 List<Integer> blkIndices = entry.getValue();
@@ -866,6 +903,36 @@ public class CombatService {
             }
         }
 
+        // Check if any phase 2 attackers need manual damage assignment
+        if (!gameData.combatDamagePhase1Complete) {
+            List<Integer> needsManual = new ArrayList<>();
+            for (var bEntry : blockerMap.entrySet()) {
+                int bAtkIdx = bEntry.getKey();
+                if (deadAttackerIndices.contains(bAtkIdx)) continue;
+                Permanent bAtk = atkBf.get(bAtkIdx);
+                boolean bAtkSkipPhase2 = gameQueryService.hasKeyword(gameData, bAtk, Keyword.FIRST_STRIKE)
+                        && !gameQueryService.hasKeyword(gameData, bAtk, Keyword.DOUBLE_STRIKE);
+                if (bAtkSkipPhase2) continue;
+                if (gameQueryService.isPreventedFromDealingDamage(gameData, bAtk)) continue;
+                List<Integer> livingBlockers = bEntry.getValue().stream()
+                        .filter(i -> !deadDefenderIndices.contains(i))
+                        .toList();
+                if (needsManualDamageAssignment(gameData, bAtk, livingBlockers)) {
+                    needsManual.add(bAtkIdx);
+                }
+            }
+            if (!needsManual.isEmpty()) {
+                gameData.combatDamagePhase1State = savePhase1State(deadAttackerIndices, deadDefenderIndices,
+                        atkDamageTaken, defDamageTaken, combatDamageDealt, combatDamageDealtToPlayer,
+                        combatDamageDealtToCreatures, combatDamageDealerControllers,
+                        damageToDefendingPlayer, damageRedirectedToGuard, blockerMap, anyFirstStrike);
+                gameData.combatDamagePhase1Complete = true;
+                gameData.combatDamagePendingIndices.addAll(needsManual);
+                sendNextCombatDamageAssignment(gameData, atkBf, defBf, activeId, defenderId);
+                return CombatResult.DONE;
+            }
+        }
+
         // Phase 2: Regular damage (skip dead creatures, skip first-strikers who already dealt — double strikers deal again)
         for (var entry : blockerMap.entrySet()) {
             int atkIdx = entry.getKey();
@@ -876,8 +943,43 @@ public class CombatService {
             boolean atkSkipPhase2 = gameQueryService.hasKeyword(gameData, atk, Keyword.FIRST_STRIKE)
                     && !gameQueryService.hasKeyword(gameData, atk, Keyword.DOUBLE_STRIKE);
 
+            // Check for player-provided damage assignment
+            Map<UUID, Integer> playerAssignment = gameData.combatDamagePlayerAssignments.get(atkIdx);
             boolean assignAsUnblocked = !blkIndices.isEmpty() && assignsCombatDamageAsThoughUnblocked(atk);
-            if (blkIndices.isEmpty() || assignAsUnblocked) {
+            if (playerAssignment != null) {
+                // Player assigned damage manually
+                if (!atkSkipPhase2 && !gameQueryService.isPreventedFromDealingDamage(gameData, atk)) {
+                    for (var dmgEntry : playerAssignment.entrySet()) {
+                        UUID targetId = dmgEntry.getKey();
+                        int dmg = dmgEntry.getValue();
+                        if (dmg <= 0) continue;
+                        if (targetId.equals(defenderId)) {
+                            int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
+                            if (redirectTarget != null) {
+                                damageRedirectedToGuard += actualDmg;
+                            } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
+                                damageToDefendingPlayer += actualDmg;
+                            }
+                            combatDamageDealt.merge(atk, actualDmg, Integer::sum);
+                            combatDamageDealtToPlayer.merge(atk, actualDmg, Integer::sum);
+                        } else {
+                            for (int blkIdx : blkIndices) {
+                                Permanent blk = defBf.get(blkIdx);
+                                if (blk.getId().equals(targetId)) {
+                                    if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getCard().getColor())) {
+                                        int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
+                                        defDamageTaken.merge(blkIdx, actualDmg, Integer::sum);
+                                        combatDamageDealt.merge(atk, actualDmg, Integer::sum);
+                                        recordCombatDamageToCreature(gameData, combatDamageDealtToCreatures, combatDamageDealerControllers,
+                                                atk, activeId, blk, actualDmg);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (blkIndices.isEmpty() || assignAsUnblocked) {
                 // Unblocked regular attacker deals damage to player (or redirect target)
                 if (!atkSkipPhase2 && !gameQueryService.isPreventedFromDealingDamage(gameData, atk)) {
                     int power = gameQueryService.applyDamageMultiplier(gameData, gameQueryService.getEffectiveCombatDamage(gameData, atk));
@@ -1355,6 +1457,174 @@ public class CombatService {
                 .anyMatch(AssignCombatDamageAsThoughUnblockedEffect.class::isInstance);
     }
 
+    // ===== Combat damage assignment =====
+
+    private boolean needsManualDamageAssignment(GameData gameData, Permanent atk, List<Integer> livingBlockerIndices) {
+        if (livingBlockerIndices.isEmpty()) return false;
+        if (livingBlockerIndices.size() >= 2) return true;
+        // Single blocker: needs manual only if trample or assign-as-unblocked
+        if (gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)) return true;
+        if (assignsCombatDamageAsThoughUnblocked(atk)) return true;
+        return false;
+    }
+
+    private CombatDamagePhase1State savePhase1State(
+            Set<Integer> deadAttackerIndices, Set<Integer> deadDefenderIndices,
+            Map<Integer, Integer> atkDamageTaken, Map<Integer, Integer> defDamageTaken,
+            Map<Permanent, Integer> combatDamageDealt, Map<Permanent, Integer> combatDamageDealtToPlayer,
+            Map<Permanent, List<UUID>> combatDamageDealtToCreatures,
+            Map<Permanent, UUID> combatDamageDealerControllers,
+            int damageToDefendingPlayer, int damageRedirectedToGuard,
+            Map<Integer, List<Integer>> blockerMap, boolean anyFirstStrike) {
+        // Convert Permanent-keyed maps to UUID-keyed maps for serialization
+        Map<UUID, Integer> dealtByUUID = new HashMap<>();
+        for (var e : combatDamageDealt.entrySet()) {
+            dealtByUUID.put(e.getKey().getId(), e.getValue());
+        }
+        Map<UUID, Integer> dealtToPlayerByUUID = new HashMap<>();
+        for (var e : combatDamageDealtToPlayer.entrySet()) {
+            dealtToPlayerByUUID.put(e.getKey().getId(), e.getValue());
+        }
+        Map<UUID, List<UUID>> dealtToCreaturesByUUID = new HashMap<>();
+        for (var e : combatDamageDealtToCreatures.entrySet()) {
+            dealtToCreaturesByUUID.put(e.getKey().getId(), new ArrayList<>(e.getValue()));
+        }
+        Map<UUID, UUID> dealerControllersByUUID = new HashMap<>();
+        for (var e : combatDamageDealerControllers.entrySet()) {
+            dealerControllersByUUID.put(e.getKey().getId(), e.getValue());
+        }
+        return new CombatDamagePhase1State(
+                new TreeSet<>(deadAttackerIndices), new TreeSet<>(deadDefenderIndices),
+                new HashMap<>(atkDamageTaken), new HashMap<>(defDamageTaken),
+                dealtByUUID, dealtToPlayerByUUID, dealtToCreaturesByUUID, dealerControllersByUUID,
+                damageToDefendingPlayer, damageRedirectedToGuard,
+                new LinkedHashMap<>(blockerMap), anyFirstStrike);
+    }
+
+    private void sendNextCombatDamageAssignment(GameData gameData, List<Permanent> atkBf,
+                                                 List<Permanent> defBf, UUID activeId, UUID defenderId) {
+        int atkIdx = gameData.combatDamagePendingIndices.get(0);
+        Permanent atk = atkBf.get(atkIdx);
+        CombatDamagePhase1State p1 = gameData.combatDamagePhase1State;
+        List<Integer> blkIndices = p1.blockerMap.get(atkIdx);
+        List<Integer> livingBlockers = blkIndices.stream()
+                .filter(i -> !p1.deadDefenderIndices.contains(i))
+                .toList();
+
+        List<CombatDamageTargetView> targetViews = new ArrayList<>();
+        for (int blkIdx : livingBlockers) {
+            Permanent blk = defBf.get(blkIdx);
+            targetViews.add(new CombatDamageTargetView(
+                    blk.getId().toString(), blk.getCard().getName(),
+                    gameQueryService.getEffectiveToughness(gameData, blk),
+                    p1.defDamageTaken.getOrDefault(blkIdx, 0),
+                    false));
+        }
+
+        boolean isTrample = gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE);
+        boolean addPlayer = isTrample || assignsCombatDamageAsThoughUnblocked(atk);
+        if (addPlayer) {
+            targetViews.add(new CombatDamageTargetView(
+                    defenderId.toString(), gameData.playerIdToName.get(defenderId),
+                    0, 0, true));
+        }
+
+        int totalDamage = gameQueryService.getEffectiveCombatDamage(gameData, atk);
+
+        // Build domain targets for interaction context
+        List<CombatDamageTarget> domainTargets = new ArrayList<>();
+        for (int blkIdx : livingBlockers) {
+            Permanent blk = defBf.get(blkIdx);
+            domainTargets.add(new CombatDamageTarget(
+                    blk.getId(), blk.getCard().getName(),
+                    gameQueryService.getEffectiveToughness(gameData, blk),
+                    p1.defDamageTaken.getOrDefault(blkIdx, 0),
+                    false));
+        }
+        if (addPlayer) {
+            domainTargets.add(new CombatDamageTarget(
+                    defenderId, gameData.playerIdToName.get(defenderId),
+                    0, 0, true));
+        }
+
+        gameData.interaction.beginCombatDamageAssignment(activeId, atkIdx, atk.getId(),
+                atk.getCard().getName(), totalDamage, domainTargets, isTrample);
+
+        CombatDamageAssignmentNotification notification = new CombatDamageAssignmentNotification(
+                atkIdx, atk.getId().toString(), atk.getCard().getName(), totalDamage, targetViews, isTrample);
+        sessionManager.sendToPlayer(activeId, notification);
+    }
+
+    void handleCombatDamageAssigned(GameData gameData, int attackerIndex, Map<UUID, Integer> assignments) {
+        if (!gameData.combatDamagePhase1Complete) {
+            throw new IllegalStateException("Not in combat damage assignment phase");
+        }
+        if (!gameData.combatDamagePendingIndices.contains(attackerIndex)) {
+            throw new IllegalStateException("Attacker index " + attackerIndex + " is not pending assignment");
+        }
+
+        UUID activeId = gameData.activePlayerId;
+        UUID defenderId = gameQueryService.getOpponentId(gameData, activeId);
+        List<Permanent> atkBf = gameData.playerBattlefields.get(activeId);
+        List<Permanent> defBf = gameData.playerBattlefields.get(defenderId);
+        Permanent atk = atkBf.get(attackerIndex);
+        int totalDamage = gameQueryService.getEffectiveCombatDamage(gameData, atk);
+
+        // Validate total damage
+        int totalAssigned = assignments.values().stream().mapToInt(Integer::intValue).sum();
+        if (totalAssigned != totalDamage) {
+            throw new IllegalStateException("Total assigned damage (" + totalAssigned
+                    + ") must equal attacker's combat damage (" + totalDamage + ")");
+        }
+
+        // Validate targets
+        CombatDamagePhase1State p1 = gameData.combatDamagePhase1State;
+        List<Integer> blkIndices = p1.blockerMap.get(attackerIndex);
+        List<Integer> livingBlockers = blkIndices.stream()
+                .filter(i -> !p1.deadDefenderIndices.contains(i))
+                .toList();
+
+        Set<UUID> validTargetIds = new HashSet<>();
+        for (int blkIdx : livingBlockers) {
+            validTargetIds.add(defBf.get(blkIdx).getId());
+        }
+        boolean canTargetPlayer = gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)
+                || assignsCombatDamageAsThoughUnblocked(atk);
+        if (canTargetPlayer) {
+            validTargetIds.add(defenderId);
+        }
+
+        for (UUID targetId : assignments.keySet()) {
+            if (!validTargetIds.contains(targetId)) {
+                throw new IllegalStateException("Invalid damage target: " + targetId);
+            }
+        }
+
+        // Validate trample: each blocker must receive at least lethal damage
+        if (gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)) {
+            for (int blkIdx : livingBlockers) {
+                Permanent blk = defBf.get(blkIdx);
+                int lethal = gameQueryService.getEffectiveToughness(gameData, blk)
+                        - p1.defDamageTaken.getOrDefault(blkIdx, 0);
+                int assigned = assignments.getOrDefault(blk.getId(), 0);
+                if (assigned < lethal) {
+                    throw new IllegalStateException("Trample: must assign at least " + lethal
+                            + " damage to " + blk.getCard().getName());
+                }
+            }
+        }
+
+        // Validate non-trample non-unblocked: no damage to player
+        if (!canTargetPlayer && assignments.containsKey(defenderId)) {
+            throw new IllegalStateException("Cannot assign damage to defending player");
+        }
+
+        // Store and remove from pending
+        gameData.combatDamagePlayerAssignments.put(attackerIndex, assignments);
+        gameData.combatDamagePendingIndices.remove(Integer.valueOf(attackerIndex));
+        gameData.interaction.clearAwaitingInput();
+    }
+
     // ===== Combat state management =====
 
     void clearCombatState(GameData gameData) {
@@ -1364,7 +1634,11 @@ public class CombatService {
                 battlefield.forEach(Permanent::clearCombatState);
             }
         }
-
+        // Clear combat damage assignment state
+        gameData.combatDamagePlayerAssignments.clear();
+        gameData.combatDamagePendingIndices.clear();
+        gameData.combatDamagePhase1Complete = false;
+        gameData.combatDamagePhase1State = null;
     }
 
     void processEndOfCombatSacrifices(GameData gameData) {

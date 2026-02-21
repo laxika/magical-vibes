@@ -21,6 +21,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -121,6 +122,12 @@ class PrimalRageTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+
+        // 2/2 trample blocked by 1/1 → assign lethal to blocker, excess to player
+        harness.handleCombatDamageAssigned(player1, 1, Map.of(
+                blocker.getId(), 1,
+                player2.getId(), 1
+        ));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }

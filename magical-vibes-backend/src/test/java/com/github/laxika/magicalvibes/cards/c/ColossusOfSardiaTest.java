@@ -23,6 +23,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -311,6 +312,12 @@ class ColossusOfSardiaTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        // Trample creature blocked → assign lethal to blocker, excess to player
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blockerPerm.getId(), 2,
+                player2.getId(), 7
+        ));
+
         // 9 power - 2 toughness = 7 trample damage to player
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
         // Blocker should be dead
@@ -345,6 +352,13 @@ class ColossusOfSardiaTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+
+        // Trample creature blocked by 2 → assign lethal to each, excess to player
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker1.getId(), 2,
+                blocker2.getId(), 2,
+                player2.getId(), 5
+        ));
 
         // 9 power - 2 toughness - 2 toughness = 5 trample damage to player
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);

@@ -288,6 +288,35 @@
       </div>
     }
 
+    @if (choice.assigningCombatDamage) {
+      <div class="combat-damage-banner targeting-banner">
+        <span>Assign {{ choice.combatDamageAttackerName }}'s combat damage
+          ({{ choice.combatDamageRemaining }} of {{ choice.combatDamageTotalDamage }} remaining)</span>
+        <button class="btn-confirm" (click)="choice.confirmCombatDamageAssignment()"
+          [disabled]="choice.combatDamageRemaining !== 0">Confirm</button>
+      </div>
+    }
+
+    @if (choice.assigningCombatDamage) {
+      <div class="combat-damage-targets">
+        @for (target of choice.combatDamageTargets; track target.id) {
+          <div class="combat-damage-target" [class.is-player]="target.isPlayer">
+            <span class="target-name">{{ target.name }}</span>
+            @if (!target.isPlayer) {
+              <span class="target-toughness">({{ target.toughness - target.currentDamage }} remaining toughness)</span>
+            }
+            <div class="damage-controls">
+              <button class="btn-damage" (click)="choice.unassignCombatDamage(target.id)"
+                [disabled]="choice.getCombatDamageAssigned(target.id) === 0">-</button>
+              <span class="damage-count">{{ choice.getCombatDamageAssigned(target.id) }}</span>
+              <button class="btn-damage" (click)="choice.assignCombatDamage(target.id)"
+                [disabled]="choice.combatDamageRemaining <= 0">+</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
     <div class="battlefield-area">
       <div class="battlefield-row">
         <div class="battlefield-label">{{ game()?.playerNames?.[opponentPlayerIndex] }}'s Battlefield</div>

@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
+import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedRequest;
 import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.ColorChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
@@ -53,7 +54,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -101,6 +104,7 @@ public class AiDecisionEngine {
             case "CHOOSE_MULTIPLE_CARDS_FROM_GRAVEYARDS" -> handleMultiGraveyardChoice(gameData);
             case "CHOOSE_HAND_TOP_BOTTOM" -> handleHandTopBottom(gameData);
             case "CHOOSE_FROM_REVEALED_HAND" -> handleRevealedHandChoice(gameData);
+            case "COMBAT_DAMAGE_ASSIGNMENT" -> handleCombatDamageAssignment(gameData);
             case "GAME_OVER" -> log.info("AI: Game {} is over", gameId);
             default -> {
                 // Ignore informational messages (BATTLEFIELD_UPDATED, MANA_UPDATED, etc.)
@@ -1181,6 +1185,55 @@ public class AiDecisionEngine {
 
         log.info("AI: Choosing card {} from revealed hand in game {}", bestIndex, gameId);
         send(() -> messageHandler.handleCardChosen(selfConnection, new CardChosenRequest(bestIndex)));
+    }
+
+    // ===== Combat damage assignment =====
+
+    private void handleCombatDamageAssignment(GameData gameData) {
+        InteractionContext.CombatDamageAssignment cda = gameData.interaction.combatDamageAssignmentContext();
+        if (cda == null || !aiPlayer.getId().equals(cda.playerId())) {
+            return;
+        }
+
+        int atkIdx = cda.attackerIndex();
+        int totalDamage = cda.totalDamage();
+        var targets = cda.validTargets();
+        boolean isTrample = cda.isTrample();
+
+        // AI auto-assigns: lethal to each blocker in order, excess to player if trample/unblocked
+        Map<String, Integer> assignments = new HashMap<>();
+        int remaining = totalDamage;
+
+        for (var target : targets) {
+            if (target.isPlayer()) continue;
+            int lethal = target.effectiveToughness() - target.currentDamage();
+            int dmg = Math.min(remaining, lethal);
+            if (dmg > 0) {
+                assignments.put(target.id().toString(), dmg);
+                remaining -= dmg;
+            }
+        }
+
+        // Assign remaining to defending player if available
+        if (remaining > 0) {
+            for (var target : targets) {
+                if (target.isPlayer()) {
+                    assignments.put(target.id().toString(), remaining);
+                    remaining = 0;
+                    break;
+                }
+            }
+        }
+
+        // If no player target and remaining damage, dump on first blocker
+        if (remaining > 0 && !targets.isEmpty()) {
+            var firstBlocker = targets.stream().filter(t -> !t.isPlayer()).findFirst().orElse(targets.get(0));
+            assignments.merge(firstBlocker.id().toString(), remaining, Integer::sum);
+        }
+
+        log.info("AI: Assigning combat damage for attacker {} in game {}: {}", atkIdx, gameId, assignments);
+        send(() -> messageHandler.handleCombatDamageAssigned(selfConnection,
+                new CombatDamageAssignedRequest(atkIdx, assignments)));
     }
 
     // ===== Utility =====

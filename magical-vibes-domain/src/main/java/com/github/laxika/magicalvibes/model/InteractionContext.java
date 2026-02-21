@@ -18,7 +18,8 @@ public sealed interface InteractionContext permits
         InteractionContext.LibrarySearch,
         InteractionContext.LibraryRevealChoice,
         InteractionContext.HandTopBottomChoice,
-        InteractionContext.RevealedHandChoice {
+        InteractionContext.RevealedHandChoice,
+        InteractionContext.CombatDamageAssignment {
 
     record AttackerDeclaration(UUID activePlayerId) implements InteractionContext {}
 
@@ -51,4 +52,8 @@ public sealed interface InteractionContext permits
 
     record RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId, Set<Integer> validIndices,
                               int remainingCount, boolean discardMode, List<Card> chosenCards) implements InteractionContext {}
+
+    record CombatDamageAssignment(UUID playerId, int attackerIndex, UUID attackerPermanentId,
+                                   String attackerName, int totalDamage, List<CombatDamageTarget> validTargets,
+                                   boolean isTrample) implements InteractionContext {}
 }

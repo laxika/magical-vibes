@@ -20,6 +20,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -78,9 +79,11 @@ class RhoxTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
+        // Advance from DECLARE_BLOCKERS → COMBAT_DAMAGE (paused for assignment)
         harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+
+        // Rhox has "assign as though unblocked" — assign all damage to defending player
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 5));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -128,9 +131,11 @@ class RhoxTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
+        // Advance from DECLARE_BLOCKERS → COMBAT_DAMAGE (paused for assignment)
         harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+
+        // Rhox has "assign as though unblocked" — assign all damage to defending player
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 5));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
         assertThat(gd.playerBattlefields.get(player1.getId()))

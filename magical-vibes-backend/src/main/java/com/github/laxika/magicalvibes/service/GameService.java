@@ -258,6 +258,13 @@ public class GameService {
         }
     }
 
+    public void handleCombatDamageAssigned(GameData gameData, Player player, int attackerIndex, Map<UUID, Integer> assignments) {
+        synchronized (gameData) {
+            combatService.handleCombatDamageAssigned(gameData, attackerIndex, assignments);
+            turnProgressionService.handleCombatResult(combatService.resolveCombatDamage(gameData), gameData);
+        }
+    }
+
 }
 
 

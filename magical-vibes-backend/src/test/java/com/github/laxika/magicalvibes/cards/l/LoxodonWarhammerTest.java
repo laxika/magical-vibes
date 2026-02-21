@@ -23,6 +23,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -261,6 +262,12 @@ class LoxodonWarhammerTest {
 
         resolveCombat();
 
+        // Trample creature blocked → assign lethal to blocker, excess to player
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2,
+                player2.getId(), 3
+        ));
+
         // Attacker assigns 2 lethal to blocker + 3 tramples to player = 5 total damage dealt
         // Player1 gains 5 life from lifelink: 20 + 5 = 25
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(25);
@@ -285,6 +292,12 @@ class LoxodonWarhammerTest {
         blocker.addBlockingTarget(0);
 
         resolveCombat();
+
+        // Trample creature blocked → assign lethal to blocker, excess to player
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2,
+                player2.getId(), 3
+        ));
 
         // Attacker has 5 power, blocker has 2 toughness
         // 2 damage to blocker, 3 tramples to player2 (20 - 3 = 17)

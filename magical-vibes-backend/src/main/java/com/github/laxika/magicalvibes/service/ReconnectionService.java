@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
+import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentNotification;
+import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
@@ -151,6 +153,12 @@ public class ReconnectionService {
                 InteractionContext.RevealedHandChoice rhc = gameData.interaction.revealedHandChoiceContext();
                 if (rhc != null) {
                     resendFromContext(gameData, playerId, rhc);
+                }
+            }
+            case COMBAT_DAMAGE_ASSIGNMENT -> {
+                InteractionContext.CombatDamageAssignment cda = gameData.interaction.combatDamageAssignmentContext();
+                if (cda != null) {
+                    resendFromContext(gameData, playerId, cda);
                 }
             }
         }
@@ -322,6 +330,18 @@ public class ReconnectionService {
                 List<Integer> validIndices = new ArrayList<>(rhc.validIndices());
                 sessionManager.sendToPlayer(playerId, new ChooseFromRevealedHandMessage(
                         cardViews, validIndices, "Choose a card to put on top of " + targetName + "'s library."));
+            }
+            case InteractionContext.CombatDamageAssignment cda -> {
+                if (!playerId.equals(cda.playerId())) {
+                    return;
+                }
+                List<CombatDamageTargetView> targetViews = cda.validTargets().stream()
+                        .map(t -> new CombatDamageTargetView(
+                                t.id().toString(), t.name(), t.effectiveToughness(), t.currentDamage(), t.isPlayer()))
+                        .toList();
+                sessionManager.sendToPlayer(playerId, new CombatDamageAssignmentNotification(
+                        cda.attackerIndex(), cda.attackerPermanentId().toString(),
+                        cda.attackerName(), cda.totalDamage(), targetViews, cda.isTrample()));
             }
         }
     }

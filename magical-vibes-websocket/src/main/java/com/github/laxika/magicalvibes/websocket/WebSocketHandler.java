@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.networking.message.SacrificePermanentReque
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.HandTopBottomChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedRequest;
 import com.github.laxika.magicalvibes.networking.message.CreateDraftRequest;
 import com.github.laxika.magicalvibes.networking.message.DraftPickRequest;
 import com.github.laxika.magicalvibes.networking.message.SubmitDeckRequest;
@@ -117,6 +118,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 case CREATE_DRAFT -> messageHandler.handleCreateDraft(connection, objectMapper.treeToValue(jsonNode, CreateDraftRequest.class));
                 case DRAFT_PICK -> messageHandler.handleDraftPick(connection, objectMapper.treeToValue(jsonNode, DraftPickRequest.class));
                 case SUBMIT_DECK -> messageHandler.handleSubmitDeck(connection, objectMapper.treeToValue(jsonNode, SubmitDeckRequest.class));
+                case COMBAT_DAMAGE_ASSIGNED -> messageHandler.handleCombatDamageAssigned(connection, objectMapper.treeToValue(jsonNode, CombatDamageAssignedRequest.class));
                 default -> messageHandler.handleError(connection, "Unknown message type: " + type);
             }
         } catch (Exception e) {
