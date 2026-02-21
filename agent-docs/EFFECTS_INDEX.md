@@ -53,6 +53,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `gets +N/+N for each other creature with same name`: `BoostByOtherCreaturesWithSameNameEffect`
 - `when you cast a spell of specific colors, put +1/+1 counter on this`: `PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect`
 - `power/toughness each equal number of lands you control`: `PowerToughnessEqualToControlledLandCountEffect`
+- `power/toughness each equal number of creatures you control`: `PowerToughnessEqualToControlledCreatureCountEffect`
 - `grant keyword`: `GrantKeywordEffect` with `GrantKeywordEffect.Scope` (`TARGET`, `SELF`, `ENCHANTED_CREATURE`, `EQUIPPED_CREATURE`, `OWN_TAPPED_CREATURES`, `OWN_CREATURES`)
 - `grant activated mana ability to lands you control`: `GrantActivatedAbilityToOwnLandsEffect` (typically with `AwardAnyColorManaEffect`)
 - `can't block (static on creature)`: `CantBlockEffect`
