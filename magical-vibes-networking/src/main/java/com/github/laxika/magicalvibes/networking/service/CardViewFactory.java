@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOw
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
@@ -89,8 +90,7 @@ public class CardViewFactory {
                 card.getLoyalty(),
                 card.getMinTargets(),
                 card.getMaxTargets(),
-                card.getKeywords().contains(Keyword.CONVOKE)
-        );
+                card.getKeywords().contains(Keyword.CONVOKE));
     }
 
     public ActivatedAbilityView createAbilityView(ActivatedAbility ability) {
@@ -121,8 +121,7 @@ public class CardViewFactory {
                 List.copyOf(allowedTargetColors),
                 ability.getManaCost(),
                 ability.getLoyaltyCost(),
-                targetsBlockingThis
-        );
+                targetsBlockingThis);
     }
 
     private boolean computeRequiresAttackingTarget(Card card) {
@@ -145,6 +144,7 @@ public class CardViewFactory {
                     || effect instanceof ReturnArtifactsTargetPlayerOwnsToHandEffect
                     || effect instanceof SacrificeCreatureEffect
                     || effect instanceof ShuffleGraveyardIntoLibraryEffect
+                    || effect instanceof TargetPlayerDiscardsEffect
                     || effect instanceof DealOrderedDamageToAnyTargetsEffect) {
                 return true;
             }
@@ -171,8 +171,7 @@ public class CardViewFactory {
                         CardType.CREATURE.getDisplayName(),
                         CardType.ENCHANTMENT.getDisplayName(),
                         CardType.ARTIFACT.getDisplayName(),
-                        CardType.LAND.getDisplayName()
-                );
+                        CardType.LAND.getDisplayName());
             }
             if (effect instanceof DestroyTargetPermanentEffect) {
                 return getTargetTypesFromFilter(card.getTargetFilter());
