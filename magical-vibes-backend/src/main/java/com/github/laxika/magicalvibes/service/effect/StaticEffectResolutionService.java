@@ -20,9 +20,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityToOwnLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnTappedCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect.Scope;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledSubtypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect;
 import org.springframework.stereotype.Service;
@@ -41,12 +40,10 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         registry.register(BoostEnchantedCreatureEffect.class, this::resolveBoostEnchantedCreature);
         registry.register(BoostEnchantedCreaturePerControlledSubtypeEffect.class, this::resolveBoostEnchantedCreaturePerControlledSubtype);
         registry.register(BoostEquippedCreatureEffect.class, this::resolveBoostEquippedCreature);
-        registry.register(GrantKeywordToEnchantedCreatureEffect.class, this::resolveGrantKeywordToEnchantedCreature);
-        registry.register(GrantKeywordToEquippedCreatureEffect.class, this::resolveGrantKeywordToEquippedCreature);
+        registry.register(GrantKeywordEffect.class, this::resolveGrantKeyword);
         registry.register(BoostOwnCreaturesEffect.class, this::resolveBoostOwnCreatures);
         registry.register(BoostOtherCreaturesByColorEffect.class, this::resolveBoostOtherCreaturesByColor);
         registry.register(BoostNonColorCreaturesEffect.class, this::resolveBoostNonColorCreatures);
-        registry.register(GrantKeywordToOwnTappedCreaturesEffect.class, this::resolveGrantKeywordToOwnTappedCreatures);
         registry.register(GrantActivatedAbilityToEnchantedCreatureEffect.class, this::resolveGrantActivatedAbilityToEnchantedCreature);
         registry.register(GrantActivatedAbilityToOwnLandsEffect.class, this::resolveGrantActivatedAbilityToOwnLands);
         registry.register(BoostBySharedCreatureTypeEffect.class, this::resolveBoostBySharedCreatureType);
@@ -118,18 +115,16 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         }
     }
 
-    private void resolveGrantKeywordToEnchantedCreature(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var grant = (GrantKeywordToEnchantedCreatureEffect) effect;
-        if (context.source().getAttachedTo() != null
-                && context.source().getAttachedTo().equals(context.target().getId())) {
-            accumulator.addKeyword(grant.keyword());
+    private void resolveGrantKeyword(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var grant = (GrantKeywordEffect) effect;
+        if (grant.scope() == Scope.ENCHANTED_CREATURE || grant.scope() == Scope.EQUIPPED_CREATURE) {
+            if (context.source().getAttachedTo() != null
+                    && context.source().getAttachedTo().equals(context.target().getId())) {
+                accumulator.addKeyword(grant.keyword());
+            }
+            return;
         }
-    }
-
-    private void resolveGrantKeywordToEquippedCreature(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var grant = (GrantKeywordToEquippedCreatureEffect) effect;
-        if (context.source().getAttachedTo() != null
-                && context.source().getAttachedTo().equals(context.target().getId())) {
+        if (grant.scope() == Scope.OWN_TAPPED_CREATURES && context.targetOnSameBattlefield() && context.target().isTapped()) {
             accumulator.addKeyword(grant.keyword());
         }
     }
@@ -155,13 +150,6 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         if (context.target().getCard().getColor() != boost.excludedColor()) {
             accumulator.addPower(boost.powerBoost());
             accumulator.addToughness(boost.toughnessBoost());
-        }
-    }
-
-    private void resolveGrantKeywordToOwnTappedCreatures(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var grant = (GrantKeywordToOwnTappedCreaturesEffect) effect;
-        if (context.targetOnSameBattlefield() && context.target().isTapped()) {
-            accumulator.addKeyword(grant.keyword());
         }
     }
 

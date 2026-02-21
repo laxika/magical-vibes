@@ -47,7 +47,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `pump target/self/all`: `BoostTargetCreatureEffect`, `BoostSelfEffect`, `BoostAllOwnCreaturesEffect`, `BoostAllCreaturesXEffect`
 - `enchanted creature gets +X/+X per controlled subtype`: `BoostEnchantedCreaturePerControlledSubtypeEffect`
 - `gets +N/+N for each other creature with same name`: `BoostByOtherCreaturesWithSameNameEffect`
-- `grant keyword`: `GrantKeywordToTargetEffect`, `GrantKeywordToSelfEffect`, `GrantKeywordToEnchantedCreatureEffect`
+- `grant keyword`: `GrantKeywordEffect` with `GrantKeywordEffect.Scope` (`TARGET`, `SELF`, `ENCHANTED_CREATURE`, `EQUIPPED_CREATURE`, `OWN_TAPPED_CREATURES`)
 - `grant activated mana ability to lands you control`: `GrantActivatedAbilityToOwnLandsEffect` (typically with `AwardAnyColorManaEffect`)
 - `can't block (static on creature)`: `CantBlockEffect`
 - `can be blocked only by permanents matching a composed predicate`: `CanBeBlockedOnlyByFilterEffect` + permanent predicates (`PermanentHasKeywordPredicate`, `PermanentHasSubtypePredicate`, `PermanentAnyOfPredicate`, `PermanentAllOfPredicate`, `PermanentNotPredicate`)

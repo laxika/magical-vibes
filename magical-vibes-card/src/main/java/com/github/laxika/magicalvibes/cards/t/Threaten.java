@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect.Scope;
 import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 
 import java.util.Set;
@@ -18,6 +19,6 @@ public class Threaten extends Card {
         setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new UntapTargetPermanentEffect(Set.of(CardType.CREATURE)));
         addEffect(EffectSlot.SPELL, new GainControlOfTargetCreatureUntilEndOfTurnEffect());
-        addEffect(EffectSlot.SPELL, new GrantKeywordToTargetEffect(Keyword.HASTE));
+        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, Scope.TARGET));
     }
 }

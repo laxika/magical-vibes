@@ -11,8 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
@@ -59,10 +58,8 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveBoostAllOwnCreatures(gd, entry, (BoostAllOwnCreaturesEffect) effect));
         registry.register(BoostAllCreaturesXEffect.class,
                 (gd, entry, effect) -> resolveBoostAllCreaturesX(gd, entry, (BoostAllCreaturesXEffect) effect));
-        registry.register(GrantKeywordToSelfEffect.class,
-                (gd, entry, effect) -> resolveGrantKeywordToSelf(gd, entry, (GrantKeywordToSelfEffect) effect));
-        registry.register(GrantKeywordToTargetEffect.class,
-                (gd, entry, effect) -> resolveGrantKeywordToTarget(gd, entry, (GrantKeywordToTargetEffect) effect));
+        registry.register(GrantKeywordEffect.class,
+                (gd, entry, effect) -> resolveGrantKeyword(gd, entry, (GrantKeywordEffect) effect));
         registry.register(CantBlockSourceEffect.class,
                 (gd, entry, effect) -> resolveCantBlockSource(gd, entry, (CantBlockSourceEffect) effect));
         registry.register(TargetCreatureCantBlockThisTurnEffect.class,
@@ -243,34 +240,26 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} gives {}/{} to {} creatures", gameData.id, entry.getCard().getName(), powerBoost, toughnessBoost, count);
     }
 
-    private void resolveGrantKeywordToSelf(GameData gameData, StackEntry entry, GrantKeywordToSelfEffect grant) {
-        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
-        if (self == null) {
+    private void resolveGrantKeyword(GameData gameData, StackEntry entry, GrantKeywordEffect grant) {
+        UUID targetId = switch (grant.scope()) {
+            case SELF -> entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetPermanentId();
+            case TARGET -> entry.getTargetPermanentId();
+            default -> null;
+        };
+        if (targetId == null) {
             return;
         }
 
-        self.getGrantedKeywords().add(grant.keyword());
-
-        String keywordName = grant.keyword().name().charAt(0) + grant.keyword().name().substring(1).toLowerCase().replace('_', ' ');
-        String logEntry = self.getCard().getName() + " gains " + keywordName + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-
-        log.info("Game {} - {} gains {}", gameData.id, self.getCard().getName(), grant.keyword());
-    }
-
-    private void resolveGrantKeywordToTarget(GameData gameData, StackEntry entry, GrantKeywordToTargetEffect grant) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             return;
         }
 
         target.getGrantedKeywords().add(grant.keyword());
-
         String keywordName = grant.keyword().name().charAt(0) + grant.keyword().name().substring(1).toLowerCase().replace('_', ' ');
         String logEntry = target.getCard().getName() + " gains " + keywordName + " until end of turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-
-        log.info("Game {} - {} gains {}", gameData.id, target.getCard().getName(), grant.keyword());
+        log.info("Game {} - {} gains {} ({})", gameData.id, target.getCard().getName(), grant.keyword(), grant.scope());
     }
 
     private void resolveCantBlockSource(GameData gameData, StackEntry entry, CantBlockSourceEffect effect) {

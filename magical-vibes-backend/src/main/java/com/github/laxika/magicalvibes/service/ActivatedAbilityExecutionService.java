@@ -18,7 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect.Scope;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -67,7 +68,8 @@ public class ActivatedAbilityExecutionService {
         if (effectiveTargetId == null) {
             boolean needsSelfTarget = abilityEffects.stream().anyMatch(e ->
                     e instanceof RegenerateEffect || e instanceof BoostSelfEffect || e instanceof UntapSelfEffect
-                            || e instanceof AnimateSelfEffect || e instanceof GrantKeywordToSelfEffect);
+                            || e instanceof AnimateSelfEffect
+                            || (e instanceof GrantKeywordEffect grant && grant.scope() == Scope.SELF));
             if (needsSelfTarget) {
                 effectiveTargetId = permanent.getId();
             }
