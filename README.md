@@ -1,4 +1,4 @@
-An experimental online Magic game engine. The goal is to show that modern agents could write okay quality code en-masse with good human supervision. **99.99% of the code in this repo was written by either Claude or Codex.**
+An experimental online Magic game engine. The goal is to show that modern agents could write okay quality code en-masse with proper human supervision. **99.99% of the code in this repo was written by either Claude or Codex.**
 
 **Why Magic?**
 - The rules are extremely well-defined.
