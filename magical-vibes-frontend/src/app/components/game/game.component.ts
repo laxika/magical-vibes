@@ -839,6 +839,18 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   onCombatAttackerClick(group: CombatGroup): void {
+    if (this.choice.choosingPermanent) {
+      if (this.choice.choosablePermanentIds().has(group.attacker.id)) {
+        this.choice.choosePermanent(group.attacker.id);
+      }
+      return;
+    }
+    if (this.choice.choosingMultiplePermanents) {
+      if (this.choice.multiPermanentChoiceIds().has(group.attacker.id)) {
+        this.choice.toggleMultiPermanentSelection(group.attacker.id);
+      }
+      return;
+    }
     if (this.choice.multiTargeting) {
       if (isPermanentCreature(group.attacker)) {
         if (this.choice.isMultiTargetSelected(group.attacker.id)) {
@@ -863,12 +875,44 @@ export class GameComponent implements OnInit, OnDestroy {
       this.toggleAttacker(group.attackerIndex);
     } else if (this.declaringBlockers && !group.attackerIsMine) {
       this.assignBlock(group.attackerIndex);
+    } else if (group.attackerIsMine) {
+      this.choice.tapPermanent(group.attackerIndex);
     }
   }
 
   onCombatBlockerClick(blocker: CombatBlocker): void {
+    if (this.choice.choosingPermanent) {
+      if (this.choice.choosablePermanentIds().has(blocker.perm.id)) {
+        this.choice.choosePermanent(blocker.perm.id);
+      }
+      return;
+    }
+    if (this.choice.choosingMultiplePermanents) {
+      if (this.choice.multiPermanentChoiceIds().has(blocker.perm.id)) {
+        this.choice.toggleMultiPermanentSelection(blocker.perm.id);
+      }
+      return;
+    }
+    if (this.choice.multiTargeting) {
+      if (isPermanentCreature(blocker.perm)) {
+        if (this.choice.isMultiTargetSelected(blocker.perm.id)) {
+          this.choice.removeMultiTarget(blocker.perm.id);
+        } else {
+          this.choice.addMultiTarget(blocker.perm.id);
+        }
+      }
+      return;
+    }
+    if (this.choice.targeting) {
+      if (this.choice.isValidTarget(blocker.perm)) {
+        this.choice.selectTarget(blocker.perm.id);
+      }
+      return;
+    }
     if (this.declaringBlockers && blocker.isMine) {
       this.selectBlocker(blocker.index);
+    } else if (blocker.isMine) {
+      this.choice.tapPermanent(blocker.index);
     }
   }
 
