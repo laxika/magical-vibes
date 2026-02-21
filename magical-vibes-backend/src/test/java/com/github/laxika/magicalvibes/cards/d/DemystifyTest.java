@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DemystifyTest {
 
@@ -153,19 +154,12 @@ class DemystifyTest {
     @DisplayName("Cannot destroy a creature with Demystify")
     void cannotDestroyCreature() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new AngelicChorus());
         harness.setHand(player1, List.of(new Demystify()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, creatureId);
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
-        // Creature survives — invalid target type
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, creatureId))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
 

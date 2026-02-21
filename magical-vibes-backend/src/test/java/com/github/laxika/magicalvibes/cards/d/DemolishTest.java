@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DemolishTest {
 
@@ -190,19 +191,12 @@ class DemolishTest {
     @DisplayName("Cannot destroy a creature with Demolish")
     void cannotDestroyCreature() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new Mountain());
         harness.setHand(player1, List.of(new Demolish()));
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, creatureId);
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
-        // Creature survives — invalid target type
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, creatureId))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
 

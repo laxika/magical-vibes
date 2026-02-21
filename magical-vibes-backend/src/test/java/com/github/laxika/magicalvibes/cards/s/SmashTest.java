@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SmashTest {
 
@@ -152,18 +153,12 @@ class SmashTest {
     @DisplayName("Cannot destroy a creature with Smash")
     void cannotDestroyCreature() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new FountainOfYouth());
         harness.setHand(player1, List.of(new Smash()));
         harness.addMana(player1, ManaColor.RED, 3);
 
         UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, creatureId);
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, creatureId))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
 
