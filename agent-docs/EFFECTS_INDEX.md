@@ -36,6 +36,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `opponent may put a creature card from hand onto battlefield`: `OpponentMayPlayCreatureEffect`
 - `mill`: `MillTargetPlayerEffect`, `MillHalfLibraryEffect`, `MillByHandSizeEffect`
 - `search library`: `SearchLibraryForCardToHandEffect`, `SearchLibraryForBasicLandToHandEffect`
+- `search library for card type(s) to hand`: `SearchLibraryForCardTypesToHandEffect(Set<CardType>)`
 - `search library`: `SearchLibraryForCardToHandEffect`, `SearchLibraryForBasicLandToHandEffect`, `SearchLibraryForCardTypesToBattlefieldEffect`
 - `pay mana, then search library for named card and put onto battlefield`: `PayManaAndSearchLibraryForCardNamedToBattlefieldEffect`
 - `look at top N cards, may reveal a card of specified type(s) and put it into hand, rest on bottom`: `LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect`

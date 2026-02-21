@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithMVXOrLessToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
@@ -68,6 +69,8 @@ public class LibraryResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveReorderTopCardsOfLibrary(gd, entry, (ReorderTopCardsOfLibraryEffect) effect));
         registry.register(SearchLibraryForBasicLandToHandEffect.class,
                 (gd, entry, effect) -> resolveSearchLibraryForBasicLandToHand(gd, entry));
+        registry.register(SearchLibraryForCardTypesToHandEffect.class,
+                (gd, entry, effect) -> resolveSearchLibraryForCardTypesToHand(gd, entry, (SearchLibraryForCardTypesToHandEffect) effect));
         registry.register(SearchLibraryForCardTypesToBattlefieldEffect.class,
                 (gd, entry, effect) -> resolveSearchLibraryForCardTypesToBattlefield(
                         gd, entry, (SearchLibraryForCardTypesToBattlefieldEffect) effect));
@@ -275,6 +278,64 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         String logMsg = playerName + " searches their library.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} searching library for a basic land ({} found)", gameData.id, playerName, basicLands.size());
+    }
+
+    void resolveSearchLibraryForCardTypesToHand(GameData gameData, StackEntry entry, SearchLibraryForCardTypesToHandEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+        Set<CardType> requestedTypes = effect.cardTypes();
+        String requestedTypeText = formatCardTypeSetForPrompt(requestedTypes);
+
+        if (deck == null || deck.isEmpty()) {
+            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> matchingCards = new ArrayList<>();
+        for (Card card : deck) {
+            boolean matchesType = requestedTypes.contains(card.getType())
+                    || card.getAdditionalTypes().stream().anyMatch(requestedTypes::contains);
+            if (matchesType) {
+                matchingCards.add(card);
+            }
+        }
+
+        if (matchingCards.isEmpty()) {
+            Collections.shuffle(deck);
+            String logMsg = playerName + " searches their library but finds no " + requestedTypeText + " cards. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - {} searches library, no {} cards found", gameData.id, playerName, requestedTypeText);
+            return;
+        }
+
+        gameData.interaction.beginLibrarySearch(controllerId, matchingCards, true, true, null, 0);
+
+        List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
+                cardViews,
+                "Search your library for a " + requestedTypeText + " card to reveal and put into your hand.",
+                true
+        ));
+
+        String logMsg = playerName + " searches their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} searching library for {} cards ({} found)", gameData.id, playerName, requestedTypeText, matchingCards.size());
+    }
+
+    private String formatCardTypeSetForPrompt(Set<CardType> cardTypes) {
+        if (cardTypes == null || cardTypes.isEmpty()) {
+            return "matching";
+        }
+        List<String> names = cardTypes.stream()
+                .map(type -> type.name().toLowerCase())
+                .sorted()
+                .toList();
+        if (names.size() == 1) {
+            return names.getFirst();
+        }
+        return String.join(" or ", names);
     }
 
     void resolveSearchLibraryForCardTypesToBattlefield(GameData gameData, StackEntry entry,
