@@ -1,8 +1,4 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.CardType;
-
-import java.util.Set;
-
-public record UntapTargetPermanentEffect(Set<CardType> allowedTypes) implements CardEffect {
+public record UntapTargetPermanentEffect() implements CardEffect {
 }

@@ -84,27 +84,15 @@ public class TargetValidationService {
         });
 
         registry.register(TapOrUntapTargetPermanentEffect.class, (ctx, effect) -> {
-            Permanent target = requireBattlefieldTarget(ctx);
-            TapOrUntapTargetPermanentEffect tapOrUntapEffect = (TapOrUntapTargetPermanentEffect) effect;
-            if (!tapOrUntapEffect.allowedTypes().contains(target.getCard().getType())) {
-                throw new IllegalStateException("Target must be an artifact, creature, or land");
-            }
+            requireBattlefieldTarget(ctx);
         });
 
         registry.register(TapTargetPermanentEffect.class, (ctx, effect) -> {
-            Permanent target = requireBattlefieldTarget(ctx);
-            TapTargetPermanentEffect tapEffect = (TapTargetPermanentEffect) effect;
-            if (!tapEffect.allowedTypes().contains(target.getCard().getType())) {
-                throw new IllegalStateException("Target must be an artifact, creature, or land");
-            }
+            requireBattlefieldTarget(ctx);
         });
 
         registry.register(UntapTargetPermanentEffect.class, (ctx, effect) -> {
-            Permanent target = requireBattlefieldTarget(ctx);
-            UntapTargetPermanentEffect untapEffect = (UntapTargetPermanentEffect) effect;
-            if (!untapEffect.allowedTypes().contains(target.getCard().getType())) {
-                throw new IllegalStateException("Target must be a creature");
-            }
+            requireBattlefieldTarget(ctx);
         });
 
         registry.register(MillTargetPlayerEffect.class, (ctx, effect) -> {

@@ -28,13 +28,14 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEf
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
@@ -96,11 +97,9 @@ public class CardViewFactory {
                 .anyMatch(e -> e instanceof MillTargetPlayerEffect || e instanceof RevealTopCardOfLibraryEffect
                         || e instanceof DealDamageToAnyTargetEffect || e instanceof DealDamageToTargetPlayerEffect);
 
-        List<String> allowedTargetTypes = new ArrayList<>();
-        for (CardEffect effect : ability.getEffects()) {
-            if (effect instanceof TapTargetPermanentEffect tapEffect) {
-                tapEffect.allowedTypes().forEach(t -> allowedTargetTypes.add(t.getDisplayName()));
-            }
+        Set<String> allowedTargetTypes = new LinkedHashSet<>();
+        if (ability.getTargetFilter() instanceof PermanentPredicateTargetFilter predicateFilter) {
+            collectAllowedTypes(predicateFilter.predicate(), allowedTargetTypes);
         }
 
         Set<String> allowedTargetColors = new LinkedHashSet<>();
@@ -117,7 +116,7 @@ public class CardViewFactory {
                 ability.isNeedsTarget(),
                 ability.isNeedsSpellTarget(),
                 targetsPlayer,
-                allowedTargetTypes,
+                List.copyOf(allowedTargetTypes),
                 List.copyOf(allowedTargetColors),
                 ability.getManaCost(),
                 ability.getLoyaltyCost(),
@@ -234,6 +233,28 @@ public class CardViewFactory {
         }
         if (predicate instanceof PermanentAllOfPredicate allOfPredicate) {
             allOfPredicate.predicates().forEach(p -> collectAllowedSubtypes(p, out));
+        }
+    }
+
+    private void collectAllowedTypes(PermanentPredicate predicate, Set<String> out) {
+        if (predicate instanceof PermanentIsCreaturePredicate) {
+            out.add(CardType.CREATURE.getDisplayName());
+            return;
+        }
+        if (predicate instanceof PermanentIsArtifactPredicate) {
+            out.add(CardType.ARTIFACT.getDisplayName());
+            return;
+        }
+        if (predicate instanceof PermanentIsLandPredicate) {
+            out.add(CardType.LAND.getDisplayName());
+            return;
+        }
+        if (predicate instanceof PermanentAnyOfPredicate anyOfPredicate) {
+            anyOfPredicate.predicates().forEach(p -> collectAllowedTypes(p, out));
+            return;
+        }
+        if (predicate instanceof PermanentAllOfPredicate allOfPredicate) {
+            allOfPredicate.predicates().forEach(p -> collectAllowedTypes(p, out));
         }
     }
 

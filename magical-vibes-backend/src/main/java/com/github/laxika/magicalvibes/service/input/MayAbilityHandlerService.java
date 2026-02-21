@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
@@ -34,8 +35,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEf
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -51,7 +50,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -377,83 +375,31 @@ public class MayAbilityHandlerService {
                 }
             }
         } else if (copiedCard.isNeedsTarget()) {
-            List<CardEffect> effects = copyEntry.getEffectsToResolve();
+            Zone targetZone = copyEntry.getTargetZone() != null ? copyEntry.getTargetZone() : Zone.BATTLEFIELD;
 
-            // Check if it targets a player only
-            boolean targetsPlayer = isPlayerTargetingEffects(effects);
-            if (targetsPlayer) {
-                validTargets.addAll(gameData.orderedPlayerIds);
-            } else {
-                // Determine targeting category from effects
-                boolean targetsAnyPermanent = false;
-                boolean targetsEnchantmentOnly = false;
-                boolean targetsCreatureOrPlayer = false;
-                boolean requiresAttacking = false;
-                Set<CardType> configuredTargetTypes = null;
-
-                for (CardEffect effect : effects) {
-                    if (effect instanceof ReturnTargetPermanentToHandEffect) {
-                        targetsAnyPermanent = true;
-                        break;
-                    }
-                    if (effect instanceof GainControlOfTargetAuraEffect) {
-                        targetsEnchantmentOnly = true;
-                        break;
-                    }
-                    if (effect instanceof DealXDamageToAnyTargetAndGainXLifeEffect
-                            || effect instanceof PreventDamageToTargetEffect) {
-                        targetsCreatureOrPlayer = true;
-                        break;
-                    }
-                    if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
-                        requiresAttacking = true;
-                        break;
-                    }
-                    if (effect instanceof DestroyTargetPermanentEffect dte) {
-                        configuredTargetTypes = dte.targetTypes();
-                        break;
-                    }
-                    if (effect instanceof TapOrUntapTargetPermanentEffect toue) {
-                        configuredTargetTypes = toue.allowedTypes();
-                        break;
-                    }
-                    if (effect instanceof TapTargetPermanentEffect tpe) {
-                        configuredTargetTypes = tpe.allowedTypes();
-                        break;
-                    }
+            List<UUID> candidateTargets = new ArrayList<>(gameData.orderedPlayerIds);
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) {
+                    continue;
                 }
-
-                // "Any target" spells can also target players
-                if (targetsCreatureOrPlayer) {
-                    validTargets.addAll(gameData.orderedPlayerIds);
+                for (Permanent p : battlefield) {
+                    candidateTargets.add(p.getId());
                 }
+            }
 
-                // Add matching permanents from all battlefields
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                    if (battlefield == null) continue;
-                    for (Permanent p : battlefield) {
-                        if (targetsAnyPermanent) {
-                            validTargets.add(p.getId());
-                        } else if (targetsEnchantmentOnly) {
-                            if (p.getCard().getType() == CardType.ENCHANTMENT && p.getAttachedTo() != null) {
-                                validTargets.add(p.getId());
-                            }
-                        } else if (configuredTargetTypes != null) {
-                            if (configuredTargetTypes.contains(p.getCard().getType())) {
-                                validTargets.add(p.getId());
-                            }
-                        } else if (requiresAttacking) {
-                            if (gameQueryService.isCreature(gameData, p) && p.isAttacking()) {
-                                validTargets.add(p.getId());
-                            }
-                        } else {
-                            // Default: creature targeting (including "any target" which also adds players above)
-                            if (gameQueryService.isCreature(gameData, p)) {
-                                validTargets.add(p.getId());
-                            }
-                        }
-                    }
+            for (UUID candidate : candidateTargets) {
+                try {
+                    targetLegalityService.validateSpellTargeting(
+                            gameData,
+                            copiedCard,
+                            candidate,
+                            targetZone,
+                            copyEntry.getControllerId()
+                    );
+                    validTargets.add(candidate);
+                } catch (IllegalStateException ignored) {
+                    // Candidate is not legal for this copied spell.
                 }
             }
         }
@@ -475,22 +421,6 @@ public class MayAbilityHandlerService {
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(copyCardId));
         playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
                 "Choose a new target for the copy of " + copiedCard.getName() + ".");
-    }
-
-    private boolean isPlayerTargetingEffects(List<CardEffect> effects) {
-        for (CardEffect effect : effects) {
-            if (effect instanceof ChooseCardsFromTargetHandToTopOfLibraryEffect
-                    || effect instanceof DoubleTargetPlayerLifeEffect
-                    || effect instanceof ExtraTurnEffect
-                    || effect instanceof LookAtHandEffect
-                    || effect instanceof MillTargetPlayerEffect
-                    || effect instanceof ReturnArtifactsTargetPlayerOwnsToHandEffect
-                    || effect instanceof ShuffleGraveyardIntoLibraryEffect
-                    || effect instanceof TargetPlayerLosesLifeAndControllerGainsLifeEffect) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private void handleSingleDrawReplacementChoice(GameData gameData, Player player, boolean accepted,
