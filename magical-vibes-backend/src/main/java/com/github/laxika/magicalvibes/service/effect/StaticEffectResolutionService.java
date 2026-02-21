@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreaturePerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEnchantmentOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostNonColorCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOtherCreaturesByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
@@ -51,6 +52,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         registry.register(BoostBySharedCreatureTypeEffect.class, this::resolveBoostBySharedCreatureType);
 
         registry.registerSelfHandler(BoostByOtherCreaturesWithSameNameEffect.class, this::resolveBoostByOtherCreaturesWithSameName);
+        registry.registerSelfHandler(BoostSelfPerEnchantmentOnBattlefieldEffect.class, this::resolveBoostSelfPerEnchantmentOnBattlefield);
         registry.registerSelfHandler(PowerToughnessEqualToControlledCreatureCountEffect.class, this::resolvePowerToughnessEqualToControlledCreatureCount);
         registry.registerSelfHandler(PowerToughnessEqualToControlledLandCountEffect.class, this::resolvePowerToughnessEqualToControlledLandCount);
         registry.registerSelfHandler(PowerToughnessEqualToControlledSubtypeCountEffect.class, this::resolvePowerToughnessEqualToControlledSubtypeCount);
@@ -265,6 +267,23 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
 
         accumulator.addPower(count * boost.powerPerCreature());
         accumulator.addToughness(count * boost.toughnessPerCreature());
+    }
+
+    private void resolveBoostSelfPerEnchantmentOnBattlefield(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostSelfPerEnchantmentOnBattlefieldEffect) effect;
+        int count = 0;
+        for (UUID playerId : context.gameData().orderedPlayerIds) {
+            List<Permanent> bf = context.gameData().playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent permanent : bf) {
+                if (permanent.getCard().getType() == CardType.ENCHANTMENT
+                        || permanent.getCard().getAdditionalTypes().contains(CardType.ENCHANTMENT)) {
+                    count++;
+                }
+            }
+        }
+        accumulator.addPower(count * boost.powerPerEnchantment());
+        accumulator.addToughness(count * boost.toughnessPerEnchantment());
     }
 
     private void resolvePowerToughnessEqualToControlledSubtypeCount(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {

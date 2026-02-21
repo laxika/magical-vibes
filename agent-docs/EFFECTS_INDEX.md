@@ -55,6 +55,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `pump target/self/all`: `BoostTargetCreatureEffect`, `BoostSelfEffect`, `BoostAllOwnCreaturesEffect`, `BoostAllCreaturesXEffect`
 - `enchanted creature gets +X/+X per controlled subtype`: `BoostEnchantedCreaturePerControlledSubtypeEffect`
 - `gets +N/+N for each other creature with same name`: `BoostByOtherCreaturesWithSameNameEffect`
+- `gets +N/+N for each enchantment on the battlefield`: `BoostSelfPerEnchantmentOnBattlefieldEffect`
 - `when you cast a spell of specific colors, put +1/+1 counter on this`: `PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect`
 - `power/toughness each equal number of lands you control`: `PowerToughnessEqualToControlledLandCountEffect`
 - `power/toughness each equal number of creatures you control`: `PowerToughnessEqualToControlledCreatureCountEffect`
