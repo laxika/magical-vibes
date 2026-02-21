@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityToOwnLan
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect.Scope;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledLandCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledSubtypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         registry.register(BoostBySharedCreatureTypeEffect.class, this::resolveBoostBySharedCreatureType);
 
         registry.registerSelfHandler(BoostByOtherCreaturesWithSameNameEffect.class, this::resolveBoostByOtherCreaturesWithSameName);
+        registry.registerSelfHandler(PowerToughnessEqualToControlledLandCountEffect.class, this::resolvePowerToughnessEqualToControlledLandCount);
         registry.registerSelfHandler(PowerToughnessEqualToControlledSubtypeCountEffect.class, this::resolvePowerToughnessEqualToControlledSubtypeCount);
         registry.registerSelfHandler(PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect.class, this::resolvePowerToughnessEqualToCreatureCardsInAllGraveyards);
     }
@@ -271,6 +273,29 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         int count = 0;
         for (Permanent permanent : battlefield) {
             if (permanent.getCard().getSubtypes().contains(pt.subtype())) {
+                count++;
+            }
+        }
+
+        accumulator.addPower(count);
+        accumulator.addToughness(count);
+    }
+
+    private void resolvePowerToughnessEqualToControlledLandCount(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        UUID controllerId = findControllerId(context.gameData(), context.source());
+        if (controllerId == null) {
+            return;
+        }
+
+        List<Permanent> battlefield = context.gameData().playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (permanent.getCard().getType() == CardType.LAND
+                    || permanent.getCard().getAdditionalTypes().contains(CardType.LAND)) {
                 count++;
             }
         }
