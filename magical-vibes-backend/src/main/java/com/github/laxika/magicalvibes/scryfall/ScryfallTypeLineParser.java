@@ -27,7 +27,8 @@ public class ScryfallTypeLineParser {
             "Sorcery", CardType.SORCERY,
             "Artifact", CardType.ARTIFACT,
             "Land", CardType.LAND,
-            "Planeswalker", CardType.PLANESWALKER
+            "Planeswalker", CardType.PLANESWALKER,
+            "Kindred", CardType.KINDRED
     );
 
     private static final Map<String, CardSubtype> SUBTYPE_MAP;
@@ -83,7 +84,9 @@ public class ScryfallTypeLineParser {
 
             CardType cardType = TYPE_MAP.get(word);
             if (cardType != null) {
-                if (type == null) {
+                if (cardType == CardType.KINDRED) {
+                    additionalTypes.add(cardType);
+                } else if (type == null) {
                     type = cardType;
                 } else {
                     additionalTypes.add(cardType);

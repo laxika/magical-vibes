@@ -100,6 +100,10 @@ public class ExampleCard extends Card {
   - `setEntersTapped(true)` + `addEffect(EffectSlot.ON_TAP, new AwardManaEffect(...))` + `addActivatedAbility(new ActivatedAbility(false, cost, List.of(new AnimateLandEffect(power, toughness, subtypes, keywords, color)), false, description))`
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/f/FaerieConclave.java`
 
+- Kindred Enchantment with ETB token creation + activated token ability:
+  - `addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateCreatureTokenWithColorsEffect(N, ...))` + `addActivatedAbility(new ActivatedAbility(false, cost, List.of(new CreateCreatureTokenWithColorsEffect(...)), false, description))`
+  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/c/ClachanFestival.java`
+
 - Predicate-based targeting:
   - prefer `setTargetFilter(new PermanentPredicateTargetFilter(...))` over ad-hoc `TargetFilter` permutations
   - compose with `PermanentAllOfPredicate`, `PermanentAnyOfPredicate`, and atoms like `PermanentIsCreaturePredicate`, `PermanentIsTappedPredicate`, `PermanentColorInPredicate`, `PermanentHasSubtypePredicate`

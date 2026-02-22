@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 public record CreateCreatureTokenWithColorsEffect(
+        int amount,
         String tokenName,
         int power,
         int toughness,
@@ -14,4 +15,14 @@ public record CreateCreatureTokenWithColorsEffect(
         CardColor primaryColor,
         List<CardSubtype> subtypes
 ) implements CardEffect {
+
+    public CreateCreatureTokenWithColorsEffect(
+            String tokenName,
+            int power,
+            int toughness,
+            Set<CardColor> colors,
+            CardColor primaryColor,
+            List<CardSubtype> subtypes) {
+        this(1, tokenName, power, toughness, colors, primaryColor, subtypes);
+    }
 }

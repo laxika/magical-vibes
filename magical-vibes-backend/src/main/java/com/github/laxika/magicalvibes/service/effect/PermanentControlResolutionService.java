@@ -109,31 +109,33 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
     }
 
     private void resolveCreateCreatureTokenWithColors(GameData gameData, UUID controllerId, CreateCreatureTokenWithColorsEffect token) {
-        Card tokenCard = new Card();
-        tokenCard.setName(token.tokenName());
-        tokenCard.setType(CardType.CREATURE);
-        tokenCard.setManaCost("");
-        tokenCard.setToken(true);
-        tokenCard.setColor(token.primaryColor());
-        tokenCard.setPower(token.power());
-        tokenCard.setToughness(token.toughness());
-        tokenCard.setSubtypes(token.subtypes());
+        for (int i = 0; i < token.amount(); i++) {
+            Card tokenCard = new Card();
+            tokenCard.setName(token.tokenName());
+            tokenCard.setType(CardType.CREATURE);
+            tokenCard.setManaCost("");
+            tokenCard.setToken(true);
+            tokenCard.setColor(token.primaryColor());
+            tokenCard.setPower(token.power());
+            tokenCard.setToughness(token.toughness());
+            tokenCard.setSubtypes(token.subtypes());
 
-        Permanent tokenPermanent = new Permanent(tokenCard);
-        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent);
+            Permanent tokenPermanent = new Permanent(tokenCard);
+            gameHelper.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent);
 
-        String colorNames = token.colors().stream()
-                .map(c -> c.name().charAt(0) + c.name().substring(1).toLowerCase())
-                .reduce((a, b) -> a + " and " + b).orElse("");
-        String logEntry = "A " + token.power() + "/" + token.toughness() + " " + colorNames + " " + token.tokenName() + " creature token enters the battlefield.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            String colorNames = token.colors().stream()
+                    .map(c -> c.name().charAt(0) + c.name().substring(1).toLowerCase())
+                    .reduce((a, b) -> a + " and " + b).orElse("");
+            String logEntry = "A " + token.power() + "/" + token.toughness() + " " + colorNames + " " + token.tokenName() + " creature token enters the battlefield.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
-        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
-        if (!gameData.interaction.isAwaitingInput()) {
-            legendRuleService.checkLegendRule(gameData, controllerId);
+            gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+            if (!gameData.interaction.isAwaitingInput()) {
+                legendRuleService.checkLegendRule(gameData, controllerId);
+            }
         }
 
-        log.info("Game {} - {} token created for player {}", gameData.id, token.tokenName(), controllerId);
+        log.info("Game {} - {} {} token(s) created for player {}", gameData.id, token.amount(), token.tokenName(), controllerId);
     }
 
     private void resolvePutAuraFromHandOntoSelf(GameData gameData, StackEntry entry) {

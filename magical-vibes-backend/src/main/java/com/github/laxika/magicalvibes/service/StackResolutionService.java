@@ -152,6 +152,12 @@ public class StackResolutionService {
                 Permanent justEntered = bf.get(bf.size() - 1);
                 playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), null);
             }
+
+            // Process general ETB effects (e.g., token creation for Kindred Enchantments)
+            if (!gameData.interaction.isAwaitingInput()) {
+                gameHelper.processCreatureETBEffects(gameData, controllerId, card, null, true);
+            }
+
             if (!gameData.interaction.isAwaitingInput()) {
                 legendRuleService.checkLegendRule(gameData, controllerId);
             }
