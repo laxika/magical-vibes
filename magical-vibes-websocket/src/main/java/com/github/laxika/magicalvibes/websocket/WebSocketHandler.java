@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.networking.message.HandTopBottomChosenRequ
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedRequest;
 import com.github.laxika.magicalvibes.networking.message.CreateDraftRequest;
 import com.github.laxika.magicalvibes.networking.message.DraftPickRequest;
+import com.github.laxika.magicalvibes.networking.message.RequestCardListRequest;
 import com.github.laxika.magicalvibes.networking.message.SubmitDeckRequest;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import lombok.RequiredArgsConstructor;
@@ -119,6 +120,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 case DRAFT_PICK -> messageHandler.handleDraftPick(connection, objectMapper.treeToValue(jsonNode, DraftPickRequest.class));
                 case SUBMIT_DECK -> messageHandler.handleSubmitDeck(connection, objectMapper.treeToValue(jsonNode, SubmitDeckRequest.class));
                 case COMBAT_DAMAGE_ASSIGNED -> messageHandler.handleCombatDamageAssigned(connection, objectMapper.treeToValue(jsonNode, CombatDamageAssignedRequest.class));
+                case REQUEST_CARD_LIST -> messageHandler.handleRequestCardList(connection, objectMapper.treeToValue(jsonNode, RequestCardListRequest.class));
                 default -> messageHandler.handleError(connection, "Unknown message type: " + type);
             }
         } catch (Exception e) {

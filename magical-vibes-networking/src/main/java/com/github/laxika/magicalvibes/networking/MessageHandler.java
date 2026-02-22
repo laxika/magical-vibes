@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.networking.message.HandTopBottomChosenRequ
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedRequest;
 import com.github.laxika.magicalvibes.networking.message.CreateDraftRequest;
 import com.github.laxika.magicalvibes.networking.message.DraftPickRequest;
+import com.github.laxika.magicalvibes.networking.message.RequestCardListRequest;
 import com.github.laxika.magicalvibes.networking.message.SubmitDeckRequest;
 
 public interface MessageHandler {
@@ -86,6 +87,8 @@ public interface MessageHandler {
     void handleSubmitDeck(Connection connection, SubmitDeckRequest request) throws Exception;
 
     void handleCombatDamageAssigned(Connection connection, CombatDamageAssignedRequest request) throws Exception;
+
+    void handleRequestCardList(Connection connection, RequestCardListRequest request) throws Exception;
 
     void handleTimeout(Connection connection);
 

@@ -1,0 +1,358 @@
+.browser-container {
+  min-height: 100vh;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 52px,
+      rgba(0, 0, 0, 0.08) 52px,
+      rgba(0, 0, 0, 0.08) 54px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 78px,
+      rgba(0, 0, 0, 0.05) 78px,
+      rgba(0, 0, 0, 0.05) 80px
+    ),
+    linear-gradient(180deg, #1a1210 0%, #2b1b17 30%, #1a1210 60%, #0d0a07 100%);
+  padding: 20px;
+}
+
+.browser-content {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(180deg, #2b1b17 0%, #1a1210 100%);
+  padding: 20px 30px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+  border: 2px solid #3b2314;
+  border-bottom: 3px solid #8b1a1a;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+h1 {
+  margin: 0;
+  color: #c8a951;
+  font-size: 28px;
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.btn-back {
+  padding: 8px 20px;
+  background: linear-gradient(180deg, #4a2c17 0%, #3b2314 100%);
+  color: #ecd9b0;
+  border: 2px solid #7a5a40;
+  border-radius: 3px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Cinzel', Georgia, serif;
+  cursor: pointer;
+  transition: transform 0.2s;
+  letter-spacing: 1px;
+}
+
+.btn-back:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(180deg, #5c3a2e 0%, #4a2c17 100%);
+}
+
+.controls-bar {
+  display: flex;
+  gap: 15px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  background: linear-gradient(180deg, #f5e6c8 0%, #ecd9b0 100%);
+  padding: 20px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+  border: 2px solid #8b1a1a;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.control-group label {
+  color: #5c3a2e;
+  font-weight: 700;
+  font-size: 13px;
+  font-family: 'Cinzel', Georgia, serif;
+}
+
+.control-group select,
+.control-group input {
+  padding: 8px 12px;
+  border: 2px solid #c4a882;
+  border-radius: 3px;
+  font-size: 14px;
+  font-family: 'Crimson Text', Georgia, serif;
+  background: #faf3e5;
+  color: #2b1b17;
+  transition: border-color 0.3s;
+}
+
+.control-group select:focus,
+.control-group input:focus {
+  outline: none;
+  border-color: #8b1a1a;
+  box-shadow: 0 0 6px rgba(139, 26, 26, 0.3);
+}
+
+.search-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.search-group input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.view-toggle {
+  flex-direction: row;
+  align-self: flex-end;
+  gap: 0;
+}
+
+.toggle-btn {
+  padding: 8px 16px;
+  background: linear-gradient(180deg, #4a2c17 0%, #3b2314 100%);
+  color: #ecd9b0;
+  border: 2px solid #7a5a40;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Cinzel', Georgia, serif;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.toggle-btn:first-child {
+  border-radius: 3px 0 0 3px;
+  border-right: 1px solid #7a5a40;
+}
+
+.toggle-btn:last-child {
+  border-radius: 0 3px 3px 0;
+  border-left: 1px solid #7a5a40;
+}
+
+.toggle-btn.active {
+  background: linear-gradient(180deg, #b22222 0%, #8b1a1a 100%);
+  border-color: #6b1010;
+  color: #f5e6c8;
+}
+
+.toggle-btn:hover:not(.active) {
+  background: linear-gradient(180deg, #5c3a2e 0%, #4a2c17 100%);
+}
+
+.stats-bar {
+  display: flex;
+  gap: 25px;
+  padding: 10px 20px;
+  background: rgba(43, 27, 23, 0.8);
+  border-radius: 4px;
+  margin-bottom: 15px;
+  color: #c4a882;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Crimson Text', Georgia, serif;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 60px;
+  color: #c4a882;
+  font-size: 16px;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(200, 169, 81, 0.3);
+  border-top-color: #c8a951;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* List View */
+
+.list-view {
+  background: linear-gradient(180deg, #f5e6c8 0%, #ecd9b0 100%);
+  border-radius: 4px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+  border: 2px solid #8b1a1a;
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead tr {
+  background: linear-gradient(180deg, #2b1b17 0%, #1a1210 100%);
+}
+
+th {
+  padding: 12px 15px;
+  text-align: left;
+  color: #c8a951;
+  font-size: 13px;
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #8b1a1a;
+}
+
+th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+th.sortable:hover {
+  color: #f5e6c8;
+}
+
+td {
+  padding: 8px 15px;
+  font-size: 14px;
+  font-family: 'Crimson Text', Georgia, serif;
+  color: #2b1b17;
+  border-bottom: 1px solid #d4c4a0;
+}
+
+tbody tr:hover {
+  background: rgba(200, 169, 81, 0.15);
+}
+
+tbody tr.implemented {
+  background: rgba(200, 220, 180, 0.15);
+}
+
+tbody tr.not-implemented {
+  opacity: 0.7;
+}
+
+.col-number {
+  width: 60px;
+}
+
+.col-cost {
+  width: 120px;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.col-cost ::ng-deep .mana-sym {
+  height: 14px !important;
+  vertical-align: middle !important;
+}
+
+.col-rarity {
+  width: 100px;
+}
+
+.col-status {
+  width: 80px;
+  text-align: center;
+}
+
+.rarity-common {
+  color: #5c3a2e;
+}
+
+.rarity-uncommon {
+  color: #6e8b8b;
+}
+
+.rarity-rare {
+  color: #c8a951;
+  font-weight: 700;
+}
+
+.rarity-mythic {
+  color: #b22222;
+  font-weight: 700;
+}
+
+.status-yes {
+  color: #2d7a2d;
+  font-weight: 700;
+}
+
+.status-no {
+  color: #999;
+  font-weight: 600;
+}
+
+/* Card View */
+
+.card-view {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 171px);
+  gap: 15px;
+  justify-content: center;
+}
+
+.card-item {
+  position: relative;
+  width: 171px;
+  height: 237px;
+}
+
+.card-item app-card-display {
+  pointer-events: none;
+}
+
+.not-implemented-card {
+  opacity: 0.5;
+}
+
+.not-implemented-card:hover {
+  opacity: 0.8;
+}
+
+.not-implemented-overlay {
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  color: #c4a882;
+  text-align: center;
+  padding: 4px;
+  font-size: 11px;
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  z-index: 1;
+}

@@ -1,0 +1,112 @@
+<div class="browser-container">
+  <div class="browser-content">
+    <header>
+      <div class="header-left">
+        <button class="btn-back" (click)="goBack()">Back to Lobby</button>
+        <h1>Card Browser</h1>
+      </div>
+    </header>
+
+    <div class="controls-bar">
+      <div class="control-group">
+        <label for="setSelect">Set</label>
+        <select id="setSelect" [ngModel]="selectedSetCode()" (ngModelChange)="onSetChange($event)">
+          @for (set of availableSets; track set.code) {
+            <option [value]="set.code">{{ set.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="control-group search-group">
+        <label for="searchInput">Search</label>
+        <input
+          type="text"
+          id="searchInput"
+          [(ngModel)]="searchQuery"
+          placeholder="Search by name..."
+        />
+      </div>
+
+      <div class="control-group">
+        <label for="statusFilter">Status</label>
+        <select id="statusFilter" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
+          <option value="all">All Cards</option>
+          <option value="implemented">Implemented</option>
+          <option value="not-implemented">Not Implemented</option>
+        </select>
+      </div>
+
+      <div class="control-group view-toggle">
+        <button
+          class="toggle-btn"
+          [class.active]="viewMode() === 'list'"
+          (click)="viewMode.set('list')"
+        >List</button>
+        <button
+          class="toggle-btn"
+          [class.active]="viewMode() === 'card'"
+          (click)="viewMode.set('card')"
+        >Cards</button>
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <span>Total: {{ totalCount() }}</span>
+      <span>Implemented: {{ implementedCount() }} / {{ totalCount() }} ({{ implementedPercent() }}%)</span>
+      <span>Showing: {{ filteredCount() }}</span>
+    </div>
+
+    @if (loading()) {
+      <div class="loading">
+        <div class="spinner"></div>
+        <span>Loading cards...</span>
+      </div>
+    } @else if (viewMode() === 'list') {
+      <div class="list-view">
+        <table>
+          <thead>
+            <tr>
+              <th class="col-number sortable" (click)="toggleSort('number')">#{{ sortIndicator('number') }}</th>
+              <th class="col-name sortable" (click)="toggleSort('name')">Name{{ sortIndicator('name') }}</th>
+              <th class="col-cost">Cost</th>
+              <th class="col-type">Type</th>
+              <th class="col-rarity">Rarity</th>
+              <th class="col-status sortable" (click)="toggleSort('implemented')">Implemented{{ sortIndicator('implemented') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (card of filteredCards(); track card.collectorNumber) {
+              <tr [class.implemented]="card.implemented" [class.not-implemented]="!card.implemented">
+                <td class="col-number">#{{ card.collectorNumber }}</td>
+                <td class="col-name">{{ card.name }}</td>
+                <td class="col-cost" [innerHTML]="renderManaCost(card.manaCost)"></td>
+                <td class="col-type">{{ card.typeLine }}</td>
+                <td class="col-rarity" [class]="'rarity-' + card.rarity">{{ capitalizeRarity(card.rarity) }}</td>
+                <td class="col-status">
+                  @if (card.implemented) {
+                    <span class="status-yes">Yes</span>
+                  } @else {
+                    <span class="status-no">No</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="card-view">
+        @for (card of filteredCards(); track card.collectorNumber) {
+          <div class="card-item" [class.not-implemented-card]="!card.implemented">
+            <app-card-display [card]="toCard(card)" [preview]="true" />
+            @if (!card.implemented) {
+              <div class="not-implemented-overlay">
+                <span>Not Implemented</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

@@ -163,6 +163,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     });
   }
 
+  browseCards() {
+    this.router.navigate(['/cards']);
+  }
+
   logout() {
     this.websocketService.disconnect();
     this.router.navigate(['/']);

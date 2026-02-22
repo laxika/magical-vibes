@@ -62,7 +62,9 @@ export enum MessageType {
   TOURNAMENT_GAME_READY = 'TOURNAMENT_GAME_READY',
   DRAFT_FINISHED = 'DRAFT_FINISHED',
   COMBAT_DAMAGE_ASSIGNMENT = 'COMBAT_DAMAGE_ASSIGNMENT',
-  COMBAT_DAMAGE_ASSIGNED = 'COMBAT_DAMAGE_ASSIGNED'
+  COMBAT_DAMAGE_ASSIGNED = 'COMBAT_DAMAGE_ASSIGNED',
+  REQUEST_CARD_LIST = 'REQUEST_CARD_LIST',
+  CARD_LIST_RESPONSE = 'CARD_LIST_RESPONSE'
 }
 
 export enum GameStatus {
@@ -471,7 +473,33 @@ export interface CombatDamageAssignmentNotification {
   isTrample: boolean;
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameStateNotification | MulliganResolvedNotification | SelectCardsToBottomNotification | AvailableAttackersNotification | AvailableBlockersNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | ChooseMultipleCardsFromGraveyardsNotification | ReorderLibraryCardsNotification | ChooseCardFromLibraryNotification | RevealHandNotification | ChooseFromRevealedHandNotification | ChooseCardFromGraveyardNotification | ChooseHandTopBottomNotification | DraftJoinedNotification | DraftPackUpdateNotification | DeckBuildingStateNotification | TournamentUpdateNotification | TournamentGameReadyNotification | DraftFinishedNotification | CombatDamageAssignmentNotification;
+export interface BrowseCardInfo {
+  name: string;
+  collectorNumber: string;
+  setCode: string;
+  manaCost: string | null;
+  typeLine: string;
+  rarity: string;
+  power: string | null;
+  toughness: string | null;
+  color: string | null;
+  implemented: boolean;
+  cardText: string | null;
+  keywords: string[];
+  type: string;
+  additionalTypes: string[];
+  supertypes: string[];
+  subtypes: string[];
+  loyalty: number | null;
+}
+
+export interface CardListResponse {
+  type: MessageType;
+  setCode: string;
+  cards: BrowseCardInfo[];
+}
+
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameStateNotification | MulliganResolvedNotification | SelectCardsToBottomNotification | AvailableAttackersNotification | AvailableBlockersNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | ChooseMultipleCardsFromGraveyardsNotification | ReorderLibraryCardsNotification | ChooseCardFromLibraryNotification | RevealHandNotification | ChooseFromRevealedHandNotification | ChooseCardFromGraveyardNotification | ChooseHandTopBottomNotification | DraftJoinedNotification | DraftPackUpdateNotification | DeckBuildingStateNotification | TournamentUpdateNotification | TournamentGameReadyNotification | DraftFinishedNotification | CombatDamageAssignmentNotification | CardListResponse;
 
 export interface User {
   userId: string;

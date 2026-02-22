@@ -35,8 +35,10 @@ import com.github.laxika.magicalvibes.networking.message.SacrificePermanentReque
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.HandTopBottomChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.CardListResponse;
 import com.github.laxika.magicalvibes.networking.message.CreateDraftRequest;
 import com.github.laxika.magicalvibes.networking.message.DraftPickRequest;
+import com.github.laxika.magicalvibes.networking.message.RequestCardListRequest;
 import com.github.laxika.magicalvibes.networking.message.SubmitDeckRequest;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.ai.AiPlayerService;
@@ -45,6 +47,7 @@ import com.github.laxika.magicalvibes.model.DraftStatus;
 import com.github.laxika.magicalvibes.service.DraftRegistry;
 import com.github.laxika.magicalvibes.service.DraftService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.CardBrowserService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.LobbyService;
@@ -68,6 +71,7 @@ public class GameMessageHandler implements MessageHandler {
     private final AiPlayerService aiPlayerService;
     private final DraftService draftService;
     private final DraftRegistry draftRegistry;
+    private final CardBrowserService cardBrowserService;
 
     public GameMessageHandler(LoginService loginService,
             GameService gameService,
@@ -78,7 +82,8 @@ public class GameMessageHandler implements MessageHandler {
             ObjectMapper objectMapper,
             AiPlayerService aiPlayerService,
             DraftService draftService,
-            DraftRegistry draftRegistry) {
+            DraftRegistry draftRegistry,
+            CardBrowserService cardBrowserService) {
         this.loginService = loginService;
         this.gameService = gameService;
         this.gameBroadcastService = gameBroadcastService;
@@ -89,6 +94,7 @@ public class GameMessageHandler implements MessageHandler {
         this.aiPlayerService = aiPlayerService;
         this.draftService = draftService;
         this.draftRegistry = draftRegistry;
+        this.cardBrowserService = cardBrowserService;
     }
 
     @Override
@@ -773,6 +779,19 @@ public class GameMessageHandler implements MessageHandler {
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
+    }
+
+    @Override
+    public void handleRequestCardList(Connection connection, RequestCardListRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        var cards = cardBrowserService.getCardsForSet(request.setCode());
+        CardListResponse response = new CardListResponse(request.setCode(), cards);
+        connection.sendMessage(objectMapper.writeValueAsString(response));
     }
 
     @Override
