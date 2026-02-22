@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
@@ -96,7 +97,8 @@ public class CardViewFactory {
     public ActivatedAbilityView createAbilityView(ActivatedAbility ability) {
         boolean targetsPlayer = ability.getEffects().stream()
                 .anyMatch(e -> e instanceof MillTargetPlayerEffect || e instanceof RevealTopCardOfLibraryEffect
-                        || e instanceof DealDamageToAnyTargetEffect || e instanceof DealDamageToTargetPlayerEffect);
+                        || e instanceof DealDamageToAnyTargetEffect || e instanceof DealDamageToTargetPlayerEffect
+                        || e instanceof ChooseCardFromTargetHandToDiscardEffect);
 
         Set<String> allowedTargetTypes = new LinkedHashSet<>();
         if (ability.getTargetFilter() instanceof PermanentPredicateTargetFilter predicateFilter) {

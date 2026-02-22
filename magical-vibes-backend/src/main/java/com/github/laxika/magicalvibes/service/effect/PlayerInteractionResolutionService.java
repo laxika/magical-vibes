@@ -219,7 +219,7 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         String casterName = gameData.playerIdToName.get(entry.getControllerId());
 
-        if (hand.isEmpty()) {
+        if (hand == null || hand.isEmpty()) {
             String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else {
@@ -241,7 +241,7 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         String casterName = gameData.playerIdToName.get(casterId);
 
-        if (hand.isEmpty()) {
+        if (hand == null || hand.isEmpty()) {
             String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} looks at {}'s empty hand", gameData.id, casterName, targetName);
@@ -278,7 +278,7 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         String casterName = gameData.playerIdToName.get(casterId);
 
-        if (hand.isEmpty()) {
+        if (hand == null || hand.isEmpty()) {
             String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} looks at {}'s empty hand", gameData.id, casterName, targetName);
