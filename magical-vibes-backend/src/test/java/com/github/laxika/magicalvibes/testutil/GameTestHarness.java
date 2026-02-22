@@ -153,7 +153,7 @@ public class GameTestHarness {
                 playerInputService, sessionManager);
         ColorChoiceHandlerService colorChoiceHandlerService = new ColorChoiceHandlerService(
                 sessionManager, gameQueryService, gameHelper, gameBroadcastService,
-                playerInputService, turnProgressionService);
+                playerInputService, turnProgressionService, legendRuleService);
         CardChoiceHandlerService cardChoiceHandlerService = new CardChoiceHandlerService(
                 gameQueryService, gameHelper, gameBroadcastService,
                 playerInputService, turnProgressionService, abilityActivationService);

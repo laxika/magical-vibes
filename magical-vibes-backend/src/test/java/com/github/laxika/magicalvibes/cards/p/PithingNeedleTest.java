@@ -81,7 +81,7 @@ class PithingNeedleTest {
     }
 
     @Test
-    @DisplayName("Resolving Pithing Needle enters battlefield and awaits card name choice")
+    @DisplayName("Resolving Pithing Needle awaits card name choice before entering battlefield")
     void resolvingTriggersCardNameChoice() {
         harness.setHand(player1, List.of(new PithingNeedle()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -89,8 +89,9 @@ class PithingNeedleTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
+        // Permanent should NOT be on the battlefield yet — name must be chosen first (Rule 614.1c)
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Pithing Needle"));
+                .noneMatch(p -> p.getCard().getName().equals("Pithing Needle"));
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
         assertThat(gd.interaction.awaitingColorChoicePlayerId()).isEqualTo(player1.getId());
     }

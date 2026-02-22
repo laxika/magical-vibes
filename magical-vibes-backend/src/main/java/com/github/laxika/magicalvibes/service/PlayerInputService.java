@@ -100,9 +100,9 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a color", gameData.id, playerName);
     }
 
-    public void beginCardNameChoice(GameData gameData, UUID playerId, UUID permanentId) {
-        ColorChoiceContext.CardNameChoice choiceContext = new ColorChoiceContext.CardNameChoice(permanentId);
-        gameData.interaction.beginColorChoice(playerId, permanentId, null, choiceContext);
+    public void beginCardNameChoice(GameData gameData, UUID playerId, Card card) {
+        ColorChoiceContext.CardNameChoice choiceContext = new ColorChoiceContext.CardNameChoice(card, playerId);
+        gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
 
         List<String> cardNames = collectAllCardNamesInGame(gameData);
         sessionManager.sendToPlayer(playerId, new ChooseColorMessage(cardNames, "Choose a card name."));

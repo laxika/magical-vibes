@@ -166,6 +166,15 @@ public class StackResolutionService {
             return;
         }
 
+        // "As enters" card name choice (e.g. Pithing Needle) — name must be chosen
+        // BEFORE the permanent enters the battlefield (MTG Rule 614.1c)
+        boolean needsCardNameChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof ChooseCardNameEffect);
+        if (needsCardNameChoice) {
+            playerInputService.beginCardNameChoice(gameData, controllerId, card);
+            return;
+        }
+
         gameHelper.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(card));
 
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -174,17 +183,7 @@ public class StackResolutionService {
 
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
 
-        // Check if artifact has "as enters" card name choice (e.g. Pithing Needle)
-        boolean needsCardNameChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof ChooseCardNameEffect);
-        if (needsCardNameChoice) {
-            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-            Permanent justEntered = bf.get(bf.size() - 1);
-            playerInputService.beginCardNameChoice(gameData, controllerId, justEntered.getId());
-        }
-        if (!gameData.interaction.isAwaitingInput()) {
-            legendRuleService.checkLegendRule(gameData, controllerId);
-        }
+        legendRuleService.checkLegendRule(gameData, controllerId);
     }
 
     private void resolvePlaneswalkerSpell(GameData gameData, StackEntry entry) {

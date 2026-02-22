@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
+import com.github.laxika.magicalvibes.service.LegendRuleService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class ColorChoiceHandlerService {
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
+    private final LegendRuleService legendRuleService;
 
     public void handleColorChosen(GameData gameData, Player player, String colorName) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.COLOR_CHOICE)) {
@@ -208,14 +210,23 @@ public class ColorChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearColorChoice();
 
-        Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
-        if (perm != null) {
-            perm.setChosenName(cardName);
+        Card card = ctx.card();
+        UUID controllerId = ctx.controllerId();
 
-            String logEntry = player.getUsername() + " chooses \"" + cardName + "\" for " + perm.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} chooses card name \"{}\" for {}", gameData.id, player.getUsername(), cardName, perm.getCard().getName());
-        }
+        Permanent perm = new Permanent(card);
+        perm.setChosenName(cardName);
+        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, perm);
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
+
+        String choiceLog = player.getUsername() + " chooses \"" + cardName + "\" for " + card.getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, choiceLog);
+        log.info("Game {} - {} chooses card name \"{}\" for {}", gameData.id, player.getUsername(), cardName, card.getName());
+
+        legendRuleService.checkLegendRule(gameData, controllerId);
 
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
