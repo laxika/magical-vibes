@@ -3,12 +3,14 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.FirstTargetDealsPowerDamageToSecondTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesAndPlayersEffect;
@@ -76,6 +78,8 @@ public class DamageResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveDealOrderedDamageToAnyTargets(gd, entry, (DealOrderedDamageToAnyTargetsEffect) effect));
         registry.register(DealDamageIfFewCardsInHandEffect.class,
                 (gd, entry, effect) -> resolveDealDamageIfFewCardsInHand(gd, entry, (DealDamageIfFewCardsInHandEffect) effect));
+        registry.register(FirstTargetDealsPowerDamageToSecondTargetEffect.class,
+                (gd, entry, effect) -> resolveBite(gd, entry));
     }
 
     void resolveDealXDamageToTargetCreature(GameData gameData, StackEntry entry) {
@@ -490,6 +494,58 @@ public class DamageResolutionService implements EffectHandlerProvider {
                 String playerName = gameData.playerIdToName.get(playerId);
                 gameBroadcastService.logAndBroadcast(gameData,
                         playerName + " takes " + effectiveDamage + " damage from " + cardName + ".");
+            }
+        }
+    }
+
+    void resolveBite(GameData gameData, StackEntry entry) {
+        List<UUID> targets = entry.getTargetPermanentIds();
+        if (targets == null || targets.size() < 2) {
+            return; // No second target — "up to one" chose zero
+        }
+
+        UUID biterId = targets.get(0);
+        UUID targetId = targets.get(1);
+
+        Permanent biter = gameQueryService.findPermanentById(gameData, biterId);
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (biter == null || target == null) {
+            return;
+        }
+
+        // The biting creature deals the damage — check if it is prevented from dealing damage
+        if (gameQueryService.isPreventedFromDealingDamage(gameData, biter)) {
+            String logEntry = biter.getCard().getName() + "'s damage is prevented.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        // Use the biting creature's color for protection checks (not the spell's color)
+        CardColor biterColor = biter.getCard().getColor();
+        if (gameQueryService.hasProtectionFrom(gameData, target, biterColor)) {
+            String logEntry = target.getCard().getName() + " has protection from " + biterColor.name().toLowerCase() + " — damage prevented.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        int power = gameQueryService.getEffectivePower(gameData, biter);
+        if (power <= 0) {
+            return;
+        }
+
+        int damage = gameHelper.applyCreaturePreventionShield(gameData, target, gameQueryService.applyDamageMultiplier(gameData, power));
+        gameHelper.recordCreatureDamagedByPermanent(gameData, biter.getId(), target, damage);
+        String logEntry = biter.getCard().getName() + " deals " + damage + " damage to " + target.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} bites {} for {} damage", gameData.id, biter.getCard().getName(), target.getCard().getName(), damage);
+
+        if (damage >= gameQueryService.getEffectiveToughness(gameData, target)) {
+            if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        target.getCard().getName() + " is indestructible and survives.");
+            } else if (!gameHelper.tryRegenerate(gameData, target)) {
+                destroyPermanent(gameData, target);
+                gameHelper.removeOrphanedAuras(gameData);
             }
         }
     }

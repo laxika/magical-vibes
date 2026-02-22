@@ -39,6 +39,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 | `DealXDamageToAnyTargetAndGainXLifeEffect` | `()` | deal X damage and gain X life (X spell) |
 | `DealXDamageToTargetCreatureEffect` | `()` | deal X damage to target creature (X spell) |
 | `DealXDamageDividedAmongTargetAttackingCreaturesEffect` | `()` | deal X damage divided among attacking creatures |
+| `FirstTargetDealsPowerDamageToSecondTargetEffect` | `()` | first target creature deals damage equal to its power to second target creature (bite mechanic) |
 | `DoubleDamageEffect` | `()` | double all damage dealt (static) |
 | `SacrificeOtherCreatureOrDamageEffect` | `(int damage)` | sacrifice another creature or take N damage (upkeep trigger) |
 
@@ -203,6 +204,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 | `BoostEnchantedCreaturePerControlledSubtypeEffect` | `(CardSubtype subtype, int powerPerSubtype, int toughnessPerSubtype)` | enchanted creature gets +X/+Y per controlled subtype |
 | `BoostByOtherCreaturesWithSameNameEffect` | `(int powerPerCreature, int toughnessPerCreature)` | +X/+Y per other creature with same name (static) |
 | `BoostBySharedCreatureTypeEffect` | `()` | +1/+1 for each other creature sharing a creature type (static) |
+| `BoostFirstTargetCreatureEffect` | `(int powerBoost, int toughnessBoost)` | first target creature in multi-target spell gets +X/+Y until end of turn |
 | `BoostSelfPerEnchantmentOnBattlefieldEffect` | `(int powerPerEnchantment, int toughnessPerEnchantment)` | +X/+Y per enchantment on battlefield (static) |
 | `BoostSelfPerBlockingCreatureEffect` | `(int powerPerBlockingCreature, int toughnessPerBlockingCreature)` | +X/+Y for each creature blocking this (combat trigger) |
 

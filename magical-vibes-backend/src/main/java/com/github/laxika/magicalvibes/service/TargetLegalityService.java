@@ -141,7 +141,9 @@ public class TargetLegalityService {
 
         boolean multiTargetAllowsPlayers = card.getEffects(EffectSlot.SPELL).stream()
                 .anyMatch(e -> e instanceof DealOrderedDamageToAnyTargetsEffect);
-        for (UUID targetId : targetPermanentIds) {
+        List<TargetFilter> perPositionFilters = card.getMultiTargetFilters();
+        for (int i = 0; i < targetPermanentIds.size(); i++) {
+            UUID targetId = targetPermanentIds.get(i);
             boolean isPlayerTarget = gameData.playerIds.contains(targetId);
             Permanent target = isPlayerTarget ? null : gameQueryService.findPermanentById(gameData, targetId);
             if (!isPlayerTarget && target == null) {
@@ -168,6 +170,13 @@ public class TargetLegalityService {
                 }
                 if (card.isNeedsTarget() && gameQueryService.cantBeTargetedBySpellColor(gameData, target, card.getColor())) {
                     throw new IllegalStateException(target.getCard().getName() + " can't be the target of " + card.getColor().name().toLowerCase() + " spells");
+                }
+                // Apply per-position target filter if available
+                if (i < perPositionFilters.size() && perPositionFilters.get(i) != null) {
+                    gameQueryService.validateTargetFilter(perPositionFilters.get(i), target,
+                            FilterContext.of(gameData)
+                                    .withSourceCardId(card.getId())
+                                    .withSourceControllerId(controllerId));
                 }
             } else if (card.isNeedsTarget() && gameQueryService.playerHasShroud(gameData, targetId)) {
                 throw new IllegalStateException(gameData.playerIdToName.get(targetId) + " has shroud and can't be targeted");

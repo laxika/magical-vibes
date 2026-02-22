@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesXEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostFirstTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -51,6 +52,8 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveBoostSelfPerBlockingCreature(gd, entry, (BoostSelfPerBlockingCreatureEffect) effect));
         registry.register(BoostTargetCreatureEffect.class,
                 (gd, entry, effect) -> resolveBoostTargetCreature(gd, entry, (BoostTargetCreatureEffect) effect));
+        registry.register(BoostFirstTargetCreatureEffect.class,
+                (gd, entry, effect) -> resolveBoostFirstTargetCreature(gd, entry, (BoostFirstTargetCreatureEffect) effect));
         registry.register(BoostAllOwnCreaturesEffect.class,
                 (gd, entry, effect) -> resolveBoostAllOwnCreatures(gd, entry, (BoostAllOwnCreaturesEffect) effect));
         registry.register(BoostAllCreaturesXEffect.class,
@@ -199,6 +202,26 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
 
         // Single-target fallback
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        target.setPowerModifier(target.getPowerModifier() + boost.powerBoost());
+        target.setToughnessModifier(target.getToughnessModifier() + boost.toughnessBoost());
+
+        String logEntry = target.getCard().getName() + " gets +" + boost.powerBoost() + "/+" + boost.toughnessBoost() + " until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} gets +{}/+{}", gameData.id, target.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
+    }
+
+    private void resolveBoostFirstTargetCreature(GameData gameData, StackEntry entry, BoostFirstTargetCreatureEffect boost) {
+        if (entry.getTargetPermanentIds() == null || entry.getTargetPermanentIds().isEmpty()) {
+            return;
+        }
+
+        UUID firstTargetId = entry.getTargetPermanentIds().getFirst();
+        Permanent target = gameQueryService.findPermanentById(gameData, firstTargetId);
         if (target == null) {
             return;
         }
