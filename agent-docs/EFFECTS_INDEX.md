@@ -157,7 +157,13 @@ new ActivatedAbility(loyaltyCost, effects, needsTarget, description)
 
 ```java
 // +1: Create a token
-new ActivatedAbility(+1, List.of(new CreateCreatureTokenWithColorsEffect(...)), false,
+// CreateCreatureTokenWithColorsEffect(int amount, String tokenName, int power, int toughness, Set<CardColor> colors, CardColor primaryColor, List<CardSubtype> subtypes)
+// Convenience: CreateCreatureTokenWithColorsEffect(String tokenName, int power, int toughness, Set<CardColor> colors, CardColor primaryColor, List<CardSubtype> subtypes) — defaults amount to 1
+new ActivatedAbility(+1, List.of(new CreateCreatureTokenWithColorsEffect(
+        "Kithkin", 1, 1,
+        Set.of(CardColor.GREEN, CardColor.WHITE),
+        CardColor.GREEN,
+        List.of(CardSubtype.KITHKIN))), false,
     "+1: Create a 1/1 green and white Kithkin creature token.")
 
 // -8: Ultimate
