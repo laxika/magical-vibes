@@ -14,9 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -97,15 +97,17 @@ public class ActivatedAbilityExecutionService {
         log.info("Game {} - {} activates {}'s ability", gameData.id, player.getUsername(), permanent.getCard().getName());
 
         List<CardEffect> snapshotEffects = snapshotEffects(abilityEffects, permanent);
+        // CR 605.1a: A mana ability doesn't require a target, could add mana, and isn't a loyalty ability.
+        // Pain lands (e.g. Adarkar Wastes) include DealDamageToControllerEffect alongside mana production
+        // and are still mana abilities — they resolve immediately without using the stack.
         boolean isManaAbility = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget()
                 && ability.getLoyaltyCost() == null
                 && !snapshotEffects.isEmpty()
+                && snapshotEffects.stream().anyMatch(e ->
+                e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof DoubleManaPoolEffect)
                 && snapshotEffects.stream().allMatch(e ->
                 e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect
-                        || e instanceof DoubleManaPoolEffect || e instanceof DealDamageToControllerEffect)
-                && snapshotEffects.stream().anyMatch(e ->
-                e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect
-                        || e instanceof DoubleManaPoolEffect);
+                        || e instanceof DoubleManaPoolEffect || e instanceof DealDamageToControllerEffect);
 
         if (isManaAbility) {
             resolveManaAbility(gameData, playerId, player, permanent, snapshotEffects);
