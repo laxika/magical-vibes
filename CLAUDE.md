@@ -8,9 +8,12 @@
 ## Documentation
 
 Check the agent-docs folder for more info on the following:
-- EFFECTS_INDEX.md for effect reuse before creating new effects.
-- CARD_IMPLEMENTATION_PLAYBOOK.md for implementation workflow/patterns.
-- TEST_RECIPES.md for standard card test templates.
+- EFFECTS_INDEX.md — Complete lookup table of all 206 effects with constructor signatures, organized by category (damage, destruction, bounce, life, etc.). Always check here before creating a new effect.
+- ACTIVATED_ABILITY_GUIDE.md — All ActivatedAbility constructor overloads with "use this when" guidance, EffectSlot reference (all 28 slots with when each fires), TargetFilter types, PermanentPredicate/StackEntryPredicate compositions,
+  and cost effects.
+- CARD_PATTERN_INDEX.md — One reference card per archetype (burn spell, ETB creature, pain land, lord, aura, equipment, etc.). Start here to find a similar existing card to base your implementation on.
+- CARD_IMPLEMENTATION_PLAYBOOK.md — Step-by-step workflow for adding cards, canonical patterns, targeting checklist, and anti-patterns.
+- TEST_RECIPES.md — Standard test skeletons for card tests using GameTestHarness.
 
 ## Architecture
 
