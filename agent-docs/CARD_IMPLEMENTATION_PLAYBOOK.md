@@ -4,12 +4,13 @@ Purpose: a minimal workflow for adding cards with fewer repeated lookups and low
 
 ## Fast workflow
 
-1. Identify if card is "composition-only" or requires new engine behavior.
+1. Find a similar card in `CARD_PATTERN_INDEX.md` for reference.
 2. Reuse existing effects from `EFFECTS_INDEX.md`.
-3. Add card class + `@CardRegistration`.
-4. Add/adjust target flags and target filter.
-5. Write focused tests using `GameTestHarness`.
-6. Only if needed: add new effect record + resolver registration.
+3. Check `ACTIVATED_ABILITY_GUIDE.md` for constructor patterns and EffectSlot reference.
+4. Add card class + `@CardRegistration`.
+5. Add/adjust target flags and target filter.
+6. Write focused tests using `GameTestHarness`.
+7. Only if needed: add new effect record + resolver registration.
 
 ## Card class template
 
