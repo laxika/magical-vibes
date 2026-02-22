@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class BarkOfDoran extends Card {
 
     public BarkOfDoran() {
-        addEffect(EffectSlot.STATIC, new BoostEquippedCreatureEffect(0, 1));
+        addEffect(EffectSlot.STATIC, new BoostAttachedCreatureEffect(0, 1));
         addEffect(EffectSlot.STATIC, new AssignCombatDamageWithToughnessEffect());
         addActivatedAbility(new ActivatedAbility(
                 false,

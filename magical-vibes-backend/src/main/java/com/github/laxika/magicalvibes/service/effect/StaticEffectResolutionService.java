@@ -9,9 +9,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreaturePerControlledSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEnchantmentOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostNonColorCreaturesEffect;
@@ -32,6 +31,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 @Service
 public class StaticEffectResolutionService implements StaticEffectHandlerProvider {
@@ -40,9 +40,8 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
     public void registerHandlers(StaticEffectHandlerRegistry registry) {
         registry.register(AnimateNoncreatureArtifactsEffect.class, this::resolveAnimateNoncreatureArtifacts);
         registry.register(BoostCreaturesBySubtypeEffect.class, this::resolveBoostCreaturesBySubtype);
-        registry.register(BoostEnchantedCreatureEffect.class, this::resolveBoostEnchantedCreature);
+        registry.register(BoostAttachedCreatureEffect.class, this::resolveBoostAttachedCreature);
         registry.register(BoostEnchantedCreaturePerControlledSubtypeEffect.class, this::resolveBoostEnchantedCreaturePerControlledSubtype);
-        registry.register(BoostEquippedCreatureEffect.class, this::resolveBoostEquippedCreature);
         registry.register(GrantKeywordEffect.class, this::resolveGrantKeyword);
         registry.register(BoostOwnCreaturesEffect.class, this::resolveBoostOwnCreatures);
         registry.register(BoostOtherCreaturesByColorEffect.class, this::resolveBoostOtherCreaturesByColor);
@@ -75,8 +74,8 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         }
     }
 
-    private void resolveBoostEnchantedCreature(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostEnchantedCreatureEffect) effect;
+    private void resolveBoostAttachedCreature(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostAttachedCreatureEffect) effect;
         if (context.source().getAttachedTo() != null
                 && context.source().getAttachedTo().equals(context.target().getId())) {
             accumulator.addPower(boost.powerBoost());
@@ -110,15 +109,6 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
 
         accumulator.addPower(count * boost.powerPerSubtype());
         accumulator.addToughness(count * boost.toughnessPerSubtype());
-    }
-
-    private void resolveBoostEquippedCreature(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostEquippedCreatureEffect) effect;
-        if (context.source().getAttachedTo() != null
-                && context.source().getAttachedTo().equals(context.target().getId())) {
-            accumulator.addPower(boost.powerBoost());
-            accumulator.addToughness(boost.toughnessBoost());
-        }
     }
 
     private void resolveGrantKeyword(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
@@ -288,71 +278,37 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
 
     private void resolvePowerToughnessEqualToControlledSubtypeCount(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var pt = (PowerToughnessEqualToControlledSubtypeCountEffect) effect;
-        UUID controllerId = findControllerId(context.gameData(), context.source());
-        if (controllerId == null) {
-            return;
-        }
-
-        List<Permanent> battlefield = context.gameData().playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return;
-        }
-
-        int count = 0;
-        for (Permanent permanent : battlefield) {
-            if (permanent.getCard().getSubtypes().contains(pt.subtype())) {
-                count++;
-            }
-        }
-
+        int count = countControlledPermanents(context, p -> p.getCard().getSubtypes().contains(pt.subtype()));
         accumulator.addPower(count);
         accumulator.addToughness(count);
     }
 
     private void resolvePowerToughnessEqualToControlledLandCount(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        UUID controllerId = findControllerId(context.gameData(), context.source());
-        if (controllerId == null) {
-            return;
-        }
-
-        List<Permanent> battlefield = context.gameData().playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return;
-        }
-
-        int count = 0;
-        for (Permanent permanent : battlefield) {
-            if (permanent.getCard().getType() == CardType.LAND
-                    || permanent.getCard().getAdditionalTypes().contains(CardType.LAND)) {
-                count++;
-            }
-        }
-
+        int count = countControlledPermanents(context,
+                p -> p.getCard().getType() == CardType.LAND || p.getCard().getAdditionalTypes().contains(CardType.LAND));
         accumulator.addPower(count);
         accumulator.addToughness(count);
     }
 
     private void resolvePowerToughnessEqualToControlledCreatureCount(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        UUID controllerId = findControllerId(context.gameData(), context.source());
-        if (controllerId == null) {
-            return;
-        }
-
-        List<Permanent> battlefield = context.gameData().playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return;
-        }
-
         boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
-        int count = 0;
-        for (Permanent permanent : battlefield) {
-            if (isEffectivelyCreature(permanent, hasAnimateArtifacts)) {
-                count++;
-            }
-        }
-
+        int count = countControlledPermanents(context, p -> isEffectivelyCreature(p, hasAnimateArtifacts));
         accumulator.addPower(count);
         accumulator.addToughness(count);
+    }
+
+    private int countControlledPermanents(StaticEffectContext context, Predicate<Permanent> filter) {
+        UUID controllerId = findControllerId(context.gameData(), context.source());
+        if (controllerId == null) return 0;
+
+        List<Permanent> battlefield = context.gameData().playerBattlefields.get(controllerId);
+        if (battlefield == null) return 0;
+
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (filter.test(permanent)) count++;
+        }
+        return count;
     }
 
     private UUID findControllerId(GameData gameData, Permanent permanent) {

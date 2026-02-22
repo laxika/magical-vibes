@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.service.GameQueryService;
@@ -62,7 +62,7 @@ class SerrasEmbraceTest {
         assertThat(card.isAura()).isTrue();
         assertThat(card.getCardText()).isEqualTo("Enchant creature\nEnchanted creature gets +2/+2 and has flying and vigilance.");
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(BoostEnchantedCreatureEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(BoostAttachedCreatureEffect.class);
         assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);
         assertThat(card.getEffects(EffectSlot.STATIC).get(2)).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect firstKeyword = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);

@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -70,7 +70,7 @@ class TreetopBracersTest {
         assertThat(card.isAura()).isTrue();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(BoostEnchantedCreatureEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(BoostAttachedCreatureEffect.class);
         assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(CanBeBlockedOnlyByFilterEffect.class);
 
         CanBeBlockedOnlyByFilterEffect restriction = (CanBeBlockedOnlyByFilterEffect) card.getEffects(EffectSlot.STATIC).get(1);

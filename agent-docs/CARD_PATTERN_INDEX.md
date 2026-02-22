@@ -131,7 +131,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 |---------|-----------|-------|
 | Lockdown (can't attack/block) | `p/Pacifism.java` | STATIC EnchantedCreatureCantAttackOrBlockEffect |
 | Doesn't untap | `d/Dehydration.java` | STATIC EnchantedCreatureDoesntUntapEffect |
-| Static boost | `h/HolyStrength.java` | STATIC BoostEnchantedCreatureEffect |
+| Static boost | `h/HolyStrength.java` | STATIC BoostAttachedCreatureEffect |
 | Boost + keyword | `s/SerrasEmbrace.java` | Boost + GrantKeywordEffect(ENCHANTED_CREATURE) |
 | Boost per subtype | `b/BlanchwoodArmor.java` | STATIC BoostEnchantedCreaturePerControlledSubtypeEffect |
 | Control enchanted | `p/Persuasion.java` | STATIC ControlEnchantedCreatureEffect |
@@ -144,7 +144,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
-| Simple boost equip | `l/LeoninScimitar.java` | STATIC BoostEquippedCreatureEffect + EquipEffect ability |
+| Simple boost equip | `l/LeoninScimitar.java` | STATIC BoostAttachedCreatureEffect + EquipEffect ability |
 | Boost + keywords equip | `l/LoxodonWarhammer.java` | Boost + GrantKeywordEffect(EQUIPPED_CREATURE) + equip |
 
 ## Activated abilities

@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -444,7 +444,7 @@ public class AiDecisionEngine {
         boolean isBeneficial = false;
         if (card.isAura()) {
             for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof BoostEnchantedCreatureEffect
+                if (effect instanceof BoostAttachedCreatureEffect
                         || (effect instanceof GrantKeywordEffect grant && grant.scope() == Scope.ENCHANTED_CREATURE)) {
                     isBeneficial = true;
                     break;

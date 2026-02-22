@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.d.Deathmark;
@@ -70,8 +70,8 @@ class LeoninScimitarTest {
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostEquippedCreatureEffect.class);
-        BoostEquippedCreatureEffect boost = (BoostEquippedCreatureEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+                .isInstanceOf(BoostAttachedCreatureEffect.class);
+        BoostAttachedCreatureEffect boost = (BoostAttachedCreatureEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(boost.powerBoost()).isEqualTo(1);
         assertThat(boost.toughnessBoost()).isEqualTo(1);
     }

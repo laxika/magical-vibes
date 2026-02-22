@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -68,11 +68,11 @@ class LoxodonWarhammerTest {
         LoxodonWarhammer card = new LoxodonWarhammer();
 
         assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof BoostEquippedCreatureEffect)
+                .filteredOn(e -> e instanceof BoostAttachedCreatureEffect)
                 .hasSize(1);
-        BoostEquippedCreatureEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof BoostEquippedCreatureEffect)
-                .map(e -> (BoostEquippedCreatureEffect) e)
+        BoostAttachedCreatureEffect boost = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(e -> e instanceof BoostAttachedCreatureEffect)
+                .map(e -> (BoostAttachedCreatureEffect) e)
                 .findFirst().orElseThrow();
         assertThat(boost.powerBoost()).isEqualTo(3);
         assertThat(boost.toughnessBoost()).isEqualTo(0);

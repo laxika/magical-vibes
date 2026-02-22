@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -22,7 +22,7 @@ public class TreetopBracers extends Card {
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
         ));
-        addEffect(EffectSlot.STATIC, new BoostEnchantedCreatureEffect(1, 1));
+        addEffect(EffectSlot.STATIC, new BoostAttachedCreatureEffect(1, 1));
         addEffect(EffectSlot.STATIC, new CanBeBlockedOnlyByFilterEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

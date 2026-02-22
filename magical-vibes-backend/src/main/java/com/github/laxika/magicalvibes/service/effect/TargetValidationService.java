@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreaturePerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
@@ -195,7 +195,7 @@ public class TargetValidationService {
             requireCreature(ctx, target);
         });
 
-        registry.register(BoostEnchantedCreatureEffect.class, (ctx, effect) -> {
+        registry.register(BoostAttachedCreatureEffect.class, (ctx, effect) -> {
             Permanent target = requireBattlefieldTarget(ctx);
             requireCreature(ctx, target);
         });
