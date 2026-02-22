@@ -232,6 +232,7 @@ Sacrifice and discard costs go in the `effects` list BEFORE the actual effect. T
 | `SacrificeSubtypeCreatureCost` | `(CardSubtype)` | "Sacrifice a Goblin: ..." |
 | `SacrificeAllCreaturesYouControlCost` | `()` | "Sacrifice all creatures: ..." |
 | `DiscardCardTypeCost` | `(CardType)` | "Discard a [type] card: ..." |
+| `RemoveCounterFromSourceCost` | `()` | "Remove a counter from this: ..." |
 
 ```java
 // {1}{R}, Sacrifice a Goblin: Deal 2 damage to any target

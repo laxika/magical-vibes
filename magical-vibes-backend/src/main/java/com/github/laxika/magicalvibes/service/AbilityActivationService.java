@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
@@ -297,6 +298,15 @@ public class AbilityActivationService {
             }
         }
 
+        // Validate and pay remove-counter cost
+        boolean hasRemoveCounterCost = abilityEffects.stream().anyMatch(e -> e instanceof RemoveCounterFromSourceCost);
+        if (hasRemoveCounterCost) {
+            int totalCounters = permanent.getPlusOnePlusOneCounters() + permanent.getMinusOneMinusOneCounters();
+            if (totalCounters <= 0) {
+                throw new IllegalStateException("No counters to remove");
+            }
+        }
+
         // Pay mana cost
         if (abilityCost != null) {
             payManaCost(gameData, playerId, abilityCost, effectiveXValue);
@@ -304,6 +314,19 @@ public class AbilityActivationService {
 
         if (discardCardTypeCost != null) {
             payDiscardCost(gameData, player, discardCardTypeCost.requiredType(), discardCardIndex);
+        }
+
+        // Pay remove-counter cost: remove one counter (prefer -1/-1, then +1/+1)
+        if (hasRemoveCounterCost) {
+            if (permanent.getMinusOneMinusOneCounters() > 0) {
+                permanent.setMinusOneMinusOneCounters(permanent.getMinusOneMinusOneCounters() - 1);
+                String counterLog = player.getUsername() + " removes a -1/-1 counter from " + permanent.getCard().getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, counterLog);
+            } else if (permanent.getPlusOnePlusOneCounters() > 0) {
+                permanent.setPlusOnePlusOneCounters(permanent.getPlusOnePlusOneCounters() - 1);
+                String counterLog = player.getUsername() + " removes a +1/+1 counter from " + permanent.getCard().getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, counterLog);
+            }
         }
         if (sacSubtypeCost.isPresent()) {
             if (handleSubtypeSacrificeCostSelection(gameData, player, permanent, effectiveIndex, effectiveXValue,
@@ -652,7 +675,8 @@ public class AbilityActivationService {
                 .filter(e -> !(e instanceof SacrificeSelfCost)
                         && !(e instanceof SacrificeCreatureCost)
                         && !(e instanceof SacrificeSubtypeCreatureCost)
-                        && !(e instanceof DiscardCardTypeCost))
+                        && !(e instanceof DiscardCardTypeCost)
+                        && !(e instanceof RemoveCounterFromSourceCost))
                 .toList();
         return !effects.isEmpty() && effects.stream().allMatch(e ->
                 e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof DoubleManaPoolEffect);

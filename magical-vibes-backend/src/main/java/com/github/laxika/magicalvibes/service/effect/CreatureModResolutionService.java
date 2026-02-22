@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
@@ -75,8 +75,8 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveUntapSelf(gd, entry));
         registry.register(UntapAttackedCreaturesEffect.class,
                 (gd, entry, effect) -> resolveUntapAttackedCreatures(gd, entry));
-        registry.register(PutPlusOnePlusOneCounterOnSourceEffect.class,
-                (gd, entry, effect) -> resolvePutPlusOnePlusOneCounterOnSource(gd, entry, (PutPlusOnePlusOneCounterOnSourceEffect) effect));
+        registry.register(PutCountersOnSourceEffect.class,
+                (gd, entry, effect) -> resolvePutCountersOnSource(gd, entry, (PutCountersOnSourceEffect) effect));
     }
 
     private void resolveAnimateLand(GameData gameData, StackEntry entry, AnimateLandEffect effect) {
@@ -445,7 +445,7 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} untaps {} attacked creature(s)", gameData.id, entry.getCard().getName(), count);
     }
 
-    private void resolvePutPlusOnePlusOneCounterOnSource(GameData gameData, StackEntry entry, PutPlusOnePlusOneCounterOnSourceEffect effect) {
+    private void resolvePutCountersOnSource(GameData gameData, StackEntry entry, PutCountersOnSourceEffect effect) {
         if (entry.getSourcePermanentId() == null) {
             return;
         }
@@ -455,10 +455,15 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
             return;
         }
 
-        source.setPlusOnePlusOneCounters(source.getPlusOnePlusOneCounters() + effect.amount());
-        String logEntry = source.getCard().getName() + " gets a +1/+1 counter.";
+        String counterLabel = String.format("%+d/%+d", effect.powerModifier(), effect.toughnessModifier());
+        if (effect.powerModifier() > 0) {
+            source.setPlusOnePlusOneCounters(source.getPlusOnePlusOneCounters() + effect.amount());
+        } else {
+            source.setMinusOneMinusOneCounters(source.getMinusOneMinusOneCounters() + effect.amount());
+        }
+        String logEntry = source.getCard().getName() + " gets " + effect.amount() + " " + counterLabel + " counter(s).";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} gets {} +1/+1 counter(s)", gameData.id, source.getCard().getName(), effect.amount());
+        log.info("Game {} - {} gets {} {} counter(s)", gameData.id, source.getCard().getName(), effect.amount(), counterLabel);
     }
 }
 

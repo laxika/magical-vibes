@@ -46,7 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
@@ -793,6 +793,8 @@ public class GameHelper {
                 // Put non-graveyard-exile effects on the stack as before
                 if (!otherEffects.isEmpty()) {
                     if (!card.isNeedsTarget() || targetPermanentId != null) {
+                        List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+                        UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 card,
@@ -801,7 +803,11 @@ public class GameHelper {
                                 new ArrayList<>(otherEffects),
                                 0,
                                 targetPermanentId,
-                                Map.of()
+                                sourcePermanentId,
+                                Map.of(),
+                                null,
+                                List.of(),
+                                List.of()
                         ));
                         String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
                         gameBroadcastService.logAndBroadcast(gameData, etbLog);
@@ -1055,7 +1061,7 @@ public class GameHelper {
                     } else if (inner instanceof PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger
                             && trigger.triggerColors().contains(spellCard.getColor())
                             && (!trigger.onlyOwnSpells() || playerId.equals(castingPlayerId))) {
-                        List<CardEffect> resolvedEffects = List.of(new PutPlusOnePlusOneCounterOnSourceEffect(trigger.amount()));
+                        List<CardEffect> resolvedEffects = List.of(new PutCountersOnSourceEffect(1, 1, trigger.amount()));
 
                         if (effect instanceof MayEffect may) {
                             gameData.pendingMayAbilities.add(new PendingMayAbility(

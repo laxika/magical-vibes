@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect.Scope;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
@@ -127,7 +128,8 @@ public class ActivatedAbilityExecutionService {
             if (effect instanceof SacrificeSelfCost
                     || effect instanceof SacrificeCreatureCost
                     || effect instanceof SacrificeSubtypeCreatureCost
-                    || effect instanceof DiscardCardTypeCost) {
+                    || effect instanceof DiscardCardTypeCost
+                    || effect instanceof RemoveCounterFromSourceCost) {
                 continue;
             }
             if (effect instanceof CantBlockSourceEffect) {

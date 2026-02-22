@@ -66,6 +66,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 | `SacrificeSubtypeCreatureCost` | `(CardSubtype subtype)` | sacrifice a creature of specific subtype as cost |
 | `SacrificeAllCreaturesYouControlCost` | `()` | sacrifice all creatures you control as cost |
 | `DiscardCardTypeCost` | `(CardType requiredType)` | discard a card of specific type as cost |
+| `RemoveCounterFromSourceCost` | `()` | remove a counter from this permanent as cost (prefers -1/-1, then +1/+1) |
 
 ## Counter spells
 
@@ -213,7 +214,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 | `PowerToughnessEqualToControlledCreatureCountEffect` | `()` | P/T = number of creatures you control (static) |
 | `PowerToughnessEqualToControlledSubtypeCountEffect` | `(CardSubtype subtype)` | P/T = number of permanents of subtype you control (static) |
 | `PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect` | `()` | P/T = number of creature cards in all graveyards (static) |
-| `PutPlusOnePlusOneCounterOnSourceEffect` | `(int amount)` | put N +1/+1 counters on this creature |
+| `PutCountersOnSourceEffect` | `(int powerModifier, int toughnessModifier, int amount)` | put N counters on this creature (e.g. `(1,1,1)` for +1/+1, `(-1,-1,2)` for two -1/-1) |
 | `PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect` | `(Set<CardColor> triggerColors, int amount, boolean onlyOwnSpells)` | put +1/+1 counters when spell of matching color is cast |
 
 ## Keywords / abilities
