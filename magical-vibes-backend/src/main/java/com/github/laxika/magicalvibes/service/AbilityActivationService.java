@@ -241,7 +241,7 @@ public class AbilityActivationService {
         validateNotBlockedByPithingNeedle(gameData, permanent, ability);
 
         // Validate activation timing restrictions (e.g. "Activate only during your upkeep")
-        validateTimingRestrictions(gameData, playerId, ability);
+        validateTimingRestrictions(gameData, playerId, permanent, ability);
         validateActivationLimitPerTurn(gameData, permanent, ability, effectiveIndex);
 
         // Validate loyalty ability restrictions
@@ -472,8 +472,13 @@ public class AbilityActivationService {
         gameBroadcastService.logAndBroadcast(gameData, sacLog);
     }
 
-    private void validateTimingRestrictions(GameData gameData, UUID playerId, ActivatedAbility ability) {
+    private void validateTimingRestrictions(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability) {
         if (ability.getTimingRestriction() != null) {
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_WHILE_CREATURE) {
+                if (!gameQueryService.isCreature(gameData, permanent)) {
+                    throw new IllegalStateException("This ability can only be activated while this permanent is a creature");
+                }
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP) {
                 if (!playerId.equals(gameData.activePlayerId)) {
                     throw new IllegalStateException("This ability can only be activated during your upkeep");
