@@ -190,7 +190,7 @@ public class GameTestHarness {
         messageHandler = new GameMessageHandler(
                 null, gameService, gameBroadcastService, lobbyService, gameRegistry,
                 sessionManager, new JacksonConfig().objectMapper(),
-                null, null, draftRegistry);
+                null, null, draftRegistry, null);
 
         player1 = new Player(UUID.randomUUID(), "Alice");
         player2 = new Player(UUID.randomUUID(), "Bob");
