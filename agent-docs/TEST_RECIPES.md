@@ -96,6 +96,99 @@ assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
 4. Zone transitions are correct (battlefield, graveyard, hand, library, exile).
 5. No extra side effects occur when resolution is interrupted by input prompts.
 
+## GameTestHarness method reference
+
+### Setup & state
+
+| Method | Signature | Use when |
+|--------|-----------|----------|
+| `skipMulligan` | `()` | Always call in `@BeforeEach` after constructing harness |
+| `setHand` | `(Player, List<Card>)` | Set a player's hand to specific cards |
+| `addMana` | `(Player, ManaColor, int)` | Add mana to a player's pool before casting |
+| `addToBattlefield` | `(Player, Card)` | Put a permanent directly onto the battlefield |
+| `setGraveyard` | `(Player, List<Card>)` | Set a player's graveyard contents |
+| `setLife` | `(Player, int)` | Set a player's life total |
+| `clearMessages` | `()` | Clear WebSocket messages from fake connections |
+
+### Casting spells
+
+| Method | Signature | Use when |
+|--------|-----------|----------|
+| `castCreature` | `(Player, int cardIndex)` | Cast a creature from hand |
+| `castEnchantment` | `(Player, int)` | Cast non-aura enchantment |
+| `castEnchantment` | `(Player, int, UUID targetId)` | Cast aura targeting a permanent |
+| `castArtifact` | `(Player, int)` | Cast an artifact |
+| `castPlaneswalker` | `(Player, int)` | Cast a planeswalker |
+| `castSorcery` | `(Player, int, int xValue)` | Cast X-cost sorcery |
+| `castSorcery` | `(Player, int, UUID targetId)` | Cast targeted sorcery |
+| `castSorcery` | `(Player, int, int xValue, UUID targetId)` | Cast X-cost targeted sorcery |
+| `castSorcery` | `(Player, int, List<UUID> targetIds)` | Cast multi-target sorcery |
+| `castInstant` | `(Player, int)` | Cast non-targeted instant |
+| `castInstant` | `(Player, int, UUID targetId)` | Cast targeted instant |
+| `castInstant` | `(Player, int, List<UUID> targetIds)` | Cast multi-target instant |
+| `castInstantWithConvoke` | `(Player, int, List<UUID>, List<UUID>)` | Cast instant with convoke creatures |
+| `castAndResolveInstant` | `(Player, int)` / `(..., UUID)` / `(..., List<UUID>)` | Cast + auto `passBothPriorities()` |
+| `castAndResolveSorcery` | `(Player, int, int)` / `(..., UUID)` / `(..., int, UUID)` / `(..., List<UUID>)` | Cast + auto `passBothPriorities()` |
+| `playGraveyardLand` | `(Player, int)` | Play a land from graveyard (Crucible of Worlds) |
+
+### Abilities
+
+| Method | Signature | Use when |
+|--------|-----------|----------|
+| `activateAbility` | `(Player, int permIdx, Integer xValue, UUID targetId)` | Activate first ability on a permanent |
+| `activateAbility` | `(Player, int permIdx, Integer xValue, UUID targetId, Zone)` | Activate ability targeting a specific zone |
+| `activateAbility` | `(Player, int permIdx, int abilityIdx, Integer xValue, UUID targetId)` | Activate Nth ability on a permanent |
+| `sacrificePermanent` | `(Player, int permIdx, UUID targetId)` | Sacrifice a permanent (e.g. for Siege-Gang) |
+
+### Player input handlers
+
+| Method | Signature | Use when |
+|--------|-----------|----------|
+| `handlePermanentChosen` | `(Player, UUID)` | Game awaits permanent selection (sacrifice, etc.) |
+| `handleMultiplePermanentsChosen` | `(Player, List<UUID>)` | Game awaits multiple permanent selections |
+| `handleMultipleGraveyardCardsChosen` | `(Player, List<UUID>)` | Game awaits graveyard card selections |
+| `handleCardChosen` | `(Player, int cardIndex)` | Game awaits hand card selection |
+| `handleGraveyardCardChosen` | `(Player, int cardIndex)` | Game awaits graveyard card by index |
+| `handleColorChosen` | `(Player, String colorName)` | Game awaits color choice (e.g. "White") |
+| `handleMayAbilityChosen` | `(Player, boolean)` | Game awaits may-ability yes/no |
+| `handleCombatDamageAssigned` | `(Player, int attackerIdx, Map<UUID, Integer>)` | Assign combat damage to blockers |
+
+### Game control
+
+| Method | Signature | Use when |
+|--------|-----------|----------|
+| `forceActivePlayer` | `(Player)` | Set active player for deterministic tests |
+| `forceStep` | `(TurnStep)` | Jump to a specific turn step |
+| `clearPriorityPassed` | `()` | Reset priority state |
+| `passPriority` | `(Player)` | Single player passes priority |
+| `passBothPriorities` | `()` | Both players pass (resolves top of stack) |
+| `getPermanentId` | `(Player, String cardName) → UUID` | Look up permanent UUID by card name |
+
+### Assertions
+
+| Method | Signature | Checks |
+|--------|-----------|--------|
+| `assertLife` | `(Player, int)` | Life total equals expected |
+| `assertOnBattlefield` | `(Player, String cardName)` | Card is on battlefield |
+| `assertNotOnBattlefield` | `(Player, String cardName)` | Card is NOT on battlefield |
+| `assertInGraveyard` | `(Player, String cardName)` | Card is in graveyard |
+| `assertNotInGraveyard` | `(Player, String cardName)` | Card is NOT in graveyard |
+| `assertInHand` | `(Player, String cardName)` | Card is in hand |
+| `assertNotInHand` | `(Player, String cardName)` | Card is NOT in hand |
+
+### Getters
+
+| Getter | Returns | Use when |
+|--------|---------|----------|
+| `getGameData()` | `GameData` | Direct access to game state for custom assertions |
+| `getPlayer1()` / `getPlayer2()` | `Player` | Get player references |
+| `getConn1()` / `getConn2()` | `FakeConnection` | Inspect sent WebSocket messages |
+| `getGameService()` | `GameService` | Call game engine methods directly |
+| `getGameRegistry()` | `GameRegistry` | Access game registry |
+| `getGameQueryService()` | `GameQueryService` | Query game state (static bonuses, etc.) |
+| `getMessageHandler()` | `MessageHandler` | For AI/message handler tests |
+| `getSessionManager()` | `WebSocketSessionManager` | Access session management |
+
 ## Reference tests
 
 - `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/o/OrcishArtilleryTest.java`
