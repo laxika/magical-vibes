@@ -208,14 +208,21 @@ public class AiDecisionEngine {
             return;
         }
 
+        // Read shared state under the game lock to ensure memory visibility
+        boolean awaitingInput;
+        UUID priorityHolder;
+        synchronized (gameData) {
+            awaitingInput = gameData.interaction.isAwaitingInput();
+            priorityHolder = getPriorityPlayerId(gameData);
+        }
+
         // Check if AI has priority
-        UUID priorityHolder = getPriorityPlayerId(gameData);
         if (priorityHolder == null || !priorityHolder.equals(aiPlayer.getId())) {
             return;
         }
 
         // If awaiting some input, don't try to act on priority
-        if (gameData.interaction.isAwaitingInput()) {
+        if (awaitingInput) {
             return;
         }
 
@@ -1201,8 +1208,13 @@ public class AiDecisionEngine {
     // ===== Combat damage assignment =====
 
     private void handleCombatDamageAssignment(GameData gameData) {
-        InteractionContext.CombatDamageAssignment cda = gameData.interaction.combatDamageAssignmentContext();
+        InteractionContext.CombatDamageAssignment cda;
+        synchronized (gameData) {
+            cda = gameData.interaction.combatDamageAssignmentContext();
+        }
         if (cda == null || !aiPlayer.getId().equals(cda.playerId())) {
+            log.warn("AI: No combat damage assignment context for player {} in game {} (cda={})",
+                    aiPlayer.getId(), gameId, cda);
             return;
         }
 
