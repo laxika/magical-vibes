@@ -65,6 +65,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `power/toughness each equal number of creatures you control`: `PowerToughnessEqualToControlledCreatureCountEffect`
 - `grant keyword`: `GrantKeywordEffect` with `GrantKeywordEffect.Scope` (`TARGET`, `SELF`, `ENCHANTED_CREATURE`, `EQUIPPED_CREATURE`, `OWN_TAPPED_CREATURES`, `OWN_CREATURES`)
 - `grant activated mana ability to lands you control`: `GrantActivatedAbilityToOwnLandsEffect` (typically with `AwardAnyColorManaEffect`)
+- `controller can't cast spells of specified types (static)`: `CantCastSpellTypeEffect(Set<CardType>)`
 - `can't block (static on creature)`: `CantBlockEffect`
 - `can be blocked only by permanents matching a composed predicate`: `CanBeBlockedOnlyByFilterEffect` + permanent predicates (`PermanentHasKeywordPredicate`, `PermanentHasSubtypePredicate`, `PermanentAnyOfPredicate`, `PermanentAllOfPredicate`, `PermanentNotPredicate`)
 - `can be blocked by at most N creatures`: `CanBeBlockedByAtMostNCreaturesEffect`

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect;
@@ -198,6 +199,7 @@ public class GameBroadcastService {
         boolean spellLimitReached = spellsCast >= maxSpells;
 
         boolean stackEmpty = gameData.stack.isEmpty();
+        Set<CardType> restrictedSpellTypes = getRestrictedSpellTypes(gameData, playerId);
 
         // Count untapped creatures for convoke playability
         int untappedCreatureCount = 0;
@@ -216,6 +218,9 @@ public class GameBroadcastService {
                 playable.add(i);
             }
             if (card.getManaCost() != null && !spellLimitReached) {
+                if (restrictedSpellTypes.contains(card.getType())
+                        || card.getAdditionalTypes().stream().anyMatch(restrictedSpellTypes::contains)) continue;
+
                 boolean isInstantSpeed = card.getType() == CardType.INSTANT
                         || card.getKeywords().contains(Keyword.FLASH);
                 boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
@@ -306,6 +311,20 @@ public class GameBroadcastService {
             }
         }
         return Integer.MAX_VALUE;
+    }
+
+    Set<CardType> getRestrictedSpellTypes(GameData gameData, UUID playerId) {
+        Set<CardType> restricted = EnumSet.noneOf(CardType.class);
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return restricted;
+        for (Permanent perm : bf) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CantCastSpellTypeEffect cantCast) {
+                    restricted.addAll(cantCast.restrictedTypes());
+                }
+            }
+        }
+        return restricted;
     }
 
     int getOpponentCostIncrease(GameData gameData, UUID playerId, CardType cardType) {

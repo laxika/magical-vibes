@@ -44,6 +44,10 @@ public class ExampleCard extends Card {
   - `addEffect(EffectSlot.STATIC, new CantBlockEffect())`
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SpinelessThug.java`
 
+- Static "controller can't cast spells of specified types":
+  - `addEffect(EffectSlot.STATIC, new CantCastSpellTypeEffect(Set.of(CardType.CREATURE)))`
+  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SteelGolem.java`
+
 - Aura with static effect:
   - `setNeedsTarget(true)` + static aura effect
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/p/Pacifism.java`
