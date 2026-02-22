@@ -507,6 +507,30 @@ export class GameChoiceService {
         xValue: this.xValueInput
       });
     } else {
+      const card = g.hand[this.xValueCardIndex];
+      if (card?.needsTarget) {
+        // Store X value and enter targeting mode for spells like Blaze
+        const savedXValue = this.xValueInput;
+        const savedCardIndex = this.xValueCardIndex;
+        const savedCardName = this.xValueCardName;
+        this.choosingXValue = false;
+        this.targeting = true;
+        this.targetingCardIndex = savedCardIndex;
+        this.targetingCardName = savedCardName;
+        this.targetingForAbility = false;
+        this.targetingForPlayer = card.targetsPlayer ?? false;
+        this.targetingRequiresAttacking = card.requiresAttackingTarget ?? false;
+        this.targetingAbilityIndex = -1;
+        this.pendingAbilityXValue = savedXValue;
+        this.targetingAllowedTypes = card.allowedTargetTypes?.length > 0 ? card.allowedTargetTypes : [];
+        this.targetingAllowedSubtypes = card.allowedTargetSubtypes?.length > 0 ? card.allowedTargetSubtypes : [];
+        this.targetingAllowedColors = [];
+        this.targetingBlockingThis = false;
+        this.pendingConvokeCard = null;
+        this.xValueCardIndex = -1;
+        this.xValueCardName = '';
+        return;
+      }
       this.websocketService.send({
         type: MessageType.PLAY_CARD,
         cardIndex: this.xValueCardIndex,
@@ -801,11 +825,15 @@ export class GameChoiceService {
       this.enterConvokeMode(cardIndex, card);
       return;
     } else {
-      this.websocketService.send({
+      const msg: any = {
         type: MessageType.PLAY_CARD,
         cardIndex: this.targetingCardIndex,
         targetPermanentId: permanentId
-      });
+      };
+      if (this.pendingAbilityXValue != null) {
+        msg.xValue = this.pendingAbilityXValue;
+      }
+      this.websocketService.send(msg);
     }
     this.targeting = false;
     this.targetingCardIndex = -1;
@@ -835,11 +863,15 @@ export class GameChoiceService {
         targetPermanentId: playerId
       });
     } else {
-      this.websocketService.send({
+      const msg: any = {
         type: MessageType.PLAY_CARD,
         cardIndex: this.targetingCardIndex,
         targetPermanentId: playerId
-      });
+      };
+      if (this.pendingAbilityXValue != null) {
+        msg.xValue = this.pendingAbilityXValue;
+      }
+      this.websocketService.send(msg);
     }
     this.targeting = false;
     this.targetingCardIndex = -1;

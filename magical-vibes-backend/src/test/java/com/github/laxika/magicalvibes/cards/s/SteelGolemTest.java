@@ -52,7 +52,7 @@ class SteelGolemTest {
         assertThat(card.getType()).isEqualTo(CardType.ARTIFACT);
         assertThat(card.getAdditionalTypes()).contains(CardType.CREATURE);
         assertThat(card.getManaCost()).isEqualTo("{3}");
-        assertThat(card.getColor()).isEqualTo(CardColor.COLORLESS);
+        assertThat(card.getColor()).isNull();
         assertThat(card.getPower()).isEqualTo(3);
         assertThat(card.getToughness()).isEqualTo(4);
         assertThat(card.getSubtypes()).contains(CardSubtype.GOLEM);

@@ -436,6 +436,9 @@ public class DamageResolutionService implements EffectHandlerProvider {
 
     void resolveDealXDamageToAnyTarget(GameData gameData, StackEntry entry) {
         UUID targetId = entry.getTargetPermanentId();
+        if (targetId == null) {
+            return;
+        }
         int xValue = gameQueryService.applyDamageMultiplier(gameData, entry.getXValue());
         String cardName = entry.getCard().getName();
 
@@ -493,6 +496,9 @@ public class DamageResolutionService implements EffectHandlerProvider {
 
     void resolveDealXDamageToAnyTargetAndGainXLife(GameData gameData, StackEntry entry) {
         UUID targetId = entry.getTargetPermanentId();
+        if (targetId == null) {
+            return;
+        }
         int xValue = entry.getXValue();
         int damageValue = gameQueryService.applyDamageMultiplier(gameData, xValue);
         UUID controllerId = entry.getControllerId();
@@ -663,6 +669,9 @@ public class DamageResolutionService implements EffectHandlerProvider {
 
     void resolveDealDamageToAnyTarget(GameData gameData, StackEntry entry, DealDamageToAnyTargetEffect effect) {
         UUID targetId = entry.getTargetPermanentId();
+        if (targetId == null) {
+            return;
+        }
         int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
         String cardName = entry.getCard().getName();
 
@@ -800,6 +809,9 @@ public class DamageResolutionService implements EffectHandlerProvider {
 
     void resolveDealDamageToAnyTargetAndGainLife(GameData gameData, StackEntry entry, DealDamageToAnyTargetAndGainLifeEffect effect) {
         UUID targetId = entry.getTargetPermanentId();
+        if (targetId == null) {
+            return;
+        }
         int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
         int lifeGain = effect.lifeGain();
         UUID controllerId = entry.getControllerId();

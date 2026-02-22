@@ -8,9 +8,12 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -147,7 +150,11 @@ public class CardViewFactory {
                     || effect instanceof SacrificeCreatureEffect
                     || effect instanceof ShuffleGraveyardIntoLibraryEffect
                     || effect instanceof TargetPlayerDiscardsEffect
-                    || effect instanceof DealOrderedDamageToAnyTargetsEffect) {
+                    || effect instanceof DealOrderedDamageToAnyTargetsEffect
+                    || effect instanceof DealDamageToAnyTargetEffect
+                    || effect instanceof DealDamageToAnyTargetAndGainLifeEffect
+                    || effect instanceof DealXDamageToAnyTargetEffect
+                    || effect instanceof DealXDamageToAnyTargetAndGainXLifeEffect) {
                 return true;
             }
         }
