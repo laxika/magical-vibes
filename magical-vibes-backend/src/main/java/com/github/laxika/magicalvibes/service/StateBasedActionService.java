@@ -53,6 +53,20 @@ public class StateBasedActionService {
         if (anyDied) {
             gameHelper.removeOrphanedAuras(gameData);
         }
+
+        // CR 704.5b — player who attempted to draw from an empty library loses the game
+        if (!gameData.playersAttemptedDrawFromEmptyLibrary.isEmpty()) {
+            for (UUID playerId : List.copyOf(gameData.playersAttemptedDrawFromEmptyLibrary)) {
+                if (gameQueryService.canPlayerLoseGame(gameData, playerId)) {
+                    UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
+                    String logEntry = gameData.playerIdToName.get(playerId) + " attempted to draw from an empty library and loses the game.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} loses (drew from empty library)", gameData.id, gameData.playerIdToName.get(playerId));
+                    gameHelper.declareWinner(gameData, winnerId);
+                }
+            }
+            gameData.playersAttemptedDrawFromEmptyLibrary.clear();
+        }
     }
 }
 

@@ -84,6 +84,9 @@ public class GameData {
     public boolean combatDamagePhase1Complete = false;
     public CombatDamagePhase1State combatDamagePhase1State;
 
+    // CR 704.5b — track players who attempted to draw from an empty library
+    public final Set<UUID> playersAttemptedDrawFromEmptyLibrary = ConcurrentHashMap.newKeySet();
+
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {
         this.id = id;
         this.gameName = gameName;

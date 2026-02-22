@@ -1283,8 +1283,18 @@ public class GameHelper {
         List<Card> hand = gameData.playerHands.get(playerId);
 
         if (deck == null || deck.isEmpty()) {
+            gameData.playersAttemptedDrawFromEmptyLibrary.add(playerId);
             String logEntry = gameData.playerIdToName.get(playerId) + " has no cards to draw.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+            // CR 704.5b — player who attempted to draw from an empty library loses the game
+            if (gameQueryService.canPlayerLoseGame(gameData, playerId)) {
+                UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
+                String lossLog = gameData.playerIdToName.get(playerId) + " attempted to draw from an empty library and loses the game.";
+                gameBroadcastService.logAndBroadcast(gameData, lossLog);
+                log.info("Game {} - {} loses (drew from empty library)", gameData.id, gameData.playerIdToName.get(playerId));
+                declareWinner(gameData, winnerId);
+            }
             return;
         }
 
