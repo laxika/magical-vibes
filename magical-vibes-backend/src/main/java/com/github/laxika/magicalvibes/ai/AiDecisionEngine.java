@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -654,10 +653,7 @@ public class AiDecisionEngine {
             Permanent perm = opponentBattlefield.get(i);
             if (perm.isAttacking()) {
                 // Skip unblockable creatures
-                if (perm.isCantBeBlocked()) continue;
-                boolean hasCantBeBlockedStatic = perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> e instanceof CantBeBlockedEffect);
-                if (hasCantBeBlockedStatic) continue;
+                if (gameQueryService.hasCantBeBlocked(gameData, perm)) continue;
 
                 attackers.add(new int[]{i,
                         gameQueryService.getEffectivePower(gameData, perm),

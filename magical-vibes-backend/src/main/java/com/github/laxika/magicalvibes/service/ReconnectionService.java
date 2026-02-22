@@ -4,12 +4,10 @@ import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
@@ -70,9 +68,7 @@ public class ReconnectionService {
                     List<Integer> attackerIndices = combatService.getAttackingCreatureIndices(gameData, gameData.activePlayerId);
                     List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(gameData.activePlayerId);
                     attackerIndices = attackerIndices.stream()
-                            .filter(idx -> !attackerBattlefield.get(idx).isCantBeBlocked()
-                                    && attackerBattlefield.get(idx).getCard().getEffects(EffectSlot.STATIC).stream()
-                                            .noneMatch(e -> e instanceof CantBeBlockedEffect))
+                            .filter(idx -> !gameQueryService.hasCantBeBlocked(gameData, attackerBattlefield.get(idx)))
                             .toList();
                     sessionManager.sendToPlayer(defenderId, new AvailableBlockersMessage(blockable, attackerIndices));
                 }
@@ -180,9 +176,7 @@ public class ReconnectionService {
                     List<Integer> attackerIndices = combatService.getAttackingCreatureIndices(gameData, gameData.activePlayerId);
                     List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(gameData.activePlayerId);
                     attackerIndices = attackerIndices.stream()
-                            .filter(idx -> !attackerBattlefield.get(idx).isCantBeBlocked()
-                                    && attackerBattlefield.get(idx).getCard().getEffects(EffectSlot.STATIC).stream()
-                                    .noneMatch(e -> e instanceof CantBeBlockedEffect))
+                            .filter(idx -> !gameQueryService.hasCantBeBlocked(gameData, attackerBattlefield.get(idx)))
                             .toList();
                     sessionManager.sendToPlayer(defenderId, new AvailableBlockersMessage(blockable, attackerIndices));
                 }

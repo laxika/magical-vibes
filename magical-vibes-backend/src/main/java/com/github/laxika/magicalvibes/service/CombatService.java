@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreature
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
@@ -331,9 +330,7 @@ public class CombatService {
         // Filter out attackers that can't be blocked
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
         attackerIndices = attackerIndices.stream()
-                .filter(idx -> !attackerBattlefield.get(idx).isCantBeBlocked()
-                        && attackerBattlefield.get(idx).getCard().getEffects(EffectSlot.STATIC).stream()
-                                .noneMatch(e -> e instanceof CantBeBlockedEffect))
+                .filter(idx -> !gameQueryService.hasCantBeBlocked(gameData, attackerBattlefield.get(idx)))
                 .toList();
 
         if (blockable.isEmpty() || attackerIndices.isEmpty()) {
@@ -397,12 +394,7 @@ public class CombatService {
 
             Permanent attacker = attackerBattlefield.get(attackerIdx);
             Permanent blocker = defenderBattlefield.get(blockerIdx);
-            if (attacker.isCantBeBlocked()) {
-                throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked this turn");
-            }
-            boolean hasCantBeBlockedStatic = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(e -> e instanceof CantBeBlockedEffect);
-            if (hasCantBeBlockedStatic) {
+            if (gameQueryService.hasCantBeBlocked(gameData, attacker)) {
                 throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked");
             }
             if (gameQueryService.hasKeyword(gameData, attacker, Keyword.FLYING)
@@ -653,10 +645,7 @@ public class CombatService {
                                      Permanent blocker,
                                      Permanent attacker,
                                      List<Permanent> defenderBattlefield) {
-        if (attacker.isCantBeBlocked()) return false;
-        boolean hasCantBeBlockedStatic = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(e -> e instanceof CantBeBlockedEffect);
-        if (hasCantBeBlockedStatic) return false;
+        if (gameQueryService.hasCantBeBlocked(gameData, attacker)) return false;
 
         if (gameQueryService.hasKeyword(gameData, attacker, Keyword.FLYING)
                 && !gameQueryService.hasKeyword(gameData, blocker, Keyword.FLYING)

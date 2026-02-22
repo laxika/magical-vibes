@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedBySpellColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -173,6 +174,24 @@ public class GameQueryService {
 
     public boolean hasKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
         return permanent.hasKeyword(keyword) || computeStaticBonus(gameData, permanent).keywords().contains(keyword);
+    }
+
+    public boolean hasCantBeBlocked(GameData gameData, Permanent creature) {
+        if (creature.isCantBeBlocked()) return true;
+        if (creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof CantBeBlockedEffect)) return true;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent source : battlefield) {
+                if (source.getAttachedTo() != null && source.getAttachedTo().equals(creature.getId())
+                        && source.getCard().getEffects(EffectSlot.STATIC).stream()
+                                .anyMatch(e -> e instanceof CantBeBlockedEffect)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public boolean matchesPermanentPredicate(GameData gameData, Permanent permanent, PermanentPredicate predicate) {
