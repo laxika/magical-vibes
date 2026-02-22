@@ -1,127 +1,349 @@
-# EFFECTS_INDEX
+# ACTIVATED_ABILITY_GUIDE
 
-Purpose: cut token usage when implementing cards by quickly mapping "card text intent" to existing reusable effects and their resolver location.
+Quick reference for building `ActivatedAbility` instances. Covers all constructor overloads, all parameters, and when to use each variant.
 
-## How to use this index
+## Fields reference
 
-1. Parse card text into primitive actions (damage, draw, bounce, etc.).
-2. Find each primitive below and reuse existing effects first.
-3. Only add new effect records when no existing effect can express the behavior.
-4. If you add a new effect record, register it in the matching `*ResolutionService` provider.
+| Field | Type | Description |
+|-------|------|-------------|
+| `requiresTap` | `boolean` | `true` if the ability has {T} in its cost (tap as cost) |
+| `manaCost` | `String` | Mana cost string like `"{2}{B}"`, or `null` for no mana cost |
+| `effects` | `List<CardEffect>` | Effects to resolve (costs first, then actual effects) |
+| `needsTarget` | `boolean` | `true` if the ability targets a permanent or player |
+| `needsSpellTarget` | `boolean` | `true` if the ability targets a spell on the stack |
+| `description` | `String` | Rules text shown to the player (e.g. `"{T}: Draw a card."`) |
+| `targetFilter` | `TargetFilter` | Restricts valid targets (permanent filter or stack filter) |
+| `loyaltyCost` | `Integer` | Planeswalker loyalty cost (e.g. `+1`, `-2`, `-8`). `null` for non-planeswalker abilities |
+| `maxActivationsPerTurn` | `Integer` | Maximum activations per turn. `null` for unlimited |
+| `timingRestriction` | `ActivationTimingRestriction` | When the ability can be activated. `null` for default (instant speed) |
 
-## Common intents -> effect classes
+### ActivationTimingRestriction values
 
-- `deal N damage to target creature`: `DealDamageToTargetCreatureEffect`
-- `at your draw step, you may deal N damage to target creature`: `MayEffect(DealDamageToTargetCreatureEffect(N), ...)` on `DRAW_TRIGGERED`
-- `deal N damage to any target`: `DealDamageToAnyTargetEffect`, `DealXDamageToAnyTargetEffect`
-- `deal N damage to target player`: `DealDamageToTargetPlayerEffect`, `DealDamageToTargetPlayerByHandSizeEffect`
-- `deal N damage to all creatures`: `DealDamageToAllCreaturesEffect`
-- `deal N damage to all creatures and each player`: `DealDamageToAllCreaturesAndPlayersEffect`
-- `deal N damage then gain life`: `DealDamageToAnyTargetAndGainLifeEffect`, `DealXDamageToAnyTargetAndGainXLifeEffect`
-- `deal damage to yourself/controller`: `DealDamageToControllerEffect`
-- `when enchanted land is tapped for mana, add mana`: `AddManaOnEnchantedLandTapEffect`
-- `destroy target permanent`: `DestroyTargetPermanentEffect`
-- `destroy target creature`: `DestroyTargetPermanentEffect` + `PermanentPredicateTargetFilter(PermanentIsCreaturePredicate)`
-- `destroy all creatures/artifacts/enchantments` (optionally only opponents' permanents): `DestroyAllPermanentsEffect`
-- `sacrifice unless discard a card (any type)`: `SacrificeUnlessDiscardCardTypeEffect(null)` on `UPKEEP_TRIGGERED`
-- `sacrifice unless discard a specific card type`: `SacrificeUnlessDiscardCardTypeEffect(CardType.X)` on `UPKEEP_TRIGGERED` or `ON_ENTER_BATTLEFIELD`
-- `sacrifice creature`: `SacrificeCreatureEffect`, `EachOpponentSacrificesCreatureEffect`
-- `counter spell`: `CounterSpellEffect`, `CounterUnlessPaysEffect`
-- `creature spells can't be countered`: `CreatureSpellsCantBeCounteredEffect`
-- `stack/spell target restrictions`: `StackEntryPredicateTargetFilter` + stack predicates (`StackEntryTypeInPredicate`, `StackEntryColorInPredicate`, `StackEntryIsSingleTargetPredicate`, `StackEntryAnyOfPredicate`, `StackEntryAllOfPredicate`, `StackEntryNotPredicate`)
-- `return target permanent/creature`: `ReturnTargetPermanentToHandEffect` (+ creature target filter when needed)
-- `at upkeep, choose and return creature`: `BounceCreatureOnUpkeepEffect` (scope + filters)
-- `at upkeep, return a [color] creature you control`: `BounceCreatureOnUpkeepEffect` + `ControlledPermanentPredicateTargetFilter` + `PermanentColorInPredicate`
-- `return target card from your graveyard to your hand`: `ReturnCardFromGraveyardToHandEffect`
-- `return all creatures to hand`: `ReturnCreaturesToOwnersHandEffect`
-- `artifacts/lands enter tapped`: `EnterPermanentsOfTypesTappedEffect` (e.g. `Set.of(CardType.ARTIFACT, CardType.LAND)`)
-- `draw cards`: `DrawCardEffect`, `DrawCardForTargetPlayerEffect`
-- `when an opponent draws a card, deal damage to that player`: `DealDamageToTargetPlayerEffect` on `EffectSlot.ON_OPPONENT_DRAWS`
-- `discard`: `DiscardCardEffect`, `TargetPlayerDiscardsEffect`, `RandomDiscardEffect`
-- `you may put a [type] card from hand onto battlefield`: `MayEffect(PutCardToBattlefieldEffect(CardType.X), "...")`
-- `opponent may put a creature card from hand onto battlefield`: `OpponentMayPlayCreatureEffect`
-- `mill`: `MillTargetPlayerEffect`, `MillHalfLibraryEffect`, `MillByHandSizeEffect`
-- `search library`: `SearchLibraryForCardToHandEffect`, `SearchLibraryForBasicLandToHandEffect`
-- `search library for card type(s) to hand`: `SearchLibraryForCardTypesToHandEffect(Set<CardType>)`
-- `search library`: `SearchLibraryForCardToHandEffect`, `SearchLibraryForBasicLandToHandEffect`, `SearchLibraryForCardTypesToBattlefieldEffect`
-- `pay mana, then search library for named card and put onto battlefield`: `PayManaAndSearchLibraryForCardNamedToBattlefieldEffect`
-- `look at top N cards, may reveal a card of specified type(s) and put it into hand, rest on bottom`: `LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect`
-- `shuffle into library`: `ShuffleIntoLibraryEffect`, `ShuffleGraveyardIntoLibraryEffect`
-- `create creature tokens`: `CreateCreatureTokenEffect`, `CreateCreatureTokenWithColorsEffect` (both support `amount` parameter for multiple tokens)
-- `gain life`: `GainLifeEffect`, `GainLifePerGraveyardCardEffect`, `GainLifeEqualToTargetToughnessEffect`
-- `whenever a player casts a [color] spell, you may gain N life`: `MayEffect(GainLifeOnColorSpellCastEffect(CardColor, N))` on `ON_ANY_PLAYER_CASTS_SPELL`
-- `target player gains N life`: `TargetPlayerGainsLifeEffect`
-- `lose life / drain`: `LoseLifeEffect`, `TargetPlayerLosesLifeAndControllerGainsLifeEffect`, `EnchantedCreatureControllerLosesLifeEffect`
-- `target opponent gains control of this creature (ETB)`: `TargetPlayerGainsControlOfSourceCreatureEffect`
-- `each player loses life for each creature they control`: `EachPlayerLosesLifePerCreatureControlledEffect`
-- `target player loses the game`: `TargetPlayerLosesGameEffect`
-- `lose the game if not cast from hand (ETB check)`: `LoseGameIfNotCastFromHandEffect`
-- `win the game if condition is met`: `WinGameIfCreaturesInGraveyardEffect`
-- `pump target/self/all`: `BoostTargetCreatureEffect`, `BoostSelfEffect`, `BoostAllOwnCreaturesEffect`, `BoostAllCreaturesXEffect`
-- `enchanted creature gets +X/+X per controlled subtype`: `BoostEnchantedCreaturePerControlledSubtypeEffect`
-- `gets +N/+N for each other creature with same name`: `BoostByOtherCreaturesWithSameNameEffect`
-- `gets +N/+N for each enchantment on the battlefield`: `BoostSelfPerEnchantmentOnBattlefieldEffect`
-- `when you cast a spell of specific colors, put +1/+1 counter on this`: `PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect`
-- `power/toughness each equal number of lands you control`: `PowerToughnessEqualToControlledLandCountEffect`
-- `power/toughness each equal number of creatures you control`: `PowerToughnessEqualToControlledCreatureCountEffect`
-- `grant keyword`: `GrantKeywordEffect` with `GrantKeywordEffect.Scope` (`TARGET`, `SELF`, `ENCHANTED_CREATURE`, `EQUIPPED_CREATURE`, `OWN_TAPPED_CREATURES`, `OWN_CREATURES`)
-- `grant activated mana ability to lands you control`: `GrantActivatedAbilityToOwnLandsEffect` (typically with `AwardAnyColorManaEffect`)
-- `controller can't cast spells of specified types (static)`: `CantCastSpellTypeEffect(Set<CardType>)`
-- `can't be blocked (static on creature or equipment)`: `CantBeBlockedEffect` (works on creature's own card or from attached equipment; checked via `GameQueryService.hasCantBeBlocked()`)
-- `can't block (static on creature)`: `CantBlockEffect`
-- `can be blocked only by permanents matching a composed predicate`: `CanBeBlockedOnlyByFilterEffect` + permanent predicates (`PermanentHasKeywordPredicate`, `PermanentHasSubtypePredicate`, `PermanentAnyOfPredicate`, `PermanentAllOfPredicate`, `PermanentNotPredicate`)
-- `can be blocked by at most N creatures`: `CanBeBlockedByAtMostNCreaturesEffect`
-- `assign combat damage as though it weren't blocked`: `AssignCombatDamageAsThoughUnblockedEffect`
-- `target restrictions based on permanent properties`: `PermanentPredicateTargetFilter` + permanent predicates (`PermanentIsCreaturePredicate`, `PermanentIsTappedPredicate`, `PermanentColorInPredicate`, `PermanentPowerAtMostPredicate`, etc.)
-- `can't be the target of [color] spells`: `CantBeTargetedBySpellColorsEffect`
-- `all creatures able to block enchanted creature do so`: `MustBeBlockedByAllCreaturesEffect`
-- `tap/untap`: `TapTargetPermanentEffect` (use `Set.of(CardType.CREATURE)` for creature-only), `TapOrUntapTargetPermanentEffect`, `UntapTargetPermanentEffect`, `UntapSelfEffect`
-- `untap all permanents you control during each other player's [step]`: `UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect`
-- `prevent damage`: `PreventDamageToTargetEffect`, `PreventNextDamageEffect`, `PreventAllCombatDamageEffect`, `PreventDamageFromColorsEffect`
-- `enter as a copy of [type] permanent (Clone/Sculpting Steel)`: `CopyPermanentOnEnterEffect(PermanentPredicate, typeLabel)` — handled by `GameHelper` + `MayAbilityHandlerService`
-- `copy or retarget spell`: `CopySpellEffect`, `ChangeTargetOfTargetSpellWithSingleTargetEffect`
-- `extra turn / additional combat / end turn`: `ExtraTurnEffect`, `AdditionalCombatMainPhaseEffect`, `EndTurnEffect`
-- `equip`: `EquipEffect`
-- `this spell costs {N} less to cast if an opponent controls M more creatures`: `ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect`
-- `players don't lose unspent mana as steps and phases end`: `PreventManaDrainEffect`
-- `you can't lose the game and your opponents can't win the game`: `CantLoseGameEffect`
-- `as this enters, choose a card name`: `ChooseCardNameOnEnterEffect` (implements `ChooseCardNameEffect` marker interface; reuses color choice UI flow via `ColorChoiceContext.CardNameChoice`)
-- `activated abilities of sources with the chosen name can't be activated (static)`: `ActivatedAbilitiesOfChosenNameCantBeActivatedEffect` (checked in `AbilityActivationService`; exempts mana abilities)
-- `you have no maximum hand size (static)`: `NoMaximumHandSizeEffect`
-- `land becomes N/M creature with subtypes/keywords/color until end of turn`: `AnimateLandEffect(power, toughness, grantedSubtypes, grantedKeywords, animatedColor)` — for creature lands (manlands)
+| Value | Use when |
+|-------|----------|
+| `SORCERY_SPEED` | Equip abilities, sorcery-speed activated abilities |
+| `ONLY_DURING_YOUR_UPKEEP` | Abilities that can only be used during your upkeep |
+| `ONLY_WHILE_CREATURE` | Abilities on creature lands that only work while animated |
 
-## Provider map (where effects are resolved)
+---
 
-- Damage: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/DamageResolutionService.java`
-- Destruction/sacrifice: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/DestructionResolutionService.java`
-- Bounce: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/BounceResolutionService.java`
-- Counter: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/CounterResolutionService.java`
-- Library/search/mill: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/LibraryResolutionService.java`
-- Graveyard return/exile from graveyard: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/GraveyardReturnResolutionService.java`
-- Player interaction (draw/discard/choices): `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/effect/PlayerInteractionResolutionService.java`
-- Life: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/effect/LifeResolutionService.java`
-- Creature mods (tap/pump/temp keyword): `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/effect/CreatureModResolutionService.java`
-- Permanent control/tokens/regeneration: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/effect/PermanentControlResolutionService.java`
-- Static continuous effects (keywords/stats/granted abilities): `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/effect/StaticEffectResolutionService.java`
-- Prevention: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/PreventionResolutionService.java`
-- Turn effects: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/TurnResolutionService.java`
-- Copy/retarget: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/CopyResolutionService.java`, `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/TargetRedirectionResolutionService.java`
-- Exile target permanent: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/ExileResolutionService.java`
-- Card-specific one-offs: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/effect/CardSpecificResolutionService.java`
-- Land-tap triggered handling (e.g. Manabarbs / Overgrowth): `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/GameHelper.java` (`checkLandTapTriggers`)
-- Win conditions: `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/effect/WinConditionResolutionService.java`
+## Constructor quick-pick guide
 
-## Canonical card examples
+### 1. Basic ability (most common)
 
-- Burn spell: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/Shock.java`
-- Multi-effect targeted spell: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/c/Condemn.java`
-- Effect composition in activated ability: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/o/OrcishArtillery.java`
-- Spell-copy targeting stack: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/t/Twincast.java`
-- Aura static lock: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/p/Pacifism.java`
-- Static "can't block" creature: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SpinelessThug.java`
-- ETB token + activated cost/effect composition: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SiegeGangCommander.java`
-- ETB control handoff + upkeep drawback: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SleeperAgent.java`
-- Opponent draw trigger damage: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/u/UnderworldDreams.java`
-- Conditional self cast-cost reduction: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/a/AvatarOfMight.java`
-- Evasion blocked-only-by-wall-or-flying: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/e/ElvenRiders.java`
-- ETB card name choice + static ability lock: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/p/PithingNeedle.java`
+```java
+new ActivatedAbility(requiresTap, manaCost, effects, needsTarget, description)
+```
+
+**Use when:** Simple tap ability, mana ability, pump, or any ability with no target restrictions.
+
+```java
+// Tap to deal damage to any target
+new ActivatedAbility(true, null, List.of(new DealDamageToAnyTargetEffect(3)), true,
+    "{T}: Kamahl, Pit Fighter deals 3 damage to any target.")
+
+// Pay mana to pump self
+new ActivatedAbility(false, "{R}", List.of(new BoostSelfEffect(1, 0)), false,
+    "{R}: Furnace Whelp gets +1/+0 until end of turn.")
+
+// Tap + mana to mill
+new ActivatedAbility(true, "{2}", List.of(new MillTargetPlayerEffect(2)), true,
+    "{2}, {T}: Target player mills two cards.")
+```
+
+Cards: `KamahlPitFighter`, `FurnaceWhelp`, `Millstone`, `ProdigalPyromancer`, `ArcanisTheOmnipotent`
+
+---
+
+### 2. Ability with target filter
+
+```java
+new ActivatedAbility(requiresTap, manaCost, effects, needsTarget, description, targetFilter)
+```
+
+**Use when:** Ability targets a permanent but only specific ones (e.g. "target creature with power 2 or less", "target blue or red creature").
+
+```java
+// Target creature with power 2 or less
+new ActivatedAbility(true, null, List.of(new MakeTargetUnblockableEffect()), true,
+    "{T}: Target creature with power 2 or less can't be blocked this turn.",
+    new PermanentPredicateTargetFilter(
+        new PermanentAllOfPredicate(List.of(
+            new PermanentIsCreaturePredicate(),
+            new PermanentPowerAtMostPredicate(2)
+        )),
+        "Target creature's power must be 2 or less"
+    ))
+
+// Target blue or red creature
+new ActivatedAbility(false, "{2}", List.of(new BoostTargetCreatureEffect(1, 0)), true,
+    "{2}: Target blue or red creature gets +1/+0 until end of turn.",
+    new PermanentPredicateTargetFilter(
+        new PermanentAllOfPredicate(List.of(
+            new PermanentIsCreaturePredicate(),
+            new PermanentColorInPredicate(Set.of(CardColor.BLUE, CardColor.RED))
+        )),
+        "Target must be a blue or red creature"
+    ))
+```
+
+Cards: `CraftyPathmage`, `HateWeaver`, `FemerefArchers`, `IcyManipulator`
+
+---
+
+### 3. Ability with max activations per turn
+
+```java
+new ActivatedAbility(requiresTap, manaCost, effects, needsTarget, description, maxActivationsPerTurn)
+```
+
+**Use when:** Ability text says "Activate only once each turn" or similar.
+
+```java
+// Activate only once per turn
+new ActivatedAbility(false, "{2}", List.of(new BoostSelfEffect(2, 2)), false,
+    "{2}: This creature gets +2/+2 until end of turn. Activate only once each turn.", 1)
+```
+
+**Note:** This overload has the same parameter types as the targetFilter variant (`String` for description, then `Integer` vs `TargetFilter`), so the compiler resolves them by type. Use this when you need a per-turn limit but no target filter.
+
+---
+
+### 4. Ability with spell target filter
+
+```java
+new ActivatedAbility(requiresTap, manaCost, effects, needsTarget, needsSpellTarget, description, targetFilter)
+```
+
+**Use when:** Ability targets a spell on the stack (e.g. an activated counter ability). Set `needsSpellTarget=true` and provide a `StackEntryPredicateTargetFilter`.
+
+**Note:** For spell cards (not abilities) that target spells, use `setNeedsSpellTarget(true)` and `setTargetFilter(...)` on the Card directly instead.
+
+---
+
+### 5. Ability with timing restriction
+
+```java
+new ActivatedAbility(requiresTap, manaCost, effects, needsTarget, description, timingRestriction)
+```
+
+**Use when:** The ability can only be activated at specific times.
+
+```java
+// Regenerate, only while this land is animated as a creature
+new ActivatedAbility(false, "{B}", List.of(new RegenerateEffect()), false,
+    "{B}: Regenerate this creature.",
+    ActivationTimingRestriction.ONLY_WHILE_CREATURE)
+
+// Sorcery-speed sacrifice ability
+new ActivatedAbility(false, null,
+    List.of(new SacrificeSelfCost(), new ChooseCardFromTargetHandToDiscardEffect(1, List.of())),
+    true,
+    "Sacrifice: Target player reveals their hand...",
+    ActivationTimingRestriction.SORCERY_SPEED)
+```
+
+Cards: `SpawningPool` (ONLY_WHILE_CREATURE), `ThrullSurgeon` (SORCERY_SPEED), `ColossusOfSardia` (ONLY_DURING_YOUR_UPKEEP), `SkyshroudRanger` (SORCERY_SPEED)
+
+---
+
+### 6. Loyalty ability (planeswalkers)
+
+```java
+new ActivatedAbility(loyaltyCost, effects, needsTarget, description)
+```
+
+**Use when:** Planeswalker loyalty ability with no target restrictions.
+
+```java
+// +1: Create a token
+new ActivatedAbility(+1, List.of(new CreateCreatureTokenWithColorsEffect(...)), false,
+    "+1: Create a 1/1 green and white Kithkin creature token.")
+
+// -8: Ultimate
+new ActivatedAbility(-8, List.of(new AjaniUltimateEffect()), false,
+    "\u22128: Look at the top X cards...")
+```
+
+Cards: `AjaniOutlandChaperone`
+
+---
+
+### 7. Loyalty ability with target filter
+
+```java
+new ActivatedAbility(loyaltyCost, effects, needsTarget, description, targetFilter)
+```
+
+**Use when:** Planeswalker loyalty ability that targets a specific permanent.
+
+```java
+// -2: Deal 4 damage to target tapped creature
+new ActivatedAbility(-2, List.of(new DealDamageToTargetCreatureEffect(4)), true,
+    "\u22122: Ajani deals 4 damage to target tapped creature.",
+    new PermanentPredicateTargetFilter(
+        new PermanentIsTappedPredicate(),
+        "Target must be a tapped creature"
+    ))
+```
+
+Cards: `AjaniOutlandChaperone`
+
+---
+
+### 8. Equipment ability (equip with sorcery speed + controlled creature filter)
+
+```java
+new ActivatedAbility(false, manaCost, List.of(new EquipEffect()), true, false,
+    "Equip " + manaCost,
+    new ControlledPermanentPredicateTargetFilter(
+        new PermanentIsCreaturePredicate(),
+        "Target must be a creature you control"
+    ),
+    null,
+    ActivationTimingRestriction.SORCERY_SPEED)
+```
+
+**Use when:** Any equipment card with equip cost. This is the standard equip pattern — always the same structure, only the mana cost varies.
+
+Cards: `LoxodonWarhammer` ({3}), `LeoninScimitar` ({1}), `BarkOfDoran` ({1}), `WhispersilkCloak` ({2})
+
+---
+
+### 9. Full constructor (all parameters)
+
+```java
+new ActivatedAbility(requiresTap, manaCost, effects, needsTarget, needsSpellTarget,
+    description, targetFilter, loyaltyCost, maxActivationsPerTurn, timingRestriction)
+```
+
+**Use when:** None of the simpler overloads fit. Pass `null` for unused optional parameters.
+
+---
+
+## Costs in the effects list
+
+Sacrifice and discard costs go in the `effects` list BEFORE the actual effect. The engine processes them in order.
+
+| Cost effect | Constructor | Use when |
+|------------|-------------|----------|
+| `SacrificeSelfCost` | `()` | "Sacrifice this: ..." |
+| `SacrificeCreatureCost` | `()` | "Sacrifice a creature: ..." |
+| `SacrificeSubtypeCreatureCost` | `(CardSubtype)` | "Sacrifice a Goblin: ..." |
+| `SacrificeAllCreaturesYouControlCost` | `()` | "Sacrifice all creatures: ..." |
+| `DiscardCardTypeCost` | `(CardType)` | "Discard a [type] card: ..." |
+
+```java
+// {1}{R}, Sacrifice a Goblin: Deal 2 damage to any target
+new ActivatedAbility(false, "{1}{R}",
+    List.of(new SacrificeSubtypeCreatureCost(CardSubtype.GOBLIN), new DealDamageToAnyTargetEffect(2)),
+    true,
+    "{1}{R}, Sacrifice a Goblin: Siege-Gang Commander deals 2 damage to any target.")
+
+// Sacrifice self: Gain 3 life
+new ActivatedAbility(false, null,
+    List.of(new SacrificeSelfCost(), new GainLifeEffect(3)),
+    false,
+    "Sacrifice Bottle Gnomes: You gain 3 life.")
+```
+
+Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon`, `BloodfireColossus`
+
+---
+
+## TargetFilter types
+
+| Filter class | Constructor | Use when |
+|-------------|-------------|----------|
+| `PermanentPredicateTargetFilter` | `(PermanentPredicate, String errorMsg)` | Target any permanent matching predicate |
+| `ControlledPermanentPredicateTargetFilter` | `(PermanentPredicate, String errorMsg)` | Target only permanents YOU control matching predicate |
+| `StackEntryPredicateTargetFilter` | `(StackEntryPredicate, String errorMsg)` | Target a spell on the stack |
+| `PlayerPredicateTargetFilter` | `(PlayerPredicate, String errorMsg)` | Target a player matching predicate |
+
+### Common PermanentPredicate compositions
+
+| Predicate | Constructor | Matches |
+|-----------|-------------|---------|
+| `PermanentIsCreaturePredicate` | `()` | creatures |
+| `PermanentIsArtifactPredicate` | `()` | artifacts |
+| `PermanentIsLandPredicate` | `()` | lands |
+| `PermanentIsEnchantmentPredicate` | `()` | enchantments |
+| `PermanentIsTappedPredicate` | `()` | tapped permanents |
+| `PermanentIsAttackingPredicate` | `()` | attacking creatures |
+| `PermanentIsBlockingPredicate` | `()` | blocking creatures |
+| `PermanentIsSourceCardPredicate` | `()` | the source card itself |
+| `PermanentColorInPredicate` | `(Set<CardColor>)` | permanents of specified colors |
+| `PermanentHasSubtypePredicate` | `(CardSubtype)` | permanents with specific subtype |
+| `PermanentHasAnySubtypePredicate` | `(Set<CardSubtype>)` | permanents with any of the subtypes |
+| `PermanentHasKeywordPredicate` | `(Keyword)` | permanents with specific keyword |
+| `PermanentPowerAtMostPredicate` | `(int maxPower)` | creatures with power <= N |
+| `PermanentControlledBySourceControllerPredicate` | `()` | permanents controlled by the source's controller |
+| `PermanentTruePredicate` | `()` | always matches (no restriction) |
+| `PermanentAllOfPredicate` | `(List<PermanentPredicate>)` | AND: all predicates must match |
+| `PermanentAnyOfPredicate` | `(List<PermanentPredicate>)` | OR: at least one predicate matches |
+| `PermanentNotPredicate` | `(PermanentPredicate)` | NOT: inverts a predicate |
+
+### Common StackEntryPredicate compositions
+
+| Predicate | Constructor | Matches |
+|-----------|-------------|---------|
+| `StackEntryTypeInPredicate` | `(Set<StackEntryType>)` | spells of specific types |
+| `StackEntryColorInPredicate` | `(Set<CardColor>)` | spells of specific colors |
+| `StackEntryIsSingleTargetPredicate` | `()` | spells with exactly one target |
+| `StackEntryAllOfPredicate` | `(List<StackEntryPredicate>)` | AND composition |
+| `StackEntryAnyOfPredicate` | `(List<StackEntryPredicate>)` | OR composition |
+| `StackEntryNotPredicate` | `(StackEntryPredicate)` | NOT inversion |
+
+### PlayerPredicate compositions
+
+| Predicate | Constructor | Matches |
+|-----------|-------------|---------|
+| `PlayerRelationPredicate` | `(PlayerRelation)` | player by relation. `PlayerRelation`: `OPPONENT`, `SELF` |
+
+---
+
+## Card-level targeting (for spells, not abilities)
+
+For spells (instants/sorceries) that need targets, use these `Card` setters in the constructor instead of ActivatedAbility:
+
+```java
+setNeedsTarget(true);                    // targets a permanent or player
+setNeedsSpellTarget(true);               // targets a spell on the stack
+setTargetFilter(new SomeTargetFilter()); // restricts valid targets
+addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
+```
+
+---
+
+## EffectSlot quick reference
+
+| Slot | Fires when |
+|------|------------|
+| `SPELL` | Instant/sorcery resolves |
+| `ON_ENTER_BATTLEFIELD` | Permanent enters the battlefield (ETB) |
+| `ON_TAP` | Permanent is tapped for mana (lands) |
+| `STATIC` | Continuous effect, always active while on battlefield |
+| `UPKEEP_TRIGGERED` | Controller's upkeep |
+| `EACH_UPKEEP_TRIGGERED` | Each player's upkeep |
+| `OPPONENT_UPKEEP_TRIGGERED` | Each opponent's upkeep |
+| `GRAVEYARD_UPKEEP_TRIGGERED` | Upkeep trigger from graveyard |
+| `DRAW_TRIGGERED` | Controller draws a card |
+| `EACH_DRAW_TRIGGERED` | Any player draws a card |
+| `ON_OPPONENT_DRAWS` | An opponent draws a card |
+| `ON_OPPONENT_DISCARDS` | An opponent discards a card |
+| `ON_SELF_DISCARDED_BY_OPPONENT` | This card is discarded by an opponent |
+| `END_STEP_TRIGGERED` | End step |
+| `ON_ATTACK` | This creature attacks |
+| `ON_BLOCK` | This creature blocks |
+| `ON_BECOMES_BLOCKED` | This creature becomes blocked |
+| `ON_COMBAT_DAMAGE_TO_PLAYER` | This creature deals combat damage to a player |
+| `ON_COMBAT_DAMAGE_TO_CREATURE` | This creature deals combat damage to a creature |
+| `ON_DAMAGE_TO_PLAYER` | Any damage to a player (not just combat) |
+| `ON_DEATH` | This permanent dies |
+| `ON_SACRIFICE` | This permanent is sacrificed |
+| `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` | A creature enters battlefield under your control |
+| `ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD` | Any other creature enters battlefield |
+| `ON_ALLY_CREATURE_DIES` | A creature you control dies |
+| `ON_DAMAGED_CREATURE_DIES` | A creature damaged by this permanent dies |
+| `ON_ANY_PLAYER_CASTS_SPELL` | Any player casts a spell |
+| `ON_ANY_PLAYER_TAPS_LAND` | Any player taps a land |
