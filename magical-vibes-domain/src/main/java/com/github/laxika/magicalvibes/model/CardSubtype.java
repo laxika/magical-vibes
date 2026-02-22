@@ -12,6 +12,7 @@ public enum CardSubtype {
     PLAINS("Plains"),
     SWAMP("Swamp"),
     ANGEL("Angel"),
+    APE("Ape"),
     ARCHER("Archer"),
     ASSASSIN("Assassin"),
     WALL("Wall"),
