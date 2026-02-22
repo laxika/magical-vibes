@@ -327,6 +327,11 @@ tbody tr.not-implemented {
   position: relative;
   width: 171px;
   height: 237px;
+  transition: transform 0.15s;
+}
+
+.card-item:hover {
+  transform: translateY(-4px);
 }
 
 .card-item app-card-display {
