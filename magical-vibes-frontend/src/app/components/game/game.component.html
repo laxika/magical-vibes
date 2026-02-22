@@ -271,14 +271,6 @@
       </div>
     }
 
-    @if (choice.choosingXValue) {
-      <div class="combat-banner targeting-banner">
-        <span>Choose X value for {{ choice.xValueCardName }} (max {{ choice.xValueMaximum }}):</span>
-        <input type="number" [min]="0" [max]="choice.xValueMaximum" [(ngModel)]="choice.xValueInput" class="x-value-input" />
-        <button class="btn-confirm-combat" (click)="choice.confirmXValue()" [disabled]="choice.xValueInput < 0 || choice.xValueInput > choice.xValueMaximum">Confirm</button>
-        <button class="btn-confirm-combat" (click)="choice.cancelXValue()">Cancel</button>
-      </div>
-    }
 
     @if (choice.distributingDamage) {
       <div class="combat-banner targeting-banner">
@@ -1006,6 +998,25 @@
           <button class="btn-pass btn-pass-blue" (click)="confirmBlockers()">Confirm Blockers</button>
         } @else {
           <button class="btn-pass" (click)="passPriority()" [disabled]="!hasPriority">Pass Priority</button>
+        }
+        @if (choice.choosingXValue) {
+          <div class="x-value-banner">
+            <span class="x-value-prompt">Choose X for {{ choice.xValueCardName }}</span>
+            <div class="x-value-controls">
+              <button class="x-value-arrow x-value-down" (click)="choice.xValueInput = choice.xValueInput - 1" [disabled]="choice.xValueInput <= 0">
+                <svg viewBox="0 0 12 8" fill="currentColor"><path d="M1 1l5 5 5-5"/></svg>
+              </button>
+              <span class="x-value-display">{{ choice.xValueInput }}</span>
+              <button class="x-value-arrow x-value-up" (click)="choice.xValueInput = choice.xValueInput + 1" [disabled]="choice.xValueInput >= choice.xValueMaximum">
+                <svg viewBox="0 0 12 8" fill="currentColor"><path d="M1 7l5-5 5 5"/></svg>
+              </button>
+            </div>
+            <span class="x-value-max">max {{ choice.xValueMaximum }}</span>
+            <div class="x-value-buttons">
+              <button class="btn-x-value" (click)="choice.confirmXValue()" [disabled]="choice.xValueInput < 0 || choice.xValueInput > choice.xValueMaximum">Confirm</button>
+              <button class="btn-x-value" (click)="choice.cancelXValue()">Cancel</button>
+            </div>
+          </div>
         }
         @if (choice.awaitingMayAbility) {
           <div class="may-ability-banner">
