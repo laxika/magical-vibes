@@ -790,6 +790,7 @@ export class GameChoiceService {
       this.targetingCardIndex = -1;
       this.targetingCardName = '';
       this.targetingForAbility = false;
+      this.targetingForPlayer = false;
       this.targetingRequiresAttacking = false;
       this.targetingBlockingThis = false;
       this.targetingAbilityIndex = -1;
@@ -810,6 +811,7 @@ export class GameChoiceService {
     this.targetingCardIndex = -1;
     this.targetingCardName = '';
     this.targetingForAbility = false;
+    this.targetingForPlayer = false;
     this.targetingRequiresAttacking = false;
     this.targetingBlockingThis = false;
     this.targetingAbilityIndex = -1;
