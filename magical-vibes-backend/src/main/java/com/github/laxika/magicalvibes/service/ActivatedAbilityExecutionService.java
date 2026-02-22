@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -100,10 +101,14 @@ public class ActivatedAbilityExecutionService {
                 && ability.getLoyaltyCost() == null
                 && !snapshotEffects.isEmpty()
                 && snapshotEffects.stream().allMatch(e ->
-                e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof DoubleManaPoolEffect);
+                e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect
+                        || e instanceof DoubleManaPoolEffect || e instanceof DealDamageToControllerEffect)
+                && snapshotEffects.stream().anyMatch(e ->
+                e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect
+                        || e instanceof DoubleManaPoolEffect);
 
         if (isManaAbility) {
-            resolveManaAbility(gameData, playerId, player, snapshotEffects);
+            resolveManaAbility(gameData, playerId, player, permanent, snapshotEffects);
             return;
         }
 
@@ -133,7 +138,7 @@ public class ActivatedAbilityExecutionService {
         return snapshotEffects;
     }
 
-    private void resolveManaAbility(GameData gameData, UUID playerId, Player player, List<CardEffect> snapshotEffects) {
+    private void resolveManaAbility(GameData gameData, UUID playerId, Player player, Permanent permanent, List<CardEffect> snapshotEffects) {
         for (CardEffect effect : snapshotEffects) {
             if (effect instanceof AwardManaEffect award) {
                 gameData.playerManaPools.get(playerId).add(award.color());
@@ -151,6 +156,21 @@ public class ActivatedAbilityExecutionService {
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 sessionManager.sendToPlayer(playerId, new ChooseColorMessage(colors, "Choose a color of mana to add."));
                 log.info("Game {} - Awaiting {} to choose a mana color", gameData.id, player.getUsername());
+            } else if (effect instanceof DealDamageToControllerEffect dmg) {
+                String cardName = permanent.getCard().getName();
+                int damage = dmg.damage();
+                if (!gameQueryService.isDamageFromSourcePrevented(gameData, permanent.getCard().getColor())
+                        && !gameHelper.applyColorDamagePreventionForPlayer(gameData, playerId, permanent.getCard().getColor())) {
+                    int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, playerId, damage);
+                    effectiveDamage = gameHelper.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
+                    int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+                    gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
+                    if (effectiveDamage > 0) {
+                        String logEntry = player.getUsername() + " takes " + effectiveDamage + " damage from " + cardName + ".";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} takes {} damage from {}", gameData.id, player.getUsername(), effectiveDamage, cardName);
+                    }
+                }
             }
         }
         stateBasedActionService.performStateBasedActions(gameData);
