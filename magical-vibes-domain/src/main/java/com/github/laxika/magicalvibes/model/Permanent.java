@@ -34,6 +34,7 @@ public class Permanent {
     @Setter private boolean animatedUntilEndOfTurn;
     @Setter private int animatedPower;
     @Setter private int animatedToughness;
+    @Setter private CardColor animatedColor;
     @Setter private int loyaltyCounters;
     @Setter private int plusOnePlusOneCounters;
     @Setter private boolean loyaltyAbilityUsedThisTurn;
@@ -123,6 +124,7 @@ public class Permanent {
         this.animatedUntilEndOfTurn = false;
         this.animatedPower = 0;
         this.animatedToughness = 0;
+        this.animatedColor = null;
         this.grantedKeywords.clear();
         this.grantedSubtypes.clear();
         this.cantBlockIds.clear();

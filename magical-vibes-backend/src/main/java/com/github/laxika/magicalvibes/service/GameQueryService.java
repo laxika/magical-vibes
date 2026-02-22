@@ -260,7 +260,9 @@ public class GameQueryService {
             return getEffectivePower(gameData, permanent) <= powerAtMostPredicate.maxPower();
         }
         if (predicate instanceof PermanentColorInPredicate colorInPredicate) {
-            return colorInPredicate.colors().contains(permanent.getCard().getColor());
+            CardColor effectiveColor = permanent.isAnimatedUntilEndOfTurn() && permanent.getAnimatedColor() != null
+                    ? permanent.getAnimatedColor() : permanent.getCard().getColor();
+            return colorInPredicate.colors().contains(effectiveColor);
         }
         if (predicate instanceof PermanentAnyOfPredicate anyOfPredicate) {
             for (PermanentPredicate nested : anyOfPredicate.predicates()) {
@@ -582,8 +584,10 @@ public class GameQueryService {
     }
 
     boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature) {
+        CardColor effectiveColor = creature.isAnimatedUntilEndOfTurn() && creature.getAnimatedColor() != null
+                ? creature.getAnimatedColor() : creature.getCard().getColor();
         return hasAuraWithEffect(gameData, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)
-                || isDamageFromSourcePrevented(gameData, creature.getCard().getColor());
+                || isDamageFromSourcePrevented(gameData, effectiveColor);
     }
 
     boolean isDamageFromSourcePrevented(GameData gameData, CardColor sourceColor) {

@@ -124,11 +124,13 @@ public class GameHelper {
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent) {
         Set<CardType> enterTappedTypes = snapshotEnterTappedTypes(gameData);
         applyEnterTappedEffects(permanent, enterTappedTypes);
+        applySelfEnterTapped(permanent);
         gameData.playerBattlefields.get(controllerId).add(permanent);
     }
 
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes) {
         applyEnterTappedEffects(permanent, enterTappedTypes);
+        applySelfEnterTapped(permanent);
         gameData.playerBattlefields.get(controllerId).add(permanent);
     }
 
@@ -157,6 +159,12 @@ public class GameHelper {
             return;
         }
         if (matchesAnyType(enteringPermanent.getCard(), enterTappedTypes)) {
+            enteringPermanent.tap();
+        }
+    }
+
+    private void applySelfEnterTapped(Permanent enteringPermanent) {
+        if (enteringPermanent.getCard().isEntersTapped()) {
             enteringPermanent.tap();
         }
     }

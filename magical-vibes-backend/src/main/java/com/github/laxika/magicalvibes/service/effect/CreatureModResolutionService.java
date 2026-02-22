@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesXEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -40,6 +41,8 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
 
     @Override
     public void registerHandlers(EffectHandlerRegistry registry) {
+        registry.register(AnimateLandEffect.class,
+                (gd, entry, effect) -> resolveAnimateLand(gd, entry, (AnimateLandEffect) effect));
         registry.register(AnimateSelfEffect.class,
                 (gd, entry, effect) -> resolveAnimateSelf(gd, entry, (AnimateSelfEffect) effect));
         registry.register(BoostSelfEffect.class,
@@ -74,6 +77,26 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
                 (gd, entry, effect) -> resolveUntapAttackedCreatures(gd, entry));
         registry.register(PutPlusOnePlusOneCounterOnSourceEffect.class,
                 (gd, entry, effect) -> resolvePutPlusOnePlusOneCounterOnSource(gd, entry, (PutPlusOnePlusOneCounterOnSourceEffect) effect));
+    }
+
+    private void resolveAnimateLand(GameData gameData, StackEntry entry, AnimateLandEffect effect) {
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (self == null) {
+            return;
+        }
+
+        self.setAnimatedUntilEndOfTurn(true);
+        self.setAnimatedPower(effect.power());
+        self.setAnimatedToughness(effect.toughness());
+        self.setAnimatedColor(effect.animatedColor());
+        self.getGrantedSubtypes().clear();
+        self.getGrantedSubtypes().addAll(effect.grantedSubtypes());
+        self.getGrantedKeywords().addAll(effect.grantedKeywords());
+
+        String logEntry = self.getCard().getName() + " becomes a " + effect.power() + "/" + effect.toughness() + " creature with flying until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} becomes a {}/{} creature", gameData.id, self.getCard().getName(), effect.power(), effect.toughness());
     }
 
     private void resolveAnimateSelf(GameData gameData, StackEntry entry, AnimateSelfEffect effect) {

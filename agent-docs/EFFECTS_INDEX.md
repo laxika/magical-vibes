@@ -88,6 +88,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 - `as this enters, choose a card name`: `ChooseCardNameOnEnterEffect` (implements `ChooseCardNameEffect` marker interface; reuses color choice UI flow via `ColorChoiceContext.CardNameChoice`)
 - `activated abilities of sources with the chosen name can't be activated (static)`: `ActivatedAbilitiesOfChosenNameCantBeActivatedEffect` (checked in `AbilityActivationService`; exempts mana abilities)
 - `you have no maximum hand size (static)`: `NoMaximumHandSizeEffect`
+- `land becomes N/M creature with subtypes/keywords/color until end of turn`: `AnimateLandEffect(power, toughness, grantedSubtypes, grantedKeywords, animatedColor)` — for creature lands (manlands)
 
 ## Provider map (where effects are resolved)
 
