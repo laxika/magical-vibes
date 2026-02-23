@@ -9,7 +9,7 @@ Purpose: a minimal workflow for adding cards with fewer repeated lookups and low
 3. Check `ACTIVATED_ABILITY_GUIDE.md` for constructor patterns and EffectSlot reference.
 4. Add card class + `@CardRegistration`.
 5. Add/adjust target flags and target filter.
-6. Write focused tests using `GameTestHarness`.
+6. Write focused tests extending `BaseCardTest` (provides `harness`, `player1`, `player2`, `gs`, `gqs`, `gd`). Do NOT test Scryfall metadata.
 7. Only if needed: add new effect record + resolver registration.
 
 ## Card class template

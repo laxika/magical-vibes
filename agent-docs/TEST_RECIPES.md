@@ -1,23 +1,38 @@
 # TEST_RECIPES
 
-Purpose: minimal reusable test patterns for new cards using `GameTestHarness`.
+Purpose: minimal reusable test patterns for new cards using `BaseCardTest`.
 
 ## Base skeleton
 
-```java
-private GameTestHarness harness;
-private Player player1;
-private Player player2;
+All card tests extend `BaseCardTest`, which provides these fields and `@BeforeEach setUp()` automatically:
 
-@BeforeEach
-void setUp() {
-    harness = new GameTestHarness();
-    player1 = harness.getPlayer1();
-    player2 = harness.getPlayer2();
-    harness.skipMulligan();
-    harness.clearMessages();
+```java
+// Inherited from BaseCardTest — do NOT redeclare these
+protected GameTestHarness harness;
+protected Player player1;
+protected Player player2;
+protected GameService gs;
+protected GameQueryService gqs;
+protected GameData gd;
+```
+
+Minimal test class:
+
+```java
+class ExampleCardTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("ExampleCard has correct effects")
+    void hasCorrectProperties() {
+        ExampleCard card = new ExampleCard();
+
+        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(SomeEffect.class);
+    }
 }
 ```
+
+**Do NOT test Scryfall metadata** (name, type, mana cost, color, power, toughness, subtypes, keywords) — it is auto-loaded from Scryfall. Only test engine logic: effects, abilities, targeting, game interactions.
 
 ## Recipe: cast targeted instant/sorcery
 
@@ -102,7 +117,7 @@ assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
 
 | Method | Signature | Use when |
 |--------|-----------|----------|
-| `skipMulligan` | `()` | Always call in `@BeforeEach` after constructing harness |
+| `skipMulligan` | `()` | Called automatically by `BaseCardTest.setUp()` |
 | `setHand` | `(Player, List<Card>)` | Set a player's hand to specific cards |
 | `addMana` | `(Player, ManaColor, int)` | Add mana to a player's pool before casting |
 | `addToBattlefield` | `(Player, Card)` | Put a permanent directly onto the battlefield |
