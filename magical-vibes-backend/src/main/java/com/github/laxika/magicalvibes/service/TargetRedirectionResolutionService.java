@@ -10,8 +10,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,19 +22,14 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TargetRedirectionResolutionService implements EffectHandlerProvider {
+public class TargetRedirectionResolutionService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final TargetLegalityService targetLegalityService;
 
-    @Override
-    public void registerHandlers(EffectHandlerRegistry registry) {
-        registry.register(ChangeTargetOfTargetSpellWithSingleTargetEffect.class,
-                (gd, entry, effect) -> resolveChangeTargetOfTargetSpellWithSingleTarget(gd, entry));
-    }
-
+    @HandlesEffect(ChangeTargetOfTargetSpellWithSingleTargetEffect.class)
     private void resolveChangeTargetOfTargetSpellWithSingleTarget(GameData gameData, StackEntry entry) {
         StackEntry targetSpell = findStackEntryByCardId(gameData, entry.getTargetPermanentId());
         if (targetSpell == null) {

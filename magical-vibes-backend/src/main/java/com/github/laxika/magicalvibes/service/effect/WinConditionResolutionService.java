@@ -19,20 +19,13 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class WinConditionResolutionService implements EffectHandlerProvider {
+public class WinConditionResolutionService {
 
     private final GameHelper gameHelper;
     private final GameBroadcastService gameBroadcastService;
     private final GameQueryService gameQueryService;
 
-    @Override
-    public void registerHandlers(EffectHandlerRegistry registry) {
-        registry.register(WinGameIfCreaturesInGraveyardEffect.class,
-                (gd, entry, effect) -> resolveWinGameIfCreaturesInGraveyard(gd, entry, (WinGameIfCreaturesInGraveyardEffect) effect));
-        registry.register(TargetPlayerLosesGameEffect.class,
-                (gd, entry, effect) -> resolveTargetPlayerLosesGame(gd, entry, (TargetPlayerLosesGameEffect) effect));
-    }
-
+    @HandlesEffect(WinGameIfCreaturesInGraveyardEffect.class)
     private void resolveWinGameIfCreaturesInGraveyard(GameData gameData, StackEntry entry, WinGameIfCreaturesInGraveyardEffect effect) {
         UUID controllerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -72,6 +65,7 @@ public class WinConditionResolutionService implements EffectHandlerProvider {
         }
     }
 
+    @HandlesEffect(TargetPlayerLosesGameEffect.class)
     private void resolveTargetPlayerLosesGame(GameData gameData, StackEntry entry, TargetPlayerLosesGameEffect effect) {
         UUID losingPlayerId = effect.playerId();
         if (losingPlayerId == null || !gameData.playerIds.contains(losingPlayerId)) {

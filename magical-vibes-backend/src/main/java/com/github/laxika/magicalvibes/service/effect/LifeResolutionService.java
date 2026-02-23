@@ -26,35 +26,17 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class LifeResolutionService implements EffectHandlerProvider {
+public class LifeResolutionService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
 
-    @Override
-    public void registerHandlers(EffectHandlerRegistry registry) {
-        registry.register(GainLifeEffect.class,
-                (gd, entry, effect) -> resolveGainLife(gd, entry.getControllerId(), ((GainLifeEffect) effect).amount()));
-        registry.register(GainLifePerGraveyardCardEffect.class,
-                (gd, entry, effect) -> resolveGainLifePerGraveyardCard(gd, entry.getControllerId()));
-        registry.register(GainLifeEqualToTargetToughnessEffect.class,
-                (gd, entry, effect) -> resolveGainLifeEqualToTargetToughness(gd, entry));
-        registry.register(DoubleTargetPlayerLifeEffect.class,
-                (gd, entry, effect) -> resolveDoubleTargetPlayerLife(gd, entry));
-        registry.register(EnchantedCreatureControllerLosesLifeEffect.class,
-                (gd, entry, effect) -> resolveEnchantedCreatureControllerLosesLife(gd, entry, (EnchantedCreatureControllerLosesLifeEffect) effect));
-        registry.register(LoseLifeEffect.class,
-                (gd, entry, effect) -> resolveLoseLife(gd, entry, (LoseLifeEffect) effect));
-        registry.register(EachPlayerLosesLifePerCreatureControlledEffect.class,
-                (gd, entry, effect) -> resolveEachPlayerLosesLifePerCreatureControlled(gd, entry,
-                        (EachPlayerLosesLifePerCreatureControlledEffect) effect));
-        registry.register(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class,
-                (gd, entry, effect) -> resolveTargetPlayerLosesLifeAndControllerGainsLife(gd, entry, (TargetPlayerLosesLifeAndControllerGainsLifeEffect) effect));
-        registry.register(TargetPlayerGainsLifeEffect.class,
-                (gd, entry, effect) -> resolveTargetPlayerGainsLife(gd, entry, (TargetPlayerGainsLifeEffect) effect));
+    @HandlesEffect(GainLifeEffect.class)
+    private void resolveGainLife(GameData gameData, StackEntry entry, GainLifeEffect effect) {
+        applyGainLife(gameData, entry.getControllerId(), effect.amount());
     }
 
-    private void resolveGainLife(GameData gameData, UUID controllerId, int amount) {
+    private void applyGainLife(GameData gameData, UUID controllerId, int amount) {
         Integer currentLife = gameData.playerLifeTotals.get(controllerId);
         gameData.playerLifeTotals.put(controllerId, currentLife + amount);
 
@@ -65,7 +47,12 @@ public class LifeResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} gains {} life", gameData.id, playerName, amount);
     }
 
-    private void resolveGainLifePerGraveyardCard(GameData gameData, UUID controllerId) {
+    @HandlesEffect(GainLifePerGraveyardCardEffect.class)
+    private void resolveGainLifePerGraveyardCard(GameData gameData, StackEntry entry) {
+        applyGainLifePerGraveyardCard(gameData, entry.getControllerId());
+    }
+
+    private void applyGainLifePerGraveyardCard(GameData gameData, UUID controllerId) {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         int amount = graveyard != null ? graveyard.size() : 0;
         if (amount == 0) {
@@ -75,9 +62,10 @@ public class LifeResolutionService implements EffectHandlerProvider {
             log.info("Game {} - {} has no graveyard cards for life gain", gameData.id, playerName);
             return;
         }
-        resolveGainLife(gameData, controllerId, amount);
+        applyGainLife(gameData, controllerId, amount);
     }
 
+    @HandlesEffect(GainLifeEqualToTargetToughnessEffect.class)
     private void resolveGainLifeEqualToTargetToughness(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) return;
@@ -100,6 +88,7 @@ public class LifeResolutionService implements EffectHandlerProvider {
         }
     }
 
+    @HandlesEffect(DoubleTargetPlayerLifeEffect.class)
     private void resolveDoubleTargetPlayerLife(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
 
@@ -114,6 +103,7 @@ public class LifeResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {}'s life doubled from {} to {}", gameData.id, playerName, currentLife, newLife);
     }
 
+    @HandlesEffect(EnchantedCreatureControllerLosesLifeEffect.class)
     private void resolveEnchantedCreatureControllerLosesLife(GameData gameData, StackEntry entry, EnchantedCreatureControllerLosesLifeEffect effect) {
         UUID playerId = effect.affectedPlayerId();
         if (playerId == null) return;
@@ -128,10 +118,12 @@ public class LifeResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, effect.amount(), entry.getCard().getName());
     }
 
+    @HandlesEffect(LoseLifeEffect.class)
     private void resolveLoseLife(GameData gameData, StackEntry entry, LoseLifeEffect effect) {
         applyLifeLoss(gameData, entry.getControllerId(), effect.amount(), entry.getCard().getName());
     }
 
+    @HandlesEffect(EachPlayerLosesLifePerCreatureControlledEffect.class)
     private void resolveEachPlayerLosesLifePerCreatureControlled(GameData gameData, StackEntry entry,
                                                                  EachPlayerLosesLifePerCreatureControlledEffect effect) {
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -162,6 +154,7 @@ public class LifeResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, amount, sourceName);
     }
 
+    @HandlesEffect(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class)
     private void resolveTargetPlayerLosesLifeAndControllerGainsLife(GameData gameData, StackEntry entry, TargetPlayerLosesLifeAndControllerGainsLifeEffect effect) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         UUID controllerId = entry.getControllerId();
@@ -176,15 +169,16 @@ public class LifeResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} loses {} life from {}", gameData.id, targetName, effect.lifeLoss(), entry.getCard().getName());
 
         // Controller gains life
-        resolveGainLife(gameData, controllerId, effect.lifeGain());
+        applyGainLife(gameData, controllerId, effect.lifeGain());
     }
 
+    @HandlesEffect(TargetPlayerGainsLifeEffect.class)
     private void resolveTargetPlayerGainsLife(GameData gameData, StackEntry entry, TargetPlayerGainsLifeEffect effect) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         if (targetPlayerId == null) {
             return;
         }
-        resolveGainLife(gameData, targetPlayerId, effect.amount());
+        applyGainLife(gameData, targetPlayerId, effect.amount());
     }
 }
 

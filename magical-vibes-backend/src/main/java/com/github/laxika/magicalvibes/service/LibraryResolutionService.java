@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -44,54 +43,14 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class LibraryResolutionService implements EffectHandlerProvider {
+public class LibraryResolutionService {
 
     private final GameHelper gameHelper;
     private final GameBroadcastService gameBroadcastService;
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
 
-    @Override
-    public void registerHandlers(EffectHandlerRegistry registry) {
-        registry.register(ShuffleIntoLibraryEffect.class,
-                (gd, entry, effect) -> resolveShuffleIntoLibrary(gd, entry));
-        registry.register(ShuffleGraveyardIntoLibraryEffect.class,
-                (gd, entry, effect) -> resolveShuffleGraveyardIntoLibrary(gd, entry));
-        registry.register(MillByHandSizeEffect.class,
-                (gd, entry, effect) -> resolveMillByHandSize(gd, entry));
-        registry.register(MillTargetPlayerEffect.class,
-                (gd, entry, effect) -> resolveMillTargetPlayer(gd, entry, (MillTargetPlayerEffect) effect));
-        registry.register(MillHalfLibraryEffect.class,
-                (gd, entry, effect) -> resolveMillHalfLibrary(gd, entry));
-        registry.register(RevealTopCardOfLibraryEffect.class,
-                (gd, entry, effect) -> resolveRevealTopCardOfLibrary(gd, entry));
-        registry.register(ReorderTopCardsOfLibraryEffect.class,
-                (gd, entry, effect) -> resolveReorderTopCardsOfLibrary(gd, entry, (ReorderTopCardsOfLibraryEffect) effect));
-        registry.register(SearchLibraryForBasicLandToHandEffect.class,
-                (gd, entry, effect) -> resolveSearchLibraryForBasicLandToHand(gd, entry));
-        registry.register(SearchLibraryForCardTypesToHandEffect.class,
-                (gd, entry, effect) -> resolveSearchLibraryForCardTypesToHand(gd, entry, (SearchLibraryForCardTypesToHandEffect) effect));
-        registry.register(SearchLibraryForCardTypesToBattlefieldEffect.class,
-                (gd, entry, effect) -> resolveSearchLibraryForCardTypesToBattlefield(
-                        gd, entry, (SearchLibraryForCardTypesToBattlefieldEffect) effect));
-        registry.register(SearchLibraryForCardToHandEffect.class,
-                (gd, entry, effect) -> resolveSearchLibraryForCardToHand(gd, entry));
-        registry.register(SearchLibraryForCreatureWithMVXOrLessToHandEffect.class,
-                (gd, entry, effect) -> resolveSearchLibraryForCreatureWithMVXOrLessToHand(gd, entry));
-        registry.register(PayManaAndSearchLibraryForCardNamedToBattlefieldEffect.class,
-                (gd, entry, effect) -> resolvePayManaAndSearchLibraryForCardNamedToBattlefield(
-                        gd, entry, (PayManaAndSearchLibraryForCardNamedToBattlefieldEffect) effect));
-        registry.register(LookAtTopCardsHandTopBottomEffect.class,
-                (gd, entry, effect) -> resolveLookAtTopCardsHandTopBottom(gd, entry, (LookAtTopCardsHandTopBottomEffect) effect));
-        registry.register(LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect.class,
-                (gd, entry, effect) -> resolveLookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottom(
-                        gd, entry, (LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect) effect));
-        registry.register(HeadGamesEffect.class,
-                (gd, entry, effect) -> resolveHeadGames(gd, entry));
-        registry.register(AjaniUltimateEffect.class,
-                (gd, entry, effect) -> resolveAjaniUltimate(gd, entry));
-    }
-
+    @HandlesEffect(ShuffleIntoLibraryEffect.class)
     void resolveShuffleIntoLibrary(GameData gameData, StackEntry entry) {
         List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
         deck.add(entry.getCard());
@@ -101,6 +60,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
     }
 
+    @HandlesEffect(MillByHandSizeEffect.class)
     void resolveMillByHandSize(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
@@ -127,6 +87,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} mills {} cards (hand size)", gameData.id, playerName, cardsToMill);
     }
 
+    @HandlesEffect(MillTargetPlayerEffect.class)
     void resolveMillTargetPlayer(GameData gameData, StackEntry entry, MillTargetPlayerEffect mill) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
@@ -144,6 +105,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} mills {} cards", gameData.id, playerName, cardsToMill);
     }
 
+    @HandlesEffect(MillHalfLibraryEffect.class)
     void resolveMillHalfLibrary(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
@@ -167,6 +129,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} mills half library ({} cards)", gameData.id, playerName, cardsToMill);
     }
 
+    @HandlesEffect(ShuffleGraveyardIntoLibraryEffect.class)
     void resolveShuffleGraveyardIntoLibrary(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
@@ -191,6 +154,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} shuffles graveyard ({} cards) into library", gameData.id, playerName, count);
     }
 
+    @HandlesEffect(RevealTopCardOfLibraryEffect.class)
     void resolveRevealTopCardOfLibrary(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
@@ -208,6 +172,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} reveals top card of library", gameData.id, playerName);
     }
 
+    @HandlesEffect(ReorderTopCardsOfLibraryEffect.class)
     void resolveReorderTopCardsOfLibrary(GameData gameData, StackEntry entry, ReorderTopCardsOfLibraryEffect reorder) {
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
@@ -240,6 +205,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} reordering top {} cards of library", gameData.id, gameData.playerIdToName.get(controllerId), count);
     }
 
+    @HandlesEffect(SearchLibraryForBasicLandToHandEffect.class)
     void resolveSearchLibraryForBasicLandToHand(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
@@ -280,6 +246,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} searching library for a basic land ({} found)", gameData.id, playerName, basicLands.size());
     }
 
+    @HandlesEffect(SearchLibraryForCardTypesToHandEffect.class)
     void resolveSearchLibraryForCardTypesToHand(GameData gameData, StackEntry entry, SearchLibraryForCardTypesToHandEffect effect) {
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
@@ -338,6 +305,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         return String.join(" or ", names);
     }
 
+    @HandlesEffect(SearchLibraryForCardTypesToBattlefieldEffect.class)
     void resolveSearchLibraryForCardTypesToBattlefield(GameData gameData, StackEntry entry,
                                                        SearchLibraryForCardTypesToBattlefieldEffect effect) {
         UUID controllerId = entry.getControllerId();
@@ -418,6 +386,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
                 && effect.cardTypes().contains(CardType.LAND);
     }
 
+    @HandlesEffect(SearchLibraryForCardToHandEffect.class)
     void resolveSearchLibraryForCardToHand(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
@@ -445,6 +414,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} searching library for any card ({} cards in library)", gameData.id, playerName, allCards.size());
     }
 
+    @HandlesEffect(SearchLibraryForCreatureWithMVXOrLessToHandEffect.class)
     void resolveSearchLibraryForCreatureWithMVXOrLessToHand(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
@@ -486,6 +456,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} searching library for creature with MV <= {} ({} found)", gameData.id, playerName, maxMV, eligibleCreatures.size());
     }
 
+    @HandlesEffect(PayManaAndSearchLibraryForCardNamedToBattlefieldEffect.class)
     void resolvePayManaAndSearchLibraryForCardNamedToBattlefield(GameData gameData, StackEntry entry,
                                                                   PayManaAndSearchLibraryForCardNamedToBattlefieldEffect effect) {
         UUID controllerId = entry.getControllerId();
@@ -547,6 +518,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
     }
 
+    @HandlesEffect(HeadGamesEffect.class)
     void resolveHeadGames(GameData gameData, StackEntry entry) {
         UUID casterId = entry.getControllerId();
         UUID targetPlayerId = entry.getTargetPermanentId();
@@ -593,6 +565,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
                 gameData.id, casterName, targetName, handSize);
     }
 
+    @HandlesEffect(AjaniUltimateEffect.class)
     void resolveAjaniUltimate(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
@@ -653,6 +626,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} resolving Ajani ultimate with {} revealed, {} eligible", gameData.id, playerName, count, eligibleCards.size());
     }
 
+    @HandlesEffect(LookAtTopCardsHandTopBottomEffect.class)
     void resolveLookAtTopCardsHandTopBottom(GameData gameData, StackEntry entry, LookAtTopCardsHandTopBottomEffect effect) {
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
@@ -691,6 +665,7 @@ public class LibraryResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} resolving {} with {} cards", gameData.id, playerName, entry.getCard().getName(), count);
     }
 
+    @HandlesEffect(LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect.class)
     void resolveLookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottom(
             GameData gameData,
             StackEntry entry,

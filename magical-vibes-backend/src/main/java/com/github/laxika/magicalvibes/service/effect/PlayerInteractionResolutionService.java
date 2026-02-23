@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDiscardEffect;
@@ -46,7 +45,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class PlayerInteractionResolutionService implements EffectHandlerProvider {
+public class PlayerInteractionResolutionService {
 
     private final GameHelper gameHelper;
     private final GameQueryService gameQueryService;
@@ -55,59 +54,51 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
 
-    @Override
-    public void registerHandlers(EffectHandlerRegistry registry) {
-        registry.register(OpponentMayPlayCreatureEffect.class,
-                (gd, entry, effect) -> resolveOpponentMayPlayCreature(gd, entry.getControllerId()));
-        registry.register(PutCardToBattlefieldEffect.class,
-                (gd, entry, effect) -> resolvePutCardToBattlefield(gd, entry.getControllerId(), (PutCardToBattlefieldEffect) effect));
-        registry.register(MayEffect.class,
-                (gd, entry, effect) -> resolveMayEffect(gd, entry, (MayEffect) effect));
-        registry.register(DrawCardEffect.class,
-                (gd, entry, effect) -> resolveDrawCards(gd, entry.getControllerId(), ((DrawCardEffect) effect).amount()));
-        registry.register(DiscardCardEffect.class,
-                (gd, entry, effect) -> {
-                    gd.discardCausedByOpponent = false;
-                    resolveDiscardCards(gd, entry.getControllerId(), ((DiscardCardEffect) effect).amount());
-                });
-        registry.register(TargetPlayerDiscardsEffect.class,
-                (gd, entry, effect) -> {
-                    gd.discardCausedByOpponent = true;
-                    resolveDiscardCards(gd, entry.getTargetPermanentId(), ((TargetPlayerDiscardsEffect) effect).amount());
-                });
-        registry.register(LookAtHandEffect.class,
-                (gd, entry, effect) -> resolveLookAtHand(gd, entry));
-        registry.register(ChooseCardsFromTargetHandToTopOfLibraryEffect.class,
-                (gd, entry, effect) -> resolveChooseCardsFromTargetHandToTopOfLibrary(gd, entry, (ChooseCardsFromTargetHandToTopOfLibraryEffect) effect));
-        registry.register(ChooseCardFromTargetHandToDiscardEffect.class,
-                (gd, entry, effect) -> {
-                    gd.discardCausedByOpponent = true;
-                    resolveChooseCardFromTargetHandToDiscard(gd, entry, (ChooseCardFromTargetHandToDiscardEffect) effect);
-                });
-        registry.register(ChangeColorTextEffect.class,
-                (gd, entry, effect) -> resolveChangeColorText(gd, entry));
-        registry.register(RedirectDrawsEffect.class,
-                (gd, entry, effect) -> resolveRedirectDraws(gd, entry));
-        registry.register(AwardAnyColorManaEffect.class,
-                (gd, entry, effect) -> resolveAwardAnyColorMana(gd, entry));
-        registry.register(DrawAndLoseLifePerSubtypeEffect.class,
-                (gd, entry, effect) -> resolveDrawAndLoseLifePerSubtype(gd, entry, (DrawAndLoseLifePerSubtypeEffect) effect));
-        registry.register(SacrificeUnlessDiscardCardTypeEffect.class,
-                (gd, entry, effect) -> resolveSacrificeUnlessDiscardCardType(gd, entry, (SacrificeUnlessDiscardCardTypeEffect) effect));
-        registry.register(DrawCardForTargetPlayerEffect.class,
-                (gd, entry, effect) -> resolveDrawCardForTargetPlayer(gd, entry, (DrawCardForTargetPlayerEffect) effect));
-        registry.register(RandomDiscardEffect.class,
-                (gd, entry, effect) -> {
-                    gd.discardCausedByOpponent = false;
-                    resolveRandomDiscardCards(gd, entry.getControllerId(), entry.getCard().getName(), ((RandomDiscardEffect) effect).amount());
-                });
+    @HandlesEffect(OpponentMayPlayCreatureEffect.class)
+    private void resolveOpponentMayPlayCreature(GameData gameData, StackEntry entry) {
+        applyOpponentMayPlayCreature(gameData, entry.getControllerId());
     }
 
-    private void resolveOpponentMayPlayCreature(GameData gameData, UUID controllerId) {
+    @HandlesEffect(PutCardToBattlefieldEffect.class)
+    private void resolvePutCardToBattlefield(GameData gameData, StackEntry entry, PutCardToBattlefieldEffect effect) {
+        applyPutCardToBattlefield(gameData, entry.getControllerId(), effect);
+    }
+
+    @HandlesEffect(DrawCardEffect.class)
+    private void resolveDrawCards(GameData gameData, StackEntry entry, DrawCardEffect effect) {
+        applyDrawCards(gameData, entry.getControllerId(), effect.amount());
+    }
+
+    @HandlesEffect(DiscardCardEffect.class)
+    private void resolveDiscardCard(GameData gameData, StackEntry entry, DiscardCardEffect effect) {
+        gameData.discardCausedByOpponent = false;
+        resolveDiscardCards(gameData, entry.getControllerId(), effect.amount());
+    }
+
+    @HandlesEffect(TargetPlayerDiscardsEffect.class)
+    private void resolveTargetPlayerDiscards(GameData gameData, StackEntry entry, TargetPlayerDiscardsEffect effect) {
+        gameData.discardCausedByOpponent = true;
+        resolveDiscardCards(gameData, entry.getTargetPermanentId(), effect.amount());
+    }
+
+    @HandlesEffect(ChooseCardFromTargetHandToDiscardEffect.class)
+    private void resolveChooseCardFromTargetHandToDiscardHandler(GameData gameData, StackEntry entry, ChooseCardFromTargetHandToDiscardEffect effect) {
+        gameData.discardCausedByOpponent = true;
+        resolveChooseCardFromTargetHandToDiscard(gameData, entry, effect);
+    }
+
+    @HandlesEffect(RandomDiscardEffect.class)
+    private void resolveRandomDiscard(GameData gameData, StackEntry entry, RandomDiscardEffect effect) {
+        gameData.discardCausedByOpponent = false;
+        resolveRandomDiscardCards(gameData, entry.getControllerId(), entry.getCard().getName(), effect.amount());
+    }
+
+    private void applyOpponentMayPlayCreature(GameData gameData, UUID controllerId) {
         UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
         resolvePlayerMayPlayCreature(gameData, opponentId);
     }
 
+    @HandlesEffect(MayEffect.class)
     private void resolveMayEffect(GameData gameData, StackEntry entry, MayEffect mayEffect) {
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),
@@ -117,7 +108,7 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
         ));
     }
 
-    private void resolvePutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect) {
+    private void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect) {
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = new ArrayList<>();
         if (hand != null) {
@@ -167,7 +158,7 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
         playerInputService.beginCardChoice(gameData, playerId, creatureIndices, prompt);
     }
 
-    private void resolveDrawCards(GameData gameData, UUID playerId, int amount) {
+    private void applyDrawCards(GameData gameData, UUID playerId, int amount) {
         for (int i = 0; i < amount; i++) {
             gameHelper.resolveDrawCard(gameData, playerId);
         }
@@ -213,6 +204,7 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
         }
     }
 
+    @HandlesEffect(LookAtHandEffect.class)
     private void resolveLookAtHand(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
@@ -234,6 +226,7 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
         log.info("Game {} - {} looks at {}'s hand", gameData.id, casterName, targetName);
     }
 
+    @HandlesEffect(ChooseCardsFromTargetHandToTopOfLibraryEffect.class)
     private void resolveChooseCardsFromTargetHandToTopOfLibrary(GameData gameData, StackEntry entry, ChooseCardsFromTargetHandToTopOfLibraryEffect choose) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         UUID casterId = entry.getControllerId();
@@ -317,6 +310,7 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
                 gameData.id, casterName, cardsToChoose, targetName);
     }
 
+    @HandlesEffect(ChangeColorTextEffect.class)
     private void resolveChangeColorText(GameData gameData, StackEntry entry) {
         UUID targetPermanentId = entry.getTargetPermanentId();
         Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
@@ -336,6 +330,7 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
         log.info("Game {} - Awaiting {} to choose a color word or basic land type for text change", gameData.id, playerName);
     }
 
+    @HandlesEffect(AwardAnyColorManaEffect.class)
     private void resolveAwardAnyColorMana(GameData gameData, StackEntry entry) {
         ColorChoiceContext.ManaColorChoice choiceContext = new ColorChoiceContext.ManaColorChoice(entry.getControllerId());
         gameData.interaction.beginColorChoice(entry.getControllerId(), null, null, choiceContext);
@@ -346,6 +341,7 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
         log.info("Game {} - Awaiting {} to choose a mana color", gameData.id, playerName);
     }
 
+    @HandlesEffect(DrawAndLoseLifePerSubtypeEffect.class)
     private void resolveDrawAndLoseLifePerSubtype(GameData gameData, StackEntry entry, DrawAndLoseLifePerSubtypeEffect effect) {
         UUID controllerId = entry.getControllerId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
@@ -380,6 +376,7 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
         log.info("Game {} - {} draws {} and loses {} life from {}", gameData.id, playerName, count, count, entry.getCard().getName());
     }
 
+    @HandlesEffect(RedirectDrawsEffect.class)
     private void resolveRedirectDraws(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         UUID controllerId = entry.getControllerId();
@@ -401,6 +398,7 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
                 gameData.id, cardName, targetName, controllerName);
     }
 
+    @HandlesEffect(DrawCardForTargetPlayerEffect.class)
     private void resolveDrawCardForTargetPlayer(GameData gameData, StackEntry entry, DrawCardForTargetPlayerEffect effect) {
         // Intervening-if re-check at resolution time (rule 603.4):
         // If the source is still on the battlefield but now tapped, the ability does nothing.
@@ -421,6 +419,7 @@ public class PlayerInteractionResolutionService implements EffectHandlerProvider
         }
     }
 
+    @HandlesEffect(SacrificeUnlessDiscardCardTypeEffect.class)
     private void resolveSacrificeUnlessDiscardCardType(GameData gameData, StackEntry entry, SacrificeUnlessDiscardCardTypeEffect effect) {
         UUID controllerId = entry.getControllerId();
         Card sourceCard = entry.getCard();

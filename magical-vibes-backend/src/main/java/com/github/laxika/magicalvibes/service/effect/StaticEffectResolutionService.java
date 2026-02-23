@@ -34,36 +34,16 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 @Service
-public class StaticEffectResolutionService implements StaticEffectHandlerProvider {
+public class StaticEffectResolutionService {
 
-    @Override
-    public void registerHandlers(StaticEffectHandlerRegistry registry) {
-        registry.register(AnimateNoncreatureArtifactsEffect.class, this::resolveAnimateNoncreatureArtifacts);
-        registry.register(BoostCreaturesBySubtypeEffect.class, this::resolveBoostCreaturesBySubtype);
-        registry.register(BoostAttachedCreatureEffect.class, this::resolveBoostAttachedCreature);
-        registry.register(BoostEnchantedCreaturePerControlledSubtypeEffect.class, this::resolveBoostEnchantedCreaturePerControlledSubtype);
-        registry.register(GrantKeywordEffect.class, this::resolveGrantKeyword);
-        registry.register(BoostOwnCreaturesEffect.class, this::resolveBoostOwnCreatures);
-        registry.register(BoostOtherCreaturesByColorEffect.class, this::resolveBoostOtherCreaturesByColor);
-        registry.register(BoostNonColorCreaturesEffect.class, this::resolveBoostNonColorCreatures);
-        registry.register(GrantActivatedAbilityToEnchantedCreatureEffect.class, this::resolveGrantActivatedAbilityToEnchantedCreature);
-        registry.register(GrantActivatedAbilityToOwnLandsEffect.class, this::resolveGrantActivatedAbilityToOwnLands);
-        registry.register(BoostBySharedCreatureTypeEffect.class, this::resolveBoostBySharedCreatureType);
-
-        registry.registerSelfHandler(BoostByOtherCreaturesWithSameNameEffect.class, this::resolveBoostByOtherCreaturesWithSameName);
-        registry.registerSelfHandler(BoostSelfPerEnchantmentOnBattlefieldEffect.class, this::resolveBoostSelfPerEnchantmentOnBattlefield);
-        registry.registerSelfHandler(PowerToughnessEqualToControlledCreatureCountEffect.class, this::resolvePowerToughnessEqualToControlledCreatureCount);
-        registry.registerSelfHandler(PowerToughnessEqualToControlledLandCountEffect.class, this::resolvePowerToughnessEqualToControlledLandCount);
-        registry.registerSelfHandler(PowerToughnessEqualToControlledSubtypeCountEffect.class, this::resolvePowerToughnessEqualToControlledSubtypeCount);
-        registry.registerSelfHandler(PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect.class, this::resolvePowerToughnessEqualToCreatureCardsInAllGraveyards);
-    }
-
+    @HandlesStaticEffect(AnimateNoncreatureArtifactsEffect.class)
     private void resolveAnimateNoncreatureArtifacts(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         if (context.target().getCard().getType() == CardType.ARTIFACT) {
             accumulator.setAnimatedCreature(true);
         }
     }
 
+    @HandlesStaticEffect(BoostCreaturesBySubtypeEffect.class)
     private void resolveBoostCreaturesBySubtype(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostCreaturesBySubtypeEffect) effect;
         if (context.target().hasKeyword(Keyword.CHANGELING)
@@ -74,6 +54,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         }
     }
 
+    @HandlesStaticEffect(BoostAttachedCreatureEffect.class)
     private void resolveBoostAttachedCreature(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostAttachedCreatureEffect) effect;
         if (context.source().getAttachedTo() != null
@@ -83,6 +64,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         }
     }
 
+    @HandlesStaticEffect(BoostEnchantedCreaturePerControlledSubtypeEffect.class)
     private void resolveBoostEnchantedCreaturePerControlledSubtype(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostEnchantedCreaturePerControlledSubtypeEffect) effect;
         if (context.source().getAttachedTo() == null
@@ -111,6 +93,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         accumulator.addToughness(count * boost.toughnessPerSubtype());
     }
 
+    @HandlesStaticEffect(GrantKeywordEffect.class)
     private void resolveGrantKeyword(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantKeywordEffect) effect;
         if (grant.scope() == Scope.ENCHANTED_CREATURE || grant.scope() == Scope.EQUIPPED_CREATURE) {
@@ -132,6 +115,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         }
     }
 
+    @HandlesStaticEffect(BoostOwnCreaturesEffect.class)
     private void resolveBoostOwnCreatures(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostOwnCreaturesEffect) effect;
         if (context.targetOnSameBattlefield()) {
@@ -140,6 +124,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         }
     }
 
+    @HandlesStaticEffect(BoostOtherCreaturesByColorEffect.class)
     private void resolveBoostOtherCreaturesByColor(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostOtherCreaturesByColorEffect) effect;
         if (context.target().getCard().getColor() == boost.color()) {
@@ -148,6 +133,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         }
     }
 
+    @HandlesStaticEffect(BoostNonColorCreaturesEffect.class)
     private void resolveBoostNonColorCreatures(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostNonColorCreaturesEffect) effect;
         if (context.target().getCard().getColor() != boost.excludedColor()) {
@@ -156,6 +142,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         }
     }
 
+    @HandlesStaticEffect(GrantActivatedAbilityToEnchantedCreatureEffect.class)
     private void resolveGrantActivatedAbilityToEnchantedCreature(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantActivatedAbilityToEnchantedCreatureEffect) effect;
         if (context.source().getAttachedTo() != null
@@ -164,6 +151,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         }
     }
 
+    @HandlesStaticEffect(GrantActivatedAbilityToOwnLandsEffect.class)
     private void resolveGrantActivatedAbilityToOwnLands(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantActivatedAbilityToOwnLandsEffect) effect;
         if (!context.targetOnSameBattlefield()) {
@@ -175,6 +163,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         }
     }
 
+    @HandlesStaticEffect(BoostBySharedCreatureTypeEffect.class)
     private void resolveBoostBySharedCreatureType(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         Permanent target = context.target();
         GameData gameData = context.gameData();
@@ -221,6 +210,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
                 || permanent.getCard().getAdditionalTypes().contains(CardType.ARTIFACT));
     }
 
+    @HandlesStaticEffect(value = PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect.class, selfOnly = true)
     private void resolvePowerToughnessEqualToCreatureCardsInAllGraveyards(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         GameData gameData = context.gameData();
         int count = 0;
@@ -237,6 +227,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         accumulator.addToughness(count);
     }
 
+    @HandlesStaticEffect(value = BoostByOtherCreaturesWithSameNameEffect.class, selfOnly = true)
     private void resolveBoostByOtherCreaturesWithSameName(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostByOtherCreaturesWithSameNameEffect) effect;
         String sourceName = context.source().getCard().getName();
@@ -259,6 +250,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         accumulator.addToughness(count * boost.toughnessPerCreature());
     }
 
+    @HandlesStaticEffect(value = BoostSelfPerEnchantmentOnBattlefieldEffect.class, selfOnly = true)
     private void resolveBoostSelfPerEnchantmentOnBattlefield(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostSelfPerEnchantmentOnBattlefieldEffect) effect;
         int count = 0;
@@ -276,6 +268,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         accumulator.addToughness(count * boost.toughnessPerEnchantment());
     }
 
+    @HandlesStaticEffect(value = PowerToughnessEqualToControlledSubtypeCountEffect.class, selfOnly = true)
     private void resolvePowerToughnessEqualToControlledSubtypeCount(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var pt = (PowerToughnessEqualToControlledSubtypeCountEffect) effect;
         int count = countControlledPermanents(context, p -> p.getCard().getSubtypes().contains(pt.subtype()));
@@ -283,6 +276,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         accumulator.addToughness(count);
     }
 
+    @HandlesStaticEffect(value = PowerToughnessEqualToControlledLandCountEffect.class, selfOnly = true)
     private void resolvePowerToughnessEqualToControlledLandCount(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         int count = countControlledPermanents(context,
                 p -> p.getCard().getType() == CardType.LAND || p.getCard().getAdditionalTypes().contains(CardType.LAND));
@@ -290,6 +284,7 @@ public class StaticEffectResolutionService implements StaticEffectHandlerProvide
         accumulator.addToughness(count);
     }
 
+    @HandlesStaticEffect(value = PowerToughnessEqualToControlledCreatureCountEffect.class, selfOnly = true)
     private void resolvePowerToughnessEqualToControlledCreatureCount(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
         int count = countControlledPermanents(context, p -> isEffectivelyCreature(p, hasAnimateArtifacts));

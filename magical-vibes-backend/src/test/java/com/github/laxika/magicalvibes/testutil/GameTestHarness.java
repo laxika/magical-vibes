@@ -54,18 +54,28 @@ import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.effect.CreatureModResolutionService;
 import com.github.laxika.magicalvibes.service.effect.CardSpecificResolutionService;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.EquipResolutionService;
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
+import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
+import com.github.laxika.magicalvibes.service.effect.HandlesStaticEffect;
 import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
 import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionService;
 import com.github.laxika.magicalvibes.service.effect.PlayerInteractionResolutionService;
+import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectResolutionService;
+import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
+import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.WinConditionResolutionService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import com.github.laxika.magicalvibes.config.JacksonConfig;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -100,9 +110,10 @@ public class GameTestHarness {
         CardViewFactory cardViewFactory = new CardViewFactory();
         PermanentViewFactory permanentViewFactory = new PermanentViewFactory(cardViewFactory);
         StackEntryViewFactory stackEntryViewFactory = new StackEntryViewFactory(cardViewFactory);
-        gameQueryService = new GameQueryService(
-                List.of(new StaticEffectResolutionService()));
-        gameQueryService.init();
+        StaticEffectHandlerRegistry staticEffectHandlerRegistry = new StaticEffectHandlerRegistry();
+        StaticEffectResolutionService staticEffectResolutionService = new StaticEffectResolutionService();
+        scanStaticEffectHandlers(staticEffectResolutionService, staticEffectHandlerRegistry);
+        gameQueryService = new GameQueryService(staticEffectHandlerRegistry);
         PlayerInputService playerInputService = new PlayerInputService(sessionManager, cardViewFactory);
         GameBroadcastService gameBroadcastService = new GameBroadcastService(
                 sessionManager, cardViewFactory, permanentViewFactory, stackEntryViewFactory, gameQueryService);
@@ -120,7 +131,8 @@ public class GameTestHarness {
                 gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager);
         TargetValidationService targetValidationService = new TargetValidationService(gameQueryService);
         TargetLegalityService targetLegalityService = new TargetLegalityService(gameQueryService, targetValidationService);
-        List<EffectHandlerProvider> providers = List.of(
+        EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
+        List<Object> effectServices = List.of(
                 new DamageResolutionService(gameHelper, gameQueryService, gameBroadcastService),
                 new DestructionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),
                 new LibraryResolutionService(gameHelper, gameBroadcastService, sessionManager, cardViewFactory),
@@ -140,8 +152,10 @@ public class GameTestHarness {
                 new CardSpecificResolutionService(gameHelper, gameQueryService),
                 new WinConditionResolutionService(gameHelper, gameBroadcastService, gameQueryService)
         );
-        EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper, providers);
-        effectResolutionService.init();
+        for (Object service : effectServices) {
+            scanEffectHandlers(service, effectHandlerRegistry);
+        }
+        EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper, effectHandlerRegistry);
         TurnProgressionService turnProgressionService = new TurnProgressionService(
                 combatService, gameHelper, gameQueryService, gameBroadcastService, playerInputService);
         SpellCastingService spellCastingService = new SpellCastingService(
@@ -507,6 +521,70 @@ public class GameTestHarness {
     public void clearMessages() {
         conn1.clearMessages();
         conn2.clearMessages();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void scanEffectHandlers(Object bean, EffectHandlerRegistry registry) {
+        for (Method method : bean.getClass().getDeclaredMethods()) {
+            HandlesEffect annotation = method.getAnnotation(HandlesEffect.class);
+            if (annotation == null) continue;
+
+            method.setAccessible(true);
+            Class<?>[] params = method.getParameterTypes();
+            try {
+                MethodHandle handle = MethodHandles.lookup().unreflect(method).bindTo(bean);
+
+                if (params.length == 3
+                        && params[0] == GameData.class
+                        && params[1] == StackEntry.class
+                        && CardEffect.class.isAssignableFrom(params[2])) {
+                    Class<? extends CardEffect> effectParam = (Class<? extends CardEffect>) params[2];
+                    registry.register(annotation.value(), (gd, entry, effect) -> {
+                        try { handle.invoke(gd, entry, effectParam.cast(effect)); }
+                        catch (RuntimeException re) { throw re; }
+                        catch (Throwable t) { throw new RuntimeException(t); }
+                    });
+                } else if (params.length == 2
+                        && params[0] == GameData.class
+                        && params[1] == StackEntry.class) {
+                    registry.register(annotation.value(), (gd, entry, effect) -> {
+                        try { handle.invoke(gd, entry); }
+                        catch (RuntimeException re) { throw re; }
+                        catch (Throwable t) { throw new RuntimeException(t); }
+                    });
+                }
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private static void scanStaticEffectHandlers(Object bean, StaticEffectHandlerRegistry registry) {
+        for (Method method : bean.getClass().getDeclaredMethods()) {
+            HandlesStaticEffect annotation = method.getAnnotation(HandlesStaticEffect.class);
+            if (annotation == null) continue;
+
+            method.setAccessible(true);
+            try {
+                MethodHandle handle = MethodHandles.lookup().unreflect(method).bindTo(bean);
+
+                if (annotation.selfOnly()) {
+                    registry.registerSelfHandler(annotation.value(), (context, effect, accumulator) -> {
+                        try { handle.invoke(context, effect, accumulator); }
+                        catch (RuntimeException re) { throw re; }
+                        catch (Throwable t) { throw new RuntimeException(t); }
+                    });
+                } else {
+                    registry.register(annotation.value(), (context, effect, accumulator) -> {
+                        try { handle.invoke(context, effect, accumulator); }
+                        catch (RuntimeException re) { throw re; }
+                        catch (Throwable t) { throw new RuntimeException(t); }
+                    });
+                }
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }
 

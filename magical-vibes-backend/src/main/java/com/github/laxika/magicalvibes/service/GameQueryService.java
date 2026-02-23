@@ -46,9 +46,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerProvider;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -71,15 +69,7 @@ public class GameQueryService {
             CardSubtype.AJANI
     );
 
-    private final List<StaticEffectHandlerProvider> staticEffectProviders;
-
-    private StaticEffectHandlerRegistry staticEffectRegistry;
-
-    @PostConstruct
-    public void init() {
-        staticEffectRegistry = new StaticEffectHandlerRegistry();
-        staticEffectProviders.forEach(p -> p.registerHandlers(staticEffectRegistry));
-    }
+    private final StaticEffectHandlerRegistry staticEffectRegistry;
 
     record StaticBonus(int power, int toughness, Set<Keyword> keywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities) {
         static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), false, List.of());

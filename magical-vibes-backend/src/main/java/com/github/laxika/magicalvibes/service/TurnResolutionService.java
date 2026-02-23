@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,7 +21,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TurnResolutionService implements EffectHandlerProvider {
+public class TurnResolutionService {
 
     private static final Set<StackEntryType> SPELL_TYPES = Set.of(
             StackEntryType.CREATURE_SPELL, StackEntryType.INSTANT_SPELL,
@@ -34,16 +33,7 @@ public class TurnResolutionService implements EffectHandlerProvider {
     private final CombatService combatService;
     private final GameBroadcastService gameBroadcastService;
 
-    @Override
-    public void registerHandlers(EffectHandlerRegistry registry) {
-        registry.register(EndTurnEffect.class,
-                (gd, entry, effect) -> resolveEndTurn(gd, entry));
-        registry.register(ExtraTurnEffect.class,
-                (gd, entry, effect) -> resolveExtraTurn(gd, entry, (ExtraTurnEffect) effect));
-        registry.register(AdditionalCombatMainPhaseEffect.class,
-                (gd, entry, effect) -> resolveAdditionalCombatMainPhase(gd, entry, (AdditionalCombatMainPhaseEffect) effect));
-    }
-
+    @HandlesEffect(ExtraTurnEffect.class)
     private void resolveExtraTurn(GameData gameData, StackEntry entry, ExtraTurnEffect effect) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
@@ -61,6 +51,7 @@ public class TurnResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} granted {} extra turn(s)", gameData.id, playerName, effect.count());
     }
 
+    @HandlesEffect(EndTurnEffect.class)
     private void resolveEndTurn(GameData gameData, StackEntry entry) {
         // Rule 723.1a: Triggered abilities that haven't been put on the stack yet cease to exist
         gameData.pendingMayAbilities.clear();
@@ -99,6 +90,7 @@ public class TurnResolutionService implements EffectHandlerProvider {
         log.info("Game {} - End the turn effect resolved, skipping to cleanup", gameData.id);
     }
 
+    @HandlesEffect(AdditionalCombatMainPhaseEffect.class)
     private void resolveAdditionalCombatMainPhase(GameData gameData, StackEntry entry, AdditionalCombatMainPhaseEffect effect) {
         if (effect.count() <= 0) {
             return;

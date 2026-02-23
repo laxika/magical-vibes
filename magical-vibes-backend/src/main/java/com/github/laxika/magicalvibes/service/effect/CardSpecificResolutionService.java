@@ -27,17 +27,12 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class CardSpecificResolutionService implements EffectHandlerProvider {
+public class CardSpecificResolutionService {
 
     private final GameHelper gameHelper;
     private final GameQueryService gameQueryService;
 
-    @Override
-    public void registerHandlers(EffectHandlerRegistry registry) {
-        registry.register(WarpWorldEffect.class,
-                (gd, entry, effect) -> resolveWarpWorld(gd, entry));
-    }
-
+    @HandlesEffect(WarpWorldEffect.class)
     void resolveWarpWorld(GameData gameData, StackEntry entry) {
         Map<UUID, Integer> permanentsOwnedByPlayer = new HashMap<>();
         Map<UUID, List<Card>> permanentsToShuffleByOwner = new HashMap<>();

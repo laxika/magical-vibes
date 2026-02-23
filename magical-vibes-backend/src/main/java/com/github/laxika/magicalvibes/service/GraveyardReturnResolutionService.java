@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -32,7 +31,7 @@ import java.util.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class GraveyardReturnResolutionService implements EffectHandlerProvider {
+public class GraveyardReturnResolutionService {
 
     private final GameHelper gameHelper;
     private final LegendRuleService legendRuleService;
@@ -40,41 +39,35 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
 
-    @Override
-    public void registerHandlers(EffectHandlerRegistry registry) {
-        registry.register(ReturnAuraFromGraveyardToBattlefieldEffect.class,
-                (gd, entry, effect) -> resolveReturnAuraFromGraveyardToBattlefield(gd, entry));
-        registry.register(ReturnCreatureFromGraveyardToBattlefieldEffect.class,
-                (gd, entry, effect) -> resolveReturnCardFromGraveyardToZone(gd, entry, CardType.CREATURE,
-                        GraveyardChoiceDestination.BATTLEFIELD,
-                        "You may return a creature card from your graveyard to the battlefield."));
-        registry.register(ReturnArtifactFromGraveyardToHandEffect.class,
-                (gd, entry, effect) -> resolveReturnCardFromGraveyardToZone(gd, entry, CardType.ARTIFACT,
-                        GraveyardChoiceDestination.HAND,
-                        "You may return an artifact card from your graveyard to your hand."));
-        registry.register(ReturnCreatureFromGraveyardToHandEffect.class,
-                (gd, entry, effect) -> resolveReturnCardFromGraveyardToZone(gd, entry, CardType.CREATURE,
-                        GraveyardChoiceDestination.HAND,
-                        "You may return a creature card from your graveyard to your hand."));
-        registry.register(ReturnCardFromGraveyardToHandEffect.class,
-                (gd, entry, effect) -> resolveReturnCardFromGraveyardToZone(gd, entry, null,
-                        GraveyardChoiceDestination.HAND,
-                        "You may return a card from your graveyard to your hand."));
-        registry.register(ReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHandEffect.class,
-                (gd, entry, effect) -> resolveReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHand(gd, entry));
-        registry.register(ReturnSelfFromGraveyardToHandEffect.class,
-                (gd, entry, effect) -> resolveReturnSelfFromGraveyardToHand(gd, entry));
-        registry.register(ReturnCardOfSubtypeFromGraveyardToHandEffect.class,
-                (gd, entry, effect) -> resolveReturnCardOfSubtypeFromGraveyardToHand(gd, entry,
-                        (ReturnCardOfSubtypeFromGraveyardToHandEffect) effect));
-        registry.register(ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect.class,
-                (gd, entry, effect) -> resolveReturnArtifactOrCreatureFromAnyGraveyardToBattlefield(gd, entry));
-        registry.register(ExileCardsFromGraveyardEffect.class,
-                (gd, entry, effect) -> resolveExileCardsFromGraveyard(gd, entry, (ExileCardsFromGraveyardEffect) effect));
-        registry.register(ExileCreaturesFromGraveyardAndCreateTokensEffect.class,
-                (gd, entry, effect) -> resolveExileCreaturesAndCreateTokens(gd, entry));
+    @HandlesEffect(ReturnCreatureFromGraveyardToBattlefieldEffect.class)
+    void resolveReturnCreatureFromGraveyardToBattlefield(GameData gameData, StackEntry entry) {
+        resolveReturnCardFromGraveyardToZone(gameData, entry, CardType.CREATURE,
+                GraveyardChoiceDestination.BATTLEFIELD,
+                "You may return a creature card from your graveyard to the battlefield.");
     }
 
+    @HandlesEffect(ReturnArtifactFromGraveyardToHandEffect.class)
+    void resolveReturnArtifactFromGraveyardToHand(GameData gameData, StackEntry entry) {
+        resolveReturnCardFromGraveyardToZone(gameData, entry, CardType.ARTIFACT,
+                GraveyardChoiceDestination.HAND,
+                "You may return an artifact card from your graveyard to your hand.");
+    }
+
+    @HandlesEffect(ReturnCreatureFromGraveyardToHandEffect.class)
+    void resolveReturnCreatureFromGraveyardToHand(GameData gameData, StackEntry entry) {
+        resolveReturnCardFromGraveyardToZone(gameData, entry, CardType.CREATURE,
+                GraveyardChoiceDestination.HAND,
+                "You may return a creature card from your graveyard to your hand.");
+    }
+
+    @HandlesEffect(ReturnCardFromGraveyardToHandEffect.class)
+    void resolveReturnCardFromGraveyardToHand(GameData gameData, StackEntry entry) {
+        resolveReturnCardFromGraveyardToZone(gameData, entry, null,
+                GraveyardChoiceDestination.HAND,
+                "You may return a card from your graveyard to your hand.");
+    }
+
+    @HandlesEffect(ReturnAuraFromGraveyardToBattlefieldEffect.class)
     void resolveReturnAuraFromGraveyardToBattlefield(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
 
@@ -107,7 +100,7 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
         playerInputService.beginPermanentChoice(gameData, controllerId, creatureIds, "Choose a creature you control to attach " + auraCard.getName() + " to.");
     }
 
-    void resolveReturnCardFromGraveyardToZone(GameData gameData, StackEntry entry,
+    private void resolveReturnCardFromGraveyardToZone(GameData gameData, StackEntry entry,
             CardType cardType, GraveyardChoiceDestination destination, String prompt) {
         UUID controllerId = entry.getControllerId();
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
@@ -154,6 +147,7 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
         playerInputService.beginGraveyardChoice(gameData, controllerId, matchingIndices, prompt);
     }
 
+    @HandlesEffect(ReturnCardOfSubtypeFromGraveyardToHandEffect.class)
     void resolveReturnCardOfSubtypeFromGraveyardToHand(GameData gameData, StackEntry entry,
             ReturnCardOfSubtypeFromGraveyardToHandEffect effect) {
         UUID controllerId = entry.getControllerId();
@@ -184,6 +178,7 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
                 "Return a " + subtypeName + " card from your graveyard to your hand.");
     }
 
+    @HandlesEffect(ReturnSelfFromGraveyardToHandEffect.class)
     void resolveReturnSelfFromGraveyardToHand(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
@@ -204,6 +199,7 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} returns {} from graveyard to hand", gameData.id, playerName, sourceCard.getName());
     }
 
+    @HandlesEffect(ReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHandEffect.class)
     void resolveReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHand(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
@@ -246,6 +242,7 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
                 gameData.id, playerName, returnedNames.size());
     }
 
+    @HandlesEffect(ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect.class)
     void resolveReturnArtifactOrCreatureFromAnyGraveyardToBattlefield(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
         List<Card> cardPool = new ArrayList<>();
@@ -279,6 +276,7 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
                 "Choose an artifact or creature card from a graveyard to put onto the battlefield under your control.");
     }
 
+    @HandlesEffect(ExileCardsFromGraveyardEffect.class)
     void resolveExileCardsFromGraveyard(GameData gameData, StackEntry entry, ExileCardsFromGraveyardEffect effect) {
         UUID controllerId = entry.getControllerId();
         List<UUID> targetCardIds = entry.getTargetCardIds();
@@ -318,6 +316,7 @@ public class GraveyardReturnResolutionService implements EffectHandlerProvider {
         }
     }
 
+    @HandlesEffect(ExileCreaturesFromGraveyardAndCreateTokensEffect.class)
     void resolveExileCreaturesAndCreateTokens(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
         List<UUID> targetCardIds = entry.getTargetCardIds();

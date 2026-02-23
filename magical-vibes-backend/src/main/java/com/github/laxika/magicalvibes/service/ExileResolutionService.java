@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -13,18 +12,13 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ExileResolutionService implements EffectHandlerProvider {
+public class ExileResolutionService {
 
     private final GameHelper gameHelper;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
 
-    @Override
-    public void registerHandlers(EffectHandlerRegistry registry) {
-        registry.register(ExileTargetPermanentEffect.class,
-                (gd, entry, effect) -> resolveExileTargetPermanent(gd, entry));
-    }
-
+    @HandlesEffect(ExileTargetPermanentEffect.class)
     void resolveExileTargetPermanent(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {

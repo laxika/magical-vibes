@@ -35,53 +35,12 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class CreatureModResolutionService implements EffectHandlerProvider {
+public class CreatureModResolutionService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
 
-    @Override
-    public void registerHandlers(EffectHandlerRegistry registry) {
-        registry.register(AnimateLandEffect.class,
-                (gd, entry, effect) -> resolveAnimateLand(gd, entry, (AnimateLandEffect) effect));
-        registry.register(AnimateSelfEffect.class,
-                (gd, entry, effect) -> resolveAnimateSelf(gd, entry, (AnimateSelfEffect) effect));
-        registry.register(BoostSelfEffect.class,
-                (gd, entry, effect) -> resolveBoostSelf(gd, entry, (BoostSelfEffect) effect));
-        registry.register(BoostSelfPerBlockingCreatureEffect.class,
-                (gd, entry, effect) -> resolveBoostSelfPerBlockingCreature(gd, entry, (BoostSelfPerBlockingCreatureEffect) effect));
-        registry.register(BoostTargetCreatureEffect.class,
-                (gd, entry, effect) -> resolveBoostTargetCreature(gd, entry, (BoostTargetCreatureEffect) effect));
-        registry.register(BoostFirstTargetCreatureEffect.class,
-                (gd, entry, effect) -> resolveBoostFirstTargetCreature(gd, entry, (BoostFirstTargetCreatureEffect) effect));
-        registry.register(BoostAllOwnCreaturesEffect.class,
-                (gd, entry, effect) -> resolveBoostAllOwnCreatures(gd, entry, (BoostAllOwnCreaturesEffect) effect));
-        registry.register(BoostAllCreaturesXEffect.class,
-                (gd, entry, effect) -> resolveBoostAllCreaturesX(gd, entry, (BoostAllCreaturesXEffect) effect));
-        registry.register(GrantKeywordEffect.class,
-                (gd, entry, effect) -> resolveGrantKeyword(gd, entry, (GrantKeywordEffect) effect));
-        registry.register(CantBlockSourceEffect.class,
-                (gd, entry, effect) -> resolveCantBlockSource(gd, entry, (CantBlockSourceEffect) effect));
-        registry.register(TargetCreatureCantBlockThisTurnEffect.class,
-                (gd, entry, effect) -> resolveCantBlockTargetCreature(gd, entry));
-        registry.register(MakeTargetUnblockableEffect.class,
-                (gd, entry, effect) -> resolveMakeTargetUnblockable(gd, entry));
-        registry.register(TapCreaturesEffect.class,
-                (gd, entry, effect) -> resolveTapCreatures(gd, entry, (TapCreaturesEffect) effect));
-        registry.register(TapOrUntapTargetPermanentEffect.class,
-                (gd, entry, effect) -> resolveTapOrUntapTargetPermanent(gd, entry));
-        registry.register(TapTargetPermanentEffect.class,
-                (gd, entry, effect) -> resolveTapTargetPermanent(gd, entry));
-        registry.register(UntapTargetPermanentEffect.class,
-                (gd, entry, effect) -> resolveUntapTargetPermanent(gd, entry));
-        registry.register(UntapSelfEffect.class,
-                (gd, entry, effect) -> resolveUntapSelf(gd, entry));
-        registry.register(UntapAttackedCreaturesEffect.class,
-                (gd, entry, effect) -> resolveUntapAttackedCreatures(gd, entry));
-        registry.register(PutCountersOnSourceEffect.class,
-                (gd, entry, effect) -> resolvePutCountersOnSource(gd, entry, (PutCountersOnSourceEffect) effect));
-    }
-
+    @HandlesEffect(AnimateLandEffect.class)
     private void resolveAnimateLand(GameData gameData, StackEntry entry, AnimateLandEffect effect) {
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (self == null) {
@@ -102,6 +61,7 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} becomes a {}/{} creature", gameData.id, self.getCard().getName(), effect.power(), effect.toughness());
     }
 
+    @HandlesEffect(AnimateSelfEffect.class)
     private void resolveAnimateSelf(GameData gameData, StackEntry entry, AnimateSelfEffect effect) {
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (self == null) {
@@ -121,6 +81,7 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} becomes a {}/{} creature", gameData.id, self.getCard().getName(), xValue, xValue);
     }
 
+    @HandlesEffect(BoostSelfEffect.class)
     private void resolveBoostSelf(GameData gameData, StackEntry entry, BoostSelfEffect boost) {
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (self == null) {
@@ -136,6 +97,7 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} gets +{}/+{}", gameData.id, self.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
     }
 
+    @HandlesEffect(BoostSelfPerBlockingCreatureEffect.class)
     private void resolveBoostSelfPerBlockingCreature(GameData gameData, StackEntry entry, BoostSelfPerBlockingCreatureEffect boost) {
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (self == null) {
@@ -181,6 +143,7 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
                 gameData.id, self.getCard().getName(), powerBoost, toughnessBoost, blockerCount);
     }
 
+    @HandlesEffect(BoostTargetCreatureEffect.class)
     private void resolveBoostTargetCreature(GameData gameData, StackEntry entry, BoostTargetCreatureEffect boost) {
         // Multi-target: apply boost to each valid target
         if (entry.getTargetPermanentIds() != null && !entry.getTargetPermanentIds().isEmpty()) {
@@ -215,6 +178,7 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} gets +{}/+{}", gameData.id, target.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
     }
 
+    @HandlesEffect(BoostFirstTargetCreatureEffect.class)
     private void resolveBoostFirstTargetCreature(GameData gameData, StackEntry entry, BoostFirstTargetCreatureEffect boost) {
         if (entry.getTargetPermanentIds() == null || entry.getTargetPermanentIds().isEmpty()) {
             return;
@@ -235,6 +199,7 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} gets +{}/+{}", gameData.id, target.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
     }
 
+    @HandlesEffect(BoostAllOwnCreaturesEffect.class)
     private void resolveBoostAllOwnCreatures(GameData gameData, StackEntry entry, BoostAllOwnCreaturesEffect boost) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
         int count = 0;
@@ -252,6 +217,7 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} boosts {} creatures +{}/+{}", gameData.id, entry.getCard().getName(), count, boost.powerBoost(), boost.toughnessBoost());
     }
 
+    @HandlesEffect(BoostAllCreaturesXEffect.class)
     private void resolveBoostAllCreaturesX(GameData gameData, StackEntry entry, BoostAllCreaturesXEffect effect) {
         int xValue = entry.getXValue();
         int powerBoost = effect.powerMultiplier() * xValue;
@@ -278,6 +244,7 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} gives {}/{} to {} creatures", gameData.id, entry.getCard().getName(), powerBoost, toughnessBoost, count);
     }
 
+    @HandlesEffect(GrantKeywordEffect.class)
     private void resolveGrantKeyword(GameData gameData, StackEntry entry, GrantKeywordEffect grant) {
         if (grant.scope() == GrantKeywordEffect.Scope.OWN_CREATURES) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
@@ -318,6 +285,7 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} gains {} ({})", gameData.id, target.getCard().getName(), grant.keyword(), grant.scope());
     }
 
+    @HandlesEffect(CantBlockSourceEffect.class)
     private void resolveCantBlockSource(GameData gameData, StackEntry entry, CantBlockSourceEffect effect) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null || effect.sourcePermanentId() == null) {
@@ -335,6 +303,7 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} can't block {} this turn", gameData.id, target.getCard().getName(), sourceName);
     }
 
+    @HandlesEffect(TargetCreatureCantBlockThisTurnEffect.class)
     private void resolveCantBlockTargetCreature(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
@@ -348,6 +317,7 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} can't block this turn", gameData.id, target.getCard().getName());
     }
 
+    @HandlesEffect(MakeTargetUnblockableEffect.class)
     private void resolveMakeTargetUnblockable(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
@@ -362,6 +332,7 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} can't be blocked this turn", gameData.id, target.getCard().getName());
     }
 
+    @HandlesEffect(TapCreaturesEffect.class)
     private void resolveTapCreatures(GameData gameData, StackEntry entry, TapCreaturesEffect tap) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -386,6 +357,7 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} taps creatures matching filters", gameData.id, entry.getCard().getName());
     }
 
+    @HandlesEffect(TapOrUntapTargetPermanentEffect.class)
     private void resolveTapOrUntapTargetPermanent(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
@@ -405,6 +377,7 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         }
     }
 
+    @HandlesEffect(TapTargetPermanentEffect.class)
     private void resolveTapTargetPermanent(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
@@ -419,6 +392,7 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} taps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
     }
 
+    @HandlesEffect(UntapTargetPermanentEffect.class)
     private void resolveUntapTargetPermanent(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
@@ -433,6 +407,7 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} untaps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
     }
 
+    @HandlesEffect(UntapSelfEffect.class)
     private void resolveUntapSelf(GameData gameData, StackEntry entry) {
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (self == null) {
@@ -447,6 +422,7 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} untaps", gameData.id, entry.getCard().getName());
     }
 
+    @HandlesEffect(UntapAttackedCreaturesEffect.class)
     private void resolveUntapAttackedCreatures(GameData gameData, StackEntry entry) {
         int count = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -468,6 +444,7 @@ public class CreatureModResolutionService implements EffectHandlerProvider {
         log.info("Game {} - {} untaps {} attacked creature(s)", gameData.id, entry.getCard().getName(), count);
     }
 
+    @HandlesEffect(PutCountersOnSourceEffect.class)
     private void resolvePutCountersOnSource(GameData gameData, StackEntry entry, PutCountersOnSourceEffect effect) {
         if (entry.getSourcePermanentId() == null) {
             return;

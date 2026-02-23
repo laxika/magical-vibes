@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -25,33 +24,14 @@ import java.util.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class DestructionResolutionService implements EffectHandlerProvider {
+public class DestructionResolutionService {
 
     private final GameHelper gameHelper;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
 
-    @Override
-    public void registerHandlers(EffectHandlerRegistry registry) {
-        registry.register(DestroyAllPermanentsEffect.class,
-                (gd, entry, effect) -> resolveDestroyAllPermanents(gd, entry, (DestroyAllPermanentsEffect) effect));
-        registry.register(DestroyTargetPermanentEffect.class,
-                (gd, entry, effect) -> resolveDestroyTargetPermanent(gd, entry, (DestroyTargetPermanentEffect) effect));
-        registry.register(DestroyTargetLandAndDamageControllerEffect.class,
-                (gd, entry, effect) -> resolveDestroyTargetLandAndDamageController(gd, entry, (DestroyTargetLandAndDamageControllerEffect) effect));
-        registry.register(DestroyCreatureBlockingThisEffect.class,
-                (gd, entry, effect) -> resolveDestroyCreatureBlockingThis(gd, entry));
-        registry.register(DestroyBlockedCreatureAndSelfEffect.class,
-                (gd, entry, effect) -> resolveDestroyBlockedCreatureAndSelf(gd, entry));
-        registry.register(SacrificeCreatureEffect.class,
-                (gd, entry, effect) -> resolveSacrificeCreature(gd, entry));
-        registry.register(EachOpponentSacrificesCreatureEffect.class,
-                (gd, entry, effect) -> resolveEachOpponentSacrificesCreature(gd, entry));
-        registry.register(SacrificeOtherCreatureOrDamageEffect.class,
-                (gd, entry, effect) -> resolveSacrificeOtherCreatureOrDamage(gd, entry, (SacrificeOtherCreatureOrDamageEffect) effect));
-    }
-
+    @HandlesEffect(DestroyAllPermanentsEffect.class)
     void resolveDestroyAllPermanents(GameData gameData, StackEntry entry, DestroyAllPermanentsEffect effect) {
         List<Permanent> toDestroy = new ArrayList<>();
         UUID controllerId = entry.getControllerId();
@@ -112,6 +92,7 @@ public class DestructionResolutionService implements EffectHandlerProvider {
         return targetTypes.contains(CardType.CREATURE) || targetTypes.contains(CardType.ARTIFACT);
     }
 
+    @HandlesEffect(DestroyTargetPermanentEffect.class)
     void resolveDestroyTargetPermanent(GameData gameData, StackEntry entry, DestroyTargetPermanentEffect destroy) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
@@ -139,6 +120,7 @@ public class DestructionResolutionService implements EffectHandlerProvider {
         gameHelper.removeOrphanedAuras(gameData);
     }
 
+    @HandlesEffect(DestroyTargetLandAndDamageControllerEffect.class)
     void resolveDestroyTargetLandAndDamageController(GameData gameData, StackEntry entry,
                                                       DestroyTargetLandAndDamageControllerEffect effect) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
@@ -203,6 +185,7 @@ public class DestructionResolutionService implements EffectHandlerProvider {
         gameHelper.checkWinCondition(gameData);
     }
 
+    @HandlesEffect(SacrificeCreatureEffect.class)
     void resolveSacrificeCreature(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
@@ -212,6 +195,7 @@ public class DestructionResolutionService implements EffectHandlerProvider {
         performSacrificeCreatureForPlayer(gameData, targetPlayerId);
     }
 
+    @HandlesEffect(EachOpponentSacrificesCreatureEffect.class)
     void resolveEachOpponentSacrificesCreature(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
 
@@ -259,6 +243,7 @@ public class DestructionResolutionService implements EffectHandlerProvider {
                 "Choose a creature to sacrifice.");
     }
 
+    @HandlesEffect(SacrificeOtherCreatureOrDamageEffect.class)
     void resolveSacrificeOtherCreatureOrDamage(GameData gameData, StackEntry entry, SacrificeOtherCreatureOrDamageEffect effect) {
         UUID controllerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -317,6 +302,7 @@ public class DestructionResolutionService implements EffectHandlerProvider {
                 "Choose a creature other than " + cardName + " to sacrifice.");
     }
 
+    @HandlesEffect(DestroyCreatureBlockingThisEffect.class)
     void resolveDestroyCreatureBlockingThis(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
@@ -349,6 +335,7 @@ public class DestructionResolutionService implements EffectHandlerProvider {
         gameHelper.removeOrphanedAuras(gameData);
     }
 
+    @HandlesEffect(DestroyBlockedCreatureAndSelfEffect.class)
     void resolveDestroyBlockedCreatureAndSelf(GameData gameData, StackEntry entry) {
         Permanent attacker = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (attacker != null) {

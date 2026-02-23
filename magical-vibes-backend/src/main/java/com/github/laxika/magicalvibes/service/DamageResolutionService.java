@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -37,51 +36,13 @@ import java.util.function.Predicate;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class DamageResolutionService implements EffectHandlerProvider {
+public class DamageResolutionService {
 
     private final GameHelper gameHelper;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
 
-    @Override
-    public void registerHandlers(EffectHandlerRegistry registry) {
-        registry.register(DealXDamageToTargetCreatureEffect.class,
-                (gd, entry, effect) -> resolveDealXDamageToTargetCreature(gd, entry));
-        registry.register(DealDamageToTargetCreatureEffect.class,
-                (gd, entry, effect) -> resolveDealDamageToTargetCreature(gd, entry, (DealDamageToTargetCreatureEffect) effect));
-        registry.register(DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect.class,
-                (gd, entry, effect) -> resolveDealDamageToTargetCreatureEqualToControlledSubtypeCount(
-                        gd, entry, (DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect) effect));
-        registry.register(DealXDamageDividedAmongTargetAttackingCreaturesEffect.class,
-                (gd, entry, effect) -> resolveDealXDamageDividedAmongTargetAttackingCreatures(gd, entry));
-        registry.register(DealDamageToAllCreaturesEffect.class,
-                (gd, entry, effect) -> resolveDealDamageToAllCreatures(gd, entry, (DealDamageToAllCreaturesEffect) effect));
-        registry.register(DealDamageToAllCreaturesAndPlayersEffect.class,
-                (gd, entry, effect) -> resolveDealDamageToAllCreaturesAndPlayers(gd, entry, (DealDamageToAllCreaturesAndPlayersEffect) effect));
-        registry.register(DealDamageToFlyingAndPlayersEffect.class,
-                (gd, entry, effect) -> resolveDealDamageToFlyingAndPlayers(gd, entry));
-        registry.register(DealXDamageToAnyTargetEffect.class,
-                (gd, entry, effect) -> resolveDealXDamageToAnyTarget(gd, entry));
-        registry.register(DealXDamageToAnyTargetAndGainXLifeEffect.class,
-                (gd, entry, effect) -> resolveDealXDamageToAnyTargetAndGainXLife(gd, entry));
-        registry.register(DealDamageToAnyTargetEffect.class,
-                (gd, entry, effect) -> resolveDealDamageToAnyTarget(gd, entry, (DealDamageToAnyTargetEffect) effect));
-        registry.register(DealDamageToAnyTargetAndGainLifeEffect.class,
-                (gd, entry, effect) -> resolveDealDamageToAnyTargetAndGainLife(gd, entry, (DealDamageToAnyTargetAndGainLifeEffect) effect));
-        registry.register(DealDamageToControllerEffect.class,
-                (gd, entry, effect) -> resolveDealDamageToController(gd, entry, (DealDamageToControllerEffect) effect));
-        registry.register(DealDamageToTargetPlayerEffect.class,
-                (gd, entry, effect) -> resolveDealDamageToTargetPlayer(gd, entry, (DealDamageToTargetPlayerEffect) effect));
-        registry.register(DealDamageToTargetPlayerByHandSizeEffect.class,
-                (gd, entry, effect) -> resolveDealDamageToTargetPlayerByHandSize(gd, entry));
-        registry.register(DealOrderedDamageToAnyTargetsEffect.class,
-                (gd, entry, effect) -> resolveDealOrderedDamageToAnyTargets(gd, entry, (DealOrderedDamageToAnyTargetsEffect) effect));
-        registry.register(DealDamageIfFewCardsInHandEffect.class,
-                (gd, entry, effect) -> resolveDealDamageIfFewCardsInHand(gd, entry, (DealDamageIfFewCardsInHandEffect) effect));
-        registry.register(FirstTargetDealsPowerDamageToSecondTargetEffect.class,
-                (gd, entry, effect) -> resolveBite(gd, entry));
-    }
-
+    @HandlesEffect(DealXDamageToTargetCreatureEffect.class)
     void resolveDealXDamageToTargetCreature(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) return;
@@ -94,6 +55,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         }
     }
 
+    @HandlesEffect(DealDamageToTargetCreatureEffect.class)
     void resolveDealDamageToTargetCreature(GameData gameData, StackEntry entry, DealDamageToTargetCreatureEffect effect) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) return;
@@ -106,6 +68,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         }
     }
 
+    @HandlesEffect(DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect.class)
     void resolveDealDamageToTargetCreatureEqualToControlledSubtypeCount(
             GameData gameData,
             StackEntry entry,
@@ -137,6 +100,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         return count;
     }
 
+    @HandlesEffect(DealXDamageDividedAmongTargetAttackingCreaturesEffect.class)
     void resolveDealXDamageDividedAmongTargetAttackingCreatures(GameData gameData, StackEntry entry) {
         Map<UUID, Integer> assignments = entry.getDamageAssignments();
         if (assignments == null || assignments.isEmpty()) {
@@ -169,6 +133,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         }
     }
 
+    @HandlesEffect(DealDamageToAllCreaturesEffect.class)
     void resolveDealDamageToAllCreatures(GameData gameData, StackEntry entry, DealDamageToAllCreaturesEffect effect) {
         if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
             gameBroadcastService.logAndBroadcast(gameData, entry.getCard().getName() + "'s damage is prevented.");
@@ -179,6 +144,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         damageAllCreaturesOnBattlefield(gameData, entry, damage, p -> gameQueryService.isCreature(gameData, p));
     }
 
+    @HandlesEffect(DealDamageToAllCreaturesAndPlayersEffect.class)
     void resolveDealDamageToAllCreaturesAndPlayers(GameData gameData, StackEntry entry, DealDamageToAllCreaturesAndPlayersEffect effect) {
         if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
             gameBroadcastService.logAndBroadcast(gameData, entry.getCard().getName() + "'s damage is prevented.");
@@ -195,6 +161,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         gameHelper.checkWinCondition(gameData);
     }
 
+    @HandlesEffect(DealDamageToFlyingAndPlayersEffect.class)
     void resolveDealDamageToFlyingAndPlayers(GameData gameData, StackEntry entry) {
         if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
             gameBroadcastService.logAndBroadcast(gameData, entry.getCard().getName() + "'s damage is prevented.");
@@ -211,6 +178,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         gameHelper.checkWinCondition(gameData);
     }
 
+    @HandlesEffect(DealXDamageToAnyTargetEffect.class)
     void resolveDealXDamageToAnyTarget(GameData gameData, StackEntry entry) {
         UUID targetId = entry.getTargetPermanentId();
         if (targetId == null) return;
@@ -220,6 +188,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         gameHelper.checkWinCondition(gameData);
     }
 
+    @HandlesEffect(DealXDamageToAnyTargetAndGainXLifeEffect.class)
     void resolveDealXDamageToAnyTargetAndGainXLife(GameData gameData, StackEntry entry) {
         UUID targetId = entry.getTargetPermanentId();
         if (targetId == null) return;
@@ -239,6 +208,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         gameHelper.checkWinCondition(gameData);
     }
 
+    @HandlesEffect(DealDamageToTargetPlayerEffect.class)
     void resolveDealDamageToTargetPlayer(GameData gameData, StackEntry entry, DealDamageToTargetPlayerEffect effect) {
         UUID targetId = entry.getTargetPermanentId();
         if (!gameData.playerIds.contains(targetId)) return;
@@ -253,6 +223,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         gameHelper.checkWinCondition(gameData);
     }
 
+    @HandlesEffect(DealDamageToTargetPlayerByHandSizeEffect.class)
     void resolveDealDamageToTargetPlayerByHandSize(GameData gameData, StackEntry entry) {
         UUID targetId = entry.getTargetPermanentId();
         if (!gameData.playerIds.contains(targetId)) return;
@@ -268,6 +239,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         gameHelper.checkWinCondition(gameData);
     }
 
+    @HandlesEffect(DealDamageIfFewCardsInHandEffect.class)
     void resolveDealDamageIfFewCardsInHand(GameData gameData, StackEntry entry, DealDamageIfFewCardsInHandEffect effect) {
         UUID targetId = entry.getTargetPermanentId();
         String cardName = entry.getCard().getName();
@@ -294,6 +266,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         gameHelper.checkWinCondition(gameData);
     }
 
+    @HandlesEffect(DealDamageToAnyTargetEffect.class)
     void resolveDealDamageToAnyTarget(GameData gameData, StackEntry entry, DealDamageToAnyTargetEffect effect) {
         UUID targetId = entry.getTargetPermanentId();
         if (targetId == null) return;
@@ -303,6 +276,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         gameHelper.checkWinCondition(gameData);
     }
 
+    @HandlesEffect(DealOrderedDamageToAnyTargetsEffect.class)
     void resolveDealOrderedDamageToAnyTargets(GameData gameData, StackEntry entry, DealOrderedDamageToAnyTargetsEffect effect) {
         List<UUID> targets = entry.getTargetPermanentIds();
         int damageMultiplier = gameQueryService.getDamageMultiplier(gameData);
@@ -349,6 +323,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         gameHelper.checkWinCondition(gameData);
     }
 
+    @HandlesEffect(DealDamageToAnyTargetAndGainLifeEffect.class)
     void resolveDealDamageToAnyTargetAndGainLife(GameData gameData, StackEntry entry, DealDamageToAnyTargetAndGainLifeEffect effect) {
         UUID targetId = entry.getTargetPermanentId();
         if (targetId == null) return;
@@ -498,6 +473,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         }
     }
 
+    @HandlesEffect(FirstTargetDealsPowerDamageToSecondTargetEffect.class)
     void resolveBite(GameData gameData, StackEntry entry) {
         List<UUID> targets = entry.getTargetPermanentIds();
         if (targets == null || targets.size() < 2) {
@@ -550,6 +526,7 @@ public class DamageResolutionService implements EffectHandlerProvider {
         }
     }
 
+    @HandlesEffect(DealDamageToControllerEffect.class)
     void resolveDealDamageToController(GameData gameData, StackEntry entry, DealDamageToControllerEffect effect) {
         if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
             gameBroadcastService.logAndBroadcast(gameData,

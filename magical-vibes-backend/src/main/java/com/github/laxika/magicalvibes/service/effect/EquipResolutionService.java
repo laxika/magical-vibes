@@ -16,16 +16,12 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class EquipResolutionService implements EffectHandlerProvider {
+public class EquipResolutionService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
 
-    @Override
-    public void registerHandlers(EffectHandlerRegistry registry) {
-        registry.register(EquipEffect.class, (gd, entry, effect) -> resolveEquip(gd, entry));
-    }
-
+    @HandlesEffect(EquipEffect.class)
     private void resolveEquip(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {

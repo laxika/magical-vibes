@@ -37,7 +37,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class PermanentControlResolutionService implements EffectHandlerProvider {
+public class PermanentControlResolutionService {
 
     private final GameHelper gameHelper;
     private final LegendRuleService legendRuleService;
@@ -45,35 +45,12 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
 
-    @Override
-    public void registerHandlers(EffectHandlerRegistry registry) {
-        registry.register(CreateCreatureTokenEffect.class,
-                (gd, entry, effect) -> resolveCreateCreatureToken(gd, entry.getControllerId(), (CreateCreatureTokenEffect) effect));
-        registry.register(CreateCreatureTokenWithColorsEffect.class,
-                (gd, entry, effect) -> resolveCreateCreatureTokenWithColors(gd, entry.getControllerId(), (CreateCreatureTokenWithColorsEffect) effect));
-        registry.register(PutAuraFromHandOntoSelfEffect.class,
-                (gd, entry, effect) -> resolvePutAuraFromHandOntoSelf(gd, entry));
-        registry.register(PutTargetOnBottomOfLibraryEffect.class,
-                (gd, entry, effect) -> resolvePutTargetOnBottomOfLibrary(gd, entry));
-        registry.register(SacrificeAtEndOfCombatEffect.class,
-                (gd, entry, effect) -> resolveSacrificeAtEndOfCombat(gd, entry));
-        registry.register(SacrificeSelfEffect.class,
-                (gd, entry, effect) -> resolveSacrificeSelf(gd, entry));
-        registry.register(RedirectUnblockedCombatDamageToSelfEffect.class,
-                (gd, entry, effect) -> resolveRedirectUnblockedCombatDamageToSelf(gd, entry));
-        registry.register(RegenerateEffect.class,
-                (gd, entry, effect) -> resolveRegenerate(gd, entry));
-        registry.register(GainControlOfTargetAuraEffect.class,
-                (gd, entry, effect) -> resolveGainControlOfTargetAura(gd, entry));
-        registry.register(GainControlOfEnchantedTargetEffect.class,
-                (gd, entry, effect) -> resolveGainControlOfEnchantedTarget(gd, entry));
-        registry.register(GainControlOfTargetCreatureUntilEndOfTurnEffect.class,
-                (gd, entry, effect) -> resolveGainControlOfTargetCreatureUntilEndOfTurn(gd, entry));
-        registry.register(TargetPlayerGainsControlOfSourceCreatureEffect.class,
-                (gd, entry, effect) -> resolveTargetPlayerGainsControlOfSourceCreature(gd, entry));
+    @HandlesEffect(CreateCreatureTokenEffect.class)
+    private void resolveCreateCreatureToken(GameData gameData, StackEntry entry, CreateCreatureTokenEffect effect) {
+        applyCreateCreatureToken(gameData, entry.getControllerId(), effect);
     }
 
-    private void resolveCreateCreatureToken(GameData gameData, UUID controllerId, CreateCreatureTokenEffect token) {
+    private void applyCreateCreatureToken(GameData gameData, UUID controllerId, CreateCreatureTokenEffect token) {
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(gameHelper.snapshotEnterTappedTypes(gameData));
         for (int i = 0; i < token.amount(); i++) {
@@ -108,7 +85,12 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         log.info("Game {} - {} {} token(s) created for player {}", gameData.id, token.amount(), token.tokenName(), controllerId);
     }
 
-    private void resolveCreateCreatureTokenWithColors(GameData gameData, UUID controllerId, CreateCreatureTokenWithColorsEffect token) {
+    @HandlesEffect(CreateCreatureTokenWithColorsEffect.class)
+    private void resolveCreateCreatureTokenWithColors(GameData gameData, StackEntry entry, CreateCreatureTokenWithColorsEffect effect) {
+        applyCreateCreatureTokenWithColors(gameData, entry.getControllerId(), effect);
+    }
+
+    private void applyCreateCreatureTokenWithColors(GameData gameData, UUID controllerId, CreateCreatureTokenWithColorsEffect token) {
         for (int i = 0; i < token.amount(); i++) {
             Card tokenCard = new Card();
             tokenCard.setName(token.tokenName());
@@ -138,6 +120,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         log.info("Game {} - {} {} token(s) created for player {}", gameData.id, token.amount(), token.tokenName(), controllerId);
     }
 
+    @HandlesEffect(PutAuraFromHandOntoSelfEffect.class)
     private void resolvePutAuraFromHandOntoSelf(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
 
@@ -181,6 +164,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         playerInputService.beginTargetedCardChoice(gameData, controllerId, auraIndices, prompt, self.getId());
     }
 
+    @HandlesEffect(PutTargetOnBottomOfLibraryEffect.class)
     private void resolvePutTargetOnBottomOfLibrary(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) return;
@@ -203,6 +187,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         gameHelper.removeOrphanedAuras(gameData);
     }
 
+    @HandlesEffect(SacrificeAtEndOfCombatEffect.class)
     private void resolveSacrificeAtEndOfCombat(GameData gameData, StackEntry entry) {
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (self != null) {
@@ -212,6 +197,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         }
     }
 
+    @HandlesEffect(SacrificeSelfEffect.class)
     private void resolveSacrificeSelf(GameData gameData, StackEntry entry) {
         if (entry.getSourcePermanentId() == null) {
             return;
@@ -229,6 +215,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         }
     }
 
+    @HandlesEffect(RedirectUnblockedCombatDamageToSelfEffect.class)
     private void resolveRedirectUnblockedCombatDamageToSelf(GameData gameData, StackEntry entry) {
         List<Permanent> bf = gameData.playerBattlefields.get(entry.getControllerId());
         if (bf == null) return;
@@ -244,6 +231,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         }
     }
 
+    @HandlesEffect(RegenerateEffect.class)
     private void resolveRegenerate(GameData gameData, StackEntry entry) {
         UUID regenerationTargetId = entry.getTargetPermanentId();
         if (regenerationTargetId == null && entry.getSourcePermanentId() != null) {
@@ -264,6 +252,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         log.info("Game {} - {} gains a regeneration shield", gameData.id, perm.getCard().getName());
     }
 
+    @HandlesEffect(GainControlOfTargetAuraEffect.class)
     private void resolveGainControlOfTargetAura(GameData gameData, StackEntry entry) {
         UUID casterId = entry.getControllerId();
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
@@ -307,6 +296,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         }
     }
 
+    @HandlesEffect(GainControlOfEnchantedTargetEffect.class)
     private void resolveGainControlOfEnchantedTarget(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) return;
@@ -321,6 +311,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         gameData.enchantmentDependentStolenCreatures.add(target.getId());
     }
 
+    @HandlesEffect(GainControlOfTargetCreatureUntilEndOfTurnEffect.class)
     private void resolveGainControlOfTargetCreatureUntilEndOfTurn(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) return;
@@ -334,6 +325,7 @@ public class PermanentControlResolutionService implements EffectHandlerProvider 
         gameData.untilEndOfTurnStolenCreatures.add(target.getId());
     }
 
+    @HandlesEffect(TargetPlayerGainsControlOfSourceCreatureEffect.class)
     private void resolveTargetPlayerGainsControlOfSourceCreature(GameData gameData, StackEntry entry) {
         if (entry.getTargetPermanentId() == null || !gameData.playerIds.contains(entry.getTargetPermanentId())) {
             return;

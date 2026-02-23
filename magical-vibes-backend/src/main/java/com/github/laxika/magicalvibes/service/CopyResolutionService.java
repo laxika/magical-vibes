@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerProvider;
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -19,16 +18,11 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class CopyResolutionService implements EffectHandlerProvider {
+public class CopyResolutionService {
 
     private final GameBroadcastService gameBroadcastService;
 
-    @Override
-    public void registerHandlers(EffectHandlerRegistry registry) {
-        registry.register(CopySpellEffect.class,
-                (gd, entry, effect) -> resolveCopySpell(gd, entry));
-    }
-
+    @HandlesEffect(CopySpellEffect.class)
     void resolveCopySpell(GameData gameData, StackEntry entry) {
         UUID targetCardId = entry.getTargetPermanentId();
         if (targetCardId == null) return;
