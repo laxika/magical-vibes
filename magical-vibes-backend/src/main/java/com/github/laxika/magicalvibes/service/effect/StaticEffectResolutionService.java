@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityToOwnLan
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnCreaturesByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledCreatureCountEffect;
@@ -114,6 +115,14 @@ public class StaticEffectResolutionService {
             if (isEffectivelyCreature(context.target(), hasAnimateArtifacts)) {
                 accumulator.addKeyword(grant.keyword());
             }
+        }
+    }
+
+    @HandlesStaticEffect(GrantKeywordToOwnCreaturesByColorEffect.class)
+    private void resolveGrantKeywordToOwnCreaturesByColor(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var grant = (GrantKeywordToOwnCreaturesByColorEffect) effect;
+        if (context.targetOnSameBattlefield() && context.target().getCard().getColor() == grant.color()) {
+            accumulator.addKeyword(grant.keyword());
         }
     }
 

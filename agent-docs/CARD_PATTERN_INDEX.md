@@ -107,6 +107,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 |---------|-----------|-------|
 | Subtype lord | `g/GoblinKing.java` | STATIC BoostCreaturesBySubtypeEffect |
 | Anthem (all own) | `g/GloriousAnthem.java` | STATIC BoostOwnCreaturesEffect |
+| Color keyword lord | `b/BellowingTanglewurm.java` | STATIC GrantKeywordToOwnCreaturesByColorEffect |
 | Shared-type pump | `c/CoatOfArms.java` | STATIC BoostBySharedCreatureTypeEffect |
 | Can't block | `s/SpinelessThug.java` | STATIC CantBlockEffect |
 | Must attack | `b/BloodrockCyclops.java` | STATIC MustAttackEffect |

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,7 +32,7 @@ class AssaultStrobeTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).getFirst();
         assertThat(effect.keyword()).isEqualTo(Keyword.DOUBLE_STRIKE);
-        assertThat(effect.scope()).isEqualTo(GrantKeywordEffect.Scope.TARGET);
+        assertThat(effect.scope()).isEqualTo(GrantScope.TARGET);
     }
 
     // ===== Casting and resolving =====
