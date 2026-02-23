@@ -11,7 +11,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public enum CardSet {
 
     TENTH_EDITION("10E"),
-    LORWYN_ECLIPSED("ECL");
+    LORWYN_ECLIPSED("ECL"),
+    SCARS_OF_MIRRODIN("SOM");
 
     private static final Map<String, String> setNameRegistry = new ConcurrentHashMap<>();
     private static volatile Map<CardSet, List<CardPrinting>> scannedPrintings;
