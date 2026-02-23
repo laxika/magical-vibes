@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 public class AggressiveUrge extends Card {
 
     public AggressiveUrge() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 1));
         addEffect(EffectSlot.SPELL, new DrawCardEffect());
     }

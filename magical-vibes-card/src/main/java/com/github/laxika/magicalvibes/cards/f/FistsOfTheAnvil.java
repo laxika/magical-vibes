@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class FistsOfTheAnvil extends Card {
 
     public FistsOfTheAnvil() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(4, 0));
     }
 }

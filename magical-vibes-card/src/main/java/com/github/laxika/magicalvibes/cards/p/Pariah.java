@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Pariah extends Card {
 
     public Pariah() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.STATIC, new RedirectPlayerDamageToEnchantedCreatureEffect());
     }
 }

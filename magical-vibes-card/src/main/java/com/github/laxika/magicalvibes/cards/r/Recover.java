@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardTo
 public class Recover extends Card {
 
     public Recover() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new ReturnCreatureFromGraveyardToHandEffect());
         addEffect(EffectSlot.SPELL, new DrawCardEffect());
     }

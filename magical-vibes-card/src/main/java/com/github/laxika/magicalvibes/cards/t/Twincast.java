@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Twincast extends Card {
 
     public Twincast() {
-        setNeedsSpellTarget(true);
         setTargetFilter(new StackEntryPredicateTargetFilter(
                 new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
                 "Target must be an instant or sorcery spell."

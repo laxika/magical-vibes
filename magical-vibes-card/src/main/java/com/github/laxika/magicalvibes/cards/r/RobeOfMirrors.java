@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class RobeOfMirrors extends Card {
 
     public RobeOfMirrors() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SHROUD, Scope.ENCHANTED_CREATURE));
     }
 }

@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class SleeperAgent extends Card {
 
     public SleeperAgent() {
-        setNeedsTarget(true);
         setTargetFilter(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"

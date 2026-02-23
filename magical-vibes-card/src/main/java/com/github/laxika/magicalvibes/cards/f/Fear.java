@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Fear extends Card {
 
     public Fear() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FEAR, Scope.ENCHANTED_CREATURE));
     }
 }

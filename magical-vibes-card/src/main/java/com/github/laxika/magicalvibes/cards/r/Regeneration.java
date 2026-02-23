@@ -11,7 +11,6 @@ import java.util.List;
 public class Regeneration extends Card {
 
     public Regeneration() {
-        setNeedsTarget(true);
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{G}",

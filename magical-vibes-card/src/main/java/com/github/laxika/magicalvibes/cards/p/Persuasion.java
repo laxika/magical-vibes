@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Persuasion extends Card {
 
     public Persuasion() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
     }
 }

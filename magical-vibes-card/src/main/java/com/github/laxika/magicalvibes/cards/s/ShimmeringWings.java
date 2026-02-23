@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class ShimmeringWings extends Card {
 
     public ShimmeringWings() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, Scope.ENCHANTED_CREATURE));
         addActivatedAbility(new ActivatedAbility(false, "{U}", List.of(new ReturnSelfToHandEffect()), false, "{U}: Return Shimmering Wings to its owner's hand."));
     }

@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class Overgrowth extends Card {
 
     public Overgrowth() {
-        setNeedsTarget(true);
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentIsLandPredicate(),
                 "Target must be a land"

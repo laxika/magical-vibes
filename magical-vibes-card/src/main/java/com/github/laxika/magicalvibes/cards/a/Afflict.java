@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Afflict extends Card {
 
     public Afflict() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(-1, -1));
         addEffect(EffectSlot.SPELL, new DrawCardEffect());
     }

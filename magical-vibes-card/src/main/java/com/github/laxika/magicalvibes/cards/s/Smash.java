@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class Smash extends Card {
 
     public Smash() {
-        setNeedsTarget(true);
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Target must be an artifact"

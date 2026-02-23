@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Distress extends Card {
 
     public Distress() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new ChooseCardFromTargetHandToDiscardEffect(1, List.of(CardType.LAND)));
     }
 }

@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTu
 public class Stun extends Card {
 
     public Stun() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new TargetCreatureCantBlockThisTurnEffect());
         addEffect(EffectSlot.SPELL, new DrawCardEffect());
     }

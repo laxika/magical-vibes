@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 public class NaturalSpring extends Card {
 
     public NaturalSpring() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new TargetPlayerGainsLifeEffect(8));
     }
 }

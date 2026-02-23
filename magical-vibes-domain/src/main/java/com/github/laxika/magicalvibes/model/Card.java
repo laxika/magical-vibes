@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,8 +40,6 @@ public class Card {
     @Setter private Integer power;
     @Setter private Integer toughness;
     @Setter private Set<Keyword> keywords = Set.of();
-    @Setter private boolean needsTarget;
-    @Setter private boolean needsSpellTarget;
     @Setter private TargetFilter targetFilter;
     @Setter private Integer loyalty;
     @Setter private ManaColor xColorRestriction;
@@ -93,6 +92,38 @@ public class Card {
 
     public boolean isAura() {
         return subtypes.contains(CardSubtype.AURA);
+    }
+
+    public Set<TargetType> getAllowedTargets() {
+        Set<TargetType> result = EnumSet.noneOf(TargetType.class);
+        if (isAura()) {
+            result.add(TargetType.PERMANENT);
+        }
+        for (CardEffect e : getEffects(EffectSlot.SPELL)) {
+            collectTargetTypes(e, result);
+        }
+        for (CardEffect e : getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (e.canTargetPlayer()) result.add(TargetType.PLAYER);
+            if (e.canTargetPermanent()) result.add(TargetType.PERMANENT);
+        }
+        return result;
+    }
+
+    private void collectTargetTypes(CardEffect e, Set<TargetType> out) {
+        if (e.canTargetPlayer()) out.add(TargetType.PLAYER);
+        if (e.canTargetPermanent()) out.add(TargetType.PERMANENT);
+        if (e.canTargetSpell()) out.add(TargetType.SPELL_ON_STACK);
+        if (e.canTargetGraveyard()) out.add(TargetType.GRAVEYARD);
+    }
+
+    public boolean isNeedsTarget() {
+        Set<TargetType> t = getAllowedTargets();
+        return t.contains(TargetType.PLAYER) || t.contains(TargetType.PERMANENT)
+                || t.contains(TargetType.GRAVEYARD);
+    }
+
+    public boolean isNeedsSpellTarget() {
+        return getAllowedTargets().contains(TargetType.SPELL_ON_STACK);
     }
 
     public boolean isNeedsDamageDistribution() {

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class HurkylsRecall extends Card {
 
     public HurkylsRecall() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new ReturnArtifactsTargetPlayerOwnsToHandEffect());
     }
 }

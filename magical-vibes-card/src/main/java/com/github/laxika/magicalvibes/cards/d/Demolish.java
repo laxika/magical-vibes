@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Demolish extends Card {
 
     public Demolish() {
-        setNeedsTarget(true);
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),

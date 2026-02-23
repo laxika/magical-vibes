@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class MindRot extends Card {
 
     public MindRot() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new TargetPlayerDiscardsEffect(2));
     }
 }

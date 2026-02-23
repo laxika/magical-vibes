@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Unsummon extends Card {
 
     public Unsummon() {
-        setNeedsTarget(true);
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"

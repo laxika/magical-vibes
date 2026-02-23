@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class HeadGames extends Card {
 
     public HeadGames() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new HeadGamesEffect());
     }
 }

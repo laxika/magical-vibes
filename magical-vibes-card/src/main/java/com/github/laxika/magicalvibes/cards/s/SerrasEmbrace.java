@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class SerrasEmbrace extends Card {
 
     public SerrasEmbrace() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.STATIC, new BoostAttachedCreatureEffect(2, 2));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, Scope.ENCHANTED_CREATURE));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.VIGILANCE, Scope.ENCHANTED_CREATURE));

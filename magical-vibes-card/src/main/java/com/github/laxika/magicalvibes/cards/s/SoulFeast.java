@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndContr
 public class SoulFeast extends Card {
 
     public SoulFeast() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new TargetPlayerLosesLifeAndControllerGainsLifeEffect(4, 4));
     }
 }

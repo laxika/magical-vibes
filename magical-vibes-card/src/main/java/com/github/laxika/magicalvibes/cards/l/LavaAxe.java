@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class LavaAxe extends Card {
 
     public LavaAxe() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new DealDamageToTargetPlayerEffect(5));
     }
 }

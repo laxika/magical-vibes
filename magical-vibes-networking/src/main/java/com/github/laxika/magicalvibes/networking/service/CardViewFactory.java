@@ -7,32 +7,14 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -67,7 +49,7 @@ public class CardViewFactory {
         List<String> spellAllowedTargetTypes = computeSpellAllowedTargetTypes(card);
         List<String> spellAllowedTargetSubtypes = computeSpellAllowedTargetSubtypes(card);
         boolean requiresAttackingTarget = computeRequiresAttackingTarget(card);
-        boolean targetsPlayer = computeSpellTargetsPlayer(card);
+        boolean targetsPlayer = card.getAllowedTargets().contains(TargetType.PLAYER);
 
         return new CardView(
                 card.getName(),
@@ -99,9 +81,7 @@ public class CardViewFactory {
 
     public ActivatedAbilityView createAbilityView(ActivatedAbility ability) {
         boolean targetsPlayer = ability.getEffects().stream()
-                .anyMatch(e -> e instanceof MillTargetPlayerEffect || e instanceof RevealTopCardOfLibraryEffect
-                        || e instanceof DealDamageToAnyTargetEffect || e instanceof DealDamageToTargetPlayerEffect
-                        || e instanceof ChooseCardFromTargetHandToDiscardEffect);
+                .anyMatch(CardEffect::canTargetPlayer);
 
         Set<String> allowedTargetTypes = new LinkedHashSet<>();
         if (ability.getTargetFilter() instanceof PermanentPredicateTargetFilter predicateFilter) {
@@ -132,34 +112,6 @@ public class CardViewFactory {
     private boolean computeRequiresAttackingTarget(Card card) {
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             if (effect instanceof PutTargetOnBottomOfLibraryEffect) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean computeSpellTargetsPlayer(Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof ChooseCardsFromTargetHandToTopOfLibraryEffect
-                    || effect instanceof DoubleTargetPlayerLifeEffect
-                    || effect instanceof ExtraTurnEffect
-                    || effect instanceof HeadGamesEffect
-                    || effect instanceof LookAtHandEffect
-                    || effect instanceof MillTargetPlayerEffect
-                    || effect instanceof ReturnArtifactsTargetPlayerOwnsToHandEffect
-                    || effect instanceof SacrificeCreatureEffect
-                    || effect instanceof ShuffleGraveyardIntoLibraryEffect
-                    || effect instanceof TargetPlayerDiscardsEffect
-                    || effect instanceof DealOrderedDamageToAnyTargetsEffect
-                    || effect instanceof DealDamageToAnyTargetEffect
-                    || effect instanceof DealDamageToAnyTargetAndGainLifeEffect
-                    || effect instanceof DealXDamageToAnyTargetEffect
-                    || effect instanceof DealXDamageToAnyTargetAndGainXLifeEffect) {
-                return true;
-            }
-        }
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-            if (effect instanceof TargetPlayerLosesLifeAndControllerGainsLifeEffect) {
                 return true;
             }
         }

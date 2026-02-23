@@ -16,7 +16,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
-| Targeted burn | `s/Shock.java` | `setNeedsTarget` + SPELL DealDamageToAnyTargetEffect |
+| Targeted burn | `s/Shock.java` | SPELL DealDamageToAnyTargetEffect (targeting auto-derived) |
 | X burn | `b/Blaze.java` | DealXDamageToAnyTargetEffect |
 | Burn + life drain | `e/EssenceDrain.java` | DealDamageToAnyTargetAndGainLifeEffect |
 | Multi-target damage | `c/ConeOfFlame.java` | DealOrderedDamageToAnyTargetsEffect |
@@ -27,7 +27,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Multi-effect removal | `c/Condemn.java` | PutTargetOnBottomOfLibrary + GainLifeEqualToTargetToughness |
 | Destroy + cantrip | `s/Smash.java` | DestroyTargetPermanentEffect + DrawCardEffect |
 | Board wipe | `w/WrathOfGod.java` | DestroyAllPermanentsEffect |
-| Counter (any) | `c/Cancel.java` | `setNeedsSpellTarget` + CounterSpellEffect |
+| Counter (any) | `c/Cancel.java` | CounterSpellEffect (spell targeting auto-derived) |
 | Counter (filtered) | `r/RemoveSoul.java` | StackEntryPredicateTargetFilter + StackEntryTypeInPredicate |
 | Counter + bonus | `d/Discombobulate.java` | Counter + ReorderTopCardsOfLibraryEffect |
 | Bounce target | `u/Unsummon.java` | ReturnTargetPermanentToHandEffect |
@@ -58,7 +58,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB gain life | `a/AngelOfMercy.java` | ON_ENTER_BATTLEFIELD GainLifeEffect |
 | ETB draw | `k/KavuClimber.java` | ON_ENTER_BATTLEFIELD DrawCardEffect |
 | ETB draw + downside | `p/PhyrexianRager.java` | Draw + LoseLifeEffect |
-| ETB destroy (targeted) | `n/Nekrataal.java` | `setNeedsTarget` + ON_ENTER_BATTLEFIELD DestroyTargetPermanentEffect |
+| ETB destroy (targeted) | `n/Nekrataal.java` | ON_ENTER_BATTLEFIELD DestroyTargetPermanentEffect (targeting auto-derived) |
 | ETB discard | `r/RavenousRats.java` | TargetPlayerDiscardsEffect |
 | ETB search | `c/CivicWayfinder.java` | MayEffect(SearchLibraryForBasicLandToHandEffect) |
 | ETB may return from GY | `g/Gravedigger.java` | MayEffect(ReturnCreatureFromGraveyardToHandEffect) |

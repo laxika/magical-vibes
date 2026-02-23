@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class ArcaneTeachings extends Card {
 
     public ArcaneTeachings() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.STATIC, new BoostAttachedCreatureEffect(2, 2));
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityToEnchantedCreatureEffect(
                 new ActivatedAbility(

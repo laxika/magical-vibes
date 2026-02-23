@@ -7,4 +7,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param amount number of cards to discard
  */
 public record TargetPlayerDiscardsEffect(int amount) implements CardEffect {
+
+    @Override
+    public boolean canTargetPlayer() {
+        return true;
+    }
 }

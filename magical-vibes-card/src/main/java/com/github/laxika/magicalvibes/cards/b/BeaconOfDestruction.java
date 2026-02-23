@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class BeaconOfDestruction extends Card {
 
     public BeaconOfDestruction() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(5));
         addEffect(EffectSlot.SPELL, new ShuffleIntoLibraryEffect());
     }

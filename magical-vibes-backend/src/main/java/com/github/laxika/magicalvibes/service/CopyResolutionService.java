@@ -93,8 +93,6 @@ public class CopyResolutionService {
         copy.setPower(original.getPower());
         copy.setToughness(original.getToughness());
         copy.setKeywords(original.getKeywords());
-        copy.setNeedsTarget(original.isNeedsTarget());
-        copy.setNeedsSpellTarget(original.isNeedsSpellTarget());
         copy.setTargetFilter(original.getTargetFilter());
         copy.setLoyalty(original.getLoyalty());
         copy.setXColorRestriction(original.getXColorRestriction());

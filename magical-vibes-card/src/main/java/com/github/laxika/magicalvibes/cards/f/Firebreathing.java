@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Firebreathing extends Card {
 
     public Firebreathing() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityToEnchantedCreatureEffect(
                 new ActivatedAbility(
                         false,

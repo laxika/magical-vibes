@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEf
 public class Lure extends Card {
 
     public Lure() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.STATIC, new MustBeBlockedByAllCreaturesEffect());
     }
 }

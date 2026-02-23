@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Peek extends Card {
 
     public Peek() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new LookAtHandEffect());
         addEffect(EffectSlot.SPELL, new DrawCardEffect());
     }

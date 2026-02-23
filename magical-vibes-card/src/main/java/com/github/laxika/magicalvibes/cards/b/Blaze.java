@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Blaze extends Card {
 
     public Blaze() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new DealXDamageToAnyTargetEffect());
     }
 }

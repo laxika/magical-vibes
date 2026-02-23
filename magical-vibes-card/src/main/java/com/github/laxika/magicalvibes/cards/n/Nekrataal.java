@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Nekrataal extends Card {
 
     public Nekrataal() {
-        setNeedsTarget(true);
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

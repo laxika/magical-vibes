@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class AgonizingMemories extends Card {
 
     public AgonizingMemories() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new ChooseCardsFromTargetHandToTopOfLibraryEffect(2));
     }
 }

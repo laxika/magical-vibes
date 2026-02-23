@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class HeartOfLight extends Card {
 
     public HeartOfLight() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.STATIC, new PreventAllDamageToAndByEnchantedCreatureEffect());
     }
 }

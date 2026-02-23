@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class AuraGraft extends Card {
 
     public AuraGraft() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new GainControlOfTargetAuraEffect());
     }
 }

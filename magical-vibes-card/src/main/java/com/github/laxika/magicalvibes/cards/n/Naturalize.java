@@ -15,7 +15,6 @@ import java.util.List;
 public class Naturalize extends Card {
 
     public Naturalize() {
-        setNeedsTarget(true);
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),

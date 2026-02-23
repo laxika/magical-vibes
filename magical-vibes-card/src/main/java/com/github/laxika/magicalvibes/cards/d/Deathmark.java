@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Deathmark extends Card {
 
     public Deathmark() {
-        setNeedsTarget(true);
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

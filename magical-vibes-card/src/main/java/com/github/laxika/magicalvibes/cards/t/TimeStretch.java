@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class TimeStretch extends Card {
 
     public TimeStretch() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new ExtraTurnEffect(2));
     }
 }

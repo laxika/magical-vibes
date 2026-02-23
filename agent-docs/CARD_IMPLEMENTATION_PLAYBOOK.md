@@ -18,7 +18,6 @@ Purpose: a minimal workflow for adding cards with fewer repeated lookups and low
 @CardRegistration(set = "10E", collectorNumber = "000")
 public class ExampleCard extends Card {
     public ExampleCard() {
-        // Optional: setNeedsTarget(true) / setNeedsSpellTarget(true)
         // Optional: setTargetFilter(...)
         // addEffect(...) and/or addActivatedAbility(...)
     }
@@ -28,8 +27,8 @@ public class ExampleCard extends Card {
 ## Canonical patterns
 
 - Targeted burn spell:
-  - `setNeedsTarget(true)`
   - `addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(N))`
+  - Targeting is computed from effects — no `setNeedsTarget` call needed.
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/Shock.java`
 
 - Multi-step spell resolution with shared target:
@@ -37,8 +36,9 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/c/Condemn.java`
 
 - Spell that targets stack entries:
-  - `setNeedsSpellTarget(true)`
-  - `setTargetFilter(new StackEntryPredicateTargetFilter(...))`
+  - `addEffect(EffectSlot.SPELL, new CounterSpellEffect())` (or `CopySpellEffect`, etc.)
+  - `setTargetFilter(new StackEntryPredicateTargetFilter(...))` if restricted
+  - Spell targeting is computed from effects — no `setNeedsSpellTarget` call needed.
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/t/Twincast.java`
 
 - Static combat restriction on self:
@@ -50,7 +50,7 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SteelGolem.java`
 
 - Aura with static effect:
-  - `setNeedsTarget(true)` + static aura effect
+  - Auras automatically derive targeting from `isAura()` — no `setNeedsTarget` call needed.
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/p/Pacifism.java`
 
 - Aura with static + activated ability:
@@ -62,8 +62,9 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SiegeGangCommander.java`
 
 - ETB target-opponent control handoff:
-  - `setNeedsTarget(true)` + `setTargetFilter(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT), ...))`
+  - `setTargetFilter(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT), ...))`
   - `addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TargetPlayerGainsControlOfSourceCreatureEffect())`
+  - Targeting is computed from the ETB effect — no `setNeedsTarget` call needed.
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SleeperAgent.java`
 
 - Composition before custom effect:
@@ -110,8 +111,9 @@ public class ExampleCard extends Card {
 
 ## Targeting checklist
 
-- `setNeedsTarget(true)` for permanent/player target resolution.
-- `setNeedsSpellTarget(true)` for stack target resolution.
+- Targeting is computed automatically from effects. Override `canTargetPlayer()`, `canTargetPermanent()`, `canTargetSpell()`, or `canTargetGraveyard()` on your effect record to return `true`.
+- `Card.isNeedsTarget()` and `Card.isNeedsSpellTarget()` are derived getters — never call `setNeedsTarget` or `setNeedsSpellTarget`.
+- `Card.getAllowedTargets()` returns a `Set<TargetType>` computed from SPELL and ON_ENTER_BATTLEFIELD effects, plus `isAura()`.
 - For non-battlefield targets on stack entries, use `Zone` (`Zone.GRAVEYARD`, `Zone.STACK`), not `TargetZone`.
 - Add `setTargetFilter(...)` when target legality is restricted.
 - For activated abilities, use `new ActivatedAbility(..., needsTarget, ..., optionalFilter)` when per-ability targeting differs.
@@ -124,6 +126,7 @@ Create a new `CardEffect` record only if both are true:
 
 Then do all of:
 - Add effect record in `magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/`
+  - Override `canTargetPlayer()`, `canTargetPermanent()`, `canTargetSpell()`, or `canTargetGraveyard()` to return `true` as appropriate. This drives automatic `isNeedsTarget()`/`isNeedsSpellTarget()` computation on `Card` and the `targetsPlayer` flag in `CardViewFactory`.
 - Add an annotated resolver method in the correct resolution service (see `EFFECTS_INDEX.md` provider map):
   ```java
   @HandlesEffect(YourNewEffect.class)

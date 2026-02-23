@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class EssenceDrain extends Card {
 
     public EssenceDrain() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetAndGainLifeEffect(3, 3));
     }
 }

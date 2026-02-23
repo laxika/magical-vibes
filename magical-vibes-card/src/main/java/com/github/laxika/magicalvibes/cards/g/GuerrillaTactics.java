@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class GuerrillaTactics extends Card {
 
     public GuerrillaTactics() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
         addEffect(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT, new DealDamageToAnyTargetEffect(4));
     }

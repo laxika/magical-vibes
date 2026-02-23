@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHand
 public class Recollect extends Card {
 
     public Recollect() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new ReturnCardFromGraveyardToHandEffect());
     }
 }

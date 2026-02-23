@@ -117,7 +117,7 @@ new ActivatedAbility(requiresTap, manaCost, effects, needsTarget, needsSpellTarg
 
 **Use when:** Ability targets a spell on the stack (e.g. an activated counter ability). Set `needsSpellTarget=true` and provide a `StackEntryPredicateTargetFilter`.
 
-**Note:** For spell cards (not abilities) that target spells, use `setNeedsSpellTarget(true)` and `setTargetFilter(...)` on the Card directly instead.
+**Note:** For spell cards (not abilities) that target spells, spell targeting is auto-derived from effects (e.g. `CounterSpellEffect`, `CopySpellEffect`). Use `setTargetFilter(...)` on the Card directly if target legality is restricted.
 
 ---
 
@@ -305,13 +305,12 @@ Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon
 
 ## Card-level targeting (for spells, not abilities)
 
-For spells (instants/sorceries) that need targets, use these `Card` setters in the constructor instead of ActivatedAbility:
+For spells (instants/sorceries) that need targets, targeting is auto-derived from effects. Override `canTargetPlayer()`, `canTargetPermanent()`, `canTargetSpell()`, or `canTargetGraveyard()` on your effect record to return `true`. Then in the card constructor:
 
 ```java
-setNeedsTarget(true);                    // targets a permanent or player
-setNeedsSpellTarget(true);               // targets a spell on the stack
-setTargetFilter(new SomeTargetFilter()); // restricts valid targets
+setTargetFilter(new SomeTargetFilter()); // restricts valid targets (optional)
 addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
+// isNeedsTarget() and isNeedsSpellTarget() are computed automatically from effects
 ```
 
 ---

@@ -16,7 +16,6 @@ import java.util.List;
 public class CreepingMold extends Card {
 
     public CreepingMold() {
-        setNeedsTarget(true);
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),

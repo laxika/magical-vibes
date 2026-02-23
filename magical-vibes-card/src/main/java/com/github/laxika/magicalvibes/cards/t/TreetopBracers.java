@@ -17,7 +17,6 @@ import java.util.List;
 public class TreetopBracers extends Card {
 
     public TreetopBracers() {
-        setNeedsTarget(true);
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"

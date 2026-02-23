@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class AngelicBlessing extends Card {
 
     public AngelicBlessing() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(3, 3));
         addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.FLYING, Scope.TARGET));
     }

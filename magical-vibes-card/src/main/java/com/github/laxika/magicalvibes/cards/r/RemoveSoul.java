@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class RemoveSoul extends Card {
 
     public RemoveSoul() {
-        setNeedsSpellTarget(true);
         setTargetFilter(new StackEntryPredicateTargetFilter(
                 new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL)),
                 "Target must be a creature spell."

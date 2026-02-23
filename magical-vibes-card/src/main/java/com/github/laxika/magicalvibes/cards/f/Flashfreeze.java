@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Flashfreeze extends Card {
 
     public Flashfreeze() {
-        setNeedsSpellTarget(true);
         setTargetFilter(new StackEntryPredicateTargetFilter(
                 new StackEntryColorInPredicate(Set.of(CardColor.RED, CardColor.GREEN)),
                 "Target spell must be red or green."

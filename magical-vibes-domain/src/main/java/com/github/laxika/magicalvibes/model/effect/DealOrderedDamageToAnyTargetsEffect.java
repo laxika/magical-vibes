@@ -8,4 +8,14 @@ import java.util.List;
  * Used by cards like Cone of Flame (1 to first, 2 to second, 3 to third).
  */
 public record DealOrderedDamageToAnyTargetsEffect(List<Integer> damageAmounts) implements CardEffect {
+
+    @Override
+    public boolean canTargetPlayer() {
+        return true;
+    }
+
+    @Override
+    public boolean canTargetPermanent() {
+        return true;
+    }
 }

@@ -648,7 +648,6 @@ public class GameHelper {
         copy.setPower(target.getPower());
         copy.setToughness(target.getToughness());
         copy.setKeywords(target.getKeywords());
-        copy.setNeedsTarget(target.isNeedsTarget());
         copy.setSetCode(target.getSetCode());
         copy.setCollectorNumber(target.getCollectorNumber());
         for (EffectSlot slot : EffectSlot.values()) {

@@ -5,4 +5,9 @@ public record DestroyTargetPermanentEffect(boolean cannotBeRegenerated) implemen
     public DestroyTargetPermanentEffect() {
         this(false);
     }
+
+    @Override
+    public boolean canTargetPermanent() {
+        return true;
+    }
 }

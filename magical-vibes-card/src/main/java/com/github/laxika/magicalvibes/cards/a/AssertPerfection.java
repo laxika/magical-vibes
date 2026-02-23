@@ -19,7 +19,6 @@ import java.util.List;
 public class AssertPerfection extends Card {
 
     public AssertPerfection() {
-        setNeedsTarget(true);
         setMinTargets(1);
         setMaxTargets(2);
         setMultiTargetFilters(List.of(

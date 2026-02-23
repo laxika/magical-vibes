@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Discombobulate extends Card {
 
     public Discombobulate() {
-        setNeedsSpellTarget(true);
         addEffect(EffectSlot.SPELL, new CounterSpellEffect());
         addEffect(EffectSlot.SPELL, new ReorderTopCardsOfLibraryEffect(4));
     }

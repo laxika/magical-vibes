@@ -17,8 +17,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Twitch extends Card {
 
     public Twitch() {
-
-        setNeedsTarget(true);
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),

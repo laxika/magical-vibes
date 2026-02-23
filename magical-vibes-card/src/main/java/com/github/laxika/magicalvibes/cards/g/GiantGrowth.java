@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 public class GiantGrowth extends Card {
 
     public GiantGrowth() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(3, 3));
     }
 }

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -53,7 +54,7 @@ class VoiceOfAllTest extends BaseCardTest {
         card.setType(CardType.INSTANT);
         card.setManaCost(manaCost);
         card.setColor(color);
-        card.setNeedsTarget(true);
+        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
         return card;
     }
 
@@ -364,7 +365,6 @@ class VoiceOfAllTest extends BaseCardTest {
         blackAura.setManaCost("{B}");
         blackAura.setColor(CardColor.BLACK);
         blackAura.setSubtypes(List.of(CardSubtype.AURA));
-        blackAura.setNeedsTarget(true);
         harness.setHand(player1, List.of(blackAura));
         harness.addMana(player1, ManaColor.BLACK, 1);
 

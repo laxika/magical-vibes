@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class CruelEdict extends Card {
 
     public CruelEdict() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new SacrificeCreatureEffect());
     }
 }

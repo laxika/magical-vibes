@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Boomerang extends Card {
 
     public Boomerang() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new ReturnTargetPermanentToHandEffect());
     }
 }

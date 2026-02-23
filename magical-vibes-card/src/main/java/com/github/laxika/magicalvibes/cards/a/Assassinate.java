@@ -15,7 +15,6 @@ import java.util.List;
 public class Assassinate extends Card {
 
     public Assassinate() {
-        setNeedsTarget(true);
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

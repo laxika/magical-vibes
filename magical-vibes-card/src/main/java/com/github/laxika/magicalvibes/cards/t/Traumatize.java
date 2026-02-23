@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Traumatize extends Card {
 
     public Traumatize() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new MillHalfLibraryEffect());
     }
 }

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Pacifism extends Card {
 
     public Pacifism() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect());
     }
 }

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Plagiarize extends Card {
 
     public Plagiarize() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new RedirectDrawsEffect());
     }
 }

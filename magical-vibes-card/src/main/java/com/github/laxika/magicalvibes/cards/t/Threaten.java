@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class Threaten extends Card {
 
     public Threaten() {
-        setNeedsTarget(true);
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"

@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class ConsumeSpirit extends Card {
 
     public ConsumeSpirit() {
-        setNeedsTarget(true);
         setXColorRestriction(ManaColor.BLACK);
         addEffect(EffectSlot.SPELL, new DealXDamageToAnyTargetAndGainXLifeEffect());
     }

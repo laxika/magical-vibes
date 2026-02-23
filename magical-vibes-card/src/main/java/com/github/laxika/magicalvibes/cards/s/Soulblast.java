@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouContr
 public class Soulblast extends Card {
 
     public Soulblast() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new SacrificeAllCreaturesYouControlCost());
         addEffect(EffectSlot.SPELL, new DealXDamageToAnyTargetEffect());
     }

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class AvenCloudchaser extends Card {
 
     public AvenCloudchaser() {
-        setNeedsTarget(true);
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentIsEnchantmentPredicate(),
                 "Target must be an enchantment"

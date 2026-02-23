@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Reminisce extends Card {
 
     public Reminisce() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new ShuffleGraveyardIntoLibraryEffect());
     }
 }

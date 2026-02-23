@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqu
 public class SpittingEarth extends Card {
 
     public SpittingEarth() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect(CardSubtype.MOUNTAIN));
     }
 }

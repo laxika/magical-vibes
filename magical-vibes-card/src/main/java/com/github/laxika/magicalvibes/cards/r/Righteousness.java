@@ -15,7 +15,6 @@ import java.util.List;
 public class Righteousness extends Card {
 
     public Righteousness() {
-        setNeedsTarget(true);
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

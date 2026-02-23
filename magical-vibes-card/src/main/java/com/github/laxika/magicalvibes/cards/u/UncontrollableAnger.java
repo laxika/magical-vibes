@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 public class UncontrollableAnger extends Card {
 
     public UncontrollableAnger() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.STATIC, new BoostAttachedCreatureEffect(2, 2));
         addEffect(EffectSlot.STATIC, new MustAttackEffect());
     }

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class ContaminatedBond extends Card {
 
     public ContaminatedBond() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.ON_ATTACK, new EnchantedCreatureControllerLosesLifeEffect(3));
         addEffect(EffectSlot.ON_BLOCK, new EnchantedCreatureControllerLosesLifeEffect(3));
     }

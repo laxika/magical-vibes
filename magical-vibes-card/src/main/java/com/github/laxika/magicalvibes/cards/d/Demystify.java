@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Demystify extends Card {
 
     public Demystify() {
-        setNeedsTarget(true);
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentIsEnchantmentPredicate(),
                 "Target must be an enchantment"

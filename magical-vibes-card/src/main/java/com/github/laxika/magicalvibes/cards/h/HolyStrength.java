@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class HolyStrength extends Card {
 
     public HolyStrength() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.STATIC, new BoostAttachedCreatureEffect(1, 2));
     }
 }

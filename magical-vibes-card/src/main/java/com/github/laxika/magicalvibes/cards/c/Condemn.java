@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Condemn extends Card {
 
     public Condemn() {
-        setNeedsTarget(true);
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentIsAttackingPredicate(),
                 "Target must be an attacking creature"

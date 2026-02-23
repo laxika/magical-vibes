@@ -19,7 +19,6 @@ import java.util.Set;
 public class Terror extends Card {
 
     public Terror() {
-        setNeedsTarget(true);
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

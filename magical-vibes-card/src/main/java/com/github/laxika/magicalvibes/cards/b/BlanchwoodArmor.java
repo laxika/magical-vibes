@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class BlanchwoodArmor extends Card {
 
     public BlanchwoodArmor() {
-        setNeedsTarget(true);
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"

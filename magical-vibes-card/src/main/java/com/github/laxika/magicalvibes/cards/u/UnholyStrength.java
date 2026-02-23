@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 public class UnholyStrength extends Card {
 
     public UnholyStrength() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.STATIC, new BoostAttachedCreatureEffect(2, 1));
     }
 }

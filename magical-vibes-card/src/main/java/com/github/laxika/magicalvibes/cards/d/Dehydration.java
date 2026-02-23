@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Dehydration extends Card {
 
     public Dehydration() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.STATIC, new EnchantedCreatureDoesntUntapEffect());
     }
 }

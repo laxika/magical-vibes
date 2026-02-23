@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class BeaconOfImmortality extends Card {
 
     public BeaconOfImmortality() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new DoubleTargetPlayerLifeEffect());
         addEffect(EffectSlot.SPELL, new ShuffleIntoLibraryEffect());
     }

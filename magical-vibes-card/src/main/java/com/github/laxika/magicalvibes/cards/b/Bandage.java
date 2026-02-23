@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Bandage extends Card {
 
     public Bandage() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new PreventDamageToTargetEffect(1));
         addEffect(EffectSlot.SPELL, new DrawCardEffect());
     }

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Cancel extends Card {
 
     public Cancel() {
-        setNeedsSpellTarget(true);
         addEffect(EffectSlot.SPELL, new CounterSpellEffect());
     }
 }

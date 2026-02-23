@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHan
 public class SuddenImpact extends Card {
 
     public SuddenImpact() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new DealDamageToTargetPlayerByHandSizeEffect());
     }
 }

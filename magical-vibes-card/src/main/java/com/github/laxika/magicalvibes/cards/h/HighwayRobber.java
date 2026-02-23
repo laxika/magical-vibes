@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class HighwayRobber extends Card {
 
     public HighwayRobber() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TargetPlayerLosesLifeAndControllerGainsLifeEffect(2, 2));
     }
 }

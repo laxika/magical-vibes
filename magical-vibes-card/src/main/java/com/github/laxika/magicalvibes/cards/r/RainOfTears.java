@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class RainOfTears extends Card {
 
     public RainOfTears() {
-        setNeedsTarget(true);
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentIsLandPredicate(),
                 "Target must be a land"

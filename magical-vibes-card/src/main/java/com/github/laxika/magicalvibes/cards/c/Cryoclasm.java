@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Cryoclasm extends Card {
 
     public Cryoclasm() {
-        setNeedsTarget(true);
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.PLAINS, CardSubtype.ISLAND)),
                 "Target must be a Plains or Island"

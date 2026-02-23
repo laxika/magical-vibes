@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class AppealToEirdu extends Card {
 
     public AppealToEirdu() {
-        setNeedsTarget(true);
         setMinTargets(1);
         setMaxTargets(2);
         addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 1));

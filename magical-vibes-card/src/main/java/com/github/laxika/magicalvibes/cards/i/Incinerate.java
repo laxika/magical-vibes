@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Incinerate extends Card {
 
     public Incinerate() {
-        setNeedsTarget(true);
         addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3, true));
     }
 }
