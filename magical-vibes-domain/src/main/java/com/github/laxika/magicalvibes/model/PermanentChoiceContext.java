@@ -41,4 +41,6 @@ public sealed interface PermanentChoiceContext {
     record MayAbilityTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
 
     record PreventDamageSourceChoice(UUID controllerId) implements PermanentChoiceContext {}
+
+    record AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 }

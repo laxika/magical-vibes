@@ -60,6 +60,41 @@ public class TriggeredAbilityQueueService {
         }
     }
 
+    public void processNextAttackTriggerTarget(GameData gameData) {
+        while (!gameData.pendingAttackTriggerTargets.isEmpty()) {
+            PermanentChoiceContext.AttackTriggerTarget pending = gameData.pendingAttackTriggerTargets.peekFirst();
+
+            // Collect all permanents as valid targets (Argentum Armor targets any permanent)
+            List<UUID> validTargets = new ArrayList<>();
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) continue;
+                for (Permanent p : battlefield) {
+                    validTargets.add(p.getId());
+                }
+            }
+
+            if (validTargets.isEmpty()) {
+                gameData.pendingAttackTriggerTargets.removeFirst();
+                String logEntry = pending.sourceCard().getName() + "'s attack trigger has no valid targets.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} attack trigger skipped (no valid permanent targets)",
+                        gameData.id, pending.sourceCard().getName());
+                continue;
+            }
+
+            gameData.pendingAttackTriggerTargets.removeFirst();
+            gameData.interaction.setPermanentChoiceContext(pending);
+            playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
+                    pending.sourceCard().getName() + "'s ability \u2014 Choose target permanent.");
+
+            String logEntry = pending.sourceCard().getName() + "'s attack trigger \u2014 choose a target permanent.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} attack trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
+            return;
+        }
+    }
+
     public void processNextDiscardSelfTrigger(GameData gameData) {
         while (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
             PermanentChoiceContext.DiscardTriggerAnyTarget pending = gameData.pendingDiscardSelfTriggers.peekFirst();

@@ -320,6 +320,38 @@ public class PermanentChoiceHandlerService {
             gameData.priorityPassedBy.clear();
             gameBroadcastService.broadcastGameState(gameData);
             turnProgressionService.resolveAutoPass(gameData);
+        } else if (context instanceof PermanentChoiceContext.AttackTriggerTarget att) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+            if (target != null) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        att.sourceCard(),
+                        att.controllerId(),
+                        att.sourceCard().getName() + "'s ability",
+                        new ArrayList<>(att.effects()),
+                        null,
+                        att.sourcePermanentId()
+                );
+                entry.setTargetPermanentId(permanentId);
+                gameData.stack.add(entry);
+
+                String logEntry = att.sourceCard().getName() + "'s ability targets " + target.getCard().getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} attack trigger targets {}", gameData.id, att.sourceCard().getName(), target.getCard().getName());
+            } else {
+                String logEntry = att.sourceCard().getName() + "'s ability has no valid target.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} attack trigger target no longer exists", gameData.id, att.sourceCard().getName());
+            }
+
+            // Process remaining pending attack triggers
+            if (!gameData.pendingAttackTriggerTargets.isEmpty()) {
+                gameHelper.processNextAttackTriggerTarget(gameData);
+                return;
+            }
+
+            gameData.priorityPassedBy.clear();
+            turnProgressionService.resolveAutoPass(gameData);
         } else if (gameData.interaction.pendingAuraCard() != null) {
             Card auraCard = gameData.interaction.consumePendingAuraCard();
 

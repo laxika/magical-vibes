@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessFewLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -125,12 +126,14 @@ public class GameHelper {
         Set<CardType> enterTappedTypes = snapshotEnterTappedTypes(gameData);
         applyEnterTappedEffects(permanent, enterTappedTypes);
         applySelfEnterTapped(permanent);
+        applyConditionalEnterTapped(gameData, controllerId, permanent);
         gameData.playerBattlefields.get(controllerId).add(permanent);
     }
 
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes) {
         applyEnterTappedEffects(permanent, enterTappedTypes);
         applySelfEnterTapped(permanent);
+        applyConditionalEnterTapped(gameData, controllerId, permanent);
         gameData.playerBattlefields.get(controllerId).add(permanent);
     }
 
@@ -166,6 +169,27 @@ public class GameHelper {
     private void applySelfEnterTapped(Permanent enteringPermanent) {
         if (enteringPermanent.getCard().isEntersTapped()) {
             enteringPermanent.tap();
+        }
+    }
+
+    private void applyConditionalEnterTapped(GameData gameData, UUID controllerId, Permanent enteringPermanent) {
+        for (CardEffect effect : enteringPermanent.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof EntersTappedUnlessFewLandsEffect fewLands) {
+                // Count other lands the controller already has on the battlefield
+                List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+                int otherLandCount = 0;
+                if (battlefield != null) {
+                    for (Permanent p : battlefield) {
+                        if (p.getCard().getType() == CardType.LAND
+                                || p.getCard().getAdditionalTypes().contains(CardType.LAND)) {
+                            otherLandCount++;
+                        }
+                    }
+                }
+                if (otherLandCount > fewLands.maxOtherLands()) {
+                    enteringPermanent.tap();
+                }
+            }
         }
     }
 
@@ -350,6 +374,10 @@ public class GameHelper {
 
     public void processNextDeathTriggerTarget(GameData gameData) {
         triggeredAbilityQueueService.processNextDeathTriggerTarget(gameData);
+    }
+
+    public void processNextAttackTriggerTarget(GameData gameData) {
+        triggeredAbilityQueueService.processNextAttackTriggerTarget(gameData);
     }
 
     public void beginNextPendingLibraryBottomReorder(GameData gameData) {

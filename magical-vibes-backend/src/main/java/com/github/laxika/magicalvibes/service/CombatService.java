@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -1510,19 +1511,32 @@ public class CombatService {
                                 effectsForStack.add(effect);
                             }
                         }
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                auraOwnerId,
-                                perm.getCard().getName() + "'s triggered ability",
-                                effectsForStack,
-                                null,
-                                perm.getId()
-                        ));
-                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                        log.info("Game {} - {} aura trigger pushed onto stack (enchanted creature {})",
-                                gameData.id, perm.getCard().getName(), creature.getCard().getName());
+
+                        // Check if any effect needs a permanent target — queue for target selection
+                        boolean needsTarget = effectsForStack.stream().anyMatch(CardEffect::canTargetPermanent);
+                        if (needsTarget) {
+                            gameData.pendingAttackTriggerTargets.add(
+                                    new PermanentChoiceContext.AttackTriggerTarget(
+                                            perm.getCard(), auraOwnerId, effectsForStack, perm.getId()));
+                            String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                            gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                            log.info("Game {} - {} targeted attack trigger queued for target selection (attached to {})",
+                                    gameData.id, perm.getCard().getName(), creature.getCard().getName());
+                        } else {
+                            gameData.stack.add(new StackEntry(
+                                    StackEntryType.TRIGGERED_ABILITY,
+                                    perm.getCard(),
+                                    auraOwnerId,
+                                    perm.getCard().getName() + "'s triggered ability",
+                                    effectsForStack,
+                                    null,
+                                    perm.getId()
+                            ));
+                            String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                            gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                            log.info("Game {} - {} aura trigger pushed onto stack (enchanted creature {})",
+                                    gameData.id, perm.getCard().getName(), creature.getCard().getName());
+                        }
                     }
                 }
             }
