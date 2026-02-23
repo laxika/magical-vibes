@@ -240,6 +240,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `GrantKeywordEffect` | `(Keyword keyword, Scope scope)` | grant keyword. Scope: `SELF`, `TARGET`, `ENCHANTED_CREATURE`, `EQUIPPED_CREATURE`, `OWN_TAPPED_CREATURES`, `OWN_CREATURES` |
+| `MetalcraftKeywordEffect` | `(Keyword keyword)` | metalcraft — has keyword as long as you control 3+ artifacts (self-only static) |
 | `GrantActivatedAbilityToOwnLandsEffect` | `(ActivatedAbility ability)` | grant activated ability to all lands you control |
 | `GrantActivatedAbilityToEnchantedCreatureEffect` | `(ActivatedAbility ability)` | grant activated ability to enchanted creature |
 | `GrantAdditionalBlockEffect` | `(int additionalBlocks)` | can block N additional creatures |

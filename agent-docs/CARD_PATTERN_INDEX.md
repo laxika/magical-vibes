@@ -126,6 +126,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Double damage | `f/FurnaceOfRath.java` | STATIC DoubleDamageEffect |
 | Play lands from GY | `c/CrucibleOfWorlds.java` | STATIC PlayLandsFromGraveyardEffect |
 | Draw replacement | `a/Abundance.java` | STATIC AbundanceDrawReplacementEffect |
+| Metalcraft keyword | `a/AuriokEdgewright.java` | STATIC MetalcraftKeywordEffect (self-only, 3+ artifacts) |
 
 ## Auras
 

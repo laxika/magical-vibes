@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityToOwnLan
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect.Scope;
+import com.github.laxika.magicalvibes.model.effect.MetalcraftKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledCreatureCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledLandCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledSubtypeCountEffect;
@@ -200,6 +201,16 @@ public class StaticEffectResolutionService {
 
         accumulator.addPower(count);
         accumulator.addToughness(count);
+    }
+
+    @HandlesStaticEffect(value = MetalcraftKeywordEffect.class, selfOnly = true)
+    private void resolveMetalcraftKeyword(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var metalcraft = (MetalcraftKeywordEffect) effect;
+        int artifactCount = countControlledPermanents(context,
+                p -> p.getCard().getType() == CardType.ARTIFACT || p.getCard().getAdditionalTypes().contains(CardType.ARTIFACT));
+        if (artifactCount >= 3) {
+            accumulator.addKeyword(metalcraft.keyword());
+        }
     }
 
     private boolean isEffectivelyCreature(Permanent permanent, boolean hasAnimateArtifacts) {
