@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTo
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
@@ -36,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEf
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -162,11 +162,11 @@ public class MayAbilityHandlerService {
             return;
         }
 
-        // Targeted may ability (e.g. "you may deal 3 damage to target creature")
-        boolean isTargetedCreatureEffect = ability.effects().stream()
-                .anyMatch(e -> e instanceof DealDamageToTargetCreatureEffect);
+        // Targeted may ability (e.g. "you may deal 3 damage to target creature", "you may destroy target Equipment")
+        boolean isTargetedPermanentEffect = ability.effects().stream()
+                .anyMatch(CardEffect::canTargetPermanent);
 
-        if (accepted && isTargetedCreatureEffect) {
+        if (accepted && isTargetedPermanentEffect) {
             handleTargetedMayAbilityAccepted(gameData, player, ability);
             return;
         }
@@ -199,13 +199,18 @@ public class MayAbilityHandlerService {
     }
 
     private void handleTargetedMayAbilityAccepted(GameData gameData, Player player, PendingMayAbility ability) {
-        // Collect valid creature targets from all battlefields
+        // Collect valid permanent targets from all battlefields using card's target filter
         List<UUID> validTargets = new ArrayList<>();
+        Card sourceCard = ability.sourceCard();
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent p : battlefield) {
-                if (gameQueryService.isCreature(gameData, p)) {
+                if (sourceCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
+                    if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+                        validTargets.add(p.getId());
+                    }
+                } else if (gameQueryService.isCreature(gameData, p)) {
                     validTargets.add(p.getId());
                 }
             }
@@ -214,7 +219,7 @@ public class MayAbilityHandlerService {
         if (validTargets.isEmpty()) {
             String logEntry = ability.sourceCard().getName() + "'s ability has no valid targets.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} may ability has no valid creature targets", gameData.id, ability.sourceCard().getName());
+            log.info("Game {} - {} may ability has no valid targets", gameData.id, ability.sourceCard().getName());
 
             playerInputService.processNextMayAbility(gameData);
             if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
@@ -228,8 +233,11 @@ public class MayAbilityHandlerService {
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
                 ability.sourceCard(), ability.controllerId(), new ArrayList<>(ability.effects())
         ));
+        String targetDescription = (sourceCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter)
+                ? filter.errorMessage().replace("Target must be ", "").replace("an ", "").replace("a ", "")
+                : "creature";
         playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
-                ability.sourceCard().getName() + "'s ability — Choose target creature.");
+                ability.sourceCard().getName() + "'s ability — Choose target " + targetDescription + ".");
 
         String logEntry = player.getUsername() + " accepts — choosing a target for " + ability.sourceCard().getName() + "'s ability.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);

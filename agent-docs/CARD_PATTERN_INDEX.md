@@ -65,6 +65,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB draw | `k/KavuClimber.java` | ON_ENTER_BATTLEFIELD DrawCardEffect |
 | ETB draw + downside | `p/PhyrexianRager.java` | Draw + LoseLifeEffect |
 | ETB destroy (targeted) | `n/Nekrataal.java` | ON_ENTER_BATTLEFIELD DestroyTargetPermanentEffect (targeting auto-derived) |
+| ETB may destroy (filtered) | `a/AcidWebSpider.java` | MayEffect(DestroyTargetPermanentEffect) + PermanentPredicateTargetFilter |
 | ETB discard | `r/RavenousRats.java` | TargetPlayerDiscardsEffect |
 | ETB search | `c/CivicWayfinder.java` | MayEffect(SearchLibraryForBasicLandToHandEffect) |
 | ETB may return from GY | `g/Gravedigger.java` | MayEffect(ReturnCreatureFromGraveyardToHandEffect) |
