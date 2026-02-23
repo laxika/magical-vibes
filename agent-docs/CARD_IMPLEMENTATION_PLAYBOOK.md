@@ -10,7 +10,7 @@ Purpose: a minimal workflow for adding cards with fewer repeated lookups and low
 4. Add card class + `@CardRegistration`.
 5. Add/adjust target flags and target filter.
 6. Write focused tests extending `BaseCardTest` (provides `harness`, `player1`, `player2`, `gs`, `gqs`, `gd`). Do NOT test Scryfall metadata.
-7. Only if needed: add new effect record + resolver registration.
+7. Only if needed: add new effect record + annotated resolver method (see below).
 
 ## Card class template
 
@@ -124,7 +124,15 @@ Create a new `CardEffect` record only if both are true:
 
 Then do all of:
 - Add effect record in `magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/`
-- Register handler in the correct provider (see `EFFECTS_INDEX.md`)
+- Add an annotated resolver method in the correct resolution service (see `EFFECTS_INDEX.md` provider map):
+  ```java
+  @HandlesEffect(YourNewEffect.class)
+  void resolveYourNewEffect(GameData gameData, StackEntry entry) { ... }
+  // or with typed effect access:
+  @HandlesEffect(YourNewEffect.class)
+  void resolveYourNewEffect(GameData gameData, StackEntry entry, YourNewEffect effect) { ... }
+  ```
+  The `@HandlesEffect` annotation auto-registers the handler at startup — no manual `registry.register()` call needed. For static/continuous effects, use `@HandlesStaticEffect(YourEffect.class)` (or `@HandlesStaticEffect(value = YourEffect.class, selfOnly = true)` for self-only bonuses) in `StaticEffectResolutionService`.
 - Add test coverage for normal path + invalid/fizzle path if applicable
 
 ## Quick anti-patterns

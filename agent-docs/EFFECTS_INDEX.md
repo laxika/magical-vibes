@@ -7,7 +7,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 1. Parse card text into primitive actions (damage, draw, bounce, etc.).
 2. Find each primitive below in the categorized sections and reuse existing effects.
 3. Only add new effect records when no existing effect can express the behavior.
-4. If you add a new effect record, register it in the matching `*ResolutionService` (see provider map at bottom).
+4. If you add a new effect record, add an `@HandlesEffect`-annotated resolver method in the matching `*ResolutionService` (see provider map at bottom). No manual registration needed — the annotation auto-registers the handler at startup.
 
 ## Wrapper / modifier effects
 
@@ -383,7 +383,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 
 ---
 
-## Provider map (where effects are resolved)
+## Provider map (where to add `@HandlesEffect` resolver methods)
 
 | Category | Resolution service |
 |----------|--------------------|
