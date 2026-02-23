@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -361,6 +362,29 @@ public class TurnProgressionService {
     }
 
     private void handleEndStepTriggers(GameData gameData) {
+        // Process pending exile returns (e.g. Argent Sphinx)
+        if (!gameData.pendingExileReturns.isEmpty()) {
+            List<PendingExileReturn> returns = new ArrayList<>(gameData.pendingExileReturns);
+            gameData.pendingExileReturns.clear();
+            for (PendingExileReturn pending : returns) {
+                Card card = pending.card();
+                UUID controllerId = pending.controllerId();
+                // Remove card from exile zone
+                List<Card> exiledCards = gameData.playerExiledCards.get(controllerId);
+                if (exiledCards != null) {
+                    exiledCards.remove(card);
+                }
+                // Return as a new permanent
+                Permanent perm = new Permanent(card);
+                gameHelper.putPermanentOntoBattlefield(gameData, controllerId, perm);
+                String playerName = gameData.playerIdToName.get(controllerId);
+                String logEntry = card.getName() + " returns to the battlefield under " + playerName + "'s control.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} returns from exile for {}", gameData.id, card.getName(), playerName);
+                gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
+            }
+        }
+
         UUID activePlayerId = gameData.activePlayerId;
         List<UUID> triggerOrder = new ArrayList<>();
         triggerOrder.add(activePlayerId);

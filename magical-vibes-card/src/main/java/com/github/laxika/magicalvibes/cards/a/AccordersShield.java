@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect.Scope;
@@ -19,19 +19,18 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class AccordersShield extends Card {
 
     public AccordersShield() {
-        addEffect(EffectSlot.STATIC, new BoostEquippedCreatureEffect(0, 3));
+        addEffect(EffectSlot.STATIC, new BoostAttachedCreatureEffect(0, 3));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.VIGILANCE, Scope.EQUIPPED_CREATURE));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}",
                 List.of(new EquipEffect()),
-                true,
-                false,
                 "Equip {3}",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),
                         "Target must be a creature you control"
                 ),
+                null,
                 null,
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

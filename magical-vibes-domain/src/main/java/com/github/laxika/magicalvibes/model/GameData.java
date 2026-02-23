@@ -80,6 +80,7 @@ public class GameData {
     public final Deque<LibraryBottomReorderRequest> pendingLibraryBottomReorders = new ArrayDeque<>();
     public final WarpWorldOperationState warpWorldOperation = new WarpWorldOperationState();
     public boolean cleanupDiscardPending;
+    public final List<PendingExileReturn> pendingExileReturns = Collections.synchronizedList(new ArrayList<>());
 
     // Combat damage assignment state
     public final Map<Integer, Map<UUID, Integer>> combatDamagePlayerAssignments = new HashMap<>();
@@ -201,6 +202,9 @@ public class GameData {
 
         // --- PendingMayAbility list (records with shared Card refs) ---
         copy.pendingMayAbilities.addAll(this.pendingMayAbilities);
+
+        // --- PendingExileReturn list (records with shared Card refs) ---
+        copy.pendingExileReturns.addAll(this.pendingExileReturns);
 
         // --- GraveyardTargetOperationState ---
         copy.graveyardTargetOperation.card = this.graveyardTargetOperation.card;
