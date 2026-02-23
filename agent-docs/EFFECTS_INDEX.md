@@ -245,7 +245,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `GrantActivatedAbilityToOwnLandsEffect` | `(ActivatedAbility ability)` | grant activated ability to all lands you control |
 | `GrantActivatedAbilityToEnchantedCreatureEffect` | `(ActivatedAbility ability)` | grant activated ability to enchanted creature |
 | `GrantAdditionalBlockEffect` | `(int additionalBlocks)` | can block N additional creatures |
-| `RegenerateEffect` | `()` | regenerate target/self |
+| `RegenerateEffect` | `()` or `(boolean targetsPermanent)` | regenerate self (default) or target creature when `targetsPermanent=true` |
 
 ## Combat restrictions / evasion
 
@@ -305,6 +305,8 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `ProtectionFromColorsEffect` | `(Set<CardColor> colors)` | protection from specified colors (static) |
 | `ProtectionFromChosenColorEffect` | `()` | protection from chosen color (static, requires ChooseColorOnEnterEffect) |
 | `CantBeTargetedBySpellColorsEffect` | `(Set<CardColor> colors)` | can't be targeted by spells of specified colors (static) |
+| `CantBeTargetOfSpellsOrAbilitiesEffect` | `()` | can't be targeted by opponents' spells or abilities (hexproof behavior, use with GrantEffect) |
+| `GrantEffect` | `(CardEffect effect, Scope scope)` | grant a CardEffect to permanents matching scope (e.g. OWN_CREATURES); uses GrantKeywordEffect.Scope |
 | `RedirectPlayerDamageToEnchantedCreatureEffect` | `()` | redirect damage dealt to player to enchanted creature |
 | `RedirectUnblockedCombatDamageToSelfEffect` | `()` | redirect unblocked combat damage to this creature |
 | `GrantControllerShroudEffect` | `()` | controller has shroud (can't be targeted) (static) |

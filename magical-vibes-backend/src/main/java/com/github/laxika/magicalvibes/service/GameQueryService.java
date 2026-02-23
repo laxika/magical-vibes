@@ -71,8 +71,8 @@ public class GameQueryService {
 
     private final StaticEffectHandlerRegistry staticEffectRegistry;
 
-    record StaticBonus(int power, int toughness, Set<Keyword> keywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities) {
-        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), false, List.of());
+    record StaticBonus(int power, int toughness, Set<Keyword> keywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects) {
+        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), false, List.of(), List.of());
     }
 
     public Permanent findPermanentById(GameData gameData, UUID permanentId) {
@@ -164,6 +164,11 @@ public class GameQueryService {
 
     public boolean hasKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
         return permanent.hasKeyword(keyword) || computeStaticBonus(gameData, permanent).keywords().contains(keyword);
+    }
+
+    public boolean hasGrantedEffect(GameData gameData, Permanent permanent, Class<? extends CardEffect> effectType) {
+        return computeStaticBonus(gameData, permanent).grantedEffects().stream()
+                .anyMatch(effectType::isInstance);
     }
 
     public boolean hasCantBeBlocked(GameData gameData, Permanent creature) {
@@ -358,7 +363,7 @@ public class GameQueryService {
             toughness += manaValue;
         }
 
-        return new StaticBonus(power, toughness, accumulator.getKeywords(), accumulator.isAnimatedCreature() || isSelfAnimated, accumulator.getGrantedActivatedAbilities());
+        return new StaticBonus(power, toughness, accumulator.getKeywords(), accumulator.isAnimatedCreature() || isSelfAnimated, accumulator.getGrantedActivatedAbilities(), accumulator.getGrantedEffects());
     }
 
     public boolean hasProtectionFrom(GameData gameData, Permanent target, CardColor sourceColor) {

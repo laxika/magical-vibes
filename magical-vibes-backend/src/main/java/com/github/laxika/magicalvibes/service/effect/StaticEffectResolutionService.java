@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityToOwnLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect.Scope;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftKeywordEffect;
@@ -112,6 +113,28 @@ public class StaticEffectResolutionService {
             boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
             if (isEffectivelyCreature(context.target(), hasAnimateArtifacts)) {
                 accumulator.addKeyword(grant.keyword());
+            }
+        }
+    }
+
+    @HandlesStaticEffect(GrantEffect.class)
+    private void resolveGrantEffect(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var grant = (GrantEffect) effect;
+        if (grant.scope() == Scope.ENCHANTED_CREATURE || grant.scope() == Scope.EQUIPPED_CREATURE) {
+            if (context.source().getAttachedTo() != null
+                    && context.source().getAttachedTo().equals(context.target().getId())) {
+                accumulator.addGrantedEffect(grant.effect());
+            }
+            return;
+        }
+        if (grant.scope() == Scope.OWN_TAPPED_CREATURES && context.targetOnSameBattlefield() && context.target().isTapped()) {
+            accumulator.addGrantedEffect(grant.effect());
+            return;
+        }
+        if (grant.scope() == Scope.OWN_CREATURES && context.targetOnSameBattlefield()) {
+            boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
+            if (isEffectivelyCreature(context.target(), hasAnimateArtifacts)) {
+                accumulator.addGrantedEffect(grant.effect());
             }
         }
     }

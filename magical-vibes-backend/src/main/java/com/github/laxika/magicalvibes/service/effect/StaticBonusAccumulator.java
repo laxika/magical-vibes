@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -15,6 +16,7 @@ public class StaticBonusAccumulator {
     private final Set<Keyword> keywords = new HashSet<>();
     private boolean animatedCreature;
     private final List<ActivatedAbility> grantedActivatedAbilities = new ArrayList<>();
+    private final List<CardEffect> grantedEffects = new ArrayList<>();
 
     public void addPower(int amount) {
         power += amount;
@@ -58,6 +60,14 @@ public class StaticBonusAccumulator {
 
     public List<ActivatedAbility> getGrantedActivatedAbilities() {
         return grantedActivatedAbilities;
+    }
+
+    public void addGrantedEffect(CardEffect effect) {
+        grantedEffects.add(effect);
+    }
+
+    public List<CardEffect> getGrantedEffects() {
+        return grantedEffects;
     }
 }
 

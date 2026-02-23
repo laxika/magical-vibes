@@ -174,7 +174,9 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Grant keyword to target | `m/MightWeaver.java` | GrantKeywordEffect with color filter |
 | Sacrifice self for effect | `b/BottleGnomes.java` | SacrificeSelfCost + effect |
 | Sacrifice subtype for effect | `s/SiegeGangCommander.java` | SacrificeSubtypeCreatureCost + DealDamageToAnyTargetEffect |
-| Regenerate | `d/DrudgeSkeletons.java` | `(false, "{B}", RegenerateEffect, false)` |
+| Regenerate (self) | `d/DrudgeSkeletons.java` | `(false, "{B}", RegenerateEffect, false)` |
+| Regenerate (target creature) | `a/Asceticism.java` | `RegenerateEffect(true)` + PermanentPredicateTargetFilter |
+| Static effect grant (own creatures) | `a/Asceticism.java` | `GrantEffect(CantBeTargetOfSpellsOrAbilitiesEffect, Scope.OWN_CREATURES)` |
 | Create token | `d/DragonRoost.java` | CreateCreatureTokenEffect |
 | Mill target | `m/Millstone.java` | `(true, "{2}", MillTargetPlayerEffect, true)` |
 | Mana dork (tap for color) | `b/BirdsOfParadise.java` | `(true, null, AwardAnyColorManaEffect, false)` |

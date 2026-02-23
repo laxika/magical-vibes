@@ -70,7 +70,7 @@ public class ActivatedAbilityExecutionService {
         UUID effectiveTargetId = targetPermanentId;
         if (effectiveTargetId == null) {
             boolean needsSelfTarget = abilityEffects.stream().anyMatch(e ->
-                    (e instanceof RegenerateEffect && !permanent.getCard().isAura())
+                    (e instanceof RegenerateEffect regen && !regen.targetsPermanent() && !permanent.getCard().isAura())
                             || e instanceof BoostSelfEffect || e instanceof UntapSelfEffect
                             || e instanceof AnimateSelfEffect || e instanceof AnimateLandEffect
                             || (e instanceof GrantKeywordEffect grant && grant.scope() == Scope.SELF));
