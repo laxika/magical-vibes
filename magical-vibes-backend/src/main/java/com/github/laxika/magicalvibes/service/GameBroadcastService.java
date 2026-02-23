@@ -58,6 +58,7 @@ public class GameBroadcastService {
         List<Integer> deckSizes = getDeckSizes(gameData);
         List<Integer> handSizes = getHandSizes(gameData);
         List<Integer> lifeTotals = getLifeTotals(gameData);
+        List<Integer> poisonCounters = getPoisonCounters(gameData);
         UUID priorityPlayerId = gameData.interaction.isAwaitingInput() ? null : gameQueryService.getPriorityPlayerId(gameData);
 
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -75,7 +76,7 @@ public class GameBroadcastService {
             sessionManager.sendToPlayer(playerId, new GameStateMessage(
                     gameData.status, gameData.activePlayerId, gameData.turnNumber,
                     gameData.currentStep, priorityPlayerId,
-                    battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals,
+                    battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters,
                     hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
                     playableGraveyardLandIndices, newLogEntries
             ));
@@ -168,6 +169,14 @@ public class GameBroadcastService {
             totals.add(gameData.playerLifeTotals.getOrDefault(pid, 20));
         }
         return totals;
+    }
+
+    List<Integer> getPoisonCounters(GameData gameData) {
+        List<Integer> counters = new ArrayList<>();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            counters.add(gameData.playerPoisonCounters.getOrDefault(pid, 0));
+        }
+        return counters;
     }
 
     List<Integer> getPlayableCardIndices(GameData gameData, UUID playerId) {

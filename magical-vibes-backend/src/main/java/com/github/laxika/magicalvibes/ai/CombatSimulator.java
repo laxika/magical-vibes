@@ -32,13 +32,14 @@ public class CombatSimulator {
                         boolean flying, boolean firstStrike, boolean doubleStrike,
                         boolean trample, boolean lifelink, boolean indestructible,
                         boolean menace, boolean fear, boolean reach, boolean defender,
-                        boolean cantBeBlocked, boolean isArtifact, CardColor color,
-                        double creatureScore) {}
+                        boolean cantBeBlocked, boolean isArtifact, boolean infect,
+                        CardColor color, double creatureScore) {}
 
-    record CombatOutcome(int aiLifeChange, int opponentLifeChange,
+    record CombatOutcome(int aiLifeChange, int opponentLifeChange, int opponentPoisonChange,
                          double aiCreaturesLostValue, double opponentCreaturesLostValue) {
         double evaluationDelta() {
             return -opponentLifeChange * 2.0
+                    + opponentPoisonChange * 4.0
                     + opponentCreaturesLostValue
                     - aiCreaturesLostValue
                     + aiLifeChange * 0.5;
@@ -58,6 +59,7 @@ public class CombatSimulator {
         List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
         int opponentLife = gameData.playerLifeTotals.getOrDefault(opponentId, 20);
+        int opponentPoison = gameData.playerPoisonCounters.getOrDefault(opponentId, 0);
 
         // Build creature info for available attackers
         List<CreatureInfo> attackerInfos = new ArrayList<>();
@@ -95,12 +97,20 @@ public class CombatSimulator {
                 }
             }
 
-            // Quick lethal check: if unblockable damage >= opponent life, pick immediately
-            int unblockableDamage = subset.stream()
+            // Quick lethal check: if unblockable damage >= opponent life (or poison), pick immediately
+            List<CreatureInfo> unblockable = subset.stream()
                     .filter(a -> a.cantBeBlocked || !canBeBlockedByAny(a, blockerInfos))
+                    .toList();
+            int unblockableLifeDamage = unblockable.stream()
+                    .filter(a -> !a.infect)
                     .mapToInt(CreatureInfo::power)
                     .sum();
-            if (unblockableDamage >= opponentLife) {
+            int unblockablePoisonDamage = unblockable.stream()
+                    .filter(a -> a.infect)
+                    .mapToInt(CreatureInfo::power)
+                    .sum();
+            if (unblockableLifeDamage >= opponentLife
+                    || unblockablePoisonDamage + opponentPoison >= 10) {
                 return subset.stream().map(CreatureInfo::index).toList();
             }
 
@@ -296,6 +306,7 @@ public class CombatSimulator {
 
         // Now compute combat outcome
         int opponentLifeLost = 0;
+        int opponentPoisonGained = 0;
         int aiLifeGained = 0;
         double aiCreaturesLostValue = 0;
         double oppCreaturesLostValue = 0;
@@ -306,7 +317,11 @@ public class CombatSimulator {
 
             if (assignedBlockers.isEmpty()) {
                 // Unblocked: damage goes to opponent
-                opponentLifeLost += attacker.power;
+                if (attacker.infect) {
+                    opponentPoisonGained += attacker.power;
+                } else {
+                    opponentLifeLost += attacker.power;
+                }
                 if (attacker.lifelink) {
                     aiLifeGained += attacker.power;
                 }
@@ -338,7 +353,11 @@ public class CombatSimulator {
 
                     // Trample excess in first strike
                     if (attacker.trample && fsRemaining > 0) {
-                        opponentLifeLost += fsRemaining;
+                        if (attacker.infect) {
+                            opponentPoisonGained += fsRemaining;
+                        } else {
+                            opponentLifeLost += fsRemaining;
+                        }
                     }
                     if (attacker.lifelink) {
                         aiLifeGained += attacker.power;
@@ -378,7 +397,11 @@ public class CombatSimulator {
                     }
 
                     if (attacker.trample && regularRemaining > 0) {
-                        opponentLifeLost += regularRemaining;
+                        if (attacker.infect) {
+                            opponentPoisonGained += regularRemaining;
+                        } else {
+                            opponentLifeLost += regularRemaining;
+                        }
                     }
                     if (attacker.lifelink && attackerDamageDealt == 0) {
                         aiLifeGained += attacker.power;
@@ -401,7 +424,7 @@ public class CombatSimulator {
             }
         }
 
-        return new CombatOutcome(aiLifeGained, -opponentLifeLost,
+        return new CombatOutcome(aiLifeGained, -opponentLifeLost, opponentPoisonGained,
                 aiCreaturesLostValue, oppCreaturesLostValue);
     }
 
@@ -519,6 +542,7 @@ public class CombatSimulator {
                 gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER),
                 gameQueryService.hasCantBeBlocked(gameData, perm),
                 gameQueryService.isArtifact(perm),
+                gameQueryService.hasKeyword(gameData, perm, Keyword.INFECT),
                 perm.getCard().getColor(),
                 boardEvaluator.creatureScore(gameData, perm, controllerId, opponentId)
         );

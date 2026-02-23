@@ -41,10 +41,12 @@ public class BoardEvaluator {
 
         int aiLife = gameData.playerLifeTotals.getOrDefault(aiPlayerId, 20);
         int oppLife = gameData.playerLifeTotals.getOrDefault(opponentId, 20);
+        int aiPoison = gameData.playerPoisonCounters.getOrDefault(aiPlayerId, 0);
+        int oppPoison = gameData.playerPoisonCounters.getOrDefault(opponentId, 0);
 
         // Game-over detection
-        if (oppLife <= 0) return GAME_OVER_SCORE;
-        if (aiLife <= 0) return -GAME_OVER_SCORE;
+        if (oppLife <= 0 || oppPoison >= 10) return GAME_OVER_SCORE;
+        if (aiLife <= 0 || aiPoison >= 10) return -GAME_OVER_SCORE;
 
         double score = 0.0;
 
@@ -54,6 +56,11 @@ public class BoardEvaluator {
         // Low-life bonus/penalty
         if (oppLife <= 5) score += LOW_LIFE_BONUS;
         if (aiLife <= 5) score -= LOW_LIFE_BONUS;
+
+        // Poison counter pressure
+        if (oppPoison >= 7) score += LOW_LIFE_BONUS;
+        if (aiPoison >= 7) score -= LOW_LIFE_BONUS;
+        score += (oppPoison - aiPoison) * LIFE_WEIGHT;
 
         // Card advantage
         int aiHandSize = gameData.playerHands.getOrDefault(aiPlayerId, List.of()).size();
@@ -142,6 +149,7 @@ public class BoardEvaluator {
         if (keywords.contains(Keyword.FEAR)) score += 2;
         if (keywords.contains(Keyword.DEFENDER)) score -= 3;
         if (keywords.contains(Keyword.HASTE)) score += 1;
+        if (keywords.contains(Keyword.INFECT)) score += 4;
 
         return score;
     }
@@ -162,6 +170,7 @@ public class BoardEvaluator {
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.FEAR)) bonus += 2;
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER)) bonus -= 3;
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) bonus += 1;
+        if (gameQueryService.hasKeyword(gameData, perm, Keyword.INFECT)) bonus += 4;
 
         // Landwalk bonuses: check if opponent has matching land type
         if (opponentId != null) {

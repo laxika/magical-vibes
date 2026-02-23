@@ -452,7 +452,8 @@ public class GameHelper {
     boolean checkWinCondition(GameData gameData) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             int life = gameData.playerLifeTotals.getOrDefault(playerId, 20);
-            if (life <= 0) {
+            int poison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
+            if (life <= 0 || poison >= 10) {
                 // Check if the player is protected from losing (e.g. Platinum Angel)
                 if (!gameQueryService.canPlayerLoseGame(gameData, playerId)) {
                     continue;
@@ -463,7 +464,12 @@ public class GameHelper {
 
                 gameData.status = GameStatus.FINISHED;
 
-                String logEntry = gameData.playerIdToName.get(playerId) + " has been defeated! " + winnerName + " wins!";
+                String logEntry;
+                if (poison >= 10) {
+                    logEntry = gameData.playerIdToName.get(playerId) + " has 10 poison counters and loses! " + winnerName + " wins!";
+                } else {
+                    logEntry = gameData.playerIdToName.get(playerId) + " has been defeated! " + winnerName + " wins!";
+                }
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
                 sessionManager.sendToPlayers(gameData.orderedPlayerIds, new GameOverMessage(winnerId, winnerName));
@@ -472,8 +478,8 @@ public class GameHelper {
 
                 gameRegistry.remove(gameData.id);
 
-                log.info("Game {} - {} wins! {} is at {} life", gameData.id, winnerName,
-                        gameData.playerIdToName.get(playerId), life);
+                log.info("Game {} - {} wins! {} is at {} life, {} poison", gameData.id, winnerName,
+                        gameData.playerIdToName.get(playerId), life, poison);
                 return true;
             }
         }

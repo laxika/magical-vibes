@@ -218,6 +218,7 @@ export interface Game {
   manaPool: Record<string, number>;
   autoStopSteps: string[];
   lifeTotals: number[];
+  poisonCounters: number[];
   stack: StackEntry[];
   graveyards: Card[][];
 }
@@ -276,6 +277,7 @@ export interface GameStateNotification {
   deckSizes: number[];
   handSizes: number[];
   lifeTotals: number[];
+  poisonCounters: number[];
   hand: Card[];
   opponentHand: Card[];
   mulliganCount: number;

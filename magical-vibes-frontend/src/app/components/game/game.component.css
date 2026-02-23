@@ -333,6 +333,18 @@
   color: #e8c888;
 }
 
+.poison-total {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4caf50;
+  font-family: 'Crimson Text', Georgia, serif;
+}
+
+.player-badge.active .poison-total {
+  color: #66ff66;
+}
+
 .hand-size {
   display: block;
   font-size: 10px;

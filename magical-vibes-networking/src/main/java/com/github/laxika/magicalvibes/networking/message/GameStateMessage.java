@@ -24,6 +24,7 @@ public record GameStateMessage(
         List<Integer> deckSizes,
         List<Integer> handSizes,
         List<Integer> lifeTotals,
+        List<Integer> poisonCounters,
         List<CardView> hand,
         List<CardView> opponentHand,
         int mulliganCount,
@@ -45,6 +46,7 @@ public record GameStateMessage(
             List<Integer> deckSizes,
             List<Integer> handSizes,
             List<Integer> lifeTotals,
+            List<Integer> poisonCounters,
             List<CardView> hand,
             List<CardView> opponentHand,
             int mulliganCount,
@@ -55,7 +57,7 @@ public record GameStateMessage(
             List<String> newLogEntries
     ) {
         this(MessageType.GAME_STATE, status, activePlayerId, turnNumber, currentStep, priorityPlayerId,
-                battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals,
+                battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters,
                 hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
                 playableGraveyardLandIndices, newLogEntries);
     }

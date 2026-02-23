@@ -362,6 +362,20 @@ public class DamageResolutionService {
         recordCreatureDamageFromPermanentSource(gameData, entry, target, damage);
         String cardName = entry.getCard().getName();
 
+        // Check if source permanent has infect
+        boolean sourceHasInfect = hasInfectSource(gameData, entry);
+
+        if (sourceHasInfect) {
+            if (damage > 0) {
+                target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() + damage);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        cardName + " puts " + damage + " -1/-1 counters on " + target.getCard().getName() + ".");
+                log.info("Game {} - {} puts {} -1/-1 counters on {}", gameData.id, cardName, damage, target.getCard().getName());
+            }
+            // CR 704.5f: 0 toughness from -1/-1 counters — dies regardless of indestructible
+            return gameQueryService.getEffectiveToughness(gameData, target) <= 0;
+        }
+
         gameBroadcastService.logAndBroadcast(gameData,
                 cardName + " deals " + damage + " damage to " + target.getCard().getName() + ".");
         log.info("Game {} - {} deals {} damage to {}", gameData.id, cardName, damage, target.getCard().getName());
@@ -373,6 +387,16 @@ public class DamageResolutionService {
                 return false;
             }
             return !gameHelper.tryRegenerate(gameData, target);
+        }
+        return false;
+    }
+
+    private boolean hasInfectSource(GameData gameData, StackEntry entry) {
+        if (entry.getSourcePermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source != null) {
+                return gameQueryService.hasKeyword(gameData, source, Keyword.INFECT);
+            }
         }
         return false;
     }
@@ -421,6 +445,7 @@ public class DamageResolutionService {
 
     private void damageAllCreaturesOnBattlefield(GameData gameData, StackEntry entry, int damage, Predicate<Permanent> filter) {
         String cardName = entry.getCard().getName();
+        boolean sourceHasInfect = hasInfectSource(gameData, entry);
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -434,11 +459,21 @@ public class DamageResolutionService {
 
                 int effectiveDamage = gameHelper.applyCreaturePreventionShield(gameData, p, damage);
                 recordCreatureDamageFromPermanentSource(gameData, entry, p, effectiveDamage);
-                int toughness = gameQueryService.getEffectiveToughness(gameData, p);
-                if (effectiveDamage >= toughness
-                        && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)
-                        && !gameHelper.tryRegenerate(gameData, p)) {
-                    deadIndices.add(i);
+
+                if (sourceHasInfect) {
+                    if (effectiveDamage > 0) {
+                        p.setMinusOneMinusOneCounters(p.getMinusOneMinusOneCounters() + effectiveDamage);
+                    }
+                    if (gameQueryService.getEffectiveToughness(gameData, p) <= 0) {
+                        deadIndices.add(i);
+                    }
+                } else {
+                    int toughness = gameQueryService.getEffectiveToughness(gameData, p);
+                    if (effectiveDamage >= toughness
+                            && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)
+                            && !gameHelper.tryRegenerate(gameData, p)) {
+                        deadIndices.add(i);
+                    }
                 }
             }
 
@@ -462,13 +497,26 @@ public class DamageResolutionService {
         if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, playerId, entry.getCard().getColor())) {
             int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             effectiveDamage = gameHelper.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
-            int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
-            gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
 
-            if (effectiveDamage > 0) {
-                String playerName = gameData.playerIdToName.get(playerId);
-                gameBroadcastService.logAndBroadcast(gameData,
-                        playerName + " takes " + effectiveDamage + " damage from " + cardName + ".");
+            boolean sourceHasInfect = hasInfectSource(gameData, entry);
+
+            if (sourceHasInfect) {
+                if (effectiveDamage > 0) {
+                    int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
+                    gameData.playerPoisonCounters.put(playerId, currentPoison + effectiveDamage);
+                    String playerName = gameData.playerIdToName.get(playerId);
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            playerName + " gets " + effectiveDamage + " poison counters from " + cardName + ".");
+                }
+            } else {
+                int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+                gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
+
+                if (effectiveDamage > 0) {
+                    String playerName = gameData.playerIdToName.get(playerId);
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            playerName + " takes " + effectiveDamage + " damage from " + cardName + ".");
+                }
             }
         }
     }

@@ -44,6 +44,7 @@ public class GameData {
     public final Map<UUID, ManaPool> playerManaPools = new ConcurrentHashMap<>();
     public final Map<UUID, Set<TurnStep>> playerAutoStopSteps = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> playerLifeTotals = new ConcurrentHashMap<>();
+    public final Map<UUID, Integer> playerPoisonCounters = new ConcurrentHashMap<>();
     public final InteractionState interaction = new InteractionState();
     public final List<StackEntry> stack = Collections.synchronizedList(new ArrayList<>());
     public final Map<UUID, List<Card>> playerGraveyards = new ConcurrentHashMap<>();
@@ -152,6 +153,7 @@ public class GameData {
         copy.landsPlayedThisTurn.putAll(this.landsPlayedThisTurn);
         copy.spellsCastThisTurn.putAll(this.spellsCastThisTurn);
         copy.playerLifeTotals.putAll(this.playerLifeTotals);
+        copy.playerPoisonCounters.putAll(this.playerPoisonCounters);
         copy.playerDamagePreventionShields.putAll(this.playerDamagePreventionShields);
         copy.stolenCreatures.putAll(this.stolenCreatures);
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);

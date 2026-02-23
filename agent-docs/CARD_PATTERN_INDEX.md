@@ -51,6 +51,12 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 
 Reference: `a/AirElemental.java` — no constructor code needed.
 
+## Keyword creatures (keywords from Scryfall, empty body)
+
+| Pattern | Reference | Notes |
+|---------|-----------|-------|
+| Infect creature | `b/BlackcleaveGoblin.java` | Haste + Infect auto-loaded from Scryfall. Infect deals damage as -1/-1 counters to creatures and poison counters to players. |
+
 ## ETB creatures
 
 | Pattern | Reference | Notes |
