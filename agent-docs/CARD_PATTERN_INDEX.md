@@ -56,6 +56,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Infect creature | `b/BlackcleaveGoblin.java` | Haste + Infect auto-loaded from Scryfall. Infect deals damage as -1/-1 counters to creatures and poison counters to players. |
+| Intimidate creature + activated ability | `g/GethLordOfTheVault.java` | Intimidate from Scryfall + X-cost graveyard-targeting activated ability. PutCardFromOpponentGraveyardOntoBattlefieldEffect(tapped=true) |
 
 ## ETB creatures
 

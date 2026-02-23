@@ -24,5 +24,6 @@ public enum Keyword {
     SWAMPWALK,
     HEXPROOF,
     INFECT,
+    INTIMIDATE,
     METALCRAFT
 }

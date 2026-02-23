@@ -407,6 +407,11 @@ public class CombatService {
                     && blocker.getCard().getColor() != CardColor.BLACK) {
                 throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (fear)");
             }
+            if (gameQueryService.hasKeyword(gameData, attacker, Keyword.INTIMIDATE)
+                    && !gameQueryService.isArtifact(blocker)
+                    && blocker.getCard().getColor() != attacker.getCard().getColor()) {
+                throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (intimidate)");
+            }
             for (CardEffect blockerStaticEffect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
                 if (blockerStaticEffect instanceof CanBlockOnlyIfAttackerMatchesPredicateEffect restriction
                         && !gameQueryService.matchesPermanentPredicate(gameData, attacker, restriction.attackerPredicate())) {
@@ -655,6 +660,11 @@ public class CombatService {
         if (gameQueryService.hasKeyword(gameData, attacker, Keyword.FEAR)
                 && !gameQueryService.isArtifact(blocker)
                 && blocker.getCard().getColor() != CardColor.BLACK) {
+            return false;
+        }
+        if (gameQueryService.hasKeyword(gameData, attacker, Keyword.INTIMIDATE)
+                && !gameQueryService.isArtifact(blocker)
+                && blocker.getCard().getColor() != attacker.getCard().getColor()) {
             return false;
         }
 

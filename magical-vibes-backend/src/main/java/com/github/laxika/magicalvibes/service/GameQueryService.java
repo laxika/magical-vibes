@@ -117,6 +117,20 @@ public class GameQueryService {
         return null;
     }
 
+    public UUID findGraveyardOwnerById(GameData gameData, UUID cardId) {
+        if (cardId == null) return null;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card c : graveyard) {
+                if (c.getId().equals(cardId)) {
+                    return playerId;
+                }
+            }
+        }
+        return null;
+    }
+
     public UUID getOpponentId(GameData gameData, UUID playerId) {
         List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);
         return ids.get(0).equals(playerId) ? ids.get(1) : ids.get(0);

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
@@ -274,6 +275,66 @@ public class GraveyardReturnResolutionService {
         gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.BATTLEFIELD, cardPool);
         playerInputService.beginGraveyardChoice(gameData, controllerId, indices,
                 "Choose an artifact or creature card from a graveyard to put onto the battlefield under your control.");
+    }
+
+    @HandlesEffect(PutCardFromOpponentGraveyardOntoBattlefieldEffect.class)
+    void resolvePutFromOpponentGraveyardAndMill(GameData gameData, StackEntry entry,
+            PutCardFromOpponentGraveyardOntoBattlefieldEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        int xValue = entry.getXValue();
+
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetPermanentId());
+        if (targetCard == null) {
+            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target no longer in graveyard).");
+            return;
+        }
+
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
+        if (graveyardOwnerId == null || graveyardOwnerId.equals(controllerId)) {
+            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target not in opponent's graveyard).");
+            return;
+        }
+
+        gameHelper.removeCardFromGraveyardById(gameData, targetCard.getId());
+
+        Set<CardType> enterTappedTypes = gameHelper.snapshotEnterTappedTypes(gameData);
+        Permanent permanent = new Permanent(targetCard);
+        if (effect.tapped()) {
+            permanent.tap();
+        }
+        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
+
+        gameData.stolenCreatures.put(permanent.getId(), graveyardOwnerId);
+        gameData.permanentControlStolenCreatures.add(permanent.getId());
+
+        String tappedText = effect.tapped() ? " tapped" : "";
+        String playerName = gameData.playerIdToName.get(controllerId);
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " puts " + targetCard.getName() + " onto the battlefield" + tappedText + " under their control.");
+
+        if (gameQueryService.isCreature(gameData, permanent)) {
+            gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, targetCard, null, false);
+        }
+        if (!gameData.interaction.isAwaitingInput()) {
+            legendRuleService.checkLegendRule(gameData, controllerId);
+        }
+
+        if (xValue > 0) {
+            List<Card> opponentDeck = gameData.playerDecks.get(graveyardOwnerId);
+            List<Card> opponentGraveyard = gameData.playerGraveyards.get(graveyardOwnerId);
+            int cardsToMill = Math.min(xValue, opponentDeck.size());
+            List<String> milledNames = new ArrayList<>();
+            for (int i = 0; i < cardsToMill; i++) {
+                Card milled = opponentDeck.removeFirst();
+                opponentGraveyard.add(milled);
+                milledNames.add(milled.getName());
+            }
+            if (cardsToMill > 0) {
+                String opponentName = gameData.playerIdToName.get(graveyardOwnerId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        opponentName + " mills " + cardsToMill + " cards (" + String.join(", ", milledNames) + ").");
+            }
+        }
     }
 
     @HandlesEffect(ExileCardsFromGraveyardEffect.class)

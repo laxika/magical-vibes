@@ -63,9 +63,10 @@ public class TargetLegalityService {
                                                   List<CardEffect> abilityEffects,
                                                   UUID targetPermanentId,
                                                   Zone targetZone,
-                                                  Card sourceCard) {
+                                                  Card sourceCard,
+                                                  int xValue) {
         targetValidationService.validateEffectTargets(abilityEffects,
-                new TargetValidationContext(gameData, targetPermanentId, targetZone, sourceCard));
+                new TargetValidationContext(gameData, targetPermanentId, targetZone, sourceCard, xValue));
 
         if (ability.getTargetFilter() != null && targetPermanentId != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);

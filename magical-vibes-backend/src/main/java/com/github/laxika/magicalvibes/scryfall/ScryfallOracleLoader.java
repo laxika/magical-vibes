@@ -66,6 +66,7 @@ public class ScryfallOracleLoader {
         KEYWORD_MAP.put("Swampwalk", Keyword.SWAMPWALK);
         KEYWORD_MAP.put("Hexproof", Keyword.HEXPROOF);
         KEYWORD_MAP.put("Infect", Keyword.INFECT);
+        KEYWORD_MAP.put("Intimidate", Keyword.INTIMIDATE);
     }
 
     public static void loadAll(String cacheDir) {

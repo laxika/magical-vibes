@@ -10,6 +10,11 @@ public record TargetValidationContext(
         GameData gameData,
         UUID targetPermanentId,
         Zone targetZone,
-        Card sourceCard
-) {}
+        Card sourceCard,
+        int xValue
+) {
+    public TargetValidationContext(GameData gameData, UUID targetPermanentId, Zone targetZone, Card sourceCard) {
+        this(gameData, targetPermanentId, targetZone, sourceCard, 0);
+    }
+}
 

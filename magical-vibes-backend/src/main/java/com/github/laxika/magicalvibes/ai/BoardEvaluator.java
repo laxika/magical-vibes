@@ -147,6 +147,7 @@ public class BoardEvaluator {
         if (keywords.contains(Keyword.HEXPROOF)) score += 3;
         if (keywords.contains(Keyword.SHROUD)) score += 3;
         if (keywords.contains(Keyword.FEAR)) score += 2;
+        if (keywords.contains(Keyword.INTIMIDATE)) score += 2;
         if (keywords.contains(Keyword.DEFENDER)) score -= 3;
         if (keywords.contains(Keyword.HASTE)) score += 1;
         if (keywords.contains(Keyword.INFECT)) score += 4;
@@ -168,6 +169,7 @@ public class BoardEvaluator {
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.HEXPROOF)) bonus += 3;
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.SHROUD)) bonus += 3;
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.FEAR)) bonus += 2;
+        if (gameQueryService.hasKeyword(gameData, perm, Keyword.INTIMIDATE)) bonus += 2;
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER)) bonus -= 3;
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) bonus += 1;
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.INFECT)) bonus += 4;

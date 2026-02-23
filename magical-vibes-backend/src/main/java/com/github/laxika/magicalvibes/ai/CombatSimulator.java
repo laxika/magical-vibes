@@ -31,7 +31,7 @@ public class CombatSimulator {
     record CreatureInfo(int index, UUID id, int power, int toughness,
                         boolean flying, boolean firstStrike, boolean doubleStrike,
                         boolean trample, boolean lifelink, boolean indestructible,
-                        boolean menace, boolean fear, boolean reach, boolean defender,
+                        boolean menace, boolean fear, boolean intimidate, boolean reach, boolean defender,
                         boolean cantBeBlocked, boolean isArtifact, boolean infect,
                         CardColor color, double creatureScore) {}
 
@@ -512,6 +512,9 @@ public class CombatSimulator {
         // Fear: can only be blocked by artifact creatures or black creatures
         if (attacker.fear && !blocker.isArtifact && blocker.color != CardColor.BLACK) return false;
 
+        // Intimidate: can only be blocked by artifact creatures or creatures that share a color
+        if (attacker.intimidate && !blocker.isArtifact && blocker.color != attacker.color) return false;
+
         return true;
     }
 
@@ -538,6 +541,7 @@ public class CombatSimulator {
                 gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE),
                 gameQueryService.hasKeyword(gameData, perm, Keyword.MENACE),
                 gameQueryService.hasKeyword(gameData, perm, Keyword.FEAR),
+                gameQueryService.hasKeyword(gameData, perm, Keyword.INTIMIDATE),
                 gameQueryService.hasKeyword(gameData, perm, Keyword.REACH),
                 gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER),
                 gameQueryService.hasCantBeBlocked(gameData, perm),

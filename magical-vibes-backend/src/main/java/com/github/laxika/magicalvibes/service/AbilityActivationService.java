@@ -286,7 +286,7 @@ public class AbilityActivationService {
         // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
         if (!hasSacCreatureCost) {
             targetLegalityService.validateActivatedAbilityTargeting(
-                    gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard());
+                    gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard(), effectiveXValue);
         }
         if (sacSubtypeCost.isPresent() && !hasSubtypeCreatureToSacrifice(gameData, playerId, sacSubtypeCost.get())) {
             throw new IllegalStateException("Must choose a " + sacSubtypeCost.get().subtype().getDisplayName() + " to sacrifice");
@@ -381,7 +381,7 @@ public class AbilityActivationService {
         // Validate any remaining real targets after the cost has been paid.
         if (hasSacCreatureCost) {
             targetLegalityService.validateActivatedAbilityTargeting(
-                    gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard());
+                    gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard(), effectiveXValue);
         }
         activatedAbilityExecutionService.completeActivationAfterCosts(
                 gameData, player, permanent, ability, abilityEffects, effectiveXValue, targetPermanentId, targetZone, hasSacCreatureCost);

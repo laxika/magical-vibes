@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetE
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
@@ -239,6 +240,30 @@ public class TargetValidationService {
                 throw new IllegalStateException("Target must be an Aura attached to a permanent");
             }
         });
+
+        registry.register(PutCardFromOpponentGraveyardOntoBattlefieldEffect.class, (ctx, effect) -> {
+            if (ctx.targetZone() != Zone.GRAVEYARD) {
+                throw new IllegalStateException("Ability requires a graveyard target");
+            }
+            if (ctx.targetPermanentId() == null) {
+                throw new IllegalStateException("Ability requires a target card");
+            }
+            Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetPermanentId());
+            if (graveyardCard == null) {
+                throw new IllegalStateException("Target card not found in any graveyard");
+            }
+            if (graveyardCard.getType() != CardType.ARTIFACT && graveyardCard.getType() != CardType.CREATURE) {
+                throw new IllegalStateException("Target must be an artifact or creature card");
+            }
+            if (graveyardCard.getManaValue() != ctx.xValue()) {
+                throw new IllegalStateException("Target card's mana value must equal X (" + ctx.xValue() + ")");
+            }
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetPermanentId());
+            UUID controllerId = findSourcePermanentController(ctx);
+            if (graveyardOwnerId != null && graveyardOwnerId.equals(controllerId)) {
+                throw new IllegalStateException("Target must be in an opponent's graveyard");
+            }
+        });
     }
 
     public void validateEffectTargets(List<CardEffect> effects, TargetValidationContext context) {
@@ -297,6 +322,19 @@ public class TargetValidationService {
             }
         }
         return -1;
+    }
+
+    private UUID findSourcePermanentController(TargetValidationContext ctx) {
+        for (UUID playerId : ctx.gameData().orderedPlayerIds) {
+            List<Permanent> battlefield = ctx.gameData().playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (p.getCard() == ctx.sourceCard()) {
+                    return playerId;
+                }
+            }
+        }
+        return null;
     }
 }
 
