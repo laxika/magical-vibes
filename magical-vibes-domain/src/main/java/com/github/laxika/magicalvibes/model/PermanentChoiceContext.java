@@ -39,4 +39,6 @@ public sealed interface PermanentChoiceContext {
     record DiscardTriggerAnyTarget(Card discardedCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
 
     record MayAbilityTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
+
+    record PreventDamageSourceChoice(UUID controllerId) implements PermanentChoiceContext {}
 }

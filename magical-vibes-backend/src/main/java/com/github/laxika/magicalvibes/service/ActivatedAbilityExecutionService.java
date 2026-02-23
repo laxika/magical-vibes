@@ -167,6 +167,7 @@ public class ActivatedAbilityExecutionService {
                 String cardName = permanent.getCard().getName();
                 int damage = dmg.damage();
                 if (!gameQueryService.isDamageFromSourcePrevented(gameData, permanent.getCard().getColor())
+                        && !gameHelper.isSourceDamagePreventedForPlayer(gameData, playerId, permanent.getId())
                         && !gameHelper.applyColorDamagePreventionForPlayer(gameData, playerId, permanent.getCard().getColor())) {
                     int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, playerId, damage);
                     effectiveDamage = gameHelper.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);

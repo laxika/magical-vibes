@@ -272,6 +272,24 @@ public class PermanentChoiceHandlerService {
 
             gameData.priorityPassedBy.clear();
             turnProgressionService.resolveAutoPass(gameData);
+        } else if (context instanceof PermanentChoiceContext.PreventDamageSourceChoice preventSource) {
+            Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
+            if (chosenPermanent == null) {
+                throw new IllegalStateException("Chosen permanent no longer exists");
+            }
+
+            UUID controllerId = preventSource.controllerId();
+            gameData.playerSourceDamagePreventionIds
+                    .computeIfAbsent(controllerId, k -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                    .add(permanentId);
+
+            String playerName = gameData.playerIdToName.get(controllerId);
+            String logEntry = "All damage " + chosenPermanent.getCard().getName() + " would deal to " + playerName + " is prevented this turn.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} chose {} as prevented damage source", gameData.id, playerName, chosenPermanent.getCard().getName());
+
+            stateBasedActionService.performStateBasedActions(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.MayAbilityTriggerTarget mat) {
             Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
             if (target != null) {

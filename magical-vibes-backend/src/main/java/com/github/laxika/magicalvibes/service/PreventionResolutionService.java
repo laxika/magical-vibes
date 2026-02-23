@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
@@ -14,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -24,6 +28,7 @@ public class PreventionResolutionService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+    private final PlayerInputService playerInputService;
 
     @HandlesEffect(PreventDamageToTargetEffect.class)
     void resolvePreventDamageToTarget(GameData gameData, StackEntry entry, PreventDamageToTargetEffect prevent) {
@@ -90,5 +95,29 @@ public class PreventionResolutionService {
                 .computeIfAbsent(controllerId, k -> new ConcurrentHashMap<>())
                 .merge(chosenColor, 1, Integer::sum);
     }
-}
 
+    @HandlesEffect(PreventAllDamageFromChosenSourceEffect.class)
+    void resolvePreventAllDamageFromChosenSource(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+
+        // Collect all permanents on all battlefields as valid source choices
+        List<UUID> validIds = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent perm : battlefield) {
+                validIds.add(perm.getId());
+            }
+        }
+
+        if (validIds.isEmpty()) {
+            String logEntry = "No permanents on the battlefield to choose as a damage source.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.PreventDamageSourceChoice(controllerId));
+        playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
+                "Choose a source. Prevent all damage it would deal to you this turn.");
+    }
+}

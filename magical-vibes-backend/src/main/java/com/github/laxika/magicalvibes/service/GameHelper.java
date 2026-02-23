@@ -540,6 +540,7 @@ public class GameHelper {
         gameData.preventDamageFromColors.clear();
         gameData.combatDamageRedirectTarget = null;
         gameData.playerColorDamagePreventionCount.clear();
+        gameData.playerSourceDamagePreventionIds.clear();
         gameData.drawReplacementTargetToController.clear();
     }
 
@@ -604,6 +605,12 @@ public class GameHelper {
         int prevented = Math.min(shield, damage);
         gameData.playerDamagePreventionShields.put(playerId, shield - prevented);
         return damage - prevented;
+    }
+
+    boolean isSourceDamagePreventedForPlayer(GameData gameData, UUID playerId, UUID sourcePermanentId) {
+        if (sourcePermanentId == null) return false;
+        Set<UUID> preventedSources = gameData.playerSourceDamagePreventionIds.get(playerId);
+        return preventedSources != null && preventedSources.contains(sourcePermanentId);
     }
 
     boolean applyColorDamagePreventionForPlayer(GameData gameData, UUID playerId, CardColor sourceColor) {
@@ -1115,6 +1122,7 @@ public class GameHelper {
                                 gameData.id, cardName, damage, gameData.playerIdToName.get(discardingPlayerId));
 
                         if (!gameQueryService.isDamageFromSourcePrevented(gameData, perm.getCard().getColor())
+                                && !isSourceDamagePreventedForPlayer(gameData, discardingPlayerId, perm.getId())
                                 && !applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, perm.getCard().getColor())) {
                             int effectiveDamage = applyPlayerPreventionShield(gameData, discardingPlayerId, damage);
                             effectiveDamage = redirectPlayerDamageToEnchantedCreature(gameData, discardingPlayerId, effectiveDamage, cardName);
@@ -1165,6 +1173,7 @@ public class GameHelper {
                                 gameData.id, cardName, damage, gameData.playerIdToName.get(tappingPlayerId));
 
                         if (!gameQueryService.isDamageFromSourcePrevented(gameData, perm.getCard().getColor())
+                                && !isSourceDamagePreventedForPlayer(gameData, tappingPlayerId, perm.getId())
                                 && !applyColorDamagePreventionForPlayer(gameData, tappingPlayerId, perm.getCard().getColor())) {
                             int effectiveDamage = applyPlayerPreventionShield(gameData, tappingPlayerId, damage);
                             effectiveDamage = redirectPlayerDamageToEnchantedCreature(gameData, tappingPlayerId, effectiveDamage, cardName);

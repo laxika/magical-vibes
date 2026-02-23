@@ -846,6 +846,8 @@ public class CombatService {
                             } else {
                                 damageRedirectedToGuard += power;
                             }
+                        } else if (gameHelper.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
+                            // Source-specific damage prevention — skip first-strike damage
                         } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
                             if (atkHasInfect) {
                                 poisonDamageToDefendingPlayer += power;
@@ -882,6 +884,8 @@ public class CombatService {
                                 } else {
                                     damageRedirectedToGuard += doubledRemaining;
                                 }
+                            } else if (gameHelper.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
+                                // Source-specific damage prevention — skip first-strike trample damage
                             } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
                                 if (atkHasInfect) {
                                     poisonDamageToDefendingPlayer += doubledRemaining;
@@ -1014,6 +1018,8 @@ public class CombatService {
                                 } else {
                                     damageRedirectedToGuard += actualDmg;
                                 }
+                            } else if (gameHelper.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
+                                // Source-specific damage prevention — skip player-assigned damage
                             } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
                                 if (atkHasInfect) {
                                     poisonDamageToDefendingPlayer += actualDmg;
@@ -1050,7 +1056,9 @@ public class CombatService {
                         } else {
                             damageRedirectedToGuard += power;
                         }
-                    } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
+                    } else if (gameHelper.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
+                    // Source-specific damage prevention — skip this attacker's damage
+                } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
                         if (atkHasInfect) {
                             poisonDamageToDefendingPlayer += power;
                         } else {
@@ -1087,6 +1095,8 @@ public class CombatService {
                             } else {
                                 damageRedirectedToGuard += doubledRemaining;
                             }
+                        } else if (gameHelper.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
+                            // Source-specific damage prevention — skip trample damage
                         } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
                             if (atkHasInfect) {
                                 poisonDamageToDefendingPlayer += doubledRemaining;

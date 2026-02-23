@@ -305,6 +305,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `PreventAllDamageToAndByEnchantedCreatureEffect` | `()` | prevent all damage to and dealt by enchanted creature |
 | `PreventDamageFromColorsEffect` | `(Set<CardColor> colors)` | prevent all damage from sources of specified colors (static) |
 | `PreventNextColorDamageToControllerEffect` | `(CardColor chosenColor)` | prevent next damage of chosen color to controller |
+| `PreventAllDamageFromChosenSourceEffect` | `()` | prevent all damage a chosen source would deal to controller this turn (prompts permanent choice on resolution) |
 | `ProtectionFromColorsEffect` | `(Set<CardColor> colors)` | protection from specified colors (static) |
 | `ProtectionFromChosenColorEffect` | `()` | protection from chosen color (static, requires ChooseColorOnEnterEffect) |
 | `CantBeTargetedBySpellColorsEffect` | `(Set<CardColor> colors)` | can't be targeted by spells of specified colors (static) |

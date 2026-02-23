@@ -176,6 +176,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Draw + discard | `m/MerfolkLooter.java` | DrawCardEffect + DiscardCardEffect |
 | Grant keyword to target | `m/MightWeaver.java` | GrantKeywordEffect with color filter |
 | Sacrifice self for effect | `b/BottleGnomes.java` | SacrificeSelfCost + effect |
+| Sacrifice self + choose source prevention | `a/AuriokReplica.java` | SacrificeSelfCost + PreventAllDamageFromChosenSourceEffect (prompts permanent choice on resolution) |
 | Sacrifice subtype for effect | `s/SiegeGangCommander.java` | SacrificeSubtypeCreatureCost + DealDamageToAnyTargetEffect |
 | Sacrifice artifact for effect | `b/BarrageOgre.java` | SacrificeArtifactCost + DealDamageToAnyTargetEffect (tap + sac artifact) |
 | Regenerate (self) | `d/DrudgeSkeletons.java` | `(false, "{B}", RegenerateEffect, false)` |

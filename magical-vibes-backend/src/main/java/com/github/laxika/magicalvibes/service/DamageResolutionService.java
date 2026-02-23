@@ -494,6 +494,10 @@ public class DamageResolutionService {
 
     private void dealDamageToPlayer(GameData gameData, StackEntry entry, UUID playerId, int rawDamage) {
         String cardName = entry.getCard().getName();
+        if (gameHelper.isSourceDamagePreventedForPlayer(gameData, playerId, entry.getSourcePermanentId())) {
+            gameBroadcastService.logAndBroadcast(gameData, cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
+            return;
+        }
         if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, playerId, entry.getCard().getColor())) {
             int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             effectiveDamage = gameHelper.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);

@@ -136,7 +136,7 @@ public class GameTestHarness {
                 new DamageResolutionService(gameHelper, gameQueryService, gameBroadcastService),
                 new DestructionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),
                 new LibraryResolutionService(gameHelper, gameBroadcastService, sessionManager, cardViewFactory),
-                new PreventionResolutionService(gameQueryService, gameBroadcastService),
+                new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new CounterResolutionService(gameHelper, gameBroadcastService, gameQueryService),
                 new ExileResolutionService(gameHelper, gameQueryService, gameBroadcastService),
                 new CopyResolutionService(gameBroadcastService),
