@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenWithColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -163,7 +163,7 @@ public class SpellEvaluator {
         }
 
         // Board wipes
-        if (effect instanceof DealDamageToAllCreaturesEffect aoe) {
+        if (effect instanceof MassDamageEffect aoe) {
             return evaluateBoardWipeDamage(gameData, aoe.damage(), aiPlayerId, opponentId,
                     aiBattlefield, oppBattlefield);
         }

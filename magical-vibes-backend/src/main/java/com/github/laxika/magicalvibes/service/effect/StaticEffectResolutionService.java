@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -24,7 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSame
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEnchantmentOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityToEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityToOwnLandsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -177,14 +178,14 @@ public class StaticEffectResolutionService {
         }
     }
 
-    @HandlesStaticEffect(GrantActivatedAbilityToOwnLandsEffect.class)
-    private void resolveGrantActivatedAbilityToOwnLands(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var grant = (GrantActivatedAbilityToOwnLandsEffect) effect;
-        if (!context.targetOnSameBattlefield()) {
-            return;
-        }
-        if (context.target().getCard().getType() == CardType.LAND
-                || context.target().getCard().getAdditionalTypes().contains(CardType.LAND)) {
+    @HandlesStaticEffect(GrantActivatedAbilityEffect.class)
+    private void resolveGrantActivatedAbility(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var grant = (GrantActivatedAbilityEffect) effect;
+        boolean scopeMatch = switch (grant.scope()) {
+            case OWN_PERMANENTS -> context.targetOnSameBattlefield();
+            default -> false;
+        };
+        if (scopeMatch && matchesStaticFilter(context.target(), grant.filter())) {
             accumulator.addActivatedAbility(grant.ability());
         }
     }
@@ -382,6 +383,9 @@ public class StaticEffectResolutionService {
         if (filter instanceof PermanentIsArtifactPredicate)
             return target.getCard().getType() == CardType.ARTIFACT
                     || target.getCard().getAdditionalTypes().contains(CardType.ARTIFACT);
+        if (filter instanceof PermanentIsLandPredicate)
+            return target.getCard().getType() == CardType.LAND
+                    || target.getCard().getAdditionalTypes().contains(CardType.LAND);
         if (filter instanceof PermanentNotPredicate p)
             return !matchesStaticFilter(target, p.predicate());
         if (filter instanceof PermanentAllOfPredicate p)

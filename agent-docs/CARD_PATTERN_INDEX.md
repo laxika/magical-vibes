@@ -20,7 +20,8 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | X burn | `b/Blaze.java` | DealXDamageToAnyTargetEffect |
 | Burn + life drain | `e/EssenceDrain.java` | DealDamageToAnyTargetAndGainLifeEffect |
 | Multi-target damage | `c/ConeOfFlame.java` | DealOrderedDamageToAnyTargetsEffect |
-| Damage all creatures | `p/Pyroclasm.java` | DealDamageToAllCreaturesEffect |
+| Damage all creatures | `p/Pyroclasm.java` | MassDamageEffect |
+| Damage filtered creatures + players | `h/Hurricane.java` | MassDamageEffect (X, filter, damagesPlayers) |
 | Pump target | `g/GiantGrowth.java` | BoostTargetCreatureEffect |
 | Pump all + keyword | `o/Overrun.java` | BoostAllOwnCreaturesEffect + GrantKeywordEffect |
 | Targeted destroy | `t/Terror.java` | DestroyTargetPermanentEffect + target filter |

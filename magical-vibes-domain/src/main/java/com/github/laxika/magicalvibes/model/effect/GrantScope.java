@@ -7,5 +7,6 @@ public enum GrantScope {
     EQUIPPED_CREATURE,
     OWN_TAPPED_CREATURES,
     OWN_CREATURES,
+    OWN_PERMANENTS,
     ALL_CREATURES
 }

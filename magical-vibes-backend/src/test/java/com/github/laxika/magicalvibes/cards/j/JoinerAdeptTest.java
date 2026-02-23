@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityToOwnLandsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,7 @@ class JoinerAdeptTest extends BaseCardTest {
         JoinerAdept card = new JoinerAdept();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantActivatedAbilityToOwnLandsEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantActivatedAbilityEffect.class);
     }
 
     @Test

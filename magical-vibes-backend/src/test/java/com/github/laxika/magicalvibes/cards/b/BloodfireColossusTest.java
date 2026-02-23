@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesAndPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -64,8 +64,8 @@ class BloodfireColossusTest extends BaseCardTest {
         assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getEffects()).hasSize(2);
         assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DealDamageToAllCreaturesAndPlayersEffect.class);
-        assertThat(((DealDamageToAllCreaturesAndPlayersEffect) ability.getEffects().get(1)).damage()).isEqualTo(6);
+        assertThat(ability.getEffects().get(1)).isInstanceOf(MassDamageEffect.class);
+        assertThat(((MassDamageEffect) ability.getEffects().get(1)).damage()).isEqualTo(6);
     }
 
     // ===== Activation and sacrifice =====

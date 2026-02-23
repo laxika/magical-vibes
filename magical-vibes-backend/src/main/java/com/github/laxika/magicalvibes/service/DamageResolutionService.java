@@ -11,12 +11,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.FirstTargetDealsPowerDamageToSecondTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesAndPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToFlyingAndPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
@@ -133,49 +131,29 @@ public class DamageResolutionService {
         }
     }
 
-    @HandlesEffect(DealDamageToAllCreaturesEffect.class)
-    void resolveDealDamageToAllCreatures(GameData gameData, StackEntry entry, DealDamageToAllCreaturesEffect effect) {
+    @HandlesEffect(MassDamageEffect.class)
+    void resolveMassDamage(GameData gameData, StackEntry entry, MassDamageEffect effect) {
         if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
             gameBroadcastService.logAndBroadcast(gameData, entry.getCard().getName() + "'s damage is prevented.");
             return;
         }
 
-        int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
-        damageAllCreaturesOnBattlefield(gameData, entry, damage, p -> gameQueryService.isCreature(gameData, p));
-    }
+        int baseDamage = effect.usesXValue() ? entry.getXValue() : effect.damage();
+        int damage = gameQueryService.applyDamageMultiplier(gameData, baseDamage);
 
-    @HandlesEffect(DealDamageToAllCreaturesAndPlayersEffect.class)
-    void resolveDealDamageToAllCreaturesAndPlayers(GameData gameData, StackEntry entry, DealDamageToAllCreaturesAndPlayersEffect effect) {
-        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getCard().getName() + "'s damage is prevented.");
-            return;
+        Predicate<Permanent> creatureFilter = effect.filter() == null
+                ? p -> gameQueryService.isCreature(gameData, p)
+                : p -> gameQueryService.isCreature(gameData, p)
+                        && gameQueryService.matchesPermanentPredicate(gameData, p, effect.filter());
+
+        damageAllCreaturesOnBattlefield(gameData, entry, damage, creatureFilter);
+
+        if (effect.damagesPlayers()) {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                dealDamageToPlayer(gameData, entry, playerId, damage);
+            }
+            gameHelper.checkWinCondition(gameData);
         }
-
-        int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
-        damageAllCreaturesOnBattlefield(gameData, entry, damage, p -> gameQueryService.isCreature(gameData, p));
-
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            dealDamageToPlayer(gameData, entry, playerId, damage);
-        }
-
-        gameHelper.checkWinCondition(gameData);
-    }
-
-    @HandlesEffect(DealDamageToFlyingAndPlayersEffect.class)
-    void resolveDealDamageToFlyingAndPlayers(GameData gameData, StackEntry entry) {
-        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getCard().getName() + "'s damage is prevented.");
-            return;
-        }
-
-        int damage = gameQueryService.applyDamageMultiplier(gameData, entry.getXValue());
-        damageAllCreaturesOnBattlefield(gameData, entry, damage, p -> gameQueryService.hasKeyword(gameData, p, Keyword.FLYING));
-
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            dealDamageToPlayer(gameData, entry, playerId, damage);
-        }
-
-        gameHelper.checkWinCondition(gameData);
     }
 
     @HandlesEffect(DealXDamageToAnyTargetEffect.class)

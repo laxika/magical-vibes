@@ -41,7 +41,9 @@ public class DestructionResolutionService {
                 continue;
             }
             for (Permanent perm : gameData.playerBattlefields.get(playerId)) {
-                if (matchesDestroyAllTargetType(gameData, perm, effect.targetTypes())) {
+                if (matchesDestroyAllTargetType(gameData, perm, effect.targetTypes())
+                        && (effect.filter() == null
+                            || gameQueryService.matchesPermanentPredicate(gameData, perm, effect.filter()))) {
                     toDestroy.add(perm);
                 }
             }

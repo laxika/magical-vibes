@@ -205,7 +205,9 @@ public class CreatureModResolutionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (gameQueryService.isCreature(gameData, permanent)) {
+            if (gameQueryService.isCreature(gameData, permanent)
+                    && (boost.filter() == null
+                        || gameQueryService.matchesPermanentPredicate(gameData, permanent, boost.filter()))) {
                 permanent.setPowerModifier(permanent.getPowerModifier() + boost.powerBoost());
                 permanent.setToughnessModifier(permanent.getToughnessModifier() + boost.toughnessBoost());
                 count++;

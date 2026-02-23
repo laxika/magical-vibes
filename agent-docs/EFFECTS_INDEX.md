@@ -41,12 +41,10 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `DealDamageToTargetCreatureEffect` | `(int damage)` | deal N damage to target creature |
 | `DealDamageToTargetPlayerEffect` | `(int damage)` | deal N damage to target player |
 | `DealDamageToTargetPlayerByHandSizeEffect` | `()` | deal damage equal to hand size to target player |
-| `DealDamageToAllCreaturesEffect` | `(int damage)` | deal N damage to all creatures |
-| `DealDamageToAllCreaturesAndPlayersEffect` | `(int damage)` | deal N damage to all creatures and each player |
+| `MassDamageEffect` | `(int damage)` or `(int damage, boolean damagesPlayers)` or `(int damage, boolean usesXValue, boolean damagesPlayers, PermanentPredicate filter)` | deal N damage to all creatures (optionally filtered by predicate), optionally to all players too. Use `usesXValue=true` to use X value instead of fixed damage |
 | `DealDamageToAnyTargetAndGainLifeEffect` | `(int damage, int lifeGain)` | deal N damage and gain M life |
 | `DealDamageToControllerEffect` | `(int damage)` | deal N damage to the card's controller (pain lands, self-damage) |
 | `DealDamageToDiscardingPlayerEffect` | `(int damage)` | deal N damage to any player who discards (trigger) |
-| `DealDamageToFlyingAndPlayersEffect` | `()` | deal damage to all flying creatures and all players (e.g. Hurricane-style; uses X) |
 | `DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect` | `(CardSubtype subtype)` | deal damage to target creature equal to number of controlled permanents of subtype |
 | `DealDamageIfFewCardsInHandEffect` | `(int maxCards, int damage)` | deal N damage to target player if they have maxCards or fewer in hand |
 | `DealDamageOnLandTapEffect` | `(int damage)` | deal N damage to a player whenever they tap a land (Manabarbs-style) |
@@ -64,7 +62,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `DestroyTargetPermanentEffect` | `(boolean cannotBeRegenerated)` | destroy target permanent |
-| `DestroyAllPermanentsEffect` | `(Set<CardType> targetTypes, boolean onlyOpponents, boolean cannotBeRegenerated)` | destroy all permanents of given types |
+| `DestroyAllPermanentsEffect` | `(Set<CardType> targetTypes)` or `(Set<CardType> targetTypes, boolean cannotBeRegenerated)` or `(Set<CardType> targetTypes, boolean onlyOpponents, boolean cannotBeRegenerated)` or `(Set<CardType> targetTypes, boolean onlyOpponents, boolean cannotBeRegenerated, PermanentPredicate filter)` | destroy all permanents of given types. Optional predicate filter for additional conditions |
 | `DestroyTargetLandAndDamageControllerEffect` | `(int damage)` | destroy target land and deal N to its controller |
 | `DestroyBlockedCreatureAndSelfEffect` | `()` | destroy creature this blocks and itself (Deathtrap-style) |
 | `DestroyCreatureBlockingThisEffect` | `()` | destroy creature that blocks this (combat trigger) |
@@ -213,7 +211,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 |--------|-------------|--------|
 | `BoostTargetCreatureEffect` | `(int powerBoost, int toughnessBoost)` | target creature gets +X/+Y until end of turn |
 | `BoostSelfEffect` | `(int powerBoost, int toughnessBoost)` | this creature gets +X/+Y until end of turn |
-| `BoostAllOwnCreaturesEffect` | `(int powerBoost, int toughnessBoost)` | all your creatures get +X/+Y (static) |
+| `BoostAllOwnCreaturesEffect` | `(int powerBoost, int toughnessBoost)` or `(int powerBoost, int toughnessBoost, PermanentPredicate filter)` | all your creatures get +X/+Y until end of turn (one-shot). Optional predicate filter |
 | `StaticBoostEffect` | `(int powerBoost, int toughnessBoost, Set<Keyword> grantedKeywords, GrantScope scope, PermanentPredicate filter)` | unified static boost: +X/+Y and keywords with predicate-based filtering. Scope: `OWN_CREATURES`, `ALL_CREATURES`. Filter: optional `PermanentPredicate` (color, subtype, not, etc). Convenience constructors: `(p, t, scope)`, `(p, t, scope, filter)`, `(p, t, keywords, scope)` |
 | `BoostAllCreaturesXEffect` | `(int powerMultiplier, int toughnessMultiplier)` | all creatures get +X/+X where X is mana paid |
 | `BoostAttachedCreatureEffect` | `(int powerBoost, int toughnessBoost)` | enchanted/equipped creature gets +X/+Y (static, works for both auras and equipment) |
@@ -241,7 +239,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 |--------|-------------|--------|
 | `GrantKeywordEffect` | `(Keyword keyword, GrantScope scope)` or `(Keyword keyword, GrantScope scope, PermanentPredicate filter)` | grant keyword. Scope: `SELF`, `TARGET`, `ENCHANTED_CREATURE`, `EQUIPPED_CREATURE`, `OWN_TAPPED_CREATURES`, `OWN_CREATURES`, `ALL_CREATURES`. Optional predicate filter for conditional grants |
 | `MetalcraftKeywordEffect` | `(Keyword keyword)` or `(Keyword keyword, int powerBoost, int toughnessBoost)` | metalcraft — has keyword (and optional +P/+T) as long as you control 3+ artifacts (self-only static) |
-| `GrantActivatedAbilityToOwnLandsEffect` | `(ActivatedAbility ability)` | grant activated ability to all lands you control |
+| `GrantActivatedAbilityEffect` | `(ActivatedAbility ability, GrantScope scope, PermanentPredicate filter)` or `(ActivatedAbility ability, GrantScope scope)` | grant activated ability to permanents matching scope + filter. Scope: `OWN_PERMANENTS` |
 | `GrantActivatedAbilityToEnchantedCreatureEffect` | `(ActivatedAbility ability)` | grant activated ability to enchanted creature |
 | `GrantAdditionalBlockEffect` | `(int additionalBlocks)` | can block N additional creatures |
 | `RegenerateEffect` | `()` or `(boolean targetsPermanent)` | regenerate self (default) or target creature when `targetsPermanent=true` |
