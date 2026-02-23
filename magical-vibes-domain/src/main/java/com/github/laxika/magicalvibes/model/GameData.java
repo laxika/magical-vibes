@@ -10,7 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class GameData {
 
@@ -94,5 +96,220 @@ public class GameData {
         this.createdByUsername = createdByUsername;
         this.createdAt = LocalDateTime.now();
         this.status = GameStatus.WAITING;
+    }
+
+    /**
+     * Creates a deep copy of this game state for AI simulation (MCTS).
+     * <ul>
+     *   <li>Card objects are shared (immutable after construction)</li>
+     *   <li>Permanent objects are deep-copied (mutable state)</li>
+     *   <li>Collections are copied to new independent instances</li>
+     *   <li>Primitive/enum/UUID/String fields are assigned directly</li>
+     * </ul>
+     */
+    public GameData deepCopy() {
+        GameData copy = new GameData(id, gameName, createdByUserId, createdByUsername);
+
+        // --- Primitives, enums, UUIDs, Strings ---
+        copy.status = this.status;
+        copy.startingPlayerId = this.startingPlayerId;
+        copy.currentStep = this.currentStep;
+        copy.activePlayerId = this.activePlayerId;
+        copy.turnNumber = this.turnNumber;
+        copy.globalDamagePreventionShield = this.globalDamagePreventionShield;
+        copy.preventAllCombatDamage = this.preventAllCombatDamage;
+        copy.combatDamageRedirectTarget = this.combatDamageRedirectTarget;
+        copy.pendingCombatDamageBounceTargetPlayerId = this.pendingCombatDamageBounceTargetPlayerId;
+        copy.pendingAbilityActivation = this.pendingAbilityActivation; // immutable record
+        copy.endTurnRequested = this.endTurnRequested;
+        copy.discardCausedByOpponent = this.discardCausedByOpponent;
+        copy.additionalCombatMainPhasePairs = this.additionalCombatMainPhasePairs;
+        copy.lastBroadcastedLogSize = this.lastBroadcastedLogSize;
+        copy.draftId = this.draftId;
+        copy.cleanupDiscardPending = this.cleanupDiscardPending;
+        copy.combatDamagePhase1Complete = this.combatDamagePhase1Complete;
+
+        // --- Set<UUID> (ConcurrentHashMap.newKeySet()) ---
+        copy.playerIds.addAll(this.playerIds);
+        copy.playerKeptHand.addAll(this.playerKeptHand);
+        copy.priorityPassedBy.addAll(this.priorityPassedBy);
+        copy.preventDamageFromColors.addAll(this.preventDamageFromColors);
+        copy.permanentsToSacrificeAtEndOfCombat.addAll(this.permanentsToSacrificeAtEndOfCombat);
+        copy.untilEndOfTurnStolenCreatures.addAll(this.untilEndOfTurnStolenCreatures);
+        copy.enchantmentDependentStolenCreatures.addAll(this.enchantmentDependentStolenCreatures);
+        copy.permanentControlStolenCreatures.addAll(this.permanentControlStolenCreatures);
+        copy.playersAttemptedDrawFromEmptyLibrary.addAll(this.playersAttemptedDrawFromEmptyLibrary);
+
+        // --- List<UUID> (synchronized) ---
+        copy.orderedPlayerIds.addAll(this.orderedPlayerIds);
+        copy.playerNames.addAll(this.playerNames);
+
+        // --- Map<UUID, String/Integer> ---
+        copy.playerIdToName.putAll(this.playerIdToName);
+        copy.playerDeckChoices.putAll(this.playerDeckChoices);
+        copy.mulliganCounts.putAll(this.mulliganCounts);
+        copy.playerNeedsToBottom.putAll(this.playerNeedsToBottom);
+        copy.landsPlayedThisTurn.putAll(this.landsPlayedThisTurn);
+        copy.spellsCastThisTurn.putAll(this.spellsCastThisTurn);
+        copy.playerLifeTotals.putAll(this.playerLifeTotals);
+        copy.playerDamagePreventionShields.putAll(this.playerDamagePreventionShields);
+        copy.stolenCreatures.putAll(this.stolenCreatures);
+        copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
+
+        // --- Map<UUID, Set<TurnStep>> ---
+        this.playerAutoStopSteps.forEach((k, v) -> copy.playerAutoStopSteps.put(k, ConcurrentHashMap.newKeySet()));
+        this.playerAutoStopSteps.forEach((k, v) -> copy.playerAutoStopSteps.get(k).addAll(v));
+
+        // --- Map<UUID, List<Card>> (shared Card refs) ---
+        this.playerDecks.forEach((k, v) -> copy.playerDecks.put(k, Collections.synchronizedList(new ArrayList<>(v))));
+        this.playerHands.forEach((k, v) -> copy.playerHands.put(k, Collections.synchronizedList(new ArrayList<>(v))));
+        this.playerGraveyards.forEach((k, v) -> copy.playerGraveyards.put(k, Collections.synchronizedList(new ArrayList<>(v))));
+        this.playerExiledCards.forEach((k, v) -> copy.playerExiledCards.put(k, Collections.synchronizedList(new ArrayList<>(v))));
+
+        // --- Map<UUID, List<Permanent>> (deep copy each Permanent) ---
+        this.playerBattlefields.forEach((k, v) ->
+                copy.playerBattlefields.put(k, Collections.synchronizedList(
+                        v.stream().map(Permanent::new).collect(Collectors.toCollection(ArrayList::new)))));
+
+        // --- Map<UUID, ManaPool> (deep copy each ManaPool) ---
+        this.playerManaPools.forEach((k, v) -> copy.playerManaPools.put(k, new ManaPool(v)));
+
+        // --- List<StackEntry> (deep copy each StackEntry) ---
+        this.stack.forEach(se -> copy.stack.add(new StackEntry(se)));
+
+        // --- InteractionState ---
+        InteractionState copiedInteraction = this.interaction.deepCopy();
+        copyInteractionInto(copy, copiedInteraction);
+
+        // --- Map<UUID, Set<UUID>> ---
+        this.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.forEach((k, v) -> {
+            Set<UUID> s = ConcurrentHashMap.newKeySet();
+            s.addAll(v);
+            copy.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.put(k, s);
+        });
+        this.creatureCardsDamagedThisTurnBySourcePermanent.forEach((k, v) -> {
+            Set<UUID> s = ConcurrentHashMap.newKeySet();
+            s.addAll(v);
+            copy.creatureCardsDamagedThisTurnBySourcePermanent.put(k, s);
+        });
+
+        // --- Map<UUID, Map<CardColor, Integer>> ---
+        this.playerColorDamagePreventionCount.forEach((k, v) ->
+                copy.playerColorDamagePreventionCount.put(k, new ConcurrentHashMap<>(v)));
+
+        // --- PendingMayAbility list (records with shared Card refs) ---
+        copy.pendingMayAbilities.addAll(this.pendingMayAbilities);
+
+        // --- GraveyardTargetOperationState ---
+        copy.graveyardTargetOperation.card = this.graveyardTargetOperation.card;
+        copy.graveyardTargetOperation.controllerId = this.graveyardTargetOperation.controllerId;
+        copy.graveyardTargetOperation.effects = this.graveyardTargetOperation.effects;
+        copy.graveyardTargetOperation.entryType = this.graveyardTargetOperation.entryType;
+        copy.graveyardTargetOperation.xValue = this.graveyardTargetOperation.xValue;
+
+        // --- CloneOperationState ---
+        copy.cloneOperation.card = this.cloneOperation.card;
+        copy.cloneOperation.controllerId = this.cloneOperation.controllerId;
+        copy.cloneOperation.etbTargetId = this.cloneOperation.etbTargetId;
+
+        // --- WarpWorldOperationState ---
+        copy.warpWorldOperation.pendingAuraChoices.addAll(this.warpWorldOperation.pendingAuraChoices);
+        copy.warpWorldOperation.pendingEnchantmentPlacements.addAll(this.warpWorldOperation.pendingEnchantmentPlacements);
+        this.warpWorldOperation.pendingCreaturesByPlayer.forEach((k, v) ->
+                copy.warpWorldOperation.pendingCreaturesByPlayer.put(k, new ArrayList<>(v)));
+        copy.warpWorldOperation.enterTappedTypesSnapshot.addAll(this.warpWorldOperation.enterTappedTypesSnapshot);
+        copy.warpWorldOperation.needsLegendChecks = this.warpWorldOperation.needsLegendChecks;
+        copy.warpWorldOperation.sourceName = this.warpWorldOperation.sourceName;
+
+        // --- Map<UUID, Map<Integer, Integer>> (activated ability uses) ---
+        this.activatedAbilityUsesThisTurn.forEach((k, v) ->
+                copy.activatedAbilityUsesThisTurn.put(k, new ConcurrentHashMap<>(v)));
+
+        // --- Deques ---
+        copy.pendingDeathTriggerTargets.addAll(this.pendingDeathTriggerTargets);
+        copy.pendingDiscardSelfTriggers.addAll(this.pendingDiscardSelfTriggers);
+        copy.extraTurns.addAll(this.extraTurns);
+        this.pendingLibraryBottomReorders.forEach(req ->
+                copy.pendingLibraryBottomReorders.add(new LibraryBottomReorderRequest(req.playerId(), new ArrayList<>(req.cards()))));
+
+        // --- Combat damage assignment state ---
+        this.combatDamagePlayerAssignments.forEach((k, v) ->
+                copy.combatDamagePlayerAssignments.put(k, new HashMap<>(v)));
+        copy.combatDamagePendingIndices.addAll(this.combatDamagePendingIndices);
+        copy.combatDamagePhase1State = this.combatDamagePhase1State; // read-only snapshot from phase 1
+
+        // --- Game log (share reference for simulation — not read during MCTS) ---
+        copy.gameLog.addAll(this.gameLog);
+
+        return copy;
+    }
+
+    /**
+     * Copies the fields from a deep-copied InteractionState into this GameData's interaction.
+     * Since GameData.interaction is final, we need to copy field-by-field.
+     */
+    private static void copyInteractionInto(GameData target, InteractionState source) {
+        // The interaction field is final on GameData, so we replicate its state
+        // by clearing and re-configuring through public methods.
+        // However, since InteractionState uses private fields and public begin*/clear* methods,
+        // we use the context object to reconstruct the state.
+        if (source.awaitingInputType() == null) {
+            return; // default state, nothing to copy
+        }
+
+        // Copy context through reflection-free approach: re-read the source's context
+        // and call the appropriate begin* method on the target's interaction.
+        InteractionState targetInteraction = target.interaction;
+        var ctx = source.currentContext();
+        if (ctx == null) {
+            return;
+        }
+
+        switch (ctx) {
+            case InteractionContext.AttackerDeclaration ad ->
+                    targetInteraction.beginAttackerDeclaration(ad.activePlayerId());
+            case InteractionContext.BlockerDeclaration bd ->
+                    targetInteraction.beginBlockerDeclaration(bd.defenderId());
+            case InteractionContext.CardChoice cc ->
+                    targetInteraction.beginCardChoice(cc.type(), cc.playerId(), cc.validIndices(), cc.targetPermanentId());
+            case InteractionContext.PermanentChoice pc ->
+                    targetInteraction.beginPermanentChoice(pc.playerId(), pc.validIds(), pc.context());
+            case InteractionContext.GraveyardChoice gc ->
+                    targetInteraction.beginGraveyardChoice(gc.playerId(), gc.validIndices(), gc.destination(), gc.cardPool());
+            case InteractionContext.ColorChoice cc ->
+                    targetInteraction.beginColorChoice(cc.playerId(), cc.permanentId(), cc.etbTargetPermanentId(), cc.context());
+            case InteractionContext.MayAbilityChoice mc ->
+                    targetInteraction.beginMayAbilityChoice(mc.playerId(), mc.description());
+            case InteractionContext.MultiPermanentChoice mpc ->
+                    targetInteraction.beginMultiPermanentChoice(mpc.playerId(), mpc.validIds(), mpc.maxCount());
+            case InteractionContext.MultiGraveyardChoice mgc ->
+                    targetInteraction.beginMultiGraveyardChoice(mgc.playerId(), mgc.validCardIds(), mgc.maxCount());
+            case InteractionContext.LibraryReorder lr ->
+                    targetInteraction.beginLibraryReorder(lr.playerId(), lr.cards() != null ? new ArrayList<>(lr.cards()) : null, lr.toBottom());
+            case InteractionContext.LibrarySearch ls ->
+                    targetInteraction.beginLibrarySearch(ls.playerId(), ls.cards() != null ? new ArrayList<>(ls.cards()) : null,
+                            ls.reveals(), ls.canFailToFind(), ls.targetPlayerId(), ls.remainingCount(),
+                            ls.sourceCards() != null ? new ArrayList<>(ls.sourceCards()) : null,
+                            ls.reorderRemainingToBottom(), ls.shuffleAfterSelection(), ls.prompt(), ls.destination());
+            case InteractionContext.LibraryRevealChoice lrc ->
+                    targetInteraction.beginLibraryRevealChoice(lrc.playerId(),
+                            lrc.allCards() != null ? new ArrayList<>(lrc.allCards()) : null,
+                            lrc.validCardIds() != null ? new HashSet<>(lrc.validCardIds()) : null);
+            case InteractionContext.HandTopBottomChoice htbc ->
+                    targetInteraction.beginHandTopBottomChoice(htbc.playerId(),
+                            htbc.cards() != null ? new ArrayList<>(htbc.cards()) : null);
+            case InteractionContext.RevealedHandChoice rhc ->
+                    targetInteraction.beginRevealedHandChoice(rhc.choosingPlayerId(), rhc.targetPlayerId(),
+                            rhc.validIndices(), rhc.remainingCount(), rhc.discardMode(), rhc.chosenCards());
+            case InteractionContext.CombatDamageAssignment cda ->
+                    targetInteraction.beginCombatDamageAssignment(cda.playerId(), cda.attackerIndex(),
+                            cda.attackerPermanentId(), cda.attackerName(), cda.totalDamage(),
+                            cda.validTargets(), cda.isTrample());
+        }
+
+        // Copy discard remaining count (not part of context reconstruction)
+        if (source.discardRemainingCount() > 0) {
+            targetInteraction.setDiscardRemainingCount(source.discardRemainingCount());
+        }
     }
 }

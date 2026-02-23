@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -164,6 +166,28 @@ public class StackEntry {
         this.targetCardIds = targetCardIds != null ? targetCardIds : List.of();
         this.targetFilter = null;
         this.targetPermanentIds = List.of();
+    }
+
+    /**
+     * Copy constructor for deep-copying game state during AI simulation.
+     * Card and CardEffect references are shared (immutable after construction).
+     */
+    public StackEntry(StackEntry source) {
+        this.entryType = source.entryType;
+        this.card = source.card;
+        this.controllerId = source.controllerId;
+        this.description = source.description;
+        this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
+        this.xValue = source.xValue;
+        this.targetPermanentId = source.targetPermanentId;
+        this.sourcePermanentId = source.sourcePermanentId;
+        this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new HashMap<>(source.damageAssignments);
+        this.targetZone = source.targetZone;
+        this.targetCardIds = source.targetCardIds.isEmpty() ? List.of() : new ArrayList<>(source.targetCardIds);
+        this.targetFilter = source.targetFilter;
+        this.copy = source.copy;
+        this.nonTargeting = source.nonTargeting;
+        this.targetPermanentIds = source.targetPermanentIds.isEmpty() ? List.of() : new ArrayList<>(source.targetPermanentIds);
     }
 
     // Multi-target permanent spell constructor (e.g. "one or two target creatures")

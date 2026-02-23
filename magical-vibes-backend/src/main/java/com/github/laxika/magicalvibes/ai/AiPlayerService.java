@@ -44,17 +44,20 @@ public class AiPlayerService {
     }
 
     public void joinAsAi(GameData gameData, String aiDeckId, String aiDifficulty) {
+        boolean isHard = "hard".equalsIgnoreCase(aiDifficulty);
         boolean isMedium = "medium".equalsIgnoreCase(aiDifficulty);
-        String aiName = isMedium ? "AI Opponent (Medium)" : "AI Opponent (Easy)";
+        String aiName = isHard ? "AI Opponent (Hard)" : isMedium ? "AI Opponent (Medium)" : "AI Opponent (Easy)";
         UUID aiPlayerId = UUID.randomUUID();
         Player aiPlayer = new Player(aiPlayerId, aiName);
 
         MessageHandler handler = messageHandlerProvider.getObject();
-        AiDecisionEngine engine = isMedium
+        AiDecisionEngine engine = isHard
+                ? new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService)
+                : isMedium
                 ? new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService)
                 : new AiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService);
         String connectionId = "ai-" + gameData.id;
-        long delay = isMedium ? 1200L : 800L;
+        long delay = isHard ? 1500L : isMedium ? 1200L : 800L;
         AiConnection aiConnection = new AiConnection(connectionId, engine, objectMapper, delay);
         engine.setSelfConnection(aiConnection);
 

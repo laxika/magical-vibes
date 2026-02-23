@@ -14,6 +14,13 @@ public class ManaPool {
         }
     }
 
+    /**
+     * Copy constructor for deep-copying game state during AI simulation.
+     */
+    public ManaPool(ManaPool source) {
+        pool.putAll(source.pool);
+    }
+
     public void add(ManaColor color) {
         pool.merge(color, 1, Integer::sum);
     }

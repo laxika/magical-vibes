@@ -53,6 +53,45 @@ public class Permanent {
         this.summoningSick = true;
     }
 
+    /**
+     * Copy constructor for deep-copying game state during AI simulation.
+     * Preserves the same ID so that target references remain valid.
+     * Card references are shared (immutable after construction).
+     */
+    public Permanent(Permanent source) {
+        this.id = source.id;
+        this.card = source.card;
+        this.originalCard = source.originalCard;
+        this.tapped = source.tapped;
+        this.attacking = source.attacking;
+        this.attackedThisTurn = source.attackedThisTurn;
+        this.blocking = source.blocking;
+        this.blockingTargets.addAll(source.blockingTargets);
+        this.summoningSick = source.summoningSick;
+        this.powerModifier = source.powerModifier;
+        this.toughnessModifier = source.toughnessModifier;
+        this.damagePreventionShield = source.damagePreventionShield;
+        this.regenerationShield = source.regenerationShield;
+        this.attachedTo = source.attachedTo;
+        this.chosenColor = source.chosenColor;
+        this.chosenName = source.chosenName;
+        this.cantBeBlocked = source.cantBeBlocked;
+        this.cantBlockThisTurn = source.cantBlockThisTurn;
+        this.cantRegenerateThisTurn = source.cantRegenerateThisTurn;
+        this.animatedUntilEndOfTurn = source.animatedUntilEndOfTurn;
+        this.animatedPower = source.animatedPower;
+        this.animatedToughness = source.animatedToughness;
+        this.animatedColor = source.animatedColor;
+        this.loyaltyCounters = source.loyaltyCounters;
+        this.plusOnePlusOneCounters = source.plusOnePlusOneCounters;
+        this.minusOneMinusOneCounters = source.minusOneMinusOneCounters;
+        this.loyaltyAbilityUsedThisTurn = source.loyaltyAbilityUsedThisTurn;
+        this.grantedKeywords.addAll(source.grantedKeywords);
+        this.grantedSubtypes.addAll(source.grantedSubtypes);
+        this.textReplacements.addAll(source.textReplacements);
+        this.cantBlockIds.addAll(source.cantBlockIds);
+    }
+
     public Card getOriginalCard() {
         return originalCard;
     }

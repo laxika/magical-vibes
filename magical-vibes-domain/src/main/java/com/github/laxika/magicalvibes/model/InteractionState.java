@@ -57,6 +57,64 @@ public class InteractionState {
     private List<Card> awaitingLibraryRevealAllCards;
     private Set<UUID> awaitingLibraryRevealValidCardIds;
 
+    /**
+     * Creates a deep copy of this interaction state for AI simulation.
+     * Immutable references (records, enums, UUIDs, Strings) are shared.
+     * Mutable collections are copied to new instances.
+     */
+    public InteractionState deepCopy() {
+        InteractionState copy = new InteractionState();
+        copy.awaitingInput = this.awaitingInput;
+        copy.context = this.context; // sealed interface of records — immutable
+        copy.awaitingCardChoicePlayerId = this.awaitingCardChoicePlayerId;
+        copy.awaitingCardChoiceValidIndices = this.awaitingCardChoiceValidIndices != null ? new HashSet<>(this.awaitingCardChoiceValidIndices) : null;
+        copy.awaitingPermanentChoicePlayerId = this.awaitingPermanentChoicePlayerId;
+        copy.awaitingPermanentChoiceValidIds = this.awaitingPermanentChoiceValidIds != null ? new HashSet<>(this.awaitingPermanentChoiceValidIds) : null;
+        copy.pendingAuraCard = this.pendingAuraCard;
+        copy.permanentChoiceContext = this.permanentChoiceContext; // sealed interface of records — immutable
+        copy.pendingCardChoiceTargetPermanentId = this.pendingCardChoiceTargetPermanentId;
+        copy.awaitingGraveyardChoicePlayerId = this.awaitingGraveyardChoicePlayerId;
+        copy.awaitingGraveyardChoiceValidIndices = this.awaitingGraveyardChoiceValidIndices != null ? new HashSet<>(this.awaitingGraveyardChoiceValidIndices) : null;
+        copy.graveyardChoiceDestination = this.graveyardChoiceDestination;
+        copy.graveyardChoiceCardPool = this.graveyardChoiceCardPool != null ? new ArrayList<>(this.graveyardChoiceCardPool) : null;
+        copy.awaitingColorChoicePlayerId = this.awaitingColorChoicePlayerId;
+        copy.awaitingColorChoicePermanentId = this.awaitingColorChoicePermanentId;
+        copy.pendingColorChoiceETBTargetId = this.pendingColorChoiceETBTargetId;
+        copy.colorChoiceContext = this.colorChoiceContext;
+        copy.awaitingMayAbilityPlayerId = this.awaitingMayAbilityPlayerId;
+        copy.awaitingMultiPermanentChoicePlayerId = this.awaitingMultiPermanentChoicePlayerId;
+        copy.awaitingMultiPermanentChoiceValidIds = this.awaitingMultiPermanentChoiceValidIds != null ? new HashSet<>(this.awaitingMultiPermanentChoiceValidIds) : null;
+        copy.awaitingMultiPermanentChoiceMaxCount = this.awaitingMultiPermanentChoiceMaxCount;
+        copy.awaitingMultiGraveyardChoicePlayerId = this.awaitingMultiGraveyardChoicePlayerId;
+        copy.awaitingMultiGraveyardChoiceValidCardIds = this.awaitingMultiGraveyardChoiceValidCardIds != null ? new HashSet<>(this.awaitingMultiGraveyardChoiceValidCardIds) : null;
+        copy.awaitingMultiGraveyardChoiceMaxCount = this.awaitingMultiGraveyardChoiceMaxCount;
+        copy.awaitingLibraryReorderPlayerId = this.awaitingLibraryReorderPlayerId;
+        copy.awaitingLibraryReorderCards = this.awaitingLibraryReorderCards != null ? new ArrayList<>(this.awaitingLibraryReorderCards) : null;
+        copy.awaitingLibraryReorderToBottom = this.awaitingLibraryReorderToBottom;
+        copy.awaitingLibrarySearchPlayerId = this.awaitingLibrarySearchPlayerId;
+        copy.awaitingLibrarySearchCards = this.awaitingLibrarySearchCards != null ? new ArrayList<>(this.awaitingLibrarySearchCards) : null;
+        copy.awaitingLibrarySearchReveals = this.awaitingLibrarySearchReveals;
+        copy.awaitingLibrarySearchCanFailToFind = this.awaitingLibrarySearchCanFailToFind;
+        copy.awaitingLibrarySearchTargetPlayerId = this.awaitingLibrarySearchTargetPlayerId;
+        copy.awaitingLibrarySearchRemainingCount = this.awaitingLibrarySearchRemainingCount;
+        copy.awaitingLibrarySearchSourceCards = this.awaitingLibrarySearchSourceCards != null ? new ArrayList<>(this.awaitingLibrarySearchSourceCards) : null;
+        copy.awaitingLibrarySearchReorderRemainingToBottom = this.awaitingLibrarySearchReorderRemainingToBottom;
+        copy.awaitingLibrarySearchShuffleAfterSelection = this.awaitingLibrarySearchShuffleAfterSelection;
+        copy.awaitingLibrarySearchPrompt = this.awaitingLibrarySearchPrompt;
+        copy.awaitingLibrarySearchDestination = this.awaitingLibrarySearchDestination;
+        copy.awaitingDiscardRemainingCount = this.awaitingDiscardRemainingCount;
+        copy.awaitingRevealedHandChoiceTargetPlayerId = this.awaitingRevealedHandChoiceTargetPlayerId;
+        copy.awaitingRevealedHandChoiceRemainingCount = this.awaitingRevealedHandChoiceRemainingCount;
+        copy.awaitingRevealedHandChosenCards.addAll(this.awaitingRevealedHandChosenCards);
+        copy.awaitingRevealedHandChoiceDiscardMode = this.awaitingRevealedHandChoiceDiscardMode;
+        copy.awaitingHandTopBottomPlayerId = this.awaitingHandTopBottomPlayerId;
+        copy.awaitingHandTopBottomCards = this.awaitingHandTopBottomCards != null ? new ArrayList<>(this.awaitingHandTopBottomCards) : null;
+        copy.awaitingLibraryRevealPlayerId = this.awaitingLibraryRevealPlayerId;
+        copy.awaitingLibraryRevealAllCards = this.awaitingLibraryRevealAllCards != null ? new ArrayList<>(this.awaitingLibraryRevealAllCards) : null;
+        copy.awaitingLibraryRevealValidCardIds = this.awaitingLibraryRevealValidCardIds != null ? new HashSet<>(this.awaitingLibraryRevealValidCardIds) : null;
+        return copy;
+    }
+
     public boolean isAwaitingInput() {
         return this.awaitingInput != null;
     }
