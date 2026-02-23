@@ -370,6 +370,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect` | `(int minimumCreatureDifference, int amount)` | reduce cast cost by N if opponent has M+ more creatures |
 | `NoMaximumHandSizeEffect` | `()` | you have no maximum hand size (static) |
 | `EnterPermanentsOfTypesTappedEffect` | `(Set<CardType> cardTypes)` | permanents of specified types enter tapped (static) |
+| `EntersTappedUnlessFewLandsEffect` | `(int maxOtherLands)` | enters tapped unless you control N or fewer other lands (fast lands, static) |
 
 ## Choose / name
 

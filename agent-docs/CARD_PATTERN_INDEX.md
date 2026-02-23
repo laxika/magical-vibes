@@ -10,6 +10,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Pain land | `s/SulfurousSprings.java` | 3 activated abilities: colorless + 2x colored with DealDamageToController |
 | Creature land (manland) | `t/TreetopVillage.java` | `setEntersTapped` + ON_TAP mana + AnimateLandEffect ability |
 | Creature land + sub-ability | `s/SpawningPool.java` | manland + regenerate with `ONLY_WHILE_CREATURE` restriction |
+| Fast land | `b/BlackcleaveCliffs.java` | STATIC EntersTappedUnlessFewLandsEffect(2) + 2 mana abilities |
 | Utility land | `q/Quicksand.java` | mana ability + sacrifice-to-debuff ability |
 
 ## Spells
