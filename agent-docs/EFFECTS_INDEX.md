@@ -265,6 +265,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `MakeTargetUnblockableEffect` | `()` | target creature is unblockable this turn |
 | `TargetCreatureCantBlockThisTurnEffect` | `()` | target creature can't block this turn |
 | `EnchantedCreatureCantAttackOrBlockEffect` | `()` | enchanted creature can't attack or block (static, Pacifism-style) |
+| `EnchantedCreatureCantActivateAbilitiesEffect` | `()` | enchanted creature's activated abilities can't be activated (static, Arrest-style) |
 
 ## Tap / untap
 

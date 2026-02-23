@@ -140,6 +140,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Lockdown (can't attack/block) | `p/Pacifism.java` | STATIC EnchantedCreatureCantAttackOrBlockEffect |
+| Full lockdown (can't attack/block/activate) | `a/Arrest.java` | STATIC EnchantedCreatureCantAttackOrBlockEffect + EnchantedCreatureCantActivateAbilitiesEffect |
 | Doesn't untap | `d/Dehydration.java` | STATIC EnchantedCreatureDoesntUntapEffect |
 | Static boost | `h/HolyStrength.java` | STATIC BoostAttachedCreatureEffect |
 | Boost + keyword | `s/SerrasEmbrace.java` | Boost + GrantKeywordEffect(ENCHANTED_CREATURE) |

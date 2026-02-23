@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -75,6 +76,9 @@ public class AbilityActivationService {
         if (permanent.isSummoningSick() && gameQueryService.isCreature(gameData, permanent) && !gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE)) {
             throw new IllegalStateException("Creature has summoning sickness");
         }
+        if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
+            throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
+        }
 
         permanent.tap();
 
@@ -113,6 +117,9 @@ public class AbilityActivationService {
         // Pithing Needle check: sacrifice abilities are activated abilities
         if (isPithingNeedleBlockingCard(gameData, permanent.getCard().getName())) {
             throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Pithing Needle)");
+        }
+        if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
+            throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
         }
 
         // Validate target for effects that need one
@@ -240,6 +247,11 @@ public class AbilityActivationService {
 
         // Pithing Needle check: block non-mana activated abilities of the chosen name
         validateNotBlockedByPithingNeedle(gameData, permanent, ability);
+
+        // Arrest check: block all activated abilities of enchanted creature
+        if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
+            throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
+        }
 
         // Validate activation timing restrictions (e.g. "Activate only during your upkeep")
         validateTimingRestrictions(gameData, playerId, permanent, ability);
