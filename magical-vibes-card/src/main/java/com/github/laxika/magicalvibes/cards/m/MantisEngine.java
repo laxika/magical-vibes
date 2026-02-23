@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class MantisEngine extends Card {
 
     public MantisEngine() {
-        addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(new GrantKeywordEffect(Keyword.FLYING, Scope.SELF)), false, "{2}: Mantis Engine gains flying until end of turn."));
-        addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Scope.SELF)), false, "{2}: Mantis Engine gains first strike until end of turn."));
+        addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(new GrantKeywordEffect(Keyword.FLYING, Scope.SELF)), "{2}: Mantis Engine gains flying until end of turn."));
+        addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Scope.SELF)), "{2}: Mantis Engine gains first strike until end of turn."));
     }
 }

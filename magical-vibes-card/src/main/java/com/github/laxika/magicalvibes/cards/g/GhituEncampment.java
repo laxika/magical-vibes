@@ -24,7 +24,6 @@ public class GhituEncampment extends Card {
                 false,
                 "{1}{R}",
                 List.of(new AnimateLandEffect(2, 1, List.of(CardSubtype.WARRIOR), Set.of(Keyword.FIRST_STRIKE), CardColor.RED)),
-                false,
                 "{1}{R}: Ghitu Encampment becomes a 2/1 red Warrior creature with first strike until end of turn. It's still a land."
         ));
     }

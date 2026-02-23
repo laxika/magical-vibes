@@ -26,7 +26,6 @@ public class SpawningPool extends Card {
                 false,
                 "{1}{B}",
                 List.of(new AnimateLandEffect(1, 1, List.of(CardSubtype.SKELETON), Set.of(), CardColor.BLACK)),
-                false,
                 "{1}{B}: Spawning Pool becomes a 1/1 black Skeleton creature with \"{B}: Regenerate this creature\" until end of turn. It's still a land."
         ));
         // {B}: Regenerate this creature. (Only available while animated as a creature)
@@ -34,7 +33,6 @@ public class SpawningPool extends Card {
                 false,
                 "{B}",
                 List.of(new RegenerateEffect()),
-                false,
                 "{B}: Regenerate this creature.",
                 ActivationTimingRestriction.ONLY_WHILE_CREATURE
         ));

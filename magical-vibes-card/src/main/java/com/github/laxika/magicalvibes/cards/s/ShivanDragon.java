@@ -11,6 +11,6 @@ import java.util.List;
 public class ShivanDragon extends Card {
 
     public ShivanDragon() {
-        addActivatedAbility(new ActivatedAbility(false, "{R}", List.of(new BoostSelfEffect(1, 0)), false, "{R}: Shivan Dragon gets +1/+0 until end of turn."));
+        addActivatedAbility(new ActivatedAbility(false, "{R}", List.of(new BoostSelfEffect(1, 0)), "{R}: Shivan Dragon gets +1/+0 until end of turn."));
     }
 }

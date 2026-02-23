@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class HonorGuard extends Card {
 
     public HonorGuard() {
-        addActivatedAbility(new ActivatedAbility(false, "{W}", List.of(new BoostSelfEffect(0, 1)), false, "{W}: Honor Guard gets +0/+1 until end of turn."));
+        addActivatedAbility(new ActivatedAbility(false, "{W}", List.of(new BoostSelfEffect(0, 1)), "{W}: Honor Guard gets +0/+1 until end of turn."));
     }
 }

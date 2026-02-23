@@ -20,7 +20,6 @@ public class FemerefArchers extends Card {
                 true,
                 null,
                 List.of(new DealDamageToTargetCreatureEffect(4)),
-                true,
                 "{T}: Femeref Archers deals 4 damage to target attacking creature with flying.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

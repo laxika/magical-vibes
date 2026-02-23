@@ -15,7 +15,6 @@ public class KnightOfDusk extends Card {
                 false,
                 "{B}{B}",
                 List.of(new DestroyCreatureBlockingThisEffect()),
-                true,
                 "{B}{B}: Destroy target creature blocking Knight of Dusk."
         ));
     }

@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class AmbassadorLaquatus extends Card {
 
     public AmbassadorLaquatus() {
-        addActivatedAbility(new ActivatedAbility(false, "{3}", List.of(new MillTargetPlayerEffect(3)), true, "{3}: Target player mills three cards."));
+        addActivatedAbility(new ActivatedAbility(false, "{3}", List.of(new MillTargetPlayerEffect(3)), "{3}: Target player mills three cards."));
     }
 }

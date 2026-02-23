@@ -19,7 +19,6 @@ public class RoyalAssassin extends Card {
                 true,
                 null,
                 List.of(new DestroyTargetPermanentEffect(false)),
-                true,
                 "{T}: Destroy target tapped creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

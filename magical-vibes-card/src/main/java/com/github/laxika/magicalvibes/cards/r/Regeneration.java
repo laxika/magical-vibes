@@ -15,7 +15,6 @@ public class Regeneration extends Card {
                 false,
                 "{G}",
                 List.of(new RegenerateEffect()),
-                false,
                 "{G}: Regenerate enchanted creature."
         ));
     }

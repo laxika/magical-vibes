@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class ArcanisTheOmnipotent extends Card {
 
     public ArcanisTheOmnipotent() {
-        addActivatedAbility(new ActivatedAbility(true, null, List.of(new DrawCardEffect(3)), false, "{T}: Draw three cards."));
-        addActivatedAbility(new ActivatedAbility(false, "{2}{U}{U}", List.of(new ReturnSelfToHandEffect()), false, "{2}{U}{U}: Return Arcanis the Omnipotent to its owner's hand."));
+        addActivatedAbility(new ActivatedAbility(true, null, List.of(new DrawCardEffect(3)), "{T}: Draw three cards."));
+        addActivatedAbility(new ActivatedAbility(false, "{2}{U}{U}", List.of(new ReturnSelfToHandEffect()), "{2}{U}{U}: Return Arcanis the Omnipotent to its owner's hand."));
     }
 }

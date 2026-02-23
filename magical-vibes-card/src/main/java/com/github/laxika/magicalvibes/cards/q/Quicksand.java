@@ -25,7 +25,6 @@ public class Quicksand extends Card {
                 true,
                 null,
                 List.of(new AwardManaEffect(ManaColor.COLORLESS)),
-                false,
                 "{T}: Add {C}."
         ));
         // {T}, Sacrifice Quicksand: Target attacking creature without flying gets -1/-2 until end of turn.
@@ -33,7 +32,6 @@ public class Quicksand extends Card {
                 true,
                 null,
                 List.of(new SacrificeSelfCost(), new BoostTargetCreatureEffect(-1, -2)),
-                true,
                 "{T}, Sacrifice Quicksand: Target attacking creature without flying gets -1/-2 until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

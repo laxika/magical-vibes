@@ -15,7 +15,6 @@ public class VampireBats extends Card {
                 false,
                 "{B}",
                 List.of(new BoostSelfEffect(1, 0)),
-                false,
                 "{B}: Vampire Bats gets +1/+0 until end of turn. Activate this ability no more than twice each turn.",
                 2
         ));

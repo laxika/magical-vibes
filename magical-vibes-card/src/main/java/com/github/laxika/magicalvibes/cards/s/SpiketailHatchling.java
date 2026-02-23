@@ -16,10 +16,7 @@ public class SpiketailHatchling extends Card {
                 false,
                 null,
                 List.of(new SacrificeSelfCost(), new CounterUnlessPaysEffect(1)),
-                false,
-                true,
-                "Sacrifice Spiketail Hatchling: Counter target spell unless its controller pays {1}.",
-                null
+                "Sacrifice Spiketail Hatchling: Counter target spell unless its controller pays {1}."
         ));
     }
 }

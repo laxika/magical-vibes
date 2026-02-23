@@ -21,7 +21,6 @@ public class TerramorphicExpanse extends Card {
                         new SacrificeSelfCost(),
                         new SearchLibraryForCardTypesToBattlefieldEffect(Set.of(CardType.LAND), true, true)
                 ),
-                false,
                 "{T}, Sacrifice Terramorphic Expanse: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle."
         ));
     }

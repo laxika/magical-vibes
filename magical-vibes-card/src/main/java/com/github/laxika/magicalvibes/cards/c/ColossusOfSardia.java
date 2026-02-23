@@ -20,7 +20,6 @@ public class ColossusOfSardia extends Card {
                 false,
                 "{9}",
                 List.of(new UntapSelfEffect()),
-                false,
                 "{9}: Untap Colossus of Sardia. Activate only during your upkeep.",
                 ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP
         ));

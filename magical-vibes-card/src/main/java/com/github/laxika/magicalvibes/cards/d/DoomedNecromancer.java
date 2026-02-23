@@ -16,7 +16,6 @@ public class DoomedNecromancer extends Card {
                 true,
                 "{B}",
                 List.of(new SacrificeSelfCost(), new ReturnCreatureFromGraveyardToBattlefieldEffect()),
-                false,
                 "{B}, {T}, Sacrifice Doomed Necromancer: Return target creature card from your graveyard to the battlefield."
         ));
     }

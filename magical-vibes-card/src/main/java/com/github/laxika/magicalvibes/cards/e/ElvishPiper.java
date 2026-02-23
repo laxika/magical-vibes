@@ -20,7 +20,6 @@ public class ElvishPiper extends Card {
                         new PutCardToBattlefieldEffect(CardType.CREATURE),
                         "Put a creature card from your hand onto the battlefield?"
                 )),
-                false,
                 "{G}, {T}: You may put a creature card from your hand onto the battlefield."
         ));
     }

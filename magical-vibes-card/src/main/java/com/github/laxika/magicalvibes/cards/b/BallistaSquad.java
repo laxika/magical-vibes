@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class BallistaSquad extends Card {
 
     public BallistaSquad() {
-        addActivatedAbility(new ActivatedAbility(true, "{X}{W}", List.of(new DealXDamageToTargetCreatureEffect()), true,
+        addActivatedAbility(new ActivatedAbility(true, "{X}{W}", List.of(new DealXDamageToTargetCreatureEffect()),
                 "{X}{W}, {T}: Ballista Squad deals X damage to target attacking or blocking creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAnyOfPredicate(List.of(

@@ -21,7 +21,6 @@ public class LordOfTheUndead extends Card {
                 true,
                 "{1}{B}",
                 List.of(new ReturnCardOfSubtypeFromGraveyardToHandEffect(CardSubtype.ZOMBIE)),
-                false,
                 "{1}{B}, {T}: Return target Zombie card from your graveyard to your hand."
         ));
     }

@@ -19,7 +19,7 @@ import java.util.Set;
 public class RageWeaver extends Card {
 
     public RageWeaver() {
-        addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(new GrantKeywordEffect(Keyword.HASTE, Scope.TARGET)), true,
+        addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(new GrantKeywordEffect(Keyword.HASTE, Scope.TARGET)),
                 "{2}: Target black or green creature gains haste until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

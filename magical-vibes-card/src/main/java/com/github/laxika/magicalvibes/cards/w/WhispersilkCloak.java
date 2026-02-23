@@ -25,13 +25,12 @@ public class WhispersilkCloak extends Card {
                 false,
                 "{2}",
                 List.of(new EquipEffect()),
-                true,
-                false,
                 "Equip {2}",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),
                         "Target must be a creature you control"
                 ),
+                null,
                 null,
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

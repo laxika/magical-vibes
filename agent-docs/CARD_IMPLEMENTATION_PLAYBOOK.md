@@ -98,11 +98,11 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/w/WhispersilkCloak.java`
 
 - Creature land (manland) — enters tapped, taps for mana, animates:
-  - `setEntersTapped(true)` + `addEffect(EffectSlot.ON_TAP, new AwardManaEffect(...))` + `addActivatedAbility(new ActivatedAbility(false, cost, List.of(new AnimateLandEffect(power, toughness, subtypes, keywords, color)), false, description))`
+  - `setEntersTapped(true)` + `addEffect(EffectSlot.ON_TAP, new AwardManaEffect(...))` + `addActivatedAbility(new ActivatedAbility(false, cost, List.of(new AnimateLandEffect(power, toughness, subtypes, keywords, color)), description))`
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/f/FaerieConclave.java`
 
 - Kindred Enchantment with ETB token creation + activated token ability:
-  - `addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateCreatureTokenWithColorsEffect(N, ...))` + `addActivatedAbility(new ActivatedAbility(false, cost, List.of(new CreateCreatureTokenWithColorsEffect(...)), false, description))`
+  - `addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateCreatureTokenWithColorsEffect(N, ...))` + `addActivatedAbility(new ActivatedAbility(false, cost, List.of(new CreateCreatureTokenWithColorsEffect(...)), description))`
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/c/ClachanFestival.java`
 
 - Predicate-based targeting:
@@ -111,12 +111,12 @@ public class ExampleCard extends Card {
 
 ## Targeting checklist
 
-- Targeting is computed automatically from effects. Override `canTargetPlayer()`, `canTargetPermanent()`, `canTargetSpell()`, or `canTargetGraveyard()` on your effect record to return `true`.
-- `Card.isNeedsTarget()` and `Card.isNeedsSpellTarget()` are derived getters — never call `setNeedsTarget` or `setNeedsSpellTarget`.
+- Targeting is computed automatically from effects — both for spells (`Card`) and activated abilities (`ActivatedAbility`).
+- Override `canTargetPlayer()`, `canTargetPermanent()`, `canTargetSpell()`, or `canTargetGraveyard()` on your effect record to return `true`.
+- `Card.isNeedsTarget()`, `Card.isNeedsSpellTarget()`, `ActivatedAbility.isNeedsTarget()`, and `ActivatedAbility.isNeedsSpellTarget()` are all derived getters — never stored as fields.
 - `Card.getAllowedTargets()` returns a `Set<TargetType>` computed from SPELL and ON_ENTER_BATTLEFIELD effects, plus `isAura()`.
 - For non-battlefield targets on stack entries, use `Zone` (`Zone.GRAVEYARD`, `Zone.STACK`), not `TargetZone`.
-- Add `setTargetFilter(...)` when target legality is restricted.
-- For activated abilities, use `new ActivatedAbility(..., needsTarget, ..., optionalFilter)` when per-ability targeting differs.
+- Add `setTargetFilter(...)` (on Card) or pass a `TargetFilter` to the `ActivatedAbility` constructor when target legality is restricted.
 
 ## When a new effect is actually required
 

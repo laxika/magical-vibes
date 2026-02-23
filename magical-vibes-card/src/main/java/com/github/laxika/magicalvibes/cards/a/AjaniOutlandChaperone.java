@@ -27,7 +27,6 @@ public class AjaniOutlandChaperone extends Card {
                         CardColor.WHITE,
                         List.of(CardSubtype.KITHKIN)
                 )),
-                false,
                 "+1: Create a 1/1 green and white Kithkin creature token."
         ));
 
@@ -35,7 +34,6 @@ public class AjaniOutlandChaperone extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -2,
                 List.of(new DealDamageToTargetCreatureEffect(4)),
-                true,
                 "\u22122: Ajani deals 4 damage to target tapped creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsTappedPredicate(),
@@ -49,7 +47,6 @@ public class AjaniOutlandChaperone extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -8,
                 List.of(new AjaniUltimateEffect()),
-                false,
                 "\u22128: Look at the top X cards of your library, where X is your life total. You may put any number of nonland permanent cards with mana value 3 or less from among them onto the battlefield. Then shuffle."
         ));
     }

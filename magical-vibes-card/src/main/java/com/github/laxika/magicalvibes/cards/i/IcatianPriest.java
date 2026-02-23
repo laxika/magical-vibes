@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class IcatianPriest extends Card {
 
     public IcatianPriest() {
-        addActivatedAbility(new ActivatedAbility(false, "{1}{W}{W}", List.of(new BoostTargetCreatureEffect(1, 1)), true, "{1}{W}{W}: Target creature gets +1/+1 until end of turn."));
+        addActivatedAbility(new ActivatedAbility(false, "{1}{W}{W}", List.of(new BoostTargetCreatureEffect(1, 1)), "{1}{W}{W}: Target creature gets +1/+1 until end of turn."));
     }
 }

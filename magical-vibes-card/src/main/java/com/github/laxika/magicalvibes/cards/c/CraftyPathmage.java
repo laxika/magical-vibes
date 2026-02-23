@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class CraftyPathmage extends Card {
 
     public CraftyPathmage() {
-        addActivatedAbility(new ActivatedAbility(true, null, List.of(new MakeTargetUnblockableEffect()), true,
+        addActivatedAbility(new ActivatedAbility(true, null, List.of(new MakeTargetUnblockableEffect()),
                 "{T}: Target creature with power 2 or less can't be blocked this turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class RodOfRuin extends Card {
 
     public RodOfRuin() {
-        addActivatedAbility(new ActivatedAbility(true, "{3}", List.of(new DealDamageToAnyTargetEffect(1)), true, "{3}, {T}: Rod of Ruin deals 1 damage to any target."));
+        addActivatedAbility(new ActivatedAbility(true, "{3}", List.of(new DealDamageToAnyTargetEffect(1)), "{3}, {T}: Rod of Ruin deals 1 damage to any target."));
     }
 }

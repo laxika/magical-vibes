@@ -24,7 +24,6 @@ public class FaerieConclave extends Card {
                 false,
                 "{1}{U}",
                 List.of(new AnimateLandEffect(2, 1, List.of(CardSubtype.FAERIE), Set.of(Keyword.FLYING), CardColor.BLUE)),
-                false,
                 "{1}{U}: Faerie Conclave becomes a 2/1 blue Faerie creature with flying until end of turn. It's still a land."
         ));
     }

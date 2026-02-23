@@ -16,7 +16,6 @@ public class OrcishArtillery extends Card {
                 true,
                 null,
                 List.of(new DealDamageToAnyTargetEffect(2), new DealDamageToControllerEffect(3)),
-                true,
                 "{T}: Orcish Artillery deals 2 damage to any target and 3 damage to you."
         ));
     }

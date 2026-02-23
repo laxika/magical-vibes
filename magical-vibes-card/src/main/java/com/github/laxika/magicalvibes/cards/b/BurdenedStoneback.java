@@ -27,13 +27,12 @@ public class BurdenedStoneback extends Card {
                         new RemoveCounterFromSourceCost(),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantKeywordEffect.Scope.TARGET)
                 ),
-                true,
-                false,
                 "{1}{W}, Remove a counter from this creature: Target creature gains indestructible until end of turn. Activate only as a sorcery.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),
                         "Target must be a creature"
                 ),
+                null,
                 null,
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

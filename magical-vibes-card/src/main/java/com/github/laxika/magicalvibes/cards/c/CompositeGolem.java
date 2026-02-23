@@ -24,7 +24,6 @@ public class CompositeGolem extends Card {
                         new AwardManaEffect(ManaColor.RED),
                         new AwardManaEffect(ManaColor.GREEN)
                 ),
-                false,
                 "Sacrifice Composite Golem: Add {W}{U}{B}{R}{G}."
         ));
     }

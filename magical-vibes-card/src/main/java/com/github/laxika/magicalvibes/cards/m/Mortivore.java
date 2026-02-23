@@ -19,7 +19,6 @@ public class Mortivore extends Card {
                 false,
                 "{B}",
                 List.of(new RegenerateEffect()),
-                false,
                 "{B}: Regenerate Mortivore."
         ));
     }

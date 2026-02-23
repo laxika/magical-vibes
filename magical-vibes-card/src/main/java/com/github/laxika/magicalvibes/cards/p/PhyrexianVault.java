@@ -19,7 +19,6 @@ public class PhyrexianVault extends Card {
                 true,
                 "{2}",
                 List.of(new SacrificeCreatureCost(), new DrawCardEffect()),
-                true,
                 "{2}, {T}, Sacrifice a creature: Draw a card.",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),

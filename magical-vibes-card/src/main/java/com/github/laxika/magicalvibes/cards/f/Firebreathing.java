@@ -18,7 +18,6 @@ public class Firebreathing extends Card {
                         false,
                         "{R}",
                         List.of(new BoostSelfEffect(1, 0)),
-                        false,
                         "{R}: This creature gets +1/+0 until end of turn."
                 )
         ));

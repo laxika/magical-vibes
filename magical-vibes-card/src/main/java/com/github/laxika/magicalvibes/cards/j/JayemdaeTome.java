@@ -15,7 +15,6 @@ public class JayemdaeTome extends Card {
                 true,
                 "{4}",
                 List.of(new DrawCardEffect()),
-                false,
                 "{4}, {T}: Draw a card."
         ));
     }

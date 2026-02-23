@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Millstone extends Card {
 
     public Millstone() {
-        addActivatedAbility(new ActivatedAbility(true, "{2}", List.of(new MillTargetPlayerEffect(2)), true, "{2}, {T}: Target player mills two cards."));
+        addActivatedAbility(new ActivatedAbility(true, "{2}", List.of(new MillTargetPlayerEffect(2)), "{2}, {T}: Target player mills two cards."));
     }
 }

@@ -17,7 +17,6 @@ public class ThrullSurgeon extends Card {
                 false,
                 null,
                 List.of(new SacrificeSelfCost(), new ChooseCardFromTargetHandToDiscardEffect(1, List.of())),
-                true,
                 "Sacrifice Thrull Surgeon: Target player reveals their hand. You choose a card from it. That player discards that card.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

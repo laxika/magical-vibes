@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class SpiritWeaver extends Card {
 
     public SpiritWeaver() {
-        addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(new BoostTargetCreatureEffect(0, 1)), true,
+        addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(new BoostTargetCreatureEffect(0, 1)),
                 "{2}: Target green or blue creature gets +0/+1 until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

@@ -20,7 +20,6 @@ public class IcyManipulator extends Card {
                 true,
                 "{1}",
                 List.of(new TapTargetPermanentEffect()),
-                true,
                 "{1}, {T}: Tap target artifact, creature, or land.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAnyOfPredicate(List.of(

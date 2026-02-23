@@ -9,13 +9,13 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `requiresTap` | `boolean` | `true` if the ability has {T} in its cost (tap as cost) |
 | `manaCost` | `String` | Mana cost string like `"{2}{B}"`, or `null` for no mana cost |
 | `effects` | `List<CardEffect>` | Effects to resolve (costs first, then actual effects) |
-| `needsTarget` | `boolean` | `true` if the ability targets a permanent or player |
-| `needsSpellTarget` | `boolean` | `true` if the ability targets a spell on the stack |
 | `description` | `String` | Rules text shown to the player (e.g. `"{T}: Draw a card."`) |
 | `targetFilter` | `TargetFilter` | Restricts valid targets (permanent filter or stack filter) |
 | `loyaltyCost` | `Integer` | Planeswalker loyalty cost (e.g. `+1`, `-2`, `-8`). `null` for non-planeswalker abilities |
 | `maxActivationsPerTurn` | `Integer` | Maximum activations per turn. `null` for unlimited |
 | `timingRestriction` | `ActivationTimingRestriction` | When the ability can be activated. `null` for default (instant speed) |
+
+**Targeting is computed from effects** — `isNeedsTarget()` and `isNeedsSpellTarget()` are derived getters, never stored as fields. Override `canTargetPlayer()`, `canTargetPermanent()`, `canTargetSpell()`, or `canTargetGraveyard()` on your effect record to return `true`.
 
 ### ActivationTimingRestriction values
 
@@ -32,22 +32,22 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 ### 1. Basic ability (most common)
 
 ```java
-new ActivatedAbility(requiresTap, manaCost, effects, needsTarget, description)
+new ActivatedAbility(requiresTap, manaCost, effects, description)
 ```
 
 **Use when:** Simple tap ability, mana ability, pump, or any ability with no target restrictions.
 
 ```java
 // Tap to deal damage to any target
-new ActivatedAbility(true, null, List.of(new DealDamageToAnyTargetEffect(3)), true,
+new ActivatedAbility(true, null, List.of(new DealDamageToAnyTargetEffect(3)),
     "{T}: Kamahl, Pit Fighter deals 3 damage to any target.")
 
 // Pay mana to pump self
-new ActivatedAbility(false, "{R}", List.of(new BoostSelfEffect(1, 0)), false,
+new ActivatedAbility(false, "{R}", List.of(new BoostSelfEffect(1, 0)),
     "{R}: Furnace Whelp gets +1/+0 until end of turn.")
 
 // Tap + mana to mill
-new ActivatedAbility(true, "{2}", List.of(new MillTargetPlayerEffect(2)), true,
+new ActivatedAbility(true, "{2}", List.of(new MillTargetPlayerEffect(2)),
     "{2}, {T}: Target player mills two cards.")
 ```
 
@@ -58,14 +58,14 @@ Cards: `KamahlPitFighter`, `FurnaceWhelp`, `Millstone`, `ProdigalPyromancer`, `A
 ### 2. Ability with target filter
 
 ```java
-new ActivatedAbility(requiresTap, manaCost, effects, needsTarget, description, targetFilter)
+new ActivatedAbility(requiresTap, manaCost, effects, description, targetFilter)
 ```
 
 **Use when:** Ability targets a permanent but only specific ones (e.g. "target creature with power 2 or less", "target blue or red creature").
 
 ```java
 // Target creature with power 2 or less
-new ActivatedAbility(true, null, List.of(new MakeTargetUnblockableEffect()), true,
+new ActivatedAbility(true, null, List.of(new MakeTargetUnblockableEffect()),
     "{T}: Target creature with power 2 or less can't be blocked this turn.",
     new PermanentPredicateTargetFilter(
         new PermanentAllOfPredicate(List.of(
@@ -76,7 +76,7 @@ new ActivatedAbility(true, null, List.of(new MakeTargetUnblockableEffect()), tru
     ))
 
 // Target blue or red creature
-new ActivatedAbility(false, "{2}", List.of(new BoostTargetCreatureEffect(1, 0)), true,
+new ActivatedAbility(false, "{2}", List.of(new BoostTargetCreatureEffect(1, 0)),
     "{2}: Target blue or red creature gets +1/+0 until end of turn.",
     new PermanentPredicateTargetFilter(
         new PermanentAllOfPredicate(List.of(
@@ -94,14 +94,14 @@ Cards: `CraftyPathmage`, `HateWeaver`, `FemerefArchers`, `IcyManipulator`
 ### 3. Ability with max activations per turn
 
 ```java
-new ActivatedAbility(requiresTap, manaCost, effects, needsTarget, description, maxActivationsPerTurn)
+new ActivatedAbility(requiresTap, manaCost, effects, description, maxActivationsPerTurn)
 ```
 
 **Use when:** Ability text says "Activate only once each turn" or similar.
 
 ```java
 // Activate only once per turn
-new ActivatedAbility(false, "{2}", List.of(new BoostSelfEffect(2, 2)), false,
+new ActivatedAbility(false, "{2}", List.of(new BoostSelfEffect(2, 2)),
     "{2}: This creature gets +2/+2 until end of turn. Activate only once each turn.", 1)
 ```
 
@@ -109,59 +109,48 @@ new ActivatedAbility(false, "{2}", List.of(new BoostSelfEffect(2, 2)), false,
 
 ---
 
-### 4. Ability with spell target filter
+### 4. Ability with timing restriction
 
 ```java
-new ActivatedAbility(requiresTap, manaCost, effects, needsTarget, needsSpellTarget, description, targetFilter)
-```
-
-**Use when:** Ability targets a spell on the stack (e.g. an activated counter ability). Set `needsSpellTarget=true` and provide a `StackEntryPredicateTargetFilter`.
-
-**Note:** For spell cards (not abilities) that target spells, spell targeting is auto-derived from effects (e.g. `CounterSpellEffect`, `CopySpellEffect`). Use `setTargetFilter(...)` on the Card directly if target legality is restricted.
-
----
-
-### 5. Ability with timing restriction
-
-```java
-new ActivatedAbility(requiresTap, manaCost, effects, needsTarget, description, timingRestriction)
+new ActivatedAbility(requiresTap, manaCost, effects, description, timingRestriction)
 ```
 
 **Use when:** The ability can only be activated at specific times.
 
 ```java
 // Regenerate, only while this land is animated as a creature
-new ActivatedAbility(false, "{B}", List.of(new RegenerateEffect()), false,
+new ActivatedAbility(false, "{B}", List.of(new RegenerateEffect()),
     "{B}: Regenerate this creature.",
     ActivationTimingRestriction.ONLY_WHILE_CREATURE)
 
 // Sorcery-speed sacrifice ability
 new ActivatedAbility(false, null,
     List.of(new SacrificeSelfCost(), new ChooseCardFromTargetHandToDiscardEffect(1, List.of())),
-    true,
     "Sacrifice: Target player reveals their hand...",
     ActivationTimingRestriction.SORCERY_SPEED)
 ```
 
 Cards: `SpawningPool` (ONLY_WHILE_CREATURE), `ThrullSurgeon` (SORCERY_SPEED), `ColossusOfSardia` (ONLY_DURING_YOUR_UPKEEP), `SkyshroudRanger` (SORCERY_SPEED)
 
+**Note:** For abilities that target spells on the stack (e.g. activated counter ability), spell targeting is auto-derived from effects (e.g. `CounterUnlessPaysEffect.canTargetSpell()` returns `true`). Use a `StackEntryPredicateTargetFilter` if target legality is restricted.
+
 ---
 
-### 6. Loyalty ability (planeswalkers)
+### 5. Loyalty ability (planeswalkers)
 
 ```java
-new ActivatedAbility(loyaltyCost, effects, needsTarget, description)
+new ActivatedAbility(loyaltyCost, effects, description)
 ```
 
 **Use when:** Planeswalker loyalty ability with no target restrictions.
 
 ```java
 // +1: Create a token
-new ActivatedAbility(+1, List.of(new CreateCreatureTokenWithColorsEffect(...)), false,
+new ActivatedAbility(+1, List.of(new CreateCreatureTokenWithColorsEffect(...)),
     "+1: Create a 1/1 green and white Kithkin creature token.")
 
 // -8: Ultimate
-new ActivatedAbility(-8, List.of(new AjaniUltimateEffect()), false,
+new ActivatedAbility(-8, List.of(new AjaniUltimateEffect()),
     "\u22128: Look at the top X cards...")
 ```
 
@@ -169,17 +158,17 @@ Cards: `AjaniOutlandChaperone`
 
 ---
 
-### 7. Loyalty ability with target filter
+### 6. Loyalty ability with target filter
 
 ```java
-new ActivatedAbility(loyaltyCost, effects, needsTarget, description, targetFilter)
+new ActivatedAbility(loyaltyCost, effects, description, targetFilter)
 ```
 
 **Use when:** Planeswalker loyalty ability that targets a specific permanent.
 
 ```java
 // -2: Deal 4 damage to target tapped creature
-new ActivatedAbility(-2, List.of(new DealDamageToTargetCreatureEffect(4)), true,
+new ActivatedAbility(-2, List.of(new DealDamageToTargetCreatureEffect(4)),
     "\u22122: Ajani deals 4 damage to target tapped creature.",
     new PermanentPredicateTargetFilter(
         new PermanentIsTappedPredicate(),
@@ -191,29 +180,30 @@ Cards: `AjaniOutlandChaperone`
 
 ---
 
-### 8. Equipment ability (equip with sorcery speed + controlled creature filter)
+### 7. Equipment ability (equip with sorcery speed + controlled creature filter)
 
 ```java
-new ActivatedAbility(false, manaCost, List.of(new EquipEffect()), true, false,
+new ActivatedAbility(false, manaCost, List.of(new EquipEffect()),
     "Equip " + manaCost,
     new ControlledPermanentPredicateTargetFilter(
         new PermanentIsCreaturePredicate(),
         "Target must be a creature you control"
     ),
     null,
+    null,
     ActivationTimingRestriction.SORCERY_SPEED)
 ```
 
-**Use when:** Any equipment card with equip cost. This is the standard equip pattern — always the same structure, only the mana cost varies.
+**Use when:** Any equipment card with equip cost. This is the standard equip pattern — always the same structure, only the mana cost varies. Uses the canonical 8-param constructor.
 
 Cards: `LoxodonWarhammer` ({3}), `LeoninScimitar` ({1}), `BarkOfDoran` ({1}), `WhispersilkCloak` ({2})
 
 ---
 
-### 9. Full constructor (all parameters)
+### 8. Full constructor (all parameters)
 
 ```java
-new ActivatedAbility(requiresTap, manaCost, effects, needsTarget, needsSpellTarget,
+new ActivatedAbility(requiresTap, manaCost, effects,
     description, targetFilter, loyaltyCost, maxActivationsPerTurn, timingRestriction)
 ```
 
@@ -238,13 +228,11 @@ Sacrifice and discard costs go in the `effects` list BEFORE the actual effect. T
 // {1}{R}, Sacrifice a Goblin: Deal 2 damage to any target
 new ActivatedAbility(false, "{1}{R}",
     List.of(new SacrificeSubtypeCreatureCost(CardSubtype.GOBLIN), new DealDamageToAnyTargetEffect(2)),
-    true,
     "{1}{R}, Sacrifice a Goblin: Siege-Gang Commander deals 2 damage to any target.")
 
 // Sacrifice self: Gain 3 life
 new ActivatedAbility(false, null,
     List.of(new SacrificeSelfCost(), new GainLifeEffect(3)),
-    false,
     "Sacrifice Bottle Gnomes: You gain 3 life.")
 ```
 

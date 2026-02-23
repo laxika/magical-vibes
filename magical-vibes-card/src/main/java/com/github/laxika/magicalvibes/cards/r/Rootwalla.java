@@ -15,7 +15,6 @@ public class Rootwalla extends Card {
                 false,
                 "{1}{G}",
                 List.of(new BoostSelfEffect(2, 2)),
-                false,
                 "{1}{G}: This creature gets +2/+2 until end of turn. Activate only once each turn.",
                 1
         ));

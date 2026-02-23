@@ -16,7 +16,6 @@ public class BloodfireColossus extends Card {
                 false,
                 "{R}",
                 List.of(new SacrificeSelfCost(), new DealDamageToAllCreaturesAndPlayersEffect(6)),
-                false,
                 "{R}, Sacrifice Bloodfire Colossus: It deals 6 damage to each creature and each player."
         ));
     }

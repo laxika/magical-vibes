@@ -21,7 +21,6 @@ public class SkyshroudRanger extends Card {
                         new PutCardToBattlefieldEffect(CardType.LAND),
                         "Put a land card from your hand onto the battlefield?"
                 )),
-                false,
                 "{T}: You may put a land card from your hand onto the battlefield. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

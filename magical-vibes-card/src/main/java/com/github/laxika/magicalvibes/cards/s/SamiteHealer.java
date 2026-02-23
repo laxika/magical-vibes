@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class SamiteHealer extends Card {
 
     public SamiteHealer() {
-        addActivatedAbility(new ActivatedAbility(true, null, List.of(new PreventNextDamageEffect(1)), false, "{T}: Prevent the next 1 damage that would be dealt to any target this turn."));
+        addActivatedAbility(new ActivatedAbility(true, null, List.of(new PreventNextDamageEffect(1)), "{T}: Prevent the next 1 damage that would be dealt to any target this turn."));
     }
 }

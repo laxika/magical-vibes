@@ -19,7 +19,7 @@ import java.util.Set;
 public class MightWeaver extends Card {
 
     public MightWeaver() {
-        addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(new GrantKeywordEffect(Keyword.TRAMPLE, Scope.TARGET)), true,
+        addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(new GrantKeywordEffect(Keyword.TRAMPLE, Scope.TARGET)),
                 "{2}: Target red or white creature gains trample until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

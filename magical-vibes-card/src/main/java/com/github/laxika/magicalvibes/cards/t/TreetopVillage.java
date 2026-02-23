@@ -25,7 +25,6 @@ public class TreetopVillage extends Card {
                 false,
                 "{1}{G}",
                 List.of(new AnimateLandEffect(3, 3, List.of(CardSubtype.APE), Set.of(Keyword.TRAMPLE), CardColor.GREEN)),
-                false,
                 "{1}{G}: Treetop Village becomes a 3/3 green Ape creature with trample until end of turn. It's still a land."
         ));
     }

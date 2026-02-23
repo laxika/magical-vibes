@@ -24,7 +24,6 @@ public class TheHive extends Card {
                         Set.of(Keyword.FLYING),
                         Set.of(CardType.ARTIFACT)
                 )),
-                false,
                 "{5}, {T}: Create a 1/1 colorless Insect artifact creature token with flying named Wasp."
         ));
     }

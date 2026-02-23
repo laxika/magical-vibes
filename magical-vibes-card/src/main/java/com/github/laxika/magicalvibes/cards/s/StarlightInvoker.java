@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class StarlightInvoker extends Card {
 
     public StarlightInvoker() {
-        addActivatedAbility(new ActivatedAbility(false, "{7}{W}", List.of(new GainLifeEffect(5)), false, "{7}{W}: You gain 5 life."));
+        addActivatedAbility(new ActivatedAbility(false, "{7}{W}", List.of(new GainLifeEffect(5)), "{7}{W}: You gain 5 life."));
     }
 }

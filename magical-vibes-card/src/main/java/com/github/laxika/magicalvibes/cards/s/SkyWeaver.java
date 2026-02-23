@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class SkyWeaver extends Card {
 
     public SkyWeaver() {
-        addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(new GrantKeywordEffect(Keyword.FLYING, Scope.TARGET)), true,
+        addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(new GrantKeywordEffect(Keyword.FLYING, Scope.TARGET)),
                 "{2}: Target white or black creature gains flying until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

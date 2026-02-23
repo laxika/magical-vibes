@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class MerfolkLooter extends Card {
 
     public MerfolkLooter() {
-        addActivatedAbility(new ActivatedAbility(true, null, List.of(new DrawCardEffect(), new DiscardCardEffect()), false, "{T}: Draw a card, then discard a card."));
+        addActivatedAbility(new ActivatedAbility(true, null, List.of(new DrawCardEffect(), new DiscardCardEffect()), "{T}: Draw a card, then discard a card."));
     }
 }

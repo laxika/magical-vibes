@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class FlamewaveInvoker extends Card {
 
     public FlamewaveInvoker() {
-        addActivatedAbility(new ActivatedAbility(false, "{7}{R}", List.of(new DealDamageToTargetPlayerEffect(5)), true, "{7}{R}: Flamewave Invoker deals 5 damage to target player or planeswalker."));
+        addActivatedAbility(new ActivatedAbility(false, "{7}{R}", List.of(new DealDamageToTargetPlayerEffect(5)), "{7}{R}: Flamewave Invoker deals 5 damage to target player or planeswalker."));
     }
 }

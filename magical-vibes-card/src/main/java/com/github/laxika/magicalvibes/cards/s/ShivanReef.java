@@ -18,7 +18,6 @@ public class ShivanReef extends Card {
                 true,
                 null,
                 List.of(new AwardManaEffect(ManaColor.COLORLESS)),
-                false,
                 "{T}: Add {C}."
         ));
         // {T}: Add {U}. Shivan Reef deals 1 damage to you.
@@ -26,7 +25,6 @@ public class ShivanReef extends Card {
                 true,
                 null,
                 List.of(new AwardManaEffect(ManaColor.BLUE), new DealDamageToControllerEffect(1)),
-                false,
                 "{T}: Add {U}. Shivan Reef deals 1 damage to you."
         ));
         // {T}: Add {R}. Shivan Reef deals 1 damage to you.
@@ -34,7 +32,6 @@ public class ShivanReef extends Card {
                 true,
                 null,
                 List.of(new AwardManaEffect(ManaColor.RED), new DealDamageToControllerEffect(1)),
-                false,
                 "{T}: Add {R}. Shivan Reef deals 1 damage to you."
         ));
     }

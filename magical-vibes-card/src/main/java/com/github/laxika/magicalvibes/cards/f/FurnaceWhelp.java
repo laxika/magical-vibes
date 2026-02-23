@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class FurnaceWhelp extends Card {
 
     public FurnaceWhelp() {
-        addActivatedAbility(new ActivatedAbility(false, "{R}", List.of(new BoostSelfEffect(1, 0)), false, "{R}: Furnace Whelp gets +1/+0 until end of turn."));
+        addActivatedAbility(new ActivatedAbility(false, "{R}", List.of(new BoostSelfEffect(1, 0)), "{R}: Furnace Whelp gets +1/+0 until end of turn."));
     }
 }

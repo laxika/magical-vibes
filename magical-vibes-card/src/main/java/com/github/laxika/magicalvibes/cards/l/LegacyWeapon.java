@@ -16,7 +16,6 @@ public class LegacyWeapon extends Card {
                 false,
                 "{W}{U}{B}{R}{G}",
                 List.of(new ExileTargetPermanentEffect()),
-                true,
                 "{W}{U}{B}{R}{G}: Exile target permanent."
         ));
     }

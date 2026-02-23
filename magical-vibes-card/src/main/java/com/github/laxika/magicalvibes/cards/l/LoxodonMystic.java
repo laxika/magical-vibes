@@ -17,7 +17,6 @@ public class LoxodonMystic extends Card {
                 true,
                 "{W}",
                 List.of(new TapTargetPermanentEffect()),
-                true,
                 "{W}, {T}: Tap target creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),

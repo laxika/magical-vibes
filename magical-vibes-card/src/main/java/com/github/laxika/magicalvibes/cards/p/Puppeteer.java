@@ -17,7 +17,6 @@ public class Puppeteer extends Card {
                 true,
                 "{U}",
                 List.of(new TapOrUntapTargetPermanentEffect()),
-                true,
                 "{U}, {T}: You may tap or untap target creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),

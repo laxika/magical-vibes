@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class KamahlPitFighter extends Card {
 
     public KamahlPitFighter() {
-        addActivatedAbility(new ActivatedAbility(true, null, List.of(new DealDamageToAnyTargetEffect(3)), true, "{T}: Kamahl, Pit Fighter deals 3 damage to any target."));
+        addActivatedAbility(new ActivatedAbility(true, null, List.of(new DealDamageToAnyTargetEffect(3)), "{T}: Kamahl, Pit Fighter deals 3 damage to any target."));
     }
 }

@@ -26,13 +26,12 @@ public class LoxodonWarhammer extends Card {
                 false,
                 "{3}",
                 List.of(new EquipEffect()),
-                true,
-                false,
                 "Equip {3}",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),
                         "Target must be a creature you control"
                 ),
+                null,
                 null,
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

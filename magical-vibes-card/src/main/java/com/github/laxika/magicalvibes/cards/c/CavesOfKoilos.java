@@ -18,7 +18,6 @@ public class CavesOfKoilos extends Card {
                 true,
                 null,
                 List.of(new AwardManaEffect(ManaColor.COLORLESS)),
-                false,
                 "{T}: Add {C}."
         ));
         // {T}: Add {W}. Caves of Koilos deals 1 damage to you.
@@ -26,7 +25,6 @@ public class CavesOfKoilos extends Card {
                 true,
                 null,
                 List.of(new AwardManaEffect(ManaColor.WHITE), new DealDamageToControllerEffect(1)),
-                false,
                 "{T}: Add {W}. Caves of Koilos deals 1 damage to you."
         ));
         // {T}: Add {B}. Caves of Koilos deals 1 damage to you.
@@ -34,7 +32,6 @@ public class CavesOfKoilos extends Card {
                 true,
                 null,
                 List.of(new AwardManaEffect(ManaColor.BLACK), new DealDamageToControllerEffect(1)),
-                false,
                 "{T}: Add {B}. Caves of Koilos deals 1 damage to you."
         ));
     }

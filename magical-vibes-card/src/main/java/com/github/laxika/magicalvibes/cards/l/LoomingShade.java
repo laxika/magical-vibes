@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class LoomingShade extends Card {
 
     public LoomingShade() {
-        addActivatedAbility(new ActivatedAbility(false, "{B}", List.of(new BoostSelfEffect(1, 1)), false, "{B}: Looming Shade gets +1/+1 until end of turn."));
+        addActivatedAbility(new ActivatedAbility(false, "{B}", List.of(new BoostSelfEffect(1, 1)), "{B}: Looming Shade gets +1/+1 until end of turn."));
     }
 }

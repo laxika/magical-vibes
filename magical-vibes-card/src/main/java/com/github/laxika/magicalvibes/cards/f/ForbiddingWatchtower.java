@@ -23,7 +23,6 @@ public class ForbiddingWatchtower extends Card {
                 false,
                 "{1}{W}",
                 List.of(new AnimateLandEffect(1, 5, List.of(CardSubtype.SOLDIER), Set.of(), CardColor.WHITE)),
-                false,
                 "{1}{W}: Forbidding Watchtower becomes a 1/5 white Soldier creature until end of turn. It's still a land."
         ));
     }

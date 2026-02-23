@@ -23,13 +23,12 @@ public class BarkOfDoran extends Card {
                 false,
                 "{1}",
                 List.of(new EquipEffect()),
-                true,
-                false,
                 "Equip {1}",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),
                         "Target must be a creature you control"
                 ),
+                null,
                 null,
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

@@ -18,7 +18,6 @@ public class Rhox extends Card {
                 false,
                 "{2}{G}",
                 List.of(new RegenerateEffect()),
-                false,
                 "{2}{G}: Regenerate Rhox."
         ));
     }

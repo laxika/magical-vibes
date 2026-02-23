@@ -281,7 +281,7 @@ class PithingNeedleTest extends BaseCardTest {
         card.addActivatedAbility(new ActivatedAbility(
                 true, null,
                 List.of(new DealDamageToAnyTargetEffect(1)),
-                true, "{T}: " + name + " deals 1 damage to any target."
+                "{T}: " + name + " deals 1 damage to any target."
         ));
         return card;
     }
@@ -297,7 +297,7 @@ class PithingNeedleTest extends BaseCardTest {
         card.addActivatedAbility(new ActivatedAbility(
                 true, null,
                 List.of(new AwardAnyColorManaEffect()),
-                false, "{T}: Add one mana of any color."
+                "{T}: Add one mana of any color."
         ));
         return card;
     }

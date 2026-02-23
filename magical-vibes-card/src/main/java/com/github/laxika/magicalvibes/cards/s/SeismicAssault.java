@@ -17,7 +17,6 @@ public class SeismicAssault extends Card {
                 false,
                 null,
                 List.of(new DiscardCardTypeCost(CardType.LAND), new DealDamageToAnyTargetEffect(2)),
-                true,
                 "Discard a land card: Seismic Assault deals 2 damage to any target."
         ));
     }

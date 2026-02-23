@@ -16,7 +16,6 @@ public class BottleGnomes extends Card {
                 false,
                 null,
                 List.of(new SacrificeSelfCost(), new GainLifeEffect(3)),
-                false,
                 "Sacrifice Bottle Gnomes: You gain 3 life."
         ));
     }

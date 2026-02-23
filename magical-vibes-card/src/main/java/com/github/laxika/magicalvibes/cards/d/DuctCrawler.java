@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class DuctCrawler extends Card {
 
     public DuctCrawler() {
-        addActivatedAbility(new ActivatedAbility(false, "{1}{R}", List.of(new CantBlockSourceEffect(null)), true, "{1}{R}: Target creature can't block Duct Crawler this turn."));
+        addActivatedAbility(new ActivatedAbility(false, "{1}{R}", List.of(new CantBlockSourceEffect(null)), "{1}{R}: Target creature can't block Duct Crawler this turn."));
     }
 }

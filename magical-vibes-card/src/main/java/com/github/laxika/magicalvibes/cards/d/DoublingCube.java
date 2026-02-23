@@ -15,7 +15,6 @@ public class DoublingCube extends Card {
                 true,
                 "{3}",
                 List.of(new DoubleManaPoolEffect()),
-                false,
                 "{3}, {T}: Double the amount of each type of unspent mana you have."
         ));
     }

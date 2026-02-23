@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class DrudgeSkeletons extends Card {
 
     public DrudgeSkeletons() {
-        addActivatedAbility(new ActivatedAbility(false, "{B}", List.of(new RegenerateEffect()), false, "{B}: Regenerate Drudge Skeletons."));
+        addActivatedAbility(new ActivatedAbility(false, "{B}", List.of(new RegenerateEffect()), "{B}: Regenerate Drudge Skeletons."));
     }
 }

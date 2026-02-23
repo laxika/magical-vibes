@@ -11,6 +11,6 @@ import java.util.List;
 public class TrollAscetic extends Card {
 
     public TrollAscetic() {
-        addActivatedAbility(new ActivatedAbility(false, "{1}{G}", List.of(new RegenerateEffect()), false, "{1}{G}: Regenerate Troll Ascetic."));
+        addActivatedAbility(new ActivatedAbility(false, "{1}{G}", List.of(new RegenerateEffect()), "{1}{G}: Regenerate Troll Ascetic."));
     }
 }

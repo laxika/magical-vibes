@@ -20,7 +20,6 @@ public class ArcaneTeachings extends Card {
                         true,
                         null,
                         List.of(new DealDamageToAnyTargetEffect(1)),
-                        true,
                         "{T}: This creature deals 1 damage to any target."
                 )
         ));

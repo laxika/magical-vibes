@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class HorseshoeCrab extends Card {
 
     public HorseshoeCrab() {
-        addActivatedAbility(new ActivatedAbility(false, "{U}", List.of(new UntapSelfEffect()), false, "{U}: Untap Horseshoe Crab."));
+        addActivatedAbility(new ActivatedAbility(false, "{U}", List.of(new UntapSelfEffect()), "{U}: Untap Horseshoe Crab."));
     }
 }

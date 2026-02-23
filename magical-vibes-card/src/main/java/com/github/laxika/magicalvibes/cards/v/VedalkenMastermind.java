@@ -17,7 +17,6 @@ public class VedalkenMastermind extends Card {
             true,
             "{U}",
             List.of(new ReturnTargetPermanentToHandEffect()),
-            true,
             "{U}, {T}: Return target permanent you control to its owner's hand.",
             new ControlledPermanentPredicateTargetFilter(
                     new PermanentTruePredicate(),

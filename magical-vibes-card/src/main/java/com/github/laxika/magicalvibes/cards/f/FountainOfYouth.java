@@ -15,7 +15,6 @@ public class FountainOfYouth extends Card {
                 true,
                 "{2}",
                 List.of(new GainLifeEffect(1)),
-                false,
                 "{2}, {T}: You gain 1 life."
         ));
     }

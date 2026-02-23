@@ -18,7 +18,6 @@ public class SulfurousSpring extends Card {
                 true,
                 null,
                 List.of(new AwardManaEffect(ManaColor.COLORLESS)),
-                false,
                 "{T}: Add {C}."
         ));
         // {T}: Add {B}. Sulfurous Springs deals 1 damage to you.
@@ -26,7 +25,6 @@ public class SulfurousSpring extends Card {
                 true,
                 null,
                 List.of(new AwardManaEffect(ManaColor.BLACK), new DealDamageToControllerEffect(1)),
-                false,
                 "{T}: Add {B}. Sulfurous Springs deals 1 damage to you."
         ));
         // {T}: Add {R}. Sulfurous Springs deals 1 damage to you.
@@ -34,7 +32,6 @@ public class SulfurousSpring extends Card {
                 true,
                 null,
                 List.of(new AwardManaEffect(ManaColor.RED), new DealDamageToControllerEffect(1)),
-                false,
                 "{T}: Add {R}. Sulfurous Springs deals 1 damage to you."
         ));
     }

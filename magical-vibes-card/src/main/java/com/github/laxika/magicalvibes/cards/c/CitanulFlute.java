@@ -15,7 +15,6 @@ public class CitanulFlute extends Card {
                 true,
                 "{X}",
                 List.of(new SearchLibraryForCreatureWithMVXOrLessToHandEffect()),
-                false,
                 "{X}, {T}: Search your library for a creature card with mana value X or less, reveal it, put it into your hand, then shuffle."
         ));
     }

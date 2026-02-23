@@ -18,7 +18,6 @@ public class ChromaticStar extends Card {
                 true,                                                            // requiresTap
                 "{1}",                                                           // manaCost
                 List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect()), // effects
-                false,                                                           // needsTarget
                 "{1}, {T}, Sacrifice Chromatic Star: Add one mana of any color." // description
         ));
         addEffect(EffectSlot.ON_DEATH, new DrawCardEffect());

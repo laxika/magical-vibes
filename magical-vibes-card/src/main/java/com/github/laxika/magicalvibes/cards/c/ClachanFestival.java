@@ -34,7 +34,6 @@ public class ClachanFestival extends Card {
                         CardColor.WHITE,
                         List.of(CardSubtype.KITHKIN)
                 )),
-                false,
                 "{4}{W}: Create a 1/1 green and white Kithkin creature token."
         ));
     }

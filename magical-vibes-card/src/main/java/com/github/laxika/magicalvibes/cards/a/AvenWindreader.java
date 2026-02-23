@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class AvenWindreader extends Card {
 
     public AvenWindreader() {
-        addActivatedAbility(new ActivatedAbility(false, "{1}{U}", List.of(new RevealTopCardOfLibraryEffect()), true, "{1}{U}: Target player reveals the top card of their library."));
+        addActivatedAbility(new ActivatedAbility(false, "{1}{U}", List.of(new RevealTopCardOfLibraryEffect()), "{1}{U}: Target player reveals the top card of their library."));
     }
 }

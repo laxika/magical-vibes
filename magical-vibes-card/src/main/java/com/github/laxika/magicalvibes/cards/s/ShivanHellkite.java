@@ -11,6 +11,6 @@ import java.util.List;
 public class ShivanHellkite extends Card {
 
     public ShivanHellkite() {
-        addActivatedAbility(new ActivatedAbility(false, "{1}{R}", List.of(new DealDamageToAnyTargetEffect(1)), true, "{1}{R}: Shivan Hellkite deals 1 damage to any target."));
+        addActivatedAbility(new ActivatedAbility(false, "{1}{R}", List.of(new DealDamageToAnyTargetEffect(1)), "{1}{R}: Shivan Hellkite deals 1 damage to any target."));
     }
 }

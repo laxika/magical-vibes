@@ -25,7 +25,6 @@ public class SiegeGangCommander extends Card {
                 false,
                 "{1}{R}",
                 List.of(new SacrificeSubtypeCreatureCost(CardSubtype.GOBLIN), new DealDamageToAnyTargetEffect(2)),
-                true,
                 "{1}{R}, Sacrifice a Goblin: Siege-Gang Commander deals 2 damage to any target."
         ));
     }

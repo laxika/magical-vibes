@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class KjeldoranRoyalGuard extends Card {
 
     public KjeldoranRoyalGuard() {
-        addActivatedAbility(new ActivatedAbility(true, null, List.of(new RedirectUnblockedCombatDamageToSelfEffect()), false, "{T}: All combat damage that would be dealt to you by unblocked creatures this turn is dealt to Kjeldoran Royal Guard instead."));
+        addActivatedAbility(new ActivatedAbility(true, null, List.of(new RedirectUnblockedCombatDamageToSelfEffect()), "{T}: All combat damage that would be dealt to you by unblocked creatures this turn is dealt to Kjeldoran Royal Guard instead."));
     }
 }

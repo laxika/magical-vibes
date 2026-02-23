@@ -19,7 +19,6 @@ public class MindStone extends Card {
                 true,
                 null,
                 List.of(new AwardManaEffect(ManaColor.COLORLESS)),
-                false,
                 "{T}: Add {C}."
         ));
         // {1}, {T}, Sacrifice Mind Stone: Draw a card.
@@ -27,7 +26,6 @@ public class MindStone extends Card {
                 true,
                 "{1}",
                 List.of(new SacrificeSelfCost(), new DrawCardEffect()),
-                false,
                 "{1}, {T}, Sacrifice Mind Stone: Draw a card."
         ));
     }

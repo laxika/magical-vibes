@@ -16,7 +16,6 @@ public class MoggFanatic extends Card {
                 false,
                 null,
                 List.of(new SacrificeSelfCost(), new DealDamageToAnyTargetEffect(1)),
-                true,
                 "Sacrifice Mogg Fanatic: It deals 1 damage to any target."
         ));
     }

@@ -11,6 +11,6 @@ import java.util.List;
 public class ProdigalPyromancer extends Card {
 
     public ProdigalPyromancer() {
-        addActivatedAbility(new ActivatedAbility(true, null, List.of(new DealDamageToAnyTargetEffect(1)), true, "{T}: Prodigal Pyromancer deals 1 damage to any target."));
+        addActivatedAbility(new ActivatedAbility(true, null, List.of(new DealDamageToAnyTargetEffect(1)), "{T}: Prodigal Pyromancer deals 1 damage to any target."));
     }
 }

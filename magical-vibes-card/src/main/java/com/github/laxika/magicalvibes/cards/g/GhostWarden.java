@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class GhostWarden extends Card {
 
     public GhostWarden() {
-        addActivatedAbility(new ActivatedAbility(true, null, List.of(new BoostTargetCreatureEffect(1, 1)), true, "{T}: Target creature gets +1/+1 until end of turn."));
+        addActivatedAbility(new ActivatedAbility(true, null, List.of(new BoostTargetCreatureEffect(1, 1)), "{T}: Target creature gets +1/+1 until end of turn."));
     }
 }

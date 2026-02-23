@@ -15,7 +15,6 @@ public class RootwaterMatriarch extends Card {
                 true,
                 null,
                 List.of(new GainControlOfEnchantedTargetEffect()),
-                true,
                 "{T}: Gain control of target creature for as long as that creature is enchanted."
         ));
     }

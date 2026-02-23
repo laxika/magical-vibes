@@ -18,7 +18,6 @@ public class NantukoHusk extends Card {
                 false,
                 null,
                 List.of(new SacrificeCreatureCost(), new BoostSelfEffect(2, 2)),
-                true,
                 "Sacrifice a creature: Nantuko Husk gets +2/+2 until end of turn.",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),

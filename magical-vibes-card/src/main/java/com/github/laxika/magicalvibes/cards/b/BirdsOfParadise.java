@@ -15,7 +15,6 @@ public class BirdsOfParadise extends Card {
                 true,
                 null,
                 List.of(new AwardAnyColorManaEffect()),
-                false,
                 "{T}: Add one mana of any color."
         ));
     }

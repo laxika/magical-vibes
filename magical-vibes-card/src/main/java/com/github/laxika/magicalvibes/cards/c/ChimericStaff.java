@@ -16,7 +16,6 @@ public class ChimericStaff extends Card {
                 false,
                 "{X}",
                 List.of(new AnimateSelfEffect(List.of(CardSubtype.CONSTRUCT))),
-                false,
                 "{X}: Chimeric Staff becomes an X/X Construct artifact creature until end of turn."
         ));
     }

@@ -19,7 +19,6 @@ public class NoRestForTheWicked extends Card {
                         new SacrificeSelfCost(),
                         new ReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHandEffect()
                 ),
-                false,
                 "Sacrifice No Rest for the Wicked: Return to your hand all creature cards put into your graveyard from the battlefield this turn."
         ));
     }
