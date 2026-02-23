@@ -24,6 +24,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `SORCERY_SPEED` | Equip abilities, sorcery-speed activated abilities |
 | `ONLY_DURING_YOUR_UPKEEP` | Abilities that can only be used during your upkeep |
 | `ONLY_WHILE_CREATURE` | Abilities on creature lands that only work while animated |
+| `METALCRAFT` | Activate only if you control three or more artifacts |
 
 ---
 
