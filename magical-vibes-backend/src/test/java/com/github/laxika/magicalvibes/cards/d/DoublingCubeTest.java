@@ -1,32 +1,17 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class DoublingCubeTest {
+class DoublingCubeTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-    private Player player2;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        player2 = harness.getPlayer2();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     // ===== Card properties =====
 
@@ -35,9 +20,6 @@ class DoublingCubeTest {
     void hasCorrectProperties() {
         DoublingCube card = new DoublingCube();
 
-        assertThat(card.getName()).isEqualTo("Doubling Cube");
-        assertThat(card.getType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(card.getManaCost()).isEqualTo("{2}");
         assertThat(card.getActivatedAbilities()).hasSize(1);
 
         var ability = card.getActivatedAbilities().getFirst();

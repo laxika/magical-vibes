@@ -2,57 +2,29 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class RhoxTest {
+class RhoxTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-    private Player player2;
-    private GameData gd;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        player2 = harness.getPlayer2();
-        gd = harness.getGameData();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     @Test
     @DisplayName("Rhox has correct card properties")
     void hasCorrectProperties() {
         Rhox card = new Rhox();
 
-        assertThat(card.getName()).isEqualTo("Rhox");
-        assertThat(card.getType()).isEqualTo(CardType.CREATURE);
-        assertThat(card.getManaCost()).isEqualTo("{4}{G}{G}");
-        assertThat(card.getColor()).isEqualTo(CardColor.GREEN);
-        assertThat(card.getPower()).isEqualTo(5);
-        assertThat(card.getToughness()).isEqualTo(5);
-        assertThat(card.getSubtypes()).containsExactly(CardSubtype.RHINO, CardSubtype.BEAST);
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(AssignCombatDamageAsThoughUnblockedEffect.class);
         assertThat(card.getActivatedAbilities()).hasSize(1);

@@ -3,18 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,20 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class SpiketailHatchlingTest {
+class SpiketailHatchlingTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-    private Player player2;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        player2 = harness.getPlayer2();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     // ===== Card properties =====
 
@@ -45,14 +28,6 @@ class SpiketailHatchlingTest {
     void hasCorrectProperties() {
         SpiketailHatchling card = new SpiketailHatchling();
 
-        assertThat(card.getName()).isEqualTo("Spiketail Hatchling");
-        assertThat(card.getType()).isEqualTo(CardType.CREATURE);
-        assertThat(card.getManaCost()).isEqualTo("{1}{U}");
-        assertThat(card.getColor()).isEqualTo(CardColor.BLUE);
-        assertThat(card.getPower()).isEqualTo(1);
-        assertThat(card.getToughness()).isEqualTo(1);
-        assertThat(card.getSubtypes()).containsExactly(CardSubtype.DRAKE);
-        assertThat(card.getKeywords()).containsExactly(Keyword.FLYING);
         assertThat(card.getActivatedAbilities()).hasSize(1);
         assertThat(card.getActivatedAbilities().getFirst().isNeedsSpellTarget()).isTrue();
         assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(2);

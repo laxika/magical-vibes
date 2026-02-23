@@ -3,18 +3,13 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,32 +18,14 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class NoRestForTheWickedTest {
+class NoRestForTheWickedTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-    private Player player2;
-    private GameData gameData;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        player2 = harness.getPlayer2();
-        gameData = harness.getGameData();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     @Test
     @DisplayName("No Rest for the Wicked has correct card properties and ability structure")
     void hasCorrectPropertiesAndAbility() {
         NoRestForTheWicked card = new NoRestForTheWicked();
 
-        assertThat(card.getName()).isEqualTo("No Rest for the Wicked");
-        assertThat(card.getType()).isEqualTo(CardType.ENCHANTMENT);
-        assertThat(card.getManaCost()).isEqualTo("{1}{B}");
-        assertThat(card.getColor()).isEqualTo(CardColor.BLACK);
         assertThat(card.getActivatedAbilities()).hasSize(1);
 
         var ability = card.getActivatedAbilities().getFirst();
@@ -68,13 +45,13 @@ class NoRestForTheWickedTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gameData.playerBattlefields.get(player1.getId()))
+        assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("No Rest for the Wicked"));
-        assertThat(gameData.playerGraveyards.get(player1.getId()))
+        assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("No Rest for the Wicked"));
 
-        assertThat(gameData.stack).hasSize(1);
-        StackEntry entry = gameData.stack.getFirst();
+        assertThat(gd.stack).hasSize(1);
+        StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("No Rest for the Wicked");
         assertThat(entry.getTargetPermanentId()).isNull();
@@ -99,9 +76,9 @@ class NoRestForTheWickedTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gameData.playerHands.get(player1.getId()))
+        assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(diedThisTurn.getId()));
-        assertThat(gameData.playerGraveyards.get(player1.getId()))
+        assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(alreadyInGraveyard.getId()));
     }
 
@@ -122,9 +99,9 @@ class NoRestForTheWickedTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gameData.playerHands.get(player1.getId()))
+        assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(opponentsCreature.getId()));
-        assertThat(gameData.playerGraveyards.get(player2.getId()))
+        assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getId().equals(opponentsCreature.getId()));
     }
 
@@ -150,14 +127,14 @@ class NoRestForTheWickedTest {
         harness.activateAbility(player1, noRestIndex, null, null);
         harness.passBothPriorities();
 
-        assertThat(gameData.playerHands.get(player1.getId()))
+        assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(diedLastTurn.getId()));
-        assertThat(gameData.playerGraveyards.get(player1.getId()))
+        assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(diedLastTurn.getId()));
     }
 
     private int findPermanentIndex(UUID controllerId, String name) {
-        List<com.github.laxika.magicalvibes.model.Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        List<com.github.laxika.magicalvibes.model.Permanent> battlefield = gd.playerBattlefields.get(controllerId);
         for (int i = 0; i < battlefield.size(); i++) {
             if (battlefield.get(i).getCard().getName().equals(name)) {
                 return i;

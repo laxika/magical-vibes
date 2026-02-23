@@ -1,38 +1,18 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.service.GameService;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class HowlingMineTest {
+class HowlingMineTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-    private Player player2;
-    private GameService gs;
-    private GameData gd;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        player2 = harness.getPlayer2();
-        gs = harness.getGameService();
-        gd = harness.getGameData();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     private void advanceToDraw(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
@@ -49,9 +29,6 @@ class HowlingMineTest {
     void hasCorrectProperties() {
         HowlingMine card = new HowlingMine();
 
-        assertThat(card.getName()).isEqualTo("Howling Mine");
-        assertThat(card.getType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(card.getManaCost()).isEqualTo("{2}");
         assertThat(card.getEffects(EffectSlot.EACH_DRAW_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.EACH_DRAW_TRIGGERED).getFirst())
                 .isInstanceOf(DrawCardForTargetPlayerEffect.class);

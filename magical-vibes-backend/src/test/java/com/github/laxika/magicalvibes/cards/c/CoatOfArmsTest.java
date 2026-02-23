@@ -4,19 +4,13 @@ import com.github.laxika.magicalvibes.cards.a.AvenCloudchaser;
 import com.github.laxika.magicalvibes.cards.b.BallistaSquad;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
-import com.github.laxika.magicalvibes.service.GameQueryService;
-import com.github.laxika.magicalvibes.service.GameService;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -24,26 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class CoatOfArmsTest {
+class CoatOfArmsTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-    private Player player2;
-    private GameService gs;
-    private GameQueryService gqs;
-    private GameData gd;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        player2 = harness.getPlayer2();
-        gs = harness.getGameService();
-        gqs = harness.getGameQueryService();
-        gd = harness.getGameData();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     // ===== Card properties =====
 
@@ -52,9 +28,6 @@ class CoatOfArmsTest {
     void hasCorrectProperties() {
         CoatOfArms card = new CoatOfArms();
 
-        assertThat(card.getName()).isEqualTo("Coat of Arms");
-        assertThat(card.getType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(card.getManaCost()).isEqualTo("{5}");
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(BoostBySharedCreatureTypeEffect.class);
     }

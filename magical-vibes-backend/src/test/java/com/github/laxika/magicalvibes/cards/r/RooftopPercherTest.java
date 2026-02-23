@@ -4,44 +4,27 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class RooftopPercherTest {
+class RooftopPercherTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-    private Player player2;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        player2 = harness.getPlayer2();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     // ===== Card properties =====
 
@@ -50,14 +33,6 @@ class RooftopPercherTest {
     void hasCorrectProperties() {
         RooftopPercher card = new RooftopPercher();
 
-        assertThat(card.getName()).isEqualTo("Rooftop Percher");
-        assertThat(card.getType()).isEqualTo(CardType.CREATURE);
-        assertThat(card.getManaCost()).isEqualTo("{5}");
-        assertThat(card.getColor()).isNull();
-        assertThat(card.getPower()).isEqualTo(3);
-        assertThat(card.getToughness()).isEqualTo(3);
-        assertThat(card.getSubtypes()).containsExactly(CardSubtype.SHAPESHIFTER);
-        assertThat(card.getKeywords()).isEqualTo(Set.of(Keyword.CHANGELING, Keyword.FLYING));
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
                 .isInstanceOf(ExileCardsFromGraveyardEffect.class);

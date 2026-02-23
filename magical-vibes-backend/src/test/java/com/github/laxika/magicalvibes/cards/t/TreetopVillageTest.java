@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,10 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
-import com.github.laxika.magicalvibes.service.GameQueryService;
-import com.github.laxika.magicalvibes.service.GameService;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,24 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TreetopVillageTest {
+class TreetopVillageTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-    private GameService gs;
-    private GameQueryService gqs;
-    private GameData gd;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        gs = harness.getGameService();
-        gqs = harness.getGameQueryService();
-        gd = harness.getGameData();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     // ===== Card properties =====
 
@@ -49,8 +29,6 @@ class TreetopVillageTest {
     void hasCorrectProperties() {
         TreetopVillage card = new TreetopVillage();
 
-        assertThat(card.getName()).isEqualTo("Treetop Village");
-        assertThat(card.getType()).isEqualTo(CardType.LAND);
         assertThat(card.isEntersTapped()).isTrue();
         assertThat(card.getActivatedAbilities()).hasSize(1);
         assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}{G}");

@@ -1,17 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,20 +16,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class AvenWindreaderTest {
+class AvenWindreaderTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-    private Player player2;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        player2 = harness.getPlayer2();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     // ===== Card properties =====
 
@@ -44,14 +26,6 @@ class AvenWindreaderTest {
     void hasCorrectProperties() {
         AvenWindreader card = new AvenWindreader();
 
-        assertThat(card.getName()).isEqualTo("Aven Windreader");
-        assertThat(card.getType()).isEqualTo(CardType.CREATURE);
-        assertThat(card.getManaCost()).isEqualTo("{3}{U}{U}");
-        assertThat(card.getColor()).isEqualTo(CardColor.BLUE);
-        assertThat(card.getPower()).isEqualTo(3);
-        assertThat(card.getToughness()).isEqualTo(3);
-        assertThat(card.getSubtypes()).containsExactly(CardSubtype.BIRD, CardSubtype.SOLDIER, CardSubtype.WIZARD);
-        assertThat(card.getKeywords()).containsExactly(Keyword.FLYING);
         assertThat(card.getActivatedAbilities()).hasSize(1);
         assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{1}{U}");
         assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();

@@ -1,20 +1,12 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
-import com.github.laxika.magicalvibes.service.GameQueryService;
-import com.github.laxika.magicalvibes.service.GameService;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,35 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class UnholyStrengthTest {
+class UnholyStrengthTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-    private GameService gs;
-    private GameQueryService gqs;
-    private GameData gd;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        gs = harness.getGameService();
-        gqs = harness.getGameQueryService();
-        gd = harness.getGameData();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     @Test
     @DisplayName("Unholy Strength has correct card properties")
     void hasCorrectProperties() {
         UnholyStrength card = new UnholyStrength();
 
-        assertThat(card.getName()).isEqualTo("Unholy Strength");
-        assertThat(card.getType()).isEqualTo(CardType.ENCHANTMENT);
-        assertThat(card.getManaCost()).isEqualTo("{B}");
-        assertThat(card.getColor()).isEqualTo(CardColor.BLACK);
-        assertThat(card.getSubtypes()).containsExactly(CardSubtype.AURA);
         assertThat(card.isNeedsTarget()).isTrue();
         assertThat(card.isAura()).isTrue();
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);

@@ -3,15 +3,11 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
 import com.github.laxika.magicalvibes.cards.s.SpiketailHatchling;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,33 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class GaeasHeraldTest {
+class GaeasHeraldTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-    private Player player2;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        player2 = harness.getPlayer2();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     @Test
     @DisplayName("Gaea's Herald has correct card properties")
     void hasCorrectProperties() {
         GaeasHerald card = new GaeasHerald();
 
-        assertThat(card.getName()).isEqualTo("Gaea's Herald");
-        assertThat(card.getType()).isEqualTo(CardType.CREATURE);
-        assertThat(card.getManaCost()).isEqualTo("{1}{G}");
-        assertThat(card.getColor()).isEqualTo(CardColor.GREEN);
         assertThat(card.getCardText()).isEqualTo("Creature spells can't be countered.");
-        assertThat(card.getPower()).isEqualTo(1);
-        assertThat(card.getToughness()).isEqualTo(1);
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
                 .isInstanceOf(CreatureSpellsCantBeCounteredEffect.class);

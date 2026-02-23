@@ -3,19 +3,14 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -24,20 +19,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class BogardanFirefiendTest {
+class BogardanFirefiendTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-    private Player player2;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        player2 = harness.getPlayer2();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     /**
      * Sets up combat where Bogardan Firefiend (player1) attacks and is blocked by a 3/3 creature (player2).
@@ -71,13 +54,6 @@ class BogardanFirefiendTest {
     void hasCorrectProperties() {
         BogardanFirefiend card = new BogardanFirefiend();
 
-        assertThat(card.getName()).isEqualTo("Bogardan Firefiend");
-        assertThat(card.getType()).isEqualTo(CardType.CREATURE);
-        assertThat(card.getManaCost()).isEqualTo("{2}{R}");
-        assertThat(card.getColor()).isEqualTo(CardColor.RED);
-        assertThat(card.getPower()).isEqualTo(2);
-        assertThat(card.getToughness()).isEqualTo(1);
-        assertThat(card.getSubtypes()).containsExactlyInAnyOrder(CardSubtype.ELEMENTAL, CardSubtype.SPIRIT);
         assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
         DealDamageToTargetCreatureEffect dmg = (DealDamageToTargetCreatureEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();

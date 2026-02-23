@@ -3,18 +3,13 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,22 +18,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class RazormaneMasticoreTest {
+class RazormaneMasticoreTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-    private Player player2;
-    private GameData gd;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        player2 = harness.getPlayer2();
-        gd = harness.getGameData();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     private void advanceToUpkeep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
@@ -57,18 +38,6 @@ class RazormaneMasticoreTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Razormane Masticore has correct card properties")
-    void hasCorrectProperties() {
-        RazormaneMasticore card = new RazormaneMasticore();
-
-        assertThat(card.getName()).isEqualTo("Razormane Masticore");
-        assertThat(card.getType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(card.getManaCost()).isEqualTo("{5}");
-        assertThat(card.getPower()).isEqualTo(5);
-        assertThat(card.getToughness()).isEqualTo(5);
-        assertThat(card.getKeywords()).contains(Keyword.FIRST_STRIKE);
-    }
 
     @Test
     @DisplayName("Has upkeep sacrifice-unless-discard effect")

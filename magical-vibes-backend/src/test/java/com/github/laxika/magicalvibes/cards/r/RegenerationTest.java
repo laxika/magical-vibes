@@ -1,19 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.service.GameService;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,33 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class RegenerationTest {
+class RegenerationTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-    private GameService gs;
-    private GameData gd;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        gs = harness.getGameService();
-        gd = harness.getGameData();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     @Test
     @DisplayName("Regeneration has correct card properties")
     void hasCorrectProperties() {
         Regeneration card = new Regeneration();
 
-        assertThat(card.getName()).isEqualTo("Regeneration");
-        assertThat(card.getType()).isEqualTo(CardType.ENCHANTMENT);
-        assertThat(card.getManaCost()).isEqualTo("{1}{G}");
-        assertThat(card.getColor()).isEqualTo(CardColor.GREEN);
-        assertThat(card.getSubtypes()).containsExactly(CardSubtype.AURA);
         assertThat(card.isNeedsTarget()).isTrue();
         assertThat(card.isAura()).isTrue();
         assertThat(card.getActivatedAbilities()).hasSize(1);

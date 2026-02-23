@@ -3,32 +3,25 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesAndPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class BloodfireColossusTest {
+class BloodfireColossusTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-    private Player player2;
 
     /** A 7/7 creature that survives 6 damage. */
     private static Card toughCreature() {
@@ -55,14 +48,6 @@ class BloodfireColossusTest {
         return card;
     }
 
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        player2 = harness.getPlayer2();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     // ===== Card properties =====
 
@@ -71,13 +56,6 @@ class BloodfireColossusTest {
     void hasCorrectProperties() {
         BloodfireColossus card = new BloodfireColossus();
 
-        assertThat(card.getName()).isEqualTo("Bloodfire Colossus");
-        assertThat(card.getType()).isEqualTo(CardType.CREATURE);
-        assertThat(card.getManaCost()).isEqualTo("{6}{R}{R}");
-        assertThat(card.getColor()).isEqualTo(CardColor.RED);
-        assertThat(card.getPower()).isEqualTo(6);
-        assertThat(card.getToughness()).isEqualTo(6);
-        assertThat(card.getSubtypes()).containsExactly(CardSubtype.GIANT);
         assertThat(card.getActivatedAbilities()).hasSize(1);
 
         var ability = card.getActivatedAbilities().getFirst();

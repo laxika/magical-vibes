@@ -1,18 +1,13 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.RandomDiscardEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,20 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class HypnoticSpecterTest {
+class HypnoticSpecterTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-    private Player player2;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        player2 = harness.getPlayer2();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
         GameData gd = harness.getGameData();
@@ -57,14 +40,6 @@ class HypnoticSpecterTest {
     void hasCorrectProperties() {
         HypnoticSpecter card = new HypnoticSpecter();
 
-        assertThat(card.getName()).isEqualTo("Hypnotic Specter");
-        assertThat(card.getType()).isEqualTo(CardType.CREATURE);
-        assertThat(card.getManaCost()).isEqualTo("{1}{B}{B}");
-        assertThat(card.getColor()).isEqualTo(CardColor.BLACK);
-        assertThat(card.getPower()).isEqualTo(2);
-        assertThat(card.getToughness()).isEqualTo(2);
-        assertThat(card.getSubtypes()).containsExactly(CardSubtype.SPECTER);
-        assertThat(card.getKeywords()).contains(Keyword.FLYING);
         assertThat(card.getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER).getFirst()).isInstanceOf(RandomDiscardEffect.class);
     }

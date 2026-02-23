@@ -15,11 +15,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.service.GameService;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -29,24 +27,8 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class VoiceOfAllTest {
+class VoiceOfAllTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-    private Player player2;
-    private GameService gs;
-    private GameData gd;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        player2 = harness.getPlayer2();
-        gs = harness.getGameService();
-        gd = harness.getGameData();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     private static Card createCreature(String name, int power, int toughness, CardColor color) {
         Card card = new Card();
@@ -82,14 +64,6 @@ class VoiceOfAllTest {
     void hasCorrectProperties() {
         VoiceOfAll card = new VoiceOfAll();
 
-        assertThat(card.getName()).isEqualTo("Voice of All");
-        assertThat(card.getType()).isEqualTo(CardType.CREATURE);
-        assertThat(card.getManaCost()).isEqualTo("{2}{W}{W}");
-        assertThat(card.getColor()).isEqualTo(CardColor.WHITE);
-        assertThat(card.getPower()).isEqualTo(2);
-        assertThat(card.getToughness()).isEqualTo(2);
-        assertThat(card.getKeywords()).containsExactly(Keyword.FLYING);
-        assertThat(card.getSubtypes()).containsExactly(CardSubtype.ANGEL);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
                 .isInstanceOf(ProtectionFromChosenColorEffect.class);

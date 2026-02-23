@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,8 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -25,20 +22,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class AjaniOutlandChaperoneTest {
+class AjaniOutlandChaperoneTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-    private Player player2;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        player2 = harness.getPlayer2();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     // ===== Card properties =====
 
@@ -47,10 +32,6 @@ class AjaniOutlandChaperoneTest {
     void hasCorrectProperties() {
         AjaniOutlandChaperone card = new AjaniOutlandChaperone();
 
-        assertThat(card.getName()).isEqualTo("Ajani, Outland Chaperone");
-        assertThat(card.getType()).isEqualTo(CardType.PLANESWALKER);
-        assertThat(card.getManaCost()).isEqualTo("{1}{W}{W}");
-        assertThat(card.getColor()).isEqualTo(CardColor.WHITE);
         assertThat(card.getLoyalty()).isEqualTo(3);
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
@@ -343,6 +324,5 @@ class AjaniOutlandChaperoneTest {
         return perm;
     }
 }
-
 
 

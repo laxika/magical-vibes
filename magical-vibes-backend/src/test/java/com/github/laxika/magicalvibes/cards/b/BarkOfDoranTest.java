@@ -1,11 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -18,10 +14,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LoxodonWarhammer;
-import com.github.laxika.magicalvibes.service.GameQueryService;
-import com.github.laxika.magicalvibes.service.GameService;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -29,40 +22,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class BarkOfDoranTest {
+class BarkOfDoranTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-    private Player player2;
-    private GameService gs;
-    private GameQueryService gqs;
-    private GameData gd;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        player2 = harness.getPlayer2();
-        gs = harness.getGameService();
-        gqs = harness.getGameQueryService();
-        gd = harness.getGameData();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Bark of Doran has correct card properties")
-    void hasCorrectProperties() {
-        BarkOfDoran card = new BarkOfDoran();
-
-        assertThat(card.getName()).isEqualTo("Bark of Doran");
-        assertThat(card.getType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(card.getManaCost()).isEqualTo("{1}{W}");
-        assertThat(card.getColor()).isEqualTo(CardColor.WHITE);
-        assertThat(card.getSubtypes()).contains(CardSubtype.EQUIPMENT);
-    }
 
     @Test
     @DisplayName("Bark of Doran has static +0/+1 boost effect")

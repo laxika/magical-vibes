@@ -1,40 +1,25 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class UndergroundRiverTest {
+class UndergroundRiverTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     @Test
     @DisplayName("Underground River has correct card properties")
     void hasCorrectProperties() {
         UndergroundRiver card = new UndergroundRiver();
 
-        assertThat(card.getName()).isEqualTo("Underground River");
-        assertThat(card.getType()).isEqualTo(CardType.LAND);
         assertThat(card.getActivatedAbilities()).hasSize(3);
 
         var colorless = card.getActivatedAbilities().get(0);

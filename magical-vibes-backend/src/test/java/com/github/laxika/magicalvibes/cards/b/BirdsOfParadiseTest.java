@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,30 +15,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class BirdsOfParadiseTest {
+class BirdsOfParadiseTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     @Test
     @DisplayName("Birds of Paradise has correct card properties")
     void hasCorrectProperties() {
         BirdsOfParadise card = new BirdsOfParadise();
 
-        assertThat(card.getName()).isEqualTo("Birds of Paradise");
-        assertThat(card.getType()).isEqualTo(CardType.CREATURE);
-        assertThat(card.getManaCost()).isEqualTo("{G}");
-        assertThat(card.getPower()).isEqualTo(0);
-        assertThat(card.getToughness()).isEqualTo(1);
-        assertThat(card.getKeywords()).contains(Keyword.FLYING);
         assertThat(card.getActivatedAbilities()).hasSize(1);
 
         var ability = card.getActivatedAbilities().getFirst();

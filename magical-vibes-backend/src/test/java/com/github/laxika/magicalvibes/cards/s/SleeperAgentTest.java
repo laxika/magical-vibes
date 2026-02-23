@@ -1,18 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,22 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class SleeperAgentTest {
+class SleeperAgentTest extends BaseCardTest {
 
-    private GameTestHarness harness;
-    private Player player1;
-    private Player player2;
-    private GameData gd;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        player2 = harness.getPlayer2();
-        gd = harness.getGameData();
-        harness.skipMulligan();
-        harness.clearMessages();
-    }
 
     private void castSleeperAgent(java.util.UUID targetPlayerId) {
         harness.setHand(player1, List.of(new SleeperAgent()));
@@ -56,13 +37,6 @@ class SleeperAgentTest {
     void hasCorrectProperties() {
         SleeperAgent card = new SleeperAgent();
 
-        assertThat(card.getName()).isEqualTo("Sleeper Agent");
-        assertThat(card.getType()).isEqualTo(CardType.CREATURE);
-        assertThat(card.getManaCost()).isEqualTo("{B}");
-        assertThat(card.getColor()).isEqualTo(CardColor.BLACK);
-        assertThat(card.getSubtypes()).containsExactly(CardSubtype.PHYREXIAN, CardSubtype.MINION);
-        assertThat(card.getPower()).isEqualTo(3);
-        assertThat(card.getToughness()).isEqualTo(3);
         assertThat(card.isNeedsTarget()).isTrue();
         assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);

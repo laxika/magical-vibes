@@ -58,4 +58,6 @@ All card metadata (name, type, mana cost, color, supertypes, subtypes, card text
 
 ### Testing Cards
 
-Tests live in `magical-vibes-backend/src/test/java/.../cards/{letter}/CardNameTest.java`. Use `GameTestHarness` which sets up a full two-player game with fake connections. Key harness methods: `skipMulligan()`, `setHand()`, `addMana()`, `addToBattlefield()`, `castCreature()`, `castInstant()`, `activateAbility()`, `passBothPriorities()`, `forceStep()`, `forceActivePlayer()`. Tests use JUnit 5 + AssertJ.
+Tests live in `magical-vibes-backend/src/test/java/.../cards/{letter}/CardNameTest.java`. All card tests extend `BaseCardTest` which provides common fields (`harness`, `player1`, `player2`, `gs`, `gqs`, `gd`) and `@BeforeEach setUp()`. Key harness methods: `skipMulligan()`, `setHand()`, `addMana()`, `addToBattlefield()`, `castCreature()`, `castInstant()`, `activateAbility()`, `passBothPriorities()`, `forceStep()`, `forceActivePlayer()`. Tests use JUnit 5 + AssertJ.
+
+Do NOT test Scryfall-loaded metadata (name, type, mana cost, color, power, toughness, subtypes, keywords) in card tests — card metadata is auto-loaded from Scryfall and doesn't require engine-side verification. Card tests should only verify engine logic: effects, abilities, targeting, game interactions.
