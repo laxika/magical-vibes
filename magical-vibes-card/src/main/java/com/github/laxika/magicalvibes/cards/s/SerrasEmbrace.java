@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect.Scope;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "40")
@@ -13,7 +13,7 @@ public class SerrasEmbrace extends Card {
 
     public SerrasEmbrace() {
         addEffect(EffectSlot.STATIC, new BoostAttachedCreatureEffect(2, 2));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, Scope.ENCHANTED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.VIGILANCE, Scope.ENCHANTED_CREATURE));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ENCHANTED_CREATURE));
     }
 }

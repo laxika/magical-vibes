@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -37,7 +38,7 @@ class WhispersilkCloakTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.STATIC))
                 .filteredOn(e -> e instanceof GrantKeywordEffect gke
                         && gke.keyword() == Keyword.SHROUD
-                        && gke.scope() == GrantKeywordEffect.Scope.EQUIPPED_CREATURE)
+                        && gke.scope() == GrantScope.EQUIPPED_CREATURE)
                 .hasSize(1);
     }
 

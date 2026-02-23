@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect.Scope;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -20,7 +20,7 @@ public class WhispersilkCloak extends Card {
 
     public WhispersilkCloak() {
         addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SHROUD, Scope.EQUIPPED_CREATURE));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SHROUD, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",

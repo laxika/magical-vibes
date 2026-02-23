@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,7 +33,7 @@ class PrimalRageTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(effect.keyword()).isEqualTo(Keyword.TRAMPLE);
-        assertThat(effect.scope()).isEqualTo(GrantKeywordEffect.Scope.OWN_CREATURES);
+        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
     }
 
     @Test

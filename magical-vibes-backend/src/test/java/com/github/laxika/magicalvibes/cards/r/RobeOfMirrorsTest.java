@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -36,7 +37,7 @@ class RobeOfMirrorsTest extends BaseCardTest {
         GrantKeywordEffect effect =
                 (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(effect.keyword()).isEqualTo(Keyword.SHROUD);
-        assertThat(effect.scope()).isEqualTo(GrantKeywordEffect.Scope.ENCHANTED_CREATURE);
+        assertThat(effect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
     }
 
     // ===== Casting and resolving =====

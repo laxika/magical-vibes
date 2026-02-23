@@ -306,8 +306,8 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `ProtectionFromColorsEffect` | `(Set<CardColor> colors)` | protection from specified colors (static) |
 | `ProtectionFromChosenColorEffect` | `()` | protection from chosen color (static, requires ChooseColorOnEnterEffect) |
 | `CantBeTargetedBySpellColorsEffect` | `(Set<CardColor> colors)` | can't be targeted by spells of specified colors (static) |
-| `CantBeTargetOfSpellsOrAbilitiesEffect` | `()` | can't be targeted by opponents' spells or abilities (hexproof behavior, use with GrantEffect) |
-| `GrantEffect` | `(CardEffect effect, Scope scope)` | grant a CardEffect to permanents matching scope (e.g. OWN_CREATURES); uses GrantKeywordEffect.Scope |
+| `CantBeTargetOfSpellsOrAbilitiesEffect` | `()` | can't be targeted by opponents' spells or abilities (hexproof behavior, use with GrantEffectEffect) |
+| `GrantEffectEffect` | `(CardEffect effect, GrantScope scope)` | grant a CardEffect to permanents matching scope (e.g. OWN_CREATURES) |
 | `RedirectPlayerDamageToEnchantedCreatureEffect` | `()` | redirect damage dealt to player to enchanted creature |
 | `RedirectUnblockedCombatDamageToSelfEffect` | `()` | redirect unblocked combat damage to this creature |
 | `GrantControllerShroudEffect` | `()` | controller has shroud (can't be targeted) (static) |

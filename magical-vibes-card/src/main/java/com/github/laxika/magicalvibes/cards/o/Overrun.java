@@ -6,12 +6,13 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "10E", collectorNumber = "284")
 public class Overrun extends Card {
 
     public Overrun() {
         addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(3, 3));
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.TRAMPLE, GrantKeywordEffect.Scope.OWN_CREATURES));
+        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
     }
 }

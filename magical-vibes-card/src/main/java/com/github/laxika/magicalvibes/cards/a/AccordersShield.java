@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect.Scope;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -20,7 +20,7 @@ public class AccordersShield extends Card {
 
     public AccordersShield() {
         addEffect(EffectSlot.STATIC, new BoostAttachedCreatureEffect(0, 3));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.VIGILANCE, Scope.EQUIPPED_CREATURE));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}",

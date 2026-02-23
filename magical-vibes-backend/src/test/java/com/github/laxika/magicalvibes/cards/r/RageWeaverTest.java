@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -47,7 +48,7 @@ class RageWeaverTest extends BaseCardTest {
         assertThat(ability.getEffects().getFirst()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect effect = (GrantKeywordEffect) ability.getEffects().getFirst();
         assertThat(effect.keyword()).isEqualTo(Keyword.HASTE);
-        assertThat(effect.scope()).isEqualTo(GrantKeywordEffect.Scope.TARGET);
+        assertThat(effect.scope()).isEqualTo(GrantScope.TARGET);
         assertThat(ability.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

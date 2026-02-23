@@ -177,7 +177,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Sacrifice subtype for effect | `s/SiegeGangCommander.java` | SacrificeSubtypeCreatureCost + DealDamageToAnyTargetEffect |
 | Regenerate (self) | `d/DrudgeSkeletons.java` | `(false, "{B}", RegenerateEffect, false)` |
 | Regenerate (target creature) | `a/Asceticism.java` | `RegenerateEffect(true)` + PermanentPredicateTargetFilter |
-| Static effect grant (own creatures) | `a/Asceticism.java` | `GrantEffect(CantBeTargetOfSpellsOrAbilitiesEffect, Scope.OWN_CREATURES)` |
+| Static effect grant (own creatures) | `a/Asceticism.java` | `GrantEffectEffect(CantBeTargetOfSpellsOrAbilitiesEffect, GrantScope.OWN_CREATURES)` |
 | Create token | `d/DragonRoost.java` | CreateCreatureTokenEffect |
 | Mill target | `m/Millstone.java` | `(true, "{2}", MillTargetPlayerEffect, true)` |
 | Mana dork (tap for color) | `b/BirdsOfParadise.java` | `(true, null, AwardAnyColorManaEffect, false)` |

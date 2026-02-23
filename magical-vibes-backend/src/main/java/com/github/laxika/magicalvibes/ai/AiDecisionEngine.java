@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect.Scope;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
@@ -445,7 +445,7 @@ public class AiDecisionEngine {
         if (card.isAura()) {
             for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof BoostAttachedCreatureEffect
-                        || (effect instanceof GrantKeywordEffect grant && grant.scope() == Scope.ENCHANTED_CREATURE)) {
+                        || (effect instanceof GrantKeywordEffect grant && grant.scope() == GrantScope.ENCHANTED_CREATURE)) {
                     isBeneficial = true;
                     break;
                 }

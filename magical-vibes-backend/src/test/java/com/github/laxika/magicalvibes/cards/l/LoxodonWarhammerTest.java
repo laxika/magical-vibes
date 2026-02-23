@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -51,7 +52,7 @@ class LoxodonWarhammerTest extends BaseCardTest {
         List<GrantKeywordEffect> keywordEffects = card.getEffects(EffectSlot.STATIC).stream()
                 .filter(e -> e instanceof GrantKeywordEffect)
                 .map(e -> (GrantKeywordEffect) e)
-                .filter(e -> e.scope() == GrantKeywordEffect.Scope.EQUIPPED_CREATURE)
+                .filter(e -> e.scope() == GrantScope.EQUIPPED_CREATURE)
                 .toList();
         assertThat(keywordEffects).hasSize(2);
         assertThat(keywordEffects).extracting(GrantKeywordEffect::keyword)

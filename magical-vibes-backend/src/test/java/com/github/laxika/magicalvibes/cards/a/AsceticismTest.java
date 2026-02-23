@@ -9,8 +9,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -32,10 +33,10 @@ class AsceticismTest extends BaseCardTest {
         Asceticism card = new Asceticism();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantEffect.class);
-        GrantEffect grantEffect = (GrantEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantEffectEffect.class);
+        GrantEffectEffect grantEffect = (GrantEffectEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(grantEffect.effect()).isInstanceOf(CantBeTargetOfSpellsOrAbilitiesEffect.class);
-        assertThat(grantEffect.scope()).isEqualTo(GrantKeywordEffect.Scope.OWN_CREATURES);
+        assertThat(grantEffect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
 
         assertThat(card.getActivatedAbilities()).hasSize(1);
         assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())

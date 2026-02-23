@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,7 @@ class MantisEngineTest extends BaseCardTest {
         GrantKeywordEffect flying = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
         assertThat(flying.keyword())
                 .isEqualTo(Keyword.FLYING);
-        assertThat(flying.scope()).isEqualTo(GrantKeywordEffect.Scope.SELF);
+        assertThat(flying.scope()).isEqualTo(GrantScope.SELF);
 
         // Second ability: {2} grants first strike
         assertThat(card.getActivatedAbilities().get(1).getManaCost()).isEqualTo("{2}");
@@ -52,7 +53,7 @@ class MantisEngineTest extends BaseCardTest {
         GrantKeywordEffect firstStrike = (GrantKeywordEffect) card.getActivatedAbilities().get(1).getEffects().getFirst();
         assertThat(firstStrike.keyword())
                 .isEqualTo(Keyword.FIRST_STRIKE);
-        assertThat(firstStrike.scope()).isEqualTo(GrantKeywordEffect.Scope.SELF);
+        assertThat(firstStrike.scope()).isEqualTo(GrantScope.SELF);
     }
 
     // ===== Casting =====

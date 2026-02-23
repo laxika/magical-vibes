@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -36,7 +37,7 @@ class OverrunTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
         assertThat(grant.keyword()).isEqualTo(Keyword.TRAMPLE);
-        assertThat(grant.scope()).isEqualTo(GrantKeywordEffect.Scope.OWN_CREATURES);
+        assertThat(grant.scope()).isEqualTo(GrantScope.OWN_CREATURES);
         assertThat(card.getCardText()).contains("Creatures you control get +3/+3 and gain trample until end of turn.");
     }
 

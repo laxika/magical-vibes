@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
@@ -243,7 +244,7 @@ public class SpellEvaluator {
                 value += boost.powerBoost() * 2.0 + boost.toughnessBoost();
             }
             if (effect instanceof GrantKeywordEffect grant
-                    && grant.scope() == GrantKeywordEffect.Scope.ENCHANTED_CREATURE) {
+                    && grant.scope() == GrantScope.ENCHANTED_CREATURE) {
                 isBeneficial = true;
                 value += 3;
             }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -35,8 +36,8 @@ class SerrasEmbraceTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.STATIC).get(2)).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect firstKeyword = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);
         GrantKeywordEffect secondKeyword = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(2);
-        assertThat(firstKeyword.scope()).isEqualTo(GrantKeywordEffect.Scope.ENCHANTED_CREATURE);
-        assertThat(secondKeyword.scope()).isEqualTo(GrantKeywordEffect.Scope.ENCHANTED_CREATURE);
+        assertThat(firstKeyword.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
+        assertThat(secondKeyword.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
         assertThat(List.of(firstKeyword.keyword(), secondKeyword.keyword()))
                 .containsExactlyInAnyOrder(Keyword.FLYING, Keyword.VIGILANCE);
     }

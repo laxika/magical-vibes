@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -39,7 +40,7 @@ class ThreatenTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(2);
         assertThat(effect.keyword()).isEqualTo(Keyword.HASTE);
-        assertThat(effect.scope()).isEqualTo(GrantKeywordEffect.Scope.TARGET);
+        assertThat(effect.scope()).isEqualTo(GrantScope.TARGET);
     }
 
     @Test

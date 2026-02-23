@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -35,7 +36,7 @@ class ShimmeringWingsTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(effect.keyword()).isEqualTo(Keyword.FLYING);
-        assertThat(effect.scope()).isEqualTo(GrantKeywordEffect.Scope.ENCHANTED_CREATURE);
+        assertThat(effect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
         assertThat(card.getActivatedAbilities()).hasSize(1);
         assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{U}");
         assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();

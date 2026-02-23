@@ -94,7 +94,7 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/e/ElvenRiders.java`
 
 - Equipment with static keyword + evasion:
-  - `addEffect(EffectSlot.STATIC, new CantBeBlockedEffect())` + `addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.X, Scope.EQUIPPED_CREATURE))` + equip ability
+  - `addEffect(EffectSlot.STATIC, new CantBeBlockedEffect())` + `addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.X, GrantScope.EQUIPPED_CREATURE))` + equip ability
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/w/WhispersilkCloak.java`
 
 - Creature land (manland) — enters tapped, taps for mana, animates:

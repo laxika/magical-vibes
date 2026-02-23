@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
@@ -246,7 +247,7 @@ public class CreatureModResolutionService {
 
     @HandlesEffect(GrantKeywordEffect.class)
     private void resolveGrantKeyword(GameData gameData, StackEntry entry, GrantKeywordEffect grant) {
-        if (grant.scope() == GrantKeywordEffect.Scope.OWN_CREATURES) {
+        if (grant.scope() == GrantScope.OWN_CREATURES) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
             int count = 0;
             for (Permanent permanent : battlefield) {

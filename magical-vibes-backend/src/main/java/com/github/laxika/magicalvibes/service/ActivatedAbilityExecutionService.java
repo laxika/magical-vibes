@@ -21,8 +21,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect.Scope;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -73,7 +73,7 @@ public class ActivatedAbilityExecutionService {
                     (e instanceof RegenerateEffect regen && !regen.targetsPermanent() && !permanent.getCard().isAura())
                             || e instanceof BoostSelfEffect || e instanceof UntapSelfEffect
                             || e instanceof AnimateSelfEffect || e instanceof AnimateLandEffect
-                            || (e instanceof GrantKeywordEffect grant && grant.scope() == Scope.SELF));
+                            || (e instanceof GrantKeywordEffect grant && grant.scope() == GrantScope.SELF));
             if (needsSelfTarget) {
                 effectiveTargetId = permanent.getId();
             }

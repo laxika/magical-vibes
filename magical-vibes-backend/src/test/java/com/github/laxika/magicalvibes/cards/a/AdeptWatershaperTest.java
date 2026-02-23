@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -34,7 +35,7 @@ class AdeptWatershaperTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(effect.keyword()).isEqualTo(Keyword.INDESTRUCTIBLE);
-        assertThat(effect.scope()).isEqualTo(GrantKeywordEffect.Scope.OWN_TAPPED_CREATURES);
+        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_TAPPED_CREATURES);
     }
 
     // ===== Casting and resolving =====

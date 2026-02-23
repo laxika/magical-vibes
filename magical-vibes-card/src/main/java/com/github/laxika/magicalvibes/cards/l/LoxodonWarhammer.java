@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect.Scope;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -20,8 +20,8 @@ public class LoxodonWarhammer extends Card {
 
     public LoxodonWarhammer() {
         addEffect(EffectSlot.STATIC, new BoostAttachedCreatureEffect(3, 0));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, Scope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.LIFELINK, Scope.EQUIPPED_CREATURE));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}",
