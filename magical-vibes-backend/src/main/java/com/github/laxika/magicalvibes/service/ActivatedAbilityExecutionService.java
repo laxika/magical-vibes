@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
@@ -128,6 +129,7 @@ public class ActivatedAbilityExecutionService {
             if (effect instanceof SacrificeSelfCost
                     || effect instanceof SacrificeCreatureCost
                     || effect instanceof SacrificeSubtypeCreatureCost
+                    || effect instanceof SacrificeArtifactCost
                     || effect instanceof DiscardCardTypeCost
                     || effect instanceof RemoveCounterFromSourceCost) {
                 continue;

@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
@@ -282,6 +283,7 @@ public class AbilityActivationService {
                 .filter(SacrificeSubtypeCreatureCost.class::isInstance)
                 .map(SacrificeSubtypeCreatureCost.class::cast)
                 .findFirst();
+        boolean hasSacArtifactCost = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeArtifactCost);
 
         // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
         if (!hasSacCreatureCost) {
@@ -290,6 +292,9 @@ public class AbilityActivationService {
         }
         if (sacSubtypeCost.isPresent() && !hasSubtypeCreatureToSacrifice(gameData, playerId, sacSubtypeCost.get())) {
             throw new IllegalStateException("Must choose a " + sacSubtypeCost.get().subtype().getDisplayName() + " to sacrifice");
+        }
+        if (hasSacArtifactCost && !hasArtifactToSacrifice(gameData, playerId)) {
+            throw new IllegalStateException("No artifact to sacrifice");
         }
 
         DiscardCardTypeCost discardCardTypeCost = abilityEffects.stream()
@@ -343,6 +348,12 @@ public class AbilityActivationService {
         if (sacSubtypeCost.isPresent()) {
             if (handleSubtypeSacrificeCostSelection(gameData, player, permanent, effectiveIndex, effectiveXValue,
                     targetPermanentId, targetZone, sacSubtypeCost.get())) {
+                return;
+            }
+        }
+        if (hasSacArtifactCost) {
+            if (handleArtifactSacrificeCostSelection(gameData, player, permanent, effectiveIndex, effectiveXValue,
+                    targetPermanentId, targetZone)) {
                 return;
             }
         }
@@ -491,6 +502,116 @@ public class AbilityActivationService {
         return battlefield.stream()
                 .anyMatch(p -> gameQueryService.isCreature(gameData, p)
                         && p.getCard().getSubtypes().contains(subtypeCost.subtype()));
+    }
+
+    private boolean hasArtifactToSacrifice(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return false;
+        }
+        return battlefield.stream().anyMatch(gameQueryService::isArtifact);
+    }
+
+    private boolean handleArtifactSacrificeCostSelection(GameData gameData,
+                                                         Player player,
+                                                         Permanent sourcePermanent,
+                                                         int abilityIndex,
+                                                         int xValue,
+                                                         UUID targetPermanentId,
+                                                         Zone targetZone) {
+        UUID playerId = player.getId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            throw new IllegalStateException("No artifact to sacrifice");
+        }
+
+        List<UUID> validSacrificeIds = battlefield.stream()
+                .filter(gameQueryService::isArtifact)
+                .map(Permanent::getId)
+                .toList();
+        if (validSacrificeIds.isEmpty()) {
+            throw new IllegalStateException("No artifact to sacrifice");
+        }
+        if (validSacrificeIds.size() == 1) {
+            Permanent onlyChoice = gameQueryService.findPermanentById(gameData, validSacrificeIds.getFirst());
+            if (onlyChoice != null) {
+                sacrificePermanentAsCost(gameData, player, onlyChoice);
+            }
+            return false;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilitySacrificeArtifact(
+                playerId,
+                sourcePermanent.getId(),
+                abilityIndex,
+                xValue,
+                targetPermanentId,
+                targetZone
+        ));
+        playerInputService.beginPermanentChoice(gameData, playerId, validSacrificeIds,
+                "Choose an artifact to sacrifice.");
+        gameBroadcastService.broadcastGameState(gameData);
+        return true;
+    }
+
+    public void completeActivatedAbilityArtifactSacrificeChoice(GameData gameData,
+                                                                Player player,
+                                                                PermanentChoiceContext.ActivatedAbilitySacrificeArtifact context,
+                                                                UUID sacrificedPermanentId) {
+        UUID playerId = player.getId();
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+        if (sourcePermanent == null) {
+            throw new IllegalStateException("Source permanent no longer exists");
+        }
+
+        List<ActivatedAbility> ownAbilities = sourcePermanent.getCard().getActivatedAbilities();
+        List<ActivatedAbility> grantedAbilities = gameQueryService.computeStaticBonus(gameData, sourcePermanent).grantedActivatedAbilities();
+        List<ActivatedAbility> abilities = new ArrayList<>(ownAbilities);
+        abilities.addAll(grantedAbilities);
+        int effectiveIndex = context.abilityIndex() != null ? context.abilityIndex() : 0;
+        if (effectiveIndex < 0 || effectiveIndex >= abilities.size()) {
+            throw new IllegalStateException("Invalid ability index");
+        }
+        ActivatedAbility ability = abilities.get(effectiveIndex);
+        List<CardEffect> abilityEffects = ability.getEffects();
+        boolean hasArtifactCost = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeArtifactCost);
+        if (!hasArtifactCost) {
+            throw new IllegalStateException("Activated ability no longer has the required sacrifice cost");
+        }
+
+        Permanent sacrificed = gameQueryService.findPermanentById(gameData, sacrificedPermanentId);
+        if (sacrificed == null) {
+            throw new IllegalStateException("Invalid sacrifice target");
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null || !battlefield.contains(sacrificed)) {
+            throw new IllegalStateException("Must sacrifice an artifact you control");
+        }
+        if (!gameQueryService.isArtifact(sacrificed)) {
+            throw new IllegalStateException("Must sacrifice an artifact");
+        }
+
+        sacrificePermanentAsCost(gameData, player, sacrificed);
+        activatedAbilityExecutionService.completeActivationAfterCosts(
+                gameData, player, sourcePermanent, ability, abilityEffects,
+                context.xValue() != null ? context.xValue() : 0, context.targetPermanentId(), context.targetZone(), false);
+        recordAbilityActivationUse(gameData, sourcePermanent, effectiveIndex);
+    }
+
+    private void sacrificePermanentAsCost(GameData gameData, Player player, Permanent sacTarget) {
+        UUID playerId = player.getId();
+        List<Permanent> playerBf = gameData.playerBattlefields.get(playerId);
+        if (playerBf == null || !playerBf.contains(sacTarget)) {
+            throw new IllegalStateException("Must sacrifice a permanent you control");
+        }
+        playerBf.remove(sacTarget);
+        gameHelper.addCardToGraveyard(gameData, playerId, sacTarget.getCard(), Zone.BATTLEFIELD);
+        if (gameQueryService.isCreature(gameData, sacTarget)) {
+            gameHelper.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true);
+            gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+        }
+        String sacLog = player.getUsername() + " sacrifices " + sacTarget.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, sacLog);
     }
 
     private void sacrificeCreatureAsCost(GameData gameData, Player player, Permanent sacTarget) {
@@ -696,6 +817,7 @@ public class AbilityActivationService {
                 .filter(e -> !(e instanceof SacrificeSelfCost)
                         && !(e instanceof SacrificeCreatureCost)
                         && !(e instanceof SacrificeSubtypeCreatureCost)
+                        && !(e instanceof SacrificeArtifactCost)
                         && !(e instanceof DiscardCardTypeCost)
                         && !(e instanceof RemoveCounterFromSourceCost))
                 .toList();

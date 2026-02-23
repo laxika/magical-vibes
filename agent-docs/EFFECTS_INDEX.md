@@ -81,6 +81,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `SacrificeSelfCost` | `()` | sacrifice this permanent as cost |
 | `SacrificeCreatureCost` | `()` | sacrifice a creature as cost |
 | `SacrificeSubtypeCreatureCost` | `(CardSubtype subtype)` | sacrifice a creature of specific subtype as cost |
+| `SacrificeArtifactCost` | `()` | sacrifice an artifact as cost |
 | `SacrificeAllCreaturesYouControlCost` | `()` | sacrifice all creatures you control as cost |
 | `DiscardCardTypeCost` | `(CardType requiredType)` | discard a card of specific type as cost |
 | `RemoveCounterFromSourceCost` | `()` | remove a counter from this permanent as cost (prefers -1/-1, then +1/+1) |
@@ -242,7 +243,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `GrantKeywordEffect` | `(Keyword keyword, Scope scope)` | grant keyword. Scope: `SELF`, `TARGET`, `ENCHANTED_CREATURE`, `EQUIPPED_CREATURE`, `OWN_TAPPED_CREATURES`, `OWN_CREATURES` |
-| `MetalcraftKeywordEffect` | `(Keyword keyword)` | metalcraft — has keyword as long as you control 3+ artifacts (self-only static) |
+| `MetalcraftKeywordEffect` | `(Keyword keyword)` or `(Keyword keyword, int powerBoost, int toughnessBoost)` | metalcraft — has keyword (and optional +P/+T) as long as you control 3+ artifacts (self-only static) |
 | `GrantActivatedAbilityToOwnLandsEffect` | `(ActivatedAbility ability)` | grant activated ability to all lands you control |
 | `GrantActivatedAbilityToEnchantedCreatureEffect` | `(ActivatedAbility ability)` | grant activated ability to enchanted creature |
 | `GrantAdditionalBlockEffect` | `(int additionalBlocks)` | can block N additional creatures |

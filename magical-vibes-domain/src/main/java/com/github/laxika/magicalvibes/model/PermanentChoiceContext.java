@@ -27,6 +27,13 @@ public sealed interface PermanentChoiceContext {
                                             Zone targetZone,
                                             CardSubtype subtype) implements PermanentChoiceContext {}
 
+    record ActivatedAbilitySacrificeArtifact(UUID activatingPlayerId,
+                                             UUID sourcePermanentId,
+                                             Integer abilityIndex,
+                                             Integer xValue,
+                                             UUID targetPermanentId,
+                                             Zone targetZone) implements PermanentChoiceContext {}
+
     record DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
 
     record DiscardTriggerAnyTarget(Card discardedCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}

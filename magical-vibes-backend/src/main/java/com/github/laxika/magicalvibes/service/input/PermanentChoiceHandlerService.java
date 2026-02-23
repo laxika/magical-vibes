@@ -151,6 +151,8 @@ public class PermanentChoiceHandlerService {
             turnProgressionService.resolveAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.ActivatedAbilitySacrificeSubtype activatedAbilitySacrificeSubtype) {
             abilityActivationService.completeActivatedAbilitySubtypeSacrificeChoice(gameData, player, activatedAbilitySacrificeSubtype, permanentId);
+        } else if (context instanceof PermanentChoiceContext.ActivatedAbilitySacrificeArtifact activatedAbilitySacrificeArtifact) {
+            abilityActivationService.completeActivatedAbilityArtifactSacrificeChoice(gameData, player, activatedAbilitySacrificeArtifact, permanentId);
         } else if (context instanceof PermanentChoiceContext.BounceCreature bounceCreature) {
             Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
             if (target == null) {

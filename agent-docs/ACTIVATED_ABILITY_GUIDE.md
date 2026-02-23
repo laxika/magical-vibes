@@ -221,6 +221,7 @@ Sacrifice and discard costs go in the `effects` list BEFORE the actual effect. T
 | `SacrificeSelfCost` | `()` | "Sacrifice this: ..." |
 | `SacrificeCreatureCost` | `()` | "Sacrifice a creature: ..." |
 | `SacrificeSubtypeCreatureCost` | `(CardSubtype)` | "Sacrifice a Goblin: ..." |
+| `SacrificeArtifactCost` | `()` | "Sacrifice an artifact: ..." |
 | `SacrificeAllCreaturesYouControlCost` | `()` | "Sacrifice all creatures: ..." |
 | `DiscardCardTypeCost` | `(CardType)` | "Discard a [type] card: ..." |
 | `RemoveCounterFromSourceCost` | `()` | "Remove a counter from this: ..." |
@@ -235,9 +236,14 @@ new ActivatedAbility(false, "{1}{R}",
 new ActivatedAbility(false, null,
     List.of(new SacrificeSelfCost(), new GainLifeEffect(3)),
     "Sacrifice Bottle Gnomes: You gain 3 life.")
+
+// {T}, Sacrifice an artifact: Deal 2 damage to any target
+new ActivatedAbility(true, null,
+    List.of(new SacrificeArtifactCost(), new DealDamageToAnyTargetEffect(2)),
+    "{T}, Sacrifice an artifact: Barrage Ogre deals 2 damage to any target.")
 ```
 
-Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon`, `BloodfireColossus`
+Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon`, `BloodfireColossus`, `BarrageOgre`
 
 ---
 

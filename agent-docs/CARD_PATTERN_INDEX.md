@@ -135,6 +135,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Play lands from GY | `c/CrucibleOfWorlds.java` | STATIC PlayLandsFromGraveyardEffect |
 | Draw replacement | `a/Abundance.java` | STATIC AbundanceDrawReplacementEffect |
 | Metalcraft keyword | `a/AuriokEdgewright.java` | STATIC MetalcraftKeywordEffect (self-only, 3+ artifacts) |
+| Metalcraft keyword + boost | `a/AuriokSunchaser.java` | STATIC MetalcraftKeywordEffect(FLYING, 2, 2) — keyword + P/T boost |
 
 ## Auras
 
@@ -175,6 +176,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Grant keyword to target | `m/MightWeaver.java` | GrantKeywordEffect with color filter |
 | Sacrifice self for effect | `b/BottleGnomes.java` | SacrificeSelfCost + effect |
 | Sacrifice subtype for effect | `s/SiegeGangCommander.java` | SacrificeSubtypeCreatureCost + DealDamageToAnyTargetEffect |
+| Sacrifice artifact for effect | `b/BarrageOgre.java` | SacrificeArtifactCost + DealDamageToAnyTargetEffect (tap + sac artifact) |
 | Regenerate (self) | `d/DrudgeSkeletons.java` | `(false, "{B}", RegenerateEffect, false)` |
 | Regenerate (target creature) | `a/Asceticism.java` | `RegenerateEffect(true)` + PermanentPredicateTargetFilter |
 | Static effect grant (own creatures) | `a/Asceticism.java` | `GrantEffectEffect(CantBeTargetOfSpellsOrAbilitiesEffect, GrantScope.OWN_CREATURES)` |
