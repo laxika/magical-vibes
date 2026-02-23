@@ -214,12 +214,9 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `BoostTargetCreatureEffect` | `(int powerBoost, int toughnessBoost)` | target creature gets +X/+Y until end of turn |
 | `BoostSelfEffect` | `(int powerBoost, int toughnessBoost)` | this creature gets +X/+Y until end of turn |
 | `BoostAllOwnCreaturesEffect` | `(int powerBoost, int toughnessBoost)` | all your creatures get +X/+Y (static) |
-| `BoostOwnCreaturesEffect` | `(int powerBoost, int toughnessBoost)` | your creatures get +X/+Y until end of turn |
+| `StaticBoostEffect` | `(int powerBoost, int toughnessBoost, Set<Keyword> grantedKeywords, GrantScope scope, PermanentPredicate filter)` | unified static boost: +X/+Y and keywords with predicate-based filtering. Scope: `OWN_CREATURES`, `ALL_CREATURES`. Filter: optional `PermanentPredicate` (color, subtype, not, etc). Convenience constructors: `(p, t, scope)`, `(p, t, scope, filter)`, `(p, t, keywords, scope)` |
 | `BoostAllCreaturesXEffect` | `(int powerMultiplier, int toughnessMultiplier)` | all creatures get +X/+X where X is mana paid |
 | `BoostAttachedCreatureEffect` | `(int powerBoost, int toughnessBoost)` | enchanted/equipped creature gets +X/+Y (static, works for both auras and equipment) |
-| `BoostCreaturesBySubtypeEffect` | `(Set<CardSubtype> affectedSubtypes, int powerBoost, int toughnessBoost, Set<Keyword> grantedKeywords)` | creatures of subtypes get +X/+Y and keywords (lord, static) |
-| `BoostOtherCreaturesByColorEffect` | `(CardColor color, int powerBoost, int toughnessBoost)` | other creatures of color get +X/+Y (static) |
-| `BoostNonColorCreaturesEffect` | `(CardColor excludedColor, int powerBoost, int toughnessBoost)` | non-[color] creatures get +X/+Y (static) |
 | `BoostEnchantedCreaturePerControlledSubtypeEffect` | `(CardSubtype subtype, int powerPerSubtype, int toughnessPerSubtype)` | enchanted creature gets +X/+Y per controlled subtype |
 | `BoostByOtherCreaturesWithSameNameEffect` | `(int powerPerCreature, int toughnessPerCreature)` | +X/+Y per other creature with same name (static) |
 | `BoostBySharedCreatureTypeEffect` | `()` | +1/+1 for each other creature sharing a creature type (static) |
@@ -242,8 +239,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
-| `GrantKeywordEffect` | `(Keyword keyword, Scope scope)` | grant keyword. Scope: `SELF`, `TARGET`, `ENCHANTED_CREATURE`, `EQUIPPED_CREATURE`, `OWN_TAPPED_CREATURES`, `OWN_CREATURES` |
-| `GrantKeywordToOwnCreaturesByColorEffect` | `(CardColor color, Keyword keyword)` | other creatures you control of specified color have keyword (static lord) |
+| `GrantKeywordEffect` | `(Keyword keyword, GrantScope scope)` or `(Keyword keyword, GrantScope scope, PermanentPredicate filter)` | grant keyword. Scope: `SELF`, `TARGET`, `ENCHANTED_CREATURE`, `EQUIPPED_CREATURE`, `OWN_TAPPED_CREATURES`, `OWN_CREATURES`, `ALL_CREATURES`. Optional predicate filter for conditional grants |
 | `MetalcraftKeywordEffect` | `(Keyword keyword)` or `(Keyword keyword, int powerBoost, int toughnessBoost)` | metalcraft — has keyword (and optional +P/+T) as long as you control 3+ artifacts (self-only static) |
 | `GrantActivatedAbilityToOwnLandsEffect` | `(ActivatedAbility ability)` | grant activated ability to all lands you control |
 | `GrantActivatedAbilityToEnchantedCreatureEffect` | `(ActivatedAbility ability)` | grant activated ability to enchanted creature |

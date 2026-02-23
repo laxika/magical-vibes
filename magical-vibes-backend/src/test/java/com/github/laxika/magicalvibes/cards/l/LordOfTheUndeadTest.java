@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardOfSubtypeFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -35,13 +35,13 @@ class LordOfTheUndeadTest extends BaseCardTest {
         LordOfTheUndead card = new LordOfTheUndead();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(BoostCreaturesBySubtypeEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
 
-        BoostCreaturesBySubtypeEffect effect = (BoostCreaturesBySubtypeEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.affectedSubtypes()).containsExactly(CardSubtype.ZOMBIE);
+        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(effect.powerBoost()).isEqualTo(1);
         assertThat(effect.toughnessBoost()).isEqualTo(1);
         assertThat(effect.grantedKeywords()).isEmpty();
+        assertThat(effect.filter()).isNotNull();
     }
 
     @Test

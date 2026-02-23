@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -13,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class GoblinKing extends Card {
 
     public GoblinKing() {
-        addEffect(EffectSlot.STATIC, new BoostCreaturesBySubtypeEffect(Set.of(CardSubtype.GOBLIN), 1, 1, Set.of(Keyword.MOUNTAINWALK)));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, Set.of(Keyword.MOUNTAINWALK), GrantScope.ALL_CREATURES,
+                new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN))));
     }
 }

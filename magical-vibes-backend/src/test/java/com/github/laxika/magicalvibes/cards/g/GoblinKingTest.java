@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -32,13 +32,13 @@ class GoblinKingTest extends BaseCardTest {
         GoblinKing card = new GoblinKing();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(BoostCreaturesBySubtypeEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
 
-        BoostCreaturesBySubtypeEffect effect = (BoostCreaturesBySubtypeEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.affectedSubtypes()).containsExactly(CardSubtype.GOBLIN);
+        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(effect.powerBoost()).isEqualTo(1);
         assertThat(effect.toughnessBoost()).isEqualTo(1);
         assertThat(effect.grantedKeywords()).containsExactly(Keyword.MOUNTAINWALK);
+        assertThat(effect.filter()).isNotNull();
     }
 
     // ===== Casting and resolving =====

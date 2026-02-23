@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnCreaturesByColorEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,11 +23,11 @@ class BellowingTanglewurmTest extends BaseCardTest {
         BellowingTanglewurm card = new BellowingTanglewurm();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordToOwnCreaturesByColorEffect.class);
-        GrantKeywordToOwnCreaturesByColorEffect effect =
-                (GrantKeywordToOwnCreaturesByColorEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.color()).isEqualTo(CardColor.GREEN);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
+        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(effect.keyword()).isEqualTo(Keyword.INTIMIDATE);
+        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
+        assertThat(effect.filter()).isNotNull();
     }
 
     // ===== Grants intimidate to own green creatures =====

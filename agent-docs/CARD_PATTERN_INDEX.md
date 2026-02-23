@@ -105,9 +105,10 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
-| Subtype lord | `g/GoblinKing.java` | STATIC BoostCreaturesBySubtypeEffect |
-| Anthem (all own) | `g/GloriousAnthem.java` | STATIC BoostOwnCreaturesEffect |
-| Color keyword lord | `b/BellowingTanglewurm.java` | STATIC GrantKeywordToOwnCreaturesByColorEffect |
+| Subtype lord | `g/GoblinKing.java` | STATIC StaticBoostEffect with PermanentHasAnySubtypePredicate filter, ALL_CREATURES scope |
+| Anthem (all own) | `g/GloriousAnthem.java` | STATIC StaticBoostEffect with OWN_CREATURES scope, no filter |
+| Color boost/debuff | `a/AscendantEvincar.java` | STATIC StaticBoostEffect with PermanentColorInPredicate / PermanentNotPredicate filter |
+| Color keyword lord | `b/BellowingTanglewurm.java` | STATIC GrantKeywordEffect with PermanentColorInPredicate filter, OWN_CREATURES scope |
 | Shared-type pump | `c/CoatOfArms.java` | STATIC BoostBySharedCreatureTypeEffect |
 | Can't block | `s/SpinelessThug.java` | STATIC CantBlockEffect |
 | Must attack | `b/BloodrockCyclops.java` | STATIC MustAttackEffect |

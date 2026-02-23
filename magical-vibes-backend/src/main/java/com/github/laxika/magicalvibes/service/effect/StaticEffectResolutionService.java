@@ -7,24 +7,30 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreaturePerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEnchantmentOnBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostNonColorCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostOtherCreaturesByColorEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityToOwnLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnCreaturesByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledCreatureCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledLandCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledSubtypeCountEffect;
@@ -32,7 +38,9 @@ import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCreature
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 
@@ -43,17 +51,6 @@ public class StaticEffectResolutionService {
     private void resolveAnimateNoncreatureArtifacts(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         if (context.target().getCard().getType() == CardType.ARTIFACT) {
             accumulator.setAnimatedCreature(true);
-        }
-    }
-
-    @HandlesStaticEffect(BoostCreaturesBySubtypeEffect.class)
-    private void resolveBoostCreaturesBySubtype(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostCreaturesBySubtypeEffect) effect;
-        if (context.target().hasKeyword(Keyword.CHANGELING)
-                || context.target().getCard().getSubtypes().stream().anyMatch(boost.affectedSubtypes()::contains)) {
-            accumulator.addPower(boost.powerBoost());
-            accumulator.addToughness(boost.toughnessBoost());
-            accumulator.addKeywords(boost.grantedKeywords());
         }
     }
 
@@ -112,17 +109,17 @@ public class StaticEffectResolutionService {
         }
         if (grant.scope() == GrantScope.OWN_CREATURES && context.targetOnSameBattlefield()) {
             boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
-            if (isEffectivelyCreature(context.target(), hasAnimateArtifacts)) {
+            if (isEffectivelyCreature(context.target(), hasAnimateArtifacts)
+                    && matchesStaticFilter(context.target(), grant.filter())) {
                 accumulator.addKeyword(grant.keyword());
             }
         }
-    }
-
-    @HandlesStaticEffect(GrantKeywordToOwnCreaturesByColorEffect.class)
-    private void resolveGrantKeywordToOwnCreaturesByColor(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var grant = (GrantKeywordToOwnCreaturesByColorEffect) effect;
-        if (context.targetOnSameBattlefield() && context.target().getCard().getColor() == grant.color()) {
-            accumulator.addKeyword(grant.keyword());
+        if (grant.scope() == GrantScope.ALL_CREATURES) {
+            boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
+            if (isEffectivelyCreature(context.target(), hasAnimateArtifacts)
+                    && matchesStaticFilter(context.target(), grant.filter())) {
+                accumulator.addKeyword(grant.keyword());
+            }
         }
     }
 
@@ -142,36 +139,32 @@ public class StaticEffectResolutionService {
         }
         if (grant.scope() == GrantScope.OWN_CREATURES && context.targetOnSameBattlefield()) {
             boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
-            if (isEffectivelyCreature(context.target(), hasAnimateArtifacts)) {
+            if (isEffectivelyCreature(context.target(), hasAnimateArtifacts)
+                    && matchesStaticFilter(context.target(), grant.filter())) {
+                accumulator.addGrantedEffect(grant.effect());
+            }
+        }
+        if (grant.scope() == GrantScope.ALL_CREATURES) {
+            boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
+            if (isEffectivelyCreature(context.target(), hasAnimateArtifacts)
+                    && matchesStaticFilter(context.target(), grant.filter())) {
                 accumulator.addGrantedEffect(grant.effect());
             }
         }
     }
 
-    @HandlesStaticEffect(BoostOwnCreaturesEffect.class)
-    private void resolveBoostOwnCreatures(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostOwnCreaturesEffect) effect;
-        if (context.targetOnSameBattlefield()) {
+    @HandlesStaticEffect(StaticBoostEffect.class)
+    private void resolveStaticBoost(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (StaticBoostEffect) effect;
+        boolean scopeMatch = switch (boost.scope()) {
+            case OWN_CREATURES -> context.targetOnSameBattlefield();
+            case ALL_CREATURES -> true;
+            default -> false;
+        };
+        if (scopeMatch && matchesStaticFilter(context.target(), boost.filter())) {
             accumulator.addPower(boost.powerBoost());
             accumulator.addToughness(boost.toughnessBoost());
-        }
-    }
-
-    @HandlesStaticEffect(BoostOtherCreaturesByColorEffect.class)
-    private void resolveBoostOtherCreaturesByColor(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostOtherCreaturesByColorEffect) effect;
-        if (context.target().getCard().getColor() == boost.color()) {
-            accumulator.addPower(boost.powerBoost());
-            accumulator.addToughness(boost.toughnessBoost());
-        }
-    }
-
-    @HandlesStaticEffect(BoostNonColorCreaturesEffect.class)
-    private void resolveBoostNonColorCreatures(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostNonColorCreaturesEffect) effect;
-        if (context.target().getCard().getColor() != boost.excludedColor()) {
-            accumulator.addPower(boost.powerBoost());
-            accumulator.addToughness(boost.toughnessBoost());
+            accumulator.addKeywords(boost.grantedKeywords());
         }
     }
 
@@ -359,6 +352,48 @@ public class StaticEffectResolutionService {
             }
         }
         return null;
+    }
+
+    private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = EnumSet.of(
+            CardSubtype.FOREST,
+            CardSubtype.MOUNTAIN,
+            CardSubtype.ISLAND,
+            CardSubtype.PLAINS,
+            CardSubtype.SWAMP,
+            CardSubtype.AURA,
+            CardSubtype.EQUIPMENT,
+            CardSubtype.AJANI
+    );
+
+    static boolean matchesStaticFilter(Permanent target, PermanentPredicate filter) {
+        if (filter == null) return true;
+        if (filter instanceof PermanentColorInPredicate p)
+            return p.colors().contains(target.getCard().getColor());
+        if (filter instanceof PermanentHasSubtypePredicate p)
+            return target.getCard().getSubtypes().contains(p.subtype())
+                    || (isCreatureSubtype(p.subtype()) && target.hasKeyword(Keyword.CHANGELING));
+        if (filter instanceof PermanentHasAnySubtypePredicate p)
+            return target.getCard().getSubtypes().stream().anyMatch(p.subtypes()::contains)
+                    || (p.subtypes().stream().anyMatch(StaticEffectResolutionService::isCreatureSubtype)
+                    && target.hasKeyword(Keyword.CHANGELING));
+        if (filter instanceof PermanentIsCreaturePredicate)
+            return target.getCard().getType() == CardType.CREATURE
+                    || target.getCard().getAdditionalTypes().contains(CardType.CREATURE);
+        if (filter instanceof PermanentIsArtifactPredicate)
+            return target.getCard().getType() == CardType.ARTIFACT
+                    || target.getCard().getAdditionalTypes().contains(CardType.ARTIFACT);
+        if (filter instanceof PermanentNotPredicate p)
+            return !matchesStaticFilter(target, p.predicate());
+        if (filter instanceof PermanentAllOfPredicate p)
+            return p.predicates().stream().allMatch(inner -> matchesStaticFilter(target, inner));
+        if (filter instanceof PermanentAnyOfPredicate p)
+            return p.predicates().stream().anyMatch(inner -> matchesStaticFilter(target, inner));
+        if (filter instanceof PermanentTruePredicate) return true;
+        throw new IllegalArgumentException("Unsupported static filter predicate: " + filter.getClass().getSimpleName());
+    }
+
+    private static boolean isCreatureSubtype(CardSubtype subtype) {
+        return !NON_CREATURE_SUBTYPES.contains(subtype);
     }
 
     private boolean hasAnimateArtifactEffect(GameData gameData) {

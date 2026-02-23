@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostCreaturesBySubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HonorGuard;
@@ -35,12 +35,12 @@ class MobilizationTest extends BaseCardTest {
         Mobilization card = new Mobilization();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(BoostCreaturesBySubtypeEffect.class);
-        BoostCreaturesBySubtypeEffect staticEffect = (BoostCreaturesBySubtypeEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(staticEffect.affectedSubtypes()).containsExactly(CardSubtype.SOLDIER);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
+        StaticBoostEffect staticEffect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(staticEffect.powerBoost()).isEqualTo(0);
         assertThat(staticEffect.toughnessBoost()).isEqualTo(0);
         assertThat(staticEffect.grantedKeywords()).containsExactly(Keyword.VIGILANCE);
+        assertThat(staticEffect.filter()).isNotNull();
         assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
         assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst()).isInstanceOf(CreateCreatureTokenEffect.class);
         CreateCreatureTokenEffect tokenEffect = (CreateCreatureTokenEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
