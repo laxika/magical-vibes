@@ -34,7 +34,8 @@
       "Bash(./gradlew :magical-vibes-backend:test:*)",
       "Bash(./gradlew -q :magical-vibes-backend:test:*)",
       "Bash(tail:*)",
-      "Bash(comm:*)"
+      "Bash(comm:*)",
+      "Bash(head:*)"
     ]
   }
 }
