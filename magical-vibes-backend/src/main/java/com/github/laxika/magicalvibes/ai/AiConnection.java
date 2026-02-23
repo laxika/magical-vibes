@@ -13,18 +13,24 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class AiConnection implements Connection {
 
-    private static final long DECISION_DELAY_MS = 800;
+    private static final long DEFAULT_DECISION_DELAY_MS = 800;
 
     private final String connectionId;
     private final AiDecisionEngine engine;
     private final ObjectMapper objectMapper;
     private final ScheduledExecutorService executor;
+    private final long decisionDelayMs;
     private final AtomicBoolean open = new AtomicBoolean(true);
 
     public AiConnection(String connectionId, AiDecisionEngine engine, ObjectMapper objectMapper) {
+        this(connectionId, engine, objectMapper, DEFAULT_DECISION_DELAY_MS);
+    }
+
+    public AiConnection(String connectionId, AiDecisionEngine engine, ObjectMapper objectMapper, long decisionDelayMs) {
         this.connectionId = connectionId;
         this.engine = engine;
         this.objectMapper = objectMapper;
+        this.decisionDelayMs = decisionDelayMs;
 
         ScheduledThreadPoolExecutor pool = new ScheduledThreadPoolExecutor(1, r -> {
             Thread t = new Thread(r, "ai-" + connectionId);
@@ -63,7 +69,7 @@ public class AiConnection implements Connection {
                 } catch (Exception e) {
                     log.error("AI decision error for message type {}", type, e);
                 }
-            }, DECISION_DELAY_MS, TimeUnit.MILLISECONDS);
+            }, decisionDelayMs, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             log.error("AI failed to parse message", e);
         }
@@ -82,7 +88,7 @@ public class AiConnection implements Connection {
             } catch (Exception e) {
                 log.error("AI initial action error", e);
             }
-        }, DECISION_DELAY_MS, TimeUnit.MILLISECONDS);
+        }, decisionDelayMs, TimeUnit.MILLISECONDS);
     }
 }
 

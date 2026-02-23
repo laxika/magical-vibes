@@ -18,6 +18,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   selectedDeckId = signal<string>('');
   vsAi = signal(false);
   aiDeckId = signal<string>('');
+  aiDifficulty = signal<string>('easy');
   errorMessage = signal('');
   showCreateForm = signal(false);
   activeTab = signal<'1v1' | 'draft'>('1v1');
@@ -132,7 +133,8 @@ export class HomeComponent implements OnInit, OnDestroy {
       gameName: this.newGameName(),
       deckId: this.selectedDeckId(),
       vsAi: this.vsAi(),
-      aiDeckId: this.aiDeckId()
+      aiDeckId: this.aiDeckId(),
+      aiDifficulty: this.aiDifficulty()
     });
 
     this.newGameName.set('');

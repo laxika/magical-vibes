@@ -178,7 +178,8 @@ public class GameMessageHandler implements MessageHandler {
             GameData gameData = gameRegistry.getGameForPlayer(player.getId());
             String aiDeck = (request.aiDeckId() != null && !request.aiDeckId().isBlank())
                     ? request.aiDeckId() : request.deckId();
-            aiPlayerService.joinAsAi(gameData, aiDeck);
+            String aiDifficulty = request.aiDifficulty() != null ? request.aiDifficulty() : "easy";
+            aiPlayerService.joinAsAi(gameData, aiDeck, aiDifficulty);
 
             // Game is now in MULLIGAN — send full state to the creator
             JoinGame joinGame = gameBroadcastService.getJoinGame(gameData, player.getId());

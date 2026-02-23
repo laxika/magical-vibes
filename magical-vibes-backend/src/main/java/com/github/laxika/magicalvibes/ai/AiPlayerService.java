@@ -40,13 +40,22 @@ public class AiPlayerService {
     }
 
     public void joinAsAi(GameData gameData, String aiDeckId) {
+        joinAsAi(gameData, aiDeckId, "easy");
+    }
+
+    public void joinAsAi(GameData gameData, String aiDeckId, String aiDifficulty) {
+        boolean isMedium = "medium".equalsIgnoreCase(aiDifficulty);
+        String aiName = isMedium ? "AI Opponent (Medium)" : "AI Opponent (Easy)";
         UUID aiPlayerId = UUID.randomUUID();
-        Player aiPlayer = new Player(aiPlayerId, "AI Opponent");
+        Player aiPlayer = new Player(aiPlayerId, aiName);
 
         MessageHandler handler = messageHandlerProvider.getObject();
-        AiDecisionEngine engine = new AiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService);
+        AiDecisionEngine engine = isMedium
+                ? new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService)
+                : new AiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService);
         String connectionId = "ai-" + gameData.id;
-        AiConnection aiConnection = new AiConnection(connectionId, engine, objectMapper);
+        long delay = isMedium ? 1200L : 800L;
+        AiConnection aiConnection = new AiConnection(connectionId, engine, objectMapper, delay);
         engine.setSelfConnection(aiConnection);
 
         // Register the AI connection in the session manager so it receives messages

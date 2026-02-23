@@ -62,14 +62,14 @@ import java.util.UUID;
 @Slf4j
 public class AiDecisionEngine {
 
-    private final UUID gameId;
-    private final Player aiPlayer;
-    private final GameRegistry gameRegistry;
-    private final MessageHandler messageHandler;
-    private final GameQueryService gameQueryService;
+    protected final UUID gameId;
+    protected final Player aiPlayer;
+    protected final GameRegistry gameRegistry;
+    protected final MessageHandler messageHandler;
+    protected final GameQueryService gameQueryService;
 
     @Setter
-    private Connection selfConnection;
+    protected Connection selfConnection;
 
     public AiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                             MessageHandler messageHandler, GameQueryService gameQueryService) {
@@ -132,7 +132,7 @@ public class AiDecisionEngine {
         handleInitialMulligan();
     }
 
-    private boolean shouldKeepHand(GameData gameData) {
+    protected boolean shouldKeepHand(GameData gameData) {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
         if (hand == null || hand.isEmpty()) {
             return true;
@@ -203,7 +203,7 @@ public class AiDecisionEngine {
 
     // ===== Priority / Main Phase =====
 
-    private void handleGameState(GameData gameData) {
+    protected void handleGameState(GameData gameData) {
         if (gameData.status != GameStatus.RUNNING) {
             return;
         }
@@ -246,7 +246,7 @@ public class AiDecisionEngine {
         send(() -> messageHandler.handlePassPriority(selfConnection, new PassPriorityRequest()));
     }
 
-    private boolean tryPlayLand(GameData gameData) {
+    protected boolean tryPlayLand(GameData gameData) {
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(aiPlayer.getId(), 0);
         if (landsPlayed > 0) {
             return false;
@@ -270,7 +270,7 @@ public class AiDecisionEngine {
         return false;
     }
 
-    private boolean tryCastSpell(GameData gameData) {
+    protected boolean tryCastSpell(GameData gameData) {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
         if (hand == null) {
             return false;
@@ -330,7 +330,7 @@ public class AiDecisionEngine {
         return true;
     }
 
-    private ManaPool buildVirtualManaPool(GameData gameData) {
+    protected ManaPool buildVirtualManaPool(GameData gameData) {
         ManaPool virtual = new ManaPool();
 
         // Copy current pool
@@ -369,7 +369,7 @@ public class AiDecisionEngine {
         return virtual;
     }
 
-    private void tapLandsForCost(GameData gameData, String manaCostStr) {
+    protected void tapLandsForCost(GameData gameData, String manaCostStr) {
         ManaCost cost = new ManaCost(manaCostStr);
         ManaPool currentPool = gameData.playerManaPools.get(aiPlayer.getId());
 
@@ -411,7 +411,7 @@ public class AiDecisionEngine {
         }
     }
 
-    private int scoreCard(GameData gameData, Card card) {
+    protected int scoreCard(GameData gameData, Card card) {
         int score = card.getManaValue() * 10;
 
         if (card.getType() == CardType.CREATURE) {
@@ -431,7 +431,7 @@ public class AiDecisionEngine {
         return score;
     }
 
-    private UUID chooseTarget(GameData gameData, Card card) {
+    protected UUID chooseTarget(GameData gameData, Card card) {
         UUID opponentId = getOpponentId(gameData);
 
         // Handle ETB destroy effects (e.g., Aven Cloudchaser targets enchantments, Nekrataal targets creatures)
@@ -515,7 +515,7 @@ public class AiDecisionEngine {
         return candidates.getFirst().getId();
     }
 
-    private boolean passesTargetFilter(Card card, Permanent target) {
+    protected boolean passesTargetFilter(Card card, Permanent target) {
         if (card.getTargetFilter() == null) {
             return true;
         }
@@ -533,7 +533,7 @@ public class AiDecisionEngine {
 
     // ===== Combat =====
 
-    private void handleAttackers(GameData gameData) {
+    protected void handleAttackers(GameData gameData) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
         if (battlefield == null) {
             send(() -> messageHandler.handleDeclareAttackers(selfConnection, new DeclareAttackersRequest(List.of())));
@@ -644,7 +644,7 @@ public class AiDecisionEngine {
         return best;
     }
 
-    private void handleBlockers(GameData gameData) {
+    protected void handleBlockers(GameData gameData) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
         UUID opponentId = getOpponentId(gameData);
         List<Permanent> opponentBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
@@ -817,7 +817,7 @@ public class AiDecisionEngine {
 
     // ===== Choice Handlers =====
 
-    private void handleCardChoice(GameData gameData) {
+    protected void handleCardChoice(GameData gameData) {
         InteractionContext.CardChoice cardChoice = gameData.interaction.cardChoiceContext();
         if (cardChoice == null) {
             return;
@@ -1261,7 +1261,7 @@ public class AiDecisionEngine {
 
     // ===== Utility =====
 
-    private UUID getOpponentId(GameData gameData) {
+    protected UUID getOpponentId(GameData gameData) {
         for (UUID id : gameData.orderedPlayerIds) {
             if (!id.equals(aiPlayer.getId())) {
                 return id;
@@ -1270,7 +1270,7 @@ public class AiDecisionEngine {
         return null;
     }
 
-    private UUID getPriorityPlayerId(GameData gameData) {
+    protected UUID getPriorityPlayerId(GameData gameData) {
         if (gameData.activePlayerId == null) {
             return null;
         }
@@ -1285,7 +1285,7 @@ public class AiDecisionEngine {
         return null;
     }
 
-    private void send(MessageHandlerAction action) {
+    protected void send(MessageHandlerAction action) {
         try {
             action.execute();
         } catch (Exception e) {
@@ -1294,7 +1294,7 @@ public class AiDecisionEngine {
     }
 
     @FunctionalInterface
-    private interface MessageHandlerAction {
+    protected interface MessageHandlerAction {
         void execute() throws Exception;
     }
 }

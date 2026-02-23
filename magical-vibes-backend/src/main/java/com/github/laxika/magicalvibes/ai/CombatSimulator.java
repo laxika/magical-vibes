@@ -1,0 +1,535 @@
+package com.github.laxika.magicalvibes.ai;
+
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.GameQueryService;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Exhaustive combat search with pure arithmetic (no state mutation).
+ * Simulates combat outcomes to find the best set of attackers or blockers.
+ */
+public class CombatSimulator {
+
+    private static final int MAX_ATTACKER_SUBSET_BITS = 12;
+
+    private final GameQueryService gameQueryService;
+    private final BoardEvaluator boardEvaluator;
+
+    public CombatSimulator(GameQueryService gameQueryService, BoardEvaluator boardEvaluator) {
+        this.gameQueryService = gameQueryService;
+        this.boardEvaluator = boardEvaluator;
+    }
+
+    record CreatureInfo(int index, UUID id, int power, int toughness,
+                        boolean flying, boolean firstStrike, boolean doubleStrike,
+                        boolean trample, boolean lifelink, boolean indestructible,
+                        boolean menace, boolean fear, boolean reach, boolean defender,
+                        boolean cantBeBlocked, boolean isArtifact, CardColor color,
+                        double creatureScore) {}
+
+    record CombatOutcome(int aiLifeChange, int opponentLifeChange,
+                         double aiCreaturesLostValue, double opponentCreaturesLostValue) {
+        double evaluationDelta() {
+            return -opponentLifeChange * 2.0
+                    + opponentCreaturesLostValue
+                    - aiCreaturesLostValue
+                    + aiLifeChange * 0.5;
+        }
+    }
+
+    /**
+     * Finds the best set of attackers among available creatures.
+     */
+    public List<Integer> findBestAttackers(GameData gameData, UUID aiPlayerId,
+                                           List<Integer> availableAttackerIndices) {
+        if (availableAttackerIndices.isEmpty()) {
+            return List.of();
+        }
+
+        UUID opponentId = getOpponentId(gameData, aiPlayerId);
+        List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
+        List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+        int opponentLife = gameData.playerLifeTotals.getOrDefault(opponentId, 20);
+
+        // Build creature info for available attackers
+        List<CreatureInfo> attackerInfos = new ArrayList<>();
+        for (int idx : availableAttackerIndices) {
+            Permanent perm = aiBattlefield.get(idx);
+            attackerInfos.add(buildCreatureInfo(gameData, perm, idx, aiPlayerId, opponentId));
+        }
+
+        // Build creature info for potential blockers
+        List<CreatureInfo> blockerInfos = new ArrayList<>();
+        for (int i = 0; i < oppBattlefield.size(); i++) {
+            Permanent perm = oppBattlefield.get(i);
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
+            if (perm.isTapped()) continue;
+            blockerInfos.add(buildCreatureInfo(gameData, perm, i, opponentId, aiPlayerId));
+        }
+
+        // Limit to top creatures by score if too many
+        if (attackerInfos.size() > MAX_ATTACKER_SUBSET_BITS) {
+            attackerInfos.sort(Comparator.comparingDouble(CreatureInfo::creatureScore).reversed());
+            attackerInfos = new ArrayList<>(attackerInfos.subList(0, MAX_ATTACKER_SUBSET_BITS));
+        }
+
+        int n = attackerInfos.size();
+        int totalSubsets = 1 << n;
+
+        double bestScore = 0; // Not attacking at all scores 0
+        List<Integer> bestSubset = List.of();
+
+        for (int mask = 1; mask < totalSubsets; mask++) {
+            List<CreatureInfo> subset = new ArrayList<>();
+            for (int i = 0; i < n; i++) {
+                if ((mask & (1 << i)) != 0) {
+                    subset.add(attackerInfos.get(i));
+                }
+            }
+
+            // Quick lethal check: if unblockable damage >= opponent life, pick immediately
+            int unblockableDamage = subset.stream()
+                    .filter(a -> a.cantBeBlocked || !canBeBlockedByAny(a, blockerInfos))
+                    .mapToInt(CreatureInfo::power)
+                    .sum();
+            if (unblockableDamage >= opponentLife) {
+                return subset.stream().map(CreatureInfo::index).toList();
+            }
+
+            // Simulate greedy-optimal blocking by opponent
+            CombatOutcome outcome = simulateCombat(subset, blockerInfos, opponentLife);
+            double score = outcome.evaluationDelta();
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestSubset = subset.stream().map(CreatureInfo::index).toList();
+            }
+        }
+
+        return bestSubset;
+    }
+
+    /**
+     * Finds the best blocker assignments for the AI as defender.
+     */
+    public List<int[]> findBestBlockers(GameData gameData, UUID aiPlayerId,
+                                        List<Integer> attackerIndices,
+                                        List<Integer> availableBlockerIndices) {
+        if (attackerIndices.isEmpty() || availableBlockerIndices.isEmpty()) {
+            return List.of();
+        }
+
+        UUID opponentId = getOpponentId(gameData, aiPlayerId);
+        List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
+        List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+        int aiLife = gameData.playerLifeTotals.getOrDefault(aiPlayerId, 20);
+
+        // Build attacker and blocker info
+        List<CreatureInfo> attackerInfos = new ArrayList<>();
+        for (int idx : attackerIndices) {
+            Permanent perm = oppBattlefield.get(idx);
+            attackerInfos.add(buildCreatureInfo(gameData, perm, idx, opponentId, aiPlayerId));
+        }
+
+        List<CreatureInfo> blockerInfos = new ArrayList<>();
+        for (int idx : availableBlockerIndices) {
+            Permanent perm = aiBattlefield.get(idx);
+            blockerInfos.add(buildCreatureInfo(gameData, perm, idx, aiPlayerId, opponentId));
+        }
+
+        // Sort attackers by threat (highest power first)
+        attackerInfos.sort(Comparator.comparingDouble(CreatureInfo::creatureScore).reversed());
+
+        // Calculate total incoming damage to determine if lethal
+        int totalIncoming = attackerInfos.stream().mapToInt(CreatureInfo::power).sum();
+        boolean lethalIncoming = totalIncoming >= aiLife;
+
+        List<int[]> assignments = new ArrayList<>(); // [blockerIdx, attackerIdx]
+        boolean[] blockerUsed = new boolean[aiBattlefield.size()];
+
+        for (CreatureInfo attacker : attackerInfos) {
+            if (attacker.cantBeBlocked) continue;
+
+            List<CreatureInfo> available = blockerInfos.stream()
+                    .filter(b -> !blockerUsed[b.index])
+                    .filter(b -> canBlock(b, attacker))
+                    .toList();
+
+            if (available.isEmpty()) continue;
+
+            // Handle menace: need 2 blockers
+            if (attacker.menace) {
+                int[] bestPair = findBestBlockerPairForMenace(attacker, available, blockerUsed);
+                if (bestPair != null) {
+                    assignments.add(new int[]{bestPair[0], attacker.index});
+                    assignments.add(new int[]{bestPair[1], attacker.index});
+                    blockerUsed[bestPair[0]] = true;
+                    blockerUsed[bestPair[1]] = true;
+                    totalIncoming -= attacker.power;
+                    lethalIncoming = totalIncoming >= aiLife;
+                } else if (lethalIncoming && available.size() >= 2) {
+                    // Chump block with cheapest pair
+                    List<CreatureInfo> sorted = available.stream()
+                            .sorted(Comparator.comparingDouble(CreatureInfo::creatureScore))
+                            .toList();
+                    if (sorted.size() >= 2) {
+                        assignments.add(new int[]{sorted.get(0).index, attacker.index});
+                        assignments.add(new int[]{sorted.get(1).index, attacker.index});
+                        blockerUsed[sorted.get(0).index] = true;
+                        blockerUsed[sorted.get(1).index] = true;
+                        totalIncoming -= attacker.power;
+                        lethalIncoming = totalIncoming >= aiLife;
+                    }
+                }
+                continue;
+            }
+
+            // Find best single blocker
+            CreatureInfo bestBlocker = null;
+            double bestBlockValue = Double.NEGATIVE_INFINITY;
+
+            for (CreatureInfo blocker : available) {
+                double blockValue = evaluateBlock(attacker, blocker);
+                if (blockValue > bestBlockValue) {
+                    bestBlockValue = blockValue;
+                    bestBlocker = blocker;
+                }
+            }
+
+            // Only block if favorable or if lethal incoming
+            if (bestBlocker != null && (bestBlockValue > 0 || lethalIncoming)) {
+                assignments.add(new int[]{bestBlocker.index, attacker.index});
+                blockerUsed[bestBlocker.index] = true;
+                totalIncoming -= attacker.power;
+                lethalIncoming = totalIncoming >= aiLife;
+            }
+        }
+
+        return assignments;
+    }
+
+    /**
+     * Simulates combat between a set of attackers and greedy-optimal blocking.
+     */
+    CombatOutcome simulateCombat(List<CreatureInfo> attackers, List<CreatureInfo> blockers,
+                                  int opponentLife) {
+        // Simulate opponent's greedy-optimal blocking:
+        // assign best blocker to biggest threat first
+        List<CreatureInfo> sortedAttackers = new ArrayList<>(attackers);
+        sortedAttackers.sort(Comparator.comparingDouble(CreatureInfo::creatureScore).reversed());
+
+        boolean[] blockerUsed = new boolean[blockers.size()];
+        // Track blocking assignments: for each attacker, list of assigned blockers
+        List<List<CreatureInfo>> blockAssignments = new ArrayList<>();
+        for (int i = 0; i < sortedAttackers.size(); i++) {
+            blockAssignments.add(new ArrayList<>());
+        }
+
+        for (int i = 0; i < sortedAttackers.size(); i++) {
+            CreatureInfo attacker = sortedAttackers.get(i);
+            if (attacker.cantBeBlocked) continue;
+
+            if (attacker.menace) {
+                // Need 2 blockers for menace
+                List<Integer> availableIdx = new ArrayList<>();
+                for (int j = 0; j < blockers.size(); j++) {
+                    if (!blockerUsed[j] && canBlock(blockers.get(j), attacker)) {
+                        availableIdx.add(j);
+                    }
+                }
+                if (availableIdx.size() >= 2) {
+                    // Pick cheapest pair that can kill attacker
+                    int bestA = -1, bestB = -1;
+                    double bestValue = Double.NEGATIVE_INFINITY;
+                    for (int a = 0; a < availableIdx.size(); a++) {
+                        for (int b = a + 1; b < availableIdx.size(); b++) {
+                            CreatureInfo ba = blockers.get(availableIdx.get(a));
+                            CreatureInfo bb = blockers.get(availableIdx.get(b));
+                            boolean kills = ba.power + bb.power >= attacker.toughness;
+                            double value = kills ? attacker.creatureScore - ba.creatureScore - bb.creatureScore : -100;
+                            if (value > bestValue) {
+                                bestValue = value;
+                                bestA = availableIdx.get(a);
+                                bestB = availableIdx.get(b);
+                            }
+                        }
+                    }
+                    if (bestA >= 0 && bestValue > -50) {
+                        blockerUsed[bestA] = true;
+                        blockerUsed[bestB] = true;
+                        blockAssignments.get(i).add(blockers.get(bestA));
+                        blockAssignments.get(i).add(blockers.get(bestB));
+                    }
+                }
+                continue;
+            }
+
+            // Single blocker: find most favorable block for defender
+            int bestBlockerIdx = -1;
+            double bestDefenderValue = Double.NEGATIVE_INFINITY;
+
+            for (int j = 0; j < blockers.size(); j++) {
+                if (blockerUsed[j]) continue;
+                CreatureInfo blocker = blockers.get(j);
+                if (!canBlock(blocker, attacker)) continue;
+
+                double value = evaluateDefenderBlock(attacker, blocker);
+                if (value > bestDefenderValue) {
+                    bestDefenderValue = value;
+                    bestBlockerIdx = j;
+                }
+            }
+
+            if (bestBlockerIdx >= 0 && bestDefenderValue > 0) {
+                blockerUsed[bestBlockerIdx] = true;
+                blockAssignments.get(i).add(blockers.get(bestBlockerIdx));
+            }
+        }
+
+        // Now compute combat outcome
+        int opponentLifeLost = 0;
+        int aiLifeGained = 0;
+        double aiCreaturesLostValue = 0;
+        double oppCreaturesLostValue = 0;
+
+        for (int i = 0; i < sortedAttackers.size(); i++) {
+            CreatureInfo attacker = sortedAttackers.get(i);
+            List<CreatureInfo> assignedBlockers = blockAssignments.get(i);
+
+            if (assignedBlockers.isEmpty()) {
+                // Unblocked: damage goes to opponent
+                opponentLifeLost += attacker.power;
+                if (attacker.lifelink) {
+                    aiLifeGained += attacker.power;
+                }
+            } else {
+                // Blocked combat
+                int totalBlockerPower = assignedBlockers.stream().mapToInt(CreatureInfo::power).sum();
+                int totalBlockerToughness = assignedBlockers.stream().mapToInt(CreatureInfo::toughness).sum();
+
+                // First strike / Double strike phase
+                int attackerDamageDealt = 0;
+                int blockerDamageDealt = 0;
+
+                if (attacker.firstStrike || attacker.doubleStrike) {
+                    // Attacker deals first strike damage
+                    int fsRemaining = attacker.power;
+                    for (CreatureInfo blocker : assignedBlockers) {
+                        if (!blocker.indestructible) {
+                            int lethal = blocker.toughness;
+                            int dmg = Math.min(fsRemaining, lethal);
+                            if (dmg >= blocker.toughness) {
+                                oppCreaturesLostValue += blocker.creatureScore;
+                            }
+                            fsRemaining -= dmg;
+                        } else {
+                            fsRemaining -= blocker.toughness;
+                        }
+                        if (fsRemaining <= 0) break;
+                    }
+
+                    // Trample excess in first strike
+                    if (attacker.trample && fsRemaining > 0) {
+                        opponentLifeLost += fsRemaining;
+                    }
+                    if (attacker.lifelink) {
+                        aiLifeGained += attacker.power;
+                    }
+                    attackerDamageDealt += attacker.power;
+                }
+
+                // Check which blockers have first strike
+                for (CreatureInfo blocker : assignedBlockers) {
+                    if (blocker.firstStrike || blocker.doubleStrike) {
+                        blockerDamageDealt += blocker.power;
+                    }
+                }
+
+                // Check if attacker dies to first strike damage
+                boolean attackerDead = false;
+                if (blockerDamageDealt >= attacker.toughness && !attacker.indestructible) {
+                    attackerDead = true;
+                    aiCreaturesLostValue += attacker.creatureScore;
+                }
+
+                // Regular damage phase (only if not already dealt via first strike)
+                if (!attackerDead && !(attacker.firstStrike && !attacker.doubleStrike)) {
+                    int regularRemaining = attacker.power;
+                    for (CreatureInfo blocker : assignedBlockers) {
+                        if (!blocker.indestructible) {
+                            int dmg = Math.min(regularRemaining, blocker.toughness);
+                            // Only count as killed if not already killed in first strike
+                            if (dmg >= blocker.toughness && !attacker.firstStrike && !attacker.doubleStrike) {
+                                oppCreaturesLostValue += blocker.creatureScore;
+                            }
+                            regularRemaining -= dmg;
+                        } else {
+                            regularRemaining -= blocker.toughness;
+                        }
+                        if (regularRemaining <= 0) break;
+                    }
+
+                    if (attacker.trample && regularRemaining > 0) {
+                        opponentLifeLost += regularRemaining;
+                    }
+                    if (attacker.lifelink && attackerDamageDealt == 0) {
+                        aiLifeGained += attacker.power;
+                    }
+                }
+
+                // Regular blocker damage
+                if (!attackerDead) {
+                    int totalRegularBlockerDmg = 0;
+                    for (CreatureInfo blocker : assignedBlockers) {
+                        if (!blocker.firstStrike || blocker.doubleStrike) {
+                            totalRegularBlockerDmg += blocker.power;
+                        }
+                    }
+                    if (totalRegularBlockerDmg + blockerDamageDealt >= attacker.toughness
+                            && !attacker.indestructible) {
+                        aiCreaturesLostValue += attacker.creatureScore;
+                    }
+                }
+            }
+        }
+
+        return new CombatOutcome(aiLifeGained, -opponentLifeLost,
+                aiCreaturesLostValue, oppCreaturesLostValue);
+    }
+
+    private double evaluateBlock(CreatureInfo attacker, CreatureInfo blocker) {
+        boolean blockerKillsAttacker = blocker.power >= attacker.toughness || attacker.indestructible;
+        boolean attackerKillsBlocker = attacker.power >= blocker.toughness && !blocker.indestructible;
+
+        if (blocker.power >= attacker.toughness && !attacker.indestructible) {
+            if (!attackerKillsBlocker) {
+                // Kill attacker, blocker survives — great trade
+                return attacker.creatureScore + 10;
+            }
+            // Both die — trade evaluation
+            return attacker.creatureScore - blocker.creatureScore;
+        }
+
+        if (!attackerKillsBlocker) {
+            // Neither dies — still prevents damage
+            return attacker.power * 0.5;
+        }
+
+        // Blocker dies, attacker lives — bad unless chump blocking
+        return -blocker.creatureScore + attacker.power * 0.5;
+    }
+
+    private double evaluateDefenderBlock(CreatureInfo attacker, CreatureInfo blocker) {
+        // From defender's perspective: positive means favorable for the defender
+        boolean blockerKillsAttacker = blocker.power >= attacker.toughness && !attacker.indestructible;
+        boolean attackerKillsBlocker = attacker.power >= blocker.toughness && !blocker.indestructible;
+
+        if (blockerKillsAttacker && !attackerKillsBlocker) {
+            // Defender kills attacker, blocker survives
+            return attacker.creatureScore + 10;
+        }
+        if (blockerKillsAttacker && attackerKillsBlocker) {
+            // Both die — favorable if attacker is more valuable
+            return attacker.creatureScore - blocker.creatureScore;
+        }
+        if (!blockerKillsAttacker && !attackerKillsBlocker) {
+            // Neither dies — prevents damage
+            return attacker.power * 0.3;
+        }
+        // Blocker dies, attacker survives — only block if cheap blocker vs expensive attacker
+        return -blocker.creatureScore * 0.5;
+    }
+
+    private int[] findBestBlockerPairForMenace(CreatureInfo attacker, List<CreatureInfo> available,
+                                               boolean[] blockerUsed) {
+        int[] bestPair = null;
+        double bestValue = Double.NEGATIVE_INFINITY;
+
+        for (int a = 0; a < available.size(); a++) {
+            for (int b = a + 1; b < available.size(); b++) {
+                CreatureInfo ba = available.get(a);
+                CreatureInfo bb = available.get(b);
+                boolean kills = ba.power + bb.power >= attacker.toughness;
+                boolean oneSurvives = attacker.power < ba.toughness || attacker.power < bb.toughness;
+
+                double value;
+                if (kills && oneSurvives) {
+                    value = attacker.creatureScore;
+                } else if (kills) {
+                    value = attacker.creatureScore - ba.creatureScore - bb.creatureScore;
+                } else {
+                    continue;
+                }
+
+                if (value > bestValue) {
+                    bestValue = value;
+                    bestPair = new int[]{ba.index, bb.index};
+                }
+            }
+        }
+
+        return bestValue > 0 ? bestPair : null;
+    }
+
+    private boolean canBlock(CreatureInfo blocker, CreatureInfo attacker) {
+        if (attacker.cantBeBlocked) return false;
+        if (blocker.defender || !blocker.defender) { /* defenders can block */ }
+
+        // Flying: can only be blocked by flying or reach
+        if (attacker.flying && !blocker.flying && !blocker.reach) return false;
+
+        // Fear: can only be blocked by artifact creatures or black creatures
+        if (attacker.fear && !blocker.isArtifact && blocker.color != CardColor.BLACK) return false;
+
+        return true;
+    }
+
+    private boolean canBeBlockedByAny(CreatureInfo attacker, List<CreatureInfo> blockers) {
+        if (attacker.cantBeBlocked) return false;
+        return blockers.stream().anyMatch(b -> canBlock(b, attacker));
+    }
+
+    CreatureInfo buildCreatureInfo(GameData gameData, Permanent perm, int index,
+                                           UUID controllerId, UUID opponentId) {
+        int power = gameQueryService.getEffectivePower(gameData, perm);
+        int toughness = gameQueryService.getEffectiveToughness(gameData, perm);
+
+        return new CreatureInfo(
+                index,
+                perm.getId(),
+                power,
+                toughness,
+                gameQueryService.hasKeyword(gameData, perm, Keyword.FLYING),
+                gameQueryService.hasKeyword(gameData, perm, Keyword.FIRST_STRIKE),
+                gameQueryService.hasKeyword(gameData, perm, Keyword.DOUBLE_STRIKE),
+                gameQueryService.hasKeyword(gameData, perm, Keyword.TRAMPLE),
+                gameQueryService.hasKeyword(gameData, perm, Keyword.LIFELINK),
+                gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE),
+                gameQueryService.hasKeyword(gameData, perm, Keyword.MENACE),
+                gameQueryService.hasKeyword(gameData, perm, Keyword.FEAR),
+                gameQueryService.hasKeyword(gameData, perm, Keyword.REACH),
+                gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER),
+                gameQueryService.hasCantBeBlocked(gameData, perm),
+                gameQueryService.isArtifact(perm),
+                perm.getCard().getColor(),
+                boardEvaluator.creatureScore(gameData, perm, controllerId, opponentId)
+        );
+    }
+
+    private UUID getOpponentId(GameData gameData, UUID playerId) {
+        for (UUID id : gameData.orderedPlayerIds) {
+            if (!id.equals(playerId)) {
+                return id;
+            }
+        }
+        return null;
+    }
+}

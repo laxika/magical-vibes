@@ -77,6 +77,13 @@
             </div>
             @if (vsAi()) {
               <div class="form-group">
+                <label for="aiDifficulty">AI Difficulty</label>
+                <select id="aiDifficulty" [ngModel]="aiDifficulty()" (ngModelChange)="aiDifficulty.set($event)">
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                </select>
+              </div>
+              <div class="form-group">
                 <label for="aiDeckSelect">AI Deck</label>
                 <select id="aiDeckSelect" [ngModel]="aiDeckId()" (ngModelChange)="aiDeckId.set($event)">
                   @for (deck of websocketService.availableDecks; track deck.id) {
