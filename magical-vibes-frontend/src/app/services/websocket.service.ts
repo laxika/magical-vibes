@@ -531,6 +531,7 @@ export class WebsocketService {
   lastDeckBuildingState: DeckBuildingStateNotification | null = null;
   lastTournamentUpdate: TournamentUpdateNotification | null = null;
   lastDraftFinished: DraftFinishedNotification | null = null;
+  pendingGameInputMessage: WebSocketMessage | null = null;
 
   login(username: string, password: string): Observable<LoginResponse> {
     return new Observable(observer => {
@@ -586,6 +587,24 @@ export class WebsocketService {
             this.lastTournamentUpdate = message as TournamentUpdateNotification;
           } else if (message.type === MessageType.DRAFT_FINISHED) {
             this.lastDraftFinished = message as DraftFinishedNotification;
+          }
+
+          // Buffer game input messages so they're available when game component mounts on rejoin
+          if (message.type === MessageType.AVAILABLE_ATTACKERS ||
+              message.type === MessageType.AVAILABLE_BLOCKERS ||
+              message.type === MessageType.CHOOSE_CARD_FROM_HAND ||
+              message.type === MessageType.CHOOSE_COLOR ||
+              message.type === MessageType.MAY_ABILITY_CHOICE ||
+              message.type === MessageType.CHOOSE_PERMANENT ||
+              message.type === MessageType.CHOOSE_MULTIPLE_PERMANENTS ||
+              message.type === MessageType.CHOOSE_MULTIPLE_CARDS_FROM_GRAVEYARDS ||
+              message.type === MessageType.REORDER_LIBRARY_CARDS ||
+              message.type === MessageType.CHOOSE_CARD_FROM_LIBRARY ||
+              message.type === MessageType.CHOOSE_HAND_TOP_BOTTOM ||
+              message.type === MessageType.CHOOSE_FROM_REVEALED_HAND ||
+              message.type === MessageType.CHOOSE_CARD_FROM_GRAVEYARD ||
+              message.type === MessageType.COMBAT_DAMAGE_ASSIGNMENT) {
+            this.pendingGameInputMessage = message;
           }
 
           // After authenticated, forward everything to the messages stream
@@ -660,5 +679,6 @@ export class WebsocketService {
     this.lastDeckBuildingState = null;
     this.lastTournamentUpdate = null;
     this.lastDraftFinished = null;
+    this.pendingGameInputMessage = null;
   }
 }

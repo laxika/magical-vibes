@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, ChooseMultipleCardsFromGraveyardsNotification, StackEntry, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification, ChooseFromRevealedHandNotification, ChooseCardFromGraveyardNotification, ChooseHandTopBottomNotification, CombatDamageAssignmentNotification } from '../../services/websocket.service';
+import { WebsocketService, WebSocketMessage, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, ChooseMultipleCardsFromGraveyardsNotification, StackEntry, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification, ChooseFromRevealedHandNotification, ChooseCardFromGraveyardNotification, ChooseHandTopBottomNotification, CombatDamageAssignmentNotification } from '../../services/websocket.service';
 import { GameChoiceService } from '../../services/game-choice.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { IndexedPermanent, CombatGroup, CombatBlocker, AttachedAura, LandStack, splitBattlefield, stackBasicLands, getAttachedAuras, isLandStack, isPermanentCreature } from './battlefield.utils';
@@ -56,93 +56,16 @@ export class GameComponent implements OnInit, OnDestroy {
 
     this.subscriptions.push(
       this.websocketService.getMessages().subscribe((message) => {
-        console.log(message);
-
-        if (message.type === MessageType.OPPONENT_JOINED) {
-          const notification = message as GameNotification;
-          if (notification.game) {
-            this.game.set(notification.game);
-            this.websocketService.currentGame = notification.game;
-          }
-        }
-
-        if (message.type === MessageType.GAME_STATE) {
-          this.applyGameState(message as GameStateNotification);
-        }
-
-        if (message.type === MessageType.MULLIGAN_RESOLVED) {
-          this.handleMulliganResolved(message as MulliganResolvedNotification);
-        }
-
-        if (message.type === MessageType.SELECT_CARDS_TO_BOTTOM) {
-          this.handleSelectCardsToBottom(message as SelectCardsToBottomNotification);
-        }
-
-        if (message.type === MessageType.AVAILABLE_ATTACKERS) {
-          this.handleAvailableAttackers(message as AvailableAttackersNotification);
-        }
-
-        if (message.type === MessageType.AVAILABLE_BLOCKERS) {
-          this.handleAvailableBlockers(message as AvailableBlockersNotification);
-        }
-
-        if (message.type === MessageType.GAME_OVER) {
-          this.handleGameOver(message as GameOverNotification);
-        }
-
-        if (message.type === MessageType.CHOOSE_CARD_FROM_HAND) {
-          this.choice.handleChooseCardFromHand(message as ChooseCardFromHandNotification);
-        }
-
-        if (message.type === MessageType.CHOOSE_COLOR) {
-          this.choice.handleChooseColor(message as ChooseColorNotification);
-        }
-
-        if (message.type === MessageType.MAY_ABILITY_CHOICE) {
-          this.choice.handleMayAbilityChoice(message as MayAbilityNotification);
-        }
-
-        if (message.type === MessageType.CHOOSE_PERMANENT) {
-          this.choice.handleChoosePermanent(message as ChoosePermanentNotification);
-        }
-
-        if (message.type === MessageType.CHOOSE_MULTIPLE_PERMANENTS) {
-          this.choice.handleChooseMultiplePermanents(message as ChooseMultiplePermanentsNotification);
-        }
-
-        if (message.type === MessageType.CHOOSE_MULTIPLE_CARDS_FROM_GRAVEYARDS) {
-          this.choice.handleChooseMultipleCardsFromGraveyards(message as ChooseMultipleCardsFromGraveyardsNotification);
-        }
-
-        if (message.type === MessageType.REORDER_LIBRARY_CARDS) {
-          this.choice.handleReorderLibraryCards(message as ReorderLibraryCardsNotification);
-        }
-
-        if (message.type === MessageType.CHOOSE_CARD_FROM_LIBRARY) {
-          this.choice.handleChooseCardFromLibrary(message as ChooseCardFromLibraryNotification);
-        }
-
-        if (message.type === MessageType.CHOOSE_HAND_TOP_BOTTOM) {
-          this.choice.handleChooseHandTopBottom(message as ChooseHandTopBottomNotification);
-        }
-
-        if (message.type === MessageType.REVEAL_HAND) {
-          this.choice.handleRevealHand(message as RevealHandNotification);
-        }
-
-        if (message.type === MessageType.CHOOSE_FROM_REVEALED_HAND) {
-          this.choice.handleChooseFromRevealedHand(message as ChooseFromRevealedHandNotification);
-        }
-
-        if (message.type === MessageType.CHOOSE_CARD_FROM_GRAVEYARD) {
-          this.choice.handleChooseCardFromGraveyard(message as ChooseCardFromGraveyardNotification);
-        }
-
-        if (message.type === MessageType.COMBAT_DAMAGE_ASSIGNMENT) {
-          this.choice.handleCombatDamageAssignment(message as CombatDamageAssignmentNotification);
-        }
+        this.processGameMessage(message);
       })
     );
+
+    // Replay any game input message that arrived before this component subscribed (e.g. during rejoin)
+    const pending = this.websocketService.pendingGameInputMessage;
+    if (pending) {
+      this.websocketService.pendingGameInputMessage = null;
+      this.processGameMessage(pending);
+    }
 
     this.subscriptions.push(
       this.websocketService.onDisconnected().subscribe(() => {
@@ -153,6 +76,94 @@ export class GameComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.subscriptions.forEach(s => s.unsubscribe());
+  }
+
+  private processGameMessage(message: WebSocketMessage): void {
+    console.log(message);
+
+    if (message.type === MessageType.OPPONENT_JOINED) {
+      const notification = message as GameNotification;
+      if (notification.game) {
+        this.game.set(notification.game);
+        this.websocketService.currentGame = notification.game;
+      }
+    }
+
+    if (message.type === MessageType.GAME_STATE) {
+      this.applyGameState(message as GameStateNotification);
+    }
+
+    if (message.type === MessageType.MULLIGAN_RESOLVED) {
+      this.handleMulliganResolved(message as MulliganResolvedNotification);
+    }
+
+    if (message.type === MessageType.SELECT_CARDS_TO_BOTTOM) {
+      this.handleSelectCardsToBottom(message as SelectCardsToBottomNotification);
+    }
+
+    if (message.type === MessageType.AVAILABLE_ATTACKERS) {
+      this.handleAvailableAttackers(message as AvailableAttackersNotification);
+    }
+
+    if (message.type === MessageType.AVAILABLE_BLOCKERS) {
+      this.handleAvailableBlockers(message as AvailableBlockersNotification);
+    }
+
+    if (message.type === MessageType.GAME_OVER) {
+      this.handleGameOver(message as GameOverNotification);
+    }
+
+    if (message.type === MessageType.CHOOSE_CARD_FROM_HAND) {
+      this.choice.handleChooseCardFromHand(message as ChooseCardFromHandNotification);
+    }
+
+    if (message.type === MessageType.CHOOSE_COLOR) {
+      this.choice.handleChooseColor(message as ChooseColorNotification);
+    }
+
+    if (message.type === MessageType.MAY_ABILITY_CHOICE) {
+      this.choice.handleMayAbilityChoice(message as MayAbilityNotification);
+    }
+
+    if (message.type === MessageType.CHOOSE_PERMANENT) {
+      this.choice.handleChoosePermanent(message as ChoosePermanentNotification);
+    }
+
+    if (message.type === MessageType.CHOOSE_MULTIPLE_PERMANENTS) {
+      this.choice.handleChooseMultiplePermanents(message as ChooseMultiplePermanentsNotification);
+    }
+
+    if (message.type === MessageType.CHOOSE_MULTIPLE_CARDS_FROM_GRAVEYARDS) {
+      this.choice.handleChooseMultipleCardsFromGraveyards(message as ChooseMultipleCardsFromGraveyardsNotification);
+    }
+
+    if (message.type === MessageType.REORDER_LIBRARY_CARDS) {
+      this.choice.handleReorderLibraryCards(message as ReorderLibraryCardsNotification);
+    }
+
+    if (message.type === MessageType.CHOOSE_CARD_FROM_LIBRARY) {
+      this.choice.handleChooseCardFromLibrary(message as ChooseCardFromLibraryNotification);
+    }
+
+    if (message.type === MessageType.CHOOSE_HAND_TOP_BOTTOM) {
+      this.choice.handleChooseHandTopBottom(message as ChooseHandTopBottomNotification);
+    }
+
+    if (message.type === MessageType.REVEAL_HAND) {
+      this.choice.handleRevealHand(message as RevealHandNotification);
+    }
+
+    if (message.type === MessageType.CHOOSE_FROM_REVEALED_HAND) {
+      this.choice.handleChooseFromRevealedHand(message as ChooseFromRevealedHandNotification);
+    }
+
+    if (message.type === MessageType.CHOOSE_CARD_FROM_GRAVEYARD) {
+      this.choice.handleChooseCardFromGraveyard(message as ChooseCardFromGraveyardNotification);
+    }
+
+    if (message.type === MessageType.COMBAT_DAMAGE_ASSIGNMENT) {
+      this.choice.handleCombatDamageAssignment(message as CombatDamageAssignmentNotification);
+    }
   }
 
   // ========== Player info getters ==========
