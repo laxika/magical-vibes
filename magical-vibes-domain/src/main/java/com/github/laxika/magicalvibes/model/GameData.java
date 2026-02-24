@@ -62,7 +62,7 @@ public class GameData {
     public final CloneOperationState cloneOperation = new CloneOperationState();
     public UUID imprintSourcePermanentId;
     public UUID pendingCombatDamageBounceTargetPlayerId;
-    public boolean pendingProliferate;
+    public int pendingProliferateCount;
     public final Set<UUID> permanentsToSacrificeAtEndOfCombat = ConcurrentHashMap.newKeySet();
     public PendingAbilityActivation pendingAbilityActivation;
     public final Map<UUID, UUID> drawReplacementTargetToController = new ConcurrentHashMap<>();
@@ -126,7 +126,7 @@ public class GameData {
         copy.preventAllCombatDamage = this.preventAllCombatDamage;
         copy.combatDamageRedirectTarget = this.combatDamageRedirectTarget;
         copy.pendingCombatDamageBounceTargetPlayerId = this.pendingCombatDamageBounceTargetPlayerId;
-        copy.pendingProliferate = this.pendingProliferate;
+        copy.pendingProliferateCount = this.pendingProliferateCount;
         copy.pendingAbilityActivation = this.pendingAbilityActivation; // immutable record
         copy.endTurnRequested = this.endTurnRequested;
         copy.discardCausedByOpponent = this.discardCausedByOpponent;

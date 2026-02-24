@@ -481,8 +481,8 @@ public class PermanentChoiceHandlerService {
 
             turnProgressionService.advanceStep(gameData);
             turnProgressionService.resolveAutoPass(gameData);
-        } else if (gameData.pendingProliferate) {
-            gameData.pendingProliferate = false;
+        } else if (gameData.pendingProliferateCount > 0) {
+            gameData.pendingProliferateCount--;
 
             if (permanentIds.isEmpty()) {
                 String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to proliferate any permanents.";
@@ -512,6 +512,34 @@ public class PermanentChoiceHandlerService {
                 }
             }
 
+            // More proliferates remaining (e.g. "proliferate, then proliferate again")
+            // Per MTG Rule 704.3, SBA are not checked during ability resolution,
+            // so defer SBA until all proliferates are done.
+            if (gameData.pendingProliferateCount > 0) {
+                List<UUID> eligiblePermanentIds = new ArrayList<>();
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                    if (battlefield == null) continue;
+                    for (Permanent p : battlefield) {
+                        if (p.getPlusOnePlusOneCounters() > 0
+                                || p.getMinusOneMinusOneCounters() > 0
+                                || p.getLoyaltyCounters() > 0) {
+                            eligiblePermanentIds.add(p.getId());
+                        }
+                    }
+                }
+                if (eligiblePermanentIds.isEmpty()) {
+                    gameData.pendingProliferateCount = 0;
+                    String logEntry = "Proliferate: no permanents with counters to choose.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                } else {
+                    playerInputService.beginMultiPermanentChoice(gameData, playerId, eligiblePermanentIds,
+                            eligiblePermanentIds.size(), "Proliferate: Choose permanents to add counters to.");
+                    return;
+                }
+            }
+
+            // All proliferates done — now check SBA
             stateBasedActionService.performStateBasedActions(gameData);
 
             if (!gameData.pendingMayAbilities.isEmpty()) {

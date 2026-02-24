@@ -623,7 +623,12 @@ public class CreatureModResolutionService {
             return;
         }
 
-        gameData.pendingProliferate = true;
+        // Count total proliferate effects in this stack entry (e.g. "proliferate, then proliferate again")
+        // so the handler knows how many rounds of choices remain after this one.
+        long totalProliferates = entry.getEffectsToResolve().stream()
+                .filter(e -> e instanceof ProliferateEffect)
+                .count();
+        gameData.pendingProliferateCount = (int) totalProliferates;
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligiblePermanentIds,
                 eligiblePermanentIds.size(), "Proliferate: Choose permanents to add counters to.");
     }

@@ -235,7 +235,6 @@ class ContagionEngineTest extends BaseCardTest {
         Permanent engine = addReadyEngine(player1);
 
         // Grizzly Bears (2/2) with 1 -1/-1 counter = 1/1
-        // Two proliferates adding counters = 0/0 after first, already dead
         Permanent bears = new Permanent(new GrizzlyBears());
         bears.setMinusOneMinusOneCounters(1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
@@ -247,12 +246,15 @@ class ContagionEngineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        // First proliferate: add counter (now 0/0, dies after SBA)
+        // First proliferate: add counter (now 2 -1/-1 counters = effective 0/0,
+        // but SBA are not checked during ability resolution per MTG Rule 704.3)
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        // Second proliferate: no eligible permanents (bears is dead)
-        // Should auto-skip or present empty choices
+        // Second proliferate: bears is still on battlefield (SBA deferred),
+        // choose nothing so it stays at 2 counters
+        harness.handleMultiplePermanentsChosen(player1, List.of());
 
+        // After ability fully resolves, SBA kills bears (2/2 with 2 -1/-1 = 0/0)
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
         assertThat(gd.playerGraveyards.get(player2.getId()))
