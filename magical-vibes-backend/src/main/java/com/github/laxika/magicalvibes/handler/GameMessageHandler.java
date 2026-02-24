@@ -40,6 +40,8 @@ import com.github.laxika.magicalvibes.networking.message.CreateDraftRequest;
 import com.github.laxika.magicalvibes.networking.message.DraftPickRequest;
 import com.github.laxika.magicalvibes.networking.message.RequestCardListRequest;
 import com.github.laxika.magicalvibes.networking.message.SubmitDeckRequest;
+import com.github.laxika.magicalvibes.networking.message.ValidTargetsRequest;
+import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.ai.AiPlayerService;
 import com.github.laxika.magicalvibes.model.DraftData;
@@ -52,6 +54,7 @@ import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.LobbyService;
 import com.github.laxika.magicalvibes.service.LoginService;
+import com.github.laxika.magicalvibes.service.ValidTargetService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -72,6 +75,7 @@ public class GameMessageHandler implements MessageHandler {
     private final DraftService draftService;
     private final DraftRegistry draftRegistry;
     private final CardBrowserService cardBrowserService;
+    private final ValidTargetService validTargetService;
 
     public GameMessageHandler(LoginService loginService,
             GameService gameService,
@@ -83,7 +87,8 @@ public class GameMessageHandler implements MessageHandler {
             AiPlayerService aiPlayerService,
             DraftService draftService,
             DraftRegistry draftRegistry,
-            CardBrowserService cardBrowserService) {
+            CardBrowserService cardBrowserService,
+            ValidTargetService validTargetService) {
         this.loginService = loginService;
         this.gameService = gameService;
         this.gameBroadcastService = gameBroadcastService;
@@ -95,6 +100,7 @@ public class GameMessageHandler implements MessageHandler {
         this.draftService = draftService;
         this.draftRegistry = draftRegistry;
         this.cardBrowserService = cardBrowserService;
+        this.validTargetService = validTargetService;
     }
 
     @Override
@@ -793,6 +799,61 @@ public class GameMessageHandler implements MessageHandler {
         var cards = cardBrowserService.getCardsForSet(request.setCode());
         CardListResponse response = new CardListResponse(request.setCode(), cards);
         connection.sendMessage(objectMapper.writeValueAsString(response));
+    }
+
+    @Override
+    public void handleValidTargetsRequest(Connection connection, ValidTargetsRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
+        try {
+            ValidTargetsResponse response;
+            synchronized (gameData) {
+                if (request.cardIndex() != null) {
+                    // Spell from hand
+                    java.util.List<com.github.laxika.magicalvibes.model.Card> hand = gameData.playerHands.get(player.getId());
+                    if (hand == null || request.cardIndex() < 0 || request.cardIndex() >= hand.size()) {
+                        handleError(connection, "Invalid card index");
+                        return;
+                    }
+                    com.github.laxika.magicalvibes.model.Card card = hand.get(request.cardIndex());
+                    response = validTargetService.computeValidTargetsForSpell(
+                            gameData, card, player.getId(),
+                            request.alreadySelectedIds() != null ? request.alreadySelectedIds() : java.util.List.of());
+                } else if (request.permanentIndex() != null && request.abilityIndex() != null) {
+                    // Activated ability
+                    java.util.List<com.github.laxika.magicalvibes.model.Permanent> battlefield = gameData.playerBattlefields.get(player.getId());
+                    if (battlefield == null || request.permanentIndex() < 0 || request.permanentIndex() >= battlefield.size()) {
+                        handleError(connection, "Invalid permanent index");
+                        return;
+                    }
+                    com.github.laxika.magicalvibes.model.Permanent permanent = battlefield.get(request.permanentIndex());
+                    java.util.List<com.github.laxika.magicalvibes.model.ActivatedAbility> abilities = permanent.getCard().getActivatedAbilities();
+                    if (request.abilityIndex() < 0 || request.abilityIndex() >= abilities.size()) {
+                        handleError(connection, "Invalid ability index");
+                        return;
+                    }
+                    com.github.laxika.magicalvibes.model.ActivatedAbility ability = abilities.get(request.abilityIndex());
+                    response = validTargetService.computeValidTargetsForAbility(
+                            gameData, permanent.getCard(), ability, player.getId(), request.permanentIndex());
+                } else {
+                    handleError(connection, "Invalid valid targets request");
+                    return;
+                }
+            }
+            connection.sendMessage(objectMapper.writeValueAsString(response));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            handleError(connection, e.getMessage());
+        }
     }
 
     @Override

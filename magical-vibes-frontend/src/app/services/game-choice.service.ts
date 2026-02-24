@@ -6,7 +6,8 @@ import {
   ChooseMultipleCardsFromGraveyardsNotification, ReorderLibraryCardsNotification,
   ChooseCardFromLibraryNotification, RevealHandNotification,
   ChooseFromRevealedHandNotification, ChooseCardFromGraveyardNotification,
-  ChooseHandTopBottomNotification, CombatDamageTargetView, CombatDamageAssignmentNotification
+  ChooseHandTopBottomNotification, CombatDamageTargetView, CombatDamageAssignmentNotification,
+  ValidTargetsResponse
 } from './websocket.service';
 import { isPermanentCreature } from '../components/game/battlefield.utils';
 
@@ -89,15 +90,12 @@ export class GameChoiceService {
   targetingCardIndex = -1;
   targetingCardName = '';
   targetingForAbility = false;
-  targetingForPlayer = false;
-  targetingAllowedTypes: string[] = [];
-  targetingAllowedSubtypes: string[] = [];
-  targetingAllowedColors: string[] = [];
-  targetingExcludedColors: string[] = [];
-  targetingRequiresAttacking = false;
-  targetingBlockingThis = false;
   targetingAbilityIndex = -1;
   pendingAbilityXValue: number | null = null;
+  validTargetPermanentIds = signal(new Set<string>());
+  validTargetPlayerIds = signal(new Set<string>());
+  targetingPrompt = '';
+  pendingTargetRequest = false;
 
   // --- Spell targeting state (for counterspells) ---
   targetingSpell = false;
@@ -146,7 +144,6 @@ export class GameChoiceService {
   multiTargetMinCount = 0;
   multiTargetMaxCount = 0;
   multiTargetSelectedIds = signal<string[]>([]);
-  multiTargetForPlayer = false;
 
   // --- Convoke state ---
   convoking = false;
@@ -267,6 +264,24 @@ export class GameChoiceService {
     this.combatDamageAssignments = new Map();
     this.combatDamageIsTrample = msg.isTrample;
     this.combatDamageAttackerIndex = msg.attackerIndex;
+  }
+
+  handleValidTargetsResponse(msg: ValidTargetsResponse): void {
+    this.pendingTargetRequest = false;
+    this.validTargetPermanentIds.set(new Set(msg.validPermanentIds));
+    this.validTargetPlayerIds.set(new Set(msg.validPlayerIds));
+    this.targetingPrompt = msg.prompt;
+
+    if (msg.maxTargets > 1) {
+      // Multi-target mode
+      this.multiTargeting = true;
+      this.multiTargetMinCount = msg.minTargets;
+      this.multiTargetMaxCount = msg.maxTargets;
+      this.multiTargetSelectedIds.set([]);
+    } else {
+      // Single target mode
+      this.targeting = true;
+    }
   }
 
   // ========== User actions ==========
@@ -414,6 +429,17 @@ export class GameChoiceService {
 
   // ========== Play card / targeting / abilities ==========
 
+  private sendValidTargetsRequest(cardIndex: number | null, permanentIndex: number | null, abilityIndex: number | null, alreadySelectedIds: string[] = []): void {
+    this.pendingTargetRequest = true;
+    this.websocketService.send({
+      type: MessageType.VALID_TARGETS_REQUEST,
+      cardIndex,
+      permanentIndex,
+      abilityIndex,
+      alreadySelectedIds
+    });
+  }
+
   playCard(index: number, isCardPlayable: (i: number) => boolean): void {
     const g = this.gameSignal();
     if (g && isCardPlayable(index)) {
@@ -442,32 +468,15 @@ export class GameChoiceService {
         this.targetingSpellCardName = card.name;
         return;
       }
-      // Multi-target spells (e.g. "one or two target creatures")
-      if (card.maxTargets > 1 && card.needsTarget) {
-        this.multiTargeting = true;
-        this.multiTargetCardIndex = index;
-        this.multiTargetCardName = card.name;
-        this.multiTargetMinCount = card.minTargets;
-        this.multiTargetMaxCount = card.maxTargets;
-        this.multiTargetSelectedIds.set([]);
-        this.multiTargetForPlayer = card.targetsPlayer ?? false;
-        this.pendingConvokeCard = card;
-        return;
-      }
       if (card.needsTarget) {
-        this.targeting = true;
+        // Ask backend for valid targets
         this.targetingCardIndex = index;
         this.targetingCardName = card.name;
         this.targetingForAbility = false;
-        this.targetingForPlayer = card.targetsPlayer ?? false;
-        this.targetingRequiresAttacking = card.requiresAttackingTarget ?? false;
         this.targetingAbilityIndex = -1;
         this.pendingAbilityXValue = null;
-        this.targetingAllowedTypes = card.allowedTargetTypes?.length > 0 ? card.allowedTargetTypes : [];
-        this.targetingAllowedSubtypes = card.allowedTargetSubtypes?.length > 0 ? card.allowedTargetSubtypes : [];
-        this.targetingExcludedColors = card.excludedTargetColors?.length > 0 ? card.excludedTargetColors : [];
-        // If this single-target card has convoke, store it for later
         this.pendingConvokeCard = card.hasConvoke ? card : null;
+        this.sendValidTargetsRequest(index, null, null);
         return;
       }
       // No targets needed — check for convoke
@@ -489,16 +498,12 @@ export class GameChoiceService {
       const perm = this.myBattlefieldFn()[this.xValueCardIndex];
       const ability = perm?.card.activatedAbilities[this.targetingAbilityIndex];
       if (ability?.needsTarget) {
-        // Store X value and enter targeting mode
+        // Store X value and request valid targets from backend
         this.pendingAbilityXValue = this.xValueInput;
         this.choosingXValue = false;
-        this.targeting = true;
         this.targetingCardIndex = this.xValueCardIndex;
         this.targetingCardName = this.xValueCardName;
-        this.targetingForPlayer = ability.targetsPlayer;
-        this.targetingAllowedTypes = ability.allowedTargetTypes ?? [];
-        this.targetingAllowedColors = ability.allowedTargetColors ?? [];
-        this.targetingBlockingThis = ability.targetsBlockingThis ?? false;
+        this.sendValidTargetsRequest(null, this.xValueCardIndex, this.targetingAbilityIndex);
         return;
       }
       // X value only, no target
@@ -511,27 +516,20 @@ export class GameChoiceService {
     } else {
       const card = g.hand[this.xValueCardIndex];
       if (card?.needsTarget) {
-        // Store X value and enter targeting mode for spells like Blaze
+        // Store X value and request valid targets from backend
         const savedXValue = this.xValueInput;
         const savedCardIndex = this.xValueCardIndex;
         const savedCardName = this.xValueCardName;
         this.choosingXValue = false;
-        this.targeting = true;
         this.targetingCardIndex = savedCardIndex;
         this.targetingCardName = savedCardName;
         this.targetingForAbility = false;
-        this.targetingForPlayer = card.targetsPlayer ?? false;
-        this.targetingRequiresAttacking = card.requiresAttackingTarget ?? false;
         this.targetingAbilityIndex = -1;
         this.pendingAbilityXValue = savedXValue;
-        this.targetingAllowedTypes = card.allowedTargetTypes?.length > 0 ? card.allowedTargetTypes : [];
-        this.targetingAllowedSubtypes = card.allowedTargetSubtypes?.length > 0 ? card.allowedTargetSubtypes : [];
-        this.targetingAllowedColors = [];
-        this.targetingExcludedColors = card.excludedTargetColors?.length > 0 ? card.excludedTargetColors : [];
-        this.targetingBlockingThis = false;
         this.pendingConvokeCard = null;
         this.xValueCardIndex = -1;
         this.xValueCardName = '';
+        this.sendValidTargetsRequest(savedCardIndex, null, null);
         return;
       }
       this.websocketService.send({
@@ -659,16 +657,18 @@ export class GameChoiceService {
   addMultiTarget(permanentId: string): void {
     if (!this.multiTargeting) return;
     const current = this.multiTargetSelectedIds();
-    if (current.includes(permanentId)) return; // Already selected
+    if (current.includes(permanentId)) return;
     if (current.length >= this.multiTargetMaxCount) return;
+    if (!this.validTargetPermanentIds().has(permanentId)) return;
     this.multiTargetSelectedIds.set([...current, permanentId]);
   }
 
   addMultiTargetPlayer(playerIndex: number): void {
-    if (!this.multiTargeting || !this.multiTargetForPlayer) return;
+    if (!this.multiTargeting) return;
     const g = this.gameSignal();
     if (!g) return;
     const playerId = g.playerIds[playerIndex];
+    if (!this.validTargetPlayerIds().has(playerId)) return;
     const current = this.multiTargetSelectedIds();
     if (current.includes(playerId)) return;
     if (current.length >= this.multiTargetMaxCount) return;
@@ -677,7 +677,10 @@ export class GameChoiceService {
 
   removeMultiTarget(permanentId: string): void {
     if (!this.multiTargeting) return;
-    this.multiTargetSelectedIds.set(this.multiTargetSelectedIds().filter(id => id !== permanentId));
+    const newSelected = this.multiTargetSelectedIds().filter(id => id !== permanentId);
+    this.multiTargetSelectedIds.set(newSelected);
+    // Request refreshed valid targets from backend with updated already-selected list
+    this.sendValidTargetsRequest(this.multiTargetCardIndex, null, null, newSelected);
   }
 
   confirmMultiTargets(): void {
@@ -690,6 +693,8 @@ export class GameChoiceService {
 
     this.multiTargeting = false;
     this.multiTargetSelectedIds.set([]);
+    this.validTargetPermanentIds.set(new Set());
+    this.validTargetPlayerIds.set(new Set());
 
     // If card has convoke, enter convoke mode
     if (card?.hasConvoke) {
@@ -711,7 +716,8 @@ export class GameChoiceService {
     this.multiTargetCardIndex = -1;
     this.multiTargetCardName = '';
     this.multiTargetSelectedIds.set([]);
-    this.multiTargetForPlayer = false;
+    this.validTargetPermanentIds.set(new Set());
+    this.validTargetPlayerIds.set(new Set());
     this.pendingConvokeCard = null;
   }
 
@@ -724,7 +730,6 @@ export class GameChoiceService {
     this.multiTargetCardName = '';
     this.multiTargetMinCount = 0;
     this.multiTargetMaxCount = 0;
-    this.multiTargetForPlayer = false;
     this.pendingMultiTargetIds = [];
     this.pendingConvokeCard = null;
   }
@@ -779,7 +784,7 @@ export class GameChoiceService {
 
   private addPendingTargetsToMsg(msg: any): void {
     if (this.pendingMultiTargetIds.length > 0) {
-      if (this.pendingConvokeCard && this.pendingConvokeCard.maxTargets > 1) {
+      if (this.pendingConvokeCard && this.multiTargetMaxCount > 1) {
         msg.targetPermanentIds = this.pendingMultiTargetIds;
       } else {
         // Single-target card that went through convoke flow
@@ -797,6 +802,7 @@ export class GameChoiceService {
 
   selectTarget(permanentId: string): void {
     if (!this.targeting) return;
+    if (!this.validTargetPermanentIds().has(permanentId)) return;
     if (this.targetingForAbility) {
       const msg: any = {
         type: MessageType.ACTIVATE_ABILITY,
@@ -813,19 +819,7 @@ export class GameChoiceService {
       const cardIndex = this.targetingCardIndex;
       const card = this.pendingConvokeCard;
       this.pendingMultiTargetIds = [permanentId];
-      this.targeting = false;
-      this.targetingCardIndex = -1;
-      this.targetingCardName = '';
-      this.targetingForAbility = false;
-      this.targetingForPlayer = false;
-      this.targetingRequiresAttacking = false;
-      this.targetingBlockingThis = false;
-      this.targetingAbilityIndex = -1;
-      this.targetingAllowedTypes = [];
-      this.targetingAllowedSubtypes = [];
-      this.targetingAllowedColors = [];
-      this.targetingExcludedColors = [];
-      this.pendingAbilityXValue = null;
+      this.resetTargetingState();
       this.enterConvokeMode(cardIndex, card);
       return;
     } else {
@@ -839,27 +833,15 @@ export class GameChoiceService {
       }
       this.websocketService.send(msg);
     }
-    this.targeting = false;
-    this.targetingCardIndex = -1;
-    this.targetingCardName = '';
-    this.targetingForAbility = false;
-    this.targetingForPlayer = false;
-    this.targetingRequiresAttacking = false;
-    this.targetingBlockingThis = false;
-    this.targetingAbilityIndex = -1;
-    this.targetingAllowedTypes = [];
-    this.targetingAllowedSubtypes = [];
-    this.targetingAllowedColors = [];
-    this.targetingExcludedColors = [];
-    this.pendingAbilityXValue = null;
-    this.pendingConvokeCard = null;
+    this.resetTargetingState();
   }
 
   selectPlayerTarget(playerIndex: number): void {
-    if (!this.targeting || !this.targetingForPlayer) return;
+    if (!this.targeting) return;
     const g = this.gameSignal();
     if (!g) return;
     const playerId = g.playerIds[playerIndex];
+    if (!this.validTargetPlayerIds().has(playerId)) return;
     if (this.targetingForAbility) {
       this.websocketService.send({
         type: MessageType.ACTIVATE_ABILITY,
@@ -878,35 +860,24 @@ export class GameChoiceService {
       }
       this.websocketService.send(msg);
     }
+    this.resetTargetingState();
+  }
+
+  private resetTargetingState(): void {
     this.targeting = false;
     this.targetingCardIndex = -1;
     this.targetingCardName = '';
     this.targetingForAbility = false;
-    this.targetingForPlayer = false;
-    this.targetingRequiresAttacking = false;
-    this.targetingBlockingThis = false;
     this.targetingAbilityIndex = -1;
-    this.targetingAllowedTypes = [];
-    this.targetingAllowedSubtypes = [];
-    this.targetingAllowedColors = [];
-    this.targetingExcludedColors = [];
+    this.validTargetPermanentIds.set(new Set());
+    this.validTargetPlayerIds.set(new Set());
+    this.targetingPrompt = '';
     this.pendingAbilityXValue = null;
+    this.pendingConvokeCard = null;
   }
 
   cancelTargeting(): void {
-    this.targeting = false;
-    this.targetingCardIndex = -1;
-    this.targetingCardName = '';
-    this.targetingForAbility = false;
-    this.targetingForPlayer = false;
-    this.targetingRequiresAttacking = false;
-    this.targetingBlockingThis = false;
-    this.targetingAbilityIndex = -1;
-    this.targetingAllowedTypes = [];
-    this.targetingAllowedSubtypes = [];
-    this.targetingAllowedColors = [];
-    this.targetingExcludedColors = [];
-    this.pendingAbilityXValue = null;
+    this.resetTargetingState();
   }
 
   selectSpellTarget(entry: StackEntry): void {
@@ -941,41 +912,7 @@ export class GameChoiceService {
   }
 
   isValidTarget(perm: Permanent): boolean {
-    if (this.targetingBlockingThis) {
-      return isPermanentCreature(perm) && perm.blocking
-        && perm.blockingTargets.includes(this.targetingCardIndex);
-    }
-    if (this.targetingRequiresAttacking) {
-      return isPermanentCreature(perm) && perm.attacking;
-    }
-    if (this.targetingAllowedTypes.length > 0) {
-      if (!this.targetingAllowedTypes.some(t => t.toUpperCase() === perm.card.type.toUpperCase())) {
-        return false;
-      }
-      // For enchantment-only targeting (e.g., Aura Graft), only allow auras that are attached
-      if (this.targetingAllowedTypes.length === 1 && perm.card.type === 'ENCHANTMENT' && perm.attachedTo == null) {
-        return false;
-      }
-      // If subtype restrictions exist, check that the permanent has at least one matching subtype
-      if (this.targetingAllowedSubtypes.length > 0) {
-        const permSubtypes = perm.card.subtypes?.map(s => s.toUpperCase()) ?? [];
-        if (!this.targetingAllowedSubtypes.some(s => permSubtypes.includes(s.toUpperCase()))) {
-          return false;
-        }
-      }
-      // Check excluded colors (e.g. Terror can't target black creatures)
-      if (this.targetingExcludedColors.length > 0 && perm.card.color != null) {
-        if (this.targetingExcludedColors.some(c => c.toUpperCase() === perm.card.color!.toUpperCase())) {
-          return false;
-        }
-      }
-      return true;
-    }
-    if (this.targetingAllowedColors.length > 0) {
-      return isPermanentCreature(perm) && perm.card.color != null
-        && this.targetingAllowedColors.some(c => c.toUpperCase() === perm.card.color!.toUpperCase());
-    }
-    return isPermanentCreature(perm);
+    return this.validTargetPermanentIds().has(perm.id);
   }
 
   // ========== Tap / ability activation ==========
@@ -1103,17 +1040,14 @@ export class GameChoiceService {
       return;
     }
 
-    // Check for targeting
+    // Check for targeting — request valid targets from backend
     if (ability.needsTarget) {
-      this.targeting = true;
       this.targetingCardIndex = permanentIndex;
       this.targetingCardName = perm.card.name;
       this.targetingForAbility = true;
       this.targetingAbilityIndex = abilityIndex;
-      this.targetingForPlayer = ability.targetsPlayer;
-      this.targetingAllowedTypes = ability.allowedTargetTypes ?? [];
-      this.targetingAllowedColors = ability.allowedTargetColors ?? [];
-      this.targetingBlockingThis = ability.targetsBlockingThis ?? false;
+      this.pendingAbilityXValue = null;
+      this.sendValidTargetsRequest(null, permanentIndex, abilityIndex);
       return;
     }
 

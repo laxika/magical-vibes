@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, WebSocketMessage, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, ChooseMultipleCardsFromGraveyardsNotification, StackEntry, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification, ChooseFromRevealedHandNotification, ChooseCardFromGraveyardNotification, ChooseHandTopBottomNotification, CombatDamageAssignmentNotification } from '../../services/websocket.service';
+import { WebsocketService, WebSocketMessage, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, ChooseMultipleCardsFromGraveyardsNotification, StackEntry, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification, ChooseFromRevealedHandNotification, ChooseCardFromGraveyardNotification, ChooseHandTopBottomNotification, CombatDamageAssignmentNotification, ValidTargetsResponse } from '../../services/websocket.service';
 import { GameChoiceService } from '../../services/game-choice.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { IndexedPermanent, CombatGroup, CombatBlocker, AttachedAura, LandStack, splitBattlefield, stackBasicLands, getAttachedAuras, isLandStack, isPermanentCreature } from './battlefield.utils';
@@ -163,6 +163,10 @@ export class GameComponent implements OnInit, OnDestroy {
 
     if (message.type === MessageType.COMBAT_DAMAGE_ASSIGNMENT) {
       this.choice.handleCombatDamageAssignment(message as CombatDamageAssignmentNotification);
+    }
+
+    if (message.type === MessageType.VALID_TARGETS_RESPONSE) {
+      this.choice.handleValidTargetsResponse(message as ValidTargetsResponse);
     }
   }
 
@@ -774,7 +778,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
     if (this.choice.multiTargeting) {
       const perm = this.myBattlefield[index];
-      if (perm && isPermanentCreature(perm)) {
+      if (perm && this.choice.validTargetPermanentIds().has(perm.id)) {
         if (this.choice.isMultiTargetSelected(perm.id)) {
           this.choice.removeMultiTarget(perm.id);
         } else {
@@ -830,7 +834,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
     if (this.choice.multiTargeting) {
       const perm = this.opponentBattlefield[index];
-      if (perm && isPermanentCreature(perm)) {
+      if (perm && this.choice.validTargetPermanentIds().has(perm.id)) {
         if (this.choice.isMultiTargetSelected(perm.id)) {
           this.choice.removeMultiTarget(perm.id);
         } else {
@@ -872,7 +876,7 @@ export class GameComponent implements OnInit, OnDestroy {
       return;
     }
     if (this.choice.multiTargeting) {
-      if (isPermanentCreature(group.attacker)) {
+      if (this.choice.validTargetPermanentIds().has(group.attacker.id)) {
         if (this.choice.isMultiTargetSelected(group.attacker.id)) {
           this.choice.removeMultiTarget(group.attacker.id);
         } else {
@@ -914,7 +918,7 @@ export class GameComponent implements OnInit, OnDestroy {
       return;
     }
     if (this.choice.multiTargeting) {
-      if (isPermanentCreature(blocker.perm)) {
+      if (this.choice.validTargetPermanentIds().has(blocker.perm.id)) {
         if (this.choice.isMultiTargetSelected(blocker.perm.id)) {
           this.choice.removeMultiTarget(blocker.perm.id);
         } else {
@@ -956,7 +960,7 @@ export class GameComponent implements OnInit, OnDestroy {
     const playerId = this.getPlayerId(playerIndex);
     if (this.choice.choosingPermanent && (this.choice.choosablePermanentIds().has(playerId) || this.choice.choosablePlayerIds().has(playerId))) {
       this.choice.choosePermanent(playerId);
-    } else if (this.choice.multiTargeting && this.choice.multiTargetForPlayer) {
+    } else if (this.choice.multiTargeting && this.choice.validTargetPlayerIds().size > 0) {
       if (this.choice.isMultiTargetSelected(playerId)) {
         this.choice.removeMultiTarget(playerId);
       } else {

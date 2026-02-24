@@ -64,7 +64,9 @@ export enum MessageType {
   COMBAT_DAMAGE_ASSIGNMENT = 'COMBAT_DAMAGE_ASSIGNMENT',
   COMBAT_DAMAGE_ASSIGNED = 'COMBAT_DAMAGE_ASSIGNED',
   REQUEST_CARD_LIST = 'REQUEST_CARD_LIST',
-  CARD_LIST_RESPONSE = 'CARD_LIST_RESPONSE'
+  CARD_LIST_RESPONSE = 'CARD_LIST_RESPONSE',
+  VALID_TARGETS_REQUEST = 'VALID_TARGETS_REQUEST',
+  VALID_TARGETS_RESPONSE = 'VALID_TARGETS_RESPONSE'
 }
 
 export enum GameStatus {
@@ -130,12 +132,8 @@ export interface ActivatedAbilityView {
   requiresTap: boolean;
   needsTarget: boolean;
   needsSpellTarget: boolean;
-  targetsPlayer: boolean;
-  allowedTargetTypes: string[];
-  allowedTargetColors: string[];
   manaCost: string | null;
   loyaltyCost: number | null;
-  targetsBlockingThis: boolean;
 }
 
 export interface Card {
@@ -155,15 +153,8 @@ export interface Card {
   color: string | null;
   needsTarget: boolean;
   needsSpellTarget: boolean;
-  targetsPlayer: boolean;
-  requiresAttackingTarget: boolean;
-  allowedTargetTypes: string[];
-  allowedTargetSubtypes: string[];
-  excludedTargetColors: string[];
   activatedAbilities: ActivatedAbilityView[];
   loyalty: number | null;
-  minTargets: number;
-  maxTargets: number;
   hasConvoke: boolean;
 }
 
@@ -502,7 +493,16 @@ export interface CardListResponse {
   cards: BrowseCardInfo[];
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameStateNotification | MulliganResolvedNotification | SelectCardsToBottomNotification | AvailableAttackersNotification | AvailableBlockersNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | ChooseMultipleCardsFromGraveyardsNotification | ReorderLibraryCardsNotification | ChooseCardFromLibraryNotification | RevealHandNotification | ChooseFromRevealedHandNotification | ChooseCardFromGraveyardNotification | ChooseHandTopBottomNotification | DraftJoinedNotification | DraftPackUpdateNotification | DeckBuildingStateNotification | TournamentUpdateNotification | TournamentGameReadyNotification | DraftFinishedNotification | CombatDamageAssignmentNotification | CardListResponse;
+export interface ValidTargetsResponse {
+  type: MessageType;
+  validPermanentIds: string[];
+  validPlayerIds: string[];
+  minTargets: number;
+  maxTargets: number;
+  prompt: string;
+}
+
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameStateNotification | MulliganResolvedNotification | SelectCardsToBottomNotification | AvailableAttackersNotification | AvailableBlockersNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | ChooseMultipleCardsFromGraveyardsNotification | ReorderLibraryCardsNotification | ChooseCardFromLibraryNotification | RevealHandNotification | ChooseFromRevealedHandNotification | ChooseCardFromGraveyardNotification | ChooseHandTopBottomNotification | DraftJoinedNotification | DraftPackUpdateNotification | DeckBuildingStateNotification | TournamentUpdateNotification | TournamentGameReadyNotification | DraftFinishedNotification | CombatDamageAssignmentNotification | CardListResponse | ValidTargetsResponse;
 
 export interface User {
   userId: string;

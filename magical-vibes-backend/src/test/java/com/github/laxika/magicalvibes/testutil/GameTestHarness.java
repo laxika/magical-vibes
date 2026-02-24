@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.service.SpellCastingService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.ValidTargetService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.TurnResolutionService;
@@ -201,10 +202,11 @@ public class GameTestHarness {
         lobbyService = new LobbyService(gameRegistry, gameBroadcastService);
 
         // Create the MessageHandler (GameMessageHandler) for AI tests
+        ValidTargetService validTargetService = new ValidTargetService(gameQueryService);
         messageHandler = new GameMessageHandler(
                 null, gameService, gameBroadcastService, lobbyService, gameRegistry,
                 sessionManager, new JacksonConfig().objectMapper(),
-                null, null, draftRegistry, null);
+                null, null, draftRegistry, null, validTargetService);
 
         player1 = new Player(UUID.randomUUID(), "Alice");
         player2 = new Player(UUID.randomUUID(), "Bob");

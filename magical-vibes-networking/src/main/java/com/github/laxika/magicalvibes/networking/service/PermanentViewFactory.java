@@ -63,10 +63,8 @@ public class PermanentViewFactory {
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
                 cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
-                cardView.needsSpellTarget(), cardView.targetsPlayer(),
-                cardView.requiresAttackingTarget(), cardView.allowedTargetTypes(),
-                cardView.allowedTargetSubtypes(), cardView.excludedTargetColors(), cardView.activatedAbilities(), cardView.loyalty(),
-                cardView.minTargets(), cardView.maxTargets(), cardView.hasConvoke()
+                cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
+                cardView.hasConvoke()
         );
     }
 
@@ -85,10 +83,8 @@ public class PermanentViewFactory {
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), hasTapAbility, cardView.setCode(),
                 cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
-                cardView.needsSpellTarget(), cardView.targetsPlayer(),
-                cardView.requiresAttackingTarget(), cardView.allowedTargetTypes(),
-                cardView.allowedTargetSubtypes(), cardView.excludedTargetColors(), mergedAbilities, cardView.loyalty(),
-                cardView.minTargets(), cardView.maxTargets(), cardView.hasConvoke()
+                cardView.needsSpellTarget(), mergedAbilities, cardView.loyalty(),
+                cardView.hasConvoke()
         );
     }
 
@@ -105,10 +101,8 @@ public class PermanentViewFactory {
                 modifiedText, cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
                 cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
-                cardView.needsSpellTarget(), cardView.targetsPlayer(),
-                cardView.requiresAttackingTarget(), cardView.allowedTargetTypes(),
-                cardView.allowedTargetSubtypes(), cardView.excludedTargetColors(), cardView.activatedAbilities(), cardView.loyalty(),
-                cardView.minTargets(), cardView.maxTargets(), cardView.hasConvoke()
+                cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
+                cardView.hasConvoke()
         );
     }
 }

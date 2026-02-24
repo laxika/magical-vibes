@@ -84,17 +84,7 @@
   @if (game()?.status === GameStatus.RUNNING || game()?.status === GameStatus.FINISHED) {
     @if (choice.targeting) {
       <div class="combat-banner targeting-banner">
-        @if (choice.targetingForPlayer) {
-          <span>Select a target player for {{ choice.targetingCardName }}</span>
-        } @else if (choice.targetingAllowedTypes.includes('Enchantment')) {
-          <span>Select a target Aura for {{ choice.targetingCardName }}</span>
-        } @else if (choice.targetingBlockingThis) {
-          <span>Select a creature blocking {{ choice.targetingCardName }}</span>
-        } @else if (choice.targetingRequiresAttacking) {
-          <span>Select a target attacking creature for {{ choice.targetingCardName }}</span>
-        } @else {
-          <span>Select a target creature for {{ choice.targetingCardName }}</span>
-        }
+        <span>{{ choice.targetingPrompt }}</span>
         <button class="btn-confirm-combat" (click)="choice.cancelTargeting()">Cancel</button>
       </div>
     }
@@ -108,11 +98,7 @@
 
     @if (choice.multiTargeting) {
       <div class="combat-banner targeting-banner">
-        @if (choice.multiTargetForPlayer) {
-          <span>Select targets for {{ choice.multiTargetCardName }} ({{ choice.multiTargetSelectedIds().length }}/{{ choice.multiTargetMaxCount }})</span>
-        } @else {
-          <span>Select target creatures for {{ choice.multiTargetCardName }} ({{ choice.multiTargetSelectedIds().length }}/{{ choice.multiTargetMaxCount }})</span>
-        }
+        <span>{{ choice.targetingPrompt }} ({{ choice.multiTargetSelectedIds().length }}/{{ choice.multiTargetMaxCount }})</span>
         <button class="btn-confirm-combat" (click)="choice.confirmMultiTargets()" [disabled]="choice.multiTargetSelectedIds().length < choice.multiTargetMinCount">Confirm</button>
         <button class="btn-confirm-combat" (click)="choice.cancelMultiTargeting()">Cancel</button>
       </div>
@@ -890,7 +876,7 @@
             </div>
 
             <div class="turn-info">
-              <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)" [class.targetable]="choice.targetingForPlayer || (choice.multiTargeting && choice.multiTargetForPlayer)" [class.multi-target-selected]="choice.multiTargeting && choice.multiTargetForPlayer && choice.isMultiTargetSelected(getPlayerId(0))" [class.stack-targeted]="isStackTargetPlayer(0)" [class.choosable-permanent]="choice.choosingPermanent && (choice.choosablePermanentIds().has(getPlayerId(0)) || choice.choosablePlayerIds().has(getPlayerId(0)))" (click)="onPlayerBadgeClick(0)">
+              <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)" [class.targetable]="(choice.targeting && choice.validTargetPlayerIds().size > 0) || (choice.multiTargeting && choice.validTargetPlayerIds().size > 0)" [class.multi-target-selected]="choice.multiTargeting && choice.validTargetPlayerIds().size > 0 && choice.isMultiTargetSelected(getPlayerId(0))" [class.stack-targeted]="isStackTargetPlayer(0)" [class.choosable-permanent]="choice.choosingPermanent && (choice.choosablePermanentIds().has(getPlayerId(0)) || choice.choosablePlayerIds().has(getPlayerId(0)))" (click)="onPlayerBadgeClick(0)">
                 {{ player1Name }}
                 <span class="life-total">Life: {{ getLifeTotal(0) }}</span>
                 @if (getPoisonCounters(0) > 0) {
@@ -906,7 +892,7 @@
                 <span class="turn-number">Turn {{ game()?.turnNumber }}</span>
                 <span class="vs-label">VS</span>
               </div>
-              <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)" [class.targetable]="choice.targetingForPlayer || (choice.multiTargeting && choice.multiTargetForPlayer)" [class.multi-target-selected]="choice.multiTargeting && choice.multiTargetForPlayer && choice.isMultiTargetSelected(getPlayerId(1))" [class.stack-targeted]="isStackTargetPlayer(1)" [class.choosable-permanent]="choice.choosingPermanent && (choice.choosablePermanentIds().has(getPlayerId(1)) || choice.choosablePlayerIds().has(getPlayerId(1)))" (click)="onPlayerBadgeClick(1)">
+              <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)" [class.targetable]="(choice.targeting && choice.validTargetPlayerIds().size > 0) || (choice.multiTargeting && choice.validTargetPlayerIds().size > 0)" [class.multi-target-selected]="choice.multiTargeting && choice.validTargetPlayerIds().size > 0 && choice.isMultiTargetSelected(getPlayerId(1))" [class.stack-targeted]="isStackTargetPlayer(1)" [class.choosable-permanent]="choice.choosingPermanent && (choice.choosablePermanentIds().has(getPlayerId(1)) || choice.choosablePlayerIds().has(getPlayerId(1)))" (click)="onPlayerBadgeClick(1)">
                 {{ player2Name }}
                 <span class="life-total">Life: {{ getLifeTotal(1) }}</span>
                 @if (getPoisonCounters(1) > 0) {
