@@ -116,6 +116,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `PutCardFromOpponentGraveyardOntoBattlefieldEffect` | `(boolean tapped)` | put target artifact/creature with MV=X from opponent's graveyard onto battlefield under your control (tapped if `tapped=true`), then mill that player X cards |
 | `ReturnAuraFromGraveyardToBattlefieldEffect` | `()` | return aura from graveyard to battlefield |
 | `ReturnCardOfSubtypeFromGraveyardToHandEffect` | `(CardSubtype subtype)` | return card of specific subtype from graveyard to hand |
+| `ReturnCardWithKeywordFromGraveyardToHandEffect` | `(CardType cardType, Keyword keyword)` | return card of given type with given keyword from graveyard to hand. `cardType` null = any type |
 | `ReturnSelfFromGraveyardToHandEffect` | `()` | return this card from graveyard to owner's hand |
 | `ReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHandEffect` | `()` | return creature cards that died this turn to hand |
 | `PutImprintedCreatureOntoBattlefieldEffect` | `()` | when this creature dies, reveal imprinted card; if creature, put onto battlefield (Clone Shell dies trigger) |

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnArtifactOrCreatureFromA
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardOfSubtypeFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardWithKeywordFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfFromGraveyardToHandEffect;
@@ -164,6 +165,42 @@ public class GraveyardReturnResolutionService {
         gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.HAND, null);
         playerInputService.beginGraveyardChoice(gameData, controllerId, matchingIndices,
                 "Return a " + subtypeName + " card from your graveyard to your hand.");
+    }
+
+    @HandlesEffect(ReturnCardWithKeywordFromGraveyardToHandEffect.class)
+    void resolveReturnCardWithKeywordFromGraveyardToHand(GameData gameData, StackEntry entry,
+            ReturnCardWithKeywordFromGraveyardToHandEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        String keywordName = effect.keyword().name().toLowerCase().replace('_', ' ');
+        String typeName = effect.cardType() != null ? effect.cardType().name().toLowerCase() + " card" : "card";
+        String label = typeName + " with " + keywordName;
+
+        if (graveyard == null || graveyard.isEmpty()) {
+            String logEntry = entry.getDescription() + " — no " + label + "s in graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        List<Integer> matchingIndices = new ArrayList<>();
+        for (int i = 0; i < graveyard.size(); i++) {
+            Card card = graveyard.get(i);
+            boolean typeMatch = effect.cardType() == null || card.getType() == effect.cardType();
+            boolean keywordMatch = card.getKeywords().contains(effect.keyword());
+            if (typeMatch && keywordMatch) {
+                matchingIndices.add(i);
+            }
+        }
+
+        if (matchingIndices.isEmpty()) {
+            String logEntry = entry.getDescription() + " — no " + label + "s in graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.HAND, null);
+        playerInputService.beginGraveyardChoice(gameData, controllerId, matchingIndices,
+                "Return a " + label + " from your graveyard to your hand.");
     }
 
     @HandlesEffect(ReturnSelfFromGraveyardToHandEffect.class)
