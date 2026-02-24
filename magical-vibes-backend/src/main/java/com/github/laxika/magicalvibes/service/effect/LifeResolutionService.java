@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifePerCreatur
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifePerControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerCreatureOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -70,6 +71,27 @@ public class LifeResolutionService {
             return;
         }
         applyGainLife(gameData, entry.getControllerId(), creatureCount);
+    }
+
+    @HandlesEffect(GainLifePerControlledCreatureEffect.class)
+    private void resolveGainLifePerControlledCreature(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        int creatureCount = 0;
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                if (gameQueryService.isCreature(gameData, permanent)) {
+                    creatureCount++;
+                }
+            }
+        }
+        if (creatureCount == 0) {
+            String playerName = gameData.playerIdToName.get(controllerId);
+            String logEntry = playerName + " gains no life (no creatures on the battlefield).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+        applyGainLife(gameData, controllerId, creatureCount);
     }
 
     @HandlesEffect(GainLifePerGraveyardCardEffect.class)

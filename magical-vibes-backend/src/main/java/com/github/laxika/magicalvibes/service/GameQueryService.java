@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -290,6 +291,9 @@ public class GameQueryService {
         }
         if (predicate instanceof PermanentIsTappedPredicate) {
             return permanent.isTapped();
+        }
+        if (predicate instanceof PermanentIsTokenPredicate) {
+            return permanent.getCard().isToken();
         }
         if (predicate instanceof PermanentIsAttackingPredicate) {
             return permanent.isAttacking();

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
@@ -36,6 +37,9 @@ public class DestructionResolutionService {
     void resolveDestroyAllPermanents(GameData gameData, StackEntry entry, DestroyAllPermanentsEffect effect) {
         List<Permanent> toDestroy = new ArrayList<>();
         UUID controllerId = entry.getControllerId();
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(controllerId);
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (effect.onlyOpponents() && playerId.equals(controllerId)) {
@@ -44,7 +48,7 @@ public class DestructionResolutionService {
             for (Permanent perm : gameData.playerBattlefields.get(playerId)) {
                 if (matchesDestroyAllTargetType(gameData, perm, effect.targetTypes())
                         && (effect.filter() == null
-                            || gameQueryService.matchesPermanentPredicate(gameData, perm, effect.filter()))) {
+                            || gameQueryService.matchesPermanentPredicate(perm, effect.filter(), filterContext))) {
                     toDestroy.add(perm);
                 }
             }
