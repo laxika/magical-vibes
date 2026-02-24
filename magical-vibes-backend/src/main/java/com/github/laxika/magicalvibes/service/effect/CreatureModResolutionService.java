@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAttackedCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapEachOtherCreatureYouControlEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameQueryService;
@@ -473,6 +474,28 @@ public class CreatureModResolutionService {
         String logEntry = entry.getCard().getName() + " untaps " + count + " creature(s) that attacked this turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} untaps {} attacked creature(s)", gameData.id, entry.getCard().getName(), count);
+    }
+
+    @HandlesEffect(UntapEachOtherCreatureYouControlEffect.class)
+    private void resolveUntapEachOtherCreatureYouControl(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        UUID sourceId = entry.getSourcePermanentId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return;
+
+        int count = 0;
+        for (Permanent p : battlefield) {
+            if (p.getId().equals(sourceId)) continue;
+            if (!gameQueryService.isCreature(gameData, p)) continue;
+            if (!p.isTapped()) continue;
+
+            p.untap();
+            count++;
+        }
+
+        String logEntry = entry.getCard().getName() + " untaps " + count + " other creature(s) you control.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} untaps {} other creature(s)", gameData.id, entry.getCard().getName(), count);
     }
 
     @HandlesEffect(PutMinusOneMinusOneCounterOnEachOtherCreatureEffect.class)

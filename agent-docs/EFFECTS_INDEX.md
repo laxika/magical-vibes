@@ -280,6 +280,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `DoesntUntapDuringUntapStepEffect` | `()` | this permanent doesn't untap during untap step (static) |
 | `EnchantedCreatureDoesntUntapEffect` | `()` | enchanted creature doesn't untap during untap step (static) |
 | `UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect` | `(TurnStep step)` | untap all your permanents during each other player's step |
+| `UntapEachOtherCreatureYouControlEffect` | `()` | untap each other creature you control (ON_ATTACK trigger) |
 
 ## Control / steal
 
