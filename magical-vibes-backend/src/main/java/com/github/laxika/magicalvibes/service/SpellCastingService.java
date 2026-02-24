@@ -235,10 +235,10 @@ public class SpellCastingService {
             ));
             finishSpellCast(gameData, playerId, player, hand, card);
         } else if (card.getType() == CardType.ARTIFACT) {
-            paySpellManaCost(gameData, playerId, card, 0, convokeContributions);
+            paySpellManaCost(gameData, playerId, card, effectiveXValue, convokeContributions);
             gameData.stack.add(new StackEntry(
                     StackEntryType.ARTIFACT_SPELL, card, playerId, card.getName(),
-                    List.of(), 0, targetPermanentId, null
+                    List.of(), effectiveXValue, targetPermanentId, null
             ));
             finishSpellCast(gameData, playerId, player, hand, card);
         } else if (card.getType() == CardType.PLANESWALKER) {

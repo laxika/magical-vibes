@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimateSelfByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -73,7 +74,8 @@ public class ActivatedAbilityExecutionService {
             boolean needsSelfTarget = abilityEffects.stream().anyMatch(e ->
                     (e instanceof RegenerateEffect regen && !regen.targetsPermanent() && !permanent.getCard().isAura())
                             || e instanceof BoostSelfEffect || e instanceof UntapSelfEffect
-                            || e instanceof AnimateSelfEffect || e instanceof AnimateLandEffect
+                            || e instanceof AnimateSelfEffect || e instanceof AnimateSelfByChargeCountersEffect
+                            || e instanceof AnimateLandEffect
                             || (e instanceof GrantKeywordEffect grant && grant.scope() == GrantScope.SELF));
             if (needsSelfTarget) {
                 effectiveTargetId = permanent.getId();
