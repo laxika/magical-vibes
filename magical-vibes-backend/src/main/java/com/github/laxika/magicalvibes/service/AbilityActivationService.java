@@ -652,6 +652,12 @@ public class AbilityActivationService {
                     throw new IllegalStateException("This ability can only be activated during your upkeep");
                 }
             }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.POWER_4_OR_GREATER) {
+                int effectivePower = gameQueryService.getEffectivePower(gameData, permanent);
+                if (effectivePower < 4) {
+                    throw new IllegalStateException("Activate only if this creature's power is 4 or greater");
+                }
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED) {
                 if (!playerId.equals(gameData.activePlayerId)) {
                     throw new IllegalStateException("This ability can only be activated at sorcery speed");
