@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -14,6 +16,7 @@ public class StaticBonusAccumulator {
     private int power;
     private int toughness;
     private final Set<Keyword> keywords = new HashSet<>();
+    private final Set<CardColor> protectionColors = EnumSet.noneOf(CardColor.class);
     private boolean animatedCreature;
     private final List<ActivatedAbility> grantedActivatedAbilities = new ArrayList<>();
     private final List<CardEffect> grantedEffects = new ArrayList<>();
@@ -52,6 +55,14 @@ public class StaticBonusAccumulator {
 
     public boolean isAnimatedCreature() {
         return animatedCreature;
+    }
+
+    public void addProtectionColors(Set<CardColor> colors) {
+        protectionColors.addAll(colors);
+    }
+
+    public Set<CardColor> getProtectionColors() {
+        return protectionColors;
     }
 
     public void addActivatedAbility(ActivatedAbility ability) {

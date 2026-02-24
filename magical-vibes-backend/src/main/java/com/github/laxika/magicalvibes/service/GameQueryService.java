@@ -80,8 +80,8 @@ public class GameQueryService {
 
     private final StaticEffectHandlerRegistry staticEffectRegistry;
 
-    record StaticBonus(int power, int toughness, Set<Keyword> keywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects) {
-        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), false, List.of(), List.of());
+    record StaticBonus(int power, int toughness, Set<Keyword> keywords, Set<CardColor> protectionColors, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects) {
+        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), false, List.of(), List.of());
     }
 
     public Permanent findPermanentById(GameData gameData, UUID permanentId) {
@@ -404,7 +404,8 @@ public class GameQueryService {
                 && !accumulator.isAnimatedCreature()
                 && !isSelfAnimated
                 && accumulator.getKeywords().isEmpty()
-                && accumulator.getGrantedActivatedAbilities().isEmpty()) {
+                && accumulator.getGrantedActivatedAbilities().isEmpty()
+                && accumulator.getProtectionColors().isEmpty()) {
             return StaticBonus.NONE;
         }
 
@@ -416,7 +417,7 @@ public class GameQueryService {
             toughness += manaValue;
         }
 
-        return new StaticBonus(power, toughness, accumulator.getKeywords(), accumulator.isAnimatedCreature() || isSelfAnimated, accumulator.getGrantedActivatedAbilities(), accumulator.getGrantedEffects());
+        return new StaticBonus(power, toughness, accumulator.getKeywords(), accumulator.getProtectionColors(), accumulator.isAnimatedCreature() || isSelfAnimated, accumulator.getGrantedActivatedAbilities(), accumulator.getGrantedEffects());
     }
 
     public boolean hasProtectionFrom(GameData gameData, Permanent target, CardColor sourceColor) {
@@ -425,6 +426,9 @@ public class GameQueryService {
             if (effect instanceof ProtectionFromColorsEffect protection && protection.colors().contains(sourceColor)) {
                 return true;
             }
+        }
+        if (computeStaticBonus(gameData, target).protectionColors().contains(sourceColor)) {
+            return true;
         }
         if (target.getChosenColor() != null && target.getChosenColor() == sourceColor) {
             return true;
