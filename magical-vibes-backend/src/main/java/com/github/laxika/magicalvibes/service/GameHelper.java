@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
@@ -811,6 +812,18 @@ public class GameHelper {
                         return e;
                     })
                     .filter(Objects::nonNull)
+                    // Metalcraft intervening-if: only trigger if controller has 3+ artifacts
+                    .filter(e -> {
+                        if (e instanceof MetalcraftConditionalEffect) {
+                            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+                            long artifactCount = bf == null ? 0 : bf.stream()
+                                    .filter(p -> p.getCard().getType() == CardType.ARTIFACT
+                                            || p.getCard().getAdditionalTypes().contains(CardType.ARTIFACT))
+                                    .count();
+                            return artifactCount >= 3;
+                        }
+                        return true;
+                    })
                     .toList();
 
             for (CardEffect effect : mayEffects) {

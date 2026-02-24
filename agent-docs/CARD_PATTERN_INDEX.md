@@ -79,6 +79,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB control handoff | `s/SleeperAgent.java` | TargetPlayerGainsControlOfSourceCreatureEffect |
 | ETB drawback | `h/HiddenHorror.java` | SacrificeUnlessDiscardCardTypeEffect |
 | ETB -1/-1 counters + counter removal ability | `b/BurdenedStoneback.java` | PutCountersOnSourceEffect(-1,-1,2) + RemoveCounterFromSourceCost + GrantKeywordEffect |
+| ETB metalcraft conditional drain | `b/BleakCovenVampires.java` | MetalcraftConditionalEffect(TargetPlayerLosesLifeAndControllerGainsLifeEffect) — intervening-if 3+ artifacts |
 
 ## Triggered creatures
 

@@ -30,6 +30,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | Effect | Constructor | Description |
 |--------|-------------|-------------|
 | `MayEffect` | `(CardEffect wrapped, String prompt)` | Wraps any effect with "you may" choice |
+| `MetalcraftConditionalEffect` | `(CardEffect wrapped)` | Wraps any effect with metalcraft intervening-if (3+ artifacts). Checked at trigger time and resolution time. Delegates targeting to wrapped effect |
 
 ---
 

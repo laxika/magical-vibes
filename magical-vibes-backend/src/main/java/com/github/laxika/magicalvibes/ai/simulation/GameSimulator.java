@@ -165,7 +165,7 @@ public class GameSimulator {
             scanEffectHandlers(service, effectHandlerRegistry);
         }
 
-        EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper, effectHandlerRegistry);
+        EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper, effectHandlerRegistry, gameBroadcastService);
         TurnProgressionService turnProgressionService = new TurnProgressionService(
                 combatService, gameHelper, gameQueryService, gameBroadcastService, playerInputService);
         SpellCastingService spellCastingService = new SpellCastingService(
