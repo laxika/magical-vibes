@@ -3,8 +3,12 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHandEffect;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
 
@@ -17,7 +21,7 @@ public class NoRestForTheWicked extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new ReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHandEffect()
+                        new ReturnCardFromGraveyardEffect(GraveyardChoiceDestination.HAND, new CardTypePredicate(CardType.CREATURE), GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, true, true, null)
                 ),
                 "Sacrifice No Rest for the Wicked: Return to your hand all creature cards put into your graveyard from the battlefield this turn."
         ));

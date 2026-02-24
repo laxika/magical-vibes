@@ -21,7 +21,7 @@ When creating a new effect, override the relevant method(s) to return `true`:
 | `canTargetPlayer()` | DealDamageToAnyTargetEffect, DealDamageToAnyTargetAndGainLifeEffect, DealDamageToTargetPlayerEffect, DealDamageToTargetPlayerByHandSizeEffect, DealOrderedDamageToAnyTargetsEffect, DealXDamageToAnyTargetEffect, DealXDamageToAnyTargetAndGainXLifeEffect, TargetPlayerLosesLifeAndControllerGainsLifeEffect, TargetPlayerGainsLifeEffect, DoubleTargetPlayerLifeEffect, TargetPlayerDiscardsEffect, ChooseCardFromTargetHandToDiscardEffect, ChooseCardsFromTargetHandToTopOfLibraryEffect, LookAtHandEffect, HeadGamesEffect, RedirectDrawsEffect, MillTargetPlayerEffect, MillHalfLibraryEffect, ExtraTurnEffect, SacrificeCreatureEffect, ShuffleGraveyardIntoLibraryEffect, RevealTopCardDealManaValueDamageEffect, RevealTopCardOfLibraryEffect, ReturnArtifactsTargetPlayerOwnsToHandEffect, TargetPlayerGainsControlOfSourceCreatureEffect, PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect |
 | `canTargetPermanent()` | DealDamageToAnyTargetEffect, DealDamageToAnyTargetAndGainLifeEffect, DealDamageToTargetCreatureEffect, DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect, DealOrderedDamageToAnyTargetsEffect, DealXDamageToAnyTargetEffect, DealXDamageToAnyTargetAndGainXLifeEffect, DealXDamageToTargetCreatureEffect, DealXDamageDividedAmongTargetAttackingCreaturesEffect, FirstTargetDealsPowerDamageToSecondTargetEffect, DestroyTargetPermanentEffect, DestroyTargetLandAndDamageControllerEffect, DestroyCreatureBlockingThisEffect, ExileTargetPermanentEffect, ReturnTargetPermanentToHandEffect, PutTargetOnBottomOfLibraryEffect, GainControlOfTargetCreatureUntilEndOfTurnEffect, GainControlOfEnchantedTargetEffect, GainControlOfTargetAuraEffect, BoostTargetCreatureEffect, BoostFirstTargetCreatureEffect, GainLifeEqualToTargetToughnessEffect, PreventDamageToTargetEffect, TapTargetPermanentEffect, TapOrUntapTargetPermanentEffect, UntapTargetPermanentEffect, MakeTargetUnblockableEffect, TargetCreatureCantBlockThisTurnEffect, ChangeColorTextEffect, EquipEffect, CantBlockSourceEffect, SacrificeCreatureCost, GrantKeywordEffect (when scope == Scope.TARGET), PutMinusOneMinusOneCounterOnTargetCreatureEffect |
 | `canTargetSpell()` | CounterSpellEffect, CounterUnlessPaysEffect, CopySpellEffect, ChangeTargetOfTargetSpellWithSingleTargetEffect |
-| `canTargetGraveyard()` | ReturnCardFromGraveyardToHandEffect (when targetGraveyard=true), PutCardFromOpponentGraveyardOntoBattlefieldEffect |
+| `canTargetGraveyard()` | ReturnCardFromGraveyardEffect (when targetGraveyard=true), PutCardFromOpponentGraveyardOntoBattlefieldEffect |
 
 Effects that target both players and permanents (any-target): DealDamageToAnyTargetEffect, DealDamageToAnyTargetAndGainLifeEffect, DealOrderedDamageToAnyTargetsEffect, DealXDamageToAnyTargetEffect, DealXDamageToAnyTargetAndGainXLifeEffect.
 
@@ -108,17 +108,93 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 
 ## Graveyard return
 
+### Unified effect: `ReturnCardFromGraveyardEffect`
+
+All graveyard-to-hand and graveyard-to-battlefield return effects are handled by a single unified record.
+
+**Canonical constructor:**
+```
+ReturnCardFromGraveyardEffect(
+    GraveyardChoiceDestination destination,  // HAND or BATTLEFIELD
+    CardPredicate filter,                    // which cards qualify (null = any)
+    GraveyardSearchScope source,             // CONTROLLERS_GRAVEYARD, ALL_GRAVEYARDS, OPPONENT_GRAVEYARD
+    boolean targetGraveyard,                 // true = player chooses whose graveyard to search at cast time
+    boolean returnAll,                       // true = return all matching cards, false = choose one
+    boolean thisTurnOnly,                    // true = only cards put there from battlefield this turn
+    PermanentPredicate attachmentTarget      // non-null = aura attaches to matching permanent on ETB
+)
+```
+
+**Convenience constructors:**
+
+| Constructor | Equivalent canonical | When to use |
+|-------------|---------------------|-------------|
+| `(destination, filter)` | `(destination, filter, CONTROLLERS_GRAVEYARD, false, false, false, null)` | choose one from controller's graveyard (most common) |
+| `(destination, filter, source)` | `(destination, filter, source, false, false, false, null)` | choose one from a specific scope (e.g. ALL_GRAVEYARDS) |
+| `(destination, filter, targetGraveyard)` | `(destination, filter, CONTROLLERS_GRAVEYARD, targetGraveyard, false, false, null)` | targets graveyard at cast time (for spells like Recollect, Recover) |
+
+**CardPredicate filter system** (in `model/filter/`):
+
+| Predicate | Constructor | Matches |
+|-----------|-------------|---------|
+| `CardTypePredicate` | `(CardType cardType)` | cards of a given type (CREATURE, ARTIFACT, etc.) |
+| `CardSubtypePredicate` | `(CardSubtype subtype)` | cards of a given subtype (ZOMBIE, GOBLIN, etc.) |
+| `CardKeywordPredicate` | `(Keyword keyword)` | cards with a given keyword (INFECT, FLYING, etc.) |
+| `CardIsSelfPredicate` | `()` | only the source card itself (Squee-style self-return) |
+| `CardIsAuraPredicate` | `()` | aura cards |
+| `CardAllOfPredicate` | `(List<CardPredicate> predicates)` | AND — all predicates must match |
+| `CardAnyOfPredicate` | `(List<CardPredicate> predicates)` | OR — any predicate matches |
+
+Pass `null` as filter to allow any card.
+
+**GraveyardSearchScope enum** (in `model/`):
+
+| Value | Meaning |
+|-------|---------|
+| `CONTROLLERS_GRAVEYARD` | search only the controller's graveyard (default) |
+| `ALL_GRAVEYARDS` | search any player's graveyard |
+| `OPPONENT_GRAVEYARD` | search only opponent's graveyard |
+
+**GraveyardChoiceDestination enum** (in `model/`):
+
+| Value | Meaning |
+|-------|---------|
+| `HAND` | return chosen card(s) to hand |
+| `BATTLEFIELD` | put chosen card(s) onto battlefield |
+
+**Migration from old effects:**
+
+| Old effect | New equivalent |
+|------------|----------------|
+| `ReturnCardFromGraveyardToHandEffect()` | `ReturnCardFromGraveyardEffect(HAND, null, true)` |
+| `ReturnCardFromGraveyardToHandEffect(CardType.CREATURE)` | `ReturnCardFromGraveyardEffect(HAND, new CardTypePredicate(CREATURE))` |
+| `ReturnCardOfSubtypeFromGraveyardToHandEffect(subtype)` | `ReturnCardFromGraveyardEffect(HAND, new CardSubtypePredicate(subtype))` |
+| `ReturnCardWithKeywordFromGraveyardToHandEffect(type, kw)` | `ReturnCardFromGraveyardEffect(HAND, new CardAllOfPredicate(List.of(new CardTypePredicate(type), new CardKeywordPredicate(kw))))` |
+| `ReturnSelfFromGraveyardToHandEffect()` | `ReturnCardFromGraveyardEffect(HAND, new CardIsSelfPredicate(), CONTROLLERS_GRAVEYARD, false, true, false, null)` |
+| `ReturnCreatureFromGraveyardToBattlefieldEffect()` | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardTypePredicate(CREATURE))` |
+| `ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect()` | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardAnyOfPredicate(List.of(new CardTypePredicate(ARTIFACT), new CardTypePredicate(CREATURE))), ALL_GRAVEYARDS)` |
+| `ReturnAuraFromGraveyardToBattlefieldEffect()` | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardIsAuraPredicate(), CONTROLLERS_GRAVEYARD, false, false, false, attachmentTarget)` |
+| `ReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHandEffect()` | `ReturnCardFromGraveyardEffect(HAND, new CardTypePredicate(CREATURE), CONTROLLERS_GRAVEYARD, false, true, true, null)` |
+
+**Common usage examples:**
+
+| Card | Usage |
+|------|-------|
+| Recollect | `ReturnCardFromGraveyardEffect(HAND, null, true)` — any card, targets graveyard |
+| Gravedigger | `MayEffect(ReturnCardFromGraveyardEffect(HAND, new CardTypePredicate(CREATURE)))` — creature to hand |
+| Corpse Cur | `ReturnCardFromGraveyardEffect(HAND, new CardAllOfPredicate(List.of(new CardTypePredicate(CREATURE), new CardKeywordPredicate(INFECT))))` — creature with infect |
+| Lord of the Undead | `ReturnCardFromGraveyardEffect(HAND, new CardSubtypePredicate(ZOMBIE))` — Zombie subtype |
+| Doomed Necromancer | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardTypePredicate(CREATURE))` — creature to battlefield |
+| Beacon of Unrest | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardAnyOfPredicate(...), ALL_GRAVEYARDS)` — artifact or creature from any graveyard |
+| Nomad Mythmaker | canonical constructor with `attachmentTarget = new PermanentIsCreaturePredicate()` — aura to battlefield attached to creature |
+| Squee, Goblin Nabob | `ReturnCardFromGraveyardEffect(HAND, new CardIsSelfPredicate(), CONTROLLERS_GRAVEYARD, false, true, false, null)` — self-return |
+| No Rest for the Wicked | `ReturnCardFromGraveyardEffect(HAND, new CardTypePredicate(CREATURE), CONTROLLERS_GRAVEYARD, false, true, true, null)` — all creatures that died this turn |
+
+### Other graveyard effects
+
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
-| `ReturnCardFromGraveyardToHandEffect` | `()` or `(CardType cardType)` | return target card from graveyard to hand. No-arg: any card from your graveyard. `(CardType)`: only cards of that type (e.g. `CardType.CREATURE` replaces old `ReturnCreatureFromGraveyardToHandEffect`, `CardType.ARTIFACT` replaces old `ReturnArtifactFromGraveyardToHandEffect`). Fields: `CardType cardType` (null = any), `boolean targetGraveyard` (auto-set: true when no cardType filter). When `targetGraveyard=true`, targets opponent's graveyard; otherwise targets your own |
-| `ReturnCreatureFromGraveyardToBattlefieldEffect` | `()` | return target creature card from graveyard to battlefield |
-| `ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect` | `()` | return target artifact or creature from ANY graveyard to battlefield |
 | `PutCardFromOpponentGraveyardOntoBattlefieldEffect` | `(boolean tapped)` | put target artifact/creature with MV=X from opponent's graveyard onto battlefield under your control (tapped if `tapped=true`), then mill that player X cards |
-| `ReturnAuraFromGraveyardToBattlefieldEffect` | `()` | return aura from graveyard to battlefield |
-| `ReturnCardOfSubtypeFromGraveyardToHandEffect` | `(CardSubtype subtype)` | return card of specific subtype from graveyard to hand |
-| `ReturnCardWithKeywordFromGraveyardToHandEffect` | `(CardType cardType, Keyword keyword)` | return card of given type with given keyword from graveyard to hand. `cardType` null = any type |
-| `ReturnSelfFromGraveyardToHandEffect` | `()` | return this card from graveyard to owner's hand |
-| `ReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHandEffect` | `()` | return creature cards that died this turn to hand |
 | `PutImprintedCreatureOntoBattlefieldEffect` | `()` | when this creature dies, reveal imprinted card; if creature, put onto battlefield (Clone Shell dies trigger) |
 
 ## Draw / discard / hand manipulation
@@ -360,7 +436,6 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `PutAuraFromHandOntoSelfEffect` | `()` | put an aura from hand onto this creature (ETB) |
-| `ReturnAuraFromGraveyardToBattlefieldEffect` | `()` | return aura from graveyard to battlefield |
 | `GainControlOfTargetAuraEffect` | `()` | gain control of target aura |
 | `ChangeColorTextEffect` | `()` | change color words in enchanted permanent's text (Sleight of Mind-style) |
 

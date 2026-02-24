@@ -4,9 +4,11 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardOfSubtypeFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.List;
@@ -23,7 +25,7 @@ public class LordOfTheUndead extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{B}",
-                List.of(new ReturnCardOfSubtypeFromGraveyardToHandEffect(CardSubtype.ZOMBIE)),
+                List.of(new ReturnCardFromGraveyardEffect(GraveyardChoiceDestination.HAND, new CardSubtypePredicate(CardSubtype.ZOMBIE))),
                 "{1}{B}, {T}: Return target Zombie card from your graveyard to your hand."
         ));
     }

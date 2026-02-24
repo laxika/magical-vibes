@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,7 +34,7 @@ class NomadMythmakerTest extends BaseCardTest {
 
         assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
         assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(ReturnAuraFromGraveyardToBattlefieldEffect.class);
+                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
         assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{W}");
     }
 

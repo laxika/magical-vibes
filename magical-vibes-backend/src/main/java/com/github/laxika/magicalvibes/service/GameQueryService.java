@@ -21,6 +21,14 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -129,6 +137,33 @@ public class GameQueryService {
             }
         }
         return null;
+    }
+
+    public boolean matchesCardPredicate(Card card, CardPredicate predicate, UUID sourceCardId) {
+        if (predicate == null) return true;
+
+        if (predicate instanceof CardTypePredicate p) {
+            return card.getType() == p.cardType() || card.getAdditionalTypes().contains(p.cardType());
+        }
+        if (predicate instanceof CardSubtypePredicate p) {
+            return card.getSubtypes().contains(p.subtype());
+        }
+        if (predicate instanceof CardKeywordPredicate p) {
+            return card.getKeywords().contains(p.keyword());
+        }
+        if (predicate instanceof CardIsSelfPredicate) {
+            return sourceCardId != null && card.getId().equals(sourceCardId);
+        }
+        if (predicate instanceof CardIsAuraPredicate) {
+            return card.isAura();
+        }
+        if (predicate instanceof CardAllOfPredicate p) {
+            return p.predicates().stream().allMatch(sub -> matchesCardPredicate(card, sub, sourceCardId));
+        }
+        if (predicate instanceof CardAnyOfPredicate p) {
+            return p.predicates().stream().anyMatch(sub -> matchesCardPredicate(card, sub, sourceCardId));
+        }
+        return false;
     }
 
     public UUID getOpponentId(GameData gameData, UUID playerId) {

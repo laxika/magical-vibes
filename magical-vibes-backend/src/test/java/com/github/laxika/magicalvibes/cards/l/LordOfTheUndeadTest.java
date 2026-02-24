@@ -13,7 +13,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardOfSubtypeFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -56,11 +57,12 @@ class LordOfTheUndeadTest extends BaseCardTest {
         assertThat(ability.getManaCost()).isEqualTo("{1}{B}");
         assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(ReturnCardOfSubtypeFromGraveyardToHandEffect.class);
+        assertThat(ability.getEffects().getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
 
-        ReturnCardOfSubtypeFromGraveyardToHandEffect effect =
-                (ReturnCardOfSubtypeFromGraveyardToHandEffect) ability.getEffects().getFirst();
-        assertThat(effect.subtype()).isEqualTo(CardSubtype.ZOMBIE);
+        ReturnCardFromGraveyardEffect effect =
+                (ReturnCardFromGraveyardEffect) ability.getEffects().getFirst();
+        assertThat(effect.filter()).isInstanceOf(CardSubtypePredicate.class);
+        assertThat(((CardSubtypePredicate) effect.filter()).subtype()).isEqualTo(CardSubtype.ZOMBIE);
     }
 
     // ===== Casting and resolving =====

@@ -7,8 +7,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -105,10 +106,11 @@ public class TargetRedirectionResolutionService {
                 if (gameQueryService.findCardInGraveyardById(gameData, candidateTargetId) == null) {
                     return false;
                 }
-                boolean spellTargetsOwnGraveyardCard = spellCard.getEffects(EffectSlot.SPELL)
+                ReturnCardFromGraveyardEffect graveyardEffect = (ReturnCardFromGraveyardEffect) spellCard.getEffects(EffectSlot.SPELL)
                         .stream()
-                        .anyMatch(e -> e instanceof ReturnCardFromGraveyardToHandEffect);
-                if (spellTargetsOwnGraveyardCard) {
+                        .filter(e -> e instanceof ReturnCardFromGraveyardEffect)
+                        .findFirst().orElse(null);
+                if (graveyardEffect != null && graveyardEffect.source() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD) {
                     boolean inControllersGraveyard = gameData.playerGraveyards
                             .getOrDefault(targetSpell.getControllerId(), List.of())
                             .stream()

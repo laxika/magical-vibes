@@ -16,8 +16,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -122,31 +123,31 @@ public class SpellCastingService {
             targetLegalityService.validateSpellTargetOnStack(gameData, targetPermanentId, card.getTargetFilter());
         }
 
-        ReturnCardFromGraveyardToHandEffect graveyardReturnEffect = (ReturnCardFromGraveyardToHandEffect) card.getEffects(EffectSlot.SPELL).stream()
-                .filter(e -> e instanceof ReturnCardFromGraveyardToHandEffect)
+        ReturnCardFromGraveyardEffect graveyardReturnEffect = (ReturnCardFromGraveyardEffect) card.getEffects(EffectSlot.SPELL).stream()
+                .filter(e -> e instanceof ReturnCardFromGraveyardEffect)
                 .findFirst().orElse(null);
         boolean needsSingleGraveyardTargeting = graveyardReturnEffect != null;
 
         // Validate target if specified (can be a permanent or a player)
         if (targetPermanentId != null && !card.isNeedsSpellTarget()) {
             if (needsSingleGraveyardTargeting) {
-                String typeName = graveyardReturnEffect.cardType() != null
-                        ? graveyardReturnEffect.cardType().name().toLowerCase() + " card" : "card";
-                boolean inControllersGraveyard = gameData.playerGraveyards
-                        .getOrDefault(playerId, List.of())
-                        .stream()
-                        .anyMatch(c -> c.getId().equals(targetPermanentId));
-                if (!inControllersGraveyard) {
-                    throw new IllegalStateException("Target must be a " + typeName + " in your graveyard");
+                String filterLabel = GraveyardReturnResolutionService.describeFilter(graveyardReturnEffect.filter());
+                if (graveyardReturnEffect.source() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD) {
+                    boolean inControllersGraveyard = gameData.playerGraveyards
+                            .getOrDefault(playerId, List.of())
+                            .stream()
+                            .anyMatch(c -> c.getId().equals(targetPermanentId));
+                    if (!inControllersGraveyard) {
+                        throw new IllegalStateException("Target must be a " + filterLabel + " in your graveyard");
+                    }
                 }
                 targetLegalityService.validateEffectTargetInZone(gameData, card, targetPermanentId, Zone.GRAVEYARD);
             } else {
                 targetLegalityService.validateSpellTargeting(gameData, card, targetPermanentId, null, playerId);
             }
         } else if (card.isNeedsTarget() && needsSingleGraveyardTargeting) {
-            String typeName = graveyardReturnEffect.cardType() != null
-                    ? graveyardReturnEffect.cardType().name().toLowerCase() + " card" : "card";
-            throw new IllegalStateException("Must target a " + typeName + " in your graveyard");
+            String filterLabel = GraveyardReturnResolutionService.describeFilter(graveyardReturnEffect.filter());
+            throw new IllegalStateException("Must target a " + filterLabel + " in your graveyard");
         }
 
         // Validate multi-target permanent targeting

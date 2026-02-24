@@ -40,7 +40,8 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Targeted discard | `d/Distress.java` | ChooseCardFromTargetHandToDiscardEffect |
 | Tutor to hand | `d/DiabolicTutor.java` | SearchLibraryForCardToHandEffect |
 | Tutor to battlefield | `r/RampantGrowth.java` | SearchLibraryForCardTypesToBattlefieldEffect |
-| Graveyard return | `r/Recollect.java` | ReturnCardFromGraveyardToHandEffect |
+| Graveyard return (to hand) | `r/Recollect.java` | ReturnCardFromGraveyardEffect(HAND, null, true) — any card, targets graveyard |
+| Graveyard return (to battlefield) | `b/BeaconOfUnrest.java` | ReturnCardFromGraveyardEffect(BATTLEFIELD, CardAnyOfPredicate, ALL_GRAVEYARDS) |
 | Prevent combat damage | `h/HolyDay.java` | PreventAllCombatDamageEffect |
 | Steal creature (temp) | `t/Threaten.java` | GainControlOfTargetCreatureUntilEndOfTurn + haste + untap |
 | Extra turn | `t/TimeStretch.java` | ExtraTurnEffect |
@@ -71,7 +72,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB may destroy (filtered) | `a/AcidWebSpider.java` | MayEffect(DestroyTargetPermanentEffect) + PermanentPredicateTargetFilter |
 | ETB discard | `r/RavenousRats.java` | TargetPlayerDiscardsEffect |
 | ETB search | `c/CivicWayfinder.java` | MayEffect(SearchLibraryForBasicLandToHandEffect) |
-| ETB may return from GY | `g/Gravedigger.java` | MayEffect(ReturnCardFromGraveyardToHandEffect(CardType.CREATURE)) |
+| ETB may return from GY | `g/Gravedigger.java` | MayEffect(ReturnCardFromGraveyardEffect(HAND, CardTypePredicate(CREATURE))) |
 | ETB tokens + ability | `s/SiegeGangCommander.java` | CreateCreatureTokenEffect + activated sac ability |
 | ETB copy | `c/Clone.java` | CopyPermanentOnEnterEffect |
 | ETB choose color | `v/VoiceOfAll.java` | ProtectionFromChosenColorEffect |
@@ -91,7 +92,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Upkeep sacrifice/discard | `r/RazormaneMasticore.java` | UPKEEP_TRIGGERED + DRAW_TRIGGERED |
 | Upkeep bounce | `s/StampedingWildebeests.java` | BounceCreatureOnUpkeepEffect |
 | Upkeep token | `v/VerdantForce.java` | EACH_UPKEEP_TRIGGERED CreateCreatureTokenEffect |
-| Graveyard upkeep | `s/SqueeGoblinNabob.java` | GRAVEYARD_UPKEEP_TRIGGERED ReturnSelfFromGraveyardToHandEffect |
+| Graveyard upkeep | `s/SqueeGoblinNabob.java` | GRAVEYARD_UPKEEP_TRIGGERED ReturnCardFromGraveyardEffect(HAND, CardIsSelfPredicate, returnAll=true) |
 | Combat damage to player | `t/ThievingMagpie.java` | ON_COMBAT_DAMAGE_TO_PLAYER DrawCardEffect |
 | On becomes blocked | `s/SylvanBasilisk.java` | ON_BECOMES_BLOCKED DestroyCreatureBlockingThisEffect |
 | On block (mutual destroy) | `l/LoyalSentry.java` | ON_BLOCK DestroyBlockedCreatureAndSelfEffect |
