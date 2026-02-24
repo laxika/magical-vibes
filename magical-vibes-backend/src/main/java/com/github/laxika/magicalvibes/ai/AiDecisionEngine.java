@@ -434,8 +434,13 @@ public class AiDecisionEngine {
     protected UUID chooseTarget(GameData gameData, Card card) {
         UUID opponentId = getOpponentId(gameData);
 
-        // Handle ETB destroy effects (e.g., Aven Cloudchaser targets enchantments, Nekrataal targets creatures)
+        // Handle destroy effects (ETB creatures like Nekrataal, or removal spells like Assassinate/Terror)
         for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (effect instanceof DestroyTargetPermanentEffect) {
+                return chooseDestroyTarget(gameData, card, opponentId);
+            }
+        }
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             if (effect instanceof DestroyTargetPermanentEffect) {
                 return chooseDestroyTarget(gameData, card, opponentId);
             }

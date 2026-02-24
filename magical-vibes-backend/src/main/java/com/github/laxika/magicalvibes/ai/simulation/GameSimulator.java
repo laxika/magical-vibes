@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
@@ -697,11 +698,39 @@ public class GameSimulator {
     private UUID findBestTarget(GameData gd, Card card, UUID playerId) {
         UUID opponentId = getOpponentId(gd, playerId);
         List<Permanent> oppBattlefield = gd.playerBattlefields.getOrDefault(opponentId, List.of());
-        return oppBattlefield.stream()
+
+        // Prefer creatures that pass the target filter
+        UUID creatureTarget = oppBattlefield.stream()
                 .filter(p -> gameQueryService.isCreature(gd, p))
+                .filter(p -> passesTargetFilter(gd, card, p, playerId))
                 .max(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gd, p)))
                 .map(Permanent::getId)
                 .orElse(null);
+        if (creatureTarget != null) {
+            return creatureTarget;
+        }
+
+        // Fall back to any permanent that passes the target filter (e.g., artifacts/enchantments for Naturalize)
+        return oppBattlefield.stream()
+                .filter(p -> passesTargetFilter(gd, card, p, playerId))
+                .findFirst()
+                .map(Permanent::getId)
+                .orElse(null);
+    }
+
+    private boolean passesTargetFilter(GameData gd, Card card, Permanent target, UUID controllerId) {
+        if (card.getTargetFilter() == null) {
+            return true;
+        }
+        try {
+            gameQueryService.validateTargetFilter(card.getTargetFilter(), target,
+                    FilterContext.of(gd)
+                            .withSourceCardId(card.getId())
+                            .withSourceControllerId(controllerId));
+            return true;
+        } catch (IllegalStateException e) {
+            return false;
+        }
     }
 
     private int findPermanentIndex(GameData gd, UUID playerId, UUID permanentId) {
