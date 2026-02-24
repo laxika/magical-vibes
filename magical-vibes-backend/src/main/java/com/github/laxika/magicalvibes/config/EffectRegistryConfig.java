@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.service.effect.HandlesStaticEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,7 +21,7 @@ import java.lang.reflect.Method;
 
 @Slf4j
 @Configuration
-public class EffectRegistryConfig {
+public class EffectRegistryConfig implements SmartInitializingSingleton {
 
     private final ApplicationContext applicationContext;
     private final EffectHandlerRegistry effectHandlerRegistry;
@@ -43,8 +43,8 @@ public class EffectRegistryConfig {
         return staticEffectHandlerRegistry;
     }
 
-    @PostConstruct
-    public void scanAndRegister() {
+    @Override
+    public void afterSingletonsInstantiated() {
         int effectCount = 0;
         int staticCount = 0;
 
