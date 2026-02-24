@@ -287,9 +287,16 @@ public class CreatureModResolutionService {
     private void resolveGrantKeyword(GameData gameData, StackEntry entry, GrantKeywordEffect grant) {
         if (grant.scope() == GrantScope.OWN_CREATURES) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                    .withSourceControllerId(entry.getControllerId());
             int count = 0;
             for (Permanent permanent : battlefield) {
                 if (!gameQueryService.isCreature(gameData, permanent)) {
+                    continue;
+                }
+                if (grant.filter() != null
+                        && !gameQueryService.matchesPermanentPredicate(permanent, grant.filter(), filterContext)) {
                     continue;
                 }
                 permanent.getGrantedKeywords().add(grant.keyword());
