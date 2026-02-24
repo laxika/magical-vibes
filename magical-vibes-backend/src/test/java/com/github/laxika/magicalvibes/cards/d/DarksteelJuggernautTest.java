@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
-import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledArtifactCountEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledPermanentCountEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,7 +24,7 @@ class DarksteelJuggernautTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.STATIC).get(0))
-                .isInstanceOf(PowerToughnessEqualToControlledArtifactCountEffect.class);
+                .isInstanceOf(PowerToughnessEqualToControlledPermanentCountEffect.class);
         assertThat(card.getEffects(EffectSlot.STATIC).get(1))
                 .isInstanceOf(MustAttackEffect.class);
     }

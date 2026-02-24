@@ -31,8 +31,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledArtifactCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledCreatureCountEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledPermanentCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledLandCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledSubtypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect;
@@ -298,10 +298,11 @@ public class StaticEffectResolutionService {
         accumulator.addToughness(count);
     }
 
-    @HandlesStaticEffect(value = PowerToughnessEqualToControlledArtifactCountEffect.class, selfOnly = true)
-    private void resolvePowerToughnessEqualToControlledArtifactCount(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+    @HandlesStaticEffect(value = PowerToughnessEqualToControlledPermanentCountEffect.class, selfOnly = true)
+    private void resolvePowerToughnessEqualToControlledPermanentCount(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var pt = (PowerToughnessEqualToControlledPermanentCountEffect) effect;
         int count = countControlledPermanents(context,
-                p -> p.getCard().getType() == CardType.ARTIFACT || p.getCard().getAdditionalTypes().contains(CardType.ARTIFACT));
+                p -> gameQueryService.matchesPermanentPredicate(context.gameData(), p, pt.filter()));
         accumulator.addPower(count);
         accumulator.addToughness(count);
     }
