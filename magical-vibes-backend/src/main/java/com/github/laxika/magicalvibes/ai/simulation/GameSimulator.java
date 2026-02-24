@@ -127,7 +127,7 @@ public class GameSimulator {
         StackEntryViewFactory stackEntryViewFactory = new StackEntryViewFactory(cardViewFactory);
 
         StaticEffectHandlerRegistry staticEffectHandlerRegistry = new StaticEffectHandlerRegistry();
-        StaticEffectResolutionService staticEffectResolutionService = new StaticEffectResolutionService();
+        StaticEffectResolutionService staticEffectResolutionService = new StaticEffectResolutionService(sharedQueryService);
         scanStaticEffectHandlers(staticEffectResolutionService, staticEffectHandlerRegistry);
 
         this.gameQueryService = sharedQueryService;

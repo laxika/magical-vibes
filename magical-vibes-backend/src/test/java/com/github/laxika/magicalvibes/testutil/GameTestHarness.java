@@ -123,9 +123,9 @@ public class GameTestHarness {
         PermanentViewFactory permanentViewFactory = new PermanentViewFactory(cardViewFactory);
         StackEntryViewFactory stackEntryViewFactory = new StackEntryViewFactory(cardViewFactory);
         StaticEffectHandlerRegistry staticEffectHandlerRegistry = new StaticEffectHandlerRegistry();
-        StaticEffectResolutionService staticEffectResolutionService = new StaticEffectResolutionService();
-        scanStaticEffectHandlers(staticEffectResolutionService, staticEffectHandlerRegistry);
         gameQueryService = new GameQueryService(staticEffectHandlerRegistry);
+        StaticEffectResolutionService staticEffectResolutionService = new StaticEffectResolutionService(gameQueryService);
+        scanStaticEffectHandlers(staticEffectResolutionService, staticEffectHandlerRegistry);
         PlayerInputService playerInputService = new PlayerInputService(sessionManager, cardViewFactory);
         GameBroadcastService gameBroadcastService = new GameBroadcastService(
                 sessionManager, cardViewFactory, permanentViewFactory, stackEntryViewFactory, gameQueryService);

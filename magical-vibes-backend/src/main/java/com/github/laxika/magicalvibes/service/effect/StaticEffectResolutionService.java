@@ -36,6 +36,8 @@ import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControll
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledLandCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledSubtypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect;
+import com.github.laxika.magicalvibes.service.GameQueryService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -46,7 +48,10 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 @Service
+@RequiredArgsConstructor
 public class StaticEffectResolutionService {
+
+    private final GameQueryService gameQueryService;
 
     @HandlesStaticEffect(AnimateNoncreatureArtifactsEffect.class)
     private void resolveAnimateNoncreatureArtifacts(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {

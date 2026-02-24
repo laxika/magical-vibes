@@ -383,17 +383,6 @@ public class CombatService {
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
         List<Integer> blockable = getBlockableCreatureIndices(gameData, defenderId);
 
-        // Compute max blocks per creature (1 + additional from static effects)
-        int additionalBlocks = 0;
-        for (Permanent p : defenderBattlefield) {
-            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof GrantAdditionalBlockEffect e) {
-                    additionalBlocks += e.additionalBlocks();
-                }
-            }
-        }
-        int maxBlocksPerCreature = 1 + additionalBlocks;
-
         // Validate assignments
         Map<Integer, Integer> blockerUsageCount = new HashMap<>();
         Set<String> blockerAttackerPairs = new HashSet<>();
@@ -406,7 +395,8 @@ public class CombatService {
                 throw new IllegalStateException("Invalid blocker index: " + blockerIdx);
             }
             int usageCount = blockerUsageCount.merge(blockerIdx, 1, Integer::sum);
-            if (usageCount > maxBlocksPerCreature) {
+            int maxBlocks = getMaxBlocksForCreature(defenderBattlefield.get(blockerIdx), defenderBattlefield);
+            if (usageCount > maxBlocks) {
                 throw new IllegalStateException("Blocker " + blockerIdx + " assigned too many times");
             }
             if (!blockerAttackerPairs.add(blockerIdx + ":" + attackerIdx)) {
@@ -503,7 +493,7 @@ public class CombatService {
         }
 
         validateMaximumBlockRequirements(gameData, attackerBattlefield, defenderBattlefield, blockable,
-                blockerAssignments, maxBlocksPerCreature);
+                blockerAssignments);
 
         gameData.interaction.clearAwaitingInput();
 
@@ -625,12 +615,33 @@ public class CombatService {
         return CombatResult.AUTO_PASS_ONLY;
     }
 
+    private int getMaxBlocksForCreature(Permanent creature, List<Permanent> battlefield) {
+        int additionalBlocks = 0;
+        for (Permanent p : battlefield) {
+            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof GrantAdditionalBlockEffect e) {
+                    boolean isAttachable = p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
+                            || p.getCard().isAura();
+                    if (isAttachable) {
+                        // Equipment/aura: only applies when attached to this creature
+                        if (creature.getId().equals(p.getAttachedTo())) {
+                            additionalBlocks += e.additionalBlocks();
+                        }
+                    } else {
+                        // Global effect (e.g. High Ground): applies to all creatures
+                        additionalBlocks += e.additionalBlocks();
+                    }
+                }
+            }
+        }
+        return 1 + additionalBlocks;
+    }
+
     private void validateMaximumBlockRequirements(GameData gameData,
                                                   List<Permanent> attackerBattlefield,
                                                   List<Permanent> defenderBattlefield,
                                                   List<Integer> blockable,
-                                                  List<BlockerAssignment> blockerAssignments,
-                                                  int maxBlocksPerCreature) {
+                                                  List<BlockerAssignment> blockerAssignments) {
         Set<Integer> lureAttackerIndices = new HashSet<>();
         for (int i = 0; i < attackerBattlefield.size(); i++) {
             Permanent attacker = attackerBattlefield.get(i);
@@ -663,7 +674,7 @@ public class CombatService {
                 }
             }
 
-            int maxSatisfiable = Math.min(maxBlocksPerCreature, possibleLureBlocks);
+            int maxSatisfiable = Math.min(getMaxBlocksForCreature(blocker, defenderBattlefield), possibleLureBlocks);
             if (currentLureBlocks < maxSatisfiable) {
                 throw new IllegalStateException(blocker.getCard().getName() + " must block enchanted creature if able");
             }
