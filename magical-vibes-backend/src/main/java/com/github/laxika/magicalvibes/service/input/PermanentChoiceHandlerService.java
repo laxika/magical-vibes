@@ -439,7 +439,38 @@ public class PermanentChoiceHandlerService {
             }
         }
 
-        if (gameData.pendingCombatDamageBounceTargetPlayerId != null) {
+        if (gameData.pendingSacrificeAttackingCreature) {
+            gameData.pendingSacrificeAttackingCreature = false;
+
+            for (UUID permId : permanentIds) {
+                Permanent creature = gameQueryService.findPermanentById(gameData, permId);
+                if (creature != null) {
+                    UUID ownerId = null;
+                    for (UUID pid : gameData.orderedPlayerIds) {
+                        List<Permanent> bf = gameData.playerBattlefields.get(pid);
+                        if (bf != null && bf.contains(creature)) {
+                            ownerId = pid;
+                            break;
+                        }
+                    }
+                    gameHelper.removePermanentToGraveyard(gameData, creature);
+                    String ownerName = ownerId != null ? gameData.playerIdToName.get(ownerId) : "Unknown";
+                    String logEntry = ownerName + " sacrifices " + creature.getCard().getName() + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} sacrifices {}", gameData.id, ownerName, creature.getCard().getName());
+                }
+            }
+
+            stateBasedActionService.performStateBasedActions(gameData);
+
+            if (!gameData.pendingMayAbilities.isEmpty()) {
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+        } else if (gameData.pendingCombatDamageBounceTargetPlayerId != null) {
             UUID targetPlayerId = gameData.pendingCombatDamageBounceTargetPlayerId;
             gameData.pendingCombatDamageBounceTargetPlayerId = null;
 

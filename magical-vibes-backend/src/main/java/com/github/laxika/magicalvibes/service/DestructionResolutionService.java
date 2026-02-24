@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageCon
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamageEffect;
 import lombok.RequiredArgsConstructor;
@@ -195,6 +196,65 @@ public class DestructionResolutionService {
         }
 
         performSacrificeCreatureForPlayer(gameData, targetPlayerId);
+    }
+
+    @HandlesEffect(SacrificeAttackingCreaturesEffect.class)
+    void resolveSacrificeAttackingCreatures(GameData gameData, StackEntry entry, SacrificeAttackingCreaturesEffect effect) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            return;
+        }
+
+        // Check metalcraft at resolution time (intervening-if)
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(controllerId);
+        long artifactCount = 0;
+        if (controllerBattlefield != null) {
+            artifactCount = controllerBattlefield.stream()
+                    .filter(p -> p.getCard().getType() == CardType.ARTIFACT
+                            || p.getCard().getAdditionalTypes().contains(CardType.ARTIFACT))
+                    .count();
+        }
+        int count = artifactCount >= 3 ? effect.metalcraftCount() : effect.baseCount();
+
+        // Collect attacking creatures on target player's battlefield
+        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+        List<UUID> attackingCreatureIds = new ArrayList<>();
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (p.isAttacking() && gameQueryService.isCreature(gameData, p)) {
+                    attackingCreatureIds.add(p.getId());
+                }
+            }
+        }
+
+        if (attackingCreatureIds.isEmpty()) {
+            String playerName = gameData.playerIdToName.get(targetPlayerId);
+            String logEntry = playerName + " has no attacking creatures to sacrifice.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} has no attacking creatures to sacrifice", gameData.id, playerName);
+            return;
+        }
+
+        if (attackingCreatureIds.size() <= count) {
+            // Auto-sacrifice all attacking creatures
+            for (UUID creatureId : attackingCreatureIds) {
+                Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
+                if (creature != null) {
+                    gameHelper.removePermanentToGraveyard(gameData, creature);
+                    String playerName = gameData.playerIdToName.get(targetPlayerId);
+                    String logEntry = playerName + " sacrifices " + creature.getCard().getName() + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} sacrifices {}", gameData.id, playerName, creature.getCard().getName());
+                }
+            }
+            return;
+        }
+
+        // More attacking creatures than required — prompt player to choose
+        gameData.pendingSacrificeAttackingCreature = true;
+        playerInputService.beginMultiPermanentChoice(gameData, targetPlayerId, attackingCreatureIds,
+                count, "Choose " + count + " attacking creature" + (count > 1 ? "s" : "") + " to sacrifice.");
     }
 
     @HandlesEffect(EachOpponentSacrificesCreatureEffect.class)

@@ -350,6 +350,9 @@ public class TargetLegalityService {
 
     private boolean matchesPlayerPredicate(UUID controllerId, UUID targetPlayerId, PlayerPredicate predicate) {
         if (predicate instanceof PlayerRelationPredicate relationPredicate) {
+            if (relationPredicate.relation() == PlayerRelation.ANY) {
+                return true;
+            }
             if (relationPredicate.relation() == PlayerRelation.SELF) {
                 return controllerId != null && controllerId.equals(targetPlayerId);
             }
