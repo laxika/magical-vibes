@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
@@ -448,6 +449,29 @@ public class CreatureModResolutionService {
         String logEntry = entry.getCard().getName() + " untaps " + count + " creature(s) that attacked this turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} untaps {} attacked creature(s)", gameData.id, entry.getCard().getName(), count);
+    }
+
+    @HandlesEffect(PutMinusOneMinusOneCounterOnEachOtherCreatureEffect.class)
+    private void resolvePutMinusOneMinusOneCounterOnEachOtherCreature(GameData gameData, StackEntry entry) {
+        UUID sourceId = entry.getSourcePermanentId();
+        int count = 0;
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+
+            for (Permanent p : battlefield) {
+                if (p.getId().equals(sourceId)) continue;
+                if (!gameQueryService.isCreature(gameData, p)) continue;
+
+                p.setMinusOneMinusOneCounters(p.getMinusOneMinusOneCounters() + 1);
+                count++;
+            }
+        }
+
+        String logEntry = entry.getCard().getName() + " puts a -1/-1 counter on " + count + " other creature(s).";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} puts -1/-1 counter on {} other creature(s)", gameData.id, entry.getCard().getName(), count);
     }
 
     @HandlesEffect(PutCountersOnSourceEffect.class)
