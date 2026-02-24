@@ -93,6 +93,7 @@ export class GameChoiceService {
   targetingAllowedTypes: string[] = [];
   targetingAllowedSubtypes: string[] = [];
   targetingAllowedColors: string[] = [];
+  targetingExcludedColors: string[] = [];
   targetingRequiresAttacking = false;
   targetingBlockingThis = false;
   targetingAbilityIndex = -1;
@@ -464,6 +465,7 @@ export class GameChoiceService {
         this.pendingAbilityXValue = null;
         this.targetingAllowedTypes = card.allowedTargetTypes?.length > 0 ? card.allowedTargetTypes : [];
         this.targetingAllowedSubtypes = card.allowedTargetSubtypes?.length > 0 ? card.allowedTargetSubtypes : [];
+        this.targetingExcludedColors = card.excludedTargetColors?.length > 0 ? card.excludedTargetColors : [];
         // If this single-target card has convoke, store it for later
         this.pendingConvokeCard = card.hasConvoke ? card : null;
         return;
@@ -525,6 +527,7 @@ export class GameChoiceService {
         this.targetingAllowedTypes = card.allowedTargetTypes?.length > 0 ? card.allowedTargetTypes : [];
         this.targetingAllowedSubtypes = card.allowedTargetSubtypes?.length > 0 ? card.allowedTargetSubtypes : [];
         this.targetingAllowedColors = [];
+        this.targetingExcludedColors = card.excludedTargetColors?.length > 0 ? card.excludedTargetColors : [];
         this.targetingBlockingThis = false;
         this.pendingConvokeCard = null;
         this.xValueCardIndex = -1;
@@ -821,6 +824,7 @@ export class GameChoiceService {
       this.targetingAllowedTypes = [];
       this.targetingAllowedSubtypes = [];
       this.targetingAllowedColors = [];
+      this.targetingExcludedColors = [];
       this.pendingAbilityXValue = null;
       this.enterConvokeMode(cardIndex, card);
       return;
@@ -846,6 +850,7 @@ export class GameChoiceService {
     this.targetingAllowedTypes = [];
     this.targetingAllowedSubtypes = [];
     this.targetingAllowedColors = [];
+    this.targetingExcludedColors = [];
     this.pendingAbilityXValue = null;
     this.pendingConvokeCard = null;
   }
@@ -884,6 +889,7 @@ export class GameChoiceService {
     this.targetingAllowedTypes = [];
     this.targetingAllowedSubtypes = [];
     this.targetingAllowedColors = [];
+    this.targetingExcludedColors = [];
     this.pendingAbilityXValue = null;
   }
 
@@ -899,6 +905,7 @@ export class GameChoiceService {
     this.targetingAllowedTypes = [];
     this.targetingAllowedSubtypes = [];
     this.targetingAllowedColors = [];
+    this.targetingExcludedColors = [];
     this.pendingAbilityXValue = null;
   }
 
@@ -953,6 +960,12 @@ export class GameChoiceService {
       if (this.targetingAllowedSubtypes.length > 0) {
         const permSubtypes = perm.card.subtypes?.map(s => s.toUpperCase()) ?? [];
         if (!this.targetingAllowedSubtypes.some(s => permSubtypes.includes(s.toUpperCase()))) {
+          return false;
+        }
+      }
+      // Check excluded colors (e.g. Terror can't target black creatures)
+      if (this.targetingExcludedColors.length > 0 && perm.card.color != null) {
+        if (this.targetingExcludedColors.some(c => c.toUpperCase() === perm.card.color!.toUpperCase())) {
           return false;
         }
       }

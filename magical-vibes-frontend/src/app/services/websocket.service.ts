@@ -159,6 +159,7 @@ export interface Card {
   requiresAttackingTarget: boolean;
   allowedTargetTypes: string[];
   allowedTargetSubtypes: string[];
+  excludedTargetColors: string[];
   activatedAbilities: ActivatedAbilityView[];
   loyalty: number | null;
   minTargets: number;

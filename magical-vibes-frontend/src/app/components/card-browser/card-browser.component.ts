@@ -169,6 +169,7 @@ export class CardBrowserComponent implements OnInit, OnDestroy {
       requiresAttackingTarget: false,
       allowedTargetTypes: [],
       allowedTargetSubtypes: [],
+      excludedTargetColors: [],
       activatedAbilities: [],
       loyalty: info.loyalty,
       minTargets: 0,

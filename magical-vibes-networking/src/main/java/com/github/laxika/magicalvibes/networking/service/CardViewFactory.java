@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -48,6 +49,7 @@ public class CardViewFactory {
 
         List<String> spellAllowedTargetTypes = computeSpellAllowedTargetTypes(card);
         List<String> spellAllowedTargetSubtypes = computeSpellAllowedTargetSubtypes(card);
+        List<String> spellExcludedTargetColors = computeSpellExcludedTargetColors(card);
         boolean requiresAttackingTarget = computeRequiresAttackingTarget(card);
         boolean targetsPlayer = card.getAllowedTargets().contains(TargetType.PLAYER);
 
@@ -72,6 +74,7 @@ public class CardViewFactory {
                 requiresAttackingTarget,
                 spellAllowedTargetTypes,
                 spellAllowedTargetSubtypes,
+                spellExcludedTargetColors,
                 abilityViews,
                 card.getLoyalty(),
                 card.getMinTargets(),
@@ -158,6 +161,16 @@ public class CardViewFactory {
         return List.copyOf(targetTypes);
     }
 
+    private List<String> computeSpellExcludedTargetColors(Card card) {
+        TargetFilter filter = card.getTargetFilter();
+        if (filter instanceof PermanentPredicateTargetFilter f) {
+            Set<String> excludedColors = new LinkedHashSet<>();
+            collectExcludedColors(f.predicate(), excludedColors);
+            return List.copyOf(excludedColors);
+        }
+        return List.of();
+    }
+
     private List<String> computeSpellAllowedTargetSubtypes(Card card) {
         TargetFilter filter = card.getTargetFilter();
         if (filter instanceof PermanentPredicateTargetFilter f) {
@@ -225,6 +238,22 @@ public class CardViewFactory {
         }
         if (predicate instanceof PermanentAllOfPredicate allOfPredicate) {
             allOfPredicate.predicates().forEach(p -> collectAllowedTypes(p, out));
+        }
+    }
+
+    private void collectExcludedColors(PermanentPredicate predicate, Set<String> out) {
+        if (predicate instanceof PermanentNotPredicate notPredicate) {
+            if (notPredicate.predicate() instanceof PermanentColorInPredicate colorInPredicate) {
+                colorInPredicate.colors().forEach(c -> out.add(c.name()));
+            }
+            return;
+        }
+        if (predicate instanceof PermanentAnyOfPredicate anyOfPredicate) {
+            anyOfPredicate.predicates().forEach(p -> collectExcludedColors(p, out));
+            return;
+        }
+        if (predicate instanceof PermanentAllOfPredicate allOfPredicate) {
+            allOfPredicate.predicates().forEach(p -> collectExcludedColors(p, out));
         }
     }
 

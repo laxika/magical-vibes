@@ -65,7 +65,7 @@ public class PermanentViewFactory {
                 cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.targetsPlayer(),
                 cardView.requiresAttackingTarget(), cardView.allowedTargetTypes(),
-                cardView.allowedTargetSubtypes(), cardView.activatedAbilities(), cardView.loyalty(),
+                cardView.allowedTargetSubtypes(), cardView.excludedTargetColors(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.minTargets(), cardView.maxTargets(), cardView.hasConvoke()
         );
     }
@@ -87,7 +87,7 @@ public class PermanentViewFactory {
                 cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.targetsPlayer(),
                 cardView.requiresAttackingTarget(), cardView.allowedTargetTypes(),
-                cardView.allowedTargetSubtypes(), mergedAbilities, cardView.loyalty(),
+                cardView.allowedTargetSubtypes(), cardView.excludedTargetColors(), mergedAbilities, cardView.loyalty(),
                 cardView.minTargets(), cardView.maxTargets(), cardView.hasConvoke()
         );
     }
@@ -107,7 +107,7 @@ public class PermanentViewFactory {
                 cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.targetsPlayer(),
                 cardView.requiresAttackingTarget(), cardView.allowedTargetTypes(),
-                cardView.allowedTargetSubtypes(), cardView.activatedAbilities(), cardView.loyalty(),
+                cardView.allowedTargetSubtypes(), cardView.excludedTargetColors(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.minTargets(), cardView.maxTargets(), cardView.hasConvoke()
         );
     }
