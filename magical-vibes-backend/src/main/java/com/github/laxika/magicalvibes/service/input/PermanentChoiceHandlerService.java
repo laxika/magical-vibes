@@ -481,6 +481,45 @@ public class PermanentChoiceHandlerService {
 
             turnProgressionService.advanceStep(gameData);
             turnProgressionService.resolveAutoPass(gameData);
+        } else if (gameData.pendingProliferate) {
+            gameData.pendingProliferate = false;
+
+            if (permanentIds.isEmpty()) {
+                String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to proliferate any permanents.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            } else {
+                List<String> proliferatedNames = new ArrayList<>();
+                for (UUID permId : permanentIds) {
+                    Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+                    if (perm != null) {
+                        if (perm.getPlusOnePlusOneCounters() > 0) {
+                            perm.setPlusOnePlusOneCounters(perm.getPlusOnePlusOneCounters() + 1);
+                        }
+                        if (perm.getMinusOneMinusOneCounters() > 0) {
+                            perm.setMinusOneMinusOneCounters(perm.getMinusOneMinusOneCounters() + 1);
+                        }
+                        if (perm.getLoyaltyCounters() > 0) {
+                            perm.setLoyaltyCounters(perm.getLoyaltyCounters() + 1);
+                        }
+                        proliferatedNames.add(perm.getCard().getName());
+                    }
+                }
+
+                if (!proliferatedNames.isEmpty()) {
+                    String logEntry = "Proliferate adds counters to " + String.join(", ", proliferatedNames) + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - Proliferated {} permanents", gameData.id, proliferatedNames.size());
+                }
+            }
+
+            stateBasedActionService.performStateBasedActions(gameData);
+
+            if (!gameData.pendingMayAbilities.isEmpty()) {
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+
+            gameBroadcastService.broadcastGameState(gameData);
         } else {
             throw new IllegalStateException("No pending multi-permanent choice context");
         }

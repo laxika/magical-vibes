@@ -205,11 +205,9 @@ public class StackResolutionService {
 
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
 
-        // Artifact creatures need creature ETB processing (e.g. Clone Shell's imprint)
-        boolean isAlsoCreature = card.getAdditionalTypes().contains(CardType.CREATURE);
-        if (isAlsoCreature) {
-            gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId(), true);
-        }
+        // Process ETB effects for all artifacts (creature and non-creature)
+        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId(), true);
+
         if (!gameData.interaction.isAwaitingInput()) {
             legendRuleService.checkLegendRule(gameData, controllerId);
         }

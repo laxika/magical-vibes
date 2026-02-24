@@ -238,7 +238,7 @@ public class SpellCastingService {
             paySpellManaCost(gameData, playerId, card, 0, convokeContributions);
             gameData.stack.add(new StackEntry(
                     StackEntryType.ARTIFACT_SPELL, card, playerId, card.getName(),
-                    List.of(), 0, null, null
+                    List.of(), 0, targetPermanentId, null
             ));
             finishSpellCast(gameData, playerId, player, hand, card);
         } else if (card.getType() == CardType.PLANESWALKER) {

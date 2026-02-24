@@ -145,7 +145,7 @@ public class GameTestHarness {
                 new GraveyardReturnResolutionService(gameHelper, legendRuleService, gameQueryService, gameBroadcastService, playerInputService),
                 new BounceResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),
                 new LifeResolutionService(gameQueryService, gameBroadcastService),
-                new CreatureModResolutionService(gameQueryService, gameBroadcastService),
+                new CreatureModResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new PlayerInteractionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager, cardViewFactory),
                 new PermanentControlResolutionService(gameHelper, legendRuleService, gameQueryService, gameBroadcastService, playerInputService),
                 new TurnResolutionService(gameHelper, combatService, gameBroadcastService),
@@ -268,6 +268,10 @@ public class GameTestHarness {
 
     public void castArtifact(Player player, int cardIndex) {
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
+    }
+
+    public void castArtifact(Player player, int cardIndex, UUID targetPermanentId) {
+        gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null);
     }
 
     public void playGraveyardLand(Player player, int cardIndex) {

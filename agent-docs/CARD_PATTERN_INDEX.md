@@ -163,6 +163,12 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Enchanted land mana | `o/Overgrowth.java` | ON_ANY_PLAYER_TAPS_LAND AddManaOnEnchantedLandTapEffect |
 | Aura + self-bounce ability | `s/ShimmeringWings.java` | STATIC keyword + activated ReturnSelfToHandEffect |
 
+## Artifacts
+
+| Pattern | Reference | Notes |
+|---------|-----------|-------|
+| Targeted ETB + activated ability | `c/ContagionClasp.java` | ON_ENTER_BATTLEFIELD PutMinusOneMinusOneCounterOnTargetCreatureEffect + tap+mana ProliferateEffect activated ability |
+
 ## Equipment
 
 | Pattern | Reference | Notes |

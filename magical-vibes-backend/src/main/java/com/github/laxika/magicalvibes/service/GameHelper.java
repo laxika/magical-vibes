@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffec
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -800,6 +801,7 @@ public class GameHelper {
         List<CardEffect> triggeredEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> !(e instanceof ChooseColorEffect))
                 .filter(e -> !(e instanceof CopyPermanentOnEnterEffect))
+                .filter(e -> !(e instanceof EnterWithXChargeCountersEffect))
                 .toList();
         if (!triggeredEffects.isEmpty()) {
             List<CardEffect> mayEffects = triggeredEffects.stream().filter(e -> e instanceof MayEffect).toList();
@@ -994,6 +996,9 @@ public class GameHelper {
     }
 
     void checkAnyCreatureEntersTriggers(GameData gameData, UUID enteringCreatureControllerId, Card enteringCreature) {
+        // Non-creature permanents (e.g. artifacts) should not trigger "creature enters" triggers
+        if (enteringCreature.getToughness() == null) return;
+
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;

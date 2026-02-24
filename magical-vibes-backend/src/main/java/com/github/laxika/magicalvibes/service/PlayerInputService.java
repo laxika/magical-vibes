@@ -75,7 +75,7 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a card from graveyard", gameData.id, playerName);
     }
 
-    void beginMultiPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, int maxCount, String prompt) {
+    public void beginMultiPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, int maxCount, String prompt) {
         gameData.interaction.beginMultiPermanentChoice(playerId, new HashSet<>(validIds), maxCount);
         sessionManager.sendToPlayer(playerId, new ChooseMultiplePermanentsMessage(validIds, maxCount, prompt));
 

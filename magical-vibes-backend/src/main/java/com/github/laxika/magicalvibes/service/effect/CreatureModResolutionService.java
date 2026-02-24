@@ -17,7 +17,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachOtherCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
@@ -29,10 +31,12 @@ import com.github.laxika.magicalvibes.model.effect.UntapEachOtherCreatureYouCont
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameQueryService;
+import com.github.laxika.magicalvibes.service.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,6 +47,7 @@ public class CreatureModResolutionService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+    private final PlayerInputService playerInputService;
 
     @HandlesEffect(AnimateLandEffect.class)
     private void resolveAnimateLand(GameData gameData, StackEntry entry, AnimateLandEffect effect) {
@@ -541,6 +546,51 @@ public class CreatureModResolutionService {
         String logEntry = source.getCard().getName() + " gets " + effect.amount() + " " + counterLabel + " counter(s).";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gets {} {} counter(s)", gameData.id, source.getCard().getName(), effect.amount(), counterLabel);
+    }
+
+    @HandlesEffect(PutMinusOneMinusOneCounterOnTargetCreatureEffect.class)
+    private void resolvePutMinusOneMinusOneCounterOnTargetCreature(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            log.info("Game {} - Target creature no longer on battlefield, effect fizzles", gameData.id);
+            return;
+        }
+
+        target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() + 1);
+
+        String logEntry = target.getCard().getName() + " gets a -1/-1 counter.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} gets a -1/-1 counter", gameData.id, target.getCard().getName());
+    }
+
+    @HandlesEffect(ProliferateEffect.class)
+    private void resolveProliferate(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+
+        // Collect all permanents with counters (any player's battlefield)
+        List<UUID> eligiblePermanentIds = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (p.getPlusOnePlusOneCounters() > 0
+                        || p.getMinusOneMinusOneCounters() > 0
+                        || p.getLoyaltyCounters() > 0) {
+                    eligiblePermanentIds.add(p.getId());
+                }
+            }
+        }
+
+        if (eligiblePermanentIds.isEmpty()) {
+            String logEntry = "Proliferate: no permanents with counters to choose.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - Proliferate: no eligible permanents", gameData.id);
+            return;
+        }
+
+        gameData.pendingProliferate = true;
+        playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligiblePermanentIds,
+                eligiblePermanentIds.size(), "Proliferate: Choose permanents to add counters to.");
     }
 }
 

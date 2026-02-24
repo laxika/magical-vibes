@@ -153,7 +153,7 @@ public class GameSimulator {
                 new GraveyardReturnResolutionService(gameHelper, legendRuleService, gameQueryService, gameBroadcastService, playerInputService),
                 new BounceResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),
                 new LifeResolutionService(gameQueryService, gameBroadcastService),
-                new CreatureModResolutionService(gameQueryService, gameBroadcastService),
+                new CreatureModResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new PlayerInteractionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService, noOpSession, cardViewFactory),
                 new PermanentControlResolutionService(gameHelper, legendRuleService, gameQueryService, gameBroadcastService, playerInputService),
                 new TurnResolutionService(gameHelper, combatService, gameBroadcastService),
