@@ -195,6 +195,28 @@ public class CombatService {
         return indices;
     }
 
+    Map<Integer, List<Integer>> computeLegalBlockPairs(GameData gameData,
+                                                       List<Integer> blockerIndices,
+                                                       List<Integer> attackerIndices,
+                                                       UUID defenderId,
+                                                       UUID attackerId) {
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(attackerId);
+        Map<Integer, List<Integer>> pairs = new LinkedHashMap<>();
+        for (int blockerIdx : blockerIndices) {
+            Permanent blocker = defenderBattlefield.get(blockerIdx);
+            List<Integer> legalAttackers = new ArrayList<>();
+            for (int attackerIdx : attackerIndices) {
+                Permanent attacker = attackerBattlefield.get(attackerIdx);
+                if (canBlockAttacker(gameData, blocker, attacker, defenderBattlefield)) {
+                    legalAttackers.add(attackerIdx);
+                }
+            }
+            pairs.put(blockerIdx, legalAttackers);
+        }
+        return pairs;
+    }
+
     List<Integer> getAttackingCreatureIndices(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
@@ -339,8 +361,9 @@ public class CombatService {
             return CombatResult.ADVANCE_ONLY;
         }
 
+        Map<Integer, List<Integer>> legalPairs = computeLegalBlockPairs(gameData, blockable, attackerIndices, defenderId, activeId);
         gameData.interaction.beginBlockerDeclaration(defenderId);
-        sessionManager.sendToPlayer(defenderId, new AvailableBlockersMessage(blockable, attackerIndices));
+        sessionManager.sendToPlayer(defenderId, new AvailableBlockersMessage(blockable, attackerIndices, legalPairs));
         return CombatResult.DONE;
     }
 

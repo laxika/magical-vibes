@@ -522,6 +522,7 @@ export class GameComponent implements OnInit, OnDestroy {
   selectedAttackerIndices = signal(new Set<number>());
   opponentAttackerIndices: number[] = [];
   blockerAssignments = signal(new Map<number, number>());
+  legalBlockPairs = signal(new Map<number, number[]>());
   selectedBlockerIndex: number | null = null;
   gameOverWinner: string | null = null;
   gameOverWinnerId: string | null = null;
@@ -537,6 +538,11 @@ export class GameComponent implements OnInit, OnDestroy {
     this.declaringBlockers = true;
     this.availableBlockerIndices.set(new Set(msg.blockerIndices));
     this.opponentAttackerIndices = msg.attackerIndices;
+    const pairs = new Map<number, number[]>();
+    for (const [key, value] of Object.entries(msg.legalBlockPairs)) {
+      pairs.set(Number(key), value);
+    }
+    this.legalBlockPairs.set(pairs);
     this.blockerAssignments.set(new Map());
     this.selectedBlockerIndex = null;
   }
@@ -603,14 +609,18 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   isBlockTarget(index: number): boolean {
-    return this.declaringBlockers && this.selectedBlockerIndex !== null
-      && this.opponentBattlefield[index]?.attacking === true;
+    if (!this.declaringBlockers || this.selectedBlockerIndex === null) return false;
+    if (!this.opponentBattlefield[index]?.attacking) return false;
+    const legal = this.legalBlockPairs().get(this.selectedBlockerIndex);
+    return legal != null && legal.includes(index);
   }
 
   assignBlock(attackerIndex: number): void {
     if (this.selectedBlockerIndex === null || !this.declaringBlockers) return;
     const perm = this.opponentBattlefield[attackerIndex];
     if (!perm || !perm.attacking) return;
+    const legal = this.legalBlockPairs().get(this.selectedBlockerIndex);
+    if (!legal || !legal.includes(attackerIndex)) return;
     const updated = new Map(this.blockerAssignments());
     updated.set(this.selectedBlockerIndex, attackerIndex);
     this.blockerAssignments.set(updated);
@@ -631,6 +641,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.declaringBlockers = false;
     this.selectedBlockerIndex = null;
     this.availableBlockerIndices.set(new Set());
+    this.legalBlockPairs.set(new Map());
     this.opponentAttackerIndices = [];
   }
 

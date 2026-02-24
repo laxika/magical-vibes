@@ -303,6 +303,7 @@ export interface AvailableBlockersNotification {
   type: MessageType;
   blockerIndices: number[];
   attackerIndices: number[];
+  legalBlockPairs: Record<number, number[]>;
 }
 
 export interface GameOverNotification {
