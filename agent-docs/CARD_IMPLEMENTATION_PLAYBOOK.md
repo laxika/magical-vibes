@@ -136,6 +136,15 @@ Then do all of:
   void resolveYourNewEffect(GameData gameData, StackEntry entry, YourNewEffect effect) { ... }
   ```
   The `@HandlesEffect` annotation auto-registers the handler at startup — no manual `registry.register()` call needed. For static/continuous effects, use `@HandlesStaticEffect(YourEffect.class)` (or `@HandlesStaticEffect(value = YourEffect.class, selfOnly = true)` for self-only bonuses) in `StaticEffectResolutionService`.
+- If the effect requires target validation, add a `@ValidatesTarget`-annotated method in the appropriate validator class under `service/validate/` (see `EFFECTS_INDEX.md` target validator map):
+  ```java
+  @ValidatesTarget(YourNewEffect.class)
+  public void validateYourNewEffect(TargetValidationContext ctx) { ... }
+  // or with typed effect access:
+  @ValidatesTarget(YourNewEffect.class)
+  public void validateYourNewEffect(TargetValidationContext ctx, YourNewEffect effect) { ... }
+  ```
+  Use `TargetValidationService` helper methods: `requireTarget()`, `requireBattlefieldTarget()`, `requireCreature()`, `checkProtection()`, `requireTargetPlayer()`.
 - Add test coverage for normal path + invalid/fizzle path if applicable
 
 ## Quick anti-patterns

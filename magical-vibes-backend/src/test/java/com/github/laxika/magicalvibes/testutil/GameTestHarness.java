@@ -66,8 +66,19 @@ import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry
 import com.github.laxika.magicalvibes.service.effect.StaticEffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
+import com.github.laxika.magicalvibes.service.effect.TargetValidatorRegistry;
+import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
 import com.github.laxika.magicalvibes.service.effect.WinConditionResolutionService;
+import com.github.laxika.magicalvibes.service.validate.BounceTargetValidators;
+import com.github.laxika.magicalvibes.service.validate.CreatureModTargetValidators;
+import com.github.laxika.magicalvibes.service.validate.DamageTargetValidators;
+import com.github.laxika.magicalvibes.service.validate.DestructionTargetValidators;
+import com.github.laxika.magicalvibes.service.validate.GraveyardTargetValidators;
+import com.github.laxika.magicalvibes.service.validate.LibraryTargetValidators;
+import com.github.laxika.magicalvibes.service.validate.LifeTargetValidators;
+import com.github.laxika.magicalvibes.service.validate.PermanentControlTargetValidators;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import com.github.laxika.magicalvibes.config.JacksonConfig;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -130,7 +141,21 @@ public class GameTestHarness {
                 gameHelper, gameQueryService, gameBroadcastService);
         CombatService combatService = new CombatService(
                 gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager);
-        TargetValidationService targetValidationService = new TargetValidationService(gameQueryService);
+        TargetValidatorRegistry targetValidatorRegistry = new TargetValidatorRegistry();
+        TargetValidationService targetValidationService = new TargetValidationService(gameQueryService, targetValidatorRegistry);
+        List<Object> validatorBeans = List.of(
+                new DamageTargetValidators(targetValidationService, gameQueryService),
+                new CreatureModTargetValidators(targetValidationService),
+                new DestructionTargetValidators(targetValidationService, gameQueryService),
+                new GraveyardTargetValidators(targetValidationService, gameQueryService),
+                new BounceTargetValidators(targetValidationService),
+                new LibraryTargetValidators(targetValidationService),
+                new PermanentControlTargetValidators(targetValidationService, gameQueryService),
+                new LifeTargetValidators(targetValidationService)
+        );
+        for (Object bean : validatorBeans) {
+            scanTargetValidators(bean, targetValidatorRegistry);
+        }
         TargetLegalityService targetLegalityService = new TargetLegalityService(gameQueryService, targetValidationService);
         EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
         List<Object> effectServices = List.of(
@@ -555,6 +580,40 @@ public class GameTestHarness {
                         && params[1] == StackEntry.class) {
                     registry.register(annotation.value(), (gd, entry, effect) -> {
                         try { handle.invoke(gd, entry); }
+                        catch (RuntimeException re) { throw re; }
+                        catch (Throwable t) { throw new RuntimeException(t); }
+                    });
+                }
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void scanTargetValidators(Object bean, TargetValidatorRegistry registry) {
+        for (Method method : bean.getClass().getDeclaredMethods()) {
+            ValidatesTarget annotation = method.getAnnotation(ValidatesTarget.class);
+            if (annotation == null) continue;
+
+            method.setAccessible(true);
+            Class<?>[] params = method.getParameterTypes();
+            try {
+                MethodHandle handle = MethodHandles.lookup().unreflect(method).bindTo(bean);
+
+                if (params.length == 2
+                        && params[0] == TargetValidationContext.class
+                        && CardEffect.class.isAssignableFrom(params[1])) {
+                    Class<? extends CardEffect> effectParam = (Class<? extends CardEffect>) params[1];
+                    registry.register(annotation.value(), (ctx, effect) -> {
+                        try { handle.invoke(ctx, effectParam.cast(effect)); }
+                        catch (RuntimeException re) { throw re; }
+                        catch (Throwable t) { throw new RuntimeException(t); }
+                    });
+                } else if (params.length == 1
+                        && params[0] == TargetValidationContext.class) {
+                    registry.register(annotation.value(), (ctx, effect) -> {
+                        try { handle.invoke(ctx); }
                         catch (RuntimeException re) { throw re; }
                         catch (Throwable t) { throw new RuntimeException(t); }
                     });

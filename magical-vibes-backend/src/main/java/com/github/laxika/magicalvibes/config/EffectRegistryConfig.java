@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.service.effect.HandlesStaticEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
+import com.github.laxika.magicalvibes.service.effect.TargetValidatorRegistry;
+import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
@@ -26,11 +29,13 @@ public class EffectRegistryConfig implements SmartInitializingSingleton {
     private final ApplicationContext applicationContext;
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final StaticEffectHandlerRegistry staticEffectHandlerRegistry;
+    private final TargetValidatorRegistry targetValidatorRegistry;
 
     public EffectRegistryConfig(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
         this.effectHandlerRegistry = new EffectHandlerRegistry();
         this.staticEffectHandlerRegistry = new StaticEffectHandlerRegistry();
+        this.targetValidatorRegistry = new TargetValidatorRegistry();
     }
 
     @Bean
@@ -43,10 +48,16 @@ public class EffectRegistryConfig implements SmartInitializingSingleton {
         return staticEffectHandlerRegistry;
     }
 
+    @Bean
+    public TargetValidatorRegistry targetValidatorRegistry() {
+        return targetValidatorRegistry;
+    }
+
     @Override
     public void afterSingletonsInstantiated() {
         int effectCount = 0;
         int staticCount = 0;
+        int validatorCount = 0;
 
         for (String beanName : applicationContext.getBeanDefinitionNames()) {
             Object bean = applicationContext.getBean(beanName);
@@ -64,10 +75,17 @@ public class EffectRegistryConfig implements SmartInitializingSingleton {
                     registerStaticEffectHandler(bean, method, handlesStatic.value(), handlesStatic.selfOnly());
                     staticCount++;
                 }
+
+                ValidatesTarget validatesTarget = method.getAnnotation(ValidatesTarget.class);
+                if (validatesTarget != null) {
+                    registerTargetValidator(bean, method, validatesTarget.value());
+                    validatorCount++;
+                }
             }
         }
 
-        log.info("Effect auto-registration complete: {} runtime handlers, {} static handlers", effectCount, staticCount);
+        log.info("Effect auto-registration complete: {} runtime handlers, {} static handlers, {} target validators",
+                effectCount, staticCount, validatorCount);
     }
 
     @SuppressWarnings("unchecked")
@@ -147,6 +165,46 @@ public class EffectRegistryConfig implements SmartInitializingSingleton {
             }
         } catch (IllegalAccessException e) {
             throw new IllegalStateException("Cannot access @HandlesStaticEffect method " + method.getName(), e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void registerTargetValidator(Object bean, Method method, Class<? extends CardEffect> effectClass) {
+        method.setAccessible(true);
+        Class<?>[] params = method.getParameterTypes();
+
+        try {
+            MethodHandle handle = MethodHandles.lookup().unreflect(method).bindTo(bean);
+
+            if (params.length == 2
+                    && params[0] == TargetValidationContext.class
+                    && CardEffect.class.isAssignableFrom(params[1])) {
+                // Pattern B: (TargetValidationContext, ConcreteEffectType)
+                Class<? extends CardEffect> effectParam = (Class<? extends CardEffect>) params[1];
+                targetValidatorRegistry.register(effectClass, (ctx, effect) -> {
+                    try {
+                        handle.invoke(ctx, effectParam.cast(effect));
+                    } catch (Throwable t) {
+                        throw wrapException(t, method);
+                    }
+                });
+            } else if (params.length == 1
+                    && params[0] == TargetValidationContext.class) {
+                // Pattern A: (TargetValidationContext)
+                targetValidatorRegistry.register(effectClass, (ctx, effect) -> {
+                    try {
+                        handle.invoke(ctx);
+                    } catch (Throwable t) {
+                        throw wrapException(t, method);
+                    }
+                });
+            } else {
+                throw new IllegalStateException(
+                        "@ValidatesTarget method " + method.getDeclaringClass().getSimpleName() + "." + method.getName()
+                                + " must have signature (TargetValidationContext) or (TargetValidationContext, <? extends CardEffect>)");
+            }
+        } catch (IllegalAccessException e) {
+            throw new IllegalStateException("Cannot access @ValidatesTarget method " + method.getName(), e);
         }
     }
 

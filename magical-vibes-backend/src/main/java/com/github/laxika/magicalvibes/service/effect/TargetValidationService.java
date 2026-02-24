@@ -1,39 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreaturePerControlledSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import org.springframework.stereotype.Service;
 
@@ -46,198 +14,9 @@ public class TargetValidationService {
     private final GameQueryService gameQueryService;
     private final TargetValidatorRegistry registry;
 
-    public TargetValidationService(GameQueryService gameQueryService) {
+    public TargetValidationService(GameQueryService gameQueryService, TargetValidatorRegistry registry) {
         this.gameQueryService = gameQueryService;
-        this.registry = new TargetValidatorRegistry();
-
-        registry.register(DealXDamageToTargetCreatureEffect.class, (ctx, effect) -> {
-            Permanent target = requireBattlefieldTarget(ctx);
-            requireCreature(ctx, target);
-            checkProtection(ctx, target);
-        });
-
-        registry.register(DealDamageToTargetCreatureEffect.class, (ctx, effect) -> {
-            Permanent target = requireBattlefieldTarget(ctx);
-            requireCreature(ctx, target);
-            checkProtection(ctx, target);
-        });
-
-        registry.register(DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect.class, (ctx, effect) -> {
-            Permanent target = requireBattlefieldTarget(ctx);
-            requireCreature(ctx, target);
-            checkProtection(ctx, target);
-        });
-
-        registry.register(DealDamageToAnyTargetEffect.class, (ctx, effect) -> {
-            requireTarget(ctx);
-            if (ctx.gameData().playerIds.contains(ctx.targetPermanentId())) {
-                return;
-            }
-            Permanent target = requireBattlefieldTarget(ctx);
-            boolean validPermanentType = gameQueryService.isCreature(ctx.gameData(), target)
-                    || target.getCard().getType() == CardType.PLANESWALKER;
-            if (!validPermanentType) {
-                throw new IllegalStateException("Target must be a creature, planeswalker, or player");
-            }
-            checkProtection(ctx, target);
-        });
-
-        registry.register(TapOrUntapTargetPermanentEffect.class, (ctx, effect) -> {
-            requireBattlefieldTarget(ctx);
-        });
-
-        registry.register(TapTargetPermanentEffect.class, (ctx, effect) -> {
-            requireBattlefieldTarget(ctx);
-        });
-
-        registry.register(UntapTargetPermanentEffect.class, (ctx, effect) -> {
-            requireBattlefieldTarget(ctx);
-        });
-
-        registry.register(MillTargetPlayerEffect.class, (ctx, effect) -> {
-            requireTargetPlayer(ctx);
-        });
-
-        registry.register(DealDamageToTargetPlayerEffect.class, (ctx, effect) -> {
-            requireTargetPlayer(ctx);
-        });
-
-        registry.register(DealDamageToTargetPlayerByHandSizeEffect.class, (ctx, effect) -> {
-            requireTargetPlayer(ctx);
-        });
-
-        registry.register(SacrificeCreatureEffect.class, (ctx, effect) -> {
-            requireTargetPlayer(ctx);
-        });
-
-        registry.register(TargetPlayerGainsControlOfSourceCreatureEffect.class, (ctx, effect) -> {
-            requireTargetPlayer(ctx);
-        });
-
-        registry.register(RevealTopCardOfLibraryEffect.class, (ctx, effect) -> {
-            requireTargetPlayer(ctx);
-        });
-
-        registry.register(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class, (ctx, effect) -> {
-            requireTargetPlayer(ctx);
-        });
-
-        registry.register(TargetPlayerGainsLifeEffect.class, (ctx, effect) -> {
-            requireTargetPlayer(ctx);
-        });
-
-        registry.register(GainControlOfEnchantedTargetEffect.class, (ctx, effect) -> {
-            Permanent target = requireBattlefieldTarget(ctx);
-            requireCreature(ctx, target);
-        });
-
-        registry.register(GainControlOfTargetCreatureUntilEndOfTurnEffect.class, (ctx, effect) -> {
-            Permanent target = requireBattlefieldTarget(ctx);
-            requireCreature(ctx, target);
-        });
-
-        registry.register(ReturnCardFromGraveyardEffect.class, (ctx, rawEffect) -> {
-            var effect = (ReturnCardFromGraveyardEffect) rawEffect;
-            if (!effect.targetGraveyard()) {
-                return; // Non-targeting effects choose at resolution time
-            }
-            if (ctx.targetZone() != Zone.GRAVEYARD) {
-                throw new IllegalStateException("Effect requires a graveyard target");
-            }
-            if (ctx.targetPermanentId() == null) {
-                throw new IllegalStateException("Effect requires a target card");
-            }
-            Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetPermanentId());
-            if (graveyardCard == null) {
-                throw new IllegalStateException("Target card not found in any graveyard");
-            }
-            if (effect.filter() != null && !gameQueryService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
-                String label = com.github.laxika.magicalvibes.service.GraveyardReturnResolutionService.describeFilter(effect.filter());
-                throw new IllegalStateException("Target card must be a " + label);
-            }
-        });
-
-        registry.register(PutTargetOnBottomOfLibraryEffect.class, (ctx, effect) -> {
-            requireTarget(ctx);
-            Permanent target = gameQueryService.findPermanentById(ctx.gameData(), ctx.targetPermanentId());
-            if (target == null || !gameQueryService.isCreature(ctx.gameData(), target)) {
-                throw new IllegalStateException("Target must be a creature");
-            }
-        });
-
-        registry.register(BoostTargetCreatureEffect.class, (ctx, effect) -> {
-            Permanent target = requireBattlefieldTarget(ctx);
-            requireCreature(ctx, target);
-        });
-
-        registry.register(BoostAttachedCreatureEffect.class, (ctx, effect) -> {
-            Permanent target = requireBattlefieldTarget(ctx);
-            requireCreature(ctx, target);
-        });
-
-        registry.register(BoostEnchantedCreaturePerControlledSubtypeEffect.class, (ctx, effect) -> {
-            Permanent target = requireBattlefieldTarget(ctx);
-            requireCreature(ctx, target);
-        });
-
-        registry.register(DestroyCreatureBlockingThisEffect.class, (ctx, effect) -> {
-            requireTarget(ctx);
-            Permanent target = gameQueryService.findPermanentById(ctx.gameData(), ctx.targetPermanentId());
-            if (target == null || !gameQueryService.isCreature(ctx.gameData(), target) || !target.isBlocking()) {
-                throw new IllegalStateException("Target must be a creature blocking this creature");
-            }
-            int sourceIndex = findSourcePermanentIndex(ctx);
-            if (sourceIndex < 0 || !target.getBlockingTargets().contains(sourceIndex)) {
-                throw new IllegalStateException("Target must be a creature blocking this creature");
-            }
-        });
-
-        registry.register(DestroyTargetPermanentEffect.class, (ctx, effect) -> {
-            Permanent target = requireBattlefieldTarget(ctx);
-            checkProtection(ctx, target);
-        });
-        registry.register(TargetCreatureCantBlockThisTurnEffect.class, (ctx, effect) -> {
-            Permanent target = requireBattlefieldTarget(ctx);
-            requireCreature(ctx, target);
-        });
-
-        registry.register(ReturnTargetPermanentToHandEffect.class, (ctx, effect) -> {
-            requireBattlefieldTarget(ctx);
-        });
-
-        registry.register(GainControlOfTargetAuraEffect.class, (ctx, effect) -> {
-            requireTarget(ctx);
-            Permanent target = gameQueryService.findPermanentById(ctx.gameData(), ctx.targetPermanentId());
-            if (target == null || target.getCard().getType() != CardType.ENCHANTMENT
-                    || !target.getCard().getSubtypes().contains(CardSubtype.AURA)
-                    || target.getAttachedTo() == null) {
-                throw new IllegalStateException("Target must be an Aura attached to a permanent");
-            }
-        });
-
-        registry.register(PutCardFromOpponentGraveyardOntoBattlefieldEffect.class, (ctx, effect) -> {
-            if (ctx.targetZone() != Zone.GRAVEYARD) {
-                throw new IllegalStateException("Ability requires a graveyard target");
-            }
-            if (ctx.targetPermanentId() == null) {
-                throw new IllegalStateException("Ability requires a target card");
-            }
-            Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetPermanentId());
-            if (graveyardCard == null) {
-                throw new IllegalStateException("Target card not found in any graveyard");
-            }
-            if (graveyardCard.getType() != CardType.ARTIFACT && graveyardCard.getType() != CardType.CREATURE) {
-                throw new IllegalStateException("Target must be an artifact or creature card");
-            }
-            if (graveyardCard.getManaValue() != ctx.xValue()) {
-                throw new IllegalStateException("Target card's mana value must equal X (" + ctx.xValue() + ")");
-            }
-            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetPermanentId());
-            UUID controllerId = findSourcePermanentController(ctx);
-            if (graveyardOwnerId != null && graveyardOwnerId.equals(controllerId)) {
-                throw new IllegalStateException("Target must be in an opponent's graveyard");
-            }
-        });
+        this.registry = registry;
     }
 
     public void validateEffectTargets(List<CardEffect> effects, TargetValidationContext context) {
@@ -249,13 +28,13 @@ public class TargetValidationService {
         }
     }
 
-    private void requireTarget(TargetValidationContext ctx) {
+    public void requireTarget(TargetValidationContext ctx) {
         if (ctx.targetPermanentId() == null) {
             throw new IllegalStateException("Ability requires a target");
         }
     }
 
-    private Permanent requireBattlefieldTarget(TargetValidationContext ctx) {
+    public Permanent requireBattlefieldTarget(TargetValidationContext ctx) {
         requireTarget(ctx);
         Permanent target = gameQueryService.findPermanentById(ctx.gameData(), ctx.targetPermanentId());
         if (target == null) {
@@ -264,19 +43,19 @@ public class TargetValidationService {
         return target;
     }
 
-    private void requireCreature(TargetValidationContext ctx, Permanent target) {
+    public void requireCreature(TargetValidationContext ctx, Permanent target) {
         if (!gameQueryService.isCreature(ctx.gameData(), target)) {
             throw new IllegalStateException("Target must be a creature");
         }
     }
 
-    private void checkProtection(TargetValidationContext ctx, Permanent target) {
+    public void checkProtection(TargetValidationContext ctx, Permanent target) {
         if (gameQueryService.hasProtectionFrom(ctx.gameData(), target, ctx.sourceCard().getColor())) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from " + ctx.sourceCard().getColor().name().toLowerCase());
         }
     }
 
-    private void requireTargetPlayer(TargetValidationContext ctx) {
+    public void requireTargetPlayer(TargetValidationContext ctx) {
         if (ctx.targetPermanentId() == null) {
             throw new IllegalStateException("Ability requires a target player");
         }
@@ -285,7 +64,7 @@ public class TargetValidationService {
         }
     }
 
-    private int findSourcePermanentIndex(TargetValidationContext ctx) {
+    public int findSourcePermanentIndex(TargetValidationContext ctx) {
         for (UUID playerId : ctx.gameData().orderedPlayerIds) {
             List<Permanent> battlefield = ctx.gameData().playerBattlefields.get(playerId);
             if (battlefield == null) continue;
@@ -298,7 +77,7 @@ public class TargetValidationService {
         return -1;
     }
 
-    private UUID findSourcePermanentController(TargetValidationContext ctx) {
+    public UUID findSourcePermanentController(TargetValidationContext ctx) {
         for (UUID playerId : ctx.gameData().orderedPlayerIds) {
             List<Permanent> battlefield = ctx.gameData().playerBattlefields.get(playerId);
             if (battlefield == null) continue;
@@ -311,5 +90,3 @@ public class TargetValidationService {
         return null;
     }
 }
-
-

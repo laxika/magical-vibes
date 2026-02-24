@@ -9,6 +9,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 3. Only add new effect records when no existing effect can express the behavior.
 4. If you add a new effect record, add an `@HandlesEffect`-annotated resolver method in the matching `*ResolutionService` (see provider map at bottom). No manual registration needed — the annotation auto-registers the handler at startup.
 5. If your new effect targets something, override the appropriate `canTarget*()` method(s) on `CardEffect` to return `true` (see targeting section below).
+6. If your new effect requires target validation, add a `@ValidatesTarget`-annotated method in the appropriate validator class under `service/validate/` (see target validator map at bottom).
 
 ## Effect targeting declarations
 
@@ -514,6 +515,27 @@ Pass `null` as filter to allow any card.
 | Win conditions | `effect/WinConditionResolutionService` |
 
 All resolution services are in `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/`.
+
+## Target validator map (where to add `@ValidatesTarget` methods)
+
+Target validation is auto-registered via `@ValidatesTarget` annotations, mirroring `@HandlesEffect`. Validator classes live in `service/validate/`.
+
+| Category | Validator class | Dependencies |
+|----------|----------------|--------------|
+| Damage (any target, creature, player) | `DamageTargetValidators` | `TargetValidationService`, `GameQueryService` |
+| Creature mods (tap/untap/boost/block) | `CreatureModTargetValidators` | `TargetValidationService` |
+| Destruction (sacrifice, destroy) | `DestructionTargetValidators` | `TargetValidationService`, `GameQueryService` |
+| Graveyard (return, opponent graveyard) | `GraveyardTargetValidators` | `TargetValidationService`, `GameQueryService` |
+| Bounce (return to hand) | `BounceTargetValidators` | `TargetValidationService` |
+| Library (mill, reveal) | `LibraryTargetValidators` | `TargetValidationService` |
+| Permanent control (gain control, bottom of library) | `PermanentControlTargetValidators` | `TargetValidationService`, `GameQueryService` |
+| Life (drain, gain) | `LifeTargetValidators` | `TargetValidationService` |
+
+**Two method signatures supported:**
+- **Pattern A:** `void method(TargetValidationContext ctx)` — effect not needed
+- **Pattern B:** `void method(TargetValidationContext ctx, ConcreteEffectType effect)` — effect auto-cast
+
+Helper methods on `TargetValidationService`: `requireTarget()`, `requireBattlefieldTarget()`, `requireCreature()`, `checkProtection()`, `requireTargetPlayer()`, `findSourcePermanentIndex()`, `findSourcePermanentController()`.
 
 ## Canonical card examples
 
