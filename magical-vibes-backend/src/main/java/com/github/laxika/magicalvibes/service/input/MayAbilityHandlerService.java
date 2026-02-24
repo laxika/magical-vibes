@@ -162,6 +162,26 @@ public class MayAbilityHandlerService {
             return;
         }
 
+        // Mana payment for may-pay triggers (e.g. Embersmith "pay {1}")
+        if (accepted && ability.manaCost() != null) {
+            ManaCost cost = new ManaCost(ability.manaCost());
+            ManaPool pool = gameData.playerManaPools.get(player.getId());
+            if (!cost.canPay(pool)) {
+                String logEntry = player.getUsername() + " cannot pay " + ability.manaCost() + " for " + ability.sourceCard().getName() + "'s ability.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} can't pay {} for may ability", gameData.id, player.getUsername(), ability.manaCost());
+
+                playerInputService.processNextMayAbility(gameData);
+                if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                    gameData.priorityPassedBy.clear();
+                    gameBroadcastService.broadcastGameState(gameData);
+                    turnProgressionService.resolveAutoPass(gameData);
+                }
+                return;
+            }
+            cost.pay(pool);
+        }
+
         // Targeted may ability (e.g. "you may deal 3 damage to target creature", "you may destroy target Equipment")
         boolean isTargetedPermanentEffect = ability.effects().stream()
                 .anyMatch(CardEffect::canTargetPermanent);
@@ -216,6 +236,12 @@ public class MayAbilityHandlerService {
             }
         }
 
+        // Add player IDs for effects that can target players (e.g. DealDamageToAnyTargetEffect)
+        boolean canTargetPlayer = ability.effects().stream().anyMatch(CardEffect::canTargetPlayer);
+        if (canTargetPlayer) {
+            validTargets.addAll(gameData.orderedPlayerIds);
+        }
+
         if (validTargets.isEmpty()) {
             String logEntry = ability.sourceCard().getName() + "'s ability has no valid targets.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -233,9 +259,14 @@ public class MayAbilityHandlerService {
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
                 ability.sourceCard(), ability.controllerId(), new ArrayList<>(ability.effects())
         ));
-        String targetDescription = (sourceCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter)
-                ? filter.errorMessage().replace("Target must be ", "").replace("an ", "").replace("a ", "")
-                : "creature";
+        String targetDescription;
+        if (sourceCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
+            targetDescription = filter.errorMessage().replace("Target must be ", "").replace("an ", "").replace("a ", "");
+        } else if (canTargetPlayer) {
+            targetDescription = "any target";
+        } else {
+            targetDescription = "creature";
+        }
         playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
                 ability.sourceCard().getName() + "'s ability — Choose target " + targetDescription + ".");
 

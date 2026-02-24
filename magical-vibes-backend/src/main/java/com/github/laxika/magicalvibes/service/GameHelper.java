@@ -28,6 +28,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnArtifactCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
@@ -1085,10 +1087,6 @@ public class GameHelper {
     // ===== Triggers =====
 
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId) {
-        if (spellCard.getColor() == null) {
-            return;
-        }
-
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
@@ -1098,6 +1096,7 @@ public class GameHelper {
                     CardEffect inner = effect instanceof MayEffect m ? m.wrapped() : effect;
 
                     if (inner instanceof GainLifeOnColorSpellCastEffect trigger
+                            && spellCard.getColor() != null
                             && spellCard.getColor() == trigger.triggerColor()) {
                         List<CardEffect> resolvedEffects = List.of(new GainLifeEffect(trigger.amount()));
 
@@ -1118,6 +1117,7 @@ public class GameHelper {
                             ));
                         }
                     } else if (inner instanceof PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger
+                            && spellCard.getColor() != null
                             && trigger.triggerColors().contains(spellCard.getColor())
                             && (!trigger.onlyOwnSpells() || playerId.equals(castingPlayerId))) {
                         List<CardEffect> resolvedEffects = List.of(new PutCountersOnSourceEffect(1, 1, trigger.amount()));
@@ -1138,6 +1138,29 @@ public class GameHelper {
                                     new ArrayList<>(resolvedEffects),
                                     null,
                                     perm.getId()
+                            ));
+                        }
+                    } else if (inner instanceof DealDamageToAnyTargetOnArtifactCastEffect trigger
+                            && spellCard.getType() == CardType.ARTIFACT
+                            && playerId.equals(castingPlayerId)) {
+                        List<CardEffect> resolvedEffects = List.of(new DealDamageToAnyTargetEffect(trigger.damage()));
+
+                        if (effect instanceof MayEffect may) {
+                            gameData.pendingMayAbilities.add(new PendingMayAbility(
+                                    perm.getCard(),
+                                    playerId,
+                                    resolvedEffects,
+                                    perm.getCard().getName() + " — " + may.prompt(),
+                                    null,
+                                    "{" + trigger.manaCost() + "}"
+                            ));
+                        } else {
+                            gameData.stack.add(new StackEntry(
+                                    StackEntryType.TRIGGERED_ABILITY,
+                                    perm.getCard(),
+                                    playerId,
+                                    perm.getCard().getName() + "'s ability",
+                                    new ArrayList<>(resolvedEffects)
                             ));
                         }
                     }

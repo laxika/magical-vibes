@@ -58,6 +58,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `FirstTargetDealsPowerDamageToSecondTargetEffect` | `()` | first target creature deals damage equal to its power to second target creature (bite mechanic) |
 | `DoubleDamageEffect` | `()` | double all damage dealt (static) |
 | `SacrificeOtherCreatureOrDamageEffect` | `(int damage)` | sacrifice another creature or take N damage (upkeep trigger) |
+| `DealDamageToAnyTargetOnArtifactCastEffect` | `(int manaCost, int damage)` | trigger descriptor: when you cast an artifact spell, may pay {N} to deal N damage to any target. Place in `ON_ANY_PLAYER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into `DealDamageToAnyTargetEffect` |
 
 ## Destruction / sacrifice
 

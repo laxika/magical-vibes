@@ -292,7 +292,9 @@ public class PermanentChoiceHandlerService {
             turnProgressionService.resolveAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.MayAbilityTriggerTarget mat) {
             Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
-            if (target != null) {
+            boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
+
+            if (target != null || isPlayerTarget) {
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         mat.sourceCard(),
@@ -303,9 +305,16 @@ public class PermanentChoiceHandlerService {
                 entry.setTargetPermanentId(permanentId);
                 gameData.stack.add(entry);
 
-                String logEntry = mat.sourceCard().getName() + "'s ability targets " + target.getCard().getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} may-ability trigger targets {}", gameData.id, mat.sourceCard().getName(), target.getCard().getName());
+                if (isPlayerTarget) {
+                    String playerName = gameData.playerIdToName.get(permanentId);
+                    String logEntry = mat.sourceCard().getName() + "'s ability targets " + playerName + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} may-ability trigger targets player {}", gameData.id, mat.sourceCard().getName(), playerName);
+                } else {
+                    String logEntry = mat.sourceCard().getName() + "'s ability targets " + target.getCard().getName() + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} may-ability trigger targets {}", gameData.id, mat.sourceCard().getName(), target.getCard().getName());
+                }
             } else {
                 String logEntry = mat.sourceCard().getName() + "'s ability has no valid target.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
