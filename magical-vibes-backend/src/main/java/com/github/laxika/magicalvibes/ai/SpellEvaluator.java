@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenWithColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
@@ -104,10 +103,6 @@ public class SpellEvaluator {
             double tokenScore = token.power() * 3.0 + token.toughness() * 1.5;
             return tokenScore * token.amount();
         }
-        if (effect instanceof CreateCreatureTokenWithColorsEffect token) {
-            double tokenScore = token.power() * 3.0 + token.toughness() * 1.5;
-            return tokenScore * token.amount();
-        }
         if (effect instanceof DealDamageToAnyTargetEffect dmg) {
             return evaluateDamageEffect(gameData, dmg.damage(), oppBattlefield, opponentId, aiPlayerId);
         }
@@ -195,10 +190,6 @@ public class SpellEvaluator {
 
         // Tokens
         if (effect instanceof CreateCreatureTokenEffect token) {
-            double tokenScore = token.power() * 3.0 + token.toughness() * 1.5;
-            return tokenScore * token.amount();
-        }
-        if (effect instanceof CreateCreatureTokenWithColorsEffect token) {
             double tokenScore = token.power() * 3.0 + token.toughness() * 1.5;
             return tokenScore * token.amount();
         }

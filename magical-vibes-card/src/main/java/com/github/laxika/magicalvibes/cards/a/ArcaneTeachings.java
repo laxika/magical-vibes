@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -15,13 +16,14 @@ public class ArcaneTeachings extends Card {
 
     public ArcaneTeachings() {
         addEffect(EffectSlot.STATIC, new BoostAttachedCreatureEffect(2, 2));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityToEnchantedCreatureEffect(
+        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,
                         List.of(new DealDamageToAnyTargetEffect(1)),
                         "{T}: This creature deals 1 damage to any target."
-                )
+                ),
+                GrantScope.ENCHANTED_CREATURE
         ));
     }
 }

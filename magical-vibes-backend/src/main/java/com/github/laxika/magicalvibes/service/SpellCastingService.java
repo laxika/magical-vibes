@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -123,38 +122,31 @@ public class SpellCastingService {
             targetLegalityService.validateSpellTargetOnStack(gameData, targetPermanentId, card.getTargetFilter());
         }
 
-        boolean needsSingleGraveyardCreatureTargeting = card.getEffects(EffectSlot.SPELL).stream()
-                .anyMatch(e -> e instanceof ReturnCreatureFromGraveyardToHandEffect);
-        boolean needsSingleGraveyardCardTargeting = card.getEffects(EffectSlot.SPELL).stream()
-                .anyMatch(e -> e instanceof ReturnCardFromGraveyardToHandEffect);
+        ReturnCardFromGraveyardToHandEffect graveyardReturnEffect = (ReturnCardFromGraveyardToHandEffect) card.getEffects(EffectSlot.SPELL).stream()
+                .filter(e -> e instanceof ReturnCardFromGraveyardToHandEffect)
+                .findFirst().orElse(null);
+        boolean needsSingleGraveyardTargeting = graveyardReturnEffect != null;
 
         // Validate target if specified (can be a permanent or a player)
         if (targetPermanentId != null && !card.isNeedsSpellTarget()) {
-            if (needsSingleGraveyardCreatureTargeting) {
+            if (needsSingleGraveyardTargeting) {
+                String typeName = graveyardReturnEffect.cardType() != null
+                        ? graveyardReturnEffect.cardType().name().toLowerCase() + " card" : "card";
                 boolean inControllersGraveyard = gameData.playerGraveyards
                         .getOrDefault(playerId, List.of())
                         .stream()
                         .anyMatch(c -> c.getId().equals(targetPermanentId));
                 if (!inControllersGraveyard) {
-                    throw new IllegalStateException("Target must be a creature card in your graveyard");
-                }
-                targetLegalityService.validateEffectTargetInZone(gameData, card, targetPermanentId, Zone.GRAVEYARD);
-            } else if (needsSingleGraveyardCardTargeting) {
-                boolean inControllersGraveyard = gameData.playerGraveyards
-                        .getOrDefault(playerId, List.of())
-                        .stream()
-                        .anyMatch(c -> c.getId().equals(targetPermanentId));
-                if (!inControllersGraveyard) {
-                    throw new IllegalStateException("Target must be a card in your graveyard");
+                    throw new IllegalStateException("Target must be a " + typeName + " in your graveyard");
                 }
                 targetLegalityService.validateEffectTargetInZone(gameData, card, targetPermanentId, Zone.GRAVEYARD);
             } else {
                 targetLegalityService.validateSpellTargeting(gameData, card, targetPermanentId, null, playerId);
             }
-        } else if (card.isNeedsTarget() && needsSingleGraveyardCreatureTargeting) {
-            throw new IllegalStateException("Must target a creature card in your graveyard");
-        } else if (card.isNeedsTarget() && needsSingleGraveyardCardTargeting) {
-            throw new IllegalStateException("Must target a card in your graveyard");
+        } else if (card.isNeedsTarget() && needsSingleGraveyardTargeting) {
+            String typeName = graveyardReturnEffect.cardType() != null
+                    ? graveyardReturnEffect.cardType().name().toLowerCase() + " card" : "card";
+            throw new IllegalStateException("Must target a " + typeName + " in your graveyard");
         }
 
         // Validate multi-target permanent targeting
@@ -282,7 +274,7 @@ public class SpellCastingService {
                         filteredSpellEffects, resolvedXValue, targetPermanentIds
                 ));
                 finishSpellCast(gameData, playerId, player, hand, card);
-            } else if (needsSingleGraveyardCreatureTargeting || needsSingleGraveyardCardTargeting) {
+            } else if (needsSingleGraveyardTargeting) {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.SORCERY_SPELL, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, targetPermanentId, null,

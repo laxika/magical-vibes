@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenWithColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -21,10 +21,10 @@ public class AjaniOutlandChaperone extends Card {
         // +1: Create a 1/1 green and white Kithkin creature token.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new CreateCreatureTokenWithColorsEffect(
+                List.of(new CreateCreatureTokenEffect(
                         "Kithkin", 1, 1,
-                        Set.of(CardColor.GREEN, CardColor.WHITE),
                         CardColor.WHITE,
+                        Set.of(CardColor.GREEN, CardColor.WHITE),
                         List.of(CardSubtype.KITHKIN)
                 )),
                 "+1: Create a 1/1 green and white Kithkin creature token."

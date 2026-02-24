@@ -71,7 +71,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB may destroy (filtered) | `a/AcidWebSpider.java` | MayEffect(DestroyTargetPermanentEffect) + PermanentPredicateTargetFilter |
 | ETB discard | `r/RavenousRats.java` | TargetPlayerDiscardsEffect |
 | ETB search | `c/CivicWayfinder.java` | MayEffect(SearchLibraryForBasicLandToHandEffect) |
-| ETB may return from GY | `g/Gravedigger.java` | MayEffect(ReturnCreatureFromGraveyardToHandEffect) |
+| ETB may return from GY | `g/Gravedigger.java` | MayEffect(ReturnCardFromGraveyardToHandEffect(CardType.CREATURE)) |
 | ETB tokens + ability | `s/SiegeGangCommander.java` | CreateCreatureTokenEffect + activated sac ability |
 | ETB copy | `c/Clone.java` | CopyPermanentOnEnterEffect |
 | ETB choose color | `v/VoiceOfAll.java` | ProtectionFromChosenColorEffect |
@@ -152,7 +152,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Boost + keyword | `s/SerrasEmbrace.java` | Boost + GrantKeywordEffect(ENCHANTED_CREATURE) |
 | Boost per subtype | `b/BlanchwoodArmor.java` | STATIC BoostEnchantedCreaturePerControlledSubtypeEffect |
 | Control enchanted | `p/Persuasion.java` | STATIC ControlEnchantedCreatureEffect |
-| Grant activated ability | `a/ArcaneTeachings.java` | GrantActivatedAbilityToEnchantedCreatureEffect |
+| Grant activated ability | `a/ArcaneTeachings.java` | GrantActivatedAbilityEffect with GrantScope.ENCHANTED_CREATURE |
 | Redirect damage to creature | `p/Pariah.java` | STATIC RedirectPlayerDamageToEnchantedCreatureEffect |
 | Enchanted land mana | `o/Overgrowth.java` | ON_ANY_PLAYER_TAPS_LAND AddManaOnEnchantedLandTapEffect |
 | Aura + self-bounce ability | `s/ShimmeringWings.java` | STATIC keyword + activated ReturnSelfToHandEffect |

@@ -232,7 +232,9 @@ public class CreatureModResolutionService {
             if (battlefield == null) continue;
 
             for (Permanent permanent : battlefield) {
-                if (gameQueryService.isCreature(gameData, permanent)) {
+                if (gameQueryService.isCreature(gameData, permanent)
+                        && (effect.filter() == null
+                            || gameQueryService.matchesPermanentPredicate(gameData, permanent, effect.filter()))) {
                     permanent.setPowerModifier(permanent.getPowerModifier() + powerBoost);
                     permanent.setToughnessModifier(permanent.getToughnessModifier() + toughnessBoost);
                     count++;

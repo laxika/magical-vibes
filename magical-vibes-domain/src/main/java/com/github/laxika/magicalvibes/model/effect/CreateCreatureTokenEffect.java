@@ -14,18 +14,37 @@ public record CreateCreatureTokenEffect(
         int power,
         int toughness,
         CardColor color,
+        Set<CardColor> colors,
         List<CardSubtype> subtypes,
         Set<Keyword> keywords,
         Set<CardType> additionalTypes
 ) implements CardEffect {
 
-    public CreateCreatureTokenEffect(String tokenName,
-                                     int power,
-                                     int toughness,
-                                     CardColor color,
-                                     List<CardSubtype> subtypes,
-                                     Set<Keyword> keywords,
-                                     Set<CardType> additionalTypes) {
-        this(1, tokenName, power, toughness, color, subtypes, keywords, additionalTypes);
+    /** Single-color token (existing pattern) */
+    public CreateCreatureTokenEffect(String tokenName, int power, int toughness,
+                                     CardColor color, List<CardSubtype> subtypes,
+                                     Set<Keyword> keywords, Set<CardType> additionalTypes) {
+        this(1, tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes);
+    }
+
+    /** Single-color token with amount */
+    public CreateCreatureTokenEffect(int amount, String tokenName, int power, int toughness,
+                                     CardColor color, List<CardSubtype> subtypes,
+                                     Set<Keyword> keywords, Set<CardType> additionalTypes) {
+        this(amount, tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes);
+    }
+
+    /** Multi-color token */
+    public CreateCreatureTokenEffect(int amount, String tokenName, int power, int toughness,
+                                     CardColor color, Set<CardColor> colors,
+                                     List<CardSubtype> subtypes) {
+        this(amount, tokenName, power, toughness, color, colors, subtypes, Set.of(), Set.of());
+    }
+
+    /** Multi-color token (single) */
+    public CreateCreatureTokenEffect(String tokenName, int power, int toughness,
+                                     CardColor color, Set<CardColor> colors,
+                                     List<CardSubtype> subtypes) {
+        this(1, tokenName, power, toughness, color, colors, subtypes, Set.of(), Set.of());
     }
 }

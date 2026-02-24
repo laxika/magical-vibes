@@ -24,7 +24,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreaturePerCont
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEnchantmentOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
@@ -97,60 +96,16 @@ public class StaticEffectResolutionService {
     @HandlesStaticEffect(GrantKeywordEffect.class)
     private void resolveGrantKeyword(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantKeywordEffect) effect;
-        if (grant.scope() == GrantScope.ENCHANTED_CREATURE || grant.scope() == GrantScope.EQUIPPED_CREATURE) {
-            if (context.source().getAttachedTo() != null
-                    && context.source().getAttachedTo().equals(context.target().getId())) {
-                accumulator.addKeyword(grant.keyword());
-            }
-            return;
-        }
-        if (grant.scope() == GrantScope.OWN_TAPPED_CREATURES && context.targetOnSameBattlefield() && context.target().isTapped()) {
+        if (matchesCreatureScope(context, grant.scope(), grant.filter())) {
             accumulator.addKeyword(grant.keyword());
-            return;
-        }
-        if (grant.scope() == GrantScope.OWN_CREATURES && context.targetOnSameBattlefield()) {
-            boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
-            if (isEffectivelyCreature(context.target(), hasAnimateArtifacts)
-                    && matchesStaticFilter(context.target(), grant.filter())) {
-                accumulator.addKeyword(grant.keyword());
-            }
-        }
-        if (grant.scope() == GrantScope.ALL_CREATURES) {
-            boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
-            if (isEffectivelyCreature(context.target(), hasAnimateArtifacts)
-                    && matchesStaticFilter(context.target(), grant.filter())) {
-                accumulator.addKeyword(grant.keyword());
-            }
         }
     }
 
     @HandlesStaticEffect(GrantEffectEffect.class)
     private void resolveGrantEffectEffect(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantEffectEffect) effect;
-        if (grant.scope() == GrantScope.ENCHANTED_CREATURE || grant.scope() == GrantScope.EQUIPPED_CREATURE) {
-            if (context.source().getAttachedTo() != null
-                    && context.source().getAttachedTo().equals(context.target().getId())) {
-                accumulator.addGrantedEffect(grant.effect());
-            }
-            return;
-        }
-        if (grant.scope() == GrantScope.OWN_TAPPED_CREATURES && context.targetOnSameBattlefield() && context.target().isTapped()) {
+        if (matchesCreatureScope(context, grant.scope(), grant.filter())) {
             accumulator.addGrantedEffect(grant.effect());
-            return;
-        }
-        if (grant.scope() == GrantScope.OWN_CREATURES && context.targetOnSameBattlefield()) {
-            boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
-            if (isEffectivelyCreature(context.target(), hasAnimateArtifacts)
-                    && matchesStaticFilter(context.target(), grant.filter())) {
-                accumulator.addGrantedEffect(grant.effect());
-            }
-        }
-        if (grant.scope() == GrantScope.ALL_CREATURES) {
-            boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
-            if (isEffectivelyCreature(context.target(), hasAnimateArtifacts)
-                    && matchesStaticFilter(context.target(), grant.filter())) {
-                accumulator.addGrantedEffect(grant.effect());
-            }
         }
     }
 
@@ -169,23 +124,15 @@ public class StaticEffectResolutionService {
         }
     }
 
-    @HandlesStaticEffect(GrantActivatedAbilityToEnchantedCreatureEffect.class)
-    private void resolveGrantActivatedAbilityToEnchantedCreature(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var grant = (GrantActivatedAbilityToEnchantedCreatureEffect) effect;
-        if (context.source().getAttachedTo() != null
-                && context.source().getAttachedTo().equals(context.target().getId())) {
-            accumulator.addActivatedAbility(grant.ability());
-        }
-    }
-
     @HandlesStaticEffect(GrantActivatedAbilityEffect.class)
     private void resolveGrantActivatedAbility(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantActivatedAbilityEffect) effect;
         boolean scopeMatch = switch (grant.scope()) {
-            case OWN_PERMANENTS -> context.targetOnSameBattlefield();
-            default -> false;
+            case OWN_PERMANENTS -> context.targetOnSameBattlefield()
+                    && matchesStaticFilter(context.target(), grant.filter());
+            default -> matchesCreatureScope(context, grant.scope(), grant.filter());
         };
-        if (scopeMatch && matchesStaticFilter(context.target(), grant.filter())) {
+        if (scopeMatch) {
             accumulator.addActivatedAbility(grant.ability());
         }
     }
@@ -239,6 +186,28 @@ public class StaticEffectResolutionService {
             accumulator.addPower(metalcraft.powerBoost());
             accumulator.addToughness(metalcraft.toughnessBoost());
         }
+    }
+
+    /**
+     * Returns true if the target matches the given creature-centric scope.
+     * Handles ENCHANTED_CREATURE, EQUIPPED_CREATURE, OWN_TAPPED_CREATURES, OWN_CREATURES, ALL_CREATURES.
+     */
+    private boolean matchesCreatureScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter) {
+        if (scope == GrantScope.ENCHANTED_CREATURE || scope == GrantScope.EQUIPPED_CREATURE) {
+            return context.source().getAttachedTo() != null
+                    && context.source().getAttachedTo().equals(context.target().getId());
+        }
+        if (scope == GrantScope.OWN_TAPPED_CREATURES) {
+            return context.targetOnSameBattlefield() && context.target().isTapped();
+        }
+        if (scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_CREATURES) {
+            boolean ownCheck = scope != GrantScope.OWN_CREATURES || context.targetOnSameBattlefield();
+            if (!ownCheck) return false;
+            boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
+            return isEffectivelyCreature(context.target(), hasAnimateArtifacts)
+                    && matchesStaticFilter(context.target(), filter);
+        }
+        return false;
     }
 
     private boolean isEffectivelyCreature(Permanent permanent, boolean hasAnimateArtifacts) {

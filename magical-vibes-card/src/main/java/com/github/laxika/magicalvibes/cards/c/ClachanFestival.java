@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenWithColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -16,11 +16,11 @@ public class ClachanFestival extends Card {
 
     public ClachanFestival() {
         // When this enchantment enters, create two 1/1 green and white Kithkin creature tokens.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateCreatureTokenWithColorsEffect(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateCreatureTokenEffect(
                 2,
                 "Kithkin", 1, 1,
-                Set.of(CardColor.GREEN, CardColor.WHITE),
                 CardColor.WHITE,
+                Set.of(CardColor.GREEN, CardColor.WHITE),
                 List.of(CardSubtype.KITHKIN)
         ));
 
@@ -28,10 +28,10 @@ public class ClachanFestival extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{W}",
-                List.of(new CreateCreatureTokenWithColorsEffect(
+                List.of(new CreateCreatureTokenEffect(
                         "Kithkin", 1, 1,
-                        Set.of(CardColor.GREEN, CardColor.WHITE),
                         CardColor.WHITE,
+                        Set.of(CardColor.GREEN, CardColor.WHITE),
                         List.of(CardSubtype.KITHKIN)
                 )),
                 "{4}{W}: Create a 1/1 green and white Kithkin creature token."

@@ -28,7 +28,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSou
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
@@ -154,32 +153,21 @@ public class TargetValidationService {
             }
         });
 
-        registry.register(ReturnCreatureFromGraveyardToHandEffect.class, (ctx, effect) -> {
+        registry.register(ReturnCardFromGraveyardToHandEffect.class, (ctx, rawEffect) -> {
+            var effect = (ReturnCardFromGraveyardToHandEffect) rawEffect;
             if (ctx.targetZone() != Zone.GRAVEYARD) {
                 throw new IllegalStateException("Spell requires a graveyard target");
             }
+            String typeName = effect.cardType() != null ? effect.cardType().name().toLowerCase() + " card" : "card";
             if (ctx.targetPermanentId() == null) {
-                throw new IllegalStateException("Spell requires a target creature card");
+                throw new IllegalStateException("Spell requires a target " + typeName);
             }
             Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetPermanentId());
             if (graveyardCard == null) {
                 throw new IllegalStateException("Target card not found in any graveyard");
             }
-            if (graveyardCard.getType() != CardType.CREATURE) {
-                throw new IllegalStateException("Target card must be a creature");
-            }
-        });
-
-        registry.register(ReturnCardFromGraveyardToHandEffect.class, (ctx, effect) -> {
-            if (ctx.targetZone() != Zone.GRAVEYARD) {
-                throw new IllegalStateException("Spell requires a graveyard target");
-            }
-            if (ctx.targetPermanentId() == null) {
-                throw new IllegalStateException("Spell requires a target card");
-            }
-            Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetPermanentId());
-            if (graveyardCard == null) {
-                throw new IllegalStateException("Target card not found in any graveyard");
+            if (effect.cardType() != null && graveyardCard.getType() != effect.cardType()) {
+                throw new IllegalStateException("Target card must be a " + effect.cardType().name().toLowerCase());
             }
         });
 

@@ -21,7 +21,7 @@ When creating a new effect, override the relevant method(s) to return `true`:
 | `canTargetPlayer()` | DealDamageToAnyTargetEffect, DealDamageToAnyTargetAndGainLifeEffect, DealDamageToTargetPlayerEffect, DealDamageToTargetPlayerByHandSizeEffect, DealOrderedDamageToAnyTargetsEffect, DealXDamageToAnyTargetEffect, DealXDamageToAnyTargetAndGainXLifeEffect, TargetPlayerLosesLifeAndControllerGainsLifeEffect, TargetPlayerGainsLifeEffect, DoubleTargetPlayerLifeEffect, TargetPlayerDiscardsEffect, ChooseCardFromTargetHandToDiscardEffect, ChooseCardsFromTargetHandToTopOfLibraryEffect, LookAtHandEffect, HeadGamesEffect, RedirectDrawsEffect, MillTargetPlayerEffect, MillHalfLibraryEffect, ExtraTurnEffect, SacrificeCreatureEffect, ShuffleGraveyardIntoLibraryEffect, RevealTopCardOfLibraryEffect, ReturnArtifactsTargetPlayerOwnsToHandEffect, TargetPlayerGainsControlOfSourceCreatureEffect |
 | `canTargetPermanent()` | DealDamageToAnyTargetEffect, DealDamageToAnyTargetAndGainLifeEffect, DealDamageToTargetCreatureEffect, DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect, DealOrderedDamageToAnyTargetsEffect, DealXDamageToAnyTargetEffect, DealXDamageToAnyTargetAndGainXLifeEffect, DealXDamageToTargetCreatureEffect, DealXDamageDividedAmongTargetAttackingCreaturesEffect, FirstTargetDealsPowerDamageToSecondTargetEffect, DestroyTargetPermanentEffect, DestroyTargetLandAndDamageControllerEffect, DestroyCreatureBlockingThisEffect, ExileTargetPermanentEffect, ReturnTargetPermanentToHandEffect, PutTargetOnBottomOfLibraryEffect, GainControlOfTargetCreatureUntilEndOfTurnEffect, GainControlOfEnchantedTargetEffect, GainControlOfTargetAuraEffect, BoostTargetCreatureEffect, BoostFirstTargetCreatureEffect, GainLifeEqualToTargetToughnessEffect, PreventDamageToTargetEffect, TapTargetPermanentEffect, TapOrUntapTargetPermanentEffect, UntapTargetPermanentEffect, MakeTargetUnblockableEffect, TargetCreatureCantBlockThisTurnEffect, ChangeColorTextEffect, EquipEffect, CantBlockSourceEffect, SacrificeCreatureCost, GrantKeywordEffect (when scope == Scope.TARGET) |
 | `canTargetSpell()` | CounterSpellEffect, CounterUnlessPaysEffect, CopySpellEffect, ChangeTargetOfTargetSpellWithSingleTargetEffect |
-| `canTargetGraveyard()` | ReturnCardFromGraveyardToHandEffect, ReturnCreatureFromGraveyardToHandEffect, PutCardFromOpponentGraveyardOntoBattlefieldEffect |
+| `canTargetGraveyard()` | ReturnCardFromGraveyardToHandEffect (when targetGraveyard=true), PutCardFromOpponentGraveyardOntoBattlefieldEffect |
 
 Effects that target both players and permanents (any-target): DealDamageToAnyTargetEffect, DealDamageToAnyTargetAndGainLifeEffect, DealOrderedDamageToAnyTargetsEffect, DealXDamageToAnyTargetEffect, DealXDamageToAnyTargetAndGainXLifeEffect.
 
@@ -109,10 +109,8 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
-| `ReturnCardFromGraveyardToHandEffect` | `()` | return target card from your graveyard to hand |
-| `ReturnCreatureFromGraveyardToHandEffect` | `()` | return target creature card from your graveyard to hand |
+| `ReturnCardFromGraveyardToHandEffect` | `()` or `(CardType cardType)` | return target card from graveyard to hand. No-arg: any card from your graveyard. `(CardType)`: only cards of that type (e.g. `CardType.CREATURE` replaces old `ReturnCreatureFromGraveyardToHandEffect`, `CardType.ARTIFACT` replaces old `ReturnArtifactFromGraveyardToHandEffect`). Fields: `CardType cardType` (null = any), `boolean targetGraveyard` (auto-set: true when no cardType filter). When `targetGraveyard=true`, targets opponent's graveyard; otherwise targets your own |
 | `ReturnCreatureFromGraveyardToBattlefieldEffect` | `()` | return target creature card from graveyard to battlefield |
-| `ReturnArtifactFromGraveyardToHandEffect` | `()` | return target artifact card from graveyard to hand |
 | `ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect` | `()` | return target artifact or creature from ANY graveyard to battlefield |
 | `PutCardFromOpponentGraveyardOntoBattlefieldEffect` | `(boolean tapped)` | put target artifact/creature with MV=X from opponent's graveyard onto battlefield under your control (tapped if `tapped=true`), then mill that player X cards |
 | `ReturnAuraFromGraveyardToBattlefieldEffect` | `()` | return aura from graveyard to battlefield |
@@ -176,8 +174,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
-| `CreateCreatureTokenEffect` | `(int amount, String tokenName, int power, int toughness, CardColor color, List<CardSubtype> subtypes, Set<Keyword> keywords, Set<CardType> additionalTypes)` | create N creature tokens |
-| `CreateCreatureTokenWithColorsEffect` | `(String tokenName, int power, int toughness, Set<CardColor> colors, CardColor primaryColor, List<CardSubtype> subtypes)` | create multi-colored creature token |
+| `CreateCreatureTokenEffect` | `(String tokenName, int power, int toughness, CardColor color, List<CardSubtype> subtypes, Set<Keyword> keywords, Set<CardType> additionalTypes)` or `(int amount, ...)` or multi-color: `(int amount, String tokenName, int power, int toughness, CardColor color, Set<CardColor> colors, List<CardSubtype> subtypes)` or `(String tokenName, int power, int toughness, CardColor color, Set<CardColor> colors, List<CardSubtype> subtypes)` | create N creature tokens. `color` is primary display color. `colors` (Set&lt;CardColor&gt;, nullable) is full color identity for multi-color tokens. Multi-color constructors default keywords/additionalTypes to empty sets |
 
 ## Life
 
@@ -213,7 +210,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `BoostSelfEffect` | `(int powerBoost, int toughnessBoost)` | this creature gets +X/+Y until end of turn |
 | `BoostAllOwnCreaturesEffect` | `(int powerBoost, int toughnessBoost)` or `(int powerBoost, int toughnessBoost, PermanentPredicate filter)` | all your creatures get +X/+Y until end of turn (one-shot). Optional predicate filter |
 | `StaticBoostEffect` | `(int powerBoost, int toughnessBoost, Set<Keyword> grantedKeywords, GrantScope scope, PermanentPredicate filter)` | unified static boost: +X/+Y and keywords with predicate-based filtering. Scope: `OWN_CREATURES`, `ALL_CREATURES`. Filter: optional `PermanentPredicate` (color, subtype, not, etc). Convenience constructors: `(p, t, scope)`, `(p, t, scope, filter)`, `(p, t, keywords, scope)` |
-| `BoostAllCreaturesXEffect` | `(int powerMultiplier, int toughnessMultiplier)` | all creatures get +X/+X where X is mana paid |
+| `BoostAllCreaturesXEffect` | `(int powerMultiplier, int toughnessMultiplier)` or `(int powerMultiplier, int toughnessMultiplier, PermanentPredicate filter)` | all creatures get +X/+X where X is mana paid. Optional `PermanentPredicate filter` to restrict which creatures are affected |
 | `BoostAttachedCreatureEffect` | `(int powerBoost, int toughnessBoost)` | enchanted/equipped creature gets +X/+Y (static, works for both auras and equipment) |
 | `BoostEnchantedCreaturePerControlledSubtypeEffect` | `(CardSubtype subtype, int powerPerSubtype, int toughnessPerSubtype)` | enchanted creature gets +X/+Y per controlled subtype |
 | `BoostByOtherCreaturesWithSameNameEffect` | `(int powerPerCreature, int toughnessPerCreature)` | +X/+Y per other creature with same name (static) |
@@ -239,8 +236,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 |--------|-------------|--------|
 | `GrantKeywordEffect` | `(Keyword keyword, GrantScope scope)` or `(Keyword keyword, GrantScope scope, PermanentPredicate filter)` | grant keyword. Scope: `SELF`, `TARGET`, `ENCHANTED_CREATURE`, `EQUIPPED_CREATURE`, `OWN_TAPPED_CREATURES`, `OWN_CREATURES`, `ALL_CREATURES`. Optional predicate filter for conditional grants |
 | `MetalcraftKeywordEffect` | `(Keyword keyword)` or `(Keyword keyword, int powerBoost, int toughnessBoost)` | metalcraft — has keyword (and optional +P/+T) as long as you control 3+ artifacts (self-only static) |
-| `GrantActivatedAbilityEffect` | `(ActivatedAbility ability, GrantScope scope, PermanentPredicate filter)` or `(ActivatedAbility ability, GrantScope scope)` | grant activated ability to permanents matching scope + filter. Scope: `OWN_PERMANENTS` |
-| `GrantActivatedAbilityToEnchantedCreatureEffect` | `(ActivatedAbility ability)` | grant activated ability to enchanted creature |
+| `GrantActivatedAbilityEffect` | `(ActivatedAbility ability, GrantScope scope, PermanentPredicate filter)` or `(ActivatedAbility ability, GrantScope scope)` | grant activated ability to permanents matching scope + filter. Supported scopes: `OWN_PERMANENTS`, `ENCHANTED_CREATURE`, `EQUIPPED_CREATURE`, `OWN_TAPPED_CREATURES`, `OWN_CREATURES`, `ALL_CREATURES`, and other creature scopes. Replaces the old `GrantActivatedAbilityToEnchantedCreatureEffect` — use `GrantScope.ENCHANTED_CREATURE` instead |
 | `GrantAdditionalBlockEffect` | `(int additionalBlocks)` | can block N additional creatures |
 | `RegenerateEffect` | `()` or `(boolean targetsPermanent)` | regenerate self (default) or target creature when `targetsPermanent=true` |
 

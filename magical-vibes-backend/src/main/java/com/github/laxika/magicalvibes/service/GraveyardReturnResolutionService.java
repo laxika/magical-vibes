@@ -13,13 +13,11 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnArtifactFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardOfSubtypeFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCreatureFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
@@ -47,25 +45,13 @@ public class GraveyardReturnResolutionService {
                 "You may return a creature card from your graveyard to the battlefield.");
     }
 
-    @HandlesEffect(ReturnArtifactFromGraveyardToHandEffect.class)
-    void resolveReturnArtifactFromGraveyardToHand(GameData gameData, StackEntry entry) {
-        resolveReturnCardFromGraveyardToZone(gameData, entry, CardType.ARTIFACT,
-                GraveyardChoiceDestination.HAND,
-                "You may return an artifact card from your graveyard to your hand.");
-    }
-
-    @HandlesEffect(ReturnCreatureFromGraveyardToHandEffect.class)
-    void resolveReturnCreatureFromGraveyardToHand(GameData gameData, StackEntry entry) {
-        resolveReturnCardFromGraveyardToZone(gameData, entry, CardType.CREATURE,
-                GraveyardChoiceDestination.HAND,
-                "You may return a creature card from your graveyard to your hand.");
-    }
-
     @HandlesEffect(ReturnCardFromGraveyardToHandEffect.class)
-    void resolveReturnCardFromGraveyardToHand(GameData gameData, StackEntry entry) {
-        resolveReturnCardFromGraveyardToZone(gameData, entry, null,
+    void resolveReturnCardFromGraveyardToHand(GameData gameData, StackEntry entry, ReturnCardFromGraveyardToHandEffect effect) {
+        String typeName = effect.cardType() != null ? effect.cardType().name().toLowerCase() : "card";
+        String article = effect.cardType() != null ? "a " + typeName + " card" : "a card";
+        resolveReturnCardFromGraveyardToZone(gameData, entry, effect.cardType(),
                 GraveyardChoiceDestination.HAND,
-                "You may return a card from your graveyard to your hand.");
+                "You may return " + article + " from your graveyard to your hand.");
     }
 
     @HandlesEffect(ReturnAuraFromGraveyardToBattlefieldEffect.class)
