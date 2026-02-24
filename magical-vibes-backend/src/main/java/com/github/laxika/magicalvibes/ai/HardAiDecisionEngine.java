@@ -36,7 +36,7 @@ import java.util.UUID;
 @Slf4j
 public class HardAiDecisionEngine extends MediumAiDecisionEngine {
 
-    private static final int MCTS_BUDGET = 500;
+    private static final int MCTS_BUDGET = 50000;
 
     private final GameSimulator simulator;
     private final MCTSEngine mctsEngine;
