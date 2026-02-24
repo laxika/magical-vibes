@@ -226,11 +226,14 @@ public class CreatureModResolutionService {
     @HandlesEffect(BoostAllOwnCreaturesEffect.class)
     private void resolveBoostAllOwnCreatures(GameData gameData, StackEntry entry, BoostAllOwnCreaturesEffect boost) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                .withSourceControllerId(entry.getControllerId());
         int count = 0;
         for (Permanent permanent : battlefield) {
             if (gameQueryService.isCreature(gameData, permanent)
                     && (boost.filter() == null
-                        || gameQueryService.matchesPermanentPredicate(gameData, permanent, boost.filter()))) {
+                        || gameQueryService.matchesPermanentPredicate(permanent, boost.filter(), filterContext))) {
                 permanent.setPowerModifier(permanent.getPowerModifier() + boost.powerBoost());
                 permanent.setToughnessModifier(permanent.getToughnessModifier() + boost.toughnessBoost());
                 count++;

@@ -25,5 +25,6 @@ public enum Keyword {
     HEXPROOF,
     INFECT,
     INTIMIDATE,
-    METALCRAFT
+    METALCRAFT,
+    BATTLE_CRY
 }

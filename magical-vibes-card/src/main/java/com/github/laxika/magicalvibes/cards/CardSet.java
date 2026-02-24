@@ -12,7 +12,8 @@ public enum CardSet {
 
     TENTH_EDITION("10E"),
     LORWYN_ECLIPSED("ECL"),
-    SCARS_OF_MIRRODIN("SOM");
+    SCARS_OF_MIRRODIN("SOM"),
+    MIRRODIN_BESIEGED("MBS");
 
     private static final Map<String, String> setNameRegistry = new ConcurrentHashMap<>();
     private static volatile Map<CardSet, List<CardPrinting>> scannedPrintings;
