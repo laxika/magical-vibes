@@ -68,6 +68,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `DestroyTargetLandAndDamageControllerEffect` | `(int damage)` | destroy target land and deal N to its controller |
 | `DestroyBlockedCreatureAndSelfEffect` | `()` | destroy creature this blocks and itself (Deathtrap-style) |
 | `DestroyCreatureBlockingThisEffect` | `()` | destroy creature that blocks this (combat trigger) |
+| `DestroyTargetCreatureAndGainLifeEqualToToughnessEffect` | `()` | destroy target creature and gain life equal to its toughness (combat trigger, life gain occurs even if destroy fails). Works with both ON_BLOCK and ON_BECOMES_BLOCKED slots |
 | `SacrificeCreatureEffect` | `()` | controller sacrifices a creature |
 | `SacrificeAttackingCreaturesEffect` | `(int baseCount, int metalcraftCount)` | target player sacrifices attacking creatures; metalcraft upgrades count |
 | `EachOpponentSacrificesCreatureEffect` | `()` | each opponent sacrifices a creature |

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAttackingCreaturesEffect;
@@ -428,6 +429,39 @@ public class DestructionResolutionService {
                 log.info("Game {} - {} destroyed (self-destruct from block trigger)", gameData.id, entry.getCard().getName());
             }
         }
+    }
+
+    @HandlesEffect(DestroyTargetCreatureAndGainLifeEqualToToughnessEffect.class)
+    void resolveDestroyTargetCreatureAndGainLifeEqualToToughness(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        int toughness = gameQueryService.getEffectiveToughness(gameData, target);
+
+        // Attempt to destroy (life gain happens regardless)
+        if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
+            String logEntry = target.getCard().getName() + " is indestructible.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} is indestructible, destroy prevented", gameData.id, target.getCard().getName());
+        } else if (!gameHelper.tryRegenerate(gameData, target)) {
+            gameHelper.removePermanentToGraveyard(gameData, target);
+            String logEntry = target.getCard().getName() + " is destroyed by " + entry.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} destroyed by {}'s ability", gameData.id, target.getCard().getName(), entry.getCard().getName());
+            gameHelper.removeOrphanedAuras(gameData);
+        }
+
+        // Gain life equal to toughness regardless of destruction result
+        UUID controllerId = entry.getControllerId();
+        int currentLife = gameData.playerLifeTotals.get(controllerId);
+        gameData.playerLifeTotals.put(controllerId, currentLife + toughness);
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String lifeLog = playerName + " gains " + toughness + " life (equal to " + target.getCard().getName() + "'s toughness).";
+        gameBroadcastService.logAndBroadcast(gameData, lifeLog);
+        log.info("Game {} - {} gains {} life from {}'s toughness", gameData.id, playerName, toughness, target.getCard().getName());
     }
 }
 

@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
@@ -521,7 +522,8 @@ public class CombatService {
                 // Set target: attacker ID for effects that need it (e.g. DestroyBlockedCreatureAndSelfEffect),
                 // otherwise blocker's own ID for self-targeting effects (e.g. BoostSelfEffect)
                 boolean needsAttackerTarget = blocker.getCard().getEffects(EffectSlot.ON_BLOCK).stream()
-                        .anyMatch(e -> e instanceof DestroyBlockedCreatureAndSelfEffect);
+                        .anyMatch(e -> e instanceof DestroyBlockedCreatureAndSelfEffect
+                                || e instanceof DestroyTargetCreatureAndGainLifeEqualToToughnessEffect);
                 StackEntry blockTrigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         blocker.getCard(),
@@ -553,10 +555,12 @@ public class CombatService {
             List<CardEffect> becomesBlockedEffects = attacker.getCard().getEffects(EffectSlot.ON_BECOMES_BLOCKED);
             if (!becomesBlockedEffects.isEmpty()) {
                 List<CardEffect> blockerSpecificEffects = becomesBlockedEffects.stream()
-                        .filter(DestroyCreatureBlockingThisEffect.class::isInstance)
+                        .filter(e -> e instanceof DestroyCreatureBlockingThisEffect
+                                || e instanceof DestroyTargetCreatureAndGainLifeEqualToToughnessEffect)
                         .toList();
                 List<CardEffect> regularEffects = becomesBlockedEffects.stream()
-                        .filter(effect -> !(effect instanceof DestroyCreatureBlockingThisEffect))
+                        .filter(e -> !(e instanceof DestroyCreatureBlockingThisEffect)
+                                && !(e instanceof DestroyTargetCreatureAndGainLifeEqualToToughnessEffect))
                         .toList();
 
                 if (!regularEffects.isEmpty()) {
