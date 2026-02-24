@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfEffect;
@@ -91,6 +93,46 @@ public class PermanentControlResolutionService {
         }
 
         log.info("Game {} - {} {} token(s) created for player {}", gameData.id, token.amount(), token.tokenName(), controllerId);
+    }
+
+    @HandlesEffect(LivingWeaponEffect.class)
+    private void resolveLivingWeapon(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+
+        // Create a 0/0 black Phyrexian Germ creature token
+        Card tokenCard = new Card();
+        tokenCard.setName("Phyrexian Germ");
+        tokenCard.setType(CardType.CREATURE);
+        tokenCard.setManaCost("");
+        tokenCard.setToken(true);
+        tokenCard.setColor(CardColor.BLACK);
+        tokenCard.setPower(0);
+        tokenCard.setToughness(0);
+        tokenCard.setSubtypes(List.of(CardSubtype.PHYREXIAN, CardSubtype.GERM));
+
+        Permanent tokenPermanent = new Permanent(tokenCard);
+        Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
+        enterTappedTypesSnapshot.addAll(gameHelper.snapshotEnterTappedTypes(gameData));
+        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+
+        String logEntry = "A 0/0 black Phyrexian Germ creature token enters the battlefield.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        // Attach the equipment to the token
+        Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (equipment != null) {
+            equipment.setAttachedTo(tokenPermanent.getId());
+            String attachLog = entry.getCard().getName() + " is now attached to Phyrexian Germ.";
+            gameBroadcastService.logAndBroadcast(gameData, attachLog);
+            log.info("Game {} - {} attached to Phyrexian Germ token via living weapon", gameData.id, entry.getCard().getName());
+        }
+
+        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+        if (!gameData.interaction.isAwaitingInput()) {
+            legendRuleService.checkLegendRule(gameData, controllerId);
+        }
+
+        log.info("Game {} - Living weapon: Phyrexian Germ token created for player {}", gameData.id, controllerId);
     }
 
     @HandlesEffect(PutAuraFromHandOntoSelfEffect.class)

@@ -26,5 +26,6 @@ public enum Keyword {
     INFECT,
     INTIMIDATE,
     METALCRAFT,
-    BATTLE_CRY
+    BATTLE_CRY,
+    LIVING_WEAPON
 }

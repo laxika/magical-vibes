@@ -180,6 +180,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `CreateCreatureTokenEffect` | `(String tokenName, int power, int toughness, CardColor color, List<CardSubtype> subtypes, Set<Keyword> keywords, Set<CardType> additionalTypes)` or `(int amount, ...)` or multi-color: `(int amount, String tokenName, int power, int toughness, CardColor color, Set<CardColor> colors, List<CardSubtype> subtypes)` or `(String tokenName, int power, int toughness, CardColor color, Set<CardColor> colors, List<CardSubtype> subtypes)` | create N creature tokens. `color` is primary display color. `colors` (Set&lt;CardColor&gt;, nullable) is full color identity for multi-color tokens. Multi-color constructors default keywords/additionalTypes to empty sets |
+| `LivingWeaponEffect` | `()` | living weapon ETB: create 0/0 black Phyrexian Germ token and attach this equipment to it (resolved by PermanentControlResolutionService) |
 
 ## Life
 

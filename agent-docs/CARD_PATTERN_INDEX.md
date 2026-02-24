@@ -175,6 +175,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 |---------|-----------|-------|
 | Simple boost equip | `l/LeoninScimitar.java` | STATIC BoostAttachedCreatureEffect + EquipEffect ability |
 | Boost + keywords equip | `l/LoxodonWarhammer.java` | Boost + GrantKeywordEffect(EQUIPPED_CREATURE) + equip |
+| Living weapon equip | `s/Strandwalker.java` | ON_ENTER_BATTLEFIELD LivingWeaponEffect + STATIC BoostAttachedCreatureEffect + GrantKeywordEffect(EQUIPPED_CREATURE) + equip |
 
 ## Activated abilities
 
