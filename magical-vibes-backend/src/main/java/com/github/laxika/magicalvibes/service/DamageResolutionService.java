@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardDealManaValueDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect;
@@ -553,6 +555,70 @@ public class DamageResolutionService {
                 destroyPermanent(gameData, target);
                 gameHelper.removeOrphanedAuras(gameData);
             }
+        }
+    }
+
+    @HandlesEffect(RevealTopCardDealManaValueDamageEffect.class)
+    void resolveRevealTopCardDealManaValueDamage(GameData gameData, StackEntry entry, RevealTopCardDealManaValueDamageEffect effect) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        if (!gameData.playerIds.contains(targetPlayerId)) return;
+
+        String targetPlayerName = gameData.playerIdToName.get(targetPlayerId);
+        String cardName = entry.getCard().getName();
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+
+        if (deck.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData, targetPlayerName + "'s library is empty.");
+            return;
+        }
+
+        Card topCard = deck.getFirst();
+        int manaValue = topCard.getManaValue();
+        gameBroadcastService.logAndBroadcast(gameData,
+                targetPlayerName + " reveals " + topCard.getName() + " (mana value " + manaValue + ") from the top of their library.");
+
+        if (manaValue > 0 && !gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+            int damage = gameQueryService.applyDamageMultiplier(gameData, manaValue);
+
+            if (effect.damageTargetPlayer()) {
+                dealDamageToPlayer(gameData, entry, targetPlayerId, damage);
+            }
+
+            if (effect.damageTargetCreatures()) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+                if (battlefield != null) {
+                    List<Permanent> destroyed = new ArrayList<>();
+                    for (Permanent p : battlefield) {
+                        if (!gameQueryService.isCreature(gameData, p)) continue;
+                        if (gameQueryService.hasProtectionFrom(gameData, p, entry.getCard().getColor())) continue;
+
+                        int effectiveDamage = gameHelper.applyCreaturePreventionShield(gameData, p, damage);
+                        gameBroadcastService.logAndBroadcast(gameData,
+                                cardName + " deals " + effectiveDamage + " damage to " + p.getCard().getName() + ".");
+
+                        if (effectiveDamage >= gameQueryService.getEffectiveToughness(gameData, p)
+                                && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)
+                                && !gameHelper.tryRegenerate(gameData, p)) {
+                            destroyed.add(p);
+                        }
+                    }
+
+                    for (Permanent dead : destroyed) {
+                        destroyPermanent(gameData, dead);
+                    }
+                    if (!destroyed.isEmpty()) {
+                        gameHelper.removeOrphanedAuras(gameData);
+                    }
+                }
+            }
+
+            gameHelper.checkWinCondition(gameData);
+        }
+
+        if (effect.returnToHandIfLand() && topCard.getType() == CardType.LAND) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    "A land card was revealed — " + cardName + " is returned to its owner's hand.");
+            entry.setReturnToHandAfterResolving(true);
         }
     }
 

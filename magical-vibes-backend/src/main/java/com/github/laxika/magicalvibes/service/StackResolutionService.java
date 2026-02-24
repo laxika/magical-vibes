@@ -250,9 +250,13 @@ public class StackResolutionService {
             if ((entry.getEntryType() == StackEntryType.SORCERY_SPELL
                     || entry.getEntryType() == StackEntryType.INSTANT_SPELL)
                     && !entry.isCopy()) {
-                boolean shuffled = entry.getEffectsToResolve().stream()
-                        .anyMatch(e -> e instanceof ShuffleIntoLibraryEffect);
-                if (shuffled) {
+                if (entry.isReturnToHandAfterResolving()) {
+                    List<Card> hand = gameData.playerHands.get(entry.getControllerId());
+                    hand.add(entry.getCard());
+                    String returnLog = entry.getCard().getName() + " is returned to its owner's hand.";
+                    gameBroadcastService.logAndBroadcast(gameData, returnLog);
+                } else if (entry.getEffectsToResolve().stream()
+                        .anyMatch(e -> e instanceof ShuffleIntoLibraryEffect)) {
                     // Ensure the card is shuffled into library even when an earlier effect
                     // required user input and broke the effect resolution loop before
                     // the ShuffleIntoLibraryEffect handler could run.
