@@ -238,7 +238,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `GrantKeywordEffect` | `(Keyword keyword, GrantScope scope)` or `(Keyword keyword, GrantScope scope, PermanentPredicate filter)` | grant keyword. Scope: `SELF`, `TARGET`, `ENCHANTED_CREATURE`, `EQUIPPED_CREATURE`, `OWN_TAPPED_CREATURES`, `OWN_CREATURES`, `ALL_CREATURES`. Optional predicate filter for conditional grants |
-| `MetalcraftKeywordEffect` | `(Keyword keyword)` or `(Keyword keyword, int powerBoost, int toughnessBoost)` | metalcraft — has keyword (and optional +P/+T) as long as you control 3+ artifacts (self-only static) |
+| `MetalcraftKeywordEffect` | `(Keyword keyword)` or `(Keyword keyword, int powerBoost, int toughnessBoost)` | metalcraft — has keyword (and optional +P/+T) as long as you control 3+ artifacts (self-only static). Pass `null` keyword for boost-only metalcraft |
 | `GrantActivatedAbilityEffect` | `(ActivatedAbility ability, GrantScope scope, PermanentPredicate filter)` or `(ActivatedAbility ability, GrantScope scope)` | grant activated ability to permanents matching scope + filter. Supported scopes: `OWN_PERMANENTS`, `ENCHANTED_CREATURE`, `EQUIPPED_CREATURE`, `OWN_TAPPED_CREATURES`, `OWN_CREATURES`, `ALL_CREATURES`, and other creature scopes. Replaces the old `GrantActivatedAbilityToEnchantedCreatureEffect` — use `GrantScope.ENCHANTED_CREATURE` instead |
 | `GrantAdditionalBlockEffect` | `(int additionalBlocks)` | can block N additional creatures |
 | `RegenerateEffect` | `()` or `(boolean targetsPermanent)` | regenerate self (default) or target creature when `targetsPermanent=true` |

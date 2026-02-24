@@ -182,7 +182,9 @@ public class StaticEffectResolutionService {
         int artifactCount = countControlledPermanents(context,
                 p -> p.getCard().getType() == CardType.ARTIFACT || p.getCard().getAdditionalTypes().contains(CardType.ARTIFACT));
         if (artifactCount >= 3) {
-            accumulator.addKeyword(metalcraft.keyword());
+            if (metalcraft.keyword() != null) {
+                accumulator.addKeyword(metalcraft.keyword());
+            }
             accumulator.addPower(metalcraft.powerBoost());
             accumulator.addToughness(metalcraft.toughnessBoost());
         }

@@ -142,6 +142,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Draw replacement | `a/Abundance.java` | STATIC AbundanceDrawReplacementEffect |
 | Metalcraft keyword | `a/AuriokEdgewright.java` | STATIC MetalcraftKeywordEffect (self-only, 3+ artifacts) |
 | Metalcraft keyword + boost | `a/AuriokSunchaser.java` | STATIC MetalcraftKeywordEffect(FLYING, 2, 2) — keyword + P/T boost |
+| Metalcraft boost only | `c/CarapaceForger.java` | STATIC MetalcraftKeywordEffect(null, 2, 2) — P/T boost without keyword |
 
 ## Auras
 
