@@ -311,6 +311,7 @@ Pass `null` as filter to allow any card.
 |--------|-------------|--------|
 | `PowerToughnessEqualToControlledLandCountEffect` | `()` | P/T = number of lands you control (static) |
 | `PowerToughnessEqualToControlledCreatureCountEffect` | `()` | P/T = number of creatures you control (static) |
+| `PowerToughnessEqualToControlledArtifactCountEffect` | `()` | P/T = number of artifacts you control (static) |
 | `PowerToughnessEqualToControlledSubtypeCountEffect` | `(CardSubtype subtype)` | P/T = number of permanents of subtype you control (static) |
 | `PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect` | `()` | P/T = number of creature cards in all graveyards (static) |
 | `PutCountersOnSourceEffect` | `(int powerModifier, int toughnessModifier, int amount)` | put N counters on this creature (e.g. `(1,1,1)` for +1/+1, `(-1,-1,2)` for two -1/-1) |
