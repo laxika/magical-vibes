@@ -182,6 +182,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `GainLifeEffect` | `(int amount)` | gain N life |
+| `GainLifePerCreatureOnBattlefieldEffect` | `()` | gain 1 life per creature on the battlefield (all players) |
 | `GainLifePerGraveyardCardEffect` | `()` | gain life equal to cards in graveyard |
 | `GainLifeEqualToTargetToughnessEffect` | `()` | gain life equal to target creature's toughness |
 | `GainLifeEqualToToughnessEffect` | `()` | gain life equal to own toughness (self, e.g. dies trigger) |
