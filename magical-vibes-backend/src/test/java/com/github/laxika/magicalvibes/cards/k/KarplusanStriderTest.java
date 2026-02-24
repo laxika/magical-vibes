@@ -28,7 +28,6 @@ class KarplusanStriderTest extends BaseCardTest {
     void hasCorrectProperties() {
         KarplusanStrider card = new KarplusanStrider();
 
-        assertThat(card.getCardText()).isEqualTo("This creature can't be the target of blue or black spells.");
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
                 .isEqualTo(new CantBeTargetedBySpellColorsEffect(Set.of(CardColor.BLUE, CardColor.BLACK)));

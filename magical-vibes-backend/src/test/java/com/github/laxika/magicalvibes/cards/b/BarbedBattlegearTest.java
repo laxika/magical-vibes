@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,18 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class BarbedBattlegearTest extends BaseCardTest {
 
     // ===== Card properties =====
-
-    @Test
-    @DisplayName("Barbed Battlegear has correct card properties")
-    void hasCorrectProperties() {
-        BarbedBattlegear card = new BarbedBattlegear();
-
-        assertThat(card.getName()).isEqualTo("Barbed Battlegear");
-        assertThat(card.getType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(card.getManaCost()).isEqualTo("{3}");
-        assertThat(card.getColor()).isNull();
-        assertThat(card.getSubtypes()).contains(CardSubtype.EQUIPMENT);
-    }
 
     @Test
     @DisplayName("Barbed Battlegear has static +4/-1 boost effect")

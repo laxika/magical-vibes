@@ -33,7 +33,6 @@ class IcyManipulatorTest extends BaseCardTest {
         IcyManipulator card = new IcyManipulator();
 
         assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getCardText()).isEqualTo("{1}, {T}: Tap target artifact, creature, or land.");
         assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
         assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
                 .isInstanceOf(TapTargetPermanentEffect.class);

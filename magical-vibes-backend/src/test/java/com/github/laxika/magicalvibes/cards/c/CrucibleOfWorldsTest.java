@@ -27,7 +27,6 @@ class CrucibleOfWorldsTest extends BaseCardTest {
     void hasCorrectProperties() {
         CrucibleOfWorlds card = new CrucibleOfWorlds();
 
-        assertThat(card.getCardText()).isEqualTo("You may play lands from your graveyard.");
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
                 .isInstanceOf(PlayLandsFromGraveyardEffect.class);

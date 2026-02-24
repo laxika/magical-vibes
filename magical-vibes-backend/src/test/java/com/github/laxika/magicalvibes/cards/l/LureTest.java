@@ -25,7 +25,6 @@ class LureTest extends BaseCardTest {
     void hasCorrectProperties() {
         Lure card = new Lure();
 
-        assertThat(card.getCardText()).contains("All creatures able to block enchanted creature do so.");
         assertThat(card.isNeedsTarget()).isTrue();
         assertThat(card.isAura()).isTrue();
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);

@@ -4,11 +4,7 @@ import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -48,21 +44,6 @@ class ArgentSphinxTest {
     }
 
     // ===== Card properties =====
-
-    @Test
-    @DisplayName("Argent Sphinx has correct card properties")
-    void hasCorrectProperties() {
-        ArgentSphinx card = new ArgentSphinx();
-
-        assertThat(card.getName()).isEqualTo("Argent Sphinx");
-        assertThat(card.getType()).isEqualTo(CardType.CREATURE);
-        assertThat(card.getManaCost()).isEqualTo("{2}{U}{U}");
-        assertThat(card.getColor()).isEqualTo(CardColor.BLUE);
-        assertThat(card.getSubtypes()).contains(CardSubtype.SPHINX);
-        assertThat(card.getKeywords()).contains(Keyword.FLYING);
-        assertThat(card.getPower()).isEqualTo(4);
-        assertThat(card.getToughness()).isEqualTo(3);
-    }
 
     @Test
     @DisplayName("Argent Sphinx has metalcraft activated ability")

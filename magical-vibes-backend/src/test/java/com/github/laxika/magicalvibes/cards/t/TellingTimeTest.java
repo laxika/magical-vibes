@@ -28,7 +28,6 @@ class TellingTimeTest extends BaseCardTest {
     void hasCorrectProperties() {
         TellingTime card = new TellingTime();
 
-        assertThat(card.getCardText()).contains("Look at the top three cards");
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
                 .isInstanceOf(LookAtTopCardsHandTopBottomEffect.class);

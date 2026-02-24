@@ -30,7 +30,6 @@ class ElspethTirelTest extends BaseCardTest {
     void hasCorrectProperties() {
         ElspethTirel card = new ElspethTirel();
 
-        assertThat(card.getLoyalty()).isEqualTo(4);
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 

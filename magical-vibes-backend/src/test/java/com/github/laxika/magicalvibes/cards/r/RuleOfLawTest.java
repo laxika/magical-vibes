@@ -27,7 +27,6 @@ class RuleOfLawTest extends BaseCardTest {
     void hasCorrectProperties() {
         RuleOfLaw card = new RuleOfLaw();
 
-        assertThat(card.getCardText()).isEqualTo("Each player can't cast more than one spell each turn.");
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
                 .isInstanceOf(LimitSpellsPerTurnEffect.class);

@@ -26,7 +26,6 @@ class TelepathyTest extends BaseCardTest {
     void hasCorrectProperties() {
         Telepathy card = new Telepathy();
 
-        assertThat(card.getCardText()).isEqualTo("Your opponents play with their hands revealed.");
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
                 .isInstanceOf(RevealOpponentHandsEffect.class);

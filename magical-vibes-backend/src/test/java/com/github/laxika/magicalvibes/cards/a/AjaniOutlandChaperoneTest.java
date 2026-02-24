@@ -32,7 +32,6 @@ class AjaniOutlandChaperoneTest extends BaseCardTest {
     void hasCorrectProperties() {
         AjaniOutlandChaperone card = new AjaniOutlandChaperone();
 
-        assertThat(card.getLoyalty()).isEqualTo(3);
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 

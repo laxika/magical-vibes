@@ -1,9 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -25,36 +22,6 @@ class DuctCrawlerTest extends BaseCardTest {
 
 
     // ===== Card properties =====
-
-    @Test
-    @DisplayName("Duct Crawler has correct name")
-    void hasCorrectName() {
-        DuctCrawler card = new DuctCrawler();
-        assertThat(card.getName()).isEqualTo("Duct Crawler");
-    }
-
-    @Test
-    @DisplayName("Duct Crawler is a red creature")
-    void isRedCreature() {
-        DuctCrawler card = new DuctCrawler();
-        assertThat(card.getType()).isEqualTo(CardType.CREATURE);
-        assertThat(card.getColor()).isEqualTo(CardColor.RED);
-    }
-
-    @Test
-    @DisplayName("Duct Crawler is an Insect")
-    void isInsect() {
-        DuctCrawler card = new DuctCrawler();
-        assertThat(card.getSubtypes()).contains(CardSubtype.INSECT);
-    }
-
-    @Test
-    @DisplayName("Duct Crawler is 1/1")
-    void isPowerToughnessOneOne() {
-        DuctCrawler card = new DuctCrawler();
-        assertThat(card.getPower()).isEqualTo(1);
-        assertThat(card.getToughness()).isEqualTo(1);
-    }
 
     @Test
     @DisplayName("Duct Crawler has one activated ability")

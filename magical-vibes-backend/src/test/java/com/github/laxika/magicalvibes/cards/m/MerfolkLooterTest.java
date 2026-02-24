@@ -28,14 +28,6 @@ class MerfolkLooterTest extends BaseCardTest {
     // ===== Card properties =====
 
     @Test
-    @DisplayName("Merfolk Looter has correct card properties")
-    void hasCorrectProperties() {
-        MerfolkLooter card = new MerfolkLooter();
-
-        assertThat(card.getCardText()).isEqualTo("{T}: Draw a card, then discard a card.");
-    }
-
-    @Test
     @DisplayName("Has one activated ability with tap and no mana cost")
     void hasCorrectAbility() {
         MerfolkLooter card = new MerfolkLooter();

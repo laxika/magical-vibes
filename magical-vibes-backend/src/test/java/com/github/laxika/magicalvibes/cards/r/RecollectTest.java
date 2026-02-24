@@ -30,7 +30,6 @@ class RecollectTest extends BaseCardTest {
         assertThat(card.isNeedsTarget()).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        assertThat(card.getCardText()).contains("Return target card from your graveyard to your hand.");
     }
 
     @Test

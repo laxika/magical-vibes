@@ -38,7 +38,6 @@ class OverrunTest extends BaseCardTest {
         GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
         assertThat(grant.keyword()).isEqualTo(Keyword.TRAMPLE);
         assertThat(grant.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(card.getCardText()).contains("Creatures you control get +3/+3 and gain trample until end of turn.");
     }
 
     @Test

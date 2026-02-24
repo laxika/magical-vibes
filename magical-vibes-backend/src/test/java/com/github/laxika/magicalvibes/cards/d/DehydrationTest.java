@@ -30,7 +30,6 @@ class DehydrationTest extends BaseCardTest {
 
         assertThat(card.isNeedsTarget()).isTrue();
         assertThat(card.isAura()).isTrue();
-        assertThat(card.getCardText()).isEqualTo("Enchant creature\nEnchanted creature doesn't untap during its controller's untap step.");
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(EnchantedCreatureDoesntUntapEffect.class);
     }

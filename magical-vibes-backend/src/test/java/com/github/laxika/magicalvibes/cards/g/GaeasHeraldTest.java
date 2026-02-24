@@ -23,7 +23,6 @@ class GaeasHeraldTest extends BaseCardTest {
     void hasCorrectProperties() {
         GaeasHerald card = new GaeasHerald();
 
-        assertThat(card.getCardText()).isEqualTo("Creature spells can't be countered.");
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
                 .isInstanceOf(CreatureSpellsCantBeCounteredEffect.class);

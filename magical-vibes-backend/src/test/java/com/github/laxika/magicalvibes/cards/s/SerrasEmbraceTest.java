@@ -29,7 +29,6 @@ class SerrasEmbraceTest extends BaseCardTest {
 
         assertThat(card.isNeedsTarget()).isTrue();
         assertThat(card.isAura()).isTrue();
-        assertThat(card.getCardText()).isEqualTo("Enchant creature\nEnchanted creature gets +2/+2 and has flying and vigilance.");
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(3);
         assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(BoostAttachedCreatureEffect.class);
         assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);

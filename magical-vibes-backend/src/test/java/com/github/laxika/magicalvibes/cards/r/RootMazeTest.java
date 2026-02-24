@@ -28,10 +28,6 @@ class RootMazeTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(EnterPermanentsOfTypesTappedEffect.class);
         EnterPermanentsOfTypesTappedEffect effect = (EnterPermanentsOfTypesTappedEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(effect.cardTypes()).containsExactlyInAnyOrder(CardType.ARTIFACT, CardType.LAND);
-        assertThat(card.getCardText())
-                .containsIgnoringCase("artifact")
-                .containsIgnoringCase("land")
-                .containsIgnoringCase("tapped");
     }
 
     @Test

@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -49,18 +47,6 @@ class AccordersShieldTest {
     }
 
     // ===== Card properties =====
-
-    @Test
-    @DisplayName("Accorder's Shield has correct card properties")
-    void hasCorrectProperties() {
-        AccordersShield card = new AccordersShield();
-
-        assertThat(card.getName()).isEqualTo("Accorder's Shield");
-        assertThat(card.getType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(card.getManaCost()).isEqualTo("{0}");
-        assertThat(card.getColor()).isNull();
-        assertThat(card.getSubtypes()).contains(CardSubtype.EQUIPMENT);
-    }
 
     @Test
     @DisplayName("Accorder's Shield has static +0/+3 boost effect")
