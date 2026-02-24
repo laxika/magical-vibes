@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Wrapper for metalcraft "intervening-if" ETB triggers.
- * The wrapped effect only triggers/resolves if the controller controls 3+ artifacts.
- * Delegates targeting to the wrapped effect so target selection works at cast time.
+ * Wrapper for metalcraft conditional effects (both ETB triggers and static abilities).
+ * The wrapped effect only triggers/resolves/applies if the controller controls 3+ artifacts.
+ * For ETB triggers, delegates targeting to the wrapped effect so target selection works at cast time.
+ * For static effects, the wrapped effect (e.g. GrantKeywordEffect, StaticBoostEffect) is applied
+ * only while the metalcraft condition is met.
  */
 public record MetalcraftConditionalEffect(CardEffect wrapped) implements CardEffect {
 

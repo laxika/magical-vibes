@@ -141,9 +141,9 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Double damage | `f/FurnaceOfRath.java` | STATIC DoubleDamageEffect |
 | Play lands from GY | `c/CrucibleOfWorlds.java` | STATIC PlayLandsFromGraveyardEffect |
 | Draw replacement | `a/Abundance.java` | STATIC AbundanceDrawReplacementEffect |
-| Metalcraft keyword | `a/AuriokEdgewright.java` | STATIC MetalcraftKeywordEffect (self-only, 3+ artifacts) |
-| Metalcraft keyword + boost | `a/AuriokSunchaser.java` | STATIC MetalcraftKeywordEffect(FLYING, 2, 2) — keyword + P/T boost |
-| Metalcraft boost only | `c/CarapaceForger.java` | STATIC MetalcraftKeywordEffect(null, 2, 2) — P/T boost without keyword |
+| Metalcraft keyword | `a/AuriokEdgewright.java` | STATIC MetalcraftConditionalEffect(GrantKeywordEffect(DOUBLE_STRIKE, SELF)) |
+| Metalcraft keyword + boost | `a/AuriokSunchaser.java` | STATIC MetalcraftConditionalEffect(GrantKeywordEffect) + MetalcraftConditionalEffect(StaticBoostEffect) |
+| Metalcraft boost only | `c/CarapaceForger.java` | STATIC MetalcraftConditionalEffect(StaticBoostEffect(2, 2, SELF)) |
 
 ## Auras
 

@@ -29,7 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffe
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledCreatureCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledLandCountEffect;
@@ -176,17 +176,20 @@ public class StaticEffectResolutionService {
         accumulator.addToughness(count);
     }
 
-    @HandlesStaticEffect(value = MetalcraftKeywordEffect.class, selfOnly = true)
-    private void resolveMetalcraftKeyword(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var metalcraft = (MetalcraftKeywordEffect) effect;
+    @HandlesStaticEffect(value = MetalcraftConditionalEffect.class, selfOnly = true)
+    private void resolveMetalcraftConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var metalcraft = (MetalcraftConditionalEffect) effect;
         int artifactCount = countControlledPermanents(context,
                 p -> p.getCard().getType() == CardType.ARTIFACT || p.getCard().getAdditionalTypes().contains(CardType.ARTIFACT));
         if (artifactCount >= 3) {
-            if (metalcraft.keyword() != null) {
-                accumulator.addKeyword(metalcraft.keyword());
+            CardEffect wrapped = metalcraft.wrapped();
+            if (wrapped instanceof GrantKeywordEffect grant) {
+                accumulator.addKeyword(grant.keyword());
+            } else if (wrapped instanceof StaticBoostEffect boost) {
+                accumulator.addPower(boost.powerBoost());
+                accumulator.addToughness(boost.toughnessBoost());
+                accumulator.addKeywords(boost.grantedKeywords());
             }
-            accumulator.addPower(metalcraft.powerBoost());
-            accumulator.addToughness(metalcraft.toughnessBoost());
         }
     }
 

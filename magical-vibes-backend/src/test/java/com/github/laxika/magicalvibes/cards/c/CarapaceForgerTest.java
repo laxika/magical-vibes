@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,18 +19,21 @@ class CarapaceForgerTest extends BaseCardTest {
     // ===== Card properties =====
 
     @Test
-    @DisplayName("Has metalcraft static boost effect with +2/+2 and no keyword")
+    @DisplayName("Has metalcraft static boost effect with +2/+2")
     void hasCorrectEffect() {
         CarapaceForger card = new CarapaceForger();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(MetalcraftKeywordEffect.class);
+                .isInstanceOf(MetalcraftConditionalEffect.class);
 
-        MetalcraftKeywordEffect effect = (MetalcraftKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.keyword()).isNull();
-        assertThat(effect.powerBoost()).isEqualTo(2);
-        assertThat(effect.toughnessBoost()).isEqualTo(2);
+        MetalcraftConditionalEffect metalcraft = (MetalcraftConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(metalcraft.wrapped()).isInstanceOf(StaticBoostEffect.class);
+
+        StaticBoostEffect boost = (StaticBoostEffect) metalcraft.wrapped();
+        assertThat(boost.powerBoost()).isEqualTo(2);
+        assertThat(boost.toughnessBoost()).isEqualTo(2);
+        assertThat(boost.scope()).isEqualTo(GrantScope.SELF);
     }
 
     // ===== Without metalcraft =====
