@@ -277,6 +277,7 @@ Pass `null` as filter to allow any card.
 | `DoubleTargetPlayerLifeEffect` | `()` | double target player's life total |
 | `LoseLifeEffect` | `(int amount)` | lose N life |
 | `EachOpponentLosesLifeEffect` | `(int amount)` | each opponent loses N life |
+| `EachOpponentLosesXLifeAndControllerGainsLifeLostEffect` | `()` | each opponent loses X life, controller gains total life lost |
 | `TargetPlayerLosesLifeAndControllerGainsLifeEffect` | `(int lifeLoss, int lifeGain)` | drain: target loses N, you gain M |
 | `EnchantedCreatureControllerLosesLifeEffect` | `(int amount, UUID affectedPlayerId)` | enchanted creature's controller loses N life (trigger) |
 | `EachPlayerLosesLifePerCreatureControlledEffect` | `(int lifePerCreature)` | each player loses N life per creature they control |

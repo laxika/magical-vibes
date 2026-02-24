@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesXLifeAndControllerGainsLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifePerCreatureControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
@@ -154,6 +155,27 @@ public class LifeResolutionService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId)) continue;
             applyLifeLoss(gameData, playerId, effect.amount(), entry.getCard().getName());
+        }
+    }
+
+    @HandlesEffect(EachOpponentLosesXLifeAndControllerGainsLifeLostEffect.class)
+    private void resolveEachOpponentLosesXLifeAndControllerGainsLifeLost(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        int x = entry.getXValue();
+
+        if (x <= 0) {
+            return;
+        }
+
+        int totalLifeLost = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) continue;
+            applyLifeLoss(gameData, playerId, x, entry.getCard().getName());
+            totalLifeLost += x;
+        }
+
+        if (totalLifeLost > 0) {
+            applyGainLife(gameData, controllerId, totalLifeLost);
         }
     }
 
