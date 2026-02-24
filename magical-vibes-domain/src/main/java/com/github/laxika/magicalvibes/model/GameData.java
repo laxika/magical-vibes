@@ -60,6 +60,7 @@ public class GameData {
     public final List<PendingMayAbility> pendingMayAbilities = new ArrayList<>();
     public final GraveyardTargetOperationState graveyardTargetOperation = new GraveyardTargetOperationState();
     public final CloneOperationState cloneOperation = new CloneOperationState();
+    public UUID imprintSourcePermanentId;
     public UUID pendingCombatDamageBounceTargetPlayerId;
     public final Set<UUID> permanentsToSacrificeAtEndOfCombat = ConcurrentHashMap.newKeySet();
     public PendingAbilityActivation pendingAbilityActivation;
@@ -221,6 +222,9 @@ public class GameData {
         copy.graveyardTargetOperation.effects = this.graveyardTargetOperation.effects;
         copy.graveyardTargetOperation.entryType = this.graveyardTargetOperation.entryType;
         copy.graveyardTargetOperation.xValue = this.graveyardTargetOperation.xValue;
+
+        // --- Imprint ---
+        copy.imprintSourcePermanentId = this.imprintSourcePermanentId;
 
         // --- CloneOperationState ---
         copy.cloneOperation.card = this.cloneOperation.card;

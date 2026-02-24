@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -204,7 +205,14 @@ public class StackResolutionService {
 
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
 
-        legendRuleService.checkLegendRule(gameData, controllerId);
+        // Artifact creatures need creature ETB processing (e.g. Clone Shell's imprint)
+        boolean isAlsoCreature = card.getAdditionalTypes().contains(CardType.CREATURE);
+        if (isAlsoCreature) {
+            gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId(), true);
+        }
+        if (!gameData.interaction.isAwaitingInput()) {
+            legendRuleService.checkLegendRule(gameData, controllerId);
+        }
     }
 
     private void resolvePlaneswalkerSpell(GameData gameData, StackEntry entry) {

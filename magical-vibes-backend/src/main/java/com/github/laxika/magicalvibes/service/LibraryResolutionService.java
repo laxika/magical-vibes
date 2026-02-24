@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
 import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
+import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.MillByHandSizeEffect;
@@ -727,6 +728,76 @@ public class LibraryResolutionService {
                 "You may reveal a creature card from among them and put it into your hand.",
                 true
         ));
+    }
+
+    @HandlesEffect(ImprintFromTopCardsEffect.class)
+    void resolveImprintFromTopCards(GameData gameData, StackEntry entry, ImprintFromTopCardsEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        int count = Math.min(effect.count(), deck.size());
+        if (count == 0) {
+            String logMsg = entry.getCard().getName() + ": " + playerName + "'s library is empty.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> topCards = new ArrayList<>(deck.subList(0, count));
+        deck.subList(0, count).clear();
+
+        String logMsg = playerName + " looks at the top " + count + " cards of their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+
+        if (topCards.size() == 1) {
+            // Only one card — must exile it, nothing to reorder
+            gameData.playerExiledCards.get(controllerId).add(topCards.getFirst());
+            UUID sourcePermanentId = entry.getSourcePermanentId();
+            if (sourcePermanentId != null) {
+                setImprintedCardOnPermanent(gameData, sourcePermanentId, topCards.getFirst());
+            }
+            String exileLog = playerName + " exiles a card face down with " + entry.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, exileLog);
+            return;
+        }
+
+        gameData.imprintSourcePermanentId = entry.getSourcePermanentId();
+
+        List<Card> sourceCards = new ArrayList<>(topCards);
+
+        gameData.interaction.beginLibrarySearch(
+                controllerId,
+                topCards,
+                false,
+                false,
+                null,
+                0,
+                sourceCards,
+                true,
+                false,
+                "Exile one card face down (imprint). The rest go to the bottom of your library.",
+                LibrarySearchDestination.EXILE_IMPRINT
+        );
+
+        List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
+                cardViews,
+                "Exile one card face down (imprint). The rest go to the bottom of your library.",
+                false
+        ));
+    }
+
+    private void setImprintedCardOnPermanent(GameData gameData, UUID permanentId, Card card) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                if (perm.getId().equals(permanentId)) {
+                    perm.getCard().setImprintedCard(card);
+                    return;
+                }
+            }
+        }
     }
 }
 

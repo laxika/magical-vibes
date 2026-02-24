@@ -118,6 +118,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `ReturnCardOfSubtypeFromGraveyardToHandEffect` | `(CardSubtype subtype)` | return card of specific subtype from graveyard to hand |
 | `ReturnSelfFromGraveyardToHandEffect` | `()` | return this card from graveyard to owner's hand |
 | `ReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHandEffect` | `()` | return creature cards that died this turn to hand |
+| `PutImprintedCreatureOntoBattlefieldEffect` | `()` | when this creature dies, reveal imprinted card; if creature, put onto battlefield (Clone Shell dies trigger) |
 
 ## Draw / discard / hand manipulation
 
@@ -147,6 +148,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `SearchLibraryForCreatureWithMVXOrLessToHandEffect` | `()` | search library for creature with MV X or less to hand |
 | `PayManaAndSearchLibraryForCardNamedToBattlefieldEffect` | `(String manaCost, String cardName)` | pay mana, search for named card to battlefield |
 | `LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect` | `(int count, Set<CardType> cardTypes)` | look at top N, may reveal matching type to hand, rest on bottom |
+| `ImprintFromTopCardsEffect` | `(int count)` | look at top N cards, exile one face down (imprint on source), rest on bottom in any order |
 | `LookAtTopCardsHandTopBottomEffect` | `(int count)` | look at top N cards, choose hand/top/bottom for each |
 | `ReorderTopCardsOfLibraryEffect` | `(int count)` | reorder top N cards of library |
 | `RevealTopCardDealManaValueDamageEffect` | `(boolean damageTargetPlayer, boolean damageTargetCreatures, boolean returnToHandIfLand)` | reveal top card of target's library, deal mana value damage to player/creatures, optionally return to hand if land |

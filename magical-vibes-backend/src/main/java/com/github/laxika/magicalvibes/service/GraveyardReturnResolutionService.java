@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.PutImprintedCreatureOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandEffect;
@@ -412,6 +413,49 @@ public class GraveyardReturnResolutionService {
 
             log.info("Game {} - Zombie token created for player {}", gameData.id, controllerId);
         }
+    }
+
+    @HandlesEffect(PutImprintedCreatureOntoBattlefieldEffect.class)
+    void resolvePutImprintedCreatureOntoBattlefield(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        Card imprintedCard = entry.getCard().getImprintedCard();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        if (imprintedCard == null) {
+            String logMsg = entry.getCard().getName() + "'s imprint ability resolves but no card was imprinted.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        String revealLog = playerName + " turns the exiled card face up: " + imprintedCard.getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, revealLog);
+
+        boolean isCreature = imprintedCard.getType() == CardType.CREATURE
+                || imprintedCard.getAdditionalTypes().contains(CardType.CREATURE);
+
+        if (!isCreature) {
+            String notCreatureLog = imprintedCard.getName() + " is not a creature card. It remains in exile.";
+            gameBroadcastService.logAndBroadcast(gameData, notCreatureLog);
+            return;
+        }
+
+        // Remove from exile zone
+        List<Card> exiledCards = gameData.playerExiledCards.get(controllerId);
+        if (exiledCards != null) {
+            exiledCards.removeIf(c -> c.getId().equals(imprintedCard.getId()));
+        }
+
+        // Put onto the battlefield
+        Permanent perm = new Permanent(imprintedCard);
+        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, perm);
+
+        String enterLog = imprintedCard.getName() + " enters the battlefield under " + playerName + "'s control.";
+        gameBroadcastService.logAndBroadcast(gameData, enterLog);
+
+        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, imprintedCard, null, false);
+
+        log.info("Game {} - {} puts imprinted creature {} onto battlefield",
+                gameData.id, playerName, imprintedCard.getName());
     }
 }
 

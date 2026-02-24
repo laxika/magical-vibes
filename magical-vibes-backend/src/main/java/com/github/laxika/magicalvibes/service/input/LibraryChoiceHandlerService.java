@@ -219,7 +219,16 @@ public class LibraryChoiceHandlerService {
                     throw new IllegalStateException("Invalid card index: " + cardIndex);
                 }
                 chosenCard = searchCards.get(cardIndex);
-                gameData.playerHands.get(handOwnerId).add(chosenCard);
+                if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
+                    gameData.playerExiledCards.get(playerId).add(chosenCard);
+                    UUID sourcePermanentId = gameData.imprintSourcePermanentId;
+                    if (sourcePermanentId != null) {
+                        setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
+                        gameData.imprintSourcePermanentId = null;
+                    }
+                } else {
+                    gameData.playerHands.get(handOwnerId).add(chosenCard);
+                }
                 for (int i = 0; i < sourceCards.size(); i++) {
                     if (sourceCards.get(i).getId().equals(chosenCard.getId())) {
                         sourceCards.remove(i);
@@ -239,9 +248,16 @@ public class LibraryChoiceHandlerService {
                 deck.add(sourceCards.getFirst());
             }
 
-            String logEntry = chosenCard == null
-                    ? player.getUsername() + " does not reveal a creature card."
-                    : player.getUsername() + " reveals " + chosenCard.getName() + " and puts it into their hand.";
+            String logEntry;
+            if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
+                logEntry = chosenCard == null
+                        ? player.getUsername() + "'s imprint ability does nothing."
+                        : player.getUsername() + " exiles a card face down.";
+            } else {
+                logEntry = chosenCard == null
+                        ? player.getUsername() + " does not reveal a creature card."
+                        : player.getUsername() + " reveals " + chosenCard.getName() + " and puts it into their hand.";
+            }
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
             if (sourceCards.size() > 1) {
@@ -340,6 +356,7 @@ public class LibraryChoiceHandlerService {
             case BATTLEFIELD -> "onto the battlefield";
             case BATTLEFIELD_TAPPED -> "onto the battlefield tapped";
             case HAND -> "into their hand";
+            case EXILE_IMPRINT -> "into exile (imprint)";
         };
         String logEntry;
         if (targetPlayerId != null) {
@@ -448,6 +465,19 @@ public class LibraryChoiceHandlerService {
 
         stateBasedActionService.performStateBasedActions(gameData);
         turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void setImprintedCardOnPermanent(GameData gameData, UUID sourcePermanentId, Card card) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                if (perm.getId().equals(sourcePermanentId)) {
+                    perm.getCard().setImprintedCard(card);
+                    return;
+                }
+            }
+        }
     }
 }
 
