@@ -190,6 +190,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `TargetPlayerGainsLifeEffect` | `(int amount)` | target player gains N life |
 | `DoubleTargetPlayerLifeEffect` | `()` | double target player's life total |
 | `LoseLifeEffect` | `(int amount)` | lose N life |
+| `EachOpponentLosesLifeEffect` | `(int amount)` | each opponent loses N life |
 | `TargetPlayerLosesLifeAndControllerGainsLifeEffect` | `(int lifeLoss, int lifeGain)` | drain: target loses N, you gain M |
 | `EnchantedCreatureControllerLosesLifeEffect` | `(int amount, UUID affectedPlayerId)` | enchanted creature's controller loses N life (trigger) |
 | `EachPlayerLosesLifePerCreatureControlledEffect` | `(int lifePerCreature)` | each player loses N life per creature they control |

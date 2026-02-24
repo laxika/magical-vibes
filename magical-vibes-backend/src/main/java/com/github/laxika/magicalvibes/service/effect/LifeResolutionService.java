@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifePerCreatureControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
@@ -121,6 +122,16 @@ public class LifeResolutionService {
     @HandlesEffect(LoseLifeEffect.class)
     private void resolveLoseLife(GameData gameData, StackEntry entry, LoseLifeEffect effect) {
         applyLifeLoss(gameData, entry.getControllerId(), effect.amount(), entry.getCard().getName());
+    }
+
+    @HandlesEffect(EachOpponentLosesLifeEffect.class)
+    private void resolveEachOpponentLosesLife(GameData gameData, StackEntry entry, EachOpponentLosesLifeEffect effect) {
+        UUID controllerId = entry.getControllerId();
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) continue;
+            applyLifeLoss(gameData, playerId, effect.amount(), entry.getCard().getName());
+        }
     }
 
     @HandlesEffect(EachPlayerLosesLifePerCreatureControlledEffect.class)
