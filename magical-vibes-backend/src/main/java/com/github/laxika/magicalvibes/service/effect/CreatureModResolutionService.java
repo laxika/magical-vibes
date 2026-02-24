@@ -84,7 +84,8 @@ public class CreatureModResolutionService {
 
     @HandlesEffect(BoostSelfEffect.class)
     private void resolveBoostSelf(GameData gameData, StackEntry entry, BoostSelfEffect boost) {
-        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetPermanentId();
+        Permanent self = gameQueryService.findPermanentById(gameData, selfId);
         if (self == null) {
             return;
         }
