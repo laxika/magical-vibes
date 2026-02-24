@@ -127,6 +127,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 |--------|-------------|--------|
 | `DrawCardEffect` | `(int amount)` | draw N cards |
 | `DrawCardForTargetPlayerEffect` | `(int amount, boolean requireSourceUntapped)` | target player draws N cards; optionally requires source untapped |
+| `DrawCardsEqualToChargeCountersOnSourceEffect` | `()` | draw cards equal to charge counters on source (reads snapshotted count from xValue) |
 | `DrawAndLoseLifePerSubtypeEffect` | `(CardSubtype subtype)` | draw cards and lose life for each permanent of subtype you control |
 | `DiscardCardEffect` | `(int amount)` | discard N cards |
 | `TargetPlayerDiscardsEffect` | `(int amount)` | target player discards N cards |
@@ -240,6 +241,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `PutMinusOneMinusOneCounterOnEachOtherCreatureEffect` | `()` | put a -1/-1 counter on each other creature (all players' creatures except the source permanent) |
 | `EnterWithXChargeCountersEffect` | `()` | enters battlefield with X charge counters (replacement effect, reads X from spell cast) |
 | `PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect` | `()` | put a -1/-1 counter on each creature target player controls (targets player) |
+| `PutChargeCounterOnSelfEffect` | `()` | put a charge counter on this permanent (self-target, used as activated ability effect) |
 | `PutMinusOneMinusOneCounterOnTargetCreatureEffect` | `()` | put a -1/-1 counter on target creature (targets permanent) |
 | `ProliferateEffect` | `()` | proliferate: choose any number of permanents with counters, add one of each counter type already there |
 

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
@@ -25,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -75,7 +77,7 @@ public class ActivatedAbilityExecutionService {
                     (e instanceof RegenerateEffect regen && !regen.targetsPermanent() && !permanent.getCard().isAura())
                             || e instanceof BoostSelfEffect || e instanceof UntapSelfEffect
                             || e instanceof AnimateSelfEffect || e instanceof AnimateSelfByChargeCountersEffect
-                            || e instanceof AnimateLandEffect
+                            || e instanceof AnimateLandEffect || e instanceof PutChargeCounterOnSelfEffect
                             || (e instanceof GrantKeywordEffect grant && grant.scope() == GrantScope.SELF));
             if (needsSelfTarget) {
                 effectiveTargetId = permanent.getId();
@@ -84,6 +86,11 @@ public class ActivatedAbilityExecutionService {
 
         if (ability.isRequiresTap()) {
             permanent.tap();
+        }
+
+        // Snapshot charge counters before sacrifice so the value survives in the stack entry's xValue
+        if (abilityEffects.stream().anyMatch(e -> e instanceof DrawCardsEqualToChargeCountersOnSourceEffect)) {
+            effectiveXValue = permanent.getChargeCounters();
         }
 
         boolean shouldSacrifice = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeSelfCost);

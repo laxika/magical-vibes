@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTo
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RandomDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
@@ -67,6 +68,28 @@ public class PlayerInteractionResolutionService {
     @HandlesEffect(DrawCardEffect.class)
     private void resolveDrawCards(GameData gameData, StackEntry entry, DrawCardEffect effect) {
         applyDrawCards(gameData, entry.getControllerId(), effect.amount());
+    }
+
+    @HandlesEffect(DrawCardsEqualToChargeCountersOnSourceEffect.class)
+    private void resolveDrawCardsEqualToChargeCounters(GameData gameData, StackEntry entry) {
+        int count = entry.getXValue();
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        if (count <= 0) {
+            String logEntry = playerName + " draws 0 cards from " + entry.getCard().getName() + " (no charge counters).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} draws 0 from {} (no charge counters)", gameData.id, playerName, entry.getCard().getName());
+            return;
+        }
+
+        for (int i = 0; i < count; i++) {
+            gameHelper.resolveDrawCard(gameData, controllerId);
+        }
+
+        String logEntry = playerName + " draws " + count + " card" + (count != 1 ? "s" : "") + " from " + entry.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} draws {} from {}", gameData.id, playerName, count, entry.getCard().getName());
     }
 
     @HandlesEffect(DiscardCardEffect.class)
