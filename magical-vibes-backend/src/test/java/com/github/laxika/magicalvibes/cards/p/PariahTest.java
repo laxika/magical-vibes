@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PariahTest extends BaseCardTest {
 
@@ -201,6 +203,37 @@ class PariahTest extends BaseCardTest {
         // Player1 takes 0 (redirected to creature), player2 takes 1
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    // ===== Targeting restriction =====
+
+    @Test
+    @DisplayName("Can target a creature with Pariah")
+    void canTargetCreature() {
+        Permanent bears = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+        harness.setHand(player1, List.of(new Pariah()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent with Pariah")
+    void cannotTargetNonCreature() {
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.setHand(player1, List.of(new Pariah()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        Permanent artifact = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Fountain of Youth"))
+                .findFirst().orElseThrow();
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
     }
 
     // ===== Without Pariah, damage is dealt normally =====

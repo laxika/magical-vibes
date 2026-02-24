@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SerrasEmbraceTest extends BaseCardTest {
 
@@ -155,6 +157,37 @@ class SerrasEmbraceTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.VIGILANCE)).isFalse();
+    }
+
+    // ===== Targeting restriction =====
+
+    @Test
+    @DisplayName("Can target a creature with Serra's Embrace")
+    void canTargetCreature() {
+        Permanent bears = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+        harness.setHand(player1, List.of(new SerrasEmbrace()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent with Serra's Embrace")
+    void cannotTargetNonCreature() {
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.setHand(player1, List.of(new SerrasEmbrace()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        Permanent artifact = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Fountain of Youth"))
+                .findFirst().orElseThrow();
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
     }
 
     // ===== Does not affect other creatures =====

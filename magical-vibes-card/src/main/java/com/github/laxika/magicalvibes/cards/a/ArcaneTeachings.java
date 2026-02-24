@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -15,6 +17,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class ArcaneTeachings extends Card {
 
     public ArcaneTeachings() {
+        setTargetFilter(new PermanentPredicateTargetFilter(
+                new PermanentIsCreaturePredicate(),
+                "Target must be a creature"
+        ));
         addEffect(EffectSlot.STATIC, new BoostAttachedCreatureEffect(2, 2));
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
                 new ActivatedAbility(

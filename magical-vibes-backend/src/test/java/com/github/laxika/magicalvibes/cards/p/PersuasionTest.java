@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.d.Demystify;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PersuasionTest extends BaseCardTest {
 
@@ -145,6 +147,37 @@ class PersuasionTest extends BaseCardTest {
 
         // Stolen creatures map should be cleaned up
         assertThat(gd.stolenCreatures).doesNotContainKey(creature.getId());
+    }
+
+    // ===== Targeting restriction =====
+
+    @Test
+    @DisplayName("Can target a creature with Persuasion")
+    void canTargetCreature() {
+        Permanent bears = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+        harness.setHand(player1, List.of(new Persuasion()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent with Persuasion")
+    void cannotTargetNonCreature() {
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.setHand(player1, List.of(new Persuasion()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        Permanent artifact = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Fountain of Youth"))
+                .findFirst().orElseThrow();
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
     }
 
     // ===== Helper methods =====

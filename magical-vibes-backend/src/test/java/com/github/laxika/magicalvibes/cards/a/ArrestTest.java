@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -224,6 +225,37 @@ class ArrestTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         gs.declareAttackers(gd, player1, List.of(0));
+    }
+
+    // ===== Targeting restriction =====
+
+    @Test
+    @DisplayName("Can target a creature with Arrest")
+    void canTargetCreature() {
+        Permanent bears = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+        harness.setHand(player1, List.of(new Arrest()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent with Arrest")
+    void cannotTargetNonCreature() {
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.setHand(player1, List.of(new Arrest()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        Permanent artifact = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Fountain of Youth"))
+                .findFirst().orElseThrow();
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
     }
 
     // ===== Fizzle =====

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDoesntUntapEffect;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BondsOfQuicksilverTest extends BaseCardTest {
 
@@ -158,6 +160,37 @@ class BondsOfQuicksilverTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Bonds of Quicksilver"));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Bonds of Quicksilver"));
+    }
+
+    // ===== Targeting restriction =====
+
+    @Test
+    @DisplayName("Can target a creature with Bonds of Quicksilver")
+    void canTargetCreature() {
+        Permanent bears = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+        harness.setHand(player1, List.of(new BondsOfQuicksilver()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent with Bonds of Quicksilver")
+    void cannotTargetNonCreature() {
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.setHand(player1, List.of(new BondsOfQuicksilver()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        Permanent artifact = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Fountain of Youth"))
+                .findFirst().orElseThrow();
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
     }
 
     // ===== Full integration =====
