@@ -26,6 +26,8 @@ import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatches
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainLifeEqualToToughnessEffect;
@@ -519,9 +521,23 @@ public class CombatService {
             Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
             if (!blocker.getCard().getEffects(EffectSlot.ON_BLOCK).isEmpty()) {
                 Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
+
+                // Resolve conditional block effects (e.g. "when blocking a creature with flying")
+                List<CardEffect> blockEffects = new ArrayList<>();
+                for (CardEffect e : blocker.getCard().getEffects(EffectSlot.ON_BLOCK)) {
+                    if (e instanceof BoostSelfWhenBlockingKeywordEffect kwEffect) {
+                        if (gameQueryService.hasKeyword(gameData, attacker, kwEffect.requiredKeyword())) {
+                            blockEffects.add(new BoostSelfEffect(kwEffect.powerBoost(), kwEffect.toughnessBoost()));
+                        }
+                    } else {
+                        blockEffects.add(e);
+                    }
+                }
+                if (blockEffects.isEmpty()) continue;
+
                 // Set target: attacker ID for effects that need it (e.g. DestroyBlockedCreatureAndSelfEffect),
                 // otherwise blocker's own ID for self-targeting effects (e.g. BoostSelfEffect)
-                boolean needsAttackerTarget = blocker.getCard().getEffects(EffectSlot.ON_BLOCK).stream()
+                boolean needsAttackerTarget = blockEffects.stream()
                         .anyMatch(e -> e instanceof DestroyBlockedCreatureAndSelfEffect
                                 || e instanceof DestroyTargetCreatureAndGainLifeEqualToToughnessEffect);
                 StackEntry blockTrigger = new StackEntry(
@@ -529,7 +545,7 @@ public class CombatService {
                         blocker.getCard(),
                         defenderId,
                         blocker.getCard().getName() + "'s block trigger",
-                        new ArrayList<>(blocker.getCard().getEffects(EffectSlot.ON_BLOCK)),
+                        new ArrayList<>(blockEffects),
                         needsAttackerTarget ? attacker.getId() : blocker.getId(),
                         blocker.getId()
                 );
