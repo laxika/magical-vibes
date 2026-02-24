@@ -38,6 +38,7 @@ public class Permanent {
     @Setter private int loyaltyCounters;
     @Setter private int plusOnePlusOneCounters;
     @Setter private int minusOneMinusOneCounters;
+    @Setter private int chargeCounters;
     @Setter private boolean loyaltyAbilityUsedThisTurn;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
     private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
@@ -85,6 +86,7 @@ public class Permanent {
         this.loyaltyCounters = source.loyaltyCounters;
         this.plusOnePlusOneCounters = source.plusOnePlusOneCounters;
         this.minusOneMinusOneCounters = source.minusOneMinusOneCounters;
+        this.chargeCounters = source.chargeCounters;
         this.loyaltyAbilityUsedThisTurn = source.loyaltyAbilityUsedThisTurn;
         this.grantedKeywords.addAll(source.grantedKeywords);
         this.grantedSubtypes.addAll(source.grantedSubtypes);

@@ -20,5 +20,6 @@ public record PermanentView(
         int regenerationShield,
         boolean cantBeBlocked,
         boolean animatedCreature,
-        int loyaltyCounters
+        int loyaltyCounters,
+        int chargeCounters
 ) {}

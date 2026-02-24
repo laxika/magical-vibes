@@ -178,6 +178,7 @@ export interface Permanent {
   cantBeBlocked: boolean;
   animatedCreature: boolean;
   loyaltyCounters: number;
+  chargeCounters: number;
 }
 
 export interface StackEntry {

@@ -44,7 +44,8 @@ public class PermanentViewFactory {
                 p.getRegenerationShield(),
                 p.isCantBeBlocked(),
                 animatedCreature,
-                p.getLoyaltyCounters()
+                p.getLoyaltyCounters(),
+                p.getChargeCounters()
         );
     }
 

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
@@ -181,11 +182,25 @@ public class StackResolutionService {
             return;
         }
 
-        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(card));
+        Permanent perm = new Permanent(card);
+
+        // "Enters with X charge counters" — replacement effect (MTG Rule 614.1c)
+        boolean hasChargeCounterEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof EnterWithXChargeCountersEffect);
+        if (hasChargeCounterEffect) {
+            perm.setChargeCounters(entry.getXValue());
+        }
+
+        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        if (hasChargeCounterEffect && entry.getXValue() > 0) {
+            String logEntry = card.getName() + " enters the battlefield with " + entry.getXValue() + " charge counters under " + playerName + "'s control.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else {
+            String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        }
 
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
 
