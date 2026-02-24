@@ -1298,6 +1298,14 @@ public class CombatService {
 
         // Process combat damage to player triggers (e.g. Cephalid Constable) after all combat is resolved
         processCombatDamageToPlayerTriggers(gameData, combatDamageDealtToPlayer, activeId, defenderId);
+
+        // Process defender-side damage triggers (e.g. Dissipation Field)
+        for (var dmgEntry : combatDamageDealtToPlayer.entrySet()) {
+            if (dmgEntry.getValue() > 0) {
+                gameHelper.checkDamageDealtToControllerTriggers(gameData, defenderId, dmgEntry.getKey().getId());
+            }
+        }
+
         reorderTriggersAPNAP(gameData, stackSizeBeforeDamageTriggers, activeId);
         if (gameData.interaction.isAwaitingInput()) {
             return CombatResult.DONE;

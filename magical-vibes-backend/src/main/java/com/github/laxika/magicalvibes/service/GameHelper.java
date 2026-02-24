@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchan
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessFewLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
@@ -1196,6 +1197,55 @@ public class GameHelper {
                 String logEntry = discardedCard.getName() + " was discarded by an opponent's effect — its ability triggers!";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} self-discard trigger queued", gameData.id, discardedCard.getName());
+            }
+        }
+    }
+
+    public void checkDamageDealtToControllerTriggers(GameData gameData, UUID damagedPlayerId, UUID sourcePermanentId) {
+        if (sourcePermanentId == null) return;
+
+        List<Permanent> damagedPlayerBattlefield = gameData.playerBattlefields.get(damagedPlayerId);
+        if (damagedPlayerBattlefield == null) return;
+
+        boolean hasTrigger = false;
+        for (Permanent perm : damagedPlayerBattlefield) {
+            if (!perm.getCard().getEffects(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU).isEmpty()) {
+                hasTrigger = true;
+                break;
+            }
+        }
+        if (!hasTrigger) return;
+
+        // Find the source permanent on the battlefield
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (sourcePermanent == null) return;
+
+        for (Permanent perm : new ArrayList<>(damagedPlayerBattlefield)) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)) {
+                if (effect instanceof ReturnDamageSourcePermanentToHandEffect) {
+                    // Re-check source is still on the battlefield (may have been bounced by a prior trigger)
+                    Permanent currentSource = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                    if (currentSource == null) return;
+
+                    // Find which player controls the source and bounce it
+                    for (UUID playerId : gameData.orderedPlayerIds) {
+                        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                        if (battlefield != null && battlefield.remove(currentSource)) {
+                            removeOrphanedAuras(gameData);
+                            UUID ownerId = gameData.stolenCreatures.getOrDefault(currentSource.getId(), playerId);
+                            gameData.stolenCreatures.remove(currentSource.getId());
+                            List<Card> hand = gameData.playerHands.get(ownerId);
+                            hand.add(currentSource.getOriginalCard());
+
+                            String logEntry = perm.getCard().getName() + " triggers — " + currentSource.getCard().getName() + " is returned to its owner's hand.";
+                            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                            log.info("Game {} - {} triggers, bouncing {} to owner's hand",
+                                    gameData.id, perm.getCard().getName(), currentSource.getCard().getName());
+                            break;
+                        }
+                    }
+                    return; // Source already bounced, no need to process more triggers
+                }
             }
         }
     }

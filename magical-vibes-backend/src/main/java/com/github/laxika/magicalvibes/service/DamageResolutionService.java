@@ -502,6 +502,10 @@ public class DamageResolutionService {
                             playerName + " takes " + effectiveDamage + " damage from " + cardName + ".");
                 }
             }
+
+            if (effectiveDamage > 0) {
+                gameHelper.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId());
+            }
         }
     }
 

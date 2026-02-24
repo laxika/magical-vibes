@@ -343,3 +343,4 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_DAMAGED_CREATURE_DIES` | A creature damaged by this permanent dies |
 | `ON_ANY_PLAYER_CASTS_SPELL` | Any player casts a spell |
 | `ON_ANY_PLAYER_TAPS_LAND` | Any player taps a land |
+| `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` | Any permanent deals damage to this permanent's controller |

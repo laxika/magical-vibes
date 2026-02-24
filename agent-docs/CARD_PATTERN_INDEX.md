@@ -108,6 +108,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Discarded by opponent | `g/GuerrillaTactics.java` | ON_SELF_DISCARDED_BY_OPPONENT DealDamageToAnyTargetEffect |
 | Imprint ETB + dies | `c/CloneShell.java` | Artifact Creature — ON_ENTER_BATTLEFIELD ImprintFromTopCardsEffect + ON_DEATH PutImprintedCreatureOntoBattlefieldEffect |
 | Battle cry (attack boost others) | `a/AccorderPaladin.java` | ON_ATTACK BoostAllOwnCreaturesEffect(1, 0, PermanentAllOfPredicate(PermanentIsAttackingPredicate, PermanentNotPredicate(PermanentIsSourceCardPredicate))) |
+| Damage-to-controller bounce | `d/DissipationField.java` | ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU ReturnDamageSourcePermanentToHandEffect — bounces any permanent that deals damage to controller |
 
 ## Static permanents
 

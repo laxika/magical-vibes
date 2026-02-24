@@ -105,6 +105,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `ReturnPermanentsOnCombatDamageToPlayerEffect` | `()` | return permanents when combat damage dealt to player (Ninja-style) |
 | `ReturnArtifactsTargetPlayerOwnsToHandEffect` | `()` | return all artifacts target player owns to hand |
 | `BounceCreatureOnUpkeepEffect` | `(Scope scope, Set<TargetFilter> filters, String prompt)` | at upkeep, return a creature matching filters. Scope: `SOURCE_CONTROLLER`, `TRIGGER_TARGET_PLAYER` |
+| `ReturnDamageSourcePermanentToHandEffect` | `()` | whenever a permanent deals damage to controller, return it to owner's hand (Dissipation Field-style). Use with `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` slot |
 | `PutTargetOnBottomOfLibraryEffect` | `()` | put target permanent on bottom of owner's library |
 
 ## Graveyard return
