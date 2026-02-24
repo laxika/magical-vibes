@@ -1022,6 +1022,37 @@ export class GameChoiceService {
       if (perm.tapped) return false;
       if (perm.summoningSick && isPermanentCreature(perm)) return false;
     }
+    if (ability.manaCost && !this.canPayManaCost(ability.manaCost)) return false;
+    return true;
+  }
+
+  private canPayManaCost(manaCost: string): boolean {
+    const g = this.gameSignal();
+    if (!g) return false;
+    const pool = g.manaPool;
+    const symbols = manaCost.match(/\{([^}]+)\}/g) || [];
+    const coloredSymbols = ['W', 'U', 'B', 'R', 'G', 'C'];
+    const coloredNeeded: Record<string, number> = {};
+    let genericNeeded = 0;
+    for (const sym of symbols) {
+      const inner = sym.slice(1, -1);
+      if (inner === 'X' || inner === 'T') continue;
+      if (coloredSymbols.includes(inner)) {
+        coloredNeeded[inner] = (coloredNeeded[inner] ?? 0) + 1;
+      } else {
+        const num = parseInt(inner);
+        if (!isNaN(num)) genericNeeded += num;
+      }
+    }
+    // Check each colored requirement
+    let totalUsed = 0;
+    for (const [color, needed] of Object.entries(coloredNeeded)) {
+      if ((pool[color] ?? 0) < needed) return false;
+      totalUsed += needed;
+    }
+    // Check generic requirement against remaining mana
+    const totalAvailable = Object.values(pool).reduce((sum, v) => sum + v, 0);
+    if (totalAvailable - totalUsed < genericNeeded) return false;
     return true;
   }
 
