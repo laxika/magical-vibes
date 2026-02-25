@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -53,7 +54,8 @@ public class Card {
     @Setter private List<TargetFilter> multiTargetFilters = List.of();
     @Setter private Card imprintedCard;
 
-    private Map<EffectSlot, List<CardEffect>> effects = new EnumMap<>(EffectSlot.class);
+    @Getter(AccessLevel.NONE)
+    private Map<EffectSlot, List<EffectRegistration>> effectRegistrations = new EnumMap<>(EffectSlot.class);
     private List<ActivatedAbility> activatedAbilities = new ArrayList<>();
 
     public Card() {
@@ -75,11 +77,21 @@ public class Card {
     }
 
     public List<CardEffect> getEffects(EffectSlot slot) {
-        return effects.getOrDefault(slot, List.of());
+        return effectRegistrations.getOrDefault(slot, List.of()).stream()
+                .map(EffectRegistration::effect)
+                .toList();
+    }
+
+    public List<EffectRegistration> getEffectRegistrations(EffectSlot slot) {
+        return effectRegistrations.getOrDefault(slot, List.of());
     }
 
     public void addEffect(EffectSlot slot, CardEffect effect) {
-        effects.computeIfAbsent(slot, k -> new ArrayList<>()).add(effect);
+        effectRegistrations.computeIfAbsent(slot, k -> new ArrayList<>()).add(new EffectRegistration(effect));
+    }
+
+    public void addEffect(EffectSlot slot, CardEffect effect, TriggerMode triggerMode) {
+        effectRegistrations.computeIfAbsent(slot, k -> new ArrayList<>()).add(new EffectRegistration(effect, triggerMode));
     }
 
     public void addActivatedAbility(ActivatedAbility ability) {

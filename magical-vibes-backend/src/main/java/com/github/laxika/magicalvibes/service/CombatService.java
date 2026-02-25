@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CombatDamagePhase1State;
 import com.github.laxika.magicalvibes.model.CombatDamageTarget;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
@@ -566,13 +568,15 @@ public class CombatService {
         }
         for (int atkIdx : blockedAttackerIndices) {
             Permanent attacker = attackerBattlefield.get(atkIdx);
-            List<CardEffect> becomesBlockedEffects = attacker.getCard().getEffects(EffectSlot.ON_BECOMES_BLOCKED);
-            if (!becomesBlockedEffects.isEmpty()) {
-                List<CardEffect> blockerSpecificEffects = becomesBlockedEffects.stream()
-                        .filter(CardEffect::triggersPerBlocker)
+            List<EffectRegistration> becomesBlockedRegs = attacker.getCard().getEffectRegistrations(EffectSlot.ON_BECOMES_BLOCKED);
+            if (!becomesBlockedRegs.isEmpty()) {
+                List<CardEffect> blockerSpecificEffects = becomesBlockedRegs.stream()
+                        .filter(r -> r.triggerMode() == TriggerMode.PER_BLOCKER)
+                        .map(EffectRegistration::effect)
                         .toList();
-                List<CardEffect> regularEffects = becomesBlockedEffects.stream()
-                        .filter(e -> !e.triggersPerBlocker())
+                List<CardEffect> regularEffects = becomesBlockedRegs.stream()
+                        .filter(r -> r.triggerMode() != TriggerMode.PER_BLOCKER)
+                        .map(EffectRegistration::effect)
                         .toList();
 
                 if (!regularEffects.isEmpty()) {
@@ -1556,10 +1560,11 @@ public class CombatService {
 
         gameData.forEachPermanent((auraOwnerId, perm) -> {
             if (perm.getAttachedTo() != null && perm.getAttachedTo().equals(creature.getId())) {
-                List<CardEffect> auraEffects = perm.getCard().getEffects(slot);
+                List<EffectRegistration> auraRegs = perm.getCard().getEffectRegistrations(slot);
                 // Skip per-blocker effects — they are handled by checkAttachedPerBlockerTriggers
-                List<CardEffect> nonPerBlockerEffects = auraEffects.stream()
-                        .filter(e -> !e.triggersPerBlocker())
+                List<CardEffect> nonPerBlockerEffects = auraRegs.stream()
+                        .filter(r -> r.triggerMode() != TriggerMode.PER_BLOCKER)
+                        .map(EffectRegistration::effect)
                         .toList();
                 if (!nonPerBlockerEffects.isEmpty()) {
                     // Bake the creature's controller into effects that need it
@@ -1623,8 +1628,9 @@ public class CombatService {
 
         gameData.forEachPermanent((ownerId, perm) -> {
             if (perm.getAttachedTo() != null && perm.getAttachedTo().equals(attacker.getId())) {
-                List<CardEffect> perBlockerEffects = perm.getCard().getEffects(EffectSlot.ON_BECOMES_BLOCKED).stream()
-                        .filter(CardEffect::triggersPerBlocker)
+                List<CardEffect> perBlockerEffects = perm.getCard().getEffectRegistrations(EffectSlot.ON_BECOMES_BLOCKED).stream()
+                        .filter(r -> r.triggerMode() == TriggerMode.PER_BLOCKER)
+                        .map(EffectRegistration::effect)
                         .toList();
                 if (!perBlockerEffects.isEmpty()) {
                     for (BlockerAssignment assignment : blockerAssignments) {

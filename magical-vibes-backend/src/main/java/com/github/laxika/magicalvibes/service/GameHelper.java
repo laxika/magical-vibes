@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.DraftData;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -626,8 +627,8 @@ public class GameHelper {
         copy.setSetCode(target.getSetCode());
         copy.setCollectorNumber(target.getCollectorNumber());
         for (EffectSlot slot : EffectSlot.values()) {
-            for (CardEffect effect : target.getEffects(slot)) {
-                copy.addEffect(slot, effect);
+            for (EffectRegistration reg : target.getEffectRegistrations(slot)) {
+                copy.addEffect(slot, reg.effect(), reg.triggerMode());
             }
         }
         for (ActivatedAbility ability : target.getActivatedAbilities()) {

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -101,8 +102,8 @@ public class CopyResolutionService {
 
         // Target validation for copied spells relies on card-level spell effects.
         for (EffectSlot slot : EffectSlot.values()) {
-            for (var effect : original.getEffects(slot)) {
-                copy.addEffect(slot, effect);
+            for (var reg : original.getEffectRegistrations(slot)) {
+                copy.addEffect(slot, reg.effect(), reg.triggerMode());
             }
         }
 
