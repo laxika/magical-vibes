@@ -89,6 +89,7 @@ public class GameData {
     public final List<PendingExileReturn> pendingExileReturns = Collections.synchronizedList(new ArrayList<>());
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionIds = new ConcurrentHashMap<>();
     public boolean pendingSacrificeAttackingCreature;
+    public boolean pendingAwakeningCounterPlacement;
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
 
     // Combat damage assignment state
@@ -167,6 +168,7 @@ public class GameData {
         copy.cleanupDiscardPending = this.cleanupDiscardPending;
         copy.combatDamagePhase1Complete = this.combatDamagePhase1Complete;
         copy.pendingSacrificeAttackingCreature = this.pendingSacrificeAttackingCreature;
+        copy.pendingAwakeningCounterPlacement = this.pendingAwakeningCounterPlacement;
 
         // --- Set<UUID> (ConcurrentHashMap.newKeySet()) ---
         copy.playerIds.addAll(this.playerIds);

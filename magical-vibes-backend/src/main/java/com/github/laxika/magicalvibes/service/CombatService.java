@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEff
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 
+import com.github.laxika.magicalvibes.model.effect.PutAwakeningCountersOnTargetLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.RandomDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
@@ -1457,6 +1458,29 @@ public class CombatService {
                     gameData.pendingCombatDamageBounceTargetPlayerId = defenderId;
                     int maxCount = Math.min(damageDealt, validIds.size());
                     playerInputService.beginMultiPermanentChoice(gameData, attackerId, validIds, maxCount, "Return up to " + damageDealt + " permanent" + (damageDealt > 1 ? "s" : "") + " to their owner's hand.");
+                    return;
+                } else if (effect instanceof PutAwakeningCountersOnTargetLandsEffect) {
+                    List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(attackerId);
+                    List<UUID> validLandIds = new ArrayList<>();
+                    for (Permanent perm : attackerBattlefield) {
+                        if (perm.getCard().getType() == CardType.LAND
+                                || perm.getCard().getAdditionalTypes().contains(CardType.LAND)) {
+                            validLandIds.add(perm.getId());
+                        }
+                    }
+
+                    if (validLandIds.isEmpty()) {
+                        String logEntry = creature.getCard().getName() + "'s ability triggers, but " + gameData.playerIdToName.get(attackerId) + " controls no lands.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        continue;
+                    }
+
+                    String logEntry = creature.getCard().getName() + "'s ability triggers — " + gameData.playerIdToName.get(attackerId) + " may put awakening counters on lands.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} combat damage trigger: {} valid lands", gameData.id, creature.getCard().getName(), validLandIds.size());
+
+                    gameData.pendingAwakeningCounterPlacement = true;
+                    playerInputService.beginMultiPermanentChoice(gameData, attackerId, validLandIds, validLandIds.size(), "Choose any number of lands to put awakening counters on.");
                     return;
                 } else if (effect instanceof TargetPlayerLosesGameEffect) {
                     gameData.stack.add(new StackEntry(

@@ -253,6 +253,7 @@ public class StaticEffectResolutionService {
         if (permanent.getCard().getType() == CardType.CREATURE) return true;
         if (permanent.getCard().getAdditionalTypes().contains(CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
+        if (permanent.getAwakeningCounters() > 0) return true;
         return hasAnimateArtifacts && (permanent.getCard().getType() == CardType.ARTIFACT
                 || permanent.getCard().getAdditionalTypes().contains(CardType.ARTIFACT));
     }
@@ -406,7 +407,9 @@ public class StaticEffectResolutionService {
             return target.hasKeyword(p.keyword());
         if (filter instanceof PermanentIsCreaturePredicate)
             return target.getCard().getType() == CardType.CREATURE
-                    || target.getCard().getAdditionalTypes().contains(CardType.CREATURE);
+                    || target.getCard().getAdditionalTypes().contains(CardType.CREATURE)
+                    || target.isAnimatedUntilEndOfTurn()
+                    || target.getAwakeningCounters() > 0;
         if (filter instanceof PermanentIsArtifactPredicate)
             return target.getCard().getType() == CardType.ARTIFACT
                     || target.getCard().getAdditionalTypes().contains(CardType.ARTIFACT);

@@ -210,6 +210,7 @@ public class GameQueryService {
         if (permanent.getCard().getType() == CardType.CREATURE) return true;
         if (permanent.getCard().getAdditionalTypes().contains(CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
+        if (permanent.getAwakeningCounters() > 0) return true;
         if (isArtifact(permanent)) return hasAnimateArtifactEffect(gameData);
         return false;
     }
@@ -281,7 +282,8 @@ public class GameQueryService {
             if (gameData == null) {
                 return permanent.getCard().getType() == CardType.CREATURE
                         || permanent.getCard().getAdditionalTypes().contains(CardType.CREATURE)
-                        || permanent.isAnimatedUntilEndOfTurn();
+                        || permanent.isAnimatedUntilEndOfTurn()
+                        || permanent.getAwakeningCounters() > 0;
             }
             return isCreature(gameData, permanent);
         }
@@ -316,7 +318,10 @@ public class GameQueryService {
         }
         if (predicate instanceof PermanentColorInPredicate colorInPredicate) {
             CardColor effectiveColor = permanent.isAnimatedUntilEndOfTurn() && permanent.getAnimatedColor() != null
-                    ? permanent.getAnimatedColor() : permanent.getCard().getColor();
+                    ? permanent.getAnimatedColor()
+                    : permanent.getAwakeningCounters() > 0
+                    ? CardColor.GREEN
+                    : permanent.getCard().getColor();
             return colorInPredicate.colors().contains(effectiveColor);
         }
         if (predicate instanceof PermanentAnyOfPredicate anyOfPredicate) {
@@ -417,7 +422,7 @@ public class GameQueryService {
             }
         }
 
-        boolean isSelfAnimated = target.isAnimatedUntilEndOfTurn();
+        boolean isSelfAnimated = target.isAnimatedUntilEndOfTurn() || target.getAwakeningCounters() > 0;
         if (!isNaturalCreature
                 && !accumulator.isAnimatedCreature()
                 && !isSelfAnimated
@@ -651,7 +656,10 @@ public class GameQueryService {
 
     boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature) {
         CardColor effectiveColor = creature.isAnimatedUntilEndOfTurn() && creature.getAnimatedColor() != null
-                ? creature.getAnimatedColor() : creature.getCard().getColor();
+                ? creature.getAnimatedColor()
+                : creature.getAwakeningCounters() > 0
+                ? CardColor.GREEN
+                : creature.getCard().getColor();
         return hasAuraWithEffect(gameData, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)
                 || isDamageFromSourcePrevented(gameData, effectiveColor);
     }

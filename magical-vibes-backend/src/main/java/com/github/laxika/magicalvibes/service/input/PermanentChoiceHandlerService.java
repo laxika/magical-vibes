@@ -557,6 +557,41 @@ public class PermanentChoiceHandlerService {
 
             turnProgressionService.advanceStep(gameData);
             turnProgressionService.resolveAutoPass(gameData);
+        } else if (gameData.pendingAwakeningCounterPlacement) {
+            gameData.pendingAwakeningCounterPlacement = false;
+
+            if (permanentIds.isEmpty()) {
+                String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to put awakening counters on any lands.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            } else {
+                List<String> awakenedNames = new ArrayList<>();
+                for (UUID permId : permanentIds) {
+                    Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+                    if (perm != null) {
+                        perm.setAwakeningCounters(perm.getAwakeningCounters() + 1);
+                        awakenedNames.add(perm.getCard().getName());
+                    }
+                }
+
+                if (!awakenedNames.isEmpty()) {
+                    String logEntry = String.join(", ", awakenedNames)
+                            + (awakenedNames.size() == 1 ? " receives" : " receive")
+                            + " an awakening counter and "
+                            + (awakenedNames.size() == 1 ? "becomes an" : "become")
+                            + " 8/8 green Elemental creature"
+                            + (awakenedNames.size() == 1 ? "." : "s.");
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - Awakening counters placed on {} lands", gameData.id, awakenedNames.size());
+                }
+            }
+
+            if (!gameData.pendingMayAbilities.isEmpty()) {
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+
+            turnProgressionService.advanceStep(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
         } else if (gameData.pendingProliferateCount > 0) {
             gameData.pendingProliferateCount--;
 
@@ -577,6 +612,9 @@ public class PermanentChoiceHandlerService {
                         if (perm.getLoyaltyCounters() > 0) {
                             perm.setLoyaltyCounters(perm.getLoyaltyCounters() + 1);
                         }
+                        if (perm.getAwakeningCounters() > 0) {
+                            perm.setAwakeningCounters(perm.getAwakeningCounters() + 1);
+                        }
                         proliferatedNames.add(perm.getCard().getName());
                     }
                 }
@@ -596,7 +634,8 @@ public class PermanentChoiceHandlerService {
                 gameData.forEachPermanent((pid, p) -> {
                     if (p.getPlusOnePlusOneCounters() > 0
                             || p.getMinusOneMinusOneCounters() > 0
-                            || p.getLoyaltyCounters() > 0) {
+                            || p.getLoyaltyCounters() > 0
+                            || p.getAwakeningCounters() > 0) {
                         eligiblePermanentIds.add(p.getId());
                     }
                 });

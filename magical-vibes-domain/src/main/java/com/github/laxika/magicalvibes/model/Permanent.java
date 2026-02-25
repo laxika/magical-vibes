@@ -39,6 +39,7 @@ public class Permanent {
     @Setter private int plusOnePlusOneCounters;
     @Setter private int minusOneMinusOneCounters;
     @Setter private int chargeCounters;
+    @Setter private int awakeningCounters;
     @Setter private boolean loyaltyAbilityUsedThisTurn;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
     private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
@@ -87,6 +88,7 @@ public class Permanent {
         this.plusOnePlusOneCounters = source.plusOnePlusOneCounters;
         this.minusOneMinusOneCounters = source.minusOneMinusOneCounters;
         this.chargeCounters = source.chargeCounters;
+        this.awakeningCounters = source.awakeningCounters;
         this.loyaltyAbilityUsedThisTurn = source.loyaltyAbilityUsedThisTurn;
         this.grantedKeywords.addAll(source.grantedKeywords);
         this.grantedSubtypes.addAll(source.grantedSubtypes);
@@ -143,12 +145,18 @@ public class Permanent {
         if (animatedUntilEndOfTurn) {
             return animatedPower + powerModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
         }
+        if (awakeningCounters > 0 && card.getType() != CardType.CREATURE) {
+            return 8 + powerModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
+        }
         return (card.getPower() != null ? card.getPower() : 0) + powerModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
     }
 
     public int getEffectiveToughness() {
         if (animatedUntilEndOfTurn) {
             return animatedToughness + toughnessModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
+        }
+        if (awakeningCounters > 0 && card.getType() != CardType.CREATURE) {
+            return 8 + toughnessModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
         }
         return (card.getToughness() != null ? card.getToughness() : 0) + toughnessModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
     }

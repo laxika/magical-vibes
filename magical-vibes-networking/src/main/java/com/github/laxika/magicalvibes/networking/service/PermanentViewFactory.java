@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.networking.service;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
@@ -28,6 +30,7 @@ public class PermanentViewFactory {
         CardView cardView = cardViewFactory.create(p.getCard());
         cardView = applyTextReplacements(cardView, p);
         cardView = applyGrantedSubtypes(cardView, p);
+        cardView = applyAwakeningCounterSubtype(cardView, p);
         cardView = applyGrantedActivatedAbilities(cardView, grantedActivatedAbilities);
         return new PermanentView(
                 p.getId(), cardView,
@@ -64,6 +67,24 @@ public class PermanentViewFactory {
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
                 cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
+                cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
+                cardView.hasConvoke()
+        );
+    }
+
+    private CardView applyAwakeningCounterSubtype(CardView cardView, Permanent p) {
+        if (p.getAwakeningCounters() <= 0 || p.getCard().getType() == CardType.CREATURE) {
+            return cardView;
+        }
+        List<CardSubtype> mergedSubtypes = new ArrayList<>(cardView.subtypes());
+        if (!mergedSubtypes.contains(CardSubtype.ELEMENTAL)) {
+            mergedSubtypes.add(CardSubtype.ELEMENTAL);
+        }
+        return new CardView(
+                cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), mergedSubtypes,
+                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
+                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
+                cardView.collectorNumber(), CardColor.GREEN, cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke()
         );
