@@ -150,24 +150,7 @@ public class ManaCost {
             }
         }
 
-        int remainingGeneric = genericCost + xValue;
-        while (remainingGeneric > 0) {
-            ManaColor highestColor = null;
-            int highestAmount = 0;
-            for (ManaColor color : ManaColor.values()) {
-                int amount = pool.get(color);
-                if (amount > highestAmount) {
-                    highestAmount = amount;
-                    highestColor = color;
-                }
-            }
-            if (highestColor != null) {
-                pool.remove(highestColor);
-                remainingGeneric--;
-            } else {
-                break;
-            }
-        }
+        payGenericPreferColorless(pool, genericCost + xValue);
     }
 
     public void pay(ManaPool pool, int xValue, ManaColor xColorRestriction, int additionalGenericCost) {
@@ -181,24 +164,7 @@ public class ManaCost {
             pool.remove(xColorRestriction);
         }
 
-        int remainingGeneric = genericCost + additionalGenericCost;
-        while (remainingGeneric > 0) {
-            ManaColor highestColor = null;
-            int highestAmount = 0;
-            for (ManaColor color : ManaColor.values()) {
-                int amount = pool.get(color);
-                if (amount > highestAmount) {
-                    highestAmount = amount;
-                    highestColor = color;
-                }
-            }
-            if (highestColor != null) {
-                pool.remove(highestColor);
-                remainingGeneric--;
-            } else {
-                break;
-            }
-        }
+        payGenericPreferColorless(pool, genericCost + additionalGenericCost);
     }
 
     /**
@@ -287,6 +253,16 @@ public class ManaCost {
         }
 
         // Pay remaining generic from pool
+        payGenericPreferColorless(pool, remainingGeneric);
+    }
+
+    private void payGenericPreferColorless(ManaPool pool, int remainingGeneric) {
+        // Prefer colorless mana for generic costs since it can only pay generic,
+        // while colored mana is more versatile (can pay both colored and generic).
+        while (remainingGeneric > 0 && pool.get(ManaColor.COLORLESS) > 0) {
+            pool.remove(ManaColor.COLORLESS);
+            remainingGeneric--;
+        }
         while (remainingGeneric > 0) {
             ManaColor highestColor = null;
             int highestAmount = 0;
