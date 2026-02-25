@@ -73,6 +73,9 @@ public class SpellCastingService {
 
             log.info("Game {} - {} plays {} from graveyard", gameData.id, player.getUsername(), graveyardCard.getName());
 
+            // Process ETB effects for lands (e.g. Glimmerpost)
+            gameHelper.processCreatureETBEffects(gameData, playerId, graveyardCard, null, false);
+
             turnProgressionService.resolveAutoPass(gameData);
             return;
         }
@@ -227,6 +230,9 @@ public class SpellCastingService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
             log.info("Game {} - {} plays {}", gameData.id, player.getUsername(), card.getName());
+
+            // Process ETB effects for lands (e.g. Glimmerpost)
+            gameHelper.processCreatureETBEffects(gameData, playerId, card, null, false);
 
             turnProgressionService.resolveAutoPass(gameData);
         } else if (card.getType() == CardType.CREATURE) {

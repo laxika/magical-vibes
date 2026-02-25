@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesXLifeAndCont
 import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifePerCreatureControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeForEachSubtypeOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerCreatureOnBattlefieldEffect;
@@ -67,6 +68,21 @@ public class LifeResolutionService {
             return;
         }
         applyGainLife(gameData, entry.getControllerId(), creatureCount);
+    }
+
+    @HandlesEffect(GainLifeForEachSubtypeOnBattlefieldEffect.class)
+    private void resolveGainLifeForEachSubtypeOnBattlefield(GameData gameData, StackEntry entry,
+                                                             GainLifeForEachSubtypeOnBattlefieldEffect effect) {
+        int[] count = {0};
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (permanent.getCard().getSubtypes().contains(effect.subtype())) {
+                count[0]++;
+            }
+        });
+        if (count[0] == 0) {
+            return;
+        }
+        applyGainLife(gameData, entry.getControllerId(), count[0]);
     }
 
     @HandlesEffect(GainLifePerControlledCreatureEffect.class)

@@ -274,6 +274,7 @@ Pass `null` as filter to allow any card.
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `GainLifeEffect` | `(int amount)` | gain N life |
+| `GainLifeForEachSubtypeOnBattlefieldEffect` | `(CardSubtype subtype)` | gain 1 life per permanent with given subtype on the battlefield (all players) |
 | `GainLifePerControlledCreatureEffect` | `()` | gain 1 life per creature you control |
 | `GainLifePerCreatureOnBattlefieldEffect` | `()` | gain 1 life per creature on the battlefield (all players) |
 | `GainLifePerGraveyardCardEffect` | `()` | gain life equal to cards in graveyard |

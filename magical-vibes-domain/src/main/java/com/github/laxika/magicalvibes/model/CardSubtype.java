@@ -103,7 +103,8 @@ public enum CardSubtype {
     DINOSAUR("Dinosaur"),
     SPHINX("Sphinx"),
     SNAKE("Snake"),
-    GERM("Germ");
+    GERM("Germ"),
+    LOCUS("Locus");
 
     @Getter
     private final String displayName;
