@@ -183,7 +183,7 @@ public class GameTestHarness {
                 new PermanentControlResolutionService(gameHelper, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService, creatureControlService),
                 new TurnResolutionService(gameHelper, combatService, gameBroadcastService),
                 new EquipResolutionService(gameQueryService, gameBroadcastService),
-                new CardSpecificResolutionService(gameHelper, gameQueryService),
+                new CardSpecificResolutionService(gameHelper, gameQueryService, gameBroadcastService, sessionManager, cardViewFactory),
                 new WinConditionResolutionService(gameHelper, gameBroadcastService, gameQueryService)
         );
         for (Object service : effectServices) {

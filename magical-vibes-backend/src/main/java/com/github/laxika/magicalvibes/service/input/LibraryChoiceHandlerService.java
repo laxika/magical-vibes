@@ -447,18 +447,33 @@ public class LibraryChoiceHandlerService {
             }
         }
 
-        // Shuffle remaining cards back into library
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        deck.addAll(remainingCards);
-        Collections.shuffle(deck);
+        // Handle remaining cards based on destination
+        if (libraryRevealChoice.remainingToGraveyard()) {
+            for (Card card : remainingCards) {
+                gameHelper.addCardToGraveyard(gameData, controllerId, card);
+            }
 
-        if (selectedCards.isEmpty()) {
-            String logEntry = playerName + " puts no cards onto the battlefield. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            if (selectedCards.isEmpty()) {
+                String logEntry = playerName + " puts no cards onto the battlefield. The rest are put into their graveyard.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            } else {
+                String names = selectedCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
+                String logEntry = playerName + " puts " + names + " onto the battlefield. The rest are put into their graveyard.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            }
         } else {
-            String names = selectedCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-            String logEntry = playerName + " puts " + names + " onto the battlefield. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            List<Card> deck = gameData.playerDecks.get(controllerId);
+            deck.addAll(remainingCards);
+            Collections.shuffle(deck);
+
+            if (selectedCards.isEmpty()) {
+                String logEntry = playerName + " puts no cards onto the battlefield. Library is shuffled.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            } else {
+                String names = selectedCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
+                String logEntry = playerName + " puts " + names + " onto the battlefield. Library is shuffled.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            }
         }
 
         log.info("Game {} - {} resolves library reveal choice, {} cards to battlefield", gameData.id, playerName, selectedCards.size());

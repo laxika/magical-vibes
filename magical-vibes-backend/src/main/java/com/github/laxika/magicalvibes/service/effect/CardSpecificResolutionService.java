@@ -9,10 +9,17 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.WarpWorldAuraChoiceRequest;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
+import com.github.laxika.magicalvibes.model.effect.GenesisWaveEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFromGraveyardsMessage;
+import com.github.laxika.magicalvibes.networking.model.CardView;
+import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -24,13 +31,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CardSpecificResolutionService {
 
     private final GameHelper gameHelper;
     private final GameQueryService gameQueryService;
+    private final GameBroadcastService gameBroadcastService;
+    private final SessionManager sessionManager;
+    private final CardViewFactory cardViewFactory;
 
     @HandlesEffect(WarpWorldEffect.class)
     void resolveWarpWorld(GameData gameData, StackEntry entry) {
@@ -201,6 +213,62 @@ public class CardSpecificResolutionService {
         }
 
         gameHelper.finalizePendingWarpWorld(gameData);
+    }
+
+    @HandlesEffect(GenesisWaveEffect.class)
+    void resolveGenesisWave(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        int xValue = entry.getXValue();
+        String playerName = gameData.playerIdToName.get(controllerId);
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+
+        if (xValue <= 0 || deck.isEmpty()) {
+            String logMsg = playerName + " casts Genesis Wave with X=" + xValue + " — no cards revealed.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        int count = Math.min(xValue, deck.size());
+        List<Card> revealedCards = new ArrayList<>(deck.subList(0, count));
+        deck.subList(0, count).clear();
+
+        List<Card> eligibleCards = new ArrayList<>();
+        for (Card card : revealedCards) {
+            boolean isPermanent = card.getType() != CardType.INSTANT
+                    && card.getType() != CardType.SORCERY;
+            if (isPermanent && card.getManaValue() <= xValue) {
+                eligibleCards.add(card);
+            }
+        }
+
+        String logMsg = playerName + " reveals the top " + count + " cards of their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+
+        if (eligibleCards.isEmpty()) {
+            for (Card card : revealedCards) {
+                gameHelper.addCardToGraveyard(gameData, controllerId, card);
+            }
+            String graveyardLog = playerName + " finds no eligible permanent cards. All revealed cards are put into their graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, graveyardLog);
+            return;
+        }
+
+        Set<UUID> validCardIds = ConcurrentHashMap.newKeySet();
+        for (Card card : eligibleCards) {
+            validCardIds.add(card.getId());
+        }
+
+        gameData.interaction.beginLibraryRevealChoice(controllerId, revealedCards, validCardIds, true);
+
+        List<CardView> cardViews = eligibleCards.stream().map(cardViewFactory::create).toList();
+        List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsFromGraveyardsMessage(
+                cardIds, cardViews, eligibleCards.size(),
+                "Choose any number of permanent cards with mana value " + xValue + " or less to put onto the battlefield."
+        ));
+
+        log.info("Game {} - {} resolving Genesis Wave with X={}, {} revealed, {} eligible",
+                gameData.id, playerName, xValue, count, eligibleCards.size());
     }
 
     private List<UUID> findLegalAuraAttachments(GameData gameData, Card auraCard, UUID auraControllerId, List<UUID> baseTargetIds) {

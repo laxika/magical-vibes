@@ -435,11 +435,15 @@ public class InteractionState {
     }
 
     public void beginLibraryRevealChoice(UUID playerId, List<Card> allCards, Set<UUID> validCardIds) {
+        beginLibraryRevealChoice(playerId, allCards, validCardIds, false);
+    }
+
+    public void beginLibraryRevealChoice(UUID playerId, List<Card> allCards, Set<UUID> validCardIds, boolean remainingToGraveyard) {
         this.awaitingInput = AwaitingInput.LIBRARY_REVEAL_CHOICE;
         this.awaitingLibraryRevealPlayerId = playerId;
         this.awaitingLibraryRevealAllCards = allCards;
         this.awaitingLibraryRevealValidCardIds = validCardIds;
-        this.context = new InteractionContext.LibraryRevealChoice(playerId, allCards, validCardIds);
+        this.context = new InteractionContext.LibraryRevealChoice(playerId, allCards, validCardIds, remainingToGraveyard);
     }
 
     public void clearLibraryRevealChoice() {
@@ -629,7 +633,7 @@ public class InteractionState {
         if (context instanceof InteractionContext.LibraryRevealChoice lrc) return lrc;
         if (awaitingLibraryRevealPlayerId == null || awaitingLibraryRevealAllCards == null || awaitingLibraryRevealValidCardIds == null) return null;
         return new InteractionContext.LibraryRevealChoice(awaitingLibraryRevealPlayerId,
-                awaitingLibraryRevealAllCards, awaitingLibraryRevealValidCardIds);
+                awaitingLibraryRevealAllCards, awaitingLibraryRevealValidCardIds, false);
     }
 
     public InteractionContext.HandTopBottomChoice handTopBottomChoiceContext() {

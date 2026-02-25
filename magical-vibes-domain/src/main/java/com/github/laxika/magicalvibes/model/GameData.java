@@ -348,7 +348,8 @@ public class GameData {
             case InteractionContext.LibraryRevealChoice lrc ->
                     targetInteraction.beginLibraryRevealChoice(lrc.playerId(),
                             lrc.allCards() != null ? new ArrayList<>(lrc.allCards()) : null,
-                            lrc.validCardIds() != null ? new HashSet<>(lrc.validCardIds()) : null);
+                            lrc.validCardIds() != null ? new HashSet<>(lrc.validCardIds()) : null,
+                            lrc.remainingToGraveyard());
             case InteractionContext.HandTopBottomChoice htbc ->
                     targetInteraction.beginHandTopBottomChoice(htbc.playerId(),
                             htbc.cards() != null ? new ArrayList<>(htbc.cards()) : null);
