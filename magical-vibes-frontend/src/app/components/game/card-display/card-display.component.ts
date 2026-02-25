@@ -5,6 +5,7 @@ import { ScryfallImageService } from '../../../services/scryfall-image.service';
 import { ScryfallCardDataService } from '../../../services/scryfall-card-data.service';
 import { ManaSymbolService } from '../../../services/mana-symbol.service';
 import { SetSymbolService } from '../../../services/set-symbol.service';
+import { formatEnumName, formatKeywords } from '../../../utils/format-utils';
 
 @Component({
   selector: 'app-card-display',
@@ -18,6 +19,7 @@ export class CardDisplayComponent implements OnInit, OnChanges {
   @Input() permanent: Permanent | null = null;
   @Input() preview = false;
 
+  formatKeywords = formatKeywords;
   artUrl = signal<string | null>(null);
 
   private scryfallImageService = inject(ScryfallImageService);
@@ -103,14 +105,10 @@ export class CardDisplayComponent implements OnInit, OnChanges {
     return this.card.loyalty ?? null;
   }
 
-  private formatEnumName(s: string): string {
-    return s.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
-  }
-
   get typeLine(): string {
-    const supertypes = (this.card.supertypes ?? []).map(s => this.formatEnumName(s));
-    const mainType = [...supertypes, this.formatEnumName(this.card.type)].join(' ');
-    const subtypes = (this.card.subtypes ?? []).map(s => this.formatEnumName(s));
+    const supertypes = (this.card.supertypes ?? []).map(s => formatEnumName(s));
+    const mainType = [...supertypes, formatEnumName(this.card.type)].join(' ');
+    const subtypes = (this.card.subtypes ?? []).map(s => formatEnumName(s));
     if (subtypes.length > 0) {
       return `${mainType} \u2014 ${subtypes.join(' ')}`;
     }
@@ -166,7 +164,4 @@ export class CardDisplayComponent implements OnInit, OnChanges {
     );
   }
 
-  formatKeywords(keywords: string[]): string {
-    return keywords.map(k => k.charAt(0) + k.slice(1).toLowerCase().replace('_', ' ')).join(', ');
-  }
 }

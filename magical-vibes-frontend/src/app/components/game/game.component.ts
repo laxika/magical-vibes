@@ -1030,22 +1030,6 @@ export class GameComponent implements OnInit, OnDestroy {
 
   // ========== Formatting ==========
 
-  formatTypeLine(card: Card): string {
-    const supertypes = (card.supertypes ?? []).map(s => s.charAt(0) + s.slice(1).toLowerCase());
-    return [...supertypes, card.type].join(' ');
-  }
-
-  formatKeywords(keywords: string[]): string {
-    return keywords.map(k => k.charAt(0) + k.slice(1).toLowerCase().replace('_', ' ')).join(', ');
-  }
-
-  getEffectiveKeywords(perm: Permanent): string[] {
-    if (perm.grantedKeywords) {
-      return perm.grantedKeywords.filter(kw => !perm.card.keywords.includes(kw));
-    }
-    return [];
-  }
-
   formatAbilityDescription(description: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(
       this.manaSymbolService.replaceSymbols(description)
