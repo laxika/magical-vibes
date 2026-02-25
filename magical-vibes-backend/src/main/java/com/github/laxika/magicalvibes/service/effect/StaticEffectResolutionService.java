@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreaturePerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEquipmentAttachedEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEnchantmentOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -279,6 +280,21 @@ public class StaticEffectResolutionService {
         });
         accumulator.addPower(count[0] * boost.powerPerEnchantment());
         accumulator.addToughness(count[0] * boost.toughnessPerEnchantment());
+    }
+
+    @HandlesStaticEffect(value = BoostSelfPerEquipmentAttachedEffect.class, selfOnly = true)
+    private void resolveBoostSelfPerEquipmentAttached(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostSelfPerEquipmentAttachedEffect) effect;
+        final int[] count = {0};
+        context.gameData().forEachPermanent((playerId, permanent) -> {
+            if (permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
+                    && permanent.getAttachedTo() != null
+                    && permanent.getAttachedTo().equals(context.target().getId())) {
+                count[0]++;
+            }
+        });
+        accumulator.addPower(count[0] * boost.powerPerEquipment());
+        accumulator.addToughness(count[0] * boost.toughnessPerEquipment());
     }
 
     @HandlesStaticEffect(value = PowerToughnessEqualToControlledSubtypeCountEffect.class, selfOnly = true)
