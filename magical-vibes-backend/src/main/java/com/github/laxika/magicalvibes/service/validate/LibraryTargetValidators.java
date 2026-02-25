@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.validate;
 
+import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
@@ -16,6 +17,11 @@ public class LibraryTargetValidators {
 
     @ValidatesTarget(MillTargetPlayerEffect.class)
     public void validateMillTargetPlayer(TargetValidationContext ctx) {
+        tvs.requireTargetPlayer(ctx);
+    }
+
+    @ValidatesTarget(MillTargetPlayerByChargeCountersEffect.class)
+    public void validateMillTargetPlayerByChargeCounters(TargetValidationContext ctx) {
         tvs.requireTargetPlayer(ctx);
     }
 

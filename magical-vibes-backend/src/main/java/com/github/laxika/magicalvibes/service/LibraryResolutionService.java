@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEf
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.MillByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaAndSearchLibraryForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
@@ -104,6 +105,32 @@ public class LibraryResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} mills {} cards", gameData.id, playerName, cardsToMill);
+    }
+
+    @HandlesEffect(MillTargetPlayerByChargeCountersEffect.class)
+    void resolveMillTargetPlayerByChargeCounters(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+        int chargeCounters = entry.getXValue();
+
+        if (chargeCounters <= 0) {
+            String logEntry = playerName + " mills 0 cards (no charge counters).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} mills 0 cards (no charge counters)", gameData.id, playerName);
+            return;
+        }
+
+        int cardsToMill = Math.min(chargeCounters, deck.size());
+        for (int i = 0; i < cardsToMill; i++) {
+            Card card = deck.removeFirst();
+            gameHelper.addCardToGraveyard(gameData, targetPlayerId, card);
+        }
+
+        String logEntry = playerName + " mills " + cardsToMill + " card" + (cardsToMill != 1 ? "s" : "") + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} mills {} cards (charge counters)", gameData.id, playerName, cardsToMill);
     }
 
     @HandlesEffect(MillHalfLibraryEffect.class)
