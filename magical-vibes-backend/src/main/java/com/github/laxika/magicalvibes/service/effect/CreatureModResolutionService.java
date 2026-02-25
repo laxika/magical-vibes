@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ColorChoiceContext;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
@@ -39,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapEachOtherCreatureYouCont
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameQueryService;
+import com.github.laxika.magicalvibes.service.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +49,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -56,6 +60,7 @@ public class CreatureModResolutionService {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
+    private final PermanentRemovalService permanentRemovalService;
 
     @HandlesEffect(AnimateLandEffect.class)
     private void resolveAnimateLand(GameData gameData, StackEntry entry, AnimateLandEffect effect) {
@@ -641,6 +646,9 @@ public class CreatureModResolutionService {
             return;
         }
 
+        // Track creatures that need to be sacrificed due to SacrificeOnUnattachEffect
+        Set<UUID> sacrificeTargetIds = new java.util.LinkedHashSet<>();
+
         for (UUID targetId : entry.getTargetPermanentIds()) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) {
@@ -656,8 +664,26 @@ public class CreatureModResolutionService {
                     gameBroadcastService.logAndBroadcast(gameData, unattachLog);
                     log.info("Game {} - {} unattaches {} from {}", gameData.id, entry.getCard().getName(),
                             p.getCard().getName(), target.getCard().getName());
+
+                    boolean hasSacrificeOnUnattach = p.getCard().getEffects(EffectSlot.STATIC).stream()
+                            .anyMatch(e -> e instanceof SacrificeOnUnattachEffect);
+                    if (hasSacrificeOnUnattach) {
+                        sacrificeTargetIds.add(targetId);
+                    }
                 }
             });
+        }
+
+        // Sacrifice creatures that were unattached from equipment with SacrificeOnUnattachEffect
+        for (UUID creatureId : sacrificeTargetIds) {
+            Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
+            if (creature != null) {
+                String sacrificeLog = creature.getCard().getName() + " is sacrificed (equipment with sacrifice-on-unattach became unattached).";
+                gameBroadcastService.logAndBroadcast(gameData, sacrificeLog);
+                log.info("Game {} - {} sacrificed due to equipment unattach", gameData.id, creature.getCard().getName());
+                permanentRemovalService.removePermanentToGraveyard(gameData, creature);
+                permanentRemovalService.removeOrphanedAuras(gameData);
+            }
         }
     }
 

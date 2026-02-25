@@ -467,6 +467,7 @@ Pass `null` as filter to allow any card.
 |--------|-------------|--------|
 | `EquipEffect` | `()` | equip to target creature |
 | `BoostAttachedCreatureEffect` | `(int powerBoost, int toughnessBoost)` | equipped creature gets +X/+Y (static) |
+| `SacrificeOnUnattachEffect` | `()` | whenever this equipment becomes unattached, sacrifice the previously-equipped creature (static marker) |
 
 ## Static restrictions / taxes
 

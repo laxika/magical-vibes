@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,6 +28,9 @@ public class PermanentRemovalService {
     private final GameBroadcastService gameBroadcastService;
 
     public boolean removePermanentToGraveyard(GameData gameData, Permanent target) {
+        // Capture unattach-sacrifice info before removal
+        UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
+
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -37,6 +43,7 @@ public class PermanentRemovalService {
                     gameData.creatureDeathCountThisTurn.merge(playerId, 1, Integer::sum);
                     gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
                 }
+                handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
                 return true;
             }
         }
@@ -44,12 +51,16 @@ public class PermanentRemovalService {
     }
 
     public boolean removePermanentToExile(GameData gameData, Permanent target) {
+        // Capture unattach-sacrifice info before removal
+        UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
+
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
                 UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
                 gameData.playerExiledCards.get(ownerId).add(target.getOriginalCard());
                 gameData.stolenCreatures.remove(target.getId());
+                handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
                 return true;
             }
         }
@@ -119,5 +130,32 @@ public class PermanentRemovalService {
         }
 
         return 0;
+    }
+
+    /**
+     * Returns the ID of the creature that should be sacrificed if the given permanent is an equipment
+     * with SacrificeOnUnattachEffect that is currently attached to a creature. Returns null otherwise.
+     */
+    private UUID getSacrificeOnUnattachCreatureId(Permanent equipment) {
+        if (equipment.getAttachedTo() == null) return null;
+        if (!equipment.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) return null;
+        boolean hasEffect = equipment.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof SacrificeOnUnattachEffect);
+        return hasEffect ? equipment.getAttachedTo() : null;
+    }
+
+    /**
+     * After an equipment with SacrificeOnUnattachEffect is removed from the battlefield,
+     * sacrifice the creature it was attached to (if it still exists).
+     */
+    private void handleSacrificeOnUnattach(GameData gameData, Permanent removedEquipment, UUID creatureId) {
+        if (creatureId == null) return;
+        Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
+        if (creature == null) return;
+        String sacrificeLog = creature.getCard().getName() + " is sacrificed (" + removedEquipment.getCard().getName() + " became unattached).";
+        gameBroadcastService.logAndBroadcast(gameData, sacrificeLog);
+        log.info("Game {} - {} sacrificed due to {} leaving battlefield", gameData.id, creature.getCard().getName(), removedEquipment.getCard().getName());
+        removePermanentToGraveyard(gameData, creature);
+        removeOrphanedAuras(gameData);
     }
 }
