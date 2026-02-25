@@ -52,7 +52,7 @@ public class ExileResolutionService {
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
 
-        gameHelper.removePermanentToExile(gameData, target);
+        permanentRemovalService.removePermanentToExile(gameData, target);
 
         String logEntry = card.getName() + " is exiled. It will return at the beginning of the next end step.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -61,7 +61,7 @@ public class ExileResolutionService {
 
         gameData.pendingExileReturns.add(new PendingExileReturn(card, ownerId));
 
-        gameHelper.removeOrphanedAuras(gameData);
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     @HandlesEffect(ExileSelfAndReturnAtEndStepEffect.class)
