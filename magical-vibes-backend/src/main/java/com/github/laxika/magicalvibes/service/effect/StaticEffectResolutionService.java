@@ -387,7 +387,8 @@ public class StaticEffectResolutionService {
             CardSubtype.SWAMP,
             CardSubtype.AURA,
             CardSubtype.EQUIPMENT,
-            CardSubtype.AJANI
+            CardSubtype.AJANI,
+            CardSubtype.KOTH
     );
 
     static boolean matchesStaticFilter(Permanent target, PermanentPredicate filter) {

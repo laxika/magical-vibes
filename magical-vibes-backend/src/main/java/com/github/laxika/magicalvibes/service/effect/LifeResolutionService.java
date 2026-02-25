@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesXLifeAndControllerGainsLifeLostEffect;
@@ -323,6 +326,32 @@ public class LifeResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName, effect.amount(), entry.getCard().getName());
+    }
+
+    @HandlesEffect(AddManaPerControlledSubtypeEffect.class)
+    private void resolveAddManaPerControlledSubtype(GameData gameData, StackEntry entry, AddManaPerControlledSubtypeEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return;
+
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (permanent.getCard().getSubtypes().contains(effect.subtype())) {
+                count++;
+            }
+        }
+
+        ManaPool pool = gameData.playerManaPools.get(controllerId);
+        for (int i = 0; i < count; i++) {
+            pool.add(effect.color());
+        }
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        CardSubtype subtype = effect.subtype();
+        String logEntry = playerName + " adds " + count + " " + effect.color().getCode() + " (" + subtype.getDisplayName() + "s controlled).";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} adds {} {} (per {} controlled)", gameData.id, playerName, count, effect.color(), subtype);
     }
 }
 

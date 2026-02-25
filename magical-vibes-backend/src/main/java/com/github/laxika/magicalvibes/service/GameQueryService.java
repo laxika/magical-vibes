@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,9 @@ import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -392,6 +395,19 @@ public class GameQueryService {
                 }
             }
         });
+        // Process emblem static effects
+        for (Emblem emblem : gameData.emblems) {
+            List<Permanent> ownerBf = gameData.playerBattlefields.get(emblem.controllerId());
+            if (ownerBf == null || !ownerBf.contains(target)) continue;
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (effect instanceof GrantActivatedAbilityEffect grant
+                        && grant.scope() == GrantScope.OWN_PERMANENTS
+                        && (grant.filter() == null || matchesPermanentPredicate(gameData, target, grant.filter()))) {
+                    accumulator.addActivatedAbility(grant.ability());
+                }
+            }
+        }
+
         // Handle characteristic-defining abilities (self-referencing static effects like */* P/T)
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
             StaticEffectHandler selfHandler = staticEffectRegistry.getSelfHandler(effect);

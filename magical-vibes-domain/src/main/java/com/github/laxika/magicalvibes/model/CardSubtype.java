@@ -68,6 +68,7 @@ public enum CardSubtype {
     PHYREXIAN("Phyrexian"),
     KITHKIN("Kithkin"),
     AJANI("Ajani"),
+    KOTH("Koth"),
     WRAITH("Wraith"),
     GNOME("Gnome"),
     MERCENARY("Mercenary"),

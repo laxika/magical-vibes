@@ -89,6 +89,7 @@ public class GameData {
     public final List<PendingExileReturn> pendingExileReturns = Collections.synchronizedList(new ArrayList<>());
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionIds = new ConcurrentHashMap<>();
     public boolean pendingSacrificeAttackingCreature;
+    public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
 
     // Combat damage assignment state
     public final Map<Integer, Map<UUID, Integer>> combatDamagePlayerAssignments = new HashMap<>();
@@ -291,6 +292,9 @@ public class GameData {
                 copy.combatDamagePlayerAssignments.put(k, new HashMap<>(v)));
         copy.combatDamagePendingIndices.addAll(this.combatDamagePendingIndices);
         copy.combatDamagePhase1State = this.combatDamagePhase1State; // read-only snapshot from phase 1
+
+        // --- Emblems (records are immutable) ---
+        copy.emblems.addAll(this.emblems);
 
         // --- Game log (share reference for simulation — not read during MCTS) ---
         copy.gameLog.addAll(this.gameLog);

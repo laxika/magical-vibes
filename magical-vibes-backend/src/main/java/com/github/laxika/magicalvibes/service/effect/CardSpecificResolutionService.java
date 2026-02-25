@@ -1,15 +1,23 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.effect.w.WarpWorldEffect;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.WarpWorldAuraChoiceRequest;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GenesisWaveEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.KothEmblemEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFromGraveyardsMessage;
@@ -269,6 +277,30 @@ public class CardSpecificResolutionService {
 
         log.info("Game {} - {} resolving Genesis Wave with X={}, {} revealed, {} eligible",
                 gameData.id, playerName, xValue, count, eligibleCards.size());
+    }
+
+    @HandlesEffect(KothEmblemEffect.class)
+    void resolveKothEmblem(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        ActivatedAbility mountainAbility = new ActivatedAbility(
+                true, null,
+                List.of(new DealDamageToAnyTargetEffect(1)),
+                "{T}: This land deals 1 damage to any target."
+        );
+
+        Emblem emblem = new Emblem(controllerId, List.of(
+                new GrantActivatedAbilityEffect(mountainAbility, GrantScope.OWN_PERMANENTS,
+                        new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN))
+        ));
+
+        gameData.emblems.add(emblem);
+
+        String logEntry = playerName + " gets an emblem with \"Mountains you control have '{T}: This land deals 1 damage to any target.'\".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} gets Koth emblem", gameData.id, playerName);
     }
 
     private List<UUID> findLegalAuraAttachments(GameData gameData, Card auraCard, UUID auraControllerId, List<UUID> baseTargetIds) {

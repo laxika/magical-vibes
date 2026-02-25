@@ -438,6 +438,7 @@ Pass `null` as filter to allow any card.
 | `AwardAnyColorManaEffect` | `()` | add one mana of any color |
 | `AddManaOnEnchantedLandTapEffect` | `(ManaColor color, int amount)` | when enchanted land is tapped, add N mana of color |
 | `DoubleManaPoolEffect` | `()` | double your mana pool |
+| `AddManaPerControlledSubtypeEffect` | `(ManaColor color, CardSubtype subtype)` | add one mana of color for each permanent with subtype you control |
 | `PreventManaDrainEffect` | `()` | players don't lose unspent mana as steps/phases end (static) |
 
 ## Copy / clone
@@ -523,6 +524,7 @@ Pass `null` as filter to allow any card.
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `AjaniUltimateEffect` | `()` | Ajani's ultimate: put 100 counters (planeswalker-specific) |
+| `KothEmblemEffect` | `()` | Koth's emblem: Mountains you control have '{T}: This land deals 1 damage to any target.' |
 | `GenesisWaveEffect` | `()` | reveal top X cards, put any number of permanent cards with MV ≤ X onto battlefield, rest to graveyard. X read from `StackEntry.getXValue()` |
 
 ---
