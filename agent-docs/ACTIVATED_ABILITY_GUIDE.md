@@ -223,6 +223,7 @@ Sacrifice and discard costs go in the `effects` list BEFORE the actual effect. T
 | `SacrificeCreatureCost` | `()` | "Sacrifice a creature: ..." |
 | `SacrificeSubtypeCreatureCost` | `(CardSubtype)` | "Sacrifice a Goblin: ..." |
 | `SacrificeArtifactCost` | `()` | "Sacrifice an artifact: ..." |
+| `SacrificeMultiplePermanentsCost` | `(int count, PermanentPredicate filter)` | "Sacrifice three artifacts: ..." (use with matching predicate) |
 | `SacrificeAllCreaturesYouControlCost` | `()` | "Sacrifice all creatures: ..." |
 | `DiscardCardTypeCost` | `(CardType)` | "Discard a [type] card: ..." |
 | `RemoveCounterFromSourceCost` | `()` | "Remove a counter from this: ..." |
@@ -242,9 +243,15 @@ new ActivatedAbility(false, null,
 new ActivatedAbility(true, null,
     List.of(new SacrificeArtifactCost(), new DealDamageToAnyTargetEffect(2)),
     "{T}, Sacrifice an artifact: Barrage Ogre deals 2 damage to any target.")
+
+// {T}, Sacrifice three artifacts: Search library for artifact to battlefield
+new ActivatedAbility(true, null,
+    List.of(new SacrificeMultiplePermanentsCost(3, new PermanentIsArtifactPredicate()),
+            new SearchLibraryForCardTypesToBattlefieldEffect(Set.of(CardType.ARTIFACT), false, false)),
+    "{T}, Sacrifice three artifacts: Search your library for an artifact card, put it onto the battlefield, then shuffle.")
 ```
 
-Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon`, `BloodfireColossus`, `BarrageOgre`
+Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon`, `BloodfireColossus`, `BarrageOgre`, `KuldothaForgemaster`
 
 ---
 

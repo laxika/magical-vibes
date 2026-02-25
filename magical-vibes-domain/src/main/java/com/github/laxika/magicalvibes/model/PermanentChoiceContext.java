@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.List;
 import java.util.UUID;
@@ -45,4 +46,13 @@ public sealed interface PermanentChoiceContext {
     record AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
     record BounceOwnPermanentOrSacrificeSelf(UUID controllerId, UUID sourceCardId) implements PermanentChoiceContext {}
+
+    record ActivatedAbilitySacrificeMultiplePermanents(UUID activatingPlayerId,
+                                                       UUID sourcePermanentId,
+                                                       Integer abilityIndex,
+                                                       Integer xValue,
+                                                       UUID targetPermanentId,
+                                                       Zone targetZone,
+                                                       int remaining,
+                                                       PermanentPredicate filter) implements PermanentChoiceContext {}
 }

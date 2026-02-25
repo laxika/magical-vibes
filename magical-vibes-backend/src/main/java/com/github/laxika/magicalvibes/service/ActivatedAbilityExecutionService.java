@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
@@ -152,6 +153,7 @@ public class ActivatedAbilityExecutionService {
                     || effect instanceof SacrificeCreatureCost
                     || effect instanceof SacrificeSubtypeCreatureCost
                     || effect instanceof SacrificeArtifactCost
+                    || effect instanceof SacrificeMultiplePermanentsCost
                     || effect instanceof DiscardCardTypeCost
                     || effect instanceof RemoveCounterFromSourceCost
                     || effect instanceof RemoveChargeCountersFromSourceCost) {

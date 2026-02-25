@@ -94,6 +94,7 @@ Effects in the `ON_BECOMES_BLOCKED` slot can override `triggersPerBlocker()` to 
 | `SacrificeCreatureCost` | `()` | sacrifice a creature as cost |
 | `SacrificeSubtypeCreatureCost` | `(CardSubtype subtype)` | sacrifice a creature of specific subtype as cost |
 | `SacrificeArtifactCost` | `()` | sacrifice an artifact as cost (works for both activated abilities and spell costs) |
+| `SacrificeMultiplePermanentsCost` | `(int count, PermanentPredicate filter)` | sacrifice N permanents matching filter as cost (e.g. "Sacrifice three artifacts: ..." with `PermanentIsArtifactPredicate`). Multi-step UI: if exactly N match, auto-sacrifices all; otherwise prompts one-at-a-time. Validated and paid in `AbilityActivationService` |
 | `SacrificeAllCreaturesYouControlCost` | `()` | sacrifice all creatures you control as cost |
 | `DiscardCardTypeCost` | `(CardType requiredType)` | discard a card of specific type as cost |
 | `RemoveCounterFromSourceCost` | `()` | remove a counter from this permanent as cost (prefers -1/-1, then +1/+1) |
