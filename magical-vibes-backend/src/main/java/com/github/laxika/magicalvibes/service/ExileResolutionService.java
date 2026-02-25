@@ -7,7 +7,10 @@ import com.github.laxika.magicalvibes.model.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,6 +39,29 @@ public class ExileResolutionService {
                 gameData.id, target.getCard().getName(), entry.getCard().getName());
 
         permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    @HandlesEffect(ExileTargetPermanentAndReturnAtEndStepEffect.class)
+    void resolveExileTargetPermanentAndReturnAtEndStep(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        Card card = target.getOriginalCard();
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
+
+        gameHelper.removePermanentToExile(gameData, target);
+
+        String logEntry = card.getName() + " is exiled. It will return at the beginning of the next end step.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} exiles {}; will return at next end step",
+                gameData.id, entry.getCard().getName(), card.getName());
+
+        gameData.pendingExileReturns.add(new PendingExileReturn(card, ownerId));
+
+        gameHelper.removeOrphanedAuras(gameData);
     }
 
     @HandlesEffect(ExileSelfAndReturnAtEndStepEffect.class)
