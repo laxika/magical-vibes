@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfOnArtifactCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeOnColorSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -52,9 +52,8 @@ public class TriggerCollectionService {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)) {
                 CardEffect inner = effect instanceof MayEffect m ? m.wrapped() : effect;
 
-                if (inner instanceof GainLifeOnColorSpellCastEffect trigger
-                        && spellCard.getColor() != null
-                        && spellCard.getColor() == trigger.triggerColor()) {
+                if (inner instanceof GainLifeOnSpellCastEffect trigger
+                        && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) {
                     List<CardEffect> resolvedEffects = List.of(new GainLifeEffect(trigger.amount()));
 
                     if (effect instanceof MayEffect may) {

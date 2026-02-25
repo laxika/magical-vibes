@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GainLifeOnColorSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeOnSpellCastEffect;
+import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
@@ -33,9 +34,9 @@ class AngelsFeatherTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).getFirst())
                 .isInstanceOf(MayEffect.class);
         MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(GainLifeOnColorSpellCastEffect.class);
-        GainLifeOnColorSpellCastEffect effect = (GainLifeOnColorSpellCastEffect) mayEffect.wrapped();
-        assertThat(effect.triggerColor()).isEqualTo(CardColor.WHITE);
+        assertThat(mayEffect.wrapped()).isInstanceOf(GainLifeOnSpellCastEffect.class);
+        GainLifeOnSpellCastEffect effect = (GainLifeOnSpellCastEffect) mayEffect.wrapped();
+        assertThat(effect.spellFilter()).isEqualTo(new CardColorPredicate(CardColor.WHITE));
         assertThat(effect.amount()).isEqualTo(1);
     }
 
