@@ -3,6 +3,8 @@
 .gradle-local*
 magic-ruleset.txt
 nul
+**/.settings
+.project
 
 **/build
 

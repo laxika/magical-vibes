@@ -444,6 +444,7 @@ Pass `null` as filter to allow any card.
 |--------|-------------|--------|
 | `AnimateLandEffect` | `(int power, int toughness, List<CardSubtype> grantedSubtypes, Set<Keyword> grantedKeywords, CardColor animatedColor)` | land becomes creature until end of turn (manlands) |
 | `AnimateSelfEffect` | `(List<CardSubtype> grantedSubtypes)` | this permanent becomes a creature (e.g. Mutavault-style) |
+| `AnimateSelfWithStatsEffect` | `(int power, int toughness, List<CardSubtype> grantedSubtypes, Set<Keyword> grantedKeywords)` | this permanent becomes a creature with fixed P/T and keywords until end of turn (e.g. Glint Hawk Idol) |
 | `AnimateSelfByChargeCountersEffect` | `(List<CardSubtype> grantedSubtypes)` | becomes creature with P/T equal to charge counters until end of turn |
 | `AnimateNoncreatureArtifactsEffect` | `()` | animate all noncreature artifacts into creatures (March of the Machines-style) |
 

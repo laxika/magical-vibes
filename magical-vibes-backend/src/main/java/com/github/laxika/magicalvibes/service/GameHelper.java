@@ -807,6 +807,7 @@ public class GameHelper {
         }
 
         checkAllyCreatureEntersTriggers(gameData, controllerId, card);
+        checkAllyArtifactEntersTriggers(gameData, controllerId, card);
         checkAnyCreatureEntersTriggers(gameData, controllerId, card);
     }
 
@@ -896,6 +897,36 @@ public class GameHelper {
                     log.info("Game {} - {} triggers for {} entering (toughness={})",
                             gameData.id, perm.getCard().getName(), enteringCreature.getName(), toughness);
                 }
+            }
+}
+    }
+
+    void checkAllyArtifactEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
+        boolean isArtifact = enteringCard.getType() == CardType.ARTIFACT
+                || (enteringCard.getAdditionalTypes() != null && enteringCard.getAdditionalTypes().contains(CardType.ARTIFACT));
+        if (!isArtifact) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        for (Permanent perm : battlefield) {
+            if (perm.getCard() == enteringCard) continue;
+
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD);
+            if (effects == null || effects.isEmpty()) continue;
+
+            for (CardEffect effect : effects) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        controllerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        perm.getId()
+                ));
+                String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                log.info("Game {} - {} triggers for {} entering (ally artifact entered)",
+                        gameData.id, perm.getCard().getName(), enteringCard.getName());
             }
         }
     }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesXEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostFirstTargetCreatureEffect;
@@ -112,6 +113,28 @@ public class CreatureModResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} becomes a {}/{} creature", gameData.id, self.getCard().getName(), counters, counters);
+    }
+
+    @HandlesEffect(AnimateSelfWithStatsEffect.class)
+    private void resolveAnimateSelfWithStats(GameData gameData, StackEntry entry, AnimateSelfWithStatsEffect effect) {
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (self == null) {
+            return;
+        }
+
+        self.setAnimatedUntilEndOfTurn(true);
+        self.setAnimatedPower(effect.power());
+        self.setAnimatedToughness(effect.toughness());
+        self.getGrantedSubtypes().clear();
+        self.getGrantedSubtypes().addAll(effect.grantedSubtypes());
+        self.getGrantedKeywords().addAll(effect.grantedKeywords());
+
+        String logEntry = self.getCard().getName() + " becomes a " + effect.power() + "/" + effect.toughness()
+                + " artifact creature until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} becomes a {}/{} creature with {}",
+                gameData.id, self.getCard().getName(), effect.power(), effect.toughness(), effect.grantedKeywords());
     }
 
     @HandlesEffect(BoostSelfEffect.class)
