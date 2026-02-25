@@ -281,6 +281,7 @@ Pass `null` as filter to allow any card.
 | `GainLifeEqualToTargetToughnessEffect` | `()` | gain life equal to target creature's toughness |
 | `GainLifeEqualToToughnessEffect` | `()` | gain life equal to own toughness (self, e.g. dies trigger) |
 | `GainLifeEqualToDamageDealtEffect` | `()` | gain life equal to damage dealt (lifelink-style, static) |
+| `GainLifeEqualToChargeCountersOnSourceEffect` | `()` | gain life equal to number of charge counters on source (activated ability sacrifice effect) |
 | `GainLifeOnColorSpellCastEffect` | `(CardColor triggerColor, int amount)` | gain N life when a spell of that color is cast (trigger, wrap in MayEffect) |
 | `TargetPlayerGainsLifeEffect` | `(int amount)` | target player gains N life |
 | `DoubleTargetPlayerLifeEffect` | `()` | double target player's life total |

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesXLifeAndControllerGainsLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifePerCreatureControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForEachSubtypeOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
@@ -145,6 +146,27 @@ public class LifeResolutionService {
                 break;
             }
         }
+    }
+
+    @HandlesEffect(GainLifeEqualToChargeCountersOnSourceEffect.class)
+    private void resolveGainLifeEqualToChargeCounters(GameData gameData, StackEntry entry) {
+        int count = entry.getXValue();
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        if (count <= 0) {
+            String logEntry = playerName + " gains 0 life from " + entry.getCard().getName() + " (no charge counters).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} gains 0 life from {} (no charge counters)", gameData.id, playerName, entry.getCard().getName());
+            return;
+        }
+
+        int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+        gameData.playerLifeTotals.put(controllerId, currentLife + count);
+
+        String logEntry = playerName + " gains " + count + " life from " + entry.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} gains {} life from {}", gameData.id, playerName, count, entry.getCard().getName());
     }
 
     @HandlesEffect(DoubleTargetPlayerLifeEffect.class)
