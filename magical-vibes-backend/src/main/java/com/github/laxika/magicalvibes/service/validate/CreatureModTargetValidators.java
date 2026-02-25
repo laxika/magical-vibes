@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreaturePerCont
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentFromTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
@@ -57,5 +58,10 @@ public class CreatureModTargetValidators {
     public void validateTargetCreatureCantBlock(TargetValidationContext ctx) {
         Permanent target = tvs.requireBattlefieldTarget(ctx);
         tvs.requireCreature(ctx, target);
+    }
+
+    @ValidatesTarget(UnattachEquipmentFromTargetPermanentsEffect.class)
+    public void validateUnattachEquipmentFromTargetPermanents(TargetValidationContext ctx) {
+        tvs.requireBattlefieldTarget(ctx);
     }
 }

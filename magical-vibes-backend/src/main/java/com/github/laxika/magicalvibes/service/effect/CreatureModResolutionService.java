@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -26,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTu
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentFromTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAttackedCreaturesEffect;
@@ -411,6 +413,22 @@ public class CreatureModResolutionService {
 
     @HandlesEffect(TapTargetPermanentEffect.class)
     private void resolveTapTargetPermanent(GameData gameData, StackEntry entry) {
+        // Multi-target: tap each valid target
+        if (entry.getTargetPermanentIds() != null && !entry.getTargetPermanentIds().isEmpty()) {
+            for (UUID targetId : entry.getTargetPermanentIds()) {
+                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                if (target == null) {
+                    continue;
+                }
+                target.tap();
+                String logMsg = entry.getCard().getName() + " taps " + target.getCard().getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                log.info("Game {} - {} taps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
+            }
+            return;
+        }
+
+        // Single-target fallback
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
             return;
@@ -579,6 +597,32 @@ public class CreatureModResolutionService {
         String logEntry = target.getCard().getName() + " gets a -1/-1 counter.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gets a -1/-1 counter", gameData.id, target.getCard().getName());
+    }
+
+    @HandlesEffect(UnattachEquipmentFromTargetPermanentsEffect.class)
+    private void resolveUnattachEquipmentFromTargetPermanents(GameData gameData, StackEntry entry) {
+        if (entry.getTargetPermanentIds() == null || entry.getTargetPermanentIds().isEmpty()) {
+            return;
+        }
+
+        for (UUID targetId : entry.getTargetPermanentIds()) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                continue;
+            }
+
+            gameData.forEachPermanent((playerId, p) -> {
+                if (targetId.equals(p.getAttachedTo())
+                        && p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+                    p.setAttachedTo(null);
+                    String unattachLog = entry.getCard().getName() + " unattaches " + p.getCard().getName()
+                            + " from " + target.getCard().getName() + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, unattachLog);
+                    log.info("Game {} - {} unattaches {} from {}", gameData.id, entry.getCard().getName(),
+                            p.getCard().getName(), target.getCard().getName());
+                }
+            });
+        }
     }
 
     @HandlesEffect(ProliferateEffect.class)
