@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEff
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -95,6 +96,13 @@ public class MayAbilityHandlerService {
         boolean isSacrificeUnlessDiscard = ability.effects().stream().anyMatch(e -> e instanceof SacrificeUnlessDiscardCardTypeEffect);
         if (isSacrificeUnlessDiscard) {
             handleSacrificeUnlessDiscardChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Sacrifice-unless-return-own-permanent — handled via the may ability system
+        boolean isSacrificeUnlessReturnPermanent = ability.effects().stream().anyMatch(e -> e instanceof SacrificeUnlessReturnOwnPermanentTypeToHandEffect);
+        if (isSacrificeUnlessReturnPermanent) {
+            handleSacrificeUnlessReturnOwnPermanentChoice(gameData, player, accepted, ability);
             return;
         }
 
@@ -406,6 +414,76 @@ public class MayAbilityHandlerService {
             log.info("Game {} - {} declines, {} sacrificed", gameData.id, player.getUsername(), sourceCard.getName());
         } else {
             String logEntry = player.getUsername() + " declines to discard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} is no longer on the battlefield, decline is a no-op", gameData.id, sourceCard.getName());
+        }
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        playerInputService.processNextMayAbility(gameData);
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            gameData.priorityPassedBy.clear();
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+        }
+    }
+
+    private void handleSacrificeUnlessReturnOwnPermanentChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        SacrificeUnlessReturnOwnPermanentTypeToHandEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof SacrificeUnlessReturnOwnPermanentTypeToHandEffect)
+                .map(e -> (SacrificeUnlessReturnOwnPermanentTypeToHandEffect) e)
+                .findFirst().orElseThrow();
+
+        Card sourceCard = ability.sourceCard();
+        UUID controllerId = ability.controllerId();
+
+        // Find the source permanent on the battlefield
+        Permanent sourcePermanent = null;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (p.getCard().getId().equals(sourceCard.getId())) {
+                    sourcePermanent = p;
+                    break;
+                }
+            }
+        }
+
+        if (accepted) {
+            // Collect valid permanent IDs of the required type
+            List<UUID> validIds = new ArrayList<>();
+            if (battlefield != null) {
+                for (Permanent p : battlefield) {
+                    if (p.getCard().getType() == effect.permanentType()
+                            || p.getCard().getAdditionalTypes().contains(effect.permanentType())) {
+                        validIds.add(p.getId());
+                    }
+                }
+            }
+
+            if (!validIds.isEmpty()) {
+                String typeName = effect.permanentType().name().toLowerCase();
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.BounceOwnPermanentOrSacrificeSelf(controllerId, sourceCard.getId()));
+                playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
+                        "Choose an " + typeName + " to return to hand.");
+
+                String logEntry = player.getUsername() + " chooses to return an " + typeName + " to hand.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} accepts sacrifice-unless-return for {}", gameData.id, player.getUsername(), sourceCard.getName());
+                return;
+            }
+
+            // Battlefield changed since trigger — no valid permanents left, fall through to sacrifice
+        }
+
+        // Declined or no valid permanents left — sacrifice if still on the battlefield
+        if (sourcePermanent != null) {
+            permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
+            String logEntry = player.getUsername() + " declines to return a permanent. " + sourceCard.getName() + " is sacrificed.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines, {} sacrificed", gameData.id, player.getUsername(), sourceCard.getName());
+        } else {
+            String logEntry = player.getUsername() + " declines to return a permanent.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} is no longer on the battlefield, decline is a no-op", gameData.id, sourceCard.getName());
         }

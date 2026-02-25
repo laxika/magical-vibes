@@ -182,6 +182,34 @@ public class PermanentChoiceHandlerService {
             stateBasedActionService.performStateBasedActions(gameData);
 
             turnProgressionService.resolveAutoPass(gameData);
+        } else if (context instanceof PermanentChoiceContext.BounceOwnPermanentOrSacrificeSelf bounceOrSac) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+            if (target == null) {
+                throw new IllegalStateException("Target permanent no longer exists");
+            }
+
+            UUID controllerId = bounceOrSac.controllerId();
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield != null && battlefield.remove(target)) {
+                permanentRemovalService.removeOrphanedAuras(gameData);
+                UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
+                gameData.stolenCreatures.remove(target.getId());
+                List<Card> hand = gameData.playerHands.get(ownerId);
+                hand.add(target.getOriginalCard());
+
+                String logEntry = target.getCard().getName() + " is returned to its owner's hand.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} returned to owner's hand by bounce-or-sacrifice effect", gameData.id, target.getCard().getName());
+            }
+
+            stateBasedActionService.performStateBasedActions(gameData);
+
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                gameData.priorityPassedBy.clear();
+                gameBroadcastService.broadcastGameState(gameData);
+                turnProgressionService.resolveAutoPass(gameData);
+            }
         } else if (context instanceof PermanentChoiceContext.SpellRetarget retarget) {
             StackEntry targetSpell = null;
             for (StackEntry se : gameData.stack) {

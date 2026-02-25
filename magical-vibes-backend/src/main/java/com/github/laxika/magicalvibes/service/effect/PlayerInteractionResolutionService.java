@@ -22,7 +22,9 @@ import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
@@ -506,6 +508,59 @@ public class PlayerInteractionResolutionService {
                 sourceCard, controllerId, List.of(effect), prompt
         ));
     }
+
+    @HandlesEffect(SacrificeUnlessReturnOwnPermanentTypeToHandEffect.class)
+    private void resolveSacrificeUnlessReturnOwnPermanentType(GameData gameData, StackEntry entry, SacrificeUnlessReturnOwnPermanentTypeToHandEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        Card sourceCard = entry.getCard();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        // Find the source permanent on the battlefield
+        Permanent sourcePermanent = null;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (p.getCard().getId().equals(sourceCard.getId())) {
+                    sourcePermanent = p;
+                    break;
+                }
+            }
+        }
+
+        // Check if the controller has any permanents of the required type on the battlefield
+        boolean hasValidPermanent = false;
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (p.getCard().getType() == effect.permanentType()
+                        || p.getCard().getAdditionalTypes().contains(effect.permanentType())) {
+                    hasValidPermanent = true;
+                    break;
+                }
+            }
+        }
+
+        String typeName = effect.permanentType().name().toLowerCase();
+
+        if (!hasValidPermanent) {
+            if (sourcePermanent != null) {
+                permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
+                String logEntry = playerName + " controls no " + typeName
+                        + "s. " + sourceCard.getName() + " is sacrificed.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} sacrificed (no {}s to return)", gameData.id, sourceCard.getName(), typeName);
+            }
+            return;
+        }
+
+        // Has valid permanents — ask the controller via the may ability system
+        String prompt;
+        if (sourcePermanent != null) {
+            prompt = "Return an " + typeName + " you control to hand? If you don't, " + sourceCard.getName() + " will be sacrificed.";
+        } else {
+            prompt = sourceCard.getName() + " is no longer on the battlefield. Return an " + typeName + " you control to hand anyway?";
+        }
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                sourceCard, controllerId, List.of(effect), prompt
+        ));
+    }
 }
-
-

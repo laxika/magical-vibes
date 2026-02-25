@@ -78,6 +78,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `EachOpponentSacrificesCreatureEffect` | `()` | each opponent sacrifices a creature |
 | `SacrificeSelfEffect` | `()` | sacrifice this permanent |
 | `SacrificeUnlessDiscardCardTypeEffect` | `(CardType requiredType)` | sacrifice unless you discard a card of type (null = any) |
+| `SacrificeUnlessReturnOwnPermanentTypeToHandEffect` | `(CardType permanentType)` | sacrifice this permanent unless you return a permanent of the specified type you control to its owner's hand (ETB bounce-or-sacrifice, e.g. Glint Hawk) |
 | `SacrificeAtEndOfCombatEffect` | `()` | sacrifice at end of combat |
 
 ### Sacrifice costs (for activated abilities)
