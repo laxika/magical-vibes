@@ -492,6 +492,8 @@ Pass `null` as filter to allow any card.
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `CantCastSpellTypeEffect` | `(Set<CardType> restrictedTypes)` | controller can't cast spells of specified types (static) |
+| `CantSearchLibrariesEffect` | `()` | players can't search libraries; any player may pay {2} to ignore until end of turn (static, Leonin Arbiter) |
+| `SearchTaxPaymentEffect` | `()` | internal marker used in MayAbility system for Leonin Arbiter search tax payment prompt |
 | `LimitSpellsPerTurnEffect` | `(int maxSpells)` | each player can cast at most N spells per turn (static) |
 | `IncreaseOpponentCastCostEffect` | `(Set<CardType> affectedTypes, int amount)` | opponent's spells of types cost N more (static) |
 | `RequirePaymentToAttackEffect` | `(int amountPerAttacker)` | must pay N mana per attacking creature (static) |

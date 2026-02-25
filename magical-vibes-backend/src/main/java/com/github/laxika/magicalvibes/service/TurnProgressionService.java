@@ -473,6 +473,7 @@ public class TurnProgressionService {
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
         gameData.additionalCombatMainPhasePairs = 0;
         gameData.cleanupDiscardPending = false;
+        gameData.paidSearchTaxPermanentIds.clear();
 
         gameHelper.drainManaPools(gameData);
 
