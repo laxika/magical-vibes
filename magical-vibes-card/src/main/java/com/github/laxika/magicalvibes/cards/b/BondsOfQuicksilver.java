@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachedCreatureDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -15,6 +15,6 @@ public class BondsOfQuicksilver extends Card {
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
         ));
-        addEffect(EffectSlot.STATIC, new EnchantedCreatureDoesntUntapEffect());
+        addEffect(EffectSlot.STATIC, new AttachedCreatureDoesntUntapEffect());
     }
 }

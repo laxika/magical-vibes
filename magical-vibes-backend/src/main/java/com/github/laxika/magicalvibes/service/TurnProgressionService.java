@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachedCreatureDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
@@ -453,10 +453,10 @@ public class TurnProgressionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(nextActive);
         if (battlefield != null) {
             battlefield.forEach(p -> {
-                boolean hasAuraDoesntUntap = gameQueryService.hasAuraWithEffect(gameData, p, EnchantedCreatureDoesntUntapEffect.class);
+                boolean hasAttachedDoesntUntap = gameQueryService.hasAuraWithEffect(gameData, p, AttachedCreatureDoesntUntapEffect.class);
                 boolean hasSelfDoesntUntap = p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof DoesntUntapDuringUntapStepEffect);
-                if (!hasAuraDoesntUntap && !hasSelfDoesntUntap) {
+                if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap) {
                     p.untap();
                 }
                 p.setSummoningSick(false);

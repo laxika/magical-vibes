@@ -387,7 +387,7 @@ Pass `null` as filter to allow any card.
 | `UntapAttackedCreaturesEffect` | `()` | untap creatures that attacked this turn (end of combat) |
 | `TapCreaturesEffect` | `(Set<TargetFilter> filters)` | tap all creatures matching filters |
 | `DoesntUntapDuringUntapStepEffect` | `()` | this permanent doesn't untap during untap step (static) |
-| `EnchantedCreatureDoesntUntapEffect` | `()` | enchanted creature doesn't untap during untap step (static) |
+| `AttachedCreatureDoesntUntapEffect` | `()` | attached creature (aura or equipment) doesn't untap during untap step (static) |
 | `UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect` | `(TurnStep step)` | untap all your permanents during each other player's step |
 | `UntapEachOtherCreatureYouControlEffect` | `()` | untap each other creature you control (ON_ATTACK trigger) |
 | `UnattachEquipmentFromTargetPermanentsEffect` | `()` | unattach all equipment from target permanents (multi-target) |
