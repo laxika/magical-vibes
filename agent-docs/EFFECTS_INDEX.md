@@ -60,6 +60,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `DoubleDamageEffect` | `()` | double all damage dealt (static) |
 | `SacrificeOtherCreatureOrDamageEffect` | `(int damage)` | sacrifice another creature or take N damage (upkeep trigger) |
 | `DealDamageToAnyTargetOnArtifactCastEffect` | `(int manaCost, int damage)` | trigger descriptor: when you cast an artifact spell, may pay {N} to deal N damage to any target. Place in `ON_ANY_PLAYER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into `DealDamageToAnyTargetEffect` |
+| `DealDamageToAnyTargetOnSacrificeEffect` | `(int manaCost, int damage)` | trigger descriptor: when you sacrifice another permanent, may pay {N} to deal N damage to any target. Place in `ON_ALLY_PERMANENT_SACRIFICED` slot wrapped in `MayEffect`. Resolves into `DealDamageToAnyTargetEffect` |
 
 ## Destruction / sacrifice
 

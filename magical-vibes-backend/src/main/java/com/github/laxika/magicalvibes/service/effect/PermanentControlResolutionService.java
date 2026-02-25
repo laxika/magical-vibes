@@ -224,6 +224,7 @@ public class PermanentControlResolutionService {
         }
 
         if (gameHelper.removePermanentToGraveyard(gameData, self)) {
+            gameHelper.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId());
             String logEntry = self.getCard().getName() + " is sacrificed.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             gameHelper.removeOrphanedAuras(gameData);

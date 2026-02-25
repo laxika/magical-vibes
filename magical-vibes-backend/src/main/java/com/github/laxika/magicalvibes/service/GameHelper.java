@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffe
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnArtifactCastEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
@@ -988,6 +989,45 @@ public class GameHelper {
                 log.info("Game {} - {} triggers (ally creature died)", gameData.id, perm.getCard().getName());
             }
         }
+    }
+
+    public void checkAllyPermanentSacrificedTriggers(GameData gameData, UUID sacrificingPlayerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(sacrificingPlayerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : battlefield) {
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED);
+            if (effects == null || effects.isEmpty()) continue;
+
+            for (CardEffect effect : effects) {
+                CardEffect inner = effect instanceof MayEffect m ? m.wrapped() : effect;
+
+                if (inner instanceof DealDamageToAnyTargetOnSacrificeEffect trigger) {
+                    List<CardEffect> resolvedEffects = List.of(new DealDamageToAnyTargetEffect(trigger.damage()));
+
+                    if (effect instanceof MayEffect may) {
+                        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                                perm.getCard(),
+                                sacrificingPlayerId,
+                                resolvedEffects,
+                                perm.getCard().getName() + " — " + may.prompt(),
+                                null,
+                                "{" + trigger.manaCost() + "}"
+                        ));
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                sacrificingPlayerId,
+                                perm.getCard().getName() + "'s ability",
+                                new ArrayList<>(resolvedEffects)
+                        ));
+                    }
+                }
+            }
+        }
+
+        playerInputService.processNextMayAbility(gameData);
     }
 
     void checkAnyCreatureEntersTriggers(GameData gameData, UUID enteringCreatureControllerId, Card enteringCreature) {

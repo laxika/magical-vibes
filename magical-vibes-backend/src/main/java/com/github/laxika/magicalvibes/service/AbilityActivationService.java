@@ -150,6 +150,7 @@ public class AbilityActivationService {
         if (wasCreature) {
             gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
         }
+        gameHelper.checkAllyPermanentSacrificedTriggers(gameData, playerId);
         gameHelper.removeOrphanedAuras(gameData);
 
         String logEntry = player.getUsername() + " sacrifices " + permanent.getCard().getName() + ".";
@@ -380,6 +381,7 @@ public class AbilityActivationService {
             gameHelper.addCardToGraveyard(gameData, playerId, sacTarget.getCard(), Zone.BATTLEFIELD);
             gameHelper.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true);
             gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+            gameHelper.checkAllyPermanentSacrificedTriggers(gameData, playerId);
 
             String sacLog = player.getUsername() + " sacrifices " + sacTarget.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, sacLog);
@@ -610,6 +612,7 @@ public class AbilityActivationService {
             gameHelper.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true);
             gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
         }
+        gameHelper.checkAllyPermanentSacrificedTriggers(gameData, playerId);
         String sacLog = player.getUsername() + " sacrifices " + sacTarget.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, sacLog);
     }
@@ -624,6 +627,7 @@ public class AbilityActivationService {
         gameHelper.addCardToGraveyard(gameData, playerId, sacTarget.getCard(), Zone.BATTLEFIELD);
         gameHelper.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true);
         gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+        gameHelper.checkAllyPermanentSacrificedTriggers(gameData, playerId);
         String sacLog = player.getUsername() + " sacrifices " + sacTarget.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, sacLog);
     }
