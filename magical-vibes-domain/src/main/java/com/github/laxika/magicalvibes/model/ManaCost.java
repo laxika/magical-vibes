@@ -94,6 +94,51 @@ public class ManaCost {
         return remaining >= genericCost + additionalGenericCost;
     }
 
+    /**
+     * Calculates the maximum X value that can be paid with the given mana pool (unrestricted X).
+     * Returns 0 if the base cost (colored + generic) cannot be paid.
+     */
+    public int calculateMaxX(ManaPool pool) {
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            if (pool.get(entry.getKey()) < entry.getValue()) {
+                return 0;
+            }
+        }
+
+        int remaining = pool.getTotal();
+        for (int count : coloredCosts.values()) {
+            remaining -= count;
+        }
+
+        return Math.max(0, remaining - genericCost);
+    }
+
+    /**
+     * Calculates the maximum X value that can be paid with the given mana pool
+     * when X must be paid with a specific color (e.g., Consume Spirit requires {B} for X).
+     * Returns 0 if the base cost cannot be paid.
+     */
+    public int calculateMaxX(ManaPool pool, ManaColor xColorRestriction, int additionalGenericCost) {
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            if (pool.get(entry.getKey()) < entry.getValue()) {
+                return 0;
+            }
+        }
+
+        int restrictedAvailable = pool.get(xColorRestriction);
+        if (coloredCosts.containsKey(xColorRestriction)) {
+            restrictedAvailable -= coloredCosts.get(xColorRestriction);
+        }
+
+        int remaining = pool.getTotal();
+        for (int count : coloredCosts.values()) {
+            remaining -= count;
+        }
+
+        int maxFromGeneric = remaining - genericCost - additionalGenericCost;
+        return Math.max(0, Math.min(restrictedAvailable, maxFromGeneric));
+    }
+
     public void pay(ManaPool pool) {
         pay(pool, 0);
     }

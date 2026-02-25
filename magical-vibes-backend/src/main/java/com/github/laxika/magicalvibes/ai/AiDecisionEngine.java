@@ -295,10 +295,14 @@ public class AiDecisionEngine {
             }
 
             ManaCost cost = new ManaCost(card.getManaCost());
-            if (cost.canPay(virtualPool)) {
-                int score = scoreCard(gameData, card);
-                castableSpells.add(new int[]{i, score});
+            if (cost.hasX()) {
+                // For X spells, require at least X=1
+                if (!cost.canPay(virtualPool, 1)) continue;
+            } else {
+                if (!cost.canPay(virtualPool)) continue;
             }
+            int score = scoreCard(gameData, card);
+            castableSpells.add(new int[]{i, score});
         }
 
         if (castableSpells.isEmpty()) {
@@ -320,13 +324,26 @@ public class AiDecisionEngine {
             }
         }
 
-        // Tap lands to pay for it
-        tapLandsForCost(gameData, card.getManaCost());
+        // Calculate X value and tap lands
+        ManaCost castCost = new ManaCost(card.getManaCost());
+        Integer xValue = null;
+        if (castCost.hasX()) {
+            int smartX = calculateSmartX(gameData, card, targetId, virtualPool);
+            if (smartX <= 0) {
+                return false;
+            }
+            xValue = smartX;
+            tapLandsForXSpell(gameData, card, smartX);
+        } else {
+            tapLandsForCost(gameData, card.getManaCost());
+        }
 
-        log.info("AI: Casting {} in game {}", card.getName(), gameId);
+        log.info("AI: Casting {}{} in game {}", card.getName(),
+                xValue != null ? " (X=" + xValue + ")" : "", gameId);
         final UUID finalTargetId = targetId;
+        final Integer finalXValue = xValue;
         send(() -> messageHandler.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, null, finalTargetId, null, null, null, null)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null)));
         return true;
     }
 
@@ -406,6 +423,94 @@ public class AiDecisionEngine {
             // Re-read pool after tap (mutated in place)
             currentPool = gameData.playerManaPools.get(aiPlayer.getId());
             if (cost.canPay(currentPool)) {
+                return;
+            }
+        }
+    }
+
+    /**
+     * Calculates the maximum X value the AI can afford for an X spell, considering
+     * whether the card has a color restriction on X (e.g., Consume Spirit).
+     */
+    protected int calculateMaxAffordableX(Card card, ManaPool pool) {
+        ManaCost cost = new ManaCost(card.getManaCost());
+        if (card.getXColorRestriction() != null) {
+            return cost.calculateMaxX(pool, card.getXColorRestriction(), 0);
+        }
+        return cost.calculateMaxX(pool);
+    }
+
+    /**
+     * Calculates a "smart" X value: if targeting a creature, use just enough to kill it
+     * (saving remaining mana for other things). Otherwise, use the maximum X available.
+     */
+    protected int calculateSmartX(GameData gameData, Card card, UUID targetId, ManaPool virtualPool) {
+        int maxX = calculateMaxAffordableX(card, virtualPool);
+        if (maxX <= 0) {
+            return 0;
+        }
+
+        if (targetId != null) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target != null && gameQueryService.isCreature(gameData, target)) {
+                int toughness = gameQueryService.getEffectiveToughness(gameData, target);
+                return Math.min(toughness, maxX);
+            }
+        }
+
+        return maxX;
+    }
+
+    /**
+     * Taps lands to produce enough mana for an X spell with the given X value.
+     * Unlike tapLandsForCost which stops at the base cost, this taps enough for base + X.
+     */
+    protected void tapLandsForXSpell(GameData gameData, Card card, int xValue) {
+        ManaCost cost = new ManaCost(card.getManaCost());
+        ManaPool currentPool = gameData.playerManaPools.get(aiPlayer.getId());
+
+        boolean alreadyPaid;
+        if (card.getXColorRestriction() != null) {
+            alreadyPaid = cost.canPay(currentPool, xValue, card.getXColorRestriction(), 0);
+        } else {
+            alreadyPaid = cost.canPay(currentPool, xValue);
+        }
+        if (alreadyPaid) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
+        if (battlefield == null) {
+            return;
+        }
+
+        for (int i = 0; i < battlefield.size(); i++) {
+            Permanent perm = battlefield.get(i);
+            if (perm.isTapped()) {
+                continue;
+            }
+            if (gameQueryService.isCreature(gameData, perm) && perm.isSummoningSick()
+                    && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) {
+                continue;
+            }
+
+            boolean producesMana = perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
+                    .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect);
+            if (!producesMana) {
+                continue;
+            }
+
+            final int idx = i;
+            send(() -> messageHandler.handleTapPermanent(selfConnection, new TapPermanentRequest(idx)));
+
+            currentPool = gameData.playerManaPools.get(aiPlayer.getId());
+            boolean canPayNow;
+            if (card.getXColorRestriction() != null) {
+                canPayNow = cost.canPay(currentPool, xValue, card.getXColorRestriction(), 0);
+            } else {
+                canPayNow = cost.canPay(currentPool, xValue);
+            }
+            if (canPayNow) {
                 return;
             }
         }

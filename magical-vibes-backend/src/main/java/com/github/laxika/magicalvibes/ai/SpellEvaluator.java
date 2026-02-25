@@ -4,6 +4,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -13,8 +17,12 @@ import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesXLifeAndControllerGainsLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -221,6 +229,29 @@ public class SpellEvaluator {
             return (boost.powerBoost() * 2.0 + boost.toughnessBoost());
         }
 
+        // X-damage effects
+        if (effect instanceof DealXDamageToAnyTargetEffect) {
+            int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
+            if (estimatedX <= 0) return 0;
+            return evaluateDamageEffect(gameData, estimatedX, oppBattlefield, opponentId, aiPlayerId);
+        }
+        if (effect instanceof DealXDamageToAnyTargetAndGainXLifeEffect) {
+            int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
+            if (estimatedX <= 0) return 0;
+            return evaluateDamageEffect(gameData, estimatedX, oppBattlefield, opponentId, aiPlayerId)
+                    + estimatedX * 0.5;
+        }
+        if (effect instanceof DealXDamageToTargetCreatureEffect) {
+            int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
+            if (estimatedX <= 0) return 0;
+            return evaluateDamageToCreature(gameData, estimatedX, oppBattlefield, opponentId, aiPlayerId);
+        }
+        if (effect instanceof EachOpponentLosesXLifeAndControllerGainsLifeLostEffect) {
+            int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
+            if (estimatedX <= 0) return 0;
+            return estimatedX * 1.5 + estimatedX * 0.5; // drain value
+        }
+
         return 0;
     }
 
@@ -333,6 +364,45 @@ public class SpellEvaluator {
                 .mapToDouble(p -> boardEvaluator.creatureScore(gameData, p, controllerId, opponentId))
                 .max()
                 .orElse(0);
+    }
+
+    /**
+     * Estimates the maximum X value the AI could afford for an X spell by building
+     * a virtual mana pool from the current pool + all untapped mana sources.
+     */
+    private int estimateMaxX(GameData gameData, Card card, UUID playerId) {
+        if (card.getManaCost() == null) return 0;
+        ManaCost cost = new ManaCost(card.getManaCost());
+        if (!cost.hasX()) return 0;
+
+        ManaPool virtualPool = new ManaPool();
+        ManaPool currentPool = gameData.playerManaPools.get(playerId);
+        if (currentPool != null) {
+            for (ManaColor color : ManaColor.values()) {
+                for (int i = 0; i < currentPool.get(color); i++) {
+                    virtualPool.add(color);
+                }
+            }
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
+        for (Permanent perm : battlefield) {
+            if (perm.isTapped()) continue;
+            if (gameQueryService.isCreature(gameData, perm) && perm.isSummoningSick()
+                    && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) continue;
+            for (CardEffect manaEffect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
+                if (manaEffect instanceof com.github.laxika.magicalvibes.model.effect.AwardManaEffect me) {
+                    virtualPool.add(me.color());
+                } else if (manaEffect instanceof com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect) {
+                    virtualPool.add(ManaColor.COLORLESS);
+                }
+            }
+        }
+
+        if (card.getXColorRestriction() != null) {
+            return cost.calculateMaxX(virtualPool, card.getXColorRestriction(), 0);
+        }
+        return cost.calculateMaxX(virtualPool);
     }
 
     private UUID getOpponentId(GameData gameData, UUID playerId) {

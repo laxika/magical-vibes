@@ -105,7 +105,11 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             if (card.getManaCost() == null) continue;
 
             ManaCost cost = new ManaCost(card.getManaCost());
-            if (!cost.canPay(virtualPool)) continue;
+            if (cost.hasX()) {
+                if (!cost.canPay(virtualPool, 1)) continue;
+            } else {
+                if (!cost.canPay(virtualPool)) continue;
+            }
 
             double value = spellEvaluator.estimateSpellValue(gameData, card, aiPlayer.getId());
             if (value > 0) {
@@ -131,14 +135,28 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
-        tapLandsForCost(gameData, card.getManaCost());
+        // Calculate X value and tap lands
+        ManaCost castCost = new ManaCost(card.getManaCost());
+        Integer xValue = null;
+        if (castCost.hasX()) {
+            int smartX = calculateSmartX(gameData, card, targetId, virtualPool);
+            if (smartX <= 0) {
+                return false;
+            }
+            xValue = smartX;
+            tapLandsForXSpell(gameData, card, smartX);
+        } else {
+            tapLandsForCost(gameData, card.getManaCost());
+        }
 
-        log.info("AI (Medium): Casting {} (value={}) in game {}", card.getName(),
+        log.info("AI (Medium): Casting {}{} (value={}) in game {}", card.getName(),
+                xValue != null ? " (X=" + xValue + ")" : "",
                 String.format("%.1f", best.value), gameId);
         final UUID finalTargetId = targetId;
         final int cardIndex = best.index;
+        final Integer finalXValue = xValue;
         send(() -> messageHandler.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, null, finalTargetId, null, null, null, null)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null)));
         return true;
     }
 

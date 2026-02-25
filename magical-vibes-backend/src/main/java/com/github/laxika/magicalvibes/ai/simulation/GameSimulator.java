@@ -266,14 +266,23 @@ public class GameSimulator {
                         if (card.getType() == CardType.INSTANT) continue;
                         if (card.getManaCost() == null) continue;
                         ManaCost cost = new ManaCost(card.getManaCost());
-                        if (!cost.canPay(virtualPool)) continue;
+                        if (cost.hasX()) {
+                            if (!cost.canPay(virtualPool, 1)) continue;
+                        } else {
+                            if (!cost.canPay(virtualPool)) continue;
+                        }
                         // For targeted spells, try to find a target
                         UUID targetId = null;
                         if (card.isNeedsTarget() || card.isAura()) {
                             targetId = findBestTarget(gd, card, playerId);
                             if (targetId == null) continue; // no valid target
                         }
-                        actions.add(new SimulationAction.PlayCard(i, targetId));
+                        int xValue = 0;
+                        if (cost.hasX()) {
+                            xValue = calculateSmartX(gd, card, targetId, virtualPool);
+                            if (xValue <= 0) continue;
+                        }
+                        actions.add(new SimulationAction.PlayCard(i, targetId, xValue));
                     }
                 }
             }
@@ -365,8 +374,8 @@ public class GameSimulator {
             synchronized (gd) {
                 switch (action) {
                     case SimulationAction.PlayCard pc -> {
-                        tapLandsForCard(gd, playerId, gd.playerHands.get(playerId).get(pc.handIndex()));
-                        gameService.playCard(gd, player, pc.handIndex(), 0, pc.targetPermanentId(), null);
+                        tapLandsForCard(gd, playerId, gd.playerHands.get(playerId).get(pc.handIndex()), pc.xValue());
+                        gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetPermanentId(), null);
                     }
                     case SimulationAction.PassPriority ignored ->
                             gameService.passPriority(gd, player);
@@ -673,11 +682,18 @@ public class GameSimulator {
         return virtual;
     }
 
-    private void tapLandsForCard(GameData gd, UUID playerId, Card card) {
+    private void tapLandsForCard(GameData gd, UUID playerId, Card card, int xValue) {
         if (card.getManaCost() == null) return;
         ManaCost cost = new ManaCost(card.getManaCost());
         ManaPool currentPool = gd.playerManaPools.get(playerId);
-        if (cost.canPay(currentPool)) return;
+
+        boolean alreadyPaid;
+        if (cost.hasX() && card.getXColorRestriction() != null) {
+            alreadyPaid = cost.canPay(currentPool, xValue, card.getXColorRestriction(), 0);
+        } else {
+            alreadyPaid = cost.canPay(currentPool, xValue);
+        }
+        if (alreadyPaid) return;
 
         Player player = new Player(playerId, "sim");
         List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
@@ -691,8 +707,37 @@ public class GameSimulator {
             if (!producesMana) continue;
             gameService.tapPermanent(gd, player, i);
             currentPool = gd.playerManaPools.get(playerId);
-            if (cost.canPay(currentPool)) return;
+            boolean canPayNow;
+            if (cost.hasX() && card.getXColorRestriction() != null) {
+                canPayNow = cost.canPay(currentPool, xValue, card.getXColorRestriction(), 0);
+            } else {
+                canPayNow = cost.canPay(currentPool, xValue);
+            }
+            if (canPayNow) return;
         }
+    }
+
+    private int calculateSmartX(GameData gd, Card card, UUID targetId, ManaPool virtualPool) {
+        ManaCost cost = new ManaCost(card.getManaCost());
+        int maxX;
+        if (card.getXColorRestriction() != null) {
+            maxX = cost.calculateMaxX(virtualPool, card.getXColorRestriction(), 0);
+        } else {
+            maxX = cost.calculateMaxX(virtualPool);
+        }
+        if (maxX <= 0) {
+            return 0;
+        }
+
+        if (targetId != null) {
+            Permanent target = gameQueryService.findPermanentById(gd, targetId);
+            if (target != null && gameQueryService.isCreature(gd, target)) {
+                int toughness = gameQueryService.getEffectiveToughness(gd, target);
+                return Math.min(toughness, maxX);
+            }
+        }
+
+        return maxX;
     }
 
     private UUID findBestTarget(GameData gd, Card card, UUID playerId) {

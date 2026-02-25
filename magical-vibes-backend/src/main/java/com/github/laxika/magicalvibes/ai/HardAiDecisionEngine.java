@@ -102,7 +102,11 @@ public class HardAiDecisionEngine extends MediumAiDecisionEngine {
             if (card.getType() == CardType.LAND || card.getType() == CardType.INSTANT) continue;
             if (card.getManaCost() == null) continue;
             ManaCost cost = new ManaCost(card.getManaCost());
-            if (cost.canPay(virtualPool)) castableCount++;
+            if (cost.hasX()) {
+                if (cost.canPay(virtualPool, 1)) castableCount++;
+            } else {
+                if (cost.canPay(virtualPool)) castableCount++;
+            }
         }
 
         // If 0-1 options, use Medium AI logic (no need for MCTS)
@@ -116,12 +120,25 @@ public class HardAiDecisionEngine extends MediumAiDecisionEngine {
 
             if (bestAction instanceof SimulationAction.PlayCard pc) {
                 Card card = hand.get(pc.handIndex());
-                tapLandsForCost(gameData, card.getManaCost());
-                log.info("AI (Hard/MCTS): Casting {} in game {}", card.getName(), gameId);
+                ManaCost castCost = new ManaCost(card.getManaCost());
+                Integer xValue = null;
+                if (castCost.hasX()) {
+                    int smartX = calculateSmartX(gameData, card, pc.targetPermanentId(), virtualPool);
+                    if (smartX <= 0) {
+                        return false;
+                    }
+                    xValue = smartX;
+                    tapLandsForXSpell(gameData, card, smartX);
+                } else {
+                    tapLandsForCost(gameData, card.getManaCost());
+                }
+                log.info("AI (Hard/MCTS): Casting {}{} in game {}", card.getName(),
+                        xValue != null ? " (X=" + xValue + ")" : "", gameId);
                 final int cardIndex = pc.handIndex();
                 final UUID targetId = pc.targetPermanentId();
+                final Integer finalXValue = xValue;
                 send(() -> messageHandler.handlePlayCard(selfConnection,
-                        new PlayCardRequest(cardIndex, null, targetId, null, null, null, null)));
+                        new PlayCardRequest(cardIndex, finalXValue, targetId, null, null, null, null)));
                 return true;
             }
 

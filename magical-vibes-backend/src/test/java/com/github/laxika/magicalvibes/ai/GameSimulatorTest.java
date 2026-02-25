@@ -78,7 +78,7 @@ class GameSimulatorTest {
 
         // Apply action to a copy
         GameData copy = gd.deepCopy();
-        simulator.applyAction(copy, player1.getId(), new SimulationAction.PlayCard(0, null));
+        simulator.applyAction(copy, player1.getId(), new SimulationAction.PlayCard(0, null, 0));
 
         // Original unchanged
         assertThat(gd.playerHands.get(player1.getId())).hasSize(origHandSize);

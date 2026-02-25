@@ -9,7 +9,7 @@ import java.util.UUID;
  */
 public sealed interface SimulationAction {
 
-    record PlayCard(int handIndex, UUID targetPermanentId) implements SimulationAction {}
+    record PlayCard(int handIndex, UUID targetPermanentId, int xValue) implements SimulationAction {}
 
     record PassPriority() implements SimulationAction {}
 
