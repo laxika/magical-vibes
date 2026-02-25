@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +41,7 @@ public class SpellCastingService {
     private final TargetLegalityService targetLegalityService;
 
     void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments,
-                  List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard) {
+                  List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (targetPermanentIds == null) targetPermanentIds = List.of();
         if (convokeCreatureIds == null) convokeCreatureIds = List.of();
@@ -97,6 +98,11 @@ public class SpellCastingService {
                 .anyMatch(e -> e instanceof SacrificeAllCreaturesYouControlCost);
         if (usesSacrificeAllCreaturesCost) {
             filteredSpellEffects.removeIf(SacrificeAllCreaturesYouControlCost.class::isInstance);
+        }
+        boolean usesSacrificeCreatureCost = filteredSpellEffects.stream()
+                .anyMatch(e -> e instanceof SacrificeCreatureCost);
+        if (usesSacrificeCreatureCost) {
+            filteredSpellEffects.removeIf(SacrificeCreatureCost.class::isInstance);
         }
 
         // For X-cost spells, validate that player can pay colored + generic + xValue + any cost increases
@@ -252,6 +258,9 @@ public class SpellCastingService {
         } else if (card.getType() == CardType.SORCERY) {
             int resolvedXValue = effectiveXValue;
             paySpellManaCost(gameData, playerId, card, resolvedXValue, convokeContributions);
+            if (usesSacrificeCreatureCost) {
+                paySacrificeCreatureCost(gameData, player, card, sacrificePermanentId);
+            }
             if (usesSacrificeAllCreaturesCost) {
                 resolvedXValue = paySacrificeAllCreaturesYouControlCost(
                         gameData, player, card
@@ -292,6 +301,9 @@ public class SpellCastingService {
         } else if (card.getType() == CardType.INSTANT) {
             int resolvedXValue = effectiveXValue;
             paySpellManaCost(gameData, playerId, card, resolvedXValue, convokeContributions);
+            if (usesSacrificeCreatureCost) {
+                paySacrificeCreatureCost(gameData, player, card, sacrificePermanentId);
+            }
             if (usesSacrificeAllCreaturesCost) {
                 resolvedXValue = paySacrificeAllCreaturesYouControlCost(
                         gameData, player, card
@@ -366,6 +378,28 @@ public class SpellCastingService {
             }
         }
         return Math.max(0, totalPower);
+    }
+
+    private void paySacrificeCreatureCost(GameData gameData, Player player, Card sourceCard, UUID sacrificePermanentId) {
+        if (sacrificePermanentId == null) {
+            throw new IllegalStateException("Must sacrifice a creature to cast " + sourceCard.getName());
+        }
+        Permanent toSacrifice = gameQueryService.findPermanentById(gameData, sacrificePermanentId);
+        if (toSacrifice == null) {
+            throw new IllegalStateException("Sacrifice target not found on battlefield");
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, sacrificePermanentId);
+        if (!player.getId().equals(controllerId)) {
+            throw new IllegalStateException("Can only sacrifice creatures you control");
+        }
+        if (!gameQueryService.isCreature(gameData, toSacrifice)) {
+            throw new IllegalStateException("Sacrifice target must be a creature");
+        }
+        if (gameHelper.removePermanentToGraveyard(gameData, toSacrifice)) {
+            String logEntry = player.getUsername() + " sacrifices " + toSacrifice.getCard().getName()
+                    + " for " + sourceCard.getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        }
     }
 
     void paySpellManaCost(GameData gameData, UUID playerId, Card card, int effectiveXValue, List<ManaColor> convokeContributions) {

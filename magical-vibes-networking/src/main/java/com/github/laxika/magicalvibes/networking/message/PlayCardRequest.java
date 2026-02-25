@@ -5,5 +5,6 @@ import java.util.Map;
 import java.util.UUID;
 
 public record PlayCardRequest(int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments,
-                              List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, Boolean fromGraveyard) {
+                              List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, Boolean fromGraveyard,
+                              UUID sacrificePermanentId) {
 }

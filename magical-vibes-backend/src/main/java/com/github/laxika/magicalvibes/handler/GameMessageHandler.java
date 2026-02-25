@@ -344,7 +344,7 @@ public class GameMessageHandler implements MessageHandler {
             gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetPermanentId(), request.damageAssignments(),
                     request.targetPermanentIds() != null ? request.targetPermanentIds() : java.util.List.of(),
                     request.convokeCreatureIds() != null ? request.convokeCreatureIds() : java.util.List.of(),
-                    Boolean.TRUE.equals(request.fromGraveyard()));
+                    Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

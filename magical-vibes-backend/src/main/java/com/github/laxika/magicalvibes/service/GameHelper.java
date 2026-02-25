@@ -214,6 +214,7 @@ public class GameHelper {
                 gameData.stolenCreatures.remove(target.getId());
                 collectDeathTrigger(gameData, target.getCard(), playerId, wasCreature);
                 if (wasCreature) {
+                    gameData.creatureDeathCountThisTurn.merge(playerId, 1, Integer::sum);
                     checkAllyCreatureDeathTriggers(gameData, playerId);
                 }
                 return true;

@@ -50,6 +50,8 @@ public class GameData {
     public final List<StackEntry> stack = Collections.synchronizedList(new ArrayList<>());
     public final Map<UUID, List<Card>> playerGraveyards = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> creatureCardsPutIntoGraveyardFromBattlefieldThisTurn = new ConcurrentHashMap<>();
+    /** Counts all creature deaths (including tokens) from battlefield this turn, per controller. */
+    public final Map<UUID, Integer> creatureDeathCountThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> creatureCardsDamagedThisTurnBySourcePermanent = new ConcurrentHashMap<>();
     public final Map<UUID, List<Card>> playerExiledCards = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
@@ -224,6 +226,7 @@ public class GameData {
             s.addAll(v);
             copy.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.put(k, s);
         });
+        copy.creatureDeathCountThisTurn.putAll(this.creatureDeathCountThisTurn);
         this.creatureCardsDamagedThisTurnBySourcePermanent.forEach((k, v) -> {
             Set<UUID> s = ConcurrentHashMap.newKeySet();
             s.addAll(v);

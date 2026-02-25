@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainLifeEqualToToughnessEffect;
@@ -126,6 +127,52 @@ public class DestructionResolutionService {
                 gameData.id, target.getCard().getName(), entry.getCard().getName());
 
         gameHelper.removeOrphanedAuras(gameData);
+    }
+
+    @HandlesEffect(DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect.class)
+    void resolveDestroyTargetAndControllerLosesLifePerCreatureDeaths(GameData gameData, StackEntry entry,
+                                                                     DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        // Find the controller before destruction
+        UUID targetControllerId = gameQueryService.findPermanentController(gameData, entry.getTargetPermanentId());
+        if (targetControllerId == null) {
+            return;
+        }
+
+        // Destroy the target creature
+        if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
+            String logEntry = target.getCard().getName() + " is indestructible.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else if (gameQueryService.isCreature(gameData, target) && gameHelper.tryRegenerate(gameData, target)) {
+            // Regenerated — not destroyed
+        } else {
+            gameHelper.removePermanentToGraveyard(gameData, target);
+            String logEntry = target.getCard().getName() + " is destroyed.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameHelper.removeOrphanedAuras(gameData);
+        }
+
+        // Count ALL creatures that died this turn (across all players, including tokens)
+        int totalDeaths = 0;
+        for (int count : gameData.creatureDeathCountThisTurn.values()) {
+            totalDeaths += count;
+        }
+
+        if (totalDeaths > 0) {
+            int currentLife = gameData.playerLifeTotals.getOrDefault(targetControllerId, 20);
+            gameData.playerLifeTotals.put(targetControllerId, currentLife - totalDeaths);
+
+            String playerName = gameData.playerIdToName.get(targetControllerId);
+            String lifeLog = playerName + " loses " + totalDeaths + " life (" + entry.getCard().getName() + ").";
+            gameBroadcastService.logAndBroadcast(gameData, lifeLog);
+            log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, totalDeaths, entry.getCard().getName());
+        }
+
+        gameHelper.checkWinCondition(gameData);
     }
 
     @HandlesEffect(DestroyTargetLandAndDamageControllerEffect.class)

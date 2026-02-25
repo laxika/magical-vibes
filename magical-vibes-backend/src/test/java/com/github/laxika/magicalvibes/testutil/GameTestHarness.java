@@ -323,6 +323,10 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetPermanentIds, List.of());
     }
 
+    public void castSorceryWithSacrifice(Player player, int cardIndex, UUID targetPermanentId, UUID sacrificePermanentId) {
+        gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null, List.of(), List.of(), false, sacrificePermanentId);
+    }
+
     public void castInstant(Player player, int cardIndex) {
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }
