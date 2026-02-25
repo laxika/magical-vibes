@@ -86,11 +86,7 @@ class GoldenUrnTest extends BaseCardTest {
 
         assertThat(urn.getChargeCounters()).isEqualTo(1);
 
-        // Move through turn to next upkeep
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        // Second upkeep - add counter
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
