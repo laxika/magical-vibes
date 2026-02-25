@@ -92,6 +92,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `SacrificeAllCreaturesYouControlCost` | `()` | sacrifice all creatures you control as cost |
 | `DiscardCardTypeCost` | `(CardType requiredType)` | discard a card of specific type as cost |
 | `RemoveCounterFromSourceCost` | `()` | remove a counter from this permanent as cost (prefers -1/-1, then +1/+1) |
+| `RemoveChargeCountersFromSourceCost` | `(int count)` | remove N charge counters from source as cost (e.g. "Remove three charge counters: ..."). Validated and paid in `AbilityActivationService` |
 
 ## Counter spells
 
@@ -335,6 +336,7 @@ Pass `null` as filter to allow any card.
 | `EnterWithXChargeCountersEffect` | `()` | enters battlefield with X charge counters (replacement effect, reads X from spell cast) |
 | `PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect` | `()` | put a -1/-1 counter on each creature target player controls (targets player) |
 | `PutChargeCounterOnSelfEffect` | `()` | put a charge counter on this permanent (self-target, used as activated ability effect) |
+| `PutChargeCounterOnSelfOnArtifactCastEffect` | `()` | trigger descriptor: when you cast an artifact spell, put a charge counter on this permanent. Place in `ON_ANY_PLAYER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into `PutChargeCounterOnSelfEffect` |
 | `PutMinusOneMinusOneCounterOnTargetCreatureEffect` | `()` | put a -1/-1 counter on target creature (targets permanent) |
 | `ProliferateEffect` | `()` | proliferate: choose any number of permanents with counters, add one of each counter type already there |
 

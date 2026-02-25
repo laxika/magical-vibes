@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -327,6 +328,18 @@ public class AbilityActivationService {
             }
         }
 
+        // Validate and pay remove-charge-counter cost
+        Optional<RemoveChargeCountersFromSourceCost> removeChargeCost = abilityEffects.stream()
+                .filter(e -> e instanceof RemoveChargeCountersFromSourceCost)
+                .map(e -> (RemoveChargeCountersFromSourceCost) e)
+                .findFirst();
+        if (removeChargeCost.isPresent()) {
+            int required = removeChargeCost.get().count();
+            if (permanent.getChargeCounters() < required) {
+                throw new IllegalStateException("Not enough charge counters (need " + required + ", have " + permanent.getChargeCounters() + ")");
+            }
+        }
+
         // Pay mana cost
         if (abilityCost != null) {
             payManaCost(gameData, playerId, abilityCost, effectiveXValue);
@@ -347,6 +360,15 @@ public class AbilityActivationService {
                 String counterLog = player.getUsername() + " removes a +1/+1 counter from " + permanent.getCard().getName() + ".";
                 gameBroadcastService.logAndBroadcast(gameData, counterLog);
             }
+        }
+
+        // Pay remove-charge-counter cost
+        if (removeChargeCost.isPresent()) {
+            int required = removeChargeCost.get().count();
+            permanent.setChargeCounters(permanent.getChargeCounters() - required);
+            String counterLog = player.getUsername() + " removes " + required + " charge counter(s) from " + permanent.getCard().getName()
+                    + " (" + permanent.getChargeCounters() + " remaining).";
+            gameBroadcastService.logAndBroadcast(gameData, counterLog);
         }
         if (sacSubtypeCost.isPresent()) {
             if (handleSubtypeSacrificeCostSelection(gameData, player, permanent, effectiveIndex, effectiveXValue,
@@ -831,7 +853,8 @@ public class AbilityActivationService {
                         && !(e instanceof SacrificeSubtypeCreatureCost)
                         && !(e instanceof SacrificeArtifactCost)
                         && !(e instanceof DiscardCardTypeCost)
-                        && !(e instanceof RemoveCounterFromSourceCost))
+                        && !(e instanceof RemoveCounterFromSourceCost)
+                        && !(e instanceof RemoveChargeCountersFromSourceCost))
                 .toList();
         return !effects.isEmpty() && effects.stream().allMatch(e ->
                 e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof DoubleManaPoolEffect);

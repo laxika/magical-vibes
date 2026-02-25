@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnArtifactCastEffect;
+import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfOnArtifactCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeOnColorSpellCastEffect;
@@ -116,6 +118,29 @@ public class TriggerCollectionService {
                                 playerId,
                                 perm.getCard().getName() + "'s ability",
                                 new ArrayList<>(resolvedEffects)
+                        ));
+                    }
+                } else if (inner instanceof PutChargeCounterOnSelfOnArtifactCastEffect
+                        && spellCard.getType() == CardType.ARTIFACT
+                        && playerId.equals(castingPlayerId)) {
+                    List<CardEffect> resolvedEffects = List.of(new PutChargeCounterOnSelfEffect());
+
+                    if (effect instanceof MayEffect may) {
+                        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                                perm.getCard(),
+                                playerId,
+                                resolvedEffects,
+                                perm.getCard().getName() + " — " + may.prompt()
+                        ));
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s ability",
+                                new ArrayList<>(resolvedEffects),
+                                null,
+                                perm.getId()
                         ));
                     }
                 }
