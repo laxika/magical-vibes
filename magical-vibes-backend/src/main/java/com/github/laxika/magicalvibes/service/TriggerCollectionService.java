@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnArtifactCastEffect;
+import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfOnArtifactCastEffect;
@@ -163,6 +164,16 @@ public class TriggerCollectionService {
                         entry.setTargetPermanentId(opponentId);
                         gameData.stack.add(entry);
                     }
+                } else if (inner instanceof ProliferateEffect
+                        && playerId.equals(castingPlayerId)) {
+                    List<CardEffect> resolvedEffects = List.of(new ProliferateEffect());
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            playerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(resolvedEffects)
+                    ));
                 }
             }
         });
