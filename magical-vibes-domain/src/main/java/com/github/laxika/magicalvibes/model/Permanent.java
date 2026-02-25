@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,6 +44,7 @@ public class Permanent {
     @Setter private boolean loyaltyAbilityUsedThisTurn;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
     private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
+    private final Set<CardType> grantedCardTypes = EnumSet.noneOf(CardType.class);
     private final List<TextReplacement> textReplacements = new ArrayList<>();
     private final Set<UUID> cantBlockIds = new HashSet<>();
 
@@ -92,6 +94,7 @@ public class Permanent {
         this.loyaltyAbilityUsedThisTurn = source.loyaltyAbilityUsedThisTurn;
         this.grantedKeywords.addAll(source.grantedKeywords);
         this.grantedSubtypes.addAll(source.grantedSubtypes);
+        this.grantedCardTypes.addAll(source.grantedCardTypes);
         this.textReplacements.addAll(source.textReplacements);
         this.cantBlockIds.addAll(source.cantBlockIds);
     }
@@ -177,6 +180,7 @@ public class Permanent {
         this.animatedColor = null;
         this.grantedKeywords.clear();
         this.grantedSubtypes.clear();
+        this.grantedCardTypes.clear();
         this.cantBlockIds.clear();
     }
 }

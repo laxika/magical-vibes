@@ -241,8 +241,7 @@ public class DestructionResolutionService {
         long artifactCount = 0;
         if (controllerBattlefield != null) {
             artifactCount = controllerBattlefield.stream()
-                    .filter(p -> p.getCard().getType() == CardType.ARTIFACT
-                            || p.getCard().getAdditionalTypes().contains(CardType.ARTIFACT))
+                    .filter(gameQueryService::isArtifact)
                     .count();
         }
         int count = artifactCount >= 3 ? effect.metalcraftCount() : effect.baseCount();

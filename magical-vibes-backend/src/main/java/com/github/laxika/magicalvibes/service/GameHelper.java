@@ -488,7 +488,8 @@ public class GameHelper {
         gameData.forEachPermanent((playerId, p) -> {
             if (p.getPowerModifier() != 0 || p.getToughnessModifier() != 0 || !p.getGrantedKeywords().isEmpty()
                     || p.getDamagePreventionShield() != 0 || p.getRegenerationShield() != 0 || p.isCantBeBlocked()
-                    || p.isAnimatedUntilEndOfTurn() || p.isCantRegenerateThisTurn()) {
+                    || p.isAnimatedUntilEndOfTurn() || p.isCantRegenerateThisTurn()
+                    || !p.getGrantedCardTypes().isEmpty()) {
                 p.resetModifiers();
                 p.setDamagePreventionShield(0);
                 p.setRegenerationShield(0);
@@ -748,8 +749,7 @@ public class GameHelper {
                         if (e instanceof MetalcraftConditionalEffect) {
                             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                             long artifactCount = bf == null ? 0 : bf.stream()
-                                    .filter(p -> p.getCard().getType() == CardType.ARTIFACT
-                                            || p.getCard().getAdditionalTypes().contains(CardType.ARTIFACT))
+                                    .filter(gameQueryService::isArtifact)
                                     .count();
                             return artifactCount >= 3;
                         }

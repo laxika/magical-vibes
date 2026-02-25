@@ -31,6 +31,7 @@ public class PermanentViewFactory {
         cardView = applyTextReplacements(cardView, p);
         cardView = applyGrantedSubtypes(cardView, p);
         cardView = applyAwakeningCounterSubtype(cardView, p);
+        cardView = applyGrantedCardTypes(cardView, p);
         cardView = applyGrantedActivatedAbilities(cardView, grantedActivatedAbilities);
         return new PermanentView(
                 p.getId(), cardView,
@@ -85,6 +86,22 @@ public class PermanentViewFactory {
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
                 cardView.collectorNumber(), CardColor.GREEN, cardView.needsTarget(),
+                cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
+                cardView.hasConvoke()
+        );
+    }
+
+    private CardView applyGrantedCardTypes(CardView cardView, Permanent p) {
+        if (p.getGrantedCardTypes().isEmpty()) {
+            return cardView;
+        }
+        Set<CardType> mergedTypes = new HashSet<>(cardView.additionalTypes());
+        mergedTypes.addAll(p.getGrantedCardTypes());
+        return new CardView(
+                cardView.name(), cardView.type(), mergedTypes, cardView.supertypes(), cardView.subtypes(),
+                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
+                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
+                cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke()
         );

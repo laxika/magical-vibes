@@ -189,7 +189,7 @@ public class GameTestHarness {
         for (Object service : effectServices) {
             scanEffectHandlers(service, effectHandlerRegistry);
         }
-        EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper, effectHandlerRegistry, gameBroadcastService, permanentRemovalService);
+        EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper, gameQueryService, effectHandlerRegistry, gameBroadcastService, permanentRemovalService);
         TurnProgressionService turnProgressionService = new TurnProgressionService(
                 combatService, gameHelper, gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService);
         SpellCastingService spellCastingService = new SpellCastingService(

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
@@ -143,6 +144,22 @@ public class CreatureModResolutionService {
 
         log.info("Game {} - {} becomes a {}/{} creature with {}",
                 gameData.id, self.getCard().getName(), effect.power(), effect.toughness(), effect.grantedKeywords());
+    }
+
+    @HandlesEffect(AddCardTypeToTargetPermanentEffect.class)
+    private void resolveAddCardTypeToTargetPermanent(GameData gameData, StackEntry entry, AddCardTypeToTargetPermanentEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        target.getGrantedCardTypes().add(effect.cardType());
+
+        String typeName = effect.cardType().name().charAt(0) + effect.cardType().name().substring(1).toLowerCase();
+        String logEntry = target.getCard().getName() + " becomes an " + typeName + " in addition to its other types until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} becomes an {} until end of turn", gameData.id, target.getCard().getName(), typeName);
     }
 
     @HandlesEffect(BoostSelfEffect.class)

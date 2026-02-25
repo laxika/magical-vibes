@@ -46,9 +46,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import com.github.laxika.magicalvibes.service.GameQueryService;
-import lombok.RequiredArgsConstructor;
-
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -61,7 +58,7 @@ public class StaticEffectResolutionService {
 
     @HandlesStaticEffect(AnimateNoncreatureArtifactsEffect.class)
     private void resolveAnimateNoncreatureArtifacts(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        if (context.target().getCard().getType() == CardType.ARTIFACT) {
+        if (gameQueryService.isArtifact(context.target())) {
             accumulator.setAnimatedCreature(true);
         }
     }
@@ -187,8 +184,7 @@ public class StaticEffectResolutionService {
     @HandlesStaticEffect(value = MetalcraftConditionalEffect.class, selfOnly = true)
     private void resolveMetalcraftConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var metalcraft = (MetalcraftConditionalEffect) effect;
-        int artifactCount = countControlledPermanents(context,
-                p -> p.getCard().getType() == CardType.ARTIFACT || p.getCard().getAdditionalTypes().contains(CardType.ARTIFACT));
+        int artifactCount = countControlledPermanents(context, gameQueryService::isArtifact);
         if (artifactCount >= 3) {
             CardEffect wrapped = metalcraft.wrapped();
             if (wrapped instanceof GrantKeywordEffect grant) {
@@ -212,8 +208,7 @@ public class StaticEffectResolutionService {
         CardEffect wrapped = metalcraft.wrapped();
         // Only handle broader-scoped effects in the non-self handler
         if (wrapped instanceof GrantKeywordEffect grant && grant.scope() != GrantScope.SELF) {
-            int artifactCount = countControlledPermanents(context,
-                    p -> p.getCard().getType() == CardType.ARTIFACT || p.getCard().getAdditionalTypes().contains(CardType.ARTIFACT));
+            int artifactCount = countControlledPermanents(context, gameQueryService::isArtifact);
             if (artifactCount >= 3) {
                 boolean scopeMatch = switch (grant.scope()) {
                     case OWN_PERMANENTS -> context.targetOnSameBattlefield()
@@ -254,8 +249,7 @@ public class StaticEffectResolutionService {
         if (permanent.getCard().getAdditionalTypes().contains(CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
         if (permanent.getAwakeningCounters() > 0) return true;
-        return hasAnimateArtifacts && (permanent.getCard().getType() == CardType.ARTIFACT
-                || permanent.getCard().getAdditionalTypes().contains(CardType.ARTIFACT));
+        return hasAnimateArtifacts && gameQueryService.isArtifact(permanent);
     }
 
     @HandlesStaticEffect(value = PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect.class, selfOnly = true)
@@ -392,7 +386,7 @@ public class StaticEffectResolutionService {
             CardSubtype.KOTH
     );
 
-    static boolean matchesStaticFilter(Permanent target, PermanentPredicate filter) {
+    private boolean matchesStaticFilter(Permanent target, PermanentPredicate filter) {
         if (filter == null) return true;
         if (filter instanceof PermanentColorInPredicate p)
             return p.colors().contains(target.getCard().getColor());
@@ -411,8 +405,7 @@ public class StaticEffectResolutionService {
                     || target.isAnimatedUntilEndOfTurn()
                     || target.getAwakeningCounters() > 0;
         if (filter instanceof PermanentIsArtifactPredicate)
-            return target.getCard().getType() == CardType.ARTIFACT
-                    || target.getCard().getAdditionalTypes().contains(CardType.ARTIFACT);
+            return gameQueryService.isArtifact(target);
         if (filter instanceof PermanentIsLandPredicate)
             return target.getCard().getType() == CardType.LAND
                     || target.getCard().getAdditionalTypes().contains(CardType.LAND);

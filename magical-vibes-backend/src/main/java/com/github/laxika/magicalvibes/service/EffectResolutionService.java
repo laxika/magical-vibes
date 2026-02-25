@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -22,6 +21,7 @@ import java.util.UUID;
 public class EffectResolutionService {
 
     private final GameHelper gameHelper;
+    private final GameQueryService gameQueryService;
     private final EffectHandlerRegistry registry;
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
@@ -63,8 +63,7 @@ public class EffectResolutionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return false;
         long artifactCount = battlefield.stream()
-                .filter(p -> p.getCard().getType() == CardType.ARTIFACT
-                        || p.getCard().getAdditionalTypes().contains(CardType.ARTIFACT))
+                .filter(gameQueryService::isArtifact)
                 .count();
         return artifactCount >= 3;
     }

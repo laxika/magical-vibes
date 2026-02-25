@@ -217,7 +217,8 @@ public class GameQueryService {
 
     public boolean isArtifact(Permanent permanent) {
         return permanent.getCard().getType() == CardType.ARTIFACT
-                || permanent.getCard().getAdditionalTypes().contains(CardType.ARTIFACT);
+                || permanent.getCard().getAdditionalTypes().contains(CardType.ARTIFACT)
+                || permanent.getGrantedCardTypes().contains(CardType.ARTIFACT);
     }
 
     public boolean hasKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
