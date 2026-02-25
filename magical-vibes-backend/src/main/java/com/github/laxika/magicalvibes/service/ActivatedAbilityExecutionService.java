@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -80,6 +81,7 @@ public class ActivatedAbilityExecutionService {
                     (e instanceof RegenerateEffect regen && !regen.targetsPermanent() && !permanent.getCard().isAura())
                             || e instanceof BoostSelfEffect || e instanceof UntapSelfEffect
                             || e instanceof AnimateSelfEffect || e instanceof AnimateSelfByChargeCountersEffect
+                            || e instanceof AnimateSelfWithStatsEffect
                             || e instanceof AnimateLandEffect || e instanceof PutChargeCounterOnSelfEffect
                             || (e instanceof GrantKeywordEffect grant && grant.scope() == GrantScope.SELF));
             if (needsSelfTarget) {

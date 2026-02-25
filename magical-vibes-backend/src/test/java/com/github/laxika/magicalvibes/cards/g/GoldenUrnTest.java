@@ -52,6 +52,7 @@ class GoldenUrnTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities(); // resolve PutChargeCounterOnSelfEffect
 
         assertThat(urn.getChargeCounters()).isEqualTo(1);
     }
@@ -81,6 +82,7 @@ class GoldenUrnTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities(); // resolve PutChargeCounterOnSelfEffect
 
         assertThat(urn.getChargeCounters()).isEqualTo(1);
 
@@ -94,6 +96,7 @@ class GoldenUrnTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities(); // resolve PutChargeCounterOnSelfEffect
 
         assertThat(urn.getChargeCounters()).isEqualTo(2);
     }
@@ -162,6 +165,7 @@ class GoldenUrnTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities(); // resolve PutChargeCounterOnSelfEffect
 
         assertThat(urn.getChargeCounters()).isEqualTo(1);
 

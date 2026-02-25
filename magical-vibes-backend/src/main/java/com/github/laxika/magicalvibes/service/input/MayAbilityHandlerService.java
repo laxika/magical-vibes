@@ -15,7 +15,12 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.AnimateSelfByChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
@@ -204,13 +209,32 @@ public class MayAbilityHandlerService {
         }
 
         if (accepted) {
-            gameData.stack.add(new StackEntry(
+            StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     ability.sourceCard(),
                     ability.controllerId(),
                     ability.sourceCard().getName() + "'s ability",
                     new ArrayList<>(ability.effects())
-            ));
+            );
+
+            // Self-targeting effects need the source permanent's ID to resolve
+            boolean needsSelfTarget = ability.effects().stream().anyMatch(e ->
+                    e instanceof PutChargeCounterOnSelfEffect
+                            || e instanceof AnimateSelfEffect || e instanceof AnimateSelfByChargeCountersEffect
+                            || e instanceof AnimateSelfWithStatsEffect || e instanceof BoostSelfEffect);
+            if (needsSelfTarget) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(ability.controllerId());
+                if (battlefield != null) {
+                    for (Permanent p : battlefield) {
+                        if (p.getCard() == ability.sourceCard()) {
+                            entry.setTargetPermanentId(p.getId());
+                            break;
+                        }
+                    }
+                }
+            }
+
+            gameData.stack.add(entry);
 
             String logEntry = player.getUsername() + " accepts — " + ability.sourceCard().getName() + "'s triggered ability goes on the stack.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);

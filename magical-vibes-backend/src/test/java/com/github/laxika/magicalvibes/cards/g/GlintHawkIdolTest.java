@@ -121,7 +121,8 @@ class GlintHawkIdolTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve artifact spell, artifact enters, trigger goes on stack
+        harness.passBothPriorities(); // resolve trigger (MayEffect → PendingMayAbility → prompt)
 
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
     }
@@ -135,10 +136,11 @@ class GlintHawkIdolTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve artifact spell, trigger goes on stack
+        harness.passBothPriorities(); // resolve trigger (MayEffect → prompt)
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve AnimateSelfWithStatsEffect
 
         assertThat(idolPerm.isAnimatedUntilEndOfTurn()).isTrue();
         assertThat(idolPerm.getAnimatedPower()).isEqualTo(2);
@@ -155,10 +157,10 @@ class GlintHawkIdolTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve artifact spell, trigger goes on stack
+        harness.passBothPriorities(); // resolve trigger (MayEffect → prompt)
 
         harness.handleMayAbilityChosen(player1, false);
-        harness.passBothPriorities();
 
         assertThat(idolPerm.isAnimatedUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, idolPerm)).isFalse();
