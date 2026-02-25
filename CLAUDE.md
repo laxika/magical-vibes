@@ -3,6 +3,7 @@
 - If you need any rules clarification feel free to search the web! Being rules accurate is our number one priority.
 - When implementing cards always try to create reusable components (effects, abilities, etc) that could be reused for other cards as well.
 - If you can recreate an effect by combining existing ones then do not create a new class for it. For example "Orcish Artillery deals 2 damage to any target and 3 damage to you." could be achieved by combining DealDamageToAnyTargetEffect with DealDamageToControllerEffect.
+- If you can reuse an effect by adding predicates to it then do so. Whenever creating new effect try to add parameters as predicates. Instead of DestroyTargetArtifactEffect create a DestroyTargetPermanentEffect that accepts a PermanentPredicate.
 - If you create new effects, etc then make sure to update the files in the agent-docs folder.
 
 ## Documentation
