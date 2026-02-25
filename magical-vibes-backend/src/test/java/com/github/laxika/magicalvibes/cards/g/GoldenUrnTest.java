@@ -48,12 +48,54 @@ class GoldenUrnTest extends BaseCardTest {
         Permanent urn = addReadyUrn(player1);
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-
-        // Accept may ability to add a counter
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(urn.getChargeCounters()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger can decline to add a charge counter")
+    void upkeepTriggerCanDeclineToAddCounter() {
+        Permanent urn = addReadyUrn(player1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(urn.getChargeCounters()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Multiple upkeep triggers accumulate charge counters")
+    void multipleUpkeepTriggersAccumulateCounters() {
+        Permanent urn = addReadyUrn(player1);
+
+        // First upkeep - add counter
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(urn.getChargeCounters()).isEqualTo(1);
+
+        // Move through turn to next upkeep
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(urn.getChargeCounters()).isEqualTo(2);
     }
 
     @Test
@@ -156,7 +198,9 @@ class GoldenUrnTest extends BaseCardTest {
 
         // Add counters through multiple uptaps (manually for testing)
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(urn.getChargeCounters()).isEqualTo(1);
