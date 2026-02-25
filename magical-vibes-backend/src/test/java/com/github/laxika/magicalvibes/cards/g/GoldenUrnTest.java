@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
@@ -46,11 +47,11 @@ class GoldenUrnTest extends BaseCardTest {
     void upkeepTriggerMayAddChargeCounter() {
         Permanent urn = addReadyUrn(player1);
 
-        harness.forceActivePlayer(player1.getId());
-        harness.forceStep("upkeep");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
 
-        // Accept the may ability to add a counter
-        harness.acceptMayAbility();
+        // Accept may ability to add a counter
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(urn.getChargeCounters()).isEqualTo(1);
     }
@@ -60,11 +61,11 @@ class GoldenUrnTest extends BaseCardTest {
     void upkeepTriggerCanDeclineToAddCounter() {
         Permanent urn = addReadyUrn(player1);
 
-        harness.forceActivePlayer(player1.getId());
-        harness.forceStep("upkeep");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
 
-        // Decline the may ability
-        harness.declineMayAbility();
+        // Decline may ability
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(urn.getChargeCounters()).isEqualTo(0);
     }
@@ -75,9 +76,9 @@ class GoldenUrnTest extends BaseCardTest {
         Permanent urn = addReadyUrn(player1);
 
         // First upkeep - add counter
-        harness.forceActivePlayer(player1.getId());
-        harness.forceStep("upkeep");
-        harness.acceptMayAbility();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(urn.getChargeCounters()).isEqualTo(1);
 
@@ -86,12 +87,11 @@ class GoldenUrnTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.forceActivePlayer(player1.getId());
-        harness.forceStep("upkeep");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
 
         // Second upkeep - add counter
-        harness.acceptMayAbility();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(urn.getChargeCounters()).isEqualTo(2);
     }
@@ -155,9 +155,9 @@ class GoldenUrnTest extends BaseCardTest {
         Permanent urn = addReadyUrn(player1);
 
         // Add counters through multiple uptaps (manually for testing)
-        harness.forceActivePlayer(player1.getId());
-        harness.forceStep("upkeep");
-        harness.acceptMayAbility();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(urn.getChargeCounters()).isEqualTo(1);
 
