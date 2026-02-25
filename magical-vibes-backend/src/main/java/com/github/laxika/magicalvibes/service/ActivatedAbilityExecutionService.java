@@ -130,6 +130,10 @@ public class ActivatedAbilityExecutionService {
         if (markAsNonTargetingForSacCreatureCost && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setNonTargeting(true);
         }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+        }
     }
 
     private List<CardEffect> snapshotEffects(List<CardEffect> abilityEffects, Permanent permanent) {

@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffe
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
@@ -348,7 +349,16 @@ public class GameHelper {
         if (deathEffects.isEmpty()) return;
 
         for (CardEffect effect : deathEffects) {
-            if (effect instanceof MayEffect may) {
+            if (effect instanceof MayPayManaEffect mayPay) {
+                gameData.pendingMayAbilities.add(new PendingMayAbility(
+                        dyingCard,
+                        controllerId,
+                        List.of(mayPay.wrapped()),
+                        dyingCard.getName() + " — " + mayPay.prompt(),
+                        null,
+                        mayPay.manaCost()
+                ));
+            } else if (effect instanceof MayEffect may) {
                 gameData.pendingMayAbilities.add(new PendingMayAbility(
                         dyingCard,
                         controllerId,

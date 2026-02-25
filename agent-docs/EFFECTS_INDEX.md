@@ -31,6 +31,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | Effect | Constructor | Description |
 |--------|-------------|-------------|
 | `MayEffect` | `(CardEffect wrapped, String prompt)` | Wraps any effect with "you may" choice |
+| `MayPayManaEffect` | `(String manaCost, CardEffect wrapped, String prompt)` | Wraps any effect with "you may pay {X}. If you do, [effect]" choice. The mana cost is charged before resolving. Used for Spellbomb cycle and similar cards |
 | `MetalcraftConditionalEffect` | `(CardEffect wrapped)` | Wraps any effect with metalcraft condition (3+ artifacts). For ETB triggers: checked at trigger time and resolution time, delegates targeting to wrapped effect. For static effects: wraps GrantKeywordEffect or StaticBoostEffect, applied only while metalcraft is met (selfOnly handler) |
 
 ---
