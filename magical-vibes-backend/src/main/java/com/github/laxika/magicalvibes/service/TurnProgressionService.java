@@ -156,7 +156,9 @@ public class TurnProgressionService {
                             perm.getCard(),
                             activePlayerId,
                             perm.getCard().getName() + "'s upkeep ability",
-                            new ArrayList<>(List.of(effect))
+                            new ArrayList<>(List.of(effect)),
+                            (UUID) null,
+                            perm.getId()
                     ));
 
                     String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenPerEquipmentOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureUntilEndOfTurnEffect;
@@ -99,6 +100,46 @@ public class PermanentControlResolutionService {
         }
 
         log.info("Game {} - {} {} token(s) created for player {}", gameData.id, token.amount(), token.tokenName(), controllerId);
+    }
+
+    @HandlesEffect(CreateTokenPerEquipmentOnSourceEffect.class)
+    private void resolveCreateTokenPerEquipmentOnSource(GameData gameData, StackEntry entry, CreateTokenPerEquipmentOnSourceEffect effect) {
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId == null) {
+            log.warn("Game {} - CreateTokenPerEquipmentOnSource requires sourcePermanentId", gameData.id);
+            return;
+        }
+
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (source == null) {
+            log.info("Game {} - Source permanent no longer on battlefield, skipping token creation", gameData.id);
+            return;
+        }
+
+        // Count Equipment attached to the source permanent
+        int equipmentCount = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
+                        && p.getAttachedTo() != null
+                        && p.getAttachedTo().equals(sourcePermanentId)) {
+                    equipmentCount++;
+                }
+            }
+        }
+
+        if (equipmentCount == 0) {
+            log.info("Game {} - No Equipment attached to {}, no tokens created", gameData.id, entry.getCard().getName());
+            return;
+        }
+
+        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+                equipmentCount, effect.tokenName(), effect.power(), effect.toughness(),
+                effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
+        );
+        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect);
     }
 
     @HandlesEffect(LivingWeaponEffect.class)
