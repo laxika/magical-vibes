@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.validate;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndBoostSelfByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameQueryService;
@@ -45,6 +46,12 @@ public class DestructionTargetValidators {
 
     @ValidatesTarget(DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect.class)
     public void validateDestroyTargetAndControllerLosesLifePerCreatureDeaths(TargetValidationContext ctx) {
+        Permanent target = tvs.requireBattlefieldTarget(ctx);
+        tvs.checkProtection(ctx, target);
+    }
+
+    @ValidatesTarget(DestroyTargetPermanentAndBoostSelfByManaValueEffect.class)
+    public void validateDestroyTargetArtifactAndBoostSelfByManaValue(TargetValidationContext ctx) {
         Permanent target = tvs.requireBattlefieldTarget(ctx);
         tvs.checkProtection(ctx, target);
     }

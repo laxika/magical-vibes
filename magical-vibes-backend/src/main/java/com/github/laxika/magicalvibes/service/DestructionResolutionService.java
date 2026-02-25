@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndControllerLos
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainLifeEqualToToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndBoostSelfByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAttackingCreaturesEffect;
@@ -429,6 +430,33 @@ public class DestructionResolutionService {
             String logEntry = entry.getCard().getName() + " is destroyed.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} destroyed (self-destruct from block trigger)", gameData.id, entry.getCard().getName());
+        }
+    }
+
+    @HandlesEffect(DestroyTargetPermanentAndBoostSelfByManaValueEffect.class)
+    void resolveDestroyTargetArtifactAndBoostSelfByManaValue(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        int manaValue = target.getCard().getManaValue();
+
+        // Attempt to destroy the artifact
+        if (permanentRemovalService.tryDestroyPermanent(gameData, target)) {
+            String logEntry = target.getCard().getName() + " is destroyed by " + entry.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} destroyed by {}'s ability", gameData.id, target.getCard().getName(), entry.getCard().getName());
+        }
+
+        // Boost self by mana value regardless of destruction result
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (self != null && manaValue > 0) {
+            self.setPowerModifier(self.getPowerModifier() + manaValue);
+
+            String boostLog = entry.getCard().getName() + " gets +" + manaValue + "/+0 until end of turn.";
+            gameBroadcastService.logAndBroadcast(gameData, boostLog);
+            log.info("Game {} - {} gets +{}/+0 from {}'s mana value", gameData.id, entry.getCard().getName(), manaValue, target.getCard().getName());
         }
     }
 

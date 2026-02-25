@@ -72,6 +72,7 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 | `DestroyBlockedCreatureAndSelfEffect` | `()` | destroy creature this blocks and itself (Deathtrap-style) |
 | `DestroyCreatureBlockingThisEffect` | `()` | destroy creature that blocks this (combat trigger) |
 | `DestroyTargetCreatureAndGainLifeEqualToToughnessEffect` | `()` | destroy target creature and gain life equal to its toughness (combat trigger, life gain occurs even if destroy fails). Works with both ON_BLOCK and ON_BECOMES_BLOCKED slots |
+| `DestroyTargetPermanentAndBoostSelfByManaValueEffect` | `()` | destroy target permanent and boost source creature +X/+0 until end of turn, where X is the permanent's mana value. Boost applies even if destruction fails (indestructible). Target type restriction handled by ability's target filter. Used by Hoard-Smelter Dragon |
 | `DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect` | `()` | destroy target creature; its controller loses life equal to the number of creatures put into all graveyards from the battlefield this turn (counts ALL players' creature deaths). Used with `SacrificeCreatureCost` for Flesh Allergy |
 | `SacrificeCreatureEffect` | `()` | controller sacrifices a creature |
 | `SacrificeAttackingCreaturesEffect` | `(int baseCount, int metalcraftCount)` | target player sacrifices attacking creatures; metalcraft upgrades count |
