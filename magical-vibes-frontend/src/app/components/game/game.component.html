@@ -2,142 +2,80 @@
   <div class="game-layout">
     <div class="game-area">
   @if (game()?.status === GameStatus.MULLIGAN) {
-    <div class="mulligan-section">
-      <div class="turn-info">
-        <div class="player-badge active">
-          {{ player1Name }}
-          <span class="hand-size">Hand: {{ player1HandSize }}</span>
-          <span class="deck-size">Deck: {{ player1DeckSize }}</span>
-        </div>
-        <div class="turn-center">
-          <span class="turn-number">Mulligan Phase</span>
-          <span class="vs-label">VS</span>
-        </div>
-        <div class="player-badge active">
-          {{ player2Name }}
-          <span class="hand-size">Hand: {{ player2HandSize }}</span>
-          <span class="deck-size">Deck: {{ player2DeckSize }}</span>
-        </div>
-      </div>
-
-      @if (selectingBottomCards()) {
-        <div class="hand-area bottom-selection">
-          <div class="hand-label">Select {{ bottomCardCount() }} card{{ bottomCardCount() > 1 ? 's' : '' }} to put on the bottom of your library</div>
-          <div class="selection-count">Selected: {{ selectedCardIndices().size }} / {{ bottomCardCount() }}</div>
-          <div class="hand-cards">
-            @for (card of hand; track $index) {
-              <app-card-display
-                [card]="card"
-                class="selectable"
-                [class.selected]="isCardSelected($index)"
-                (click)="toggleCardSelection($index)"
-                (mouseenter)="onCardHover(card)"
-                (mouseleave)="onCardHoverEnd()">
-                @if (isCardSelected($index)) {
-                  <div class="card-selected-badge">Bottom</div>
-                }
-              </app-card-display>
-            }
-          </div>
-          <div class="mulligan-actions">
-            <button class="btn-keep" (click)="confirmBottomCards()" [disabled]="!canConfirmBottom">Confirm Selection</button>
-          </div>
-        </div>
-      } @else {
-        <div class="hand-area">
-          <div class="hand-label">Your Hand ({{ hand.length }} cards)</div>
-          <div class="hand-cards">
-            @for (card of hand; track $index) {
-              <app-card-display [card]="card" (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
-            }
-          </div>
-        </div>
-
-        <div class="mulligan-info">
-          @if ((game()?.mulliganCount ?? 0) > 0) {
-            <span class="mulligan-count">Mulligan count: {{ game()?.mulliganCount }}</span>
-          }
-        </div>
-
-        @if (!selfKept()) {
-          <div class="mulligan-actions">
-            <button class="btn-keep" (click)="keepHand()">Keep Hand</button>
-            <button class="btn-mulligan" (click)="takeMulligan()" [disabled]="!canMulligan">Mulligan</button>
-          </div>
-        } @else {
-          <div class="mulligan-actions">
-            <span class="kept-label">You kept your hand.</span>
-          </div>
-        }
-      }
-
-      <div class="opponent-mulligan-status">
-        @if (opponentKept()) {
-          <span>Opponent kept their hand.</span>
-        } @else {
-          <span>Opponent is deciding...</span>
-        }
-      </div>
-    </div>
+    <app-mulligan-modal
+      [hand]="hand"
+      [player1Name]="player1Name"
+      [player2Name]="player2Name"
+      [player1HandSize]="player1HandSize"
+      [player2HandSize]="player2HandSize"
+      [player1DeckSize]="player1DeckSize"
+      [player2DeckSize]="player2DeckSize"
+      [mulliganCount]="game()?.mulliganCount ?? 0"
+      [canMulligan]="(game()?.mulliganCount ?? 0) < 7"
+      (keepHandEvent)="keepHand()"
+      (takeMulliganEvent)="takeMulligan()"
+      (confirmBottomCardsEvent)="confirmBottomCards($event)"
+      (cardHover)="onCardHover($event)"
+      (cardHoverEnd)="onCardHoverEnd()" />
   }
 
   @if (game()?.status === GameStatus.RUNNING || game()?.status === GameStatus.FINISHED) {
-    @if (choice.targeting) {
+    @if (choice.targeting.selectingTarget) {
       <div class="combat-banner targeting-banner">
-        <span>{{ choice.targetingPrompt }}</span>
-        <button class="btn-confirm-combat" (click)="choice.cancelTargeting()">Cancel</button>
+        <span>{{ choice.targeting.targetingPrompt }}</span>
+        <button class="btn-confirm-combat" (click)="choice.targeting.cancelTargeting()">Cancel</button>
       </div>
     }
 
-    @if (choice.targetingSpell) {
+    @if (choice.targeting.targetingSpell) {
       <div class="combat-banner spell-targeting-banner">
-        <span>Select a spell on the stack to counter with {{ choice.targetingSpellCardName }}</span>
-        <button class="btn-confirm-combat" (click)="choice.cancelSpellTargeting()">Cancel</button>
+        <span>Select a spell on the stack to counter with {{ choice.targeting.targetingSpellCardName }}</span>
+        <button class="btn-confirm-combat" (click)="choice.targeting.cancelSpellTargeting()">Cancel</button>
       </div>
     }
 
-    @if (choice.multiTargeting) {
+    @if (choice.targeting.multiTargeting) {
       <div class="combat-banner targeting-banner">
-        <span>{{ choice.targetingPrompt }} ({{ choice.multiTargetSelectedIds().length }}/{{ choice.multiTargetMaxCount }})</span>
-        <button class="btn-confirm-combat" (click)="choice.confirmMultiTargets()" [disabled]="choice.multiTargetSelectedIds().length < choice.multiTargetMinCount">Confirm</button>
-        <button class="btn-confirm-combat" (click)="choice.cancelMultiTargeting()">Cancel</button>
+        <span>{{ choice.targeting.targetingPrompt }} ({{ choice.targeting.multiTargetSelectedIds().length }}/{{ choice.targeting.multiTargetMaxCount }})</span>
+        <button class="btn-confirm-combat" (click)="choice.targeting.confirmMultiTargets()" [disabled]="choice.targeting.multiTargetSelectedIds().length < choice.targeting.multiTargetMinCount">Confirm</button>
+        <button class="btn-confirm-combat" (click)="choice.targeting.cancelMultiTargeting()">Cancel</button>
       </div>
     }
 
-    @if (choice.convoking) {
+    @if (choice.targeting.convoking) {
       <div class="combat-banner targeting-banner">
-        <span>Tap creatures to help cast {{ choice.convokeCardName }} ({{ choice.convokeSelectedCreatureIds().length }} tapped)</span>
-        <button class="btn-confirm-combat" (click)="choice.confirmConvoke()">Cast</button>
-        <button class="btn-confirm-combat" (click)="choice.skipConvoke()">Skip Convoke</button>
-        <button class="btn-confirm-combat" (click)="choice.cancelConvoke()">Cancel</button>
+        <span>Tap creatures to help cast {{ choice.targeting.convokeCardName }} ({{ choice.targeting.convokeSelectedCreatureIds().length }} tapped)</span>
+        <button class="btn-confirm-combat" (click)="choice.targeting.confirmConvoke()">Cast</button>
+        <button class="btn-confirm-combat" (click)="choice.targeting.skipConvoke()">Skip Convoke</button>
+        <button class="btn-confirm-combat" (click)="choice.targeting.cancelConvoke()">Cancel</button>
       </div>
     }
 
-    @if (choice.reorderingLibrary) {
+    @if (choice.library.reorderingLibrary) {
       <div class="combat-banner reorder-banner">
-        <span>{{ choice.reorderPrompt }}</span>
+        <span>{{ choice.library.reorderPrompt }}</span>
       </div>
       <div class="reorder-zone">
-        @if (choice.reorderAvailableCards.length > 0) {
+        @if (choice.library.reorderAvailableCards.length > 0) {
           <div class="reorder-section">
             <div class="reorder-label">Click cards to set their order (top to bottom):</div>
             <div class="reorder-cards">
-              @for (item of choice.reorderAvailableCards; track item.originalIndex) {
+              @for (item of choice.library.reorderAvailableCards; track item.originalIndex) {
                 <app-card-display
                   [card]="item.card"
                   class="reorder-card available"
-                  (click)="choice.selectReorderCard(item.originalIndex)"
+                  (click)="choice.library.selectReorderCard(item.originalIndex)"
                   (mouseenter)="onCardHover(item.card)"
                   (mouseleave)="onCardHoverEnd()" />
               }
             </div>
           </div>
         }
-        @if (choice.reorderPlacedCards.length > 0) {
+        @if (choice.library.reorderPlacedCards.length > 0) {
           <div class="reorder-section">
             <div class="reorder-label">New order (top of library first):</div>
             <div class="reorder-cards">
-              @for (item of choice.reorderPlacedCards; track item.originalIndex) {
+              @for (item of choice.library.reorderPlacedCards; track item.originalIndex) {
                 <div class="reorder-card-wrapper">
                   <div class="reorder-position-badge">{{ item.position }}</div>
                   <app-card-display
@@ -151,73 +89,73 @@
           </div>
         }
         <div class="reorder-actions">
-          <button class="btn-confirm-combat" (click)="choice.undoLastReorderCard()" [disabled]="choice.reorderOriginalIndices.length === 0">Undo</button>
-          <button class="btn-confirm-combat" (click)="choice.confirmReorder()" [disabled]="choice.reorderAvailableCards.length > 0">Confirm Order</button>
+          <button class="btn-confirm-combat" (click)="choice.library.undoLastReorderCard()" [disabled]="choice.library.reorderOriginalIndices.length === 0">Undo</button>
+          <button class="btn-confirm-combat" (click)="choice.library.confirmReorder()" [disabled]="choice.library.reorderAvailableCards.length > 0">Confirm Order</button>
         </div>
       </div>
     }
 
-    @if (choice.choosingHandTopBottom) {
+    @if (choice.library.choosingHandTopBottom) {
       <div class="combat-banner reorder-banner">
-        <span>{{ choice.handTopBottomPrompt }}</span>
+        <span>{{ choice.library.handTopBottomPrompt }}</span>
       </div>
       <div class="reorder-zone">
-        @if (choice.handTopBottomAvailableCards.length > 0) {
+        @if (choice.library.handTopBottomAvailableCards.length > 0) {
           <div class="reorder-section">
             <div class="reorder-label">
-              @if (choice.handTopBottomStep === 0) {
+              @if (choice.library.handTopBottomStep === 0) {
                 Click a card to put into your hand:
               } @else {
                 Click a card to put on top of your library:
               }
             </div>
             <div class="reorder-cards">
-              @for (item of choice.handTopBottomAvailableCards; track item.originalIndex) {
+              @for (item of choice.library.handTopBottomAvailableCards; track item.originalIndex) {
                 <app-card-display
                   [card]="item.card"
                   class="reorder-card available"
-                  (click)="choice.selectHandTopBottomCard(item.originalIndex)"
+                  (click)="choice.library.selectHandTopBottomCard(item.originalIndex)"
                   (mouseenter)="onCardHover(item.card)"
                   (mouseleave)="onCardHoverEnd()" />
               }
             </div>
           </div>
         }
-        @if (choice.handTopBottomHandIndex !== null) {
+        @if (choice.library.handTopBottomHandIndex !== null) {
           <div class="reorder-section">
             <div class="reorder-label">Hand:</div>
             <div class="reorder-cards">
               <div class="reorder-card-wrapper">
                 <div class="reorder-position-badge">H</div>
                 <app-card-display
-                  [card]="choice.handTopBottomCards[choice.handTopBottomHandIndex]"
+                  [card]="choice.library.handTopBottomCards[choice.library.handTopBottomHandIndex]"
                   class="reorder-card placed"
-                  (mouseenter)="onCardHover(choice.handTopBottomCards[choice.handTopBottomHandIndex])"
+                  (mouseenter)="onCardHover(choice.library.handTopBottomCards[choice.library.handTopBottomHandIndex])"
                   (mouseleave)="onCardHoverEnd()" />
               </div>
             </div>
           </div>
         }
-        @if (choice.handTopBottomTopIndex !== null) {
+        @if (choice.library.handTopBottomTopIndex !== null) {
           <div class="reorder-section">
             <div class="reorder-label">Top of library:</div>
             <div class="reorder-cards">
               <div class="reorder-card-wrapper">
                 <div class="reorder-position-badge">T</div>
                 <app-card-display
-                  [card]="choice.handTopBottomCards[choice.handTopBottomTopIndex]"
+                  [card]="choice.library.handTopBottomCards[choice.library.handTopBottomTopIndex]"
                   class="reorder-card placed"
-                  (mouseenter)="onCardHover(choice.handTopBottomCards[choice.handTopBottomTopIndex])"
+                  (mouseenter)="onCardHover(choice.library.handTopBottomCards[choice.library.handTopBottomTopIndex])"
                   (mouseleave)="onCardHoverEnd()" />
               </div>
             </div>
           </div>
         }
-        @if (choice.handTopBottomStep === 2 && choice.handTopBottomAvailableCards.length > 0) {
+        @if (choice.library.handTopBottomStep === 2 && choice.library.handTopBottomAvailableCards.length > 0) {
           <div class="reorder-section">
             <div class="reorder-label">Bottom of library:</div>
             <div class="reorder-cards">
-              @for (item of choice.handTopBottomAvailableCards; track item.originalIndex) {
+              @for (item of choice.library.handTopBottomAvailableCards; track item.originalIndex) {
                 <div class="reorder-card-wrapper">
                   <div class="reorder-position-badge">B</div>
                   <app-card-display
@@ -231,64 +169,64 @@
           </div>
         }
         <div class="reorder-actions">
-          <button class="btn-confirm-combat" (click)="choice.undoHandTopBottom()" [disabled]="choice.handTopBottomHandIndex === null">Undo</button>
-          <button class="btn-confirm-combat" (click)="choice.confirmHandTopBottom()" [disabled]="choice.handTopBottomStep !== 2">Confirm</button>
+          <button class="btn-confirm-combat" (click)="choice.library.undoHandTopBottom()" [disabled]="choice.library.handTopBottomHandIndex === null">Undo</button>
+          <button class="btn-confirm-combat" (click)="choice.library.confirmHandTopBottom()" [disabled]="choice.library.handTopBottomStep !== 2">Confirm</button>
         </div>
       </div>
     }
 
-    @if (choice.searchingLibrary) {
+    @if (choice.library.searchingLibrary) {
       <div class="reveal-hand-overlay">
         <div class="reveal-hand-card">
-          <h2>{{ choice.librarySearchPrompt }}</h2>
+          <h2>{{ choice.library.librarySearchPrompt }}</h2>
           <div class="reveal-hand-cards">
-            @for (card of choice.librarySearchCards; track $index) {
+            @for (card of choice.library.librarySearchCards; track $index) {
               <app-card-display [card]="card"
                 class="library-search-card"
-                (click)="choice.chooseLibraryCard($index)"
+                (click)="choice.library.chooseLibraryCard($index)"
                 (mouseenter)="onCardHover(card)"
                 (mouseleave)="onCardHoverEnd()" />
             }
           </div>
-          @if (choice.librarySearchCanFailToFind) {
-            <button class="btn-keep" (click)="choice.declineLibrarySearch()">Decline</button>
+          @if (choice.library.librarySearchCanFailToFind) {
+            <button class="btn-keep" (click)="choice.library.declineLibrarySearch()">Decline</button>
           }
         </div>
       </div>
     }
 
 
-    @if (choice.distributingDamage) {
+    @if (choice.damage.distributingDamage) {
       <div class="combat-banner targeting-banner">
-        <span>Click attacking creatures to assign damage for {{ choice.damageDistributionCardName }} ({{ choice.damageDistributionRemaining }} remaining of {{ choice.damageDistributionXValue }})</span>
-        <button class="btn-confirm-combat" (click)="choice.confirmDamageDistribution()" [disabled]="choice.damageDistributionRemaining !== 0">Confirm</button>
-        <button class="btn-confirm-combat" (click)="choice.cancelDamageDistribution()">Cancel</button>
+        <span>Click attacking creatures to assign damage for {{ choice.damage.damageDistributionCardName }} ({{ choice.damage.damageDistributionRemaining }} remaining of {{ choice.damage.damageDistributionXValue }})</span>
+        <button class="btn-confirm-combat" (click)="choice.damage.confirmDamageDistribution()" [disabled]="choice.damage.damageDistributionRemaining !== 0">Confirm</button>
+        <button class="btn-confirm-combat" (click)="choice.damage.cancelDamageDistribution()">Cancel</button>
       </div>
     }
 
-    @if (choice.assigningCombatDamage) {
+    @if (choice.damage.assigningCombatDamage) {
       <div class="combat-damage-banner targeting-banner">
-        <span>Assign {{ choice.combatDamageAttackerName }}'s combat damage
-          ({{ choice.combatDamageRemaining }} of {{ choice.combatDamageTotalDamage }} remaining)</span>
-        <button class="btn-confirm" (click)="choice.confirmCombatDamageAssignment()"
-          [disabled]="choice.combatDamageRemaining !== 0">Confirm</button>
+        <span>Assign {{ choice.damage.combatDamageAttackerName }}'s combat damage
+          ({{ choice.damage.combatDamageRemaining }} of {{ choice.damage.combatDamageTotalDamage }} remaining)</span>
+        <button class="btn-confirm" (click)="choice.damage.confirmCombatDamageAssignment()"
+          [disabled]="choice.damage.combatDamageRemaining !== 0">Confirm</button>
       </div>
     }
 
-    @if (choice.assigningCombatDamage) {
+    @if (choice.damage.assigningCombatDamage) {
       <div class="combat-damage-targets">
-        @for (target of choice.combatDamageTargets; track target.id) {
+        @for (target of choice.damage.combatDamageTargets; track target.id) {
           <div class="combat-damage-target" [class.is-player]="target.isPlayer">
             <span class="target-name">{{ target.name }}</span>
             @if (!target.isPlayer) {
               <span class="target-toughness">({{ target.toughness - target.currentDamage }} remaining toughness)</span>
             }
             <div class="damage-controls">
-              <button class="btn-damage" (click)="choice.unassignCombatDamage(target.id)"
-                [disabled]="choice.getCombatDamageAssigned(target.id) === 0">-</button>
-              <span class="damage-count">{{ choice.getCombatDamageAssigned(target.id) }}</span>
-              <button class="btn-damage" (click)="choice.assignCombatDamage(target.id)"
-                [disabled]="choice.combatDamageRemaining <= 0">+</button>
+              <button class="btn-damage" (click)="choice.damage.unassignCombatDamage(target.id)"
+                [disabled]="choice.damage.getCombatDamageAssigned(target.id) === 0">-</button>
+              <span class="damage-count">{{ choice.damage.getCombatDamageAssigned(target.id) }}</span>
+              <button class="btn-damage" (click)="choice.damage.assignCombatDamage(target.id)"
+                [disabled]="choice.damage.combatDamageRemaining <= 0">+</button>
             </div>
           </div>
         }
@@ -310,7 +248,7 @@
                           [card]="aura.perm.card"
                           [permanent]="aura.perm"
                           class="attached-aura"
-                          [class.targetable]="choice.targeting && choice.isValidTarget(aura.perm)"
+                          [class.targetable]="choice.targeting.selectingTarget && choice.targeting.isValidTarget(aura.perm)"
                           (click)="onAuraClick(aura)"
                           (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
                           (mouseleave)="onCardHoverEnd()" />
@@ -319,7 +257,7 @@
                         [card]="ip.perm.card"
                         [permanent]="ip.perm"
                         [class.tapped]="ip.perm.tapped"
-                        [class.targetable]="choice.targeting && choice.isValidTarget(ip.perm)"
+                        [class.targetable]="choice.targeting.selectingTarget && choice.targeting.isValidTarget(ip.perm)"
                         [class.stack-targeted]="stackTargetId() === ip.perm.id"
                         [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
                         [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
@@ -337,7 +275,7 @@
                     [card]="aura.perm.card"
                     [permanent]="aura.perm"
                     class="attached-aura"
-                    [class.targetable]="choice.targeting && choice.isValidTarget(aura.perm)"
+                    [class.targetable]="choice.targeting.selectingTarget && choice.targeting.isValidTarget(aura.perm)"
                     (click)="onAuraClick(aura)"
                     (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
                     (mouseleave)="onCardHoverEnd()" />
@@ -346,7 +284,7 @@
                   [card]="item.perm.card"
                   [permanent]="item.perm"
                   [class.tapped]="item.perm.tapped"
-                  [class.targetable]="choice.targeting && choice.isValidTarget(item.perm)"
+                  [class.targetable]="choice.targeting.selectingTarget && choice.targeting.isValidTarget(item.perm)"
                   [class.stack-targeted]="stackTargetId() === item.perm.id"
                   [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(item.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(item.perm.id))"
                   [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(item.perm.id)"
@@ -365,7 +303,7 @@
                   [card]="aura.perm.card"
                   [permanent]="aura.perm"
                   class="attached-aura"
-                  [class.targetable]="choice.targeting && choice.isValidTarget(aura.perm)"
+                  [class.targetable]="choice.targeting.selectingTarget && choice.targeting.isValidTarget(aura.perm)"
                   (click)="onAuraClick(aura)"
                   (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
                   (mouseleave)="onCardHoverEnd()" />
@@ -376,7 +314,7 @@
                 [class.tapped]="ip.perm.tapped"
                 [class.summoning-sick]="ip.perm.summoningSick"
                 [class.block-target]="isBlockTarget(ip.originalIndex)"
-                [class.targetable]="choice.targeting && choice.isValidTarget(ip.perm)"
+                [class.targetable]="choice.targeting.selectingTarget && choice.targeting.isValidTarget(ip.perm)"
                 [class.stack-targeted]="stackTargetId() === ip.perm.id"
                 [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
                 [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
@@ -402,140 +340,24 @@
       </div>
 
       @if (showCombatZone) {
-        <div class="combat-zone">
-          <div class="combat-zone-label">Combat</div>
-          <div class="combat-groups">
-            @for (group of combatPairings; track group.attackerIndex) {
-              <div class="combat-group">
-                <!-- Opponent's card on top (far from us) -->
-                @if (group.attackerIsMine && group.blockers.length > 0) {
-                  <div class="combat-blocker-slots">
-                    @for (blocker of group.blockers; track blocker.index) {
-                      <div class="permanent-stack">
-                        @for (aura of getAttachedAuras(blocker.perm.id); track aura.perm.id) {
-                          <app-card-display
-                            [card]="aura.perm.card"
-                            [permanent]="aura.perm"
-                            class="attached-aura"
-                            [class.targetable]="choice.targeting && choice.isValidTarget(aura.perm)"
-                            (click)="onAuraClick(aura)"
-                            (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
-                            (mouseleave)="onCardHoverEnd()" />
-                        }
-                        <app-card-display
-                          [card]="blocker.perm.card"
-                          [permanent]="blocker.perm"
-                          class="blocking"
-                          [class.stack-targeted]="stackTargetId() === blocker.perm.id"
-                          (click)="onCombatBlockerClick(blocker)"
-                          (mouseenter)="onCardHover(blocker.perm.card, blocker.perm)"
-                          (mouseleave)="onCardHoverEnd()">
-                          <div class="card-combat-badge blocking-badge">Blocking</div>
-                        </app-card-display>
-                      </div>
-                    }
-                  </div>
-                }
-                @if (!group.attackerIsMine) {
-                  <div class="combat-attacker-slot">
-                    <div class="permanent-stack">
-                      @for (aura of getAttachedAuras(group.attacker.id); track aura.perm.id) {
-                        <app-card-display
-                          [card]="aura.perm.card"
-                          [permanent]="aura.perm"
-                          class="attached-aura"
-                          [class.targetable]="choice.targeting && choice.isValidTarget(aura.perm)"
-                          (click)="onAuraClick(aura)"
-                          (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
-                          (mouseleave)="onCardHoverEnd()" />
-                      }
-                      <app-card-display
-                        [card]="group.attacker.card"
-                        [permanent]="group.attacker"
-                        [class.attacking]="group.attacker.attacking"
-                        [class.selected-attacker]="declaringAttackers() && isSelectedAttacker(group.attackerIndex)"
-                        [class.block-target]="declaringBlockers() && selectedBlockerIndex() !== null && !group.attackerIsMine"
-                        [class.targetable]="choice.distributingDamage || (choice.targeting && choice.isValidTarget(group.attacker))"
-                        [class.stack-targeted]="stackTargetId() === group.attacker.id"
-                        (click)="onCombatAttackerClick(group)"
-                        (contextmenu)="$event.preventDefault(); choice.unassignDamage(group.attacker.id)"
-                        (mouseenter)="onCardHover(group.attacker.card, group.attacker)"
-                        (mouseleave)="onCardHoverEnd()">
-                        <div class="card-combat-badge attacking-badge">Attacking</div>
-                        @if (choice.distributingDamage && choice.getDamageAssigned(group.attacker.id) > 0) {
-                          <div class="card-combat-badge damage-badge">{{ choice.getDamageAssigned(group.attacker.id) }} dmg</div>
-                        }
-                      </app-card-display>
-                    </div>
-                  </div>
-                }
-
-                <!-- Our card on bottom (close to us) -->
-                @if (group.attackerIsMine) {
-                  <div class="combat-attacker-slot">
-                    <div class="permanent-stack">
-                      @for (aura of getAttachedAuras(group.attacker.id); track aura.perm.id) {
-                        <app-card-display
-                          [card]="aura.perm.card"
-                          [permanent]="aura.perm"
-                          class="attached-aura"
-                          [class.targetable]="choice.targeting && choice.isValidTarget(aura.perm)"
-                          (click)="onAuraClick(aura)"
-                          (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
-                          (mouseleave)="onCardHoverEnd()" />
-                      }
-                      <app-card-display
-                        [card]="group.attacker.card"
-                        [permanent]="group.attacker"
-                        [class.attacking]="group.attacker.attacking"
-                        [class.selected-attacker]="declaringAttackers() && isSelectedAttacker(group.attackerIndex)"
-                        [class.block-target]="declaringBlockers() && selectedBlockerIndex() !== null && !group.attackerIsMine"
-                        [class.targetable]="choice.distributingDamage || (choice.targeting && choice.isValidTarget(group.attacker))"
-                        [class.stack-targeted]="stackTargetId() === group.attacker.id"
-                        (click)="onCombatAttackerClick(group)"
-                        (contextmenu)="$event.preventDefault(); choice.unassignDamage(group.attacker.id)"
-                        (mouseenter)="onCardHover(group.attacker.card, group.attacker)"
-                        (mouseleave)="onCardHoverEnd()">
-                        <div class="card-combat-badge attacking-badge">Attacking</div>
-                        @if (choice.distributingDamage && choice.getDamageAssigned(group.attacker.id) > 0) {
-                          <div class="card-combat-badge damage-badge">{{ choice.getDamageAssigned(group.attacker.id) }} dmg</div>
-                        }
-                      </app-card-display>
-                    </div>
-                  </div>
-                }
-                @if (!group.attackerIsMine && group.blockers.length > 0) {
-                  <div class="combat-blocker-slots">
-                    @for (blocker of group.blockers; track blocker.index) {
-                      <div class="permanent-stack">
-                        @for (aura of getAttachedAuras(blocker.perm.id); track aura.perm.id) {
-                          <app-card-display
-                            [card]="aura.perm.card"
-                            [permanent]="aura.perm"
-                            class="attached-aura"
-                            [class.targetable]="choice.targeting && choice.isValidTarget(aura.perm)"
-                            (click)="onAuraClick(aura)"
-                            (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
-                            (mouseleave)="onCardHoverEnd()" />
-                        }
-                        <app-card-display
-                          [card]="blocker.perm.card"
-                          [permanent]="blocker.perm"
-                          class="blocking"
-                          [class.stack-targeted]="stackTargetId() === blocker.perm.id"
-                          (click)="onCombatBlockerClick(blocker)"
-                          (mouseenter)="onCardHover(blocker.perm.card, blocker.perm)"
-                          (mouseleave)="onCardHoverEnd()">
-                          <div class="card-combat-badge blocking-badge">Blocking</div>
-                        </app-card-display>
-                      </div>
-                    }
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        </div>
+        <app-combat-zone
+          [combatPairings]="combatPairings"
+          [declaringAttackers]="declaringAttackers()"
+          [declaringBlockers]="declaringBlockers()"
+          [selectedBlockerIndex]="selectedBlockerIndex()"
+          [stackTargetId]="stackTargetId()"
+          [isSelectingTarget]="choice.targeting.selectingTarget"
+          [isDistributingDamage]="choice.damage.distributingDamage"
+          [isValidTarget]="boundIsValidTarget"
+          [isSelectedAttacker]="boundIsSelectedAttacker"
+          [getAttachedAuras]="boundGetAttachedAuras"
+          [getDamageAssigned]="boundGetDamageAssigned"
+          [unassignDamage]="boundUnassignDamage"
+          (attackerClick)="onCombatAttackerClick($event)"
+          (blockerClick)="onCombatBlockerClick($event)"
+          (auraClick)="onAuraClick($event)"
+          (cardHover)="onCardHover($event.card, $event.permanent ?? null)"
+          (cardHoverEnd)="onCardHoverEnd()" />
       } @else {
         <div class="battlefield-divider"></div>
       }
@@ -550,7 +372,7 @@
                   [card]="aura.perm.card"
                   [permanent]="aura.perm"
                   class="attached-aura"
-                  [class.targetable]="choice.targeting && choice.isValidTarget(aura.perm)"
+                  [class.targetable]="choice.targeting.selectingTarget && choice.targeting.isValidTarget(aura.perm)"
                   (click)="onAuraClick(aura)"
                   (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
                   (mouseleave)="onCardHoverEnd()" />
@@ -559,27 +381,27 @@
                 [card]="ip.perm.card"
                 [permanent]="ip.perm"
                 [class.tapped]="ip.perm.tapped"
-                [class.tappable]="choice.canTapPermanent(ip.originalIndex) && !declaringAttackers() && !declaringBlockers()"
+                [class.tappable]="choice.targeting.canTapPermanent(ip.originalIndex) && !declaringAttackers() && !declaringBlockers()"
                 [class.summoning-sick]="ip.perm.summoningSick"
                 [class.can-attack]="canAttack(ip.originalIndex) && !isSelectedAttacker(ip.originalIndex)"
                 [class.must-attack]="mustAttackIndices().has(ip.originalIndex)"
                 [class.can-block]="canBlock(ip.originalIndex) && !isAssignedBlocker(ip.originalIndex) && selectedBlockerIndex() !== ip.originalIndex"
                 [class.selected-blocker]="selectedBlockerIndex() === ip.originalIndex"
                 [class.assigned-blocker]="isAssignedBlocker(ip.originalIndex)"
-                [class.targetable]="choice.targeting && choice.isValidTarget(ip.perm)"
+                [class.targetable]="choice.targeting.selectingTarget && choice.targeting.isValidTarget(ip.perm)"
                 [class.stack-targeted]="stackTargetId() === ip.perm.id"
                 [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
                 [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
                 (click)="onMyBattlefieldCardClick(ip.originalIndex)"
                 (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
                 (mouseleave)="onCardHoverEnd()" />
-              @if (choice.choosingAbility && choice.abilityChoicePermanentIndex === ip.originalIndex) {
+              @if (choice.targeting.choosingAbility && choice.targeting.abilityChoicePermanentIndex === ip.originalIndex) {
                 <div class="ability-popup" (click)="$event.stopPropagation()">
                   <div class="ability-popup-title">Choose an ability:</div>
-                  @for (ch of choice.abilityChoices; track ch.index) {
-                    <button class="ability-popup-btn" [disabled]="!ch.usable" (click)="choice.chooseAbility(ch)" [innerHTML]="formatAbilityDescription(ch.ability.description)"></button>
+                  @for (ch of choice.targeting.abilityChoices; track ch.index) {
+                    <button class="ability-popup-btn" [disabled]="!ch.usable" (click)="choice.targeting.chooseAbility(ch)" [innerHTML]="formatAbilityDescription(ch.ability.description)"></button>
                   }
-                  <button class="ability-popup-btn ability-popup-cancel" (click)="choice.cancelAbilityChoice()">Cancel</button>
+                  <button class="ability-popup-btn ability-popup-cancel" (click)="choice.targeting.cancelAbilityChoice()">Cancel</button>
                 </div>
               }
             </div>
@@ -597,7 +419,7 @@
                           [card]="aura.perm.card"
                           [permanent]="aura.perm"
                           class="attached-aura"
-                          [class.targetable]="choice.targeting && choice.isValidTarget(aura.perm)"
+                          [class.targetable]="choice.targeting.selectingTarget && choice.targeting.isValidTarget(aura.perm)"
                           (click)="onAuraClick(aura)"
                           (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
                           (mouseleave)="onCardHoverEnd()" />
@@ -606,21 +428,21 @@
                         [card]="ip.perm.card"
                         [permanent]="ip.perm"
                         [class.tapped]="ip.perm.tapped"
-                        [class.tappable]="choice.canTapPermanent(ip.originalIndex) && !declaringAttackers() && !declaringBlockers()"
-                        [class.targetable]="choice.targeting && choice.isValidTarget(ip.perm)"
+                        [class.tappable]="choice.targeting.canTapPermanent(ip.originalIndex) && !declaringAttackers() && !declaringBlockers()"
+                        [class.targetable]="choice.targeting.selectingTarget && choice.targeting.isValidTarget(ip.perm)"
                         [class.stack-targeted]="stackTargetId() === ip.perm.id"
                         [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
                         [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
                         (click)="onMyBattlefieldCardClick(ip.originalIndex)"
                         (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
                         (mouseleave)="onCardHoverEnd()" />
-                      @if (choice.choosingAbility && choice.abilityChoicePermanentIndex === ip.originalIndex) {
+                      @if (choice.targeting.choosingAbility && choice.targeting.abilityChoicePermanentIndex === ip.originalIndex) {
                         <div class="ability-popup" (click)="$event.stopPropagation()">
                           <div class="ability-popup-title">Choose an ability:</div>
-                          @for (ch of choice.abilityChoices; track ch.index) {
-                            <button class="ability-popup-btn" [disabled]="!ch.usable" (click)="choice.chooseAbility(ch)" [innerHTML]="formatAbilityDescription(ch.ability.description)"></button>
+                          @for (ch of choice.targeting.abilityChoices; track ch.index) {
+                            <button class="ability-popup-btn" [disabled]="!ch.usable" (click)="choice.targeting.chooseAbility(ch)" [innerHTML]="formatAbilityDescription(ch.ability.description)"></button>
                           }
-                          <button class="ability-popup-btn ability-popup-cancel" (click)="choice.cancelAbilityChoice()">Cancel</button>
+                          <button class="ability-popup-btn ability-popup-cancel" (click)="choice.targeting.cancelAbilityChoice()">Cancel</button>
                         </div>
                       }
                     </div>
@@ -634,7 +456,7 @@
                     [card]="aura.perm.card"
                     [permanent]="aura.perm"
                     class="attached-aura"
-                    [class.targetable]="choice.targeting && choice.isValidTarget(aura.perm)"
+                    [class.targetable]="choice.targeting.selectingTarget && choice.targeting.isValidTarget(aura.perm)"
                     (click)="onAuraClick(aura)"
                     (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
                     (mouseleave)="onCardHoverEnd()" />
@@ -643,21 +465,21 @@
                   [card]="item.perm.card"
                   [permanent]="item.perm"
                   [class.tapped]="item.perm.tapped"
-                  [class.tappable]="choice.canTapPermanent(item.originalIndex) && !declaringAttackers() && !declaringBlockers()"
-                  [class.targetable]="choice.targeting && choice.isValidTarget(item.perm)"
+                  [class.tappable]="choice.targeting.canTapPermanent(item.originalIndex) && !declaringAttackers() && !declaringBlockers()"
+                  [class.targetable]="choice.targeting.selectingTarget && choice.targeting.isValidTarget(item.perm)"
                   [class.stack-targeted]="stackTargetId() === item.perm.id"
                   [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(item.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(item.perm.id))"
                   [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(item.perm.id)"
                   (click)="onMyBattlefieldCardClick(item.originalIndex)"
                   (mouseenter)="onCardHover(item.perm.card, item.perm)"
                   (mouseleave)="onCardHoverEnd()" />
-              @if (choice.choosingAbility && choice.abilityChoicePermanentIndex === item.originalIndex) {
+              @if (choice.targeting.choosingAbility && choice.targeting.abilityChoicePermanentIndex === item.originalIndex) {
                 <div class="ability-popup" (click)="$event.stopPropagation()">
                   <div class="ability-popup-title">Choose an ability:</div>
-                  @for (ch of choice.abilityChoices; track ch.index) {
-                    <button class="ability-popup-btn" [disabled]="!ch.usable" (click)="choice.chooseAbility(ch)" [innerHTML]="formatAbilityDescription(ch.ability.description)"></button>
+                  @for (ch of choice.targeting.abilityChoices; track ch.index) {
+                    <button class="ability-popup-btn" [disabled]="!ch.usable" (click)="choice.targeting.chooseAbility(ch)" [innerHTML]="formatAbilityDescription(ch.ability.description)"></button>
                   }
-                  <button class="ability-popup-btn ability-popup-cancel" (click)="choice.cancelAbilityChoice()">Cancel</button>
+                  <button class="ability-popup-btn ability-popup-cancel" (click)="choice.targeting.cancelAbilityChoice()">Cancel</button>
                 </div>
               }
               </div>
@@ -850,176 +672,47 @@
   }
     </div>
 
-    <div class="side-panel">
-      <div class="tab-header">
-        <div class="tab" [class.active]="activeTab() === 'game'" (click)="activeTab.set('game')">Game</div>
-        <div class="tab" [class.active]="activeTab() === 'stack'" (click)="activeTab.set('stack')">
-          Stack
-          <span class="tab-badge">{{ stackEntries.length }}</span>
-        </div>
-        <div class="tab" [class.active]="activeTab() === 'graveyard'" (click)="activeTab.set('graveyard')">
-          Graveyard
-          <span class="tab-badge">{{ myGraveyard.length }}</span>
-          <span class="tab-badge tab-badge-opponent">{{ opponentGraveyard.length }}</span>
-        </div>
-      </div>
-
-      <div class="tab-content">
-        @if (activeTab() === 'game') {
-          <div class="game-tab">
-            <div class="card-preview-panel">
-              @if (hoveredCard()) {
-                <app-card-display [card]="hoveredCard()!" [permanent]="hoveredPermanent()" [preview]="true" class="preview-card" />
-              } @else {
-                <div class="card-preview-empty"></div>
-              }
-            </div>
-
-            <div class="turn-info">
-              <div class="player-badge" [class.active]="isActivePlayer(0)" [class.inactive]="!isActivePlayer(0)" [class.has-priority]="holdsPriority(0)" [class.targetable]="(choice.targeting && choice.validTargetPlayerIds().size > 0) || (choice.multiTargeting && choice.validTargetPlayerIds().size > 0)" [class.multi-target-selected]="choice.multiTargeting && choice.validTargetPlayerIds().size > 0 && choice.isMultiTargetSelected(getPlayerId(0))" [class.stack-targeted]="isStackTargetPlayer(0)" [class.choosable-permanent]="choice.choosingPermanent && (choice.choosablePermanentIds().has(getPlayerId(0)) || choice.choosablePlayerIds().has(getPlayerId(0)))" (click)="onPlayerBadgeClick(0)">
-                {{ player1Name }}
-                <span class="life-total">Life: {{ getLifeTotal(0) }}</span>
-                @if (getPoisonCounters(0) > 0) {
-                  <span class="poison-total">Poison: {{ getPoisonCounters(0) }}</span>
-                }
-                <span class="hand-size">Hand: {{ player1HandSize }}</span>
-                <span class="deck-size">Deck: {{ player1DeckSize }}</span>
-                @if (holdsPriority(0)) {
-                  <span class="priority-indicator">Priority</span>
-                }
-              </div>
-              <div class="turn-center">
-                <span class="turn-number">Turn {{ game()?.turnNumber }}</span>
-                <span class="vs-label">VS</span>
-              </div>
-              <div class="player-badge" [class.active]="isActivePlayer(1)" [class.inactive]="!isActivePlayer(1)" [class.has-priority]="holdsPriority(1)" [class.targetable]="(choice.targeting && choice.validTargetPlayerIds().size > 0) || (choice.multiTargeting && choice.validTargetPlayerIds().size > 0)" [class.multi-target-selected]="choice.multiTargeting && choice.validTargetPlayerIds().size > 0 && choice.isMultiTargetSelected(getPlayerId(1))" [class.stack-targeted]="isStackTargetPlayer(1)" [class.choosable-permanent]="choice.choosingPermanent && (choice.choosablePermanentIds().has(getPlayerId(1)) || choice.choosablePlayerIds().has(getPlayerId(1)))" (click)="onPlayerBadgeClick(1)">
-                {{ player2Name }}
-                <span class="life-total">Life: {{ getLifeTotal(1) }}</span>
-                @if (getPoisonCounters(1) > 0) {
-                  <span class="poison-total">Poison: {{ getPoisonCounters(1) }}</span>
-                }
-                <span class="hand-size">Hand: {{ player2HandSize }}</span>
-                <span class="deck-size">Deck: {{ player2DeckSize }}</span>
-                @if (holdsPriority(1)) {
-                  <span class="priority-indicator">Priority</span>
-                }
-              </div>
-            </div>
-
-            <div class="log-entries">
-              @if (gameLog.length === 0) {
-                <div class="log-entry empty">Waiting for game to start...</div>
-              } @else {
-                @for (entry of gameLog; track $index) {
-                  <div class="log-entry">{{ entry }}</div>
-                }
-              }
-            </div>
-          </div>
-        } @else if (activeTab() === 'stack') {
-          <div class="stack-entries">
-            @if (isStackEmpty) {
-              <div class="log-entry empty">The stack is empty.</div>
-            } @else {
-              @for (entry of stackEntries; track $index) {
-                <div class="stack-entry-wrapper"
-                     [class.spell-targetable]="choice.targetingSpell && entry.isSpell"
-                     [class.stack-targeted]="isStackTargetSpell(entry)"
-                     [class.choosable-permanent]="choice.choosingPermanent && choice.choosablePermanentIds().has(entry.cardId)"
-                     (click)="choice.choosingPermanent && choice.choosablePermanentIds().has(entry.cardId) ? choice.choosePermanent(entry.cardId) : (choice.targetingSpell && entry.isSpell ? choice.selectSpellTarget(entry) : null)"
-                     (mouseenter)="onStackEntryHover(entry); onCardHover(entry.card)"
-                     (mouseleave)="onStackEntryHoverEnd(); onCardHoverEnd()">
-                  <app-card-display
-                    [card]="entry.card"
-                    [attr.data-entry-type]="entry.entryType" />
-                  <div class="stack-entry-overlay">
-                    <div class="stack-entry-controller">
-                      ({{ getPlayerName(entry.controllerId) }})
-                    </div>
-                    @if (entry.targetPermanentId) {
-                      <div class="stack-entry-target">
-                        Target: {{ getStackEntryTargetName(entry) ?? entry.targetPermanentId }}
-                      </div>
-                    }
-                  </div>
-                  @if ($index === 0) {
-                    <div class="stack-top-badge">Next to resolve</div>
-                  }
-                </div>
-              }
-            }
-          </div>
-        } @else {
-          <div class="graveyard-tab">
-            <div class="graveyard-section">
-              <div class="graveyard-section-label">{{ game()?.playerNames?.[opponentPlayerIndex] }}'s Graveyard ({{ opponentGraveyard.length }})</div>
-              @if (opponentGraveyard.length === 0) {
-                <div class="log-entry empty">No cards in graveyard.</div>
-              } @else {
-                <div class="graveyard-tab-cards">
-                  @for (card of opponentGraveyard; track $index) {
-                    <app-card-display [card]="card" class="graveyard-card"
-                      (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
-                  }
-                </div>
-              }
-            </div>
-            <div class="graveyard-section">
-              <div class="graveyard-section-label">Your Graveyard ({{ myGraveyard.length }})</div>
-              @if (myGraveyard.length === 0) {
-                <div class="log-entry empty">No cards in graveyard.</div>
-              } @else {
-                <div class="graveyard-tab-cards">
-                  @for (card of myGraveyard; track $index) {
-                    <app-card-display [card]="card" class="graveyard-card"
-                      [class.playable]="isGraveyardLandPlayable($index)"
-                      (click)="playGraveyardLand($index)"
-                      (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
-                  }
-                </div>
-              }
-            </div>
-          </div>
-        }
-      </div>
-
-      <div class="action-bar">
-        @if (declaringAttackers()) {
-          <button class="btn-pass btn-pass-orange" (click)="confirmAttackers()">Confirm Attackers</button>
-        } @else if (declaringBlockers()) {
-          <button class="btn-pass btn-pass-blue" (click)="confirmBlockers()">Confirm Blockers</button>
-        } @else {
-          <button class="btn-pass" (click)="passPriority()" [disabled]="!hasPriority">Pass Priority</button>
-        }
-        @if (choice.choosingXValue) {
-          <div class="x-value-banner">
-            <span class="x-value-prompt">Choose X for {{ choice.xValueCardName }}</span>
-            <div class="x-value-controls">
-              <button class="x-value-arrow x-value-down" (click)="choice.xValueInput = choice.xValueInput - 1" [disabled]="choice.xValueInput <= 0">
-                <svg viewBox="0 0 12 8" fill="currentColor"><path d="M1 1l5 5 5-5"/></svg>
-              </button>
-              <span class="x-value-display">{{ choice.xValueInput }}</span>
-              <button class="x-value-arrow x-value-up" (click)="choice.xValueInput = choice.xValueInput + 1" [disabled]="choice.xValueInput >= choice.xValueMaximum">
-                <svg viewBox="0 0 12 8" fill="currentColor"><path d="M1 7l5-5 5 5"/></svg>
-              </button>
-            </div>
-            <span class="x-value-max">max {{ choice.xValueMaximum }}</span>
-            <div class="x-value-buttons">
-              <button class="btn-x-value" (click)="choice.confirmXValue()" [disabled]="choice.xValueInput < 0 || choice.xValueInput > choice.xValueMaximum">Confirm</button>
-              <button class="btn-x-value" (click)="choice.cancelXValue()">Cancel</button>
-            </div>
-          </div>
-        }
-        @if (choice.awaitingMayAbility) {
-          <div class="may-ability-banner">
-            <span class="may-ability-prompt">{{ choice.mayAbilityPrompt }}</span>
-            <div class="may-ability-buttons">
-              <button class="btn-may-ability" (click)="choice.acceptMayAbility()">Yes</button>
-              <button class="btn-may-ability" (click)="choice.declineMayAbility()">No</button>
-            </div>
-          </div>
-        }
-      </div>
-    </div>
+    <app-side-panel
+      [hoveredCard]="hoveredCard()"
+      [hoveredPermanent]="hoveredPermanent()"
+      [player1Name]="player1Name"
+      [player2Name]="player2Name"
+      [player1HandSize]="player1HandSize"
+      [player2HandSize]="player2HandSize"
+      [player1DeckSize]="player1DeckSize"
+      [player2DeckSize]="player2DeckSize"
+      [turnNumber]="game()?.turnNumber ?? 0"
+      [stackEntries]="stackEntries"
+      [isStackEmpty]="isStackEmpty"
+      [myGraveyard]="myGraveyard"
+      [opponentGraveyard]="opponentGraveyard"
+      [opponentPlayerName]="game()?.playerNames?.[opponentPlayerIndex] ?? ''"
+      [gameLog]="gameLog"
+      [declaringAttackers]="declaringAttackers()"
+      [declaringBlockers]="declaringBlockers()"
+      [hasPriority]="hasPriority"
+      [isActivePlayer0]="isActivePlayer(0)"
+      [isActivePlayer1]="isActivePlayer(1)"
+      [holdsPriority0]="holdsPriority(0)"
+      [holdsPriority1]="holdsPriority(1)"
+      [lifeTotal0]="getLifeTotal(0)"
+      [lifeTotal1]="getLifeTotal(1)"
+      [poisonCounters0]="getPoisonCounters(0)"
+      [poisonCounters1]="getPoisonCounters(1)"
+      [playerId0]="getPlayerId(0)"
+      [playerId1]="getPlayerId(1)"
+      [stackTargetId]="stackTargetId()"
+      [isGraveyardLandPlayable]="boundIsGraveyardLandPlayable"
+      [getPlayerName]="boundGetPlayerName"
+      [getStackEntryTargetName]="boundGetStackEntryTargetName"
+      (passPriority)="passPriority()"
+      (confirmAttackers)="confirmAttackers()"
+      (confirmBlockers)="confirmBlockers()"
+      (playerBadgeClick)="onPlayerBadgeClick($event)"
+      (cardHover)="onCardHover($event.card, $event.permanent ?? null)"
+      (cardHoverEnd)="onCardHoverEnd()"
+      (stackEntryHover)="onStackEntryHover($event)"
+      (stackEntryHoverEnd)="onStackEntryHoverEnd()"
+      (graveyardLandPlay)="playGraveyardLand($event)" />
   </div>
 </div>

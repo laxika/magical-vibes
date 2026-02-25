@@ -1,0 +1,134 @@
+<div class="combat-zone">
+  <div class="combat-zone-label">Combat</div>
+  <div class="combat-groups">
+    @for (group of combatPairings; track group.attackerIndex) {
+      <div class="combat-group">
+        <!-- Opponent's card on top (far from us) -->
+        @if (group.attackerIsMine && group.blockers.length > 0) {
+          <div class="combat-blocker-slots">
+            @for (blocker of group.blockers; track blocker.index) {
+              <div class="permanent-stack">
+                @for (aura of getAttachedAuras(blocker.perm.id); track aura.perm.id) {
+                  <app-card-display
+                    [card]="aura.perm.card"
+                    [permanent]="aura.perm"
+                    class="attached-aura"
+                    [class.targetable]="isSelectingTarget && isValidTarget(aura.perm)"
+                    (click)="auraClick.emit(aura)"
+                    (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                    (mouseleave)="onCardHoverEnd()" />
+                }
+                <app-card-display
+                  [card]="blocker.perm.card"
+                  [permanent]="blocker.perm"
+                  class="blocking"
+                  [class.stack-targeted]="stackTargetId === blocker.perm.id"
+                  (click)="blockerClick.emit(blocker)"
+                  (mouseenter)="onCardHover(blocker.perm.card, blocker.perm)"
+                  (mouseleave)="onCardHoverEnd()">
+                  <div class="card-combat-badge blocking-badge">Blocking</div>
+                </app-card-display>
+              </div>
+            }
+          </div>
+        }
+        @if (!group.attackerIsMine) {
+          <div class="combat-attacker-slot">
+            <div class="permanent-stack">
+              @for (aura of getAttachedAuras(group.attacker.id); track aura.perm.id) {
+                <app-card-display
+                  [card]="aura.perm.card"
+                  [permanent]="aura.perm"
+                  class="attached-aura"
+                  [class.targetable]="isSelectingTarget && isValidTarget(aura.perm)"
+                  (click)="auraClick.emit(aura)"
+                  (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                  (mouseleave)="onCardHoverEnd()" />
+              }
+              <app-card-display
+                [card]="group.attacker.card"
+                [permanent]="group.attacker"
+                [class.attacking]="group.attacker.attacking"
+                [class.selected-attacker]="declaringAttackers && isSelectedAttacker(group.attackerIndex)"
+                [class.block-target]="declaringBlockers && selectedBlockerIndex !== null && !group.attackerIsMine"
+                [class.targetable]="isDistributingDamage || (isSelectingTarget && isValidTarget(group.attacker))"
+                [class.stack-targeted]="stackTargetId === group.attacker.id"
+                (click)="attackerClick.emit(group)"
+                (contextmenu)="$event.preventDefault(); unassignDamage(group.attacker.id)"
+                (mouseenter)="onCardHover(group.attacker.card, group.attacker)"
+                (mouseleave)="onCardHoverEnd()">
+                <div class="card-combat-badge attacking-badge">Attacking</div>
+                @if (isDistributingDamage && getDamageAssigned(group.attacker.id) > 0) {
+                  <div class="card-combat-badge damage-badge">{{ getDamageAssigned(group.attacker.id) }} dmg</div>
+                }
+              </app-card-display>
+            </div>
+          </div>
+        }
+
+        <!-- Our card on bottom (close to us) -->
+        @if (group.attackerIsMine) {
+          <div class="combat-attacker-slot">
+            <div class="permanent-stack">
+              @for (aura of getAttachedAuras(group.attacker.id); track aura.perm.id) {
+                <app-card-display
+                  [card]="aura.perm.card"
+                  [permanent]="aura.perm"
+                  class="attached-aura"
+                  [class.targetable]="isSelectingTarget && isValidTarget(aura.perm)"
+                  (click)="auraClick.emit(aura)"
+                  (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                  (mouseleave)="onCardHoverEnd()" />
+              }
+              <app-card-display
+                [card]="group.attacker.card"
+                [permanent]="group.attacker"
+                [class.attacking]="group.attacker.attacking"
+                [class.selected-attacker]="declaringAttackers && isSelectedAttacker(group.attackerIndex)"
+                [class.block-target]="declaringBlockers && selectedBlockerIndex !== null && !group.attackerIsMine"
+                [class.targetable]="isDistributingDamage || (isSelectingTarget && isValidTarget(group.attacker))"
+                [class.stack-targeted]="stackTargetId === group.attacker.id"
+                (click)="attackerClick.emit(group)"
+                (contextmenu)="$event.preventDefault(); unassignDamage(group.attacker.id)"
+                (mouseenter)="onCardHover(group.attacker.card, group.attacker)"
+                (mouseleave)="onCardHoverEnd()">
+                <div class="card-combat-badge attacking-badge">Attacking</div>
+                @if (isDistributingDamage && getDamageAssigned(group.attacker.id) > 0) {
+                  <div class="card-combat-badge damage-badge">{{ getDamageAssigned(group.attacker.id) }} dmg</div>
+                }
+              </app-card-display>
+            </div>
+          </div>
+        }
+        @if (!group.attackerIsMine && group.blockers.length > 0) {
+          <div class="combat-blocker-slots">
+            @for (blocker of group.blockers; track blocker.index) {
+              <div class="permanent-stack">
+                @for (aura of getAttachedAuras(blocker.perm.id); track aura.perm.id) {
+                  <app-card-display
+                    [card]="aura.perm.card"
+                    [permanent]="aura.perm"
+                    class="attached-aura"
+                    [class.targetable]="isSelectingTarget && isValidTarget(aura.perm)"
+                    (click)="auraClick.emit(aura)"
+                    (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                    (mouseleave)="onCardHoverEnd()" />
+                }
+                <app-card-display
+                  [card]="blocker.perm.card"
+                  [permanent]="blocker.perm"
+                  class="blocking"
+                  [class.stack-targeted]="stackTargetId === blocker.perm.id"
+                  (click)="blockerClick.emit(blocker)"
+                  (mouseenter)="onCardHover(blocker.perm.card, blocker.perm)"
+                  (mouseleave)="onCardHoverEnd()">
+                  <div class="card-combat-badge blocking-badge">Blocking</div>
+                </app-card-display>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

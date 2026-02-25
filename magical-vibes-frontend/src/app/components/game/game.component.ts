@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +6,9 @@ import { Router } from '@angular/router';
 import { WebsocketService, WebSocketMessage, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, ChooseMultipleCardsFromGraveyardsNotification, StackEntry, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification, ChooseFromRevealedHandNotification, ChooseCardFromGraveyardNotification, ChooseHandTopBottomNotification, CombatDamageAssignmentNotification, ValidTargetsResponse } from '../../services/websocket.service';
 import { GameChoiceService } from '../../services/game-choice.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
+import { MulliganModalComponent } from './mulligan-modal/mulligan-modal.component';
+import { CombatZoneComponent } from './combat-zone/combat-zone.component';
+import { SidePanelComponent } from './side-panel/side-panel.component';
 import { IndexedPermanent, CombatGroup, CombatBlocker, AttachedAura, LandStack, splitBattlefield, stackBasicLands, getAttachedAuras, isLandStack, isPermanentCreature } from './battlefield.utils';
 import { Subscription } from 'rxjs';
 import { ManaSymbolService } from '../../services/mana-symbol.service';
@@ -13,7 +16,7 @@ import { ManaSymbolService } from '../../services/mana-symbol.service';
 @Component({
   selector: 'app-game',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardDisplayComponent],
+  imports: [CommonModule, FormsModule, CardDisplayComponent, MulliganModalComponent, CombatZoneComponent, SidePanelComponent],
   templateUrl: './game.component.html',
   styleUrl: './game.component.css'
 })
@@ -22,12 +25,24 @@ export class GameComponent implements OnInit, OnDestroy {
   hoveredCard = signal<Card | null>(null);
   hoveredPermanent = signal<Permanent | null>(null);
   stackTargetId = signal<string | null>(null);
-  activeTab = signal<'game' | 'stack' | 'graveyard'>('game');
   private subscriptions: Subscription[] = [];
+
+  @ViewChild(MulliganModalComponent) mulliganModal?: MulliganModalComponent;
+  @ViewChild(SidePanelComponent) sidePanel?: SidePanelComponent;
 
   readonly choice = inject(GameChoiceService);
   private manaSymbolService = inject(ManaSymbolService);
   private sanitizer = inject(DomSanitizer);
+
+  // Bound function references for child component inputs
+  readonly boundIsValidTarget = (perm: Permanent) => this.choice.targeting.isValidTarget(perm);
+  readonly boundIsSelectedAttacker = (index: number) => this.isSelectedAttacker(index);
+  readonly boundGetAttachedAuras = (permanentId: string) => this.getAttachedAuras(permanentId);
+  readonly boundGetDamageAssigned = (permanentId: string) => this.choice.damage.getDamageAssigned(permanentId);
+  readonly boundUnassignDamage = (permanentId: string) => this.choice.damage.unassignDamage(permanentId);
+  readonly boundIsGraveyardLandPlayable = (index: number) => this.isGraveyardLandPlayable(index);
+  readonly boundGetPlayerName = (playerId: string) => this.getPlayerName(playerId);
+  readonly boundGetStackEntryTargetName = (entry: StackEntry) => this.getStackEntryTargetName(entry);
 
   constructor(
     private router: Router,
@@ -94,11 +109,14 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     if (message.type === MessageType.MULLIGAN_RESOLVED) {
-      this.handleMulliganResolved(message as MulliganResolvedNotification);
+      this.mulliganModal?.handleMulliganResolved(
+        message as MulliganResolvedNotification,
+        this.websocketService.currentUser?.username ?? ''
+      );
     }
 
     if (message.type === MessageType.SELECT_CARDS_TO_BOTTOM) {
-      this.handleSelectCardsToBottom(message as SelectCardsToBottomNotification);
+      this.mulliganModal?.handleSelectCardsToBottom(message as SelectCardsToBottomNotification);
     }
 
     if (message.type === MessageType.AVAILABLE_ATTACKERS) {
@@ -318,11 +336,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
     // Detect transition to RUNNING to clear mulligan UI state
     if (state.status === GameStatus.RUNNING && g.status !== GameStatus.RUNNING) {
-      this.opponentKept.set(false);
-      this.selfKept.set(false);
-      this.selectingBottomCards.set(false);
-      this.bottomCardCount.set(0);
-      this.selectedCardIndices.set(new Set());
+      this.mulliganModal?.resetState();
     }
 
     const updated = {
@@ -355,9 +369,9 @@ export class GameComponent implements OnInit, OnDestroy {
 
     // Switch to stack tab when stack is non-empty
     if (state.stack.length > 0) {
-      this.activeTab.set('stack');
-    } else if (this.activeTab() === 'stack') {
-      this.activeTab.set('game');
+      this.sidePanel?.switchToStackTab();
+    } else {
+      this.sidePanel?.switchToGameTabIfOnStack();
     }
 
     // Clear pending combat state when server confirms battlefield
@@ -371,91 +385,19 @@ export class GameComponent implements OnInit, OnDestroy {
 
   // ========== Mulligan ==========
 
-  opponentKept = signal(false);
-  selfKept = signal(false);
-  selectingBottomCards = signal(false);
-  bottomCardCount = signal(0);
-  selectedCardIndices = signal(new Set<number>());
-
-  get isMulliganPhase(): boolean {
-    const g = this.game();
-    return g !== null && g.status === GameStatus.MULLIGAN;
-  }
-
-  get canMulligan(): boolean {
-    const g = this.game();
-    return g !== null && g.mulliganCount < 7;
-  }
-
-  private handleMulliganResolved(resolved: MulliganResolvedNotification): void {
-    const g = this.game();
-    if (!g) return;
-
-    const myName = this.websocketService.currentUser?.username;
-    if (resolved.playerName === myName) {
-      if (resolved.kept) {
-        this.selfKept.set(true);
-      }
-    } else {
-      if (resolved.kept) {
-        this.opponentKept.set(true);
-      } else {
-        this.opponentKept.set(false);
-      }
-    }
-  }
-
-  private handleSelectCardsToBottom(msg: SelectCardsToBottomNotification): void {
-    this.selectingBottomCards.set(true);
-    this.bottomCardCount.set(msg.count);
-    this.selectedCardIndices.set(new Set());
-  }
-
   keepHand(): void {
-    const g = this.game();
-    if (g && !this.selfKept()) {
-      this.websocketService.send({ type: MessageType.KEEP_HAND });
-    }
+    this.websocketService.send({ type: MessageType.KEEP_HAND });
   }
 
   takeMulligan(): void {
-    const g = this.game();
-    if (g && !this.selfKept()) {
-      this.websocketService.send({ type: MessageType.TAKE_MULLIGAN });
-    }
+    this.websocketService.send({ type: MessageType.TAKE_MULLIGAN });
   }
 
-  toggleCardSelection(index: number): void {
-    const current = this.selectedCardIndices();
-    if (current.has(index)) {
-      const updated = new Set(current);
-      updated.delete(index);
-      this.selectedCardIndices.set(updated);
-    } else if (current.size < this.bottomCardCount()) {
-      const updated = new Set(current);
-      updated.add(index);
-      this.selectedCardIndices.set(updated);
-    }
-  }
-
-  isCardSelected(index: number): boolean {
-    return this.selectedCardIndices().has(index);
-  }
-
-  get canConfirmBottom(): boolean {
-    return this.selectedCardIndices().size === this.bottomCardCount();
-  }
-
-  confirmBottomCards(): void {
-    const g = this.game();
-    if (g && this.canConfirmBottom) {
-      this.websocketService.send({
-        type: MessageType.BOTTOM_CARDS,
-        cardIndices: Array.from(this.selectedCardIndices())
-      });
-      this.selectingBottomCards.set(false);
-      this.selectedCardIndices.set(new Set());
-    }
+  confirmBottomCards(cardIndices: number[]): void {
+    this.websocketService.send({
+      type: MessageType.BOTTOM_CARDS,
+      cardIndices
+    });
   }
 
   // ========== Priority & playability ==========
@@ -473,7 +415,7 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   playCard(index: number): void {
-    this.choice.playCard(index, (i) => this.isCardPlayable(i));
+    this.choice.targeting.playCard(index, (i) => this.isCardPlayable(i));
   }
 
   playGraveyardLand(index: number): void {
@@ -792,35 +734,35 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return;
     }
-    if (this.choice.multiTargeting) {
+    if (this.choice.targeting.multiTargeting) {
       const perm = this.myBattlefield[index];
-      if (perm && this.choice.validTargetPermanentIds().has(perm.id)) {
-        if (this.choice.isMultiTargetSelected(perm.id)) {
-          this.choice.removeMultiTarget(perm.id);
+      if (perm && this.choice.targeting.validTargetPermanentIds().has(perm.id)) {
+        if (this.choice.targeting.isMultiTargetSelected(perm.id)) {
+          this.choice.targeting.removeMultiTarget(perm.id);
         } else {
-          this.choice.addMultiTarget(perm.id);
+          this.choice.targeting.addMultiTarget(perm.id);
         }
       }
       return;
     }
-    if (this.choice.convoking) {
+    if (this.choice.targeting.convoking) {
       const perm = this.myBattlefield[index];
       if (perm && isPermanentCreature(perm) && !perm.tapped) {
-        this.choice.toggleConvokeCreature(perm.id);
+        this.choice.targeting.toggleConvokeCreature(perm.id);
       }
       return;
     }
-    if (this.choice.distributingDamage) {
+    if (this.choice.damage.distributingDamage) {
       const perm = this.myBattlefield[index];
       if (perm && isPermanentCreature(perm) && perm.attacking) {
-        this.choice.assignDamage(perm.id);
+        this.choice.damage.assignDamage(perm.id);
       }
       return;
     }
-    if (this.choice.targeting) {
+    if (this.choice.targeting.selectingTarget) {
       const perm = this.myBattlefield[index];
-      if (perm && this.choice.isValidTarget(perm)) {
-        this.choice.selectTarget(perm.id);
+      if (perm && this.choice.targeting.isValidTarget(perm)) {
+        this.choice.targeting.selectTarget(perm.id);
       }
       return;
     }
@@ -829,7 +771,7 @@ export class GameComponent implements OnInit, OnDestroy {
     } else if (this.declaringBlockers()) {
       this.selectBlocker(index);
     } else {
-      this.choice.tapPermanent(index);
+      this.choice.targeting.tapPermanent(index);
     }
   }
 
@@ -848,28 +790,28 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return;
     }
-    if (this.choice.multiTargeting) {
+    if (this.choice.targeting.multiTargeting) {
       const perm = this.opponentBattlefield[index];
-      if (perm && this.choice.validTargetPermanentIds().has(perm.id)) {
-        if (this.choice.isMultiTargetSelected(perm.id)) {
-          this.choice.removeMultiTarget(perm.id);
+      if (perm && this.choice.targeting.validTargetPermanentIds().has(perm.id)) {
+        if (this.choice.targeting.isMultiTargetSelected(perm.id)) {
+          this.choice.targeting.removeMultiTarget(perm.id);
         } else {
-          this.choice.addMultiTarget(perm.id);
+          this.choice.targeting.addMultiTarget(perm.id);
         }
       }
       return;
     }
-    if (this.choice.distributingDamage) {
+    if (this.choice.damage.distributingDamage) {
       const perm = this.opponentBattlefield[index];
       if (perm && isPermanentCreature(perm) && perm.attacking) {
-        this.choice.assignDamage(perm.id);
+        this.choice.damage.assignDamage(perm.id);
       }
       return;
     }
-    if (this.choice.targeting) {
+    if (this.choice.targeting.selectingTarget) {
       const perm = this.opponentBattlefield[index];
-      if (perm && this.choice.isValidTarget(perm)) {
-        this.choice.selectTarget(perm.id);
+      if (perm && this.choice.targeting.isValidTarget(perm)) {
+        this.choice.targeting.selectTarget(perm.id);
       }
       return;
     }
@@ -891,24 +833,24 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return;
     }
-    if (this.choice.multiTargeting) {
-      if (this.choice.validTargetPermanentIds().has(group.attacker.id)) {
-        if (this.choice.isMultiTargetSelected(group.attacker.id)) {
-          this.choice.removeMultiTarget(group.attacker.id);
+    if (this.choice.targeting.multiTargeting) {
+      if (this.choice.targeting.validTargetPermanentIds().has(group.attacker.id)) {
+        if (this.choice.targeting.isMultiTargetSelected(group.attacker.id)) {
+          this.choice.targeting.removeMultiTarget(group.attacker.id);
         } else {
-          this.choice.addMultiTarget(group.attacker.id);
+          this.choice.targeting.addMultiTarget(group.attacker.id);
         }
       }
       return;
     }
-    if (this.choice.targeting) {
-      if (this.choice.isValidTarget(group.attacker)) {
-        this.choice.selectTarget(group.attacker.id);
+    if (this.choice.targeting.selectingTarget) {
+      if (this.choice.targeting.isValidTarget(group.attacker)) {
+        this.choice.targeting.selectTarget(group.attacker.id);
       }
       return;
     }
-    if (this.choice.distributingDamage) {
-      this.choice.assignDamage(group.attacker.id);
+    if (this.choice.damage.distributingDamage) {
+      this.choice.damage.assignDamage(group.attacker.id);
       return;
     }
     if (this.declaringAttackers() && group.attackerIsMine) {
@@ -916,7 +858,7 @@ export class GameComponent implements OnInit, OnDestroy {
     } else if (this.declaringBlockers() && !group.attackerIsMine) {
       this.assignBlock(group.attackerIndex);
     } else if (group.attackerIsMine) {
-      this.choice.tapPermanent(group.attackerIndex);
+      this.choice.targeting.tapPermanent(group.attackerIndex);
     }
   }
 
@@ -933,26 +875,26 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return;
     }
-    if (this.choice.multiTargeting) {
-      if (this.choice.validTargetPermanentIds().has(blocker.perm.id)) {
-        if (this.choice.isMultiTargetSelected(blocker.perm.id)) {
-          this.choice.removeMultiTarget(blocker.perm.id);
+    if (this.choice.targeting.multiTargeting) {
+      if (this.choice.targeting.validTargetPermanentIds().has(blocker.perm.id)) {
+        if (this.choice.targeting.isMultiTargetSelected(blocker.perm.id)) {
+          this.choice.targeting.removeMultiTarget(blocker.perm.id);
         } else {
-          this.choice.addMultiTarget(blocker.perm.id);
+          this.choice.targeting.addMultiTarget(blocker.perm.id);
         }
       }
       return;
     }
-    if (this.choice.targeting) {
-      if (this.choice.isValidTarget(blocker.perm)) {
-        this.choice.selectTarget(blocker.perm.id);
+    if (this.choice.targeting.selectingTarget) {
+      if (this.choice.targeting.isValidTarget(blocker.perm)) {
+        this.choice.targeting.selectTarget(blocker.perm.id);
       }
       return;
     }
     if (this.declaringBlockers() && blocker.isMine) {
       this.selectBlocker(blocker.index);
     } else if (blocker.isMine) {
-      this.choice.tapPermanent(blocker.index);
+      this.choice.targeting.tapPermanent(blocker.index);
     }
   }
 
@@ -966,29 +908,19 @@ export class GameComponent implements OnInit, OnDestroy {
     this.stackTargetId.set(null);
   }
 
-  isStackTargetPlayer(playerIndex: number): boolean {
-    const g = this.game();
-    if (!g) return false;
-    return this.stackTargetId() === g.playerIds[playerIndex];
-  }
-
   onPlayerBadgeClick(playerIndex: number): void {
     const playerId = this.getPlayerId(playerIndex);
     if (this.choice.choosingPermanent && (this.choice.choosablePermanentIds().has(playerId) || this.choice.choosablePlayerIds().has(playerId))) {
       this.choice.choosePermanent(playerId);
-    } else if (this.choice.multiTargeting && this.choice.validTargetPlayerIds().size > 0) {
-      if (this.choice.isMultiTargetSelected(playerId)) {
-        this.choice.removeMultiTarget(playerId);
+    } else if (this.choice.targeting.multiTargeting && this.choice.targeting.validTargetPlayerIds().size > 0) {
+      if (this.choice.targeting.isMultiTargetSelected(playerId)) {
+        this.choice.targeting.removeMultiTarget(playerId);
       } else {
-        this.choice.addMultiTargetPlayer(playerIndex);
+        this.choice.targeting.addMultiTargetPlayer(playerIndex);
       }
     } else {
-      this.choice.selectPlayerTarget(playerIndex);
+      this.choice.targeting.selectPlayerTarget(playerIndex);
     }
-  }
-
-  isStackTargetSpell(entry: StackEntry): boolean {
-    return this.stackTargetId() === entry.cardId;
   }
 
   getStackEntryTargetName(entry: StackEntry): string | null {

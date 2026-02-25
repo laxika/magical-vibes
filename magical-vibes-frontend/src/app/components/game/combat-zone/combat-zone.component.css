@@ -1,0 +1,146 @@
+/* Combat zone (red zone) */
+
+.combat-zone {
+  background: rgba(139, 26, 26, 0.06);
+  border: 1px dashed rgba(139, 26, 26, 0.4);
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin: 6px 0;
+  min-height: 60px;
+}
+
+.combat-zone-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-red-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  font-family: var(--font-display);
+}
+
+.combat-groups {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.combat-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.combat-attacker-slot {
+  /* Attacker card container */
+}
+
+.combat-blocker-slots {
+  display: flex;
+  gap: 6px;
+}
+
+.combat-zone .card {
+  cursor: pointer;
+}
+
+/* Combat card state classes */
+
+.card.attacking {
+  outline: 2px solid #c04040;
+  box-shadow: 0 0 12px rgba(192, 64, 64, 0.5);
+}
+
+.card.blocking {
+  outline: 2px solid #5878a0;
+  box-shadow: 0 0 12px rgba(88, 120, 160, 0.5);
+}
+
+.card.selected-attacker {
+  outline: 2px solid var(--color-gold);
+  box-shadow: 0 0 16px rgba(200, 169, 81, 0.7);
+  cursor: pointer;
+}
+
+.card.block-target {
+  outline: 2px dashed #c04040;
+  box-shadow: 0 0 16px rgba(192, 64, 64, 0.5);
+  cursor: pointer;
+}
+
+.card.targetable {
+  outline: 3px dashed var(--color-green-primary);
+  box-shadow: 0 0 12px rgba(45, 122, 80, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+.card.stack-targeted {
+  outline: 3px solid #c04040;
+  outline-offset: 1px;
+  box-shadow: 0 0 12px rgba(192, 64, 64, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5);
+  animation: stack-target-highlight 2s ease-in-out infinite;
+  z-index: 10;
+}
+
+@keyframes stack-target-highlight {
+  0%, 100% { box-shadow: 0 0 10px rgba(192, 64, 64, 0.4), 2px 3px 8px rgba(0, 0, 0, 0.5); }
+  50% { box-shadow: 0 0 18px rgba(192, 64, 64, 0.7), 2px 3px 10px rgba(0, 0, 0, 0.6); }
+}
+
+/* Combat badges */
+
+.card-combat-badge {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  font-family: var(--font-display);
+}
+
+.attacking-badge {
+  background: var(--color-red-bright);
+  color: var(--color-parchment);
+}
+
+.blocking-badge {
+  background: var(--color-blue-primary);
+  color: var(--color-parchment);
+}
+
+.damage-badge {
+  background: var(--color-red-bright);
+  color: var(--color-parchment);
+  top: auto;
+  bottom: -8px;
+  left: auto;
+  right: -8px;
+}
+
+/* Permanent stack (aura attachment) */
+
+.permanent-stack {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.permanent-stack > .card.attached-aura {
+  margin-bottom: -190px;
+  margin-left: 50px;
+  z-index: 0;
+}
+
+.permanent-stack:has(.attached-aura):has(.tapped) {
+  min-height: 231px;
+}
+
+.permanent-stack > .card:last-child {
+  z-index: 1;
+}
