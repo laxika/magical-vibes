@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnArtifactCastEffect;
+import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfOnArtifactCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
@@ -141,6 +142,26 @@ public class TriggerCollectionService {
                                 null,
                                 perm.getId()
                         ));
+                    }
+                } else if (inner instanceof GiveTargetPlayerPoisonCountersEffect trigger
+                        && trigger.spellFilter() != null
+                        && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)
+                        && playerId.equals(castingPlayerId)) {
+                    // Find the opponent to auto-target
+                    UUID opponentId = gameData.orderedPlayerIds.stream()
+                            .filter(id -> !id.equals(playerId))
+                            .findFirst().orElse(null);
+                    if (opponentId != null) {
+                        List<CardEffect> resolvedEffects = List.of(new GiveTargetPlayerPoisonCountersEffect(trigger.amount()));
+                        StackEntry entry = new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s ability",
+                                new ArrayList<>(resolvedEffects)
+                        );
+                        entry.setTargetPermanentId(opponentId);
+                        gameData.stack.add(entry);
                     }
                 }
             }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -376,6 +377,8 @@ public class StaticEffectResolutionService {
             return target.getCard().getSubtypes().stream().anyMatch(p.subtypes()::contains)
                     || (p.subtypes().stream().anyMatch(StaticEffectResolutionService::isCreatureSubtype)
                     && target.hasKeyword(Keyword.CHANGELING));
+        if (filter instanceof PermanentHasKeywordPredicate p)
+            return target.hasKeyword(p.keyword());
         if (filter instanceof PermanentIsCreaturePredicate)
             return target.getCard().getType() == CardType.CREATURE
                     || target.getCard().getAdditionalTypes().contains(CardType.CREATURE);
