@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 import com.github.laxika.magicalvibes.model.effect.AttachedCreatureDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
 import lombok.RequiredArgsConstructor;
@@ -175,7 +177,32 @@ public class TurnProgressionService {
                 if (upkeepEffects == null || upkeepEffects.isEmpty()) continue;
 
                 for (CardEffect effect : upkeepEffects) {
-                    if (effect instanceof MayEffect may) {
+                    CardEffect innerEffect = effect;
+
+                    // Unwrap MetalcraftConditionalEffect — check metalcraft before offering the ability
+                    if (innerEffect instanceof MetalcraftConditionalEffect metalcraft) {
+                        List<Permanent> mcBattlefield = gameData.playerBattlefields.get(activePlayerId);
+                        long artifactCount = mcBattlefield == null ? 0 : mcBattlefield.stream()
+                                .filter(gameQueryService::isArtifact)
+                                .count();
+                        if (artifactCount < 3) {
+                            log.info("Game {} - {} graveyard metalcraft ability skipped (fewer than three artifacts)",
+                                    gameData.id, card.getName());
+                            continue;
+                        }
+                        innerEffect = metalcraft.wrapped();
+                    }
+
+                    if (innerEffect instanceof MayPayManaEffect mayPay) {
+                        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                                card,
+                                activePlayerId,
+                                List.of(mayPay.wrapped()),
+                                card.getName() + " — " + mayPay.prompt(),
+                                null,
+                                mayPay.manaCost()
+                        ));
+                    } else if (innerEffect instanceof MayEffect may) {
                         gameData.pendingMayAbilities.add(new PendingMayAbility(
                                 card,
                                 activePlayerId,
@@ -188,7 +215,7 @@ public class TurnProgressionService {
                                 card,
                                 activePlayerId,
                                 card.getName() + "'s upkeep ability",
-                                new ArrayList<>(List.of(effect))
+                                new ArrayList<>(List.of(innerEffect))
                         ));
 
                         String logEntry = card.getName() + "'s upkeep ability triggers.";

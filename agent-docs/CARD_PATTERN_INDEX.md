@@ -99,6 +99,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Upkeep token | `v/VerdantForce.java` | EACH_UPKEEP_TRIGGERED CreateCreatureTokenEffect |
 | Upkeep token per equipment | `k/KembaKhaRegent.java` | UPKEEP_TRIGGERED CreateTokenPerEquipmentOnSourceEffect — tokens equal to attached Equipment |
 | Graveyard upkeep | `s/SqueeGoblinNabob.java` | GRAVEYARD_UPKEEP_TRIGGERED ReturnCardFromGraveyardEffect(HAND, CardIsSelfPredicate, returnAll=true) |
+| Graveyard metalcraft pay-to-return | `k/KuldothaPhoenix.java` | GRAVEYARD_UPKEEP_TRIGGERED MetalcraftConditionalEffect(MayPayManaEffect("{4}", ReturnCardFromGraveyardEffect(BATTLEFIELD, CardIsSelfPredicate))) — metalcraft checked at trigger time, mana paid at resolution |
 | Combat damage to player | `t/ThievingMagpie.java` | ON_COMBAT_DAMAGE_TO_PLAYER DrawCardEffect |
 | On becomes blocked | `s/SylvanBasilisk.java` | ON_BECOMES_BLOCKED DestroyCreatureBlockingThisEffect |
 | On block (mutual destroy) | `l/LoyalSentry.java` | ON_BLOCK DestroyBlockedCreatureAndSelfEffect |
