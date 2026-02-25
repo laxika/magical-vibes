@@ -1061,6 +1061,14 @@ public class AiDecisionEngine {
             return;
         }
 
+        // Keyword grant choice (Golem Artisan, etc.) — pick flying as the most impactful default
+        if (colorChoice.context() instanceof ColorChoiceContext.KeywordGrantChoice kgc) {
+            String chosenKeyword = kgc.options().getFirst().name();
+            log.info("AI: Choosing keyword {} in game {}", chosenKeyword, gameId);
+            send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, chosenKeyword)));
+            return;
+        }
+
         // Card name choice (Pithing Needle, etc.) — pick the opponent's most threatening permanent
         if (colorChoice.context() instanceof ColorChoiceContext.CardNameChoice) {
             UUID opponentId = getOpponentId(gameData);

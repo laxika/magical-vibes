@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
@@ -15,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfPerBlockingCreatureE
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
@@ -345,6 +348,16 @@ public class CreatureModResolutionService {
         String logEntry = target.getCard().getName() + " gains " + keywordName + " until end of turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gains {} ({})", gameData.id, target.getCard().getName(), grant.keyword(), grant.scope());
+    }
+
+    @HandlesEffect(GrantChosenKeywordToTargetEffect.class)
+    private void resolveGrantChosenKeyword(GameData gameData, StackEntry entry, GrantChosenKeywordToTargetEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        playerInputService.beginKeywordChoice(gameData, entry.getControllerId(), target.getId(), effect.options());
     }
 
     @HandlesEffect(CantBlockSourceEffect.class)

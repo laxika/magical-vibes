@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import java.util.List;
 import java.util.UUID;
 
 public sealed interface ColorChoiceContext {
@@ -13,4 +14,6 @@ public sealed interface ColorChoiceContext {
     record DrawReplacementChoice(UUID playerId, DrawReplacementKind kind) implements ColorChoiceContext {}
 
     record CardNameChoice(Card card, UUID controllerId) implements ColorChoiceContext {}
+
+    record KeywordGrantChoice(UUID targetPermanentId, List<Keyword> options) implements ColorChoiceContext {}
 }

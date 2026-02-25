@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -236,6 +237,9 @@ public class ReconnectionService {
                 } else if (cc.context() instanceof ColorChoiceContext.CardNameChoice) {
                     options = collectAllCardNamesInGame(gameData);
                     prompt = "Choose a card name.";
+                } else if (cc.context() instanceof ColorChoiceContext.KeywordGrantChoice kgc) {
+                    options = kgc.options().stream().map(Keyword::name).toList();
+                    prompt = "Choose a keyword to grant.";
                 } else {
                     options = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                     prompt = "Choose a color.";

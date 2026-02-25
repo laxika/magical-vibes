@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.config.EffectRegistryConfig;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.InteractionContext;
@@ -347,11 +348,18 @@ public class GameSimulator {
                 }
             }
             case COLOR_CHOICE -> {
-                actions.add(new SimulationAction.ChooseColor("WHITE"));
-                actions.add(new SimulationAction.ChooseColor("BLUE"));
-                actions.add(new SimulationAction.ChooseColor("BLACK"));
-                actions.add(new SimulationAction.ChooseColor("RED"));
-                actions.add(new SimulationAction.ChooseColor("GREEN"));
+                var cc = gd.interaction.colorChoiceContextView();
+                if (cc != null && cc.context() instanceof ColorChoiceContext.KeywordGrantChoice kgc) {
+                    for (var kw : kgc.options()) {
+                        actions.add(new SimulationAction.ChooseColor(kw.name()));
+                    }
+                } else {
+                    actions.add(new SimulationAction.ChooseColor("WHITE"));
+                    actions.add(new SimulationAction.ChooseColor("BLUE"));
+                    actions.add(new SimulationAction.ChooseColor("BLACK"));
+                    actions.add(new SimulationAction.ChooseColor("RED"));
+                    actions.add(new SimulationAction.ChooseColor("GREEN"));
+                }
             }
             case MAY_ABILITY_CHOICE -> {
                 actions.add(new SimulationAction.MayAbilityChoice(true));
@@ -553,7 +561,14 @@ public class GameSimulator {
                     gameService.handlePermanentChosen(gd, player, chosen);
                 }
             }
-            case COLOR_CHOICE -> gameService.handleColorChosen(gd, player, "RED");
+            case COLOR_CHOICE -> {
+                var ccCtx = gd.interaction.colorChoiceContextView();
+                if (ccCtx != null && ccCtx.context() instanceof ColorChoiceContext.KeywordGrantChoice kgc) {
+                    gameService.handleColorChosen(gd, player, kgc.options().getFirst().name());
+                } else {
+                    gameService.handleColorChosen(gd, player, "RED");
+                }
+            }
             case MAY_ABILITY_CHOICE -> gameService.handleMayAbilityChosen(gd, player, true);
             case GRAVEYARD_CHOICE -> {
                 var gc = gd.interaction.graveyardChoiceContext();

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -98,6 +99,17 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a color", gameData.id, playerName);
+    }
+
+    public void beginKeywordChoice(GameData gameData, UUID playerId, UUID targetPermanentId, List<Keyword> options) {
+        ColorChoiceContext.KeywordGrantChoice choiceContext = new ColorChoiceContext.KeywordGrantChoice(targetPermanentId, options);
+        gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
+
+        List<String> optionNames = options.stream().map(Keyword::name).toList();
+        sessionManager.sendToPlayer(playerId, new ChooseColorMessage(optionNames, "Choose a keyword to grant."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a keyword", gameData.id, playerName);
     }
 
     public void beginCardNameChoice(GameData gameData, UUID playerId, Card card) {

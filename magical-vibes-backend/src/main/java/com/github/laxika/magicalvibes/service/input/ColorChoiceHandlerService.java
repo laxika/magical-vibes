@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ColorChoiceContext;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
@@ -75,6 +76,10 @@ public class ColorChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ColorChoiceContext.DrawReplacementChoice ctx) {
             handleDrawReplacementChoice(gameData, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ColorChoiceContext.KeywordGrantChoice ctx) {
+            handleKeywordGrantChoice(gameData, player, colorName, ctx);
             return;
         }
 
@@ -227,6 +232,35 @@ public class ColorChoiceHandlerService {
         log.info("Game {} - {} chooses card name \"{}\" for {}", gameData.id, player.getUsername(), cardName, card.getName());
 
         legendRuleService.checkLegendRule(gameData, controllerId);
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleKeywordGrantChoice(GameData gameData, Player player, String chosenKeywordName, ColorChoiceContext.KeywordGrantChoice ctx) {
+        Keyword keyword;
+        try {
+            keyword = Keyword.valueOf(chosenKeywordName);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid keyword choice: " + chosenKeywordName);
+        }
+        if (!ctx.options().contains(keyword)) {
+            throw new IllegalArgumentException("Keyword not among valid options: " + chosenKeywordName);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.interaction.clearColorChoice();
+
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
+        if (target != null) {
+            target.getGrantedKeywords().add(keyword);
+
+            String keywordName = keyword.name().charAt(0) + keyword.name().substring(1).toLowerCase().replace('_', ' ');
+            String logEntry = target.getCard().getName() + " gains " + keywordName + " until end of turn.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), keywordName, target.getCard().getName());
+        }
 
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
