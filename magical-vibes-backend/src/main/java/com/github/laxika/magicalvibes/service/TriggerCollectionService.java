@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfOnArtifactCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeOnOwnSpellCastWithCostEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -102,6 +103,29 @@ public class TriggerCollectionService {
                         && spellCard.getType() == CardType.ARTIFACT
                         && playerId.equals(castingPlayerId)) {
                     List<CardEffect> resolvedEffects = List.of(new DealDamageToAnyTargetEffect(trigger.damage()));
+
+                    if (effect instanceof MayEffect may) {
+                        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                                perm.getCard(),
+                                playerId,
+                                resolvedEffects,
+                                perm.getCard().getName() + " — " + may.prompt(),
+                                null,
+                                "{" + trigger.manaCost() + "}"
+                        ));
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s ability",
+                                new ArrayList<>(resolvedEffects)
+                        ));
+                    }
+                } else if (inner instanceof GainLifeOnOwnSpellCastWithCostEffect trigger
+                        && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)
+                        && playerId.equals(castingPlayerId)) {
+                    List<CardEffect> resolvedEffects = List.of(new GainLifeEffect(trigger.amount()));
 
                     if (effect instanceof MayEffect may) {
                         gameData.pendingMayAbilities.add(new PendingMayAbility(
