@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MetalcraftReplacementEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,10 @@ public class EffectResolutionService {
                     continue;
                 }
                 effectToResolve = metalcraft.wrapped();
+            } else if (effect instanceof MetalcraftReplacementEffect replacement) {
+                effectToResolve = isMetalcraftMet(gameData, entry.getControllerId())
+                        ? replacement.metalcraftEffect()
+                        : replacement.baseEffect();
             }
 
             EffectHandler handler = registry.getHandler(effectToResolve);
