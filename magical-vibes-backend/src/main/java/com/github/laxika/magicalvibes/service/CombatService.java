@@ -1367,10 +1367,7 @@ public class CombatService {
             }
             if (controllerId == null) continue;
 
-            int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
-            gameData.playerLifeTotals.put(controllerId, currentLife + damageDealt);
-            String logEntry = gameData.playerIdToName.get(controllerId) + " gains " + damageDealt + " life from lifelink.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            grantLifeToPlayer(gameData, controllerId, damageDealt, "lifelink");
         }
     }
 
@@ -1384,15 +1381,19 @@ public class CombatService {
                 if (perm.getAttachedTo() != null && perm.getAttachedTo().equals(creature.getId())) {
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                         if (effect instanceof GainLifeEqualToDamageDealtEffect) {
-                            int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
-                            gameData.playerLifeTotals.put(playerId, currentLife + damageDealt);
-                            String logEntry = gameData.playerIdToName.get(playerId) + " gains " + damageDealt + " life from " + perm.getCard().getName() + ".";
-                            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                            grantLifeToPlayer(gameData, playerId, damageDealt, perm.getCard().getName());
                         }
                     }
                 }
             });
         }
+    }
+
+    private void grantLifeToPlayer(GameData gameData, UUID playerId, int amount, String source) {
+        int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+        gameData.playerLifeTotals.put(playerId, currentLife + amount);
+        String logEntry = gameData.playerIdToName.get(playerId) + " gains " + amount + " life from " + source + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
     }
 
     private void processCombatDamageToPlayerTriggers(GameData gameData, Map<Permanent, Integer> combatDamageDealtToPlayer, UUID attackerId, UUID defenderId) {

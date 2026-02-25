@@ -109,25 +109,13 @@ public class DestructionResolutionService {
             return;
         }
 
-        if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
-            String logEntry = target.getCard().getName() + " is indestructible.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} is indestructible, destroy prevented", gameData.id, target.getCard().getName());
+        if (!permanentRemovalService.tryDestroyPermanent(gameData, target, destroy.cannotBeRegenerated())) {
             return;
         }
-
-        if (!destroy.cannotBeRegenerated()
-                && gameQueryService.isCreature(gameData, target) && gameHelper.tryRegenerate(gameData, target)) {
-            return;
-        }
-
-        permanentRemovalService.removePermanentToGraveyard(gameData, target);
         String logEntry = target.getCard().getName() + " is destroyed.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} is destroyed by {}'s ability",
                 gameData.id, target.getCard().getName(), entry.getCard().getName());
-
-        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     @HandlesEffect(DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect.class)
@@ -145,16 +133,9 @@ public class DestructionResolutionService {
         }
 
         // Destroy the target creature
-        if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
-            String logEntry = target.getCard().getName() + " is indestructible.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        } else if (gameQueryService.isCreature(gameData, target) && gameHelper.tryRegenerate(gameData, target)) {
-            // Regenerated — not destroyed
-        } else {
-            permanentRemovalService.removePermanentToGraveyard(gameData, target);
+        if (permanentRemovalService.tryDestroyPermanent(gameData, target)) {
             String logEntry = target.getCard().getName() + " is destroyed.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            permanentRemovalService.removeOrphanedAuras(gameData);
         }
 
         // Count ALL creatures that died this turn (across all players, including tokens)
@@ -205,15 +186,10 @@ public class DestructionResolutionService {
         }
 
         // Attempt to destroy the land
-        if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
-            String logEntry = target.getCard().getName() + " is indestructible.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        } else {
-            permanentRemovalService.removePermanentToGraveyard(gameData, target);
+        if (permanentRemovalService.tryDestroyPermanent(gameData, target)) {
             String logEntry = target.getCard().getName() + " is destroyed.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} is destroyed by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
-            permanentRemovalService.removeOrphanedAuras(gameData);
         }
 
         // Deal damage to the land's controller regardless of whether destruction succeeded
@@ -430,52 +406,29 @@ public class DestructionResolutionService {
             return;
         }
 
-        if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
-            String logEntry = target.getCard().getName() + " is indestructible.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} is indestructible, destroy prevented", gameData.id, target.getCard().getName());
+        if (!permanentRemovalService.tryDestroyPermanent(gameData, target)) {
             return;
         }
-
-        if (gameHelper.tryRegenerate(gameData, target)) {
-            return;
-        }
-
-        permanentRemovalService.removePermanentToGraveyard(gameData, target);
         String logEntry = target.getCard().getName() + " is destroyed.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} is destroyed by {}'s ability",
                 gameData.id, target.getCard().getName(), entry.getCard().getName());
-
-        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     @HandlesEffect(DestroyBlockedCreatureAndSelfEffect.class)
     void resolveDestroyBlockedCreatureAndSelf(GameData gameData, StackEntry entry) {
         Permanent attacker = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
-        if (attacker != null) {
-            if (gameQueryService.hasKeyword(gameData, attacker, Keyword.INDESTRUCTIBLE)) {
-                String logEntry = attacker.getCard().getName() + " is indestructible.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            } else if (!gameHelper.tryRegenerate(gameData, attacker)) {
-                permanentRemovalService.removePermanentToGraveyard(gameData, attacker);
-                String logEntry = attacker.getCard().getName() + " is destroyed by " + entry.getCard().getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} destroyed by {}'s block trigger", gameData.id, attacker.getCard().getName(), entry.getCard().getName());
-            }
+        if (attacker != null && permanentRemovalService.tryDestroyPermanent(gameData, attacker)) {
+            String logEntry = attacker.getCard().getName() + " is destroyed by " + entry.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} destroyed by {}'s block trigger", gameData.id, attacker.getCard().getName(), entry.getCard().getName());
         }
 
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (self != null) {
-            if (gameQueryService.hasKeyword(gameData, self, Keyword.INDESTRUCTIBLE)) {
-                String logEntry = entry.getCard().getName() + " is indestructible.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            } else if (!gameHelper.tryRegenerate(gameData, self)) {
-                permanentRemovalService.removePermanentToGraveyard(gameData, self);
-                String logEntry = entry.getCard().getName() + " is destroyed.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} destroyed (self-destruct from block trigger)", gameData.id, entry.getCard().getName());
-            }
+        if (self != null && permanentRemovalService.tryDestroyPermanent(gameData, self)) {
+            String logEntry = entry.getCard().getName() + " is destroyed.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} destroyed (self-destruct from block trigger)", gameData.id, entry.getCard().getName());
         }
     }
 
@@ -489,16 +442,10 @@ public class DestructionResolutionService {
         int toughness = gameQueryService.getEffectiveToughness(gameData, target);
 
         // Attempt to destroy (life gain happens regardless)
-        if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
-            String logEntry = target.getCard().getName() + " is indestructible.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} is indestructible, destroy prevented", gameData.id, target.getCard().getName());
-        } else if (!gameHelper.tryRegenerate(gameData, target)) {
-            permanentRemovalService.removePermanentToGraveyard(gameData, target);
+        if (permanentRemovalService.tryDestroyPermanent(gameData, target)) {
             String logEntry = target.getCard().getName() + " is destroyed by " + entry.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} destroyed by {}'s ability", gameData.id, target.getCard().getName(), entry.getCard().getName());
-            permanentRemovalService.removeOrphanedAuras(gameData);
         }
 
         // Gain life equal to toughness regardless of destruction result

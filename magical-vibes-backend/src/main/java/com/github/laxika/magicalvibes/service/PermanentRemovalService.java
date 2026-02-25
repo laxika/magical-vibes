@@ -60,6 +60,29 @@ public class PermanentRemovalService {
         auraAttachmentService.removeOrphanedAuras(gameData);
     }
 
+    /**
+     * Attempts to destroy a permanent, handling indestructible and regeneration checks.
+     * If destroyed, also removes orphaned auras. Returns true if the permanent was destroyed.
+     */
+    public boolean tryDestroyPermanent(GameData gameData, Permanent target) {
+        return tryDestroyPermanent(gameData, target, false);
+    }
+
+    public boolean tryDestroyPermanent(GameData gameData, Permanent target, boolean cannotBeRegenerated) {
+        if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
+            String logEntry = target.getCard().getName() + " is indestructible.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} is indestructible, destroy prevented", gameData.id, target.getCard().getName());
+            return false;
+        }
+        if (!cannotBeRegenerated && gameHelper.tryRegenerate(gameData, target)) {
+            return false;
+        }
+        removePermanentToGraveyard(gameData, target);
+        removeOrphanedAuras(gameData);
+        return true;
+    }
+
     public void removeCardFromGraveyardById(GameData gameData, UUID cardId) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
