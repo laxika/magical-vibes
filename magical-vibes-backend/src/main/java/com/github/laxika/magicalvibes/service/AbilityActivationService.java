@@ -59,6 +59,8 @@ public class AbilityActivationService {
     private final ActivatedAbilityExecutionService activatedAbilityExecutionService;
     private final PlayerInputService playerInputService;
     private final SessionManager sessionManager;
+    private final PermanentRemovalService permanentRemovalService;
+    private final TriggerCollectionService triggerCollectionService;
 
     public void tapPermanent(GameData gameData, Player player, int permanentIndex) {
         UUID playerId = player.getId();
@@ -97,7 +99,7 @@ public class AbilityActivationService {
 
         // Check for "whenever a player taps a land for mana" triggers (e.g. Manabarbs)
         if (permanent.getCard().getType() == CardType.LAND) {
-            gameHelper.checkLandTapTriggers(gameData, playerId, permanent.getId());
+            triggerCollectionService.checkLandTapTriggers(gameData, playerId, permanent.getId());
         }
 
         gameBroadcastService.broadcastGameState(gameData);
@@ -150,8 +152,8 @@ public class AbilityActivationService {
         if (wasCreature) {
             gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
         }
-        gameHelper.checkAllyPermanentSacrificedTriggers(gameData, playerId);
-        gameHelper.removeOrphanedAuras(gameData);
+        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId);
+        permanentRemovalService.removeOrphanedAuras(gameData);
 
         String logEntry = player.getUsername() + " sacrifices " + permanent.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -381,7 +383,7 @@ public class AbilityActivationService {
             gameHelper.addCardToGraveyard(gameData, playerId, sacTarget.getCard(), Zone.BATTLEFIELD);
             gameHelper.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true);
             gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
-            gameHelper.checkAllyPermanentSacrificedTriggers(gameData, playerId);
+            triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId);
 
             String sacLog = player.getUsername() + " sacrifices " + sacTarget.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, sacLog);
@@ -612,7 +614,7 @@ public class AbilityActivationService {
             gameHelper.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true);
             gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
         }
-        gameHelper.checkAllyPermanentSacrificedTriggers(gameData, playerId);
+        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId);
         String sacLog = player.getUsername() + " sacrifices " + sacTarget.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, sacLog);
     }
@@ -627,7 +629,7 @@ public class AbilityActivationService {
         gameHelper.addCardToGraveyard(gameData, playerId, sacTarget.getCard(), Zone.BATTLEFIELD);
         gameHelper.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true);
         gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
-        gameHelper.checkAllyPermanentSacrificedTriggers(gameData, playerId);
+        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId);
         String sacLog = player.getUsername() + " sacrifices " + sacTarget.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, sacLog);
     }
@@ -765,7 +767,7 @@ public class AbilityActivationService {
         Card discarded = hand.remove((int) discardCardIndex);
         gameHelper.addCardToGraveyard(gameData, player.getId(), discarded);
         gameData.discardCausedByOpponent = false;
-        gameHelper.checkDiscardTriggers(gameData, player.getId(), discarded);
+        triggerCollectionService.checkDiscardTriggers(gameData, player.getId(), discarded);
 
         String logEntry = player.getUsername() + " discards " + discarded.getName() + " as an activation cost.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);

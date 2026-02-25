@@ -24,6 +24,7 @@ public class EffectResolutionService {
     private final GameHelper gameHelper;
     private final EffectHandlerRegistry registry;
     private final GameBroadcastService gameBroadcastService;
+    private final PermanentRemovalService permanentRemovalService;
 
     void resolveEffects(GameData gameData, StackEntry entry) {
         List<CardEffect> effects = entry.getEffectsToResolve();
@@ -55,7 +56,7 @@ public class EffectResolutionService {
                 break;
             }
         }
-        gameHelper.removeOrphanedAuras(gameData);
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     private boolean isMetalcraftMet(GameData gameData, UUID controllerId) {

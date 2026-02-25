@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.AbilityActivationService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class CardChoiceHandlerService {
     private final GameHelper gameHelper;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
+    private final TriggerCollectionService triggerCollectionService;
     private final TurnProgressionService turnProgressionService;
     private final AbilityActivationService abilityActivationService;
 
@@ -109,7 +111,7 @@ public class CardChoiceHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} discards {}", gameData.id, player.getUsername(), card.getName());
 
-        gameHelper.checkDiscardTriggers(gameData, playerId, card);
+        triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
 
         int remainingDiscards = gameData.interaction.decrementDiscardRemainingCount();
 
@@ -128,7 +130,7 @@ public class CardChoiceHandlerService {
 
             // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
             if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
-                gameHelper.processNextDiscardSelfTrigger(gameData);
+                triggerCollectionService.processNextDiscardSelfTrigger(gameData);
                 return;
             }
 
@@ -191,7 +193,7 @@ public class CardChoiceHandlerService {
                 log.info("Game {} - {} discards {} from {}'s hand", gameData.id, player.getUsername(), cardNames, targetName);
 
                 for (Card discarded : chosenCards) {
-                    gameHelper.checkDiscardTriggers(gameData, targetPlayerId, discarded);
+                    triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, discarded);
                 }
             } else {
                 // Put chosen cards on top of library
@@ -212,7 +214,7 @@ public class CardChoiceHandlerService {
 
             // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
             if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
-                gameHelper.processNextDiscardSelfTrigger(gameData);
+                triggerCollectionService.processNextDiscardSelfTrigger(gameData);
                 return;
             }
 

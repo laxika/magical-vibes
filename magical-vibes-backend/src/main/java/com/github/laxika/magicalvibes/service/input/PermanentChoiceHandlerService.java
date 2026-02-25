@@ -12,12 +12,15 @@ import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.service.CreatureControlService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.AbilityActivationService;
+import com.github.laxika.magicalvibes.service.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.StateBasedActionService;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,8 +41,11 @@ public class PermanentChoiceHandlerService {
     private final GameHelper gameHelper;
     private final GameBroadcastService gameBroadcastService;
     private final AbilityActivationService abilityActivationService;
+    private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
     private final StateBasedActionService stateBasedActionService;
+    private final TriggerCollectionService triggerCollectionService;
+    private final CreatureControlService creatureControlService;
     private final TurnProgressionService turnProgressionService;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
@@ -77,7 +83,7 @@ public class PermanentChoiceHandlerService {
                 stateBasedActionService.performStateBasedActions(gameData);
 
                 if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
-                    gameHelper.processNextDeathTriggerTarget(gameData);
+                    triggerCollectionService.processNextDeathTriggerTarget(gameData);
                     if (gameData.interaction.isAwaitingInput()) {
                         return;
                     }
@@ -130,7 +136,7 @@ public class PermanentChoiceHandlerService {
                 log.info("Game {} - {} sent to graveyard by legend rule", gameData.id, perm.getCard().getName());
             }
 
-            gameHelper.removeOrphanedAuras(gameData);
+            permanentRemovalService.removeOrphanedAuras(gameData);
 
             turnProgressionService.resolveAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreature sacrificeCreature) {
@@ -140,7 +146,7 @@ public class PermanentChoiceHandlerService {
             }
 
             UUID sacrificingPlayerId = sacrificeCreature.sacrificingPlayerId();
-            gameHelper.removePermanentToGraveyard(gameData, target);
+            permanentRemovalService.removePermanentToGraveyard(gameData, target);
 
             String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
             String logEntry = playerName + " sacrifices " + target.getCard().getName() + ".";
@@ -162,7 +168,7 @@ public class PermanentChoiceHandlerService {
             UUID bouncingPlayerId = bounceCreature.bouncingPlayerId();
             List<Permanent> battlefield = gameData.playerBattlefields.get(bouncingPlayerId);
             if (battlefield != null && battlefield.remove(target)) {
-                gameHelper.removeOrphanedAuras(gameData);
+                permanentRemovalService.removeOrphanedAuras(gameData);
                 UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), bouncingPlayerId);
                 gameData.stolenCreatures.remove(target.getId());
                 List<Card> hand = gameData.playerHands.get(ownerId);
@@ -217,13 +223,13 @@ public class PermanentChoiceHandlerService {
 
             // Process more pending discard self triggers
             if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
-                gameHelper.processNextDiscardSelfTrigger(gameData);
+                triggerCollectionService.processNextDiscardSelfTrigger(gameData);
                 return;
             }
 
             // Process pending death trigger targets
             if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
-                gameHelper.processNextDeathTriggerTarget(gameData);
+                triggerCollectionService.processNextDeathTriggerTarget(gameData);
                 return;
             }
 
@@ -260,7 +266,7 @@ public class PermanentChoiceHandlerService {
 
             // Process more pending death trigger targets
             if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
-                gameHelper.processNextDeathTriggerTarget(gameData);
+                triggerCollectionService.processNextDeathTriggerTarget(gameData);
                 return;
             }
 
@@ -355,7 +361,7 @@ public class PermanentChoiceHandlerService {
 
             // Process remaining pending attack triggers
             if (!gameData.pendingAttackTriggerTargets.isEmpty()) {
-                gameHelper.processNextAttackTriggerTarget(gameData);
+                triggerCollectionService.processNextAttackTriggerTarget(gameData);
                 return;
             }
 
@@ -396,7 +402,7 @@ public class PermanentChoiceHandlerService {
                 boolean hasControlEffect = auraCard.getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
                 if (hasControlEffect) {
-                    gameHelper.stealCreature(gameData, playerId, enchantTarget);
+                    creatureControlService.stealCreature(gameData, playerId, enchantTarget);
                 }
 
                 String playerName = gameData.playerIdToName.get(playerId);
@@ -462,7 +468,7 @@ public class PermanentChoiceHandlerService {
                             break;
                         }
                     }
-                    gameHelper.removePermanentToGraveyard(gameData, creature);
+                    permanentRemovalService.removePermanentToGraveyard(gameData, creature);
                     String ownerName = ownerId != null ? gameData.playerIdToName.get(ownerId) : "Unknown";
                     String logEntry = ownerName + " sacrifices " + creature.getCard().getName() + ".";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -507,7 +513,7 @@ public class PermanentChoiceHandlerService {
                 }
 
                 if (!bouncedNames.isEmpty()) {
-                    gameHelper.removeOrphanedAuras(gameData);
+                    permanentRemovalService.removeOrphanedAuras(gameData);
                     String logEntry = String.join(", ", bouncedNames) + (bouncedNames.size() == 1 ? " is" : " are") + " returned to " + gameData.playerIdToName.get(targetPlayerId) + "'s hand.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} bounced {} permanents", gameData.id, gameData.playerIdToName.get(playerId), bouncedNames.size());

@@ -20,11 +20,14 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.service.CreatureControlService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.LegendRuleService;
+import com.github.laxika.magicalvibes.service.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -45,6 +48,9 @@ public class PermanentControlResolutionService {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
+    private final PermanentRemovalService permanentRemovalService;
+    private final TriggerCollectionService triggerCollectionService;
+    private final CreatureControlService creatureControlService;
 
     @HandlesEffect(CreateCreatureTokenEffect.class)
     private void resolveCreateCreatureToken(GameData gameData, StackEntry entry, CreateCreatureTokenEffect effect) {
@@ -199,7 +205,7 @@ public class PermanentControlResolutionService {
             }
         }
 
-        gameHelper.removeOrphanedAuras(gameData);
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     @HandlesEffect(SacrificeAtEndOfCombatEffect.class)
@@ -223,11 +229,11 @@ public class PermanentControlResolutionService {
             return;
         }
 
-        if (gameHelper.removePermanentToGraveyard(gameData, self)) {
-            gameHelper.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId());
+        if (permanentRemovalService.removePermanentToGraveyard(gameData, self)) {
+            triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId());
             String logEntry = self.getCard().getName() + " is sacrificed.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            gameHelper.removeOrphanedAuras(gameData);
+            permanentRemovalService.removeOrphanedAuras(gameData);
         }
     }
 
@@ -319,7 +325,7 @@ public class PermanentControlResolutionService {
             return;
         }
 
-        gameHelper.stealCreature(gameData, entry.getControllerId(), target);
+        creatureControlService.stealCreature(gameData, entry.getControllerId(), target);
         gameData.enchantmentDependentStolenCreatures.add(target.getId());
     }
 
@@ -333,7 +339,7 @@ public class PermanentControlResolutionService {
             return;
         }
 
-        gameHelper.stealCreature(gameData, entry.getControllerId(), target);
+        creatureControlService.stealCreature(gameData, entry.getControllerId(), target);
         gameData.untilEndOfTurnStolenCreatures.add(target.getId());
     }
 
@@ -365,7 +371,7 @@ public class PermanentControlResolutionService {
             return;
         }
 
-        gameHelper.stealCreature(gameData, newControllerId, source);
+        creatureControlService.stealCreature(gameData, newControllerId, source);
         gameData.permanentControlStolenCreatures.add(source.getId());
     }
 

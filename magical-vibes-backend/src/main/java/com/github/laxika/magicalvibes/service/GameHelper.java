@@ -12,13 +12,11 @@ import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMess
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.DraftData;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,11 +24,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnArtifactCastEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
@@ -41,7 +34,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
@@ -51,10 +43,6 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
-import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessFewLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
@@ -82,6 +70,7 @@ public class GameHelper {
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final DraftRegistry draftRegistry;
     private final DraftService draftService;
+    private final CreatureControlService creatureControlService;
 
     public GameHelper(SessionManager sessionManager,
                       GameRegistry gameRegistry,
@@ -93,7 +82,8 @@ public class GameHelper {
                       AuraAttachmentService auraAttachmentService,
                       TriggeredAbilityQueueService triggeredAbilityQueueService,
                       DraftRegistry draftRegistry,
-                      DraftService draftService) {
+                      DraftService draftService,
+                      CreatureControlService creatureControlService) {
         this.sessionManager = sessionManager;
         this.gameRegistry = gameRegistry;
         this.cardViewFactory = cardViewFactory;
@@ -105,6 +95,7 @@ public class GameHelper {
         this.triggeredAbilityQueueService = triggeredAbilityQueueService;
         this.draftRegistry = draftRegistry;
         this.draftService = draftService;
+        this.creatureControlService = creatureControlService;
     }
 
     // ===== Lifecycle methods =====
@@ -203,56 +194,6 @@ public class GameHelper {
             }
         }
         return false;
-    }
-
-    public boolean removePermanentToGraveyard(GameData gameData, Permanent target) {
-        boolean wasCreature = gameQueryService.isCreature(gameData, target);
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield != null && battlefield.remove(target)) {
-                UUID graveyardOwnerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
-                addCardToGraveyard(gameData, graveyardOwnerId, target.getOriginalCard(), Zone.BATTLEFIELD);
-                gameData.stolenCreatures.remove(target.getId());
-                collectDeathTrigger(gameData, target.getCard(), playerId, wasCreature);
-                if (wasCreature) {
-                    gameData.creatureDeathCountThisTurn.merge(playerId, 1, Integer::sum);
-                    checkAllyCreatureDeathTriggers(gameData, playerId);
-                }
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean removePermanentToExile(GameData gameData, Permanent target) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield != null && battlefield.remove(target)) {
-                UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
-                gameData.playerExiledCards.get(ownerId).add(target.getOriginalCard());
-                gameData.stolenCreatures.remove(target.getId());
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public void removeOrphanedAuras(GameData gameData) {
-        auraAttachmentService.removeOrphanedAuras(gameData);
-    }
-
-    public void removeCardFromGraveyardById(GameData gameData, UUID cardId) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard == null) continue;
-            if (graveyard.removeIf(c -> c.getId().equals(cardId))) {
-                Set<UUID> tracked = gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.get(playerId);
-                if (tracked != null) {
-                    tracked.remove(cardId);
-                }
-                return;
-            }
-        }
     }
 
     private void updateThisTurnBattlefieldToGraveyardTracking(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
@@ -382,14 +323,6 @@ public class GameHelper {
         }
     }
 
-    public void processNextDeathTriggerTarget(GameData gameData) {
-        triggeredAbilityQueueService.processNextDeathTriggerTarget(gameData);
-    }
-
-    public void processNextAttackTriggerTarget(GameData gameData) {
-        triggeredAbilityQueueService.processNextAttackTriggerTarget(gameData);
-    }
-
     public void beginNextPendingLibraryBottomReorder(GameData gameData) {
         LibraryBottomReorderRequest request = gameData.pendingLibraryBottomReorders.pollFirst();
         if (request == null) {
@@ -450,7 +383,7 @@ public class GameHelper {
                 if (hasControlEffect) {
                     Permanent target = gameQueryService.findPermanentById(gameData, placement.attachmentTargetId());
                     if (target != null) {
-                        stealCreature(gameData, controllerId, target);
+                        creatureControlService.stealCreature(gameData, controllerId, target);
                     }
                 }
             }
@@ -990,46 +923,6 @@ public class GameHelper {
         }
     }
 
-    public void checkAllyPermanentSacrificedTriggers(GameData gameData, UUID sacrificingPlayerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(sacrificingPlayerId);
-        if (battlefield == null) return;
-
-        for (Permanent perm : battlefield) {
-            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED);
-            if (effects == null || effects.isEmpty()) continue;
-
-            for (CardEffect effect : effects) {
-                if (effect instanceof MayPayManaEffect mayPay) {
-                    gameData.pendingMayAbilities.add(new PendingMayAbility(
-                            perm.getCard(),
-                            sacrificingPlayerId,
-                            List.of(mayPay.wrapped()),
-                            perm.getCard().getName() + " — " + mayPay.prompt(),
-                            null,
-                            mayPay.manaCost()
-                    ));
-                } else if (effect instanceof MayEffect may) {
-                    gameData.pendingMayAbilities.add(new PendingMayAbility(
-                            perm.getCard(),
-                            sacrificingPlayerId,
-                            List.of(may.wrapped()),
-                            perm.getCard().getName() + " — " + may.prompt()
-                    ));
-                } else {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            sacrificingPlayerId,
-                            perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(effect))
-                    ));
-                }
-            }
-        }
-
-        playerInputService.processNextMayAbility(gameData);
-    }
-
     void checkAnyCreatureEntersTriggers(GameData gameData, UUID enteringCreatureControllerId, Card enteringCreature) {
         // Non-creature permanents (e.g. artifacts) should not trigger "creature enters" triggers
         if (enteringCreature.getToughness() == null) return;
@@ -1059,287 +952,6 @@ public class GameHelper {
         });
     }
 
-    // ===== Control =====
-
-    public void stealCreature(GameData gameData, UUID newControllerId, Permanent creature) {
-        UUID originalOwnerId = null;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf != null && bf.contains(creature)) {
-                originalOwnerId = pid;
-                break;
-            }
-        }
-        if (originalOwnerId == null || originalOwnerId.equals(newControllerId)) {
-            return;
-        }
-
-        gameData.playerBattlefields.get(originalOwnerId).remove(creature);
-        gameData.playerBattlefields.get(newControllerId).add(creature);
-        creature.setSummoningSick(true);
-
-        if (!gameData.stolenCreatures.containsKey(creature.getId())) {
-            gameData.stolenCreatures.put(creature.getId(), originalOwnerId);
-        }
-
-        String newControllerName = gameData.playerIdToName.get(newControllerId);
-        String logEntry = newControllerName + " gains control of " + creature.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} gains control of {}", gameData.id, newControllerName, creature.getCard().getName());
-    }
-
-    int redirectPlayerDamageToEnchantedCreature(GameData gameData, UUID playerId, int damage, String sourceName) {
-        if (damage <= 0) return damage;
-        Permanent target = gameQueryService.findEnchantedCreatureByAuraEffect(gameData, playerId, RedirectPlayerDamageToEnchantedCreatureEffect.class);
-        if (target == null) return damage;
-
-        int effectiveDamage = applyCreaturePreventionShield(gameData, target, damage);
-        String logEntry = target.getCard().getName() + " absorbs " + effectiveDamage + " redirected " + sourceName + " damage.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-
-        if (effectiveDamage >= gameQueryService.getEffectiveToughness(gameData, target)) {
-            if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
-                String indestructibleLog = target.getCard().getName() + " is indestructible and survives.";
-                gameBroadcastService.logAndBroadcast(gameData, indestructibleLog);
-            } else {
-                removePermanentToGraveyard(gameData, target);
-                String deathLog = target.getCard().getName() + " is destroyed by redirected " + sourceName + " damage.";
-                gameBroadcastService.logAndBroadcast(gameData, deathLog);
-                removeOrphanedAuras(gameData);
-            }
-        }
-
-        return 0;
-    }
-
-    // ===== Triggers =====
-
-    public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId) {
-        gameData.forEachPermanent((playerId, perm) -> {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)) {
-                CardEffect inner = effect instanceof MayEffect m ? m.wrapped() : effect;
-
-                if (inner instanceof GainLifeOnColorSpellCastEffect trigger
-                        && spellCard.getColor() != null
-                        && spellCard.getColor() == trigger.triggerColor()) {
-                    List<CardEffect> resolvedEffects = List.of(new GainLifeEffect(trigger.amount()));
-
-                    if (effect instanceof MayEffect may) {
-                        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                                perm.getCard(),
-                                playerId,
-                                resolvedEffects,
-                                perm.getCard().getName() + " — " + may.prompt()
-                        ));
-                    } else {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(resolvedEffects)
-                        ));
-                    }
-                } else if (inner instanceof PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger
-                        && spellCard.getColor() != null
-                        && trigger.triggerColors().contains(spellCard.getColor())
-                        && (!trigger.onlyOwnSpells() || playerId.equals(castingPlayerId))) {
-                    List<CardEffect> resolvedEffects = List.of(new PutCountersOnSourceEffect(1, 1, trigger.amount()));
-
-                    if (effect instanceof MayEffect may) {
-                        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                                perm.getCard(),
-                                playerId,
-                                resolvedEffects,
-                                perm.getCard().getName() + " — " + may.prompt()
-                        ));
-                    } else {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(resolvedEffects),
-                                null,
-                                perm.getId()
-                        ));
-                    }
-                } else if (inner instanceof DealDamageToAnyTargetOnArtifactCastEffect trigger
-                        && spellCard.getType() == CardType.ARTIFACT
-                        && playerId.equals(castingPlayerId)) {
-                    List<CardEffect> resolvedEffects = List.of(new DealDamageToAnyTargetEffect(trigger.damage()));
-
-                    if (effect instanceof MayEffect may) {
-                        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                                perm.getCard(),
-                                playerId,
-                                resolvedEffects,
-                                perm.getCard().getName() + " — " + may.prompt(),
-                                null,
-                                "{" + trigger.manaCost() + "}"
-                        ));
-                    } else {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(resolvedEffects)
-                        ));
-                    }
-                }
-            }
-        });
-
-        playerInputService.processNextMayAbility(gameData);
-    }
-
-    public void checkDiscardTriggers(GameData gameData, UUID discardingPlayerId, Card discardedCard) {
-        boolean[] anyTriggered = {false};
-
-        gameData.forEachBattlefield((playerId, battlefield) -> {
-            if (playerId.equals(discardingPlayerId)) return;
-
-            for (Permanent perm : battlefield) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_OPPONENT_DISCARDS)) {
-                    if (effect instanceof DealDamageToDiscardingPlayerEffect trigger) {
-                        String cardName = perm.getCard().getName();
-                        int damage = trigger.damage();
-
-                        String logEntry = cardName + " triggers — deals " + damage + " damage to " + gameData.playerIdToName.get(discardingPlayerId) + ".";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                        log.info("Game {} - {} triggers on discard, dealing {} damage to {}",
-                                gameData.id, cardName, damage, gameData.playerIdToName.get(discardingPlayerId));
-
-                        if (!gameQueryService.isDamageFromSourcePrevented(gameData, perm.getCard().getColor())
-                                && !isSourceDamagePreventedForPlayer(gameData, discardingPlayerId, perm.getId())
-                                && !applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, perm.getCard().getColor())) {
-                            int effectiveDamage = applyPlayerPreventionShield(gameData, discardingPlayerId, damage);
-                            effectiveDamage = redirectPlayerDamageToEnchantedCreature(gameData, discardingPlayerId, effectiveDamage, cardName);
-                            int currentLife = gameData.playerLifeTotals.getOrDefault(discardingPlayerId, 20);
-                            gameData.playerLifeTotals.put(discardingPlayerId, currentLife - effectiveDamage);
-                        }
-
-                        anyTriggered[0] = true;
-                    }
-                }
-            }
-        });
-
-        if (anyTriggered[0]) {
-            checkWinCondition(gameData);
-        }
-
-        // Check the discarded card itself for self-discard triggers (e.g. Guerrilla Tactics)
-        if (discardedCard != null && gameData.discardCausedByOpponent) {
-            List<CardEffect> selfTriggers = discardedCard.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT);
-            if (!selfTriggers.isEmpty()) {
-                gameData.pendingDiscardSelfTriggers.add(new PermanentChoiceContext.DiscardTriggerAnyTarget(
-                        discardedCard, discardingPlayerId, new ArrayList<>(selfTriggers)
-                ));
-                String logEntry = discardedCard.getName() + " was discarded by an opponent's effect — its ability triggers!";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} self-discard trigger queued", gameData.id, discardedCard.getName());
-            }
-        }
-    }
-
-    public void checkDamageDealtToControllerTriggers(GameData gameData, UUID damagedPlayerId, UUID sourcePermanentId) {
-        if (sourcePermanentId == null) return;
-
-        List<Permanent> damagedPlayerBattlefield = gameData.playerBattlefields.get(damagedPlayerId);
-        if (damagedPlayerBattlefield == null) return;
-
-        boolean hasTrigger = false;
-        for (Permanent perm : damagedPlayerBattlefield) {
-            if (!perm.getCard().getEffects(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU).isEmpty()) {
-                hasTrigger = true;
-                break;
-            }
-        }
-        if (!hasTrigger) return;
-
-        // Find the source permanent on the battlefield
-        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (sourcePermanent == null) return;
-
-        for (Permanent perm : new ArrayList<>(damagedPlayerBattlefield)) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)) {
-                if (effect instanceof ReturnDamageSourcePermanentToHandEffect) {
-                    // Re-check source is still on the battlefield (may have been bounced by a prior trigger)
-                    Permanent currentSource = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-                    if (currentSource == null) return;
-
-                    // Find which player controls the source and bounce it
-                    for (UUID playerId : gameData.orderedPlayerIds) {
-                        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                        if (battlefield != null && battlefield.remove(currentSource)) {
-                            removeOrphanedAuras(gameData);
-                            UUID ownerId = gameData.stolenCreatures.getOrDefault(currentSource.getId(), playerId);
-                            gameData.stolenCreatures.remove(currentSource.getId());
-                            List<Card> hand = gameData.playerHands.get(ownerId);
-                            hand.add(currentSource.getOriginalCard());
-
-                            String logEntry = perm.getCard().getName() + " triggers — " + currentSource.getCard().getName() + " is returned to its owner's hand.";
-                            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                            log.info("Game {} - {} triggers, bouncing {} to owner's hand",
-                                    gameData.id, perm.getCard().getName(), currentSource.getCard().getName());
-                            break;
-                        }
-                    }
-                    return; // Source already bounced, no need to process more triggers
-                }
-            }
-        }
-    }
-
-    public void checkLandTapTriggers(GameData gameData, UUID tappingPlayerId, UUID tappedLandId) {
-        boolean[] anyTriggered = {false};
-
-        gameData.forEachPermanent((playerId, perm) -> {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND)) {
-                if (effect instanceof DealDamageOnLandTapEffect trigger) {
-                    String cardName = perm.getCard().getName();
-                    int damage = gameQueryService.applyDamageMultiplier(gameData, trigger.damage());
-
-                    String logEntry = cardName + " triggers — deals " + damage + " damage to " + gameData.playerIdToName.get(tappingPlayerId) + ".";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - {} triggers on land tap, dealing {} damage to {}",
-                            gameData.id, cardName, damage, gameData.playerIdToName.get(tappingPlayerId));
-
-                    if (!gameQueryService.isDamageFromSourcePrevented(gameData, perm.getCard().getColor())
-                            && !isSourceDamagePreventedForPlayer(gameData, tappingPlayerId, perm.getId())
-                            && !applyColorDamagePreventionForPlayer(gameData, tappingPlayerId, perm.getCard().getColor())) {
-                        int effectiveDamage = applyPlayerPreventionShield(gameData, tappingPlayerId, damage);
-                        effectiveDamage = redirectPlayerDamageToEnchantedCreature(gameData, tappingPlayerId, effectiveDamage, cardName);
-                        int currentLife = gameData.playerLifeTotals.getOrDefault(tappingPlayerId, 20);
-                        gameData.playerLifeTotals.put(tappingPlayerId, currentLife - effectiveDamage);
-                    }
-
-                    anyTriggered[0] = true;
-                } else if (effect instanceof AddManaOnEnchantedLandTapEffect trigger) {
-                    if (perm.getAttachedTo() == null || !perm.getAttachedTo().equals(tappedLandId)) {
-                        continue;
-                    }
-
-                    ManaPool pool = gameData.playerManaPools.get(tappingPlayerId);
-                    for (int i = 0; i < trigger.amount(); i++) {
-                        pool.add(trigger.color());
-                    }
-
-                    String logEntry = perm.getCard().getName() + " triggers - " + gameData.playerIdToName.get(tappingPlayerId)
-                            + " adds " + trigger.amount() + " " + trigger.color().name().toLowerCase() + " mana.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    anyTriggered[0] = true;
-                }
-            }
-        });
-
-        if (anyTriggered[0]) {
-            checkWinCondition(gameData);
-        }
-    }
-
     public void checkOpponentDrawTriggers(GameData gameData, UUID drawingPlayerId) {
         gameData.forEachBattlefield((playerId, battlefield) -> {
             if (playerId.equals(drawingPlayerId)) return;
@@ -1365,10 +977,6 @@ public class GameHelper {
                 }
             }
         });
-    }
-
-    public void processNextDiscardSelfTrigger(GameData gameData) {
-        triggeredAbilityQueueService.processNextDiscardSelfTrigger(gameData);
     }
 
     // ===== Draw =====

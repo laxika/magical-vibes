@@ -20,6 +20,7 @@ public class ExileResolutionService {
     private final GameHelper gameHelper;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+    private final PermanentRemovalService permanentRemovalService;
 
     @HandlesEffect(ExileTargetPermanentEffect.class)
     void resolveExileTargetPermanent(GameData gameData, StackEntry entry) {
@@ -28,13 +29,13 @@ public class ExileResolutionService {
             return;
         }
 
-        gameHelper.removePermanentToExile(gameData, target);
+        permanentRemovalService.removePermanentToExile(gameData, target);
         String logEntry = target.getCard().getName() + " is exiled.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} is exiled by {}'s ability",
                 gameData.id, target.getCard().getName(), entry.getCard().getName());
 
-        gameHelper.removeOrphanedAuras(gameData);
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     @HandlesEffect(ExileSelfAndReturnAtEndStepEffect.class)
@@ -45,7 +46,7 @@ public class ExileResolutionService {
         }
 
         Card card = source.getOriginalCard();
-        gameHelper.removePermanentToExile(gameData, source);
+        permanentRemovalService.removePermanentToExile(gameData, source);
 
         String logEntry = card.getName() + " is exiled. It will return at the beginning of the next end step.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -54,7 +55,7 @@ public class ExileResolutionService {
 
         gameData.pendingExileReturns.add(new PendingExileReturn(card, entry.getControllerId()));
 
-        gameHelper.removeOrphanedAuras(gameData);
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 }
 

@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.LegendRuleService;
+import com.github.laxika.magicalvibes.service.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +39,8 @@ public class GraveyardChoiceHandlerService {
     private final LegendRuleService legendRuleService;
     private final GameBroadcastService gameBroadcastService;
     private final TurnProgressionService turnProgressionService;
+    private final PermanentRemovalService permanentRemovalService;
+    private final TriggerCollectionService triggerCollectionService;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.GRAVEYARD_CHOICE)) {
@@ -69,7 +73,7 @@ public class GraveyardChoiceHandlerService {
             if (cardPool != null) {
                 // Cross-graveyard choice: card pool contains cards from any graveyard
                 card = cardPool.get(cardIndex);
-                gameHelper.removeCardFromGraveyardById(gameData, card.getId());
+                permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
             } else {
                 // Standard choice: indices into the player's own graveyard
                 List<Card> graveyard = gameData.playerGraveyards.get(playerId);
@@ -184,7 +188,7 @@ public class GraveyardChoiceHandlerService {
             log.info("Game {} - {} casts {} with {} graveyard targets", gameData.id, pendingCard.getName(),
                     pendingCard.getName(), cardIds.size());
 
-            gameHelper.checkSpellCastTriggers(gameData, pendingCard, controllerId);
+            triggerCollectionService.checkSpellCastTriggers(gameData, pendingCard, controllerId);
             gameBroadcastService.broadcastGameState(gameData);
         } else {
             // ETB ability — put triggered ability on stack with targets

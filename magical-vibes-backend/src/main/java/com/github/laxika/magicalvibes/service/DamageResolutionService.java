@@ -41,6 +41,8 @@ public class DamageResolutionService {
     private final GameHelper gameHelper;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+    private final PermanentRemovalService permanentRemovalService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @HandlesEffect(DealXDamageToTargetCreatureEffect.class)
     void resolveDealXDamageToTargetCreature(GameData gameData, StackEntry entry) {
@@ -51,7 +53,7 @@ public class DamageResolutionService {
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, entry.getXValue());
         if (dealCreatureDamage(gameData, entry, target, rawDamage)) {
             destroyPermanent(gameData, target);
-            gameHelper.removeOrphanedAuras(gameData);
+            permanentRemovalService.removeOrphanedAuras(gameData);
         }
     }
 
@@ -64,7 +66,7 @@ public class DamageResolutionService {
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
         if (dealCreatureDamage(gameData, entry, target, rawDamage)) {
             destroyPermanent(gameData, target);
-            gameHelper.removeOrphanedAuras(gameData);
+            permanentRemovalService.removeOrphanedAuras(gameData);
         }
     }
 
@@ -82,7 +84,7 @@ public class DamageResolutionService {
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, controlledSubtypeCount);
         if (dealCreatureDamage(gameData, entry, target, rawDamage)) {
             destroyPermanent(gameData, target);
-            gameHelper.removeOrphanedAuras(gameData);
+            permanentRemovalService.removeOrphanedAuras(gameData);
         }
     }
 
@@ -129,7 +131,7 @@ public class DamageResolutionService {
             destroyPermanent(gameData, target);
         }
         if (!destroyed.isEmpty()) {
-            gameHelper.removeOrphanedAuras(gameData);
+            permanentRemovalService.removeOrphanedAuras(gameData);
         }
     }
 
@@ -297,7 +299,7 @@ public class DamageResolutionService {
             destroyPermanent(gameData, target);
         }
         if (!destroyed.isEmpty()) {
-            gameHelper.removeOrphanedAuras(gameData);
+            permanentRemovalService.removeOrphanedAuras(gameData);
         }
 
         gameHelper.checkWinCondition(gameData);
@@ -382,7 +384,7 @@ public class DamageResolutionService {
     }
 
     private void destroyPermanent(GameData gameData, Permanent target) {
-        gameHelper.removePermanentToGraveyard(gameData, target);
+        permanentRemovalService.removePermanentToGraveyard(gameData, target);
         gameBroadcastService.logAndBroadcast(gameData, target.getCard().getName() + " is destroyed.");
         log.info("Game {} - {} is destroyed", gameData.id, target.getCard().getName());
     }
@@ -415,7 +417,7 @@ public class DamageResolutionService {
                 }
                 if (dealCreatureDamage(gameData, entry, targetPermanent, rawDamage)) {
                     destroyPermanent(gameData, targetPermanent);
-                    gameHelper.removeOrphanedAuras(gameData);
+                    permanentRemovalService.removeOrphanedAuras(gameData);
                 }
             } else {
                 gameBroadcastService.logAndBroadcast(gameData, cardName + "'s damage is prevented.");
@@ -466,7 +468,7 @@ public class DamageResolutionService {
             }
         });
 
-        gameHelper.removeOrphanedAuras(gameData);
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     private void dealDamageToPlayer(GameData gameData, StackEntry entry, UUID playerId, int rawDamage) {
@@ -477,7 +479,7 @@ public class DamageResolutionService {
         }
         if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, playerId, entry.getCard().getColor())) {
             int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, playerId, rawDamage);
-            effectiveDamage = gameHelper.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
+            effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
 
             boolean sourceHasInfect = hasInfectSource(gameData, entry);
 
@@ -501,7 +503,7 @@ public class DamageResolutionService {
             }
 
             if (effectiveDamage > 0) {
-                gameHelper.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId());
+                triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId());
             }
         }
     }
@@ -554,7 +556,7 @@ public class DamageResolutionService {
                         target.getCard().getName() + " is indestructible and survives.");
             } else if (!gameHelper.tryRegenerate(gameData, target)) {
                 destroyPermanent(gameData, target);
-                gameHelper.removeOrphanedAuras(gameData);
+                permanentRemovalService.removeOrphanedAuras(gameData);
             }
         }
     }
@@ -608,7 +610,7 @@ public class DamageResolutionService {
                         destroyPermanent(gameData, dead);
                     }
                     if (!destroyed.isEmpty()) {
-                        gameHelper.removeOrphanedAuras(gameData);
+                        permanentRemovalService.removeOrphanedAuras(gameData);
                     }
                 }
             }

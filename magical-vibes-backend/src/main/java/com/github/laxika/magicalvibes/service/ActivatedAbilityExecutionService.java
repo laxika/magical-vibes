@@ -50,6 +50,8 @@ import java.util.UUID;
 public class ActivatedAbilityExecutionService {
 
     private final GameHelper gameHelper;
+    private final PermanentRemovalService permanentRemovalService;
+    private final TriggerCollectionService triggerCollectionService;
     private final StateBasedActionService stateBasedActionService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
@@ -183,7 +185,7 @@ public class ActivatedAbilityExecutionService {
                         && !gameHelper.isSourceDamagePreventedForPlayer(gameData, playerId, permanent.getId())
                         && !gameHelper.applyColorDamagePreventionForPlayer(gameData, playerId, permanent.getCard().getColor())) {
                     int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, playerId, damage);
-                    effectiveDamage = gameHelper.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
+                    effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
                     int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
                     gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
                     if (effectiveDamage > 0) {
@@ -197,7 +199,7 @@ public class ActivatedAbilityExecutionService {
         stateBasedActionService.performStateBasedActions(gameData);
         gameData.priorityPassedBy.clear();
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingDeathTriggerTargets.isEmpty()) {
-            gameHelper.processNextDeathTriggerTarget(gameData);
+            triggerCollectionService.processNextDeathTriggerTarget(gameData);
         }
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
@@ -254,7 +256,7 @@ public class ActivatedAbilityExecutionService {
         stateBasedActionService.performStateBasedActions(gameData);
         gameData.priorityPassedBy.clear();
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingDeathTriggerTargets.isEmpty()) {
-            gameHelper.processNextDeathTriggerTarget(gameData);
+            triggerCollectionService.processNextDeathTriggerTarget(gameData);
         }
         gameBroadcastService.broadcastGameState(gameData);
     }

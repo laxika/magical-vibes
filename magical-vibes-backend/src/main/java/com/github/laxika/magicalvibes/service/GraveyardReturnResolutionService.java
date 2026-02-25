@@ -37,6 +37,7 @@ import java.util.*;
 public class GraveyardReturnResolutionService {
 
     private final GameHelper gameHelper;
+    private final PermanentRemovalService permanentRemovalService;
     private final LegendRuleService legendRuleService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
@@ -96,7 +97,7 @@ public class GraveyardReturnResolutionService {
                 return;
             }
 
-            gameHelper.removeCardFromGraveyardById(gameData, targetCard.getId());
+            permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
             gameData.interaction.setPendingAuraCard(targetCard);
 
             playerInputService.beginPermanentChoice(gameData, controllerId, attachTargetIds,
@@ -104,7 +105,7 @@ public class GraveyardReturnResolutionService {
             return;
         }
 
-        gameHelper.removeCardFromGraveyardById(gameData, targetCard.getId());
+        permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
         moveCardToDestination(gameData, controllerId, targetCard, effect.destination());
     }
 
@@ -354,7 +355,7 @@ public class GraveyardReturnResolutionService {
             return;
         }
 
-        gameHelper.removeCardFromGraveyardById(gameData, targetCard.getId());
+        permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
 
         Set<CardType> enterTappedTypes = gameHelper.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(targetCard);

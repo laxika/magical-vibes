@@ -35,6 +35,8 @@ public class StackResolutionService {
     private final GameBroadcastService gameBroadcastService;
     private final EffectResolutionService effectResolutionService;
     private final PlayerInputService playerInputService;
+    private final TriggerCollectionService triggerCollectionService;
+    private final CreatureControlService creatureControlService;
 
     public void resolveTopOfStack(GameData gameData) {
         if (gameData.stack.isEmpty()) return;
@@ -67,14 +69,14 @@ public class StackResolutionService {
         stateBasedActionService.performStateBasedActions(gameData);
 
         if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
-            gameHelper.processNextDiscardSelfTrigger(gameData);
+            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
         }
 
         if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
-            gameHelper.processNextDeathTriggerTarget(gameData);
+            triggerCollectionService.processNextDeathTriggerTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
@@ -137,7 +139,7 @@ public class StackResolutionService {
                 boolean hasControlEffect = card.getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
                 if (hasControlEffect) {
-                    gameHelper.stealCreature(gameData, controllerId, target);
+                    creatureControlService.stealCreature(gameData, controllerId, target);
                 }
             }
         } else {

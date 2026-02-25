@@ -34,6 +34,7 @@ public class BounceResolutionService {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
+    private final PermanentRemovalService permanentRemovalService;
 
     @HandlesEffect(ReturnSelfToHandEffect.class)
     void resolveReturnSelfToHand(GameData gameData, StackEntry entry) {
@@ -56,7 +57,7 @@ public class BounceResolutionService {
         }
 
         battlefield.remove(toReturn);
-        gameHelper.removeOrphanedAuras(gameData);
+        permanentRemovalService.removeOrphanedAuras(gameData);
         hand.add(toReturn.getOriginalCard());
 
         String logEntry = entry.getCard().getName() + " is returned to its owner's hand.";
@@ -74,7 +75,7 @@ public class BounceResolutionService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
-                gameHelper.removeOrphanedAuras(gameData);
+                permanentRemovalService.removeOrphanedAuras(gameData);
                 UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
                 gameData.stolenCreatures.remove(target.getId());
                 List<Card> hand = gameData.playerHands.get(ownerId);
@@ -118,7 +119,7 @@ public class BounceResolutionService {
         });
 
         if (!affectedPlayers.isEmpty()) {
-            gameHelper.removeOrphanedAuras(gameData);
+            permanentRemovalService.removeOrphanedAuras(gameData);
         }
     }
 
@@ -152,7 +153,7 @@ public class BounceResolutionService {
             log.info("Game {} - {} returned to owner's hand by {}", gameData.id, artifact.getCard().getName(), entry.getCard().getName());
         }
 
-        gameHelper.removeOrphanedAuras(gameData);
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     @HandlesEffect(BounceCreatureOnUpkeepEffect.class)

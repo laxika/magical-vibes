@@ -20,6 +20,7 @@ public class StateBasedActionService {
     private final GameHelper gameHelper;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+    private final PermanentRemovalService permanentRemovalService;
 
     public void performStateBasedActions(GameData gameData) {
         boolean anyDied = false;
@@ -51,7 +52,7 @@ public class StateBasedActionService {
             }
         }
         if (anyDied) {
-            gameHelper.removeOrphanedAuras(gameData);
+            permanentRemovalService.removeOrphanedAuras(gameData);
         }
 
         // CR 704.5q — +1/+1 and -1/-1 counters cancel each other out

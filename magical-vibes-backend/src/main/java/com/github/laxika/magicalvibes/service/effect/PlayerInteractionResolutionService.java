@@ -32,7 +32,9 @@ import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
+import com.github.laxika.magicalvibes.service.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -54,6 +56,8 @@ public class PlayerInteractionResolutionService {
     private final PlayerInputService playerInputService;
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
+    private final PermanentRemovalService permanentRemovalService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @HandlesEffect(OpponentMayPlayCreatureEffect.class)
     private void resolveOpponentMayPlayCreature(GameData gameData, StackEntry entry) {
@@ -218,12 +222,12 @@ public class PlayerInteractionResolutionService {
             String logEntry = playerName + " discards " + discarded.getName() + " at random.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
-            gameHelper.checkDiscardTriggers(gameData, playerId, discarded);
+            triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
         }
 
         // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
         if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
-            gameHelper.processNextDiscardSelfTrigger(gameData);
+            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
         }
     }
 
@@ -477,7 +481,7 @@ public class PlayerInteractionResolutionService {
         if (!hasValidCard) {
             if (sourcePermanent != null) {
                 // No valid cards to discard — sacrifice immediately
-                gameHelper.removePermanentToGraveyard(gameData, sourcePermanent);
+                permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
                 String logEntry = playerName + " has no " + typeName
                         + " to discard. " + sourceCard.getName() + " is sacrificed.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);

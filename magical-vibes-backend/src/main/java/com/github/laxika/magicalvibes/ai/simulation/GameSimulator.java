@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.service.BounceResolutionService;
 import com.github.laxika.magicalvibes.service.CombatService;
 import com.github.laxika.magicalvibes.service.CopyResolutionService;
 import com.github.laxika.magicalvibes.service.CounterResolutionService;
+import com.github.laxika.magicalvibes.service.CreatureControlService;
 import com.github.laxika.magicalvibes.service.DamageResolutionService;
 import com.github.laxika.magicalvibes.service.DestructionResolutionService;
 import com.github.laxika.magicalvibes.service.DraftRegistry;
@@ -47,6 +48,7 @@ import com.github.laxika.magicalvibes.service.GraveyardReturnResolutionService;
 import com.github.laxika.magicalvibes.service.LegendRuleService;
 import com.github.laxika.magicalvibes.service.LibraryResolutionService;
 import com.github.laxika.magicalvibes.service.MulliganService;
+import com.github.laxika.magicalvibes.service.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.PreventionResolutionService;
 import com.github.laxika.magicalvibes.service.ReconnectionService;
@@ -55,6 +57,7 @@ import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.TargetRedirectionResolutionService;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.TurnResolutionService;
@@ -142,13 +145,18 @@ public class GameSimulator {
         AuraAttachmentService auraAttachmentService = new AuraAttachmentService(gameQueryService, gameBroadcastService);
         TriggeredAbilityQueueService triggeredAbilityQueueService = new TriggeredAbilityQueueService(
                 gameQueryService, gameBroadcastService, playerInputService);
+        CreatureControlService creatureControlService = new CreatureControlService(gameBroadcastService);
         GameHelper gameHelper = new GameHelper(
                 noOpSession, gameRegistry, cardViewFactory, gameQueryService, gameBroadcastService, playerInputService,
-                legendRuleService, auraAttachmentService, triggeredAbilityQueueService, draftRegistry, null);
+                legendRuleService, auraAttachmentService, triggeredAbilityQueueService, draftRegistry, null, creatureControlService);
+        PermanentRemovalService permanentRemovalService = new PermanentRemovalService(
+                gameHelper, auraAttachmentService, gameQueryService, gameBroadcastService);
+        TriggerCollectionService triggerCollectionService = new TriggerCollectionService(
+                gameHelper, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService, triggeredAbilityQueueService);
         StateBasedActionService stateBasedActionService = new StateBasedActionService(
-                gameHelper, gameQueryService, gameBroadcastService);
+                gameHelper, gameQueryService, gameBroadcastService, permanentRemovalService);
         CombatService combatService = new CombatService(
-                gameHelper, gameQueryService, gameBroadcastService, playerInputService, noOpSession);
+                gameHelper, gameQueryService, gameBroadcastService, playerInputService, noOpSession, permanentRemovalService, triggerCollectionService);
         TargetValidatorRegistry targetValidatorRegistry = new TargetValidatorRegistry();
         TargetValidationService targetValidationService = new TargetValidationService(gameQueryService, targetValidatorRegistry);
         List<Object> validatorBeans = List.of(
@@ -168,20 +176,20 @@ public class GameSimulator {
 
         EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
         List<Object> effectServices = List.of(
-                new DamageResolutionService(gameHelper, gameQueryService, gameBroadcastService),
-                new DestructionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),
+                new DamageResolutionService(gameHelper, gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService),
+                new DestructionResolutionService(gameHelper, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService),
                 new LibraryResolutionService(gameHelper, gameBroadcastService, noOpSession, cardViewFactory),
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new CounterResolutionService(gameHelper, gameBroadcastService, gameQueryService),
-                new ExileResolutionService(gameHelper, gameQueryService, gameBroadcastService),
+                new ExileResolutionService(gameHelper, gameQueryService, gameBroadcastService, permanentRemovalService),
                 new CopyResolutionService(gameBroadcastService),
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
-                new GraveyardReturnResolutionService(gameHelper, legendRuleService, gameQueryService, gameBroadcastService, playerInputService),
-                new BounceResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService),
+                new GraveyardReturnResolutionService(gameHelper, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService),
+                new BounceResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService),
                 new LifeResolutionService(gameQueryService, gameBroadcastService),
                 new CreatureModResolutionService(gameQueryService, gameBroadcastService, playerInputService),
-                new PlayerInteractionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService, noOpSession, cardViewFactory),
-                new PermanentControlResolutionService(gameHelper, legendRuleService, gameQueryService, gameBroadcastService, playerInputService),
+                new PlayerInteractionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService, noOpSession, cardViewFactory, permanentRemovalService, triggerCollectionService),
+                new PermanentControlResolutionService(gameHelper, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService, creatureControlService),
                 new TurnResolutionService(gameHelper, combatService, gameBroadcastService),
                 new EquipResolutionService(gameQueryService, gameBroadcastService),
                 new CardSpecificResolutionService(gameHelper, gameQueryService),
@@ -191,36 +199,36 @@ public class GameSimulator {
             scanEffectHandlers(service, effectHandlerRegistry);
         }
 
-        EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper, effectHandlerRegistry, gameBroadcastService);
+        EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper, effectHandlerRegistry, gameBroadcastService, permanentRemovalService);
         TurnProgressionService turnProgressionService = new TurnProgressionService(
-                combatService, gameHelper, gameQueryService, gameBroadcastService, playerInputService);
+                combatService, gameHelper, gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService);
         SpellCastingService spellCastingService = new SpellCastingService(
-                gameQueryService, gameHelper, gameBroadcastService, turnProgressionService, targetLegalityService);
+                gameQueryService, gameHelper, gameBroadcastService, turnProgressionService, targetLegalityService, permanentRemovalService, triggerCollectionService);
         ActivatedAbilityExecutionService activatedAbilityExecutionService = new ActivatedAbilityExecutionService(
-                gameHelper, stateBasedActionService, gameQueryService, gameBroadcastService, playerInputService, noOpSession);
+                gameHelper, permanentRemovalService, triggerCollectionService, stateBasedActionService, gameQueryService, gameBroadcastService, playerInputService, noOpSession);
         AbilityActivationService abilityActivationService = new AbilityActivationService(
                 gameHelper, gameQueryService, gameBroadcastService, targetLegalityService, activatedAbilityExecutionService,
-                playerInputService, noOpSession);
+                playerInputService, noOpSession, permanentRemovalService, triggerCollectionService);
         ColorChoiceHandlerService colorChoiceHandlerService = new ColorChoiceHandlerService(
                 noOpSession, gameQueryService, gameHelper, gameBroadcastService,
                 playerInputService, turnProgressionService, legendRuleService);
         CardChoiceHandlerService cardChoiceHandlerService = new CardChoiceHandlerService(
                 gameQueryService, gameHelper, gameBroadcastService,
-                playerInputService, turnProgressionService, abilityActivationService);
+                playerInputService, triggerCollectionService, turnProgressionService, abilityActivationService);
         PermanentChoiceHandlerService permanentChoiceHandlerService = new PermanentChoiceHandlerService(
                 gameQueryService, gameHelper, gameBroadcastService, abilityActivationService,
-                playerInputService, stateBasedActionService, turnProgressionService);
+                permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, creatureControlService, turnProgressionService);
         GraveyardChoiceHandlerService graveyardChoiceHandlerService = new GraveyardChoiceHandlerService(
-                gameQueryService, gameHelper, legendRuleService, gameBroadcastService, turnProgressionService);
+                gameQueryService, gameHelper, legendRuleService, gameBroadcastService, turnProgressionService, permanentRemovalService, triggerCollectionService);
         MayAbilityHandlerService mayAbilityHandlerService = new MayAbilityHandlerService(
                 gameQueryService, gameHelper, stateBasedActionService, gameBroadcastService,
-                playerInputService, turnProgressionService, targetLegalityService, noOpSession);
+                playerInputService, turnProgressionService, targetLegalityService, noOpSession, permanentRemovalService, triggerCollectionService);
         LibraryChoiceHandlerService libraryChoiceHandlerService = new LibraryChoiceHandlerService(
                 noOpSession, gameQueryService, gameHelper, legendRuleService, stateBasedActionService, gameBroadcastService,
                 cardViewFactory, turnProgressionService, playerInputService);
         StackResolutionService stackResolutionService = new StackResolutionService(
                 gameHelper, legendRuleService, stateBasedActionService, gameQueryService, targetLegalityService,
-                gameBroadcastService, effectResolutionService, playerInputService);
+                gameBroadcastService, effectResolutionService, playerInputService, triggerCollectionService, creatureControlService);
         MulliganService mulliganService = new MulliganService(
                 noOpSession, gameBroadcastService, turnProgressionService);
         ReconnectionService reconnectionService = new ReconnectionService(

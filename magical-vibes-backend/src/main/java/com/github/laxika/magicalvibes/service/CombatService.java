@@ -66,6 +66,8 @@ public class CombatService {
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final SessionManager sessionManager;
+    private final PermanentRemovalService permanentRemovalService;
+    private final TriggerCollectionService triggerCollectionService;
 
     // ===== Query methods =====
 
@@ -1232,13 +1234,13 @@ public class CombatService {
             int guardToughness = gameQueryService.getEffectiveToughness(gameData, redirectTarget);
             if (guardToughness <= 0) {
                 // CR 704.5f: 0 toughness from -1/-1 counters
-                gameHelper.removePermanentToGraveyard(gameData, redirectTarget);
+                permanentRemovalService.removePermanentToGraveyard(gameData, redirectTarget);
                 String deathLog = redirectTarget.getCard().getName() + " dies from 0 toughness.";
                 gameBroadcastService.logAndBroadcast(gameData, deathLog);
             } else if (damageRedirectedToGuard >= guardToughness
                     && !gameQueryService.hasKeyword(gameData, redirectTarget, Keyword.INDESTRUCTIBLE)
                     && !gameHelper.tryRegenerate(gameData, redirectTarget)) {
-                gameHelper.removePermanentToGraveyard(gameData, redirectTarget);
+                permanentRemovalService.removePermanentToGraveyard(gameData, redirectTarget);
                 String deathLog = redirectTarget.getCard().getName() + " is destroyed by redirected combat damage.";
                 gameBroadcastService.logAndBroadcast(gameData, deathLog);
             }
@@ -1275,14 +1277,14 @@ public class CombatService {
             defBf.remove(idx);
         }
         if (!deadAttackerIndices.isEmpty() || !deadDefenderIndices.isEmpty()) {
-            gameHelper.removeOrphanedAuras(gameData);
+            permanentRemovalService.removeOrphanedAuras(gameData);
         }
 
-        gameHelper.removeOrphanedAuras(gameData);
+        permanentRemovalService.removeOrphanedAuras(gameData);
 
         // Apply life loss (with prevention shield and Pariah redirect)
         damageToDefendingPlayer = gameHelper.applyPlayerPreventionShield(gameData, defenderId, damageToDefendingPlayer);
-        damageToDefendingPlayer = gameHelper.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, damageToDefendingPlayer, "combat");
+        damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, damageToDefendingPlayer, "combat");
         if (damageToDefendingPlayer > 0) {
             int currentLife = gameData.playerLifeTotals.getOrDefault(defenderId, 20);
             gameData.playerLifeTotals.put(defenderId, currentLife - damageToDefendingPlayer);
@@ -1329,7 +1331,7 @@ public class CombatService {
         // Process defender-side damage triggers (e.g. Dissipation Field)
         for (var dmgEntry : combatDamageDealtToPlayer.entrySet()) {
             if (dmgEntry.getValue() > 0) {
-                gameHelper.checkDamageDealtToControllerTriggers(gameData, defenderId, dmgEntry.getKey().getId());
+                triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, defenderId, dmgEntry.getKey().getId());
             }
         }
 
@@ -1427,7 +1429,7 @@ public class CombatService {
                             String logEntry = creature.getCard().getName() + "'s ability triggers — " + gameData.playerIdToName.get(defenderId) + " discards " + discarded.getName() + " at random.";
                             gameBroadcastService.logAndBroadcast(gameData, logEntry);
                             log.info("Game {} - {} triggers random discard: {} discards {}", gameData.id, creature.getCard().getName(), gameData.playerIdToName.get(defenderId), discarded.getName());
-                            gameHelper.checkDiscardTriggers(gameData, defenderId, discarded);
+                            triggerCollectionService.checkDiscardTriggers(gameData, defenderId, discarded);
                         }
                     }
                 } else if (effect instanceof ReturnPermanentsOnCombatDamageToPlayerEffect) {
@@ -1854,7 +1856,7 @@ public class CombatService {
             }
         });
         gameData.permanentsToSacrificeAtEndOfCombat.clear();
-        gameHelper.removeOrphanedAuras(gameData);
+        permanentRemovalService.removeOrphanedAuras(gameData);
 
 
     }

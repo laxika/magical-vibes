@@ -39,6 +39,8 @@ public class SpellCastingService {
     private final GameBroadcastService gameBroadcastService;
     private final TurnProgressionService turnProgressionService;
     private final TargetLegalityService targetLegalityService;
+    private final PermanentRemovalService permanentRemovalService;
+    private final TriggerCollectionService triggerCollectionService;
 
     void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments,
                   List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId) {
@@ -371,7 +373,7 @@ public class SpellCastingService {
             totalPower += gameQueryService.getEffectivePower(gameData, creature);
         }
         for (Permanent creature : creaturesToSacrifice) {
-            if (gameHelper.removePermanentToGraveyard(gameData, creature)) {
+            if (permanentRemovalService.removePermanentToGraveyard(gameData, creature)) {
                 String logEntry = player.getUsername() + " sacrifices " + creature.getCard().getName()
                         + " for " + sourceCard.getName() + ".";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -395,7 +397,7 @@ public class SpellCastingService {
         if (!gameQueryService.isCreature(gameData, toSacrifice)) {
             throw new IllegalStateException("Sacrifice target must be a creature");
         }
-        if (gameHelper.removePermanentToGraveyard(gameData, toSacrifice)) {
+        if (permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice)) {
             String logEntry = player.getUsername() + " sacrifices " + toSacrifice.getCard().getName()
                     + " for " + sourceCard.getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -427,7 +429,7 @@ public class SpellCastingService {
 
         log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), card.getName());
 
-        gameHelper.checkSpellCastTriggers(gameData, card, playerId);
+        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId);
         gameBroadcastService.broadcastGameState(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }

@@ -41,9 +41,11 @@ import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
+import com.github.laxika.magicalvibes.service.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -66,6 +68,8 @@ public class MayAbilityHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final TargetLegalityService targetLegalityService;
     private final SessionManager sessionManager;
+    private final PermanentRemovalService permanentRemovalService;
+    private final TriggerCollectionService triggerCollectionService;
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.MAY_ABILITY_CHOICE)) {
@@ -146,7 +150,7 @@ public class MayAbilityHandlerService {
                 stateBasedActionService.performStateBasedActions(gameData);
 
                 if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
-                    gameHelper.processNextDeathTriggerTarget(gameData);
+                    triggerCollectionService.processNextDeathTriggerTarget(gameData);
                     if (gameData.interaction.isAwaitingInput()) {
                         return;
                     }
@@ -396,7 +400,7 @@ public class MayAbilityHandlerService {
 
         // Declined or no valid cards left — sacrifice if still on the battlefield
         if (sourcePermanent != null) {
-            gameHelper.removePermanentToGraveyard(gameData, sourcePermanent);
+            permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
             String logEntry = player.getUsername() + " declines to discard. " + sourceCard.getName() + " is sacrificed.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} declines, {} sacrificed", gameData.id, player.getUsername(), sourceCard.getName());

@@ -31,6 +31,7 @@ import java.util.*;
 public class DestructionResolutionService {
 
     private final GameHelper gameHelper;
+    private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
@@ -75,7 +76,7 @@ public class DestructionResolutionService {
                     && gameHelper.tryRegenerate(gameData, perm)) {
                 continue;
             }
-            gameHelper.removePermanentToGraveyard(gameData, perm);
+            permanentRemovalService.removePermanentToGraveyard(gameData, perm);
             String logEntry = perm.getCard().getName() + " is destroyed.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} is destroyed", gameData.id, perm.getCard().getName());
@@ -120,13 +121,13 @@ public class DestructionResolutionService {
             return;
         }
 
-        gameHelper.removePermanentToGraveyard(gameData, target);
+        permanentRemovalService.removePermanentToGraveyard(gameData, target);
         String logEntry = target.getCard().getName() + " is destroyed.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} is destroyed by {}'s ability",
                 gameData.id, target.getCard().getName(), entry.getCard().getName());
 
-        gameHelper.removeOrphanedAuras(gameData);
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     @HandlesEffect(DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect.class)
@@ -150,10 +151,10 @@ public class DestructionResolutionService {
         } else if (gameQueryService.isCreature(gameData, target) && gameHelper.tryRegenerate(gameData, target)) {
             // Regenerated — not destroyed
         } else {
-            gameHelper.removePermanentToGraveyard(gameData, target);
+            permanentRemovalService.removePermanentToGraveyard(gameData, target);
             String logEntry = target.getCard().getName() + " is destroyed.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            gameHelper.removeOrphanedAuras(gameData);
+            permanentRemovalService.removeOrphanedAuras(gameData);
         }
 
         // Count ALL creatures that died this turn (across all players, including tokens)
@@ -208,11 +209,11 @@ public class DestructionResolutionService {
             String logEntry = target.getCard().getName() + " is indestructible.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else {
-            gameHelper.removePermanentToGraveyard(gameData, target);
+            permanentRemovalService.removePermanentToGraveyard(gameData, target);
             String logEntry = target.getCard().getName() + " is destroyed.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} is destroyed by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
-            gameHelper.removeOrphanedAuras(gameData);
+            permanentRemovalService.removeOrphanedAuras(gameData);
         }
 
         // Deal damage to the land's controller regardless of whether destruction succeeded
@@ -222,7 +223,7 @@ public class DestructionResolutionService {
         if (!gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())
                 && !gameHelper.applyColorDamagePreventionForPlayer(gameData, landControllerId, entry.getCard().getColor())) {
             int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, landControllerId, damage);
-            effectiveDamage = gameHelper.redirectPlayerDamageToEnchantedCreature(gameData, landControllerId, effectiveDamage, cardName);
+            effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, landControllerId, effectiveDamage, cardName);
             int currentLife = gameData.playerLifeTotals.getOrDefault(landControllerId, 20);
             gameData.playerLifeTotals.put(landControllerId, currentLife - effectiveDamage);
 
@@ -293,7 +294,7 @@ public class DestructionResolutionService {
             for (UUID creatureId : attackingCreatureIds) {
                 Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
                 if (creature != null) {
-                    gameHelper.removePermanentToGraveyard(gameData, creature);
+                    permanentRemovalService.removePermanentToGraveyard(gameData, creature);
                     String playerName = gameData.playerIdToName.get(targetPlayerId);
                     String logEntry = playerName + " sacrifices " + creature.getCard().getName() + ".";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -342,7 +343,7 @@ public class DestructionResolutionService {
             // Only one creature — sacrifice it automatically
             Permanent creature = gameQueryService.findPermanentById(gameData, creatureIds.getFirst());
             if (creature != null) {
-                gameHelper.removePermanentToGraveyard(gameData, creature);
+                permanentRemovalService.removePermanentToGraveyard(gameData, creature);
                 String playerName = gameData.playerIdToName.get(targetPlayerId);
                 String logEntry = playerName + " sacrifices " + creature.getCard().getName() + ".";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -383,7 +384,7 @@ public class DestructionResolutionService {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
             } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, controllerId, entry.getCard().getColor())) {
                 int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, controllerId, damage);
-                effectiveDamage = gameHelper.redirectPlayerDamageToEnchantedCreature(gameData, controllerId, effectiveDamage, cardName);
+                effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, controllerId, effectiveDamage, cardName);
                 int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
                 gameData.playerLifeTotals.put(controllerId, currentLife - effectiveDamage);
 
@@ -402,7 +403,7 @@ public class DestructionResolutionService {
             // Only one other creature — sacrifice it automatically
             Permanent creature = gameQueryService.findPermanentById(gameData, otherCreatureIds.getFirst());
             if (creature != null) {
-                gameHelper.removePermanentToGraveyard(gameData, creature);
+                permanentRemovalService.removePermanentToGraveyard(gameData, creature);
                 String logEntry = playerName + " sacrifices " + creature.getCard().getName() + ".";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName, creature.getCard().getName(), cardName);
@@ -440,13 +441,13 @@ public class DestructionResolutionService {
             return;
         }
 
-        gameHelper.removePermanentToGraveyard(gameData, target);
+        permanentRemovalService.removePermanentToGraveyard(gameData, target);
         String logEntry = target.getCard().getName() + " is destroyed.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} is destroyed by {}'s ability",
                 gameData.id, target.getCard().getName(), entry.getCard().getName());
 
-        gameHelper.removeOrphanedAuras(gameData);
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     @HandlesEffect(DestroyBlockedCreatureAndSelfEffect.class)
@@ -457,7 +458,7 @@ public class DestructionResolutionService {
                 String logEntry = attacker.getCard().getName() + " is indestructible.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
             } else if (!gameHelper.tryRegenerate(gameData, attacker)) {
-                gameHelper.removePermanentToGraveyard(gameData, attacker);
+                permanentRemovalService.removePermanentToGraveyard(gameData, attacker);
                 String logEntry = attacker.getCard().getName() + " is destroyed by " + entry.getCard().getName() + ".";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} destroyed by {}'s block trigger", gameData.id, attacker.getCard().getName(), entry.getCard().getName());
@@ -470,7 +471,7 @@ public class DestructionResolutionService {
                 String logEntry = entry.getCard().getName() + " is indestructible.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
             } else if (!gameHelper.tryRegenerate(gameData, self)) {
-                gameHelper.removePermanentToGraveyard(gameData, self);
+                permanentRemovalService.removePermanentToGraveyard(gameData, self);
                 String logEntry = entry.getCard().getName() + " is destroyed.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} destroyed (self-destruct from block trigger)", gameData.id, entry.getCard().getName());
@@ -493,11 +494,11 @@ public class DestructionResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} is indestructible, destroy prevented", gameData.id, target.getCard().getName());
         } else if (!gameHelper.tryRegenerate(gameData, target)) {
-            gameHelper.removePermanentToGraveyard(gameData, target);
+            permanentRemovalService.removePermanentToGraveyard(gameData, target);
             String logEntry = target.getCard().getName() + " is destroyed by " + entry.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} destroyed by {}'s ability", gameData.id, target.getCard().getName(), entry.getCard().getName());
-            gameHelper.removeOrphanedAuras(gameData);
+            permanentRemovalService.removeOrphanedAuras(gameData);
         }
 
         // Gain life equal to toughness regardless of destruction result
