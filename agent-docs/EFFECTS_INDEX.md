@@ -26,11 +26,15 @@ When creating a new effect, override the relevant method(s) to return `true`:
 
 Effects that target both players and permanents (any-target): DealDamageToAnyTargetEffect, DealDamageToAnyTargetAndGainLifeEffect, DealOrderedDamageToAnyTargetsEffect, DealXDamageToAnyTargetEffect, DealXDamageToAnyTargetAndGainXLifeEffect.
 
+### Per-blocker trigger flag
+
+Effects in the `ON_BECOMES_BLOCKED` slot can override `triggersPerBlocker()` to return `true`, causing CombatService to create one stack entry per blocking creature (e.g. "whenever equipped creature becomes blocked **by a creature**"). Effects with this flag: `DestroyCreatureBlockingThisEffect`, `DestroyTargetCreatureAndGainLifeEqualToToughnessEffect`. For equipment/aura triggers, use `MayEffect(wrapped, prompt, true)` with the third constructor parameter.
+
 ## Wrapper / modifier effects
 
 | Effect | Constructor | Description |
 |--------|-------------|-------------|
-| `MayEffect` | `(CardEffect wrapped, String prompt)` | Wraps any effect with "you may" choice |
+| `MayEffect` | `(CardEffect wrapped, String prompt)` or `(CardEffect wrapped, String prompt, boolean triggersPerBlocker)` | Wraps any effect with "you may" choice. Set `triggersPerBlocker=true` for "becomes blocked by a creature" triggers that fire once per blocking creature (e.g. Infiltration Lens) |
 | `MayPayManaEffect` | `(String manaCost, CardEffect wrapped, String prompt)` | Wraps any effect with "you may pay {X}. If you do, [effect]" choice. The mana cost is charged before resolving. Used for Spellbomb cycle and similar cards |
 | `MetalcraftConditionalEffect` | `(CardEffect wrapped)` | Wraps any effect with metalcraft condition (3+ artifacts). For ETB triggers: checked at trigger time and resolution time, delegates targeting to wrapped effect. For static effects: wraps GrantKeywordEffect or StaticBoostEffect, applied only while metalcraft is met (selfOnly handler) |
 | `MetalcraftReplacementEffect` | `(CardEffect baseEffect, CardEffect metalcraftEffect)` | Picks between base and upgraded effect at resolution based on metalcraft. Resolves `metalcraftEffect` if 3+ artifacts, otherwise `baseEffect`. Targeting delegates to both inner effects (union). No new handler needed — unwrapped in `EffectResolutionService` |

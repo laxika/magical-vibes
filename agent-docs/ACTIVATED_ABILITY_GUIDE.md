@@ -332,7 +332,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `END_STEP_TRIGGERED` | End step |
 | `ON_ATTACK` | This creature attacks |
 | `ON_BLOCK` | This creature blocks |
-| `ON_BECOMES_BLOCKED` | This creature becomes blocked |
+| `ON_BECOMES_BLOCKED` | This creature becomes blocked. Effects with `triggersPerBlocker()=true` fire once per blocker |
 | `ON_COMBAT_DAMAGE_TO_PLAYER` | This creature deals combat damage to a player |
 | `ON_COMBAT_DAMAGE_TO_CREATURE` | This creature deals combat damage to a creature |
 | `ON_DAMAGE_TO_PLAYER` | Any damage to a player (not just combat) |

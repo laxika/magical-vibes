@@ -11,4 +11,9 @@ public record DestroyTargetCreatureAndGainLifeEqualToToughnessEffect() implement
     public boolean canTargetPermanent() {
         return true;
     }
+
+    @Override
+    public boolean triggersPerBlocker() {
+        return true;
+    }
 }

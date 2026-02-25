@@ -569,12 +569,10 @@ public class CombatService {
             List<CardEffect> becomesBlockedEffects = attacker.getCard().getEffects(EffectSlot.ON_BECOMES_BLOCKED);
             if (!becomesBlockedEffects.isEmpty()) {
                 List<CardEffect> blockerSpecificEffects = becomesBlockedEffects.stream()
-                        .filter(e -> e instanceof DestroyCreatureBlockingThisEffect
-                                || e instanceof DestroyTargetCreatureAndGainLifeEqualToToughnessEffect)
+                        .filter(CardEffect::triggersPerBlocker)
                         .toList();
                 List<CardEffect> regularEffects = becomesBlockedEffects.stream()
-                        .filter(e -> !(e instanceof DestroyCreatureBlockingThisEffect)
-                                && !(e instanceof DestroyTargetCreatureAndGainLifeEqualToToughnessEffect))
+                        .filter(e -> !e.triggersPerBlocker())
                         .toList();
 
                 if (!regularEffects.isEmpty()) {
@@ -617,8 +615,9 @@ public class CombatService {
                 }
             }
 
-            // Check for aura-based "when enchanted creature becomes blocked" triggers
+            // Check for aura/equipment-based "when enchanted/equipped creature becomes blocked" triggers
             checkAuraTriggersForCreature(gameData, attacker, EffectSlot.ON_BECOMES_BLOCKED);
+            checkAttachedPerBlockerTriggers(gameData, attacker, blockerAssignments, defenderBattlefield, atkIdx);
         }
 
         // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
@@ -1558,10 +1557,14 @@ public class CombatService {
         gameData.forEachPermanent((auraOwnerId, perm) -> {
             if (perm.getAttachedTo() != null && perm.getAttachedTo().equals(creature.getId())) {
                 List<CardEffect> auraEffects = perm.getCard().getEffects(slot);
-                if (!auraEffects.isEmpty()) {
+                // Skip per-blocker effects — they are handled by checkAttachedPerBlockerTriggers
+                List<CardEffect> nonPerBlockerEffects = auraEffects.stream()
+                        .filter(e -> !e.triggersPerBlocker())
+                        .toList();
+                if (!nonPerBlockerEffects.isEmpty()) {
                     // Bake the creature's controller into effects that need it
                     List<CardEffect> effectsForStack = new ArrayList<>();
-                    for (CardEffect effect : auraEffects) {
+                    for (CardEffect effect : nonPerBlockerEffects) {
                         if (effect instanceof EnchantedCreatureControllerLosesLifeEffect e) {
                             effectsForStack.add(new EnchantedCreatureControllerLosesLifeEffect(e.amount(), finalCreatureControllerId));
                         } else {
@@ -1593,6 +1596,54 @@ public class CombatService {
                         gameBroadcastService.logAndBroadcast(gameData, triggerLog);
                         log.info("Game {} - {} aura trigger pushed onto stack (enchanted creature {})",
                                 gameData.id, perm.getCard().getName(), creature.getCard().getName());
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * For attached permanents (equipment/auras) with ON_BECOMES_BLOCKED effects that trigger
+     * per blocking creature (e.g. Infiltration Lens: "Whenever equipped creature becomes blocked
+     * by a creature, you may draw two cards"), create one stack entry per blocker.
+     */
+    private void checkAttachedPerBlockerTriggers(GameData gameData, Permanent attacker,
+                                                  List<BlockerAssignment> blockerAssignments,
+                                                  List<Permanent> defenderBattlefield, int attackerIndex) {
+        UUID controllerId = null;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf != null && bf.contains(attacker)) {
+                controllerId = pid;
+                break;
+            }
+        }
+        if (controllerId == null) return;
+        final UUID finalControllerId = controllerId;
+
+        gameData.forEachPermanent((ownerId, perm) -> {
+            if (perm.getAttachedTo() != null && perm.getAttachedTo().equals(attacker.getId())) {
+                List<CardEffect> perBlockerEffects = perm.getCard().getEffects(EffectSlot.ON_BECOMES_BLOCKED).stream()
+                        .filter(CardEffect::triggersPerBlocker)
+                        .toList();
+                if (!perBlockerEffects.isEmpty()) {
+                    for (BlockerAssignment assignment : blockerAssignments) {
+                        if (assignment.attackerIndex() != attackerIndex) {
+                            continue;
+                        }
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                finalControllerId,
+                                perm.getCard().getName() + "'s triggered ability",
+                                new ArrayList<>(perBlockerEffects),
+                                null,
+                                perm.getId()
+                        ));
+                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                        log.info("Game {} - {} per-blocker trigger pushed onto stack (attached to {})",
+                                gameData.id, perm.getCard().getName(), attacker.getCard().getName());
                     }
                 }
             }

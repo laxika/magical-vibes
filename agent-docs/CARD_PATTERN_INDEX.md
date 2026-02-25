@@ -191,6 +191,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Boost + keywords equip | `l/LoxodonWarhammer.java` | Boost + GrantKeywordEffect(EQUIPPED_CREATURE) + equip |
 | Living weapon equip | `s/Strandwalker.java` | ON_ENTER_BATTLEFIELD LivingWeaponEffect + STATIC BoostAttachedCreatureEffect + GrantKeywordEffect(EQUIPPED_CREATURE) + equip |
 | Grant ability + doesn't untap equip | `h/HeavyArbalest.java` | STATIC EquippedCreatureDoesntUntapEffect + GrantActivatedAbilityEffect(EQUIPPED_CREATURE) + equip |
+| Per-blocker trigger equip | `i/InfiltrationLens.java` | ON_BECOMES_BLOCKED MayEffect(DrawCardEffect(2), triggersPerBlocker=true) + equip. Use `triggersPerBlocker=true` on MayEffect for "becomes blocked by a creature" triggers that fire once per blocker |
 
 ## Activated abilities
 
