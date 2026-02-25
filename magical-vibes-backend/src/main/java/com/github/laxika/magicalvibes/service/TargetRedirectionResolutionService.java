@@ -73,11 +73,7 @@ public class TargetRedirectionResolutionService {
                         .forEach(card -> candidates.add(card.getId()));
             }
         } else {
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
-                    candidates.add(permanent.getId());
-                }
-            }
+            gameData.forEachPermanent((playerId, permanent) -> candidates.add(permanent.getId()));
             candidates.addAll(gameData.orderedPlayerIds);
         }
 

@@ -557,17 +557,13 @@ public class PermanentChoiceHandlerService {
             // so defer SBA until all proliferates are done.
             if (gameData.pendingProliferateCount > 0) {
                 List<UUID> eligiblePermanentIds = new ArrayList<>();
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                    if (battlefield == null) continue;
-                    for (Permanent p : battlefield) {
-                        if (p.getPlusOnePlusOneCounters() > 0
-                                || p.getMinusOneMinusOneCounters() > 0
-                                || p.getLoyaltyCounters() > 0) {
-                            eligiblePermanentIds.add(p.getId());
-                        }
+                gameData.forEachPermanent((pid, p) -> {
+                    if (p.getPlusOnePlusOneCounters() > 0
+                            || p.getMinusOneMinusOneCounters() > 0
+                            || p.getLoyaltyCounters() > 0) {
+                        eligiblePermanentIds.add(p.getId());
                     }
-                }
+                });
                 if (eligiblePermanentIds.isEmpty()) {
                     gameData.pendingProliferateCount = 0;
                     String logEntry = "Proliferate: no permanents with counters to choose.";

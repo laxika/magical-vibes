@@ -102,13 +102,7 @@ public class PreventionResolutionService {
 
         // Collect all permanents on all battlefields as valid source choices
         List<UUID> validIds = new ArrayList<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-            for (Permanent perm : battlefield) {
-                validIds.add(perm.getId());
-            }
-        }
+        gameData.forEachPermanent((playerId, perm) -> validIds.add(perm.getId()));
 
         if (validIds.isEmpty()) {
             String logEntry = "No permanents on the battlefield to choose as a damage source.";

@@ -318,11 +318,11 @@ export class GameComponent implements OnInit, OnDestroy {
 
     // Detect transition to RUNNING to clear mulligan UI state
     if (state.status === GameStatus.RUNNING && g.status !== GameStatus.RUNNING) {
-      this.opponentKept = false;
-      this.selfKept = false;
-      this.selectingBottomCards = false;
-      this.bottomCardCount = 0;
-      this.selectedCardIndices.clear();
+      this.opponentKept.set(false);
+      this.selfKept.set(false);
+      this.selectingBottomCards.set(false);
+      this.bottomCardCount.set(0);
+      this.selectedCardIndices.set(new Set());
     }
 
     const updated = {
@@ -361,21 +361,21 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     // Clear pending combat state when server confirms battlefield
-    if (!this.declaringAttackers) {
+    if (!this.declaringAttackers()) {
       this.selectedAttackerIndices.set(new Set());
     }
-    if (!this.declaringBlockers) {
+    if (!this.declaringBlockers()) {
       this.blockerAssignments.set(new Map());
     }
   }
 
   // ========== Mulligan ==========
 
-  opponentKept = false;
-  selfKept = false;
-  selectingBottomCards = false;
-  bottomCardCount = 0;
-  selectedCardIndices = new Set<number>();
+  opponentKept = signal(false);
+  selfKept = signal(false);
+  selectingBottomCards = signal(false);
+  bottomCardCount = signal(0);
+  selectedCardIndices = signal(new Set<number>());
 
   get isMulliganPhase(): boolean {
     const g = this.game();
@@ -394,51 +394,56 @@ export class GameComponent implements OnInit, OnDestroy {
     const myName = this.websocketService.currentUser?.username;
     if (resolved.playerName === myName) {
       if (resolved.kept) {
-        this.selfKept = true;
+        this.selfKept.set(true);
       }
     } else {
       if (resolved.kept) {
-        this.opponentKept = true;
+        this.opponentKept.set(true);
       } else {
-        this.opponentKept = false;
+        this.opponentKept.set(false);
       }
     }
   }
 
   private handleSelectCardsToBottom(msg: SelectCardsToBottomNotification): void {
-    this.selectingBottomCards = true;
-    this.bottomCardCount = msg.count;
-    this.selectedCardIndices.clear();
+    this.selectingBottomCards.set(true);
+    this.bottomCardCount.set(msg.count);
+    this.selectedCardIndices.set(new Set());
   }
 
   keepHand(): void {
     const g = this.game();
-    if (g && !this.selfKept) {
+    if (g && !this.selfKept()) {
       this.websocketService.send({ type: MessageType.KEEP_HAND });
     }
   }
 
   takeMulligan(): void {
     const g = this.game();
-    if (g && !this.selfKept) {
+    if (g && !this.selfKept()) {
       this.websocketService.send({ type: MessageType.TAKE_MULLIGAN });
     }
   }
 
   toggleCardSelection(index: number): void {
-    if (this.selectedCardIndices.has(index)) {
-      this.selectedCardIndices.delete(index);
-    } else if (this.selectedCardIndices.size < this.bottomCardCount) {
-      this.selectedCardIndices.add(index);
+    const current = this.selectedCardIndices();
+    if (current.has(index)) {
+      const updated = new Set(current);
+      updated.delete(index);
+      this.selectedCardIndices.set(updated);
+    } else if (current.size < this.bottomCardCount()) {
+      const updated = new Set(current);
+      updated.add(index);
+      this.selectedCardIndices.set(updated);
     }
   }
 
   isCardSelected(index: number): boolean {
-    return this.selectedCardIndices.has(index);
+    return this.selectedCardIndices().has(index);
   }
 
   get canConfirmBottom(): boolean {
-    return this.selectedCardIndices.size === this.bottomCardCount;
+    return this.selectedCardIndices().size === this.bottomCardCount();
   }
 
   confirmBottomCards(): void {
@@ -446,10 +451,10 @@ export class GameComponent implements OnInit, OnDestroy {
     if (g && this.canConfirmBottom) {
       this.websocketService.send({
         type: MessageType.BOTTOM_CARDS,
-        cardIndices: Array.from(this.selectedCardIndices)
+        cardIndices: Array.from(this.selectedCardIndices())
       });
-      this.selectingBottomCards = false;
-      this.selectedCardIndices.clear();
+      this.selectingBottomCards.set(false);
+      this.selectedCardIndices.set(new Set());
     }
   }
 
@@ -514,42 +519,42 @@ export class GameComponent implements OnInit, OnDestroy {
 
   // ========== Combat ==========
 
-  declaringAttackers = false;
-  declaringBlockers = false;
+  declaringAttackers = signal(false);
+  declaringBlockers = signal(false);
   availableAttackerIndices = signal(new Set<number>());
   mustAttackIndices = signal(new Set<number>());
   availableBlockerIndices = signal(new Set<number>());
   selectedAttackerIndices = signal(new Set<number>());
-  opponentAttackerIndices: number[] = [];
+  opponentAttackerIndices = signal<number[]>([]);
   blockerAssignments = signal(new Map<number, number>());
   legalBlockPairs = signal(new Map<number, number[]>());
-  selectedBlockerIndex: number | null = null;
-  gameOverWinner: string | null = null;
-  gameOverWinnerId: string | null = null;
+  selectedBlockerIndex = signal<number | null>(null);
+  gameOverWinner = signal<string | null>(null);
+  gameOverWinnerId = signal<string | null>(null);
 
   private handleAvailableAttackers(msg: AvailableAttackersNotification): void {
-    this.declaringAttackers = true;
+    this.declaringAttackers.set(true);
     this.availableAttackerIndices.set(new Set(msg.attackerIndices));
     this.mustAttackIndices.set(new Set(msg.mustAttackIndices));
     this.selectedAttackerIndices.set(new Set(msg.mustAttackIndices));
   }
 
   private handleAvailableBlockers(msg: AvailableBlockersNotification): void {
-    this.declaringBlockers = true;
+    this.declaringBlockers.set(true);
     this.availableBlockerIndices.set(new Set(msg.blockerIndices));
-    this.opponentAttackerIndices = msg.attackerIndices;
+    this.opponentAttackerIndices.set(msg.attackerIndices);
     const pairs = new Map<number, number[]>();
     for (const [key, value] of Object.entries(msg.legalBlockPairs)) {
       pairs.set(Number(key), value);
     }
     this.legalBlockPairs.set(pairs);
     this.blockerAssignments.set(new Map());
-    this.selectedBlockerIndex = null;
+    this.selectedBlockerIndex.set(null);
   }
 
   private handleGameOver(msg: GameOverNotification): void {
-    this.gameOverWinner = msg.winnerName;
-    this.gameOverWinnerId = msg.winnerId;
+    this.gameOverWinner.set(msg.winnerName);
+    this.gameOverWinnerId.set(msg.winnerId);
     const g = this.game();
     if (!g) return;
     const updated = { ...g, status: GameStatus.FINISHED };
@@ -558,7 +563,7 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   canAttack(index: number): boolean {
-    return this.declaringAttackers && this.availableAttackerIndices().has(index);
+    return this.declaringAttackers() && this.availableAttackerIndices().has(index);
   }
 
   isSelectedAttacker(index: number): boolean {
@@ -584,13 +589,13 @@ export class GameComponent implements OnInit, OnDestroy {
       type: MessageType.DECLARE_ATTACKERS,
       attackerIndices: Array.from(this.selectedAttackerIndices())
     });
-    this.declaringAttackers = false;
+    this.declaringAttackers.set(false);
     this.availableAttackerIndices.set(new Set());
     this.mustAttackIndices.set(new Set());
   }
 
   canBlock(index: number): boolean {
-    return this.declaringBlockers && this.availableBlockerIndices().has(index);
+    return this.declaringBlockers() && this.availableBlockerIndices().has(index);
   }
 
   isAssignedBlocker(index: number): boolean {
@@ -605,26 +610,26 @@ export class GameComponent implements OnInit, OnDestroy {
       this.blockerAssignments.set(updated);
       return;
     }
-    this.selectedBlockerIndex = index;
+    this.selectedBlockerIndex.set(index);
   }
 
   isBlockTarget(index: number): boolean {
-    if (!this.declaringBlockers || this.selectedBlockerIndex === null) return false;
+    if (!this.declaringBlockers() || this.selectedBlockerIndex() === null) return false;
     if (!this.opponentBattlefield[index]?.attacking) return false;
-    const legal = this.legalBlockPairs().get(this.selectedBlockerIndex);
+    const legal = this.legalBlockPairs().get(this.selectedBlockerIndex()!);
     return legal != null && legal.includes(index);
   }
 
   assignBlock(attackerIndex: number): void {
-    if (this.selectedBlockerIndex === null || !this.declaringBlockers) return;
+    if (this.selectedBlockerIndex() === null || !this.declaringBlockers()) return;
     const perm = this.opponentBattlefield[attackerIndex];
     if (!perm || !perm.attacking) return;
-    const legal = this.legalBlockPairs().get(this.selectedBlockerIndex);
+    const legal = this.legalBlockPairs().get(this.selectedBlockerIndex()!);
     if (!legal || !legal.includes(attackerIndex)) return;
     const updated = new Map(this.blockerAssignments());
-    updated.set(this.selectedBlockerIndex, attackerIndex);
+    updated.set(this.selectedBlockerIndex()!, attackerIndex);
     this.blockerAssignments.set(updated);
-    this.selectedBlockerIndex = null;
+    this.selectedBlockerIndex.set(null);
   }
 
   confirmBlockers(): void {
@@ -638,15 +643,15 @@ export class GameComponent implements OnInit, OnDestroy {
       type: MessageType.DECLARE_BLOCKERS,
       blockerAssignments: assignments
     });
-    this.declaringBlockers = false;
-    this.selectedBlockerIndex = null;
+    this.declaringBlockers.set(false);
+    this.selectedBlockerIndex.set(null);
     this.availableBlockerIndices.set(new Set());
     this.legalBlockPairs.set(new Map());
-    this.opponentAttackerIndices = [];
+    this.opponentAttackerIndices.set([]);
   }
 
   cancelBlockerSelection(): void {
-    this.selectedBlockerIndex = null;
+    this.selectedBlockerIndex.set(null);
   }
 
   // ========== Battlefield display ==========
@@ -715,7 +720,7 @@ export class GameComponent implements OnInit, OnDestroy {
     const groups: CombatGroup[] = [];
 
     const selectedAttackers = this.selectedAttackerIndices();
-    if (this.declaringAttackers || selectedAttackers.size > 0) {
+    if (this.declaringAttackers() || selectedAttackers.size > 0) {
       for (const idx of selectedAttackers) {
         groups.push({
           attackerIndex: idx,
@@ -753,7 +758,7 @@ export class GameComponent implements OnInit, OnDestroy {
           }
         });
         const assignments = this.blockerAssignments();
-        if (this.declaringBlockers || assignments.size > 0) {
+        if (this.declaringBlockers() || assignments.size > 0) {
           for (const [blockerIdx, atkIdx] of assignments) {
             if (atkIdx === idx) {
               const alreadyIncluded = group.blockers.some(b => b.index === blockerIdx && b.isMine);
@@ -819,9 +824,9 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return;
     }
-    if (this.declaringAttackers) {
+    if (this.declaringAttackers()) {
       this.toggleAttacker(index);
-    } else if (this.declaringBlockers) {
+    } else if (this.declaringBlockers()) {
       this.selectBlocker(index);
     } else {
       this.choice.tapPermanent(index);
@@ -868,7 +873,7 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return;
     }
-    if (this.declaringBlockers) {
+    if (this.declaringBlockers()) {
       this.assignBlock(index);
     }
   }
@@ -906,9 +911,9 @@ export class GameComponent implements OnInit, OnDestroy {
       this.choice.assignDamage(group.attacker.id);
       return;
     }
-    if (this.declaringAttackers && group.attackerIsMine) {
+    if (this.declaringAttackers() && group.attackerIsMine) {
       this.toggleAttacker(group.attackerIndex);
-    } else if (this.declaringBlockers && !group.attackerIsMine) {
+    } else if (this.declaringBlockers() && !group.attackerIsMine) {
       this.assignBlock(group.attackerIndex);
     } else if (group.attackerIsMine) {
       this.choice.tapPermanent(group.attackerIndex);
@@ -944,7 +949,7 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return;
     }
-    if (this.declaringBlockers && blocker.isMine) {
+    if (this.declaringBlockers() && blocker.isMine) {
       this.selectBlocker(blocker.index);
     } else if (blocker.isMine) {
       this.choice.tapPermanent(blocker.index);

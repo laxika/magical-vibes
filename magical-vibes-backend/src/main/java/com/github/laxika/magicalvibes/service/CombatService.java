@@ -124,24 +124,20 @@ public class CombatService {
      * from itself and attached Auras.
      */
     private int getMustAttackRequirementCount(GameData gameData, Permanent creature) {
-        int count = (int) creature.getCard().getEffects(EffectSlot.STATIC).stream()
+        int[] count = {(int) creature.getCard().getEffects(EffectSlot.STATIC).stream()
                 .filter(MustAttackEffect.class::isInstance)
-                .count();
+                .count()};
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-            for (Permanent permanent : battlefield) {
-                if (permanent.getAttachedTo() != null
-                        && permanent.getAttachedTo().equals(creature.getId())) {
-                    count += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                            .filter(MustAttackEffect.class::isInstance)
-                            .count();
-                }
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (permanent.getAttachedTo() != null
+                    && permanent.getAttachedTo().equals(creature.getId())) {
+                count[0] += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(MustAttackEffect.class::isInstance)
+                        .count();
             }
-        }
+        });
 
-        return count;
+        return count[0];
     }
 
     /**
@@ -1382,20 +1378,18 @@ public class CombatService {
             int damageDealt = entry.getValue();
             if (damageDealt <= 0) continue;
 
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                for (Permanent perm : gameData.playerBattlefields.get(playerId)) {
-                    if (perm.getAttachedTo() != null && perm.getAttachedTo().equals(creature.getId())) {
-                        for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                            if (effect instanceof GainLifeEqualToDamageDealtEffect) {
-                                int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
-                                gameData.playerLifeTotals.put(playerId, currentLife + damageDealt);
-                                String logEntry = gameData.playerIdToName.get(playerId) + " gains " + damageDealt + " life from " + perm.getCard().getName() + ".";
-                                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                            }
+            gameData.forEachPermanent((playerId, perm) -> {
+                if (perm.getAttachedTo() != null && perm.getAttachedTo().equals(creature.getId())) {
+                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                        if (effect instanceof GainLifeEqualToDamageDealtEffect) {
+                            int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+                            gameData.playerLifeTotals.put(playerId, currentLife + damageDealt);
+                            String logEntry = gameData.playerIdToName.get(playerId) + " gains " + damageDealt + " life from " + perm.getCard().getName() + ".";
+                            gameBroadcastService.logAndBroadcast(gameData, logEntry);
                         }
                     }
                 }
-            }
+            });
         }
     }
 
@@ -1556,73 +1550,64 @@ public class CombatService {
             }
         }
         if (creatureControllerId == null) return;
+        final UUID finalCreatureControllerId = creatureControllerId;
 
-        for (UUID auraOwnerId : gameData.orderedPlayerIds) {
-            List<Permanent> ownerBattlefield = gameData.playerBattlefields.get(auraOwnerId);
-            if (ownerBattlefield == null) continue;
-            for (Permanent perm : ownerBattlefield) {
-                if (perm.getAttachedTo() != null && perm.getAttachedTo().equals(creature.getId())) {
-                    List<CardEffect> auraEffects = perm.getCard().getEffects(slot);
-                    if (!auraEffects.isEmpty()) {
-                        // Bake the creature's controller into effects that need it
-                        List<CardEffect> effectsForStack = new ArrayList<>();
-                        for (CardEffect effect : auraEffects) {
-                            if (effect instanceof EnchantedCreatureControllerLosesLifeEffect e) {
-                                effectsForStack.add(new EnchantedCreatureControllerLosesLifeEffect(e.amount(), creatureControllerId));
-                            } else {
-                                effectsForStack.add(effect);
-                            }
-                        }
-
-                        // Check if any effect needs a permanent target — queue for target selection
-                        boolean needsTarget = effectsForStack.stream().anyMatch(CardEffect::canTargetPermanent);
-                        if (needsTarget) {
-                            gameData.pendingAttackTriggerTargets.add(
-                                    new PermanentChoiceContext.AttackTriggerTarget(
-                                            perm.getCard(), auraOwnerId, effectsForStack, perm.getId()));
-                            String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                            gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                            log.info("Game {} - {} targeted attack trigger queued for target selection (attached to {})",
-                                    gameData.id, perm.getCard().getName(), creature.getCard().getName());
+        gameData.forEachPermanent((auraOwnerId, perm) -> {
+            if (perm.getAttachedTo() != null && perm.getAttachedTo().equals(creature.getId())) {
+                List<CardEffect> auraEffects = perm.getCard().getEffects(slot);
+                if (!auraEffects.isEmpty()) {
+                    // Bake the creature's controller into effects that need it
+                    List<CardEffect> effectsForStack = new ArrayList<>();
+                    for (CardEffect effect : auraEffects) {
+                        if (effect instanceof EnchantedCreatureControllerLosesLifeEffect e) {
+                            effectsForStack.add(new EnchantedCreatureControllerLosesLifeEffect(e.amount(), finalCreatureControllerId));
                         } else {
-                            gameData.stack.add(new StackEntry(
-                                    StackEntryType.TRIGGERED_ABILITY,
-                                    perm.getCard(),
-                                    auraOwnerId,
-                                    perm.getCard().getName() + "'s triggered ability",
-                                    effectsForStack,
-                                    null,
-                                    perm.getId()
-                            ));
-                            String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                            gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                            log.info("Game {} - {} aura trigger pushed onto stack (enchanted creature {})",
-                                    gameData.id, perm.getCard().getName(), creature.getCard().getName());
+                            effectsForStack.add(effect);
                         }
+                    }
+
+                    // Check if any effect needs a permanent target — queue for target selection
+                    boolean needsTarget = effectsForStack.stream().anyMatch(CardEffect::canTargetPermanent);
+                    if (needsTarget) {
+                        gameData.pendingAttackTriggerTargets.add(
+                                new PermanentChoiceContext.AttackTriggerTarget(
+                                        perm.getCard(), auraOwnerId, effectsForStack, perm.getId()));
+                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                        log.info("Game {} - {} targeted attack trigger queued for target selection (attached to {})",
+                                gameData.id, perm.getCard().getName(), creature.getCard().getName());
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                auraOwnerId,
+                                perm.getCard().getName() + "'s triggered ability",
+                                effectsForStack,
+                                null,
+                                perm.getId()
+                        ));
+                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                        log.info("Game {} - {} aura trigger pushed onto stack (enchanted creature {})",
+                                gameData.id, perm.getCard().getName(), creature.getCard().getName());
                     }
                 }
             }
-        }
+        });
     }
 
     private List<CanBeBlockedOnlyByFilterEffect> getAuraGrantedBlockingRestrictions(GameData gameData, Permanent creature) {
         List<CanBeBlockedOnlyByFilterEffect> restrictions = new ArrayList<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) {
-                continue;
+        gameData.forEachPermanent((playerId, aura) -> {
+            if (aura.getAttachedTo() == null || !aura.getAttachedTo().equals(creature.getId())) {
+                return;
             }
-            for (Permanent aura : battlefield) {
-                if (aura.getAttachedTo() == null || !aura.getAttachedTo().equals(creature.getId())) {
-                    continue;
-                }
-                for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof CanBeBlockedOnlyByFilterEffect restriction) {
-                        restrictions.add(restriction);
-                    }
+            for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CanBeBlockedOnlyByFilterEffect restriction) {
+                    restrictions.add(restriction);
                 }
             }
-        }
+        });
         return restrictions;
     }
 
@@ -1841,12 +1826,8 @@ public class CombatService {
     // ===== Combat state management =====
 
     void clearCombatState(GameData gameData) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield != null) {
-                battlefield.forEach(Permanent::clearCombatState);
-            }
-        }
+        gameData.forEachBattlefield((playerId, battlefield) ->
+                battlefield.forEach(Permanent::clearCombatState));
         // Clear combat damage assignment state
         gameData.combatDamagePlayerAssignments.clear();
         gameData.combatDamagePendingIndices.clear();
@@ -1855,26 +1836,23 @@ public class CombatService {
     }
 
     void processEndOfCombatSacrifices(GameData gameData) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield != null) {
-                List<Permanent> toSacrifice = battlefield.stream()
-                        .filter(p -> gameData.permanentsToSacrificeAtEndOfCombat.contains(p.getId()))
-                        .toList();
-                for (Permanent perm : toSacrifice) {
-                    boolean wasCreature = gameQueryService.isCreature(gameData, perm);
-                    battlefield.remove(perm);
-                    gameHelper.addCardToGraveyard(gameData, playerId, perm.getOriginalCard(), Zone.BATTLEFIELD);
-                    gameHelper.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature);
-                    if (wasCreature) {
-                        gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
-                    }
-                    String logEntry = perm.getCard().getName() + " is sacrificed.";
-                    gameData.gameLog.add(logEntry);
-                    log.info("Game {} - {} sacrificed at end of combat", gameData.id, perm.getCard().getName());
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            List<Permanent> toSacrifice = battlefield.stream()
+                    .filter(p -> gameData.permanentsToSacrificeAtEndOfCombat.contains(p.getId()))
+                    .toList();
+            for (Permanent perm : toSacrifice) {
+                boolean wasCreature = gameQueryService.isCreature(gameData, perm);
+                battlefield.remove(perm);
+                gameHelper.addCardToGraveyard(gameData, playerId, perm.getOriginalCard(), Zone.BATTLEFIELD);
+                gameHelper.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature);
+                if (wasCreature) {
+                    gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
                 }
+                String logEntry = perm.getCard().getName() + " is sacrificed.";
+                gameData.gameLog.add(logEntry);
+                log.info("Game {} - {} sacrificed at end of combat", gameData.id, perm.getCard().getName());
             }
-        }
+        });
         gameData.permanentsToSacrificeAtEndOfCombat.clear();
         gameHelper.removeOrphanedAuras(gameData);
 

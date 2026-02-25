@@ -427,10 +427,7 @@ public class DamageResolutionService {
         String cardName = entry.getCard().getName();
         boolean sourceHasInfect = hasInfectSource(gameData, entry);
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-
+        gameData.forEachBattlefield((playerId, battlefield) -> {
             Set<Integer> deadIndices = new TreeSet<>(Collections.reverseOrder());
             for (int i = 0; i < battlefield.size(); i++) {
                 Permanent p = battlefield.get(i);
@@ -467,7 +464,7 @@ public class DamageResolutionService {
                 gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
                 battlefield.remove(idx);
             }
-        }
+        });
 
         gameHelper.removeOrphanedAuras(gameData);
     }

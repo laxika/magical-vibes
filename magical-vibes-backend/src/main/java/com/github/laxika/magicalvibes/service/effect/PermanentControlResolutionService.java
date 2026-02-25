@@ -291,15 +291,11 @@ public class PermanentControlResolutionService {
         }
 
         List<UUID> validCreatureIds = new ArrayList<>();
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent p : bf) {
-                if (gameQueryService.isCreature(gameData, p) && !p.getId().equals(aura.getAttachedTo())) {
-                    validCreatureIds.add(p.getId());
-                }
+        gameData.forEachPermanent((pid, p) -> {
+            if (gameQueryService.isCreature(gameData, p) && !p.getId().equals(aura.getAttachedTo())) {
+                validCreatureIds.add(p.getId());
             }
-        }
+        });
 
         if (!validCreatureIds.isEmpty()) {
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.AuraGraft(aura.getId()));

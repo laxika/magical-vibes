@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 public class GameData {
@@ -103,6 +104,32 @@ public class GameData {
         this.createdByUsername = createdByUsername;
         this.createdAt = LocalDateTime.now();
         this.status = GameStatus.WAITING;
+    }
+
+    /**
+     * Iterates over each player's battlefield list in player order.
+     * Skips null battlefields.
+     */
+    public void forEachBattlefield(BiConsumer<UUID, List<Permanent>> action) {
+        for (UUID playerId : orderedPlayerIds) {
+            List<Permanent> battlefield = playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            action.accept(playerId, battlefield);
+        }
+    }
+
+    /**
+     * Iterates over every permanent on every battlefield in player order.
+     * Skips null battlefields.
+     */
+    public void forEachPermanent(BiConsumer<UUID, Permanent> action) {
+        for (UUID playerId : orderedPlayerIds) {
+            List<Permanent> battlefield = playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent perm : battlefield) {
+                action.accept(playerId, perm);
+            }
+        }
     }
 
     /**

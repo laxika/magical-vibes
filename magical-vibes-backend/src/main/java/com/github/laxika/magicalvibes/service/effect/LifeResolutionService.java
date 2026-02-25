@@ -53,17 +53,13 @@ public class LifeResolutionService {
 
     @HandlesEffect(GainLifePerCreatureOnBattlefieldEffect.class)
     private void resolveGainLifePerCreatureOnBattlefield(GameData gameData, StackEntry entry) {
-        int creatureCount = 0;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield != null) {
-                for (Permanent permanent : battlefield) {
-                    if (gameQueryService.isCreature(gameData, permanent)) {
-                        creatureCount++;
-                    }
-                }
+        int[] creatureCountHolder = {0};
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (gameQueryService.isCreature(gameData, permanent)) {
+                creatureCountHolder[0]++;
             }
-        }
+        });
+        int creatureCount = creatureCountHolder[0];
         if (creatureCount == 0) {
             String playerName = gameData.playerIdToName.get(entry.getControllerId());
             String logEntry = playerName + " gains no life (no creatures on the battlefield).";
@@ -204,14 +200,11 @@ public class LifeResolutionService {
     @HandlesEffect(EachPlayerLosesLifePerCreatureControlledEffect.class)
     private void resolveEachPlayerLosesLifePerCreatureControlled(GameData gameData, StackEntry entry,
                                                                  EachPlayerLosesLifePerCreatureControlledEffect effect) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        gameData.forEachBattlefield((playerId, battlefield) -> {
             int creatureCount = 0;
-            if (battlefield != null) {
-                for (Permanent permanent : battlefield) {
-                    if (permanent.getCard().getType() == CardType.CREATURE) {
-                        creatureCount++;
-                    }
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getType() == CardType.CREATURE) {
+                    creatureCount++;
                 }
             }
 
@@ -219,7 +212,7 @@ public class LifeResolutionService {
             if (lifeLoss > 0) {
                 applyLifeLoss(gameData, playerId, lifeLoss, entry.getCard().getName());
             }
-        }
+        });
     }
 
     private void applyLifeLoss(GameData gameData, UUID playerId, int amount, String sourceName) {

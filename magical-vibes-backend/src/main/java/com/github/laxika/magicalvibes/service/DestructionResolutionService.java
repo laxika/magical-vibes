@@ -42,18 +42,18 @@ public class DestructionResolutionService {
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(controllerId);
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
+        gameData.forEachBattlefield((playerId, battlefield) -> {
             if (effect.onlyOpponents() && playerId.equals(controllerId)) {
-                continue;
+                return;
             }
-            for (Permanent perm : gameData.playerBattlefields.get(playerId)) {
+            for (Permanent perm : battlefield) {
                 if (matchesDestroyAllTargetType(gameData, perm, effect.targetTypes())
                         && (effect.filter() == null
                             || gameQueryService.matchesPermanentPredicate(perm, effect.filter(), filterContext))) {
                     toDestroy.add(perm);
                 }
             }
-        }
+        });
 
         // Snapshot indestructible status before any removals (MTG rules: "destroy all" is simultaneous)
         Set<Permanent> indestructible = new HashSet<>();

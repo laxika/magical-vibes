@@ -375,9 +375,7 @@ public class GameQueryService {
         boolean isNaturalCreature = target.getCard().getType() == CardType.CREATURE
                 || target.getCard().getAdditionalTypes().contains(CardType.CREATURE);
         StaticBonusAccumulator accumulator = new StaticBonusAccumulator();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
+        gameData.forEachBattlefield((playerId, bf) -> {
             boolean targetOnSameBattlefield = bf.contains(target);
             for (Permanent source : bf) {
                 if (source == target) continue;
@@ -389,7 +387,7 @@ public class GameQueryService {
                     }
                 }
             }
-        }
+        });
         // Handle characteristic-defining abilities (self-referencing static effects like */* P/T)
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
             StaticEffectHandler selfHandler = staticEffectRegistry.getSelfHandler(effect);
@@ -616,19 +614,15 @@ public class GameQueryService {
      * Each instance doubles the multiplier (e.g. two Furnaces = 4x damage).
      */
     int getDamageMultiplier(GameData gameData) {
-        int multiplier = 1;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent p : bf) {
-                for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof DoubleDamageEffect) {
-                        multiplier *= 2;
-                    }
+        int[] multiplier = {1};
+        gameData.forEachPermanent((playerId, p) -> {
+            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof DoubleDamageEffect) {
+                    multiplier[0] *= 2;
                 }
             }
-        }
-        return multiplier;
+        });
+        return multiplier[0];
     }
 
     int applyDamageMultiplier(GameData gameData, int damage) {

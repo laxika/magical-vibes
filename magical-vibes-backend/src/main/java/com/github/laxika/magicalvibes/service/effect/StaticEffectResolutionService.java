@@ -159,31 +159,27 @@ public class StaticEffectResolutionService {
         if (targetTypes.isEmpty() && !targetIsChangeling) return;
 
         boolean hasAnimateArtifacts = hasAnimateArtifactEffect(gameData);
-        int count = 0;
+        final int[] count = {0};
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent other : bf) {
-                if (other == target) continue;
-                if (!isEffectivelyCreature(other, hasAnimateArtifacts)) continue;
+        gameData.forEachPermanent((playerId, other) -> {
+            if (other == target) return;
+            if (!isEffectivelyCreature(other, hasAnimateArtifacts)) return;
 
-                List<CardSubtype> otherTypes = new ArrayList<>(other.getCard().getSubtypes());
-                otherTypes.addAll(other.getGrantedSubtypes());
-                boolean otherIsChangeling = other.hasKeyword(Keyword.CHANGELING);
+            List<CardSubtype> otherTypes = new ArrayList<>(other.getCard().getSubtypes());
+            otherTypes.addAll(other.getGrantedSubtypes());
+            boolean otherIsChangeling = other.hasKeyword(Keyword.CHANGELING);
 
-                if (otherTypes.isEmpty() && !otherIsChangeling) continue;
+            if (otherTypes.isEmpty() && !otherIsChangeling) return;
 
-                boolean sharesType = (targetIsChangeling && (otherIsChangeling || !otherTypes.isEmpty()))
-                        || (otherIsChangeling && !targetTypes.isEmpty())
-                        || targetTypes.stream().anyMatch(otherTypes::contains);
+            boolean sharesType = (targetIsChangeling && (otherIsChangeling || !otherTypes.isEmpty()))
+                    || (otherIsChangeling && !targetTypes.isEmpty())
+                    || targetTypes.stream().anyMatch(otherTypes::contains);
 
-                if (sharesType) count++;
-            }
-        }
+            if (sharesType) count[0]++;
+        });
 
-        accumulator.addPower(count);
-        accumulator.addToughness(count);
+        accumulator.addPower(count[0]);
+        accumulator.addToughness(count[0]);
     }
 
     @HandlesStaticEffect(value = MetalcraftConditionalEffect.class, selfOnly = true)
@@ -259,38 +255,30 @@ public class StaticEffectResolutionService {
         GameData gameData = context.gameData();
         boolean hasAnimateArtifacts = hasAnimateArtifactEffect(gameData);
 
-        int count = 0;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-            for (Permanent permanent : battlefield) {
-                if (permanent.getId().equals(context.source().getId())) continue;
-                if (!isEffectivelyCreature(permanent, hasAnimateArtifacts)) continue;
-                if (!sourceName.equals(permanent.getCard().getName())) continue;
-                count++;
-            }
-        }
+        final int[] count = {0};
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (permanent.getId().equals(context.source().getId())) return;
+            if (!isEffectivelyCreature(permanent, hasAnimateArtifacts)) return;
+            if (!sourceName.equals(permanent.getCard().getName())) return;
+            count[0]++;
+        });
 
-        accumulator.addPower(count * boost.powerPerCreature());
-        accumulator.addToughness(count * boost.toughnessPerCreature());
+        accumulator.addPower(count[0] * boost.powerPerCreature());
+        accumulator.addToughness(count[0] * boost.toughnessPerCreature());
     }
 
     @HandlesStaticEffect(value = BoostSelfPerEnchantmentOnBattlefieldEffect.class, selfOnly = true)
     private void resolveBoostSelfPerEnchantmentOnBattlefield(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostSelfPerEnchantmentOnBattlefieldEffect) effect;
-        int count = 0;
-        for (UUID playerId : context.gameData().orderedPlayerIds) {
-            List<Permanent> bf = context.gameData().playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent permanent : bf) {
-                if (permanent.getCard().getType() == CardType.ENCHANTMENT
-                        || permanent.getCard().getAdditionalTypes().contains(CardType.ENCHANTMENT)) {
-                    count++;
-                }
+        final int[] count = {0};
+        context.gameData().forEachPermanent((playerId, permanent) -> {
+            if (permanent.getCard().getType() == CardType.ENCHANTMENT
+                    || permanent.getCard().getAdditionalTypes().contains(CardType.ENCHANTMENT)) {
+                count[0]++;
             }
-        }
-        accumulator.addPower(count * boost.powerPerEnchantment());
-        accumulator.addToughness(count * boost.toughnessPerEnchantment());
+        });
+        accumulator.addPower(count[0] * boost.powerPerEnchantment());
+        accumulator.addToughness(count[0] * boost.toughnessPerEnchantment());
     }
 
     @HandlesStaticEffect(value = PowerToughnessEqualToControlledSubtypeCountEffect.class, selfOnly = true)

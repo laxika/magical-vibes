@@ -45,21 +45,16 @@ public class ValidTargetService {
 
         if (allowedTargets.contains(TargetType.PERMANENT)) {
             // Determine per-position filter for multi-target spells
-            TargetFilter positionFilter = null;
-            if (isMultiTarget && positionIndex < card.getMultiTargetFilters().size()) {
-                positionFilter = card.getMultiTargetFilters().get(positionIndex);
-            }
+            TargetFilter positionFilter = isMultiTarget && positionIndex < card.getMultiTargetFilters().size()
+                    ? card.getMultiTargetFilters().get(positionIndex)
+                    : null;
 
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                if (battlefield == null) continue;
-                for (Permanent perm : battlefield) {
-                    if (excludeIds.contains(perm.getId())) continue;
-                    if (isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, positionFilter)) {
-                        validPermanentIds.add(perm.getId());
-                    }
+            gameData.forEachPermanent((playerId, perm) -> {
+                if (excludeIds.contains(perm.getId())) return;
+                if (isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, positionFilter)) {
+                    validPermanentIds.add(perm.getId());
                 }
-            }
+            });
         }
 
         if (allowedTargets.contains(TargetType.PLAYER)) {
@@ -95,15 +90,11 @@ public class ValidTargetService {
                 .anyMatch(e -> e instanceof DestroyCreatureBlockingThisEffect);
 
         if (targetsPermanent) {
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                if (battlefield == null) continue;
-                for (Permanent perm : battlefield) {
-                    if (isValidAbilityPermanentTarget(gameData, sourceCard, ability, perm, controllerId, targetsBlockingThis, permanentIndex)) {
-                        validPermanentIds.add(perm.getId());
-                    }
+            gameData.forEachPermanent((playerId, perm) -> {
+                if (isValidAbilityPermanentTarget(gameData, sourceCard, ability, perm, controllerId, targetsBlockingThis, permanentIndex)) {
+                    validPermanentIds.add(perm.getId());
                 }
-            }
+            });
         }
 
         if (targetsPlayer) {

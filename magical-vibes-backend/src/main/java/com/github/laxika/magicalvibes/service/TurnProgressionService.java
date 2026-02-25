@@ -197,38 +197,30 @@ public class TurnProgressionService {
         }
 
         // Check all battlefields for EACH_UPKEEP_TRIGGERED effects
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> playerBattlefield = gameData.playerBattlefields.get(playerId);
-            if (playerBattlefield == null) continue;
+        gameData.forEachPermanent((playerId, perm) -> {
+            List<CardEffect> eachUpkeepEffects = perm.getCard().getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED);
+            if (eachUpkeepEffects == null || eachUpkeepEffects.isEmpty()) return;
 
-            for (Permanent perm : playerBattlefield) {
-                List<CardEffect> eachUpkeepEffects = perm.getCard().getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED);
-                if (eachUpkeepEffects == null || eachUpkeepEffects.isEmpty()) continue;
+            for (CardEffect effect : eachUpkeepEffects) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        playerId,
+                        perm.getCard().getName() + "'s upkeep ability",
+                        new ArrayList<>(List.of(effect)),
+                        activePlayerId,
+                        (UUID) null
+                ));
 
-                for (CardEffect effect : eachUpkeepEffects) {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            playerId,
-                            perm.getCard().getName() + "'s upkeep ability",
-                            new ArrayList<>(List.of(effect)),
-                            activePlayerId,
-                            (UUID) null
-                    ));
-
-                    String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - {} each-upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
-                }
+                String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} each-upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
             }
-        }
+        });
 
         // Check all battlefields for OPPONENT_UPKEEP_TRIGGERED effects (only opponents of the active player)
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (playerId.equals(activePlayerId)) continue; // Skip the active player's own permanents
-
-            List<Permanent> playerBattlefield = gameData.playerBattlefields.get(playerId);
-            if (playerBattlefield == null) continue;
+        gameData.forEachBattlefield((playerId, playerBattlefield) -> {
+            if (playerId.equals(activePlayerId)) return; // Skip the active player's own permanents
 
             for (Permanent perm : playerBattlefield) {
                 List<CardEffect> opponentUpkeepEffects = perm.getCard().getEffects(EffectSlot.OPPONENT_UPKEEP_TRIGGERED);
@@ -259,7 +251,7 @@ public class TurnProgressionService {
                     log.info("Game {} - {} opponent-upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
                 }
             }
-        }
+        });
 
         if (!gameData.stack.isEmpty()) {
 
@@ -328,37 +320,32 @@ public class TurnProgressionService {
         }
 
         // Check all battlefields for EACH_DRAW_TRIGGERED effects (all players' draw steps)
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> playerBattlefield = gameData.playerBattlefields.get(playerId);
-            if (playerBattlefield == null) continue;
+        gameData.forEachPermanent((playerId, perm) -> {
+            List<CardEffect> drawEffects = perm.getCard().getEffects(EffectSlot.EACH_DRAW_TRIGGERED);
+            if (drawEffects == null || drawEffects.isEmpty()) return;
 
-            for (Permanent perm : playerBattlefield) {
-                List<CardEffect> drawEffects = perm.getCard().getEffects(EffectSlot.EACH_DRAW_TRIGGERED);
-                if (drawEffects == null || drawEffects.isEmpty()) continue;
-
-                for (CardEffect effect : drawEffects) {
-                    // Intervening-if: skip trigger if the effect requires an untapped source and it's tapped
-                    if (effect instanceof DrawCardForTargetPlayerEffect dcEffect
-                            && dcEffect.requireSourceUntapped() && perm.isTapped()) {
-                        continue;
-                    }
-
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            playerId,
-                            perm.getCard().getName() + "'s draw step ability",
-                            new ArrayList<>(List.of(effect)),
-                            activePlayerId,
-                            perm.getId()
-                    ));
-
-                    String logEntry = perm.getCard().getName() + "'s draw step ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - {} draw-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
+            for (CardEffect effect : drawEffects) {
+                // Intervening-if: skip trigger if the effect requires an untapped source and it's tapped
+                if (effect instanceof DrawCardForTargetPlayerEffect dcEffect
+                        && dcEffect.requireSourceUntapped() && perm.isTapped()) {
+                    continue;
                 }
+
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        playerId,
+                        perm.getCard().getName() + "'s draw step ability",
+                        new ArrayList<>(List.of(effect)),
+                        activePlayerId,
+                        perm.getId()
+                ));
+
+                String logEntry = perm.getCard().getName() + "'s draw step ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} draw-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
             }
-        }
+        });
     }
 
     private void handleEndStepTriggers(GameData gameData) {
@@ -458,11 +445,7 @@ public class TurnProgressionService {
 
         gameHelper.drainManaPools(gameData);
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> playerBattlefield = gameData.playerBattlefields.get(playerId);
-            if (playerBattlefield == null) continue;
-            playerBattlefield.forEach(p -> p.setAttackedThisTurn(false));
-        }
+        gameData.forEachPermanent((playerId, p) -> p.setAttackedThisTurn(false));
 
         // Untap all permanents for the new active player (skip those with "doesn't untap" effects)
         List<Permanent> battlefield = gameData.playerBattlefields.get(nextActive);
@@ -484,25 +467,17 @@ public class TurnProgressionService {
         gameBroadcastService.logAndBroadcast(gameData, untapLog);
         log.info("Game {} - {} untaps their permanents", gameData.id, nextActiveName);
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (playerId.equals(nextActive)) {
-                continue;
-            }
-            if (!controlsUntapOnEachOtherPlayersStep(gameData, playerId, TurnStep.UNTAP)) {
-                continue;
-            }
+        gameData.forEachBattlefield((playerId, playerBattlefield) -> {
+            if (playerId.equals(nextActive)) return;
+            if (!controlsUntapOnEachOtherPlayersStep(gameData, playerId, TurnStep.UNTAP)) return;
 
-            List<Permanent> playerBattlefield = gameData.playerBattlefields.get(playerId);
-            if (playerBattlefield == null) {
-                continue;
-            }
             playerBattlefield.forEach(Permanent::untap);
 
             String playerName = gameData.playerIdToName.get(playerId);
             String seedbornLog = playerName + " untaps their permanents due to Seedborn Muse.";
             gameBroadcastService.logAndBroadcast(gameData, seedbornLog);
             log.info("Game {} - {} untaps permanents due to Seedborn Muse", gameData.id, playerName);
-        }
+        });
 
         String logEntry = "Turn " + gameData.turnNumber + " begins. " + nextActiveName + "'s turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);

@@ -117,12 +117,9 @@ public class CardSpecificResolutionService {
         }
 
         List<UUID> auraLegalBaseTargetIds = new ArrayList<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield != null) {
-                auraLegalBaseTargetIds.addAll(battlefield.stream().map(Permanent::getId).toList());
-            }
-        }
+        gameData.forEachBattlefield((playerId, battlefield) ->
+                auraLegalBaseTargetIds.addAll(battlefield.stream().map(Permanent::getId).toList())
+        );
 
         List<UUID> choiceOrder = getApnapOrder(gameData);
 
@@ -208,33 +205,26 @@ public class CardSpecificResolutionService {
 
     private List<UUID> findLegalAuraAttachments(GameData gameData, Card auraCard, UUID auraControllerId, List<UUID> baseTargetIds) {
         List<UUID> validTargets = new ArrayList<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) {
-                continue;
+        gameData.forEachPermanent((playerId, candidate) -> {
+            if (!baseTargetIds.contains(candidate.getId())) {
+                return;
             }
-
-            for (Permanent candidate : battlefield) {
-                if (!baseTargetIds.contains(candidate.getId())) {
-                    continue;
-                }
-                if (gameQueryService.hasProtectionFrom(gameData, candidate, auraCard.getColor())) {
-                    continue;
-                }
-                if (auraCard.getTargetFilter() != null) {
-                    try {
-                        gameQueryService.validateTargetFilter(auraCard.getTargetFilter(),
-                                candidate,
-                                FilterContext.of(gameData)
-                                        .withSourceCardId(auraCard.getId())
-                                        .withSourceControllerId(auraControllerId));
-                    } catch (IllegalStateException ignored) {
-                        continue;
-                    }
-                }
-                validTargets.add(candidate.getId());
+            if (gameQueryService.hasProtectionFrom(gameData, candidate, auraCard.getColor())) {
+                return;
             }
-        }
+            if (auraCard.getTargetFilter() != null) {
+                try {
+                    gameQueryService.validateTargetFilter(auraCard.getTargetFilter(),
+                            candidate,
+                            FilterContext.of(gameData)
+                                    .withSourceCardId(auraCard.getId())
+                                    .withSourceControllerId(auraControllerId));
+                } catch (IllegalStateException ignored) {
+                    return;
+                }
+            }
+            validTargets.add(candidate.getId());
+        });
 
         return validTargets;
     }

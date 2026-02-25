@@ -20,10 +20,10 @@
         </div>
       </div>
 
-      @if (selectingBottomCards) {
+      @if (selectingBottomCards()) {
         <div class="hand-area bottom-selection">
-          <div class="hand-label">Select {{ bottomCardCount }} card{{ bottomCardCount > 1 ? 's' : '' }} to put on the bottom of your library</div>
-          <div class="selection-count">Selected: {{ selectedCardIndices.size }} / {{ bottomCardCount }}</div>
+          <div class="hand-label">Select {{ bottomCardCount() }} card{{ bottomCardCount() > 1 ? 's' : '' }} to put on the bottom of your library</div>
+          <div class="selection-count">Selected: {{ selectedCardIndices().size }} / {{ bottomCardCount() }}</div>
           <div class="hand-cards">
             @for (card of hand; track $index) {
               <app-card-display
@@ -59,7 +59,7 @@
           }
         </div>
 
-        @if (!selfKept) {
+        @if (!selfKept()) {
           <div class="mulligan-actions">
             <button class="btn-keep" (click)="keepHand()">Keep Hand</button>
             <button class="btn-mulligan" (click)="takeMulligan()" [disabled]="!canMulligan">Mulligan</button>
@@ -72,7 +72,7 @@
       }
 
       <div class="opponent-mulligan-status">
-        @if (opponentKept) {
+        @if (opponentKept()) {
           <span>Opponent kept their hand.</span>
         } @else {
           <span>Opponent is deciding...</span>
@@ -453,8 +453,8 @@
                         [card]="group.attacker.card"
                         [permanent]="group.attacker"
                         [class.attacking]="group.attacker.attacking"
-                        [class.selected-attacker]="declaringAttackers && isSelectedAttacker(group.attackerIndex)"
-                        [class.block-target]="declaringBlockers && selectedBlockerIndex !== null && !group.attackerIsMine"
+                        [class.selected-attacker]="declaringAttackers() && isSelectedAttacker(group.attackerIndex)"
+                        [class.block-target]="declaringBlockers() && selectedBlockerIndex() !== null && !group.attackerIsMine"
                         [class.targetable]="choice.distributingDamage || (choice.targeting && choice.isValidTarget(group.attacker))"
                         [class.stack-targeted]="stackTargetId() === group.attacker.id"
                         (click)="onCombatAttackerClick(group)"
@@ -488,8 +488,8 @@
                         [card]="group.attacker.card"
                         [permanent]="group.attacker"
                         [class.attacking]="group.attacker.attacking"
-                        [class.selected-attacker]="declaringAttackers && isSelectedAttacker(group.attackerIndex)"
-                        [class.block-target]="declaringBlockers && selectedBlockerIndex !== null && !group.attackerIsMine"
+                        [class.selected-attacker]="declaringAttackers() && isSelectedAttacker(group.attackerIndex)"
+                        [class.block-target]="declaringBlockers() && selectedBlockerIndex() !== null && !group.attackerIsMine"
                         [class.targetable]="choice.distributingDamage || (choice.targeting && choice.isValidTarget(group.attacker))"
                         [class.stack-targeted]="stackTargetId() === group.attacker.id"
                         (click)="onCombatAttackerClick(group)"
@@ -559,12 +559,12 @@
                 [card]="ip.perm.card"
                 [permanent]="ip.perm"
                 [class.tapped]="ip.perm.tapped"
-                [class.tappable]="choice.canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
+                [class.tappable]="choice.canTapPermanent(ip.originalIndex) && !declaringAttackers() && !declaringBlockers()"
                 [class.summoning-sick]="ip.perm.summoningSick"
                 [class.can-attack]="canAttack(ip.originalIndex) && !isSelectedAttacker(ip.originalIndex)"
                 [class.must-attack]="mustAttackIndices().has(ip.originalIndex)"
-                [class.can-block]="canBlock(ip.originalIndex) && !isAssignedBlocker(ip.originalIndex) && selectedBlockerIndex !== ip.originalIndex"
-                [class.selected-blocker]="selectedBlockerIndex === ip.originalIndex"
+                [class.can-block]="canBlock(ip.originalIndex) && !isAssignedBlocker(ip.originalIndex) && selectedBlockerIndex() !== ip.originalIndex"
+                [class.selected-blocker]="selectedBlockerIndex() === ip.originalIndex"
                 [class.assigned-blocker]="isAssignedBlocker(ip.originalIndex)"
                 [class.targetable]="choice.targeting && choice.isValidTarget(ip.perm)"
                 [class.stack-targeted]="stackTargetId() === ip.perm.id"
@@ -606,7 +606,7 @@
                         [card]="ip.perm.card"
                         [permanent]="ip.perm"
                         [class.tapped]="ip.perm.tapped"
-                        [class.tappable]="choice.canTapPermanent(ip.originalIndex) && !declaringAttackers && !declaringBlockers"
+                        [class.tappable]="choice.canTapPermanent(ip.originalIndex) && !declaringAttackers() && !declaringBlockers()"
                         [class.targetable]="choice.targeting && choice.isValidTarget(ip.perm)"
                         [class.stack-targeted]="stackTargetId() === ip.perm.id"
                         [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
@@ -643,7 +643,7 @@
                   [card]="item.perm.card"
                   [permanent]="item.perm"
                   [class.tapped]="item.perm.tapped"
-                  [class.tappable]="choice.canTapPermanent(item.originalIndex) && !declaringAttackers && !declaringBlockers"
+                  [class.tappable]="choice.canTapPermanent(item.originalIndex) && !declaringAttackers() && !declaringBlockers()"
                   [class.targetable]="choice.targeting && choice.isValidTarget(item.perm)"
                   [class.stack-targeted]="stackTargetId() === item.perm.id"
                   [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(item.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(item.perm.id))"
@@ -770,11 +770,11 @@
     </div>
   }
 
-  @if (gameOverWinner) {
+  @if (gameOverWinner()) {
     <div class="game-over-overlay">
       <div class="game-over-card">
         <h2>Game Over</h2>
-        <p class="winner-text">{{ gameOverWinner }} wins!</p>
+        <p class="winner-text">{{ gameOverWinner() }} wins!</p>
         <button class="btn-keep" (click)="backToLobby()">Back to Lobby</button>
       </div>
     </div>
@@ -984,9 +984,9 @@
       </div>
 
       <div class="action-bar">
-        @if (declaringAttackers) {
+        @if (declaringAttackers()) {
           <button class="btn-pass btn-pass-orange" (click)="confirmAttackers()">Confirm Attackers</button>
-        } @else if (declaringBlockers) {
+        } @else if (declaringBlockers()) {
           <button class="btn-pass btn-pass-blue" (click)="confirmBlockers()">Confirm Blockers</button>
         } @else {
           <button class="btn-pass" (click)="passPriority()" [disabled]="!hasPriority">Pass Priority</button>

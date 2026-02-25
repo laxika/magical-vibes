@@ -151,28 +151,24 @@ public class CreatureModResolutionService {
             return;
         }
 
-        int blockerCount = 0;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-            for (Permanent permanent : battlefield) {
-                if (permanent.isBlocking() && permanent.getBlockingTargets().contains(selfIndex)) {
-                    blockerCount++;
-                }
+        final int[] blockerCount = {0};
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (permanent.isBlocking() && permanent.getBlockingTargets().contains(selfIndex)) {
+                blockerCount[0]++;
             }
-        }
+        });
 
-        int powerBoost = blockerCount * boost.powerPerBlockingCreature();
-        int toughnessBoost = blockerCount * boost.toughnessPerBlockingCreature();
+        int powerBoost = blockerCount[0] * boost.powerPerBlockingCreature();
+        int toughnessBoost = blockerCount[0] * boost.toughnessPerBlockingCreature();
         self.setPowerModifier(self.getPowerModifier() + powerBoost);
         self.setToughnessModifier(self.getToughnessModifier() + toughnessBoost);
 
         String logEntry = self.getCard().getName() + " gets +" + powerBoost + "/+" + toughnessBoost
-                + " until end of turn (" + blockerCount + " blocker(s)).";
+                + " until end of turn (" + blockerCount[0] + " blocker(s)).";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gets +{}/+{} from {} blocker(s)",
-                gameData.id, self.getCard().getName(), powerBoost, toughnessBoost, blockerCount);
+                gameData.id, self.getCard().getName(), powerBoost, toughnessBoost, blockerCount[0]);
     }
 
     @HandlesEffect(BoostTargetCreatureEffect.class)
@@ -260,27 +256,22 @@ public class CreatureModResolutionService {
         int powerBoost = effect.powerMultiplier() * xValue;
         int toughnessBoost = effect.toughnessMultiplier() * xValue;
 
-        int count = 0;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-
-            for (Permanent permanent : battlefield) {
-                if (gameQueryService.isCreature(gameData, permanent)
-                        && (effect.filter() == null
-                            || gameQueryService.matchesPermanentPredicate(gameData, permanent, effect.filter()))) {
-                    permanent.setPowerModifier(permanent.getPowerModifier() + powerBoost);
-                    permanent.setToughnessModifier(permanent.getToughnessModifier() + toughnessBoost);
-                    count++;
-                }
+        final int[] count = {0};
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (gameQueryService.isCreature(gameData, permanent)
+                    && (effect.filter() == null
+                        || gameQueryService.matchesPermanentPredicate(gameData, permanent, effect.filter()))) {
+                permanent.setPowerModifier(permanent.getPowerModifier() + powerBoost);
+                permanent.setToughnessModifier(permanent.getToughnessModifier() + toughnessBoost);
+                count[0]++;
             }
-        }
+        });
 
         String logEntry = String.format("%s gives %+d/%+d to %d creature(s) until end of turn.",
-                entry.getCard().getName(), powerBoost, toughnessBoost, count);
+                entry.getCard().getName(), powerBoost, toughnessBoost, count[0]);
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
-        log.info("Game {} - {} gives {}/{} to {} creatures", gameData.id, entry.getCard().getName(), powerBoost, toughnessBoost, count);
+        log.info("Game {} - {} gives {}/{} to {} creatures", gameData.id, entry.getCard().getName(), powerBoost, toughnessBoost, count[0]);
     }
 
     @HandlesEffect(GrantKeywordEffect.class)
@@ -380,25 +371,20 @@ public class CreatureModResolutionService {
 
     @HandlesEffect(TapCreaturesEffect.class)
     private void resolveTapCreatures(GameData gameData, StackEntry entry, TapCreaturesEffect tap) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
+        gameData.forEachPermanent((playerId, p) -> {
+            if (!gameQueryService.isCreature(gameData, p)) return;
+            if (!gameQueryService.matchesFilters(
+                    p,
+                    tap.filters(),
+                    FilterContext.of(gameData)
+                            .withSourceCardId(entry.getCard().getId())
+                            .withSourceControllerId(entry.getControllerId()))) return;
 
-            for (Permanent p : battlefield) {
-                if (!gameQueryService.isCreature(gameData, p)) continue;
-                if (!gameQueryService.matchesFilters(
-                        p,
-                        tap.filters(),
-                        FilterContext.of(gameData)
-                                .withSourceCardId(entry.getCard().getId())
-                                .withSourceControllerId(entry.getControllerId()))) continue;
+            p.tap();
 
-                p.tap();
-
-                String logMsg = entry.getCard().getName() + " taps " + p.getCard().getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            }
-        }
+            String logMsg = entry.getCard().getName() + " taps " + p.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        });
 
         log.info("Game {} - {} taps creatures matching filters", gameData.id, entry.getCard().getName());
     }
@@ -470,24 +456,19 @@ public class CreatureModResolutionService {
 
     @HandlesEffect(UntapAttackedCreaturesEffect.class)
     private void resolveUntapAttackedCreatures(GameData gameData, StackEntry entry) {
-        int count = 0;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
+        final int[] count = {0};
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (!gameQueryService.isCreature(gameData, permanent)) return;
+            if (!permanent.isAttackedThisTurn()) return;
+            if (!permanent.isTapped()) return;
 
-            for (Permanent permanent : battlefield) {
-                if (!gameQueryService.isCreature(gameData, permanent)) continue;
-                if (!permanent.isAttackedThisTurn()) continue;
-                if (!permanent.isTapped()) continue;
+            permanent.untap();
+            count[0]++;
+        });
 
-                permanent.untap();
-                count++;
-            }
-        }
-
-        String logEntry = entry.getCard().getName() + " untaps " + count + " creature(s) that attacked this turn.";
+        String logEntry = entry.getCard().getName() + " untaps " + count[0] + " creature(s) that attacked this turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} untaps {} attacked creature(s)", gameData.id, entry.getCard().getName(), count);
+        log.info("Game {} - {} untaps {} attacked creature(s)", gameData.id, entry.getCard().getName(), count[0]);
     }
 
     @HandlesEffect(UntapEachOtherCreatureYouControlEffect.class)
@@ -515,24 +496,19 @@ public class CreatureModResolutionService {
     @HandlesEffect(PutMinusOneMinusOneCounterOnEachOtherCreatureEffect.class)
     private void resolvePutMinusOneMinusOneCounterOnEachOtherCreature(GameData gameData, StackEntry entry) {
         UUID sourceId = entry.getSourcePermanentId();
-        int count = 0;
+        final int[] count = {0};
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
+        gameData.forEachPermanent((playerId, p) -> {
+            if (p.getId().equals(sourceId)) return;
+            if (!gameQueryService.isCreature(gameData, p)) return;
 
-            for (Permanent p : battlefield) {
-                if (p.getId().equals(sourceId)) continue;
-                if (!gameQueryService.isCreature(gameData, p)) continue;
+            p.setMinusOneMinusOneCounters(p.getMinusOneMinusOneCounters() + 1);
+            count[0]++;
+        });
 
-                p.setMinusOneMinusOneCounters(p.getMinusOneMinusOneCounters() + 1);
-                count++;
-            }
-        }
-
-        String logEntry = entry.getCard().getName() + " puts a -1/-1 counter on " + count + " other creature(s).";
+        String logEntry = entry.getCard().getName() + " puts a -1/-1 counter on " + count[0] + " other creature(s).";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} puts -1/-1 counter on {} other creature(s)", gameData.id, entry.getCard().getName(), count);
+        log.info("Game {} - {} puts -1/-1 counter on {} other creature(s)", gameData.id, entry.getCard().getName(), count[0]);
     }
 
     @HandlesEffect(PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect.class)
@@ -611,17 +587,13 @@ public class CreatureModResolutionService {
 
         // Collect all permanents with counters (any player's battlefield)
         List<UUID> eligiblePermanentIds = new ArrayList<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-            for (Permanent p : battlefield) {
-                if (p.getPlusOnePlusOneCounters() > 0
-                        || p.getMinusOneMinusOneCounters() > 0
-                        || p.getLoyaltyCounters() > 0) {
-                    eligiblePermanentIds.add(p.getId());
-                }
+        gameData.forEachPermanent((playerId, p) -> {
+            if (p.getPlusOnePlusOneCounters() > 0
+                    || p.getMinusOneMinusOneCounters() > 0
+                    || p.getLoyaltyCounters() > 0) {
+                eligiblePermanentIds.add(p.getId());
             }
-        }
+        });
 
         if (eligiblePermanentIds.isEmpty()) {
             String logEntry = "Proliferate: no permanents with counters to choose.";

@@ -92,12 +92,7 @@ public class BounceResolutionService {
     @HandlesEffect(ReturnCreaturesToOwnersHandEffect.class)
     void resolveReturnCreaturesToOwnersHand(GameData gameData, StackEntry entry, ReturnCreaturesToOwnersHandEffect bounce) {
         Set<UUID> affectedPlayers = new HashSet<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) {
-                continue;
-            }
-
+        gameData.forEachBattlefield((playerId, battlefield) -> {
             List<Permanent> creaturesToReturn = battlefield.stream()
                     .filter(p -> gameQueryService.isCreature(gameData, p))
                     .filter(p -> gameQueryService.matchesFilters(
@@ -120,7 +115,7 @@ public class BounceResolutionService {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} returned to owner's hand by {}", gameData.id, creature.getCard().getName(), entry.getCard().getName());
             }
-        }
+        });
 
         if (!affectedPlayers.isEmpty()) {
             gameHelper.removeOrphanedAuras(gameData);

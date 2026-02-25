@@ -55,19 +55,15 @@ public class StateBasedActionService {
         }
 
         // CR 704.5q — +1/+1 and -1/-1 counters cancel each other out
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent p : bf) {
-                int plus = p.getPlusOnePlusOneCounters();
-                int minus = p.getMinusOneMinusOneCounters();
-                if (plus > 0 && minus > 0) {
-                    int cancelled = Math.min(plus, minus);
-                    p.setPlusOnePlusOneCounters(plus - cancelled);
-                    p.setMinusOneMinusOneCounters(minus - cancelled);
-                }
+        gameData.forEachPermanent((pid, p) -> {
+            int plus = p.getPlusOnePlusOneCounters();
+            int minus = p.getMinusOneMinusOneCounters();
+            if (plus > 0 && minus > 0) {
+                int cancelled = Math.min(plus, minus);
+                p.setPlusOnePlusOneCounters(plus - cancelled);
+                p.setMinusOneMinusOneCounters(minus - cancelled);
             }
-        }
+        });
 
         // CR 704.5b — player who attempted to draw from an empty library loses the game
         if (!gameData.playersAttemptedDrawFromEmptyLibrary.isEmpty()) {
