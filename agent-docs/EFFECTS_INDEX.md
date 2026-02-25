@@ -299,6 +299,7 @@ Pass `null` as filter to allow any card.
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
+| `GiveEachPlayerPoisonCountersEffect` | `(int amount)` | give each player N poison counters (including controller). Used for ETB effects like Ichor Rats |
 | `GiveTargetPlayerPoisonCountersEffect` | `(int amount)` or `(int amount, CardPredicate spellFilter)` | give target player N poison counters. With `spellFilter`, doubles as trigger descriptor for `ON_ANY_PLAYER_CASTS_SPELL`: fires when controller casts a spell matching the predicate. Resolves into a copy with `spellFilter == null` |
 
 ## Win / lose game
