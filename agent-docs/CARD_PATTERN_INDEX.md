@@ -51,6 +51,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Mill | `t/Traumatize.java` | MillHalfLibraryEffect |
 | Shuffle-back spell | `b/BeaconOfDestruction.java` | Effect + ShuffleIntoLibraryEffect |
 | Bite (pump + bite) | `a/AssertPerfection.java` | BoostFirstTargetCreatureEffect + FirstTargetDealsPowerDamageToSecondTargetEffect, multi-target with per-position filters |
+| Sacrifice artifact spell cost + tokens | `k/KuldothaRebirth.java` | SacrificeArtifactCost + CreateCreatureTokenEffect — sacrifice artifact as additional spell cost |
 
 ## Vanilla creatures (empty body, all from Scryfall)
 

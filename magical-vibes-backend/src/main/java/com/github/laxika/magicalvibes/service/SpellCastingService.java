@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import lombok.RequiredArgsConstructor;
@@ -108,6 +109,11 @@ public class SpellCastingService {
                 .anyMatch(e -> e instanceof SacrificeCreatureCost);
         if (usesSacrificeCreatureCost) {
             filteredSpellEffects.removeIf(SacrificeCreatureCost.class::isInstance);
+        }
+        boolean usesSacrificeArtifactCost = filteredSpellEffects.stream()
+                .anyMatch(e -> e instanceof SacrificeArtifactCost);
+        if (usesSacrificeArtifactCost) {
+            filteredSpellEffects.removeIf(SacrificeArtifactCost.class::isInstance);
         }
 
         // For X-cost spells, validate that player can pay colored + generic + xValue + any cost increases
@@ -269,6 +275,9 @@ public class SpellCastingService {
             if (usesSacrificeCreatureCost) {
                 paySacrificeCreatureCost(gameData, player, card, sacrificePermanentId);
             }
+            if (usesSacrificeArtifactCost) {
+                paySacrificeArtifactCost(gameData, player, card, sacrificePermanentId);
+            }
             if (usesSacrificeAllCreaturesCost) {
                 resolvedXValue = paySacrificeAllCreaturesYouControlCost(
                         gameData, player, card
@@ -311,6 +320,9 @@ public class SpellCastingService {
             paySpellManaCost(gameData, playerId, card, resolvedXValue, convokeContributions);
             if (usesSacrificeCreatureCost) {
                 paySacrificeCreatureCost(gameData, player, card, sacrificePermanentId);
+            }
+            if (usesSacrificeArtifactCost) {
+                paySacrificeArtifactCost(gameData, player, card, sacrificePermanentId);
             }
             if (usesSacrificeAllCreaturesCost) {
                 resolvedXValue = paySacrificeAllCreaturesYouControlCost(
@@ -402,6 +414,28 @@ public class SpellCastingService {
         }
         if (!gameQueryService.isCreature(gameData, toSacrifice)) {
             throw new IllegalStateException("Sacrifice target must be a creature");
+        }
+        if (permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice)) {
+            String logEntry = player.getUsername() + " sacrifices " + toSacrifice.getCard().getName()
+                    + " for " + sourceCard.getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        }
+    }
+
+    private void paySacrificeArtifactCost(GameData gameData, Player player, Card sourceCard, UUID sacrificePermanentId) {
+        if (sacrificePermanentId == null) {
+            throw new IllegalStateException("Must sacrifice an artifact to cast " + sourceCard.getName());
+        }
+        Permanent toSacrifice = gameQueryService.findPermanentById(gameData, sacrificePermanentId);
+        if (toSacrifice == null) {
+            throw new IllegalStateException("Sacrifice target not found on battlefield");
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, sacrificePermanentId);
+        if (!player.getId().equals(controllerId)) {
+            throw new IllegalStateException("Can only sacrifice artifacts you control");
+        }
+        if (!gameQueryService.isArtifact(toSacrifice)) {
+            throw new IllegalStateException("Sacrifice target must be an artifact");
         }
         if (permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice)) {
             String logEntry = player.getUsername() + " sacrifices " + toSacrifice.getCard().getName()

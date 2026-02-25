@@ -93,7 +93,7 @@ Effects in the `ON_BECOMES_BLOCKED` slot can override `triggersPerBlocker()` to 
 | `SacrificeSelfCost` | `()` | sacrifice this permanent as cost |
 | `SacrificeCreatureCost` | `()` | sacrifice a creature as cost |
 | `SacrificeSubtypeCreatureCost` | `(CardSubtype subtype)` | sacrifice a creature of specific subtype as cost |
-| `SacrificeArtifactCost` | `()` | sacrifice an artifact as cost |
+| `SacrificeArtifactCost` | `()` | sacrifice an artifact as cost (works for both activated abilities and spell costs) |
 | `SacrificeAllCreaturesYouControlCost` | `()` | sacrifice all creatures you control as cost |
 | `DiscardCardTypeCost` | `(CardType requiredType)` | discard a card of specific type as cost |
 | `RemoveCounterFromSourceCost` | `()` | remove a counter from this permanent as cost (prefers -1/-1, then +1/+1) |
