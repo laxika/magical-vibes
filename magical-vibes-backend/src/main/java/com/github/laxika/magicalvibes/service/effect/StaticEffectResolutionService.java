@@ -192,13 +192,37 @@ public class StaticEffectResolutionService {
         if (artifactCount >= 3) {
             CardEffect wrapped = metalcraft.wrapped();
             if (wrapped instanceof GrantKeywordEffect grant) {
-                accumulator.addKeyword(grant.keyword());
+                // For SELF scope, always apply; for broader scopes, only apply if self matches filter
+                if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
+                    accumulator.addKeyword(grant.keyword());
+                }
             } else if (wrapped instanceof StaticBoostEffect boost) {
                 accumulator.addPower(boost.powerBoost());
                 accumulator.addToughness(boost.toughnessBoost());
                 accumulator.addKeywords(boost.grantedKeywords());
             } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
                 accumulator.addProtectionColors(protection.colors());
+            }
+        }
+    }
+
+    @HandlesStaticEffect(value = MetalcraftConditionalEffect.class)
+    private void resolveMetalcraftConditionalOthers(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var metalcraft = (MetalcraftConditionalEffect) effect;
+        CardEffect wrapped = metalcraft.wrapped();
+        // Only handle broader-scoped effects in the non-self handler
+        if (wrapped instanceof GrantKeywordEffect grant && grant.scope() != GrantScope.SELF) {
+            int artifactCount = countControlledPermanents(context,
+                    p -> p.getCard().getType() == CardType.ARTIFACT || p.getCard().getAdditionalTypes().contains(CardType.ARTIFACT));
+            if (artifactCount >= 3) {
+                boolean scopeMatch = switch (grant.scope()) {
+                    case OWN_PERMANENTS -> context.targetOnSameBattlefield()
+                            && matchesStaticFilter(context.target(), grant.filter());
+                    default -> matchesCreatureScope(context, grant.scope(), grant.filter());
+                };
+                if (scopeMatch) {
+                    accumulator.addKeyword(grant.keyword());
+                }
             }
         }
     }
