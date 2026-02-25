@@ -30,7 +30,6 @@ import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffe
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnArtifactCastEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
@@ -1000,29 +999,30 @@ public class GameHelper {
             if (effects == null || effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
-                CardEffect inner = effect instanceof MayEffect m ? m.wrapped() : effect;
-
-                if (inner instanceof DealDamageToAnyTargetOnSacrificeEffect trigger) {
-                    List<CardEffect> resolvedEffects = List.of(new DealDamageToAnyTargetEffect(trigger.damage()));
-
-                    if (effect instanceof MayEffect may) {
-                        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                                perm.getCard(),
-                                sacrificingPlayerId,
-                                resolvedEffects,
-                                perm.getCard().getName() + " — " + may.prompt(),
-                                null,
-                                "{" + trigger.manaCost() + "}"
-                        ));
-                    } else {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                sacrificingPlayerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(resolvedEffects)
-                        ));
-                    }
+                if (effect instanceof MayPayManaEffect mayPay) {
+                    gameData.pendingMayAbilities.add(new PendingMayAbility(
+                            perm.getCard(),
+                            sacrificingPlayerId,
+                            List.of(mayPay.wrapped()),
+                            perm.getCard().getName() + " — " + mayPay.prompt(),
+                            null,
+                            mayPay.manaCost()
+                    ));
+                } else if (effect instanceof MayEffect may) {
+                    gameData.pendingMayAbilities.add(new PendingMayAbility(
+                            perm.getCard(),
+                            sacrificingPlayerId,
+                            List.of(may.wrapped()),
+                            perm.getCard().getName() + " — " + may.prompt()
+                    ));
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            sacrificingPlayerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(effect))
+                    ));
                 }
             }
         }

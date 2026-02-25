@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnSacrificeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,18 +25,18 @@ class FurnaceCelebrationTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has MayEffect wrapping DealDamageToAnyTargetOnSacrificeEffect on ON_ALLY_PERMANENT_SACRIFICED")
+    @DisplayName("Has MayPayManaEffect wrapping DealDamageToAnyTargetEffect on ON_ALLY_PERMANENT_SACRIFICED")
     void hasCorrectStructure() {
         FurnaceCelebration card = new FurnaceCelebration();
 
         assertThat(card.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(DealDamageToAnyTargetOnSacrificeEffect.class);
-        DealDamageToAnyTargetOnSacrificeEffect trigger = (DealDamageToAnyTargetOnSacrificeEffect) mayEffect.wrapped();
-        assertThat(trigger.manaCost()).isEqualTo(2);
-        assertThat(trigger.damage()).isEqualTo(2);
+                .isInstanceOf(MayPayManaEffect.class);
+        MayPayManaEffect mayPay = (MayPayManaEffect) card.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED).getFirst();
+        assertThat(mayPay.manaCost()).isEqualTo("{2}");
+        assertThat(mayPay.wrapped()).isInstanceOf(DealDamageToAnyTargetEffect.class);
+        DealDamageToAnyTargetEffect damage = (DealDamageToAnyTargetEffect) mayPay.wrapped();
+        assertThat(damage.damage()).isEqualTo(2);
     }
 
     // ===== Sacrifice triggers may ability =====
