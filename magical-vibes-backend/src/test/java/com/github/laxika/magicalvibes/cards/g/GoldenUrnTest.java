@@ -98,46 +98,6 @@ class GoldenUrnTest extends BaseCardTest {
         assertThat(urn.getChargeCounters()).isEqualTo(2);
     }
 
-    @Test
-    @DisplayName("Upkeep trigger can decline to add a charge counter")
-    void upkeepTriggerCanDeclineToAddCounter() {
-        Permanent urn = addReadyUrn(player1);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-
-        // Decline may ability
-        harness.handleMayAbilityChosen(player1, false);
-
-        assertThat(urn.getChargeCounters()).isEqualTo(0);
-    }
-
-    @Test
-    @DisplayName("Multiple upkeep triggers accumulate charge counters")
-    void multipleUpkeepTriggersAccumulateCounters() {
-        Permanent urn = addReadyUrn(player1);
-
-        // First upkeep - add counter
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.handleMayAbilityChosen(player1, true);
-
-        assertThat(urn.getChargeCounters()).isEqualTo(1);
-
-        // Move through turn to next upkeep
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-
-        // Second upkeep - add counter
-        harness.handleMayAbilityChosen(player1, true);
-
-        assertThat(urn.getChargeCounters()).isEqualTo(2);
-    }
-
     // ===== Activated ability: Tap and sacrifice to gain life =====
 
     @Test

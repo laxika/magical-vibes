@@ -5,6 +5,7 @@ magic-ruleset.txt
 nul
 **/.settings
 .project
+token-usage-output.txt
 
 **/build
 
