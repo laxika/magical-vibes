@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardArtifactOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
@@ -130,11 +131,13 @@ public class ActivatedAbilityExecutionService {
                 && !snapshotEffects.isEmpty()
                 && snapshotEffects.stream().anyMatch(e ->
                 e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect
-                        || e instanceof DoubleManaPoolEffect || e instanceof AwardArtifactOnlyColorlessManaEffect)
+                        || e instanceof DoubleManaPoolEffect || e instanceof AwardArtifactOnlyColorlessManaEffect
+                        || e instanceof AwardMyrOnlyColorlessManaEffect)
                 && snapshotEffects.stream().allMatch(e ->
                 e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect
                         || e instanceof DoubleManaPoolEffect || e instanceof DealDamageToControllerEffect
-                        || e instanceof AwardArtifactOnlyColorlessManaEffect);
+                        || e instanceof AwardArtifactOnlyColorlessManaEffect
+                        || e instanceof AwardMyrOnlyColorlessManaEffect);
 
         if (isManaAbility) {
             resolveManaAbility(gameData, playerId, player, permanent, snapshotEffects);
@@ -197,6 +200,8 @@ public class ActivatedAbilityExecutionService {
                 log.info("Game {} - Awaiting {} to choose a mana color", gameData.id, player.getUsername());
             } else if (effect instanceof AwardArtifactOnlyColorlessManaEffect aom) {
                 gameData.playerManaPools.get(playerId).addArtifactOnlyColorless(aom.amount());
+            } else if (effect instanceof AwardMyrOnlyColorlessManaEffect mom) {
+                gameData.playerManaPools.get(playerId).addMyrOnlyColorless(mom.amount());
             } else if (effect instanceof DealDamageToControllerEffect dmg) {
                 String cardName = permanent.getCard().getName();
                 int damage = dmg.damage();

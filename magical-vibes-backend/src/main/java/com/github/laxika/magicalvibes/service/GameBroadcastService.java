@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -242,7 +243,8 @@ public class GameBroadcastService {
                     int additionalCost = getCastCostModifier(gameData, playerId, card);
                     boolean isArtifact = card.getType() == CardType.ARTIFACT
                             || card.getAdditionalTypes().contains(CardType.ARTIFACT);
-                    if (isArtifact ? cost.canPay(pool, additionalCost, true) : cost.canPay(pool, additionalCost)) {
+                    boolean isMyr = card.getSubtypes().contains(CardSubtype.MYR);
+                    if ((isArtifact || isMyr) ? cost.canPay(pool, additionalCost, isArtifact, isMyr) : cost.canPay(pool, additionalCost)) {
                         playable.add(i);
                     } else if (card.getKeywords().contains(Keyword.CONVOKE)) {
                         // Check if castable with convoke: mana pool + untapped creatures >= total cost

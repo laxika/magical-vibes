@@ -33,9 +33,11 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardArtifactOnlyColorlessManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -470,7 +472,8 @@ public class AbilityActivationService {
         // Pay mana cost
         if (abilityCost != null) {
             boolean artifactContext = gameQueryService.isArtifact(permanent);
-            payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext);
+            boolean myrContext = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
+            payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext);
         }
 
         if (discardCardTypeCost != null) {
@@ -748,18 +751,19 @@ public class AbilityActivationService {
         permanent.setLoyaltyAbilityUsedThisTurn(true);
     }
 
-    private void payManaCost(GameData gameData, UUID playerId, String abilityCost, int effectiveXValue, boolean artifactContext) {
+    private void payManaCost(GameData gameData, UUID playerId, String abilityCost, int effectiveXValue, boolean artifactContext, boolean myrContext) {
         ManaCost cost = new ManaCost(abilityCost);
         ManaPool pool = gameData.playerManaPools.get(playerId);
+        boolean hasRestricted = artifactContext || myrContext;
         if (cost.hasX()) {
             if (effectiveXValue < 0) {
                 throw new IllegalStateException("X value cannot be negative");
             }
-            if (artifactContext) {
-                if (!cost.canPay(pool, effectiveXValue, true)) {
+            if (hasRestricted) {
+                if (!cost.canPay(pool, effectiveXValue, artifactContext, myrContext)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
-                cost.pay(pool, effectiveXValue, true);
+                cost.pay(pool, effectiveXValue, artifactContext, myrContext);
             } else {
                 if (!cost.canPay(pool, effectiveXValue)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
@@ -767,11 +771,11 @@ public class AbilityActivationService {
                 cost.pay(pool, effectiveXValue);
             }
         } else {
-            if (artifactContext) {
-                if (!cost.canPay(pool, 0, true)) {
+            if (hasRestricted) {
+                if (!cost.canPay(pool, 0, artifactContext, myrContext)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
-                cost.pay(pool, 0, true);
+                cost.pay(pool, 0, artifactContext, myrContext);
             } else {
                 if (!cost.canPay(pool)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
@@ -954,7 +958,8 @@ public class AbilityActivationService {
                 .toList();
         return !effects.isEmpty() && effects.stream().allMatch(e ->
                 e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect
-                        || e instanceof DoubleManaPoolEffect || e instanceof AwardArtifactOnlyColorlessManaEffect);
+                        || e instanceof DoubleManaPoolEffect || e instanceof AwardArtifactOnlyColorlessManaEffect
+                        || e instanceof AwardMyrOnlyColorlessManaEffect);
     }
 }
 

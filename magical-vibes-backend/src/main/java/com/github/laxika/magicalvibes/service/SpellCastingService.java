@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -127,12 +128,13 @@ public class SpellCastingService {
                 int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
                 boolean isArtifact = card.getType() == CardType.ARTIFACT
                         || card.getAdditionalTypes().contains(CardType.ARTIFACT);
+                boolean isMyr = card.getSubtypes().contains(CardSubtype.MYR);
                 if (card.getXColorRestriction() != null) {
                     if (!cost.canPay(pool, effectiveXValue, card.getXColorRestriction(), additionalCost)) {
                         throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
                     }
-                } else if (isArtifact) {
-                    if (!cost.canPay(pool, effectiveXValue + additionalCost, true)) {
+                } else if (isArtifact || isMyr) {
+                    if (!cost.canPay(pool, effectiveXValue + additionalCost, isArtifact, isMyr)) {
                         throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
                     }
                 } else if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
@@ -457,19 +459,21 @@ public class SpellCastingService {
         int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
         boolean isArtifact = card.getType() == CardType.ARTIFACT
                 || card.getAdditionalTypes().contains(CardType.ARTIFACT);
+        boolean isMyr = card.getSubtypes().contains(CardSubtype.MYR);
+        boolean hasRestricted = isArtifact || isMyr;
         if (!convokeContributions.isEmpty()) {
             cost.payWithConvoke(pool, additionalCost, convokeContributions);
         } else if (cost.hasX() && card.getXColorRestriction() != null) {
             cost.pay(pool, effectiveXValue, card.getXColorRestriction(), additionalCost);
         } else if (cost.hasX()) {
-            if (isArtifact) {
-                cost.pay(pool, effectiveXValue + additionalCost, true);
+            if (hasRestricted) {
+                cost.pay(pool, effectiveXValue + additionalCost, isArtifact, isMyr);
             } else {
                 cost.pay(pool, effectiveXValue + additionalCost);
             }
         } else {
-            if (isArtifact) {
-                cost.pay(pool, additionalCost, true);
+            if (hasRestricted) {
+                cost.pay(pool, additionalCost, isArtifact, isMyr);
             } else {
                 cost.pay(pool, additionalCost);
             }

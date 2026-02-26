@@ -8,6 +8,7 @@ public class ManaPool {
 
     private final EnumMap<ManaColor, Integer> pool = new EnumMap<>(ManaColor.class);
     private int artifactOnlyColorless;
+    private int myrOnlyColorless;
 
     public ManaPool() {
         for (ManaColor color : ManaColor.values()) {
@@ -21,6 +22,7 @@ public class ManaPool {
     public ManaPool(ManaPool source) {
         pool.putAll(source.pool);
         this.artifactOnlyColorless = source.artifactOnlyColorless;
+        this.myrOnlyColorless = source.myrOnlyColorless;
     }
 
     public void add(ManaColor color) {
@@ -32,6 +34,7 @@ public class ManaPool {
             pool.put(color, 0);
         }
         artifactOnlyColorless = 0;
+        myrOnlyColorless = 0;
     }
 
     public int get(ManaColor color) {
@@ -62,12 +65,24 @@ public class ManaPool {
         artifactOnlyColorless = Math.max(0, artifactOnlyColorless - amount);
     }
 
+    public int getMyrOnlyColorless() {
+        return myrOnlyColorless;
+    }
+
+    public void addMyrOnlyColorless(int amount) {
+        myrOnlyColorless += amount;
+    }
+
+    public void removeMyrOnlyColorless(int amount) {
+        myrOnlyColorless = Math.max(0, myrOnlyColorless - amount);
+    }
+
     public Map<String, Integer> toMap() {
         Map<String, Integer> map = new LinkedHashMap<>();
         for (ManaColor color : ManaColor.values()) {
             int amount = pool.getOrDefault(color, 0);
             if (color == ManaColor.COLORLESS) {
-                amount += artifactOnlyColorless;
+                amount += artifactOnlyColorless + myrOnlyColorless;
             }
             map.put(color.getCode(), amount);
         }
