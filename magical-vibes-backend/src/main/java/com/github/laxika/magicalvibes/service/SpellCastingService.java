@@ -125,8 +125,14 @@ public class SpellCastingService {
                 }
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
+                boolean isArtifact = card.getType() == CardType.ARTIFACT
+                        || card.getAdditionalTypes().contains(CardType.ARTIFACT);
                 if (card.getXColorRestriction() != null) {
                     if (!cost.canPay(pool, effectiveXValue, card.getXColorRestriction(), additionalCost)) {
+                        throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
+                    }
+                } else if (isArtifact) {
+                    if (!cost.canPay(pool, effectiveXValue + additionalCost, true)) {
                         throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
                     }
                 } else if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
@@ -192,7 +198,7 @@ public class SpellCastingService {
                     throw new IllegalStateException(creature.getCard().getName() + " is already tapped");
                 }
                 // Each creature contributes one mana of any of its colors, or colorless (generic only)
-                CardColor creatureColor = creature.getCard().getColor();
+                CardColor creatureColor = creature.getEffectiveColor();
                 if (creatureColor != null) {
                     contributions.add(ManaColor.fromCode(creatureColor.getCode()));
                 } else {
@@ -449,14 +455,24 @@ public class SpellCastingService {
         ManaCost cost = new ManaCost(card.getManaCost());
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
+        boolean isArtifact = card.getType() == CardType.ARTIFACT
+                || card.getAdditionalTypes().contains(CardType.ARTIFACT);
         if (!convokeContributions.isEmpty()) {
             cost.payWithConvoke(pool, additionalCost, convokeContributions);
         } else if (cost.hasX() && card.getXColorRestriction() != null) {
             cost.pay(pool, effectiveXValue, card.getXColorRestriction(), additionalCost);
         } else if (cost.hasX()) {
-            cost.pay(pool, effectiveXValue + additionalCost);
+            if (isArtifact) {
+                cost.pay(pool, effectiveXValue + additionalCost, true);
+            } else {
+                cost.pay(pool, effectiveXValue + additionalCost);
+            }
         } else {
-            cost.pay(pool, additionalCost);
+            if (isArtifact) {
+                cost.pay(pool, additionalCost, true);
+            } else {
+                cost.pay(pool, additionalCost);
+            }
         }
     }
 

@@ -167,6 +167,8 @@ public class PermanentChoiceHandlerService {
             abilityActivationService.completeActivatedAbilityArtifactSacrificeChoice(gameData, player, activatedAbilitySacrificeArtifact, permanentId);
         } else if (context instanceof PermanentChoiceContext.ActivatedAbilitySacrificeMultiplePermanents multiPermanentSac) {
             abilityActivationService.completeActivatedAbilityMultiplePermanentSacrificeChoice(gameData, player, multiPermanentSac, permanentId);
+        } else if (context instanceof PermanentChoiceContext.ActivatedAbilityTapCreature activatedAbilityTapCreature) {
+            abilityActivationService.completeActivatedAbilityTapCreatureChoice(gameData, player, activatedAbilityTapCreature, permanentId);
         } else if (context instanceof PermanentChoiceContext.BounceCreature bounceCreature) {
             Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
             if (target == null) {

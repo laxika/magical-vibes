@@ -240,7 +240,9 @@ public class GameBroadcastService {
                     ManaCost cost = new ManaCost(card.getManaCost());
                     ManaPool pool = gameData.playerManaPools.get(playerId);
                     int additionalCost = getCastCostModifier(gameData, playerId, card);
-                    if (cost.canPay(pool, additionalCost)) {
+                    boolean isArtifact = card.getType() == CardType.ARTIFACT
+                            || card.getAdditionalTypes().contains(CardType.ARTIFACT);
+                    if (isArtifact ? cost.canPay(pool, additionalCost, true) : cost.canPay(pool, additionalCost)) {
                         playable.add(i);
                     } else if (card.getKeywords().contains(Keyword.CONVOKE)) {
                         // Check if castable with convoke: mana pool + untapped creatures >= total cost

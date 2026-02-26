@@ -532,7 +532,7 @@ public class DamageResolutionService {
         }
 
         // Use the biting creature's color for protection checks (not the spell's color)
-        CardColor biterColor = biter.getCard().getColor();
+        CardColor biterColor = biter.getEffectiveColor();
         if (gameQueryService.hasProtectionFrom(gameData, target, biterColor)) {
             String logEntry = target.getCard().getName() + " has protection from " + biterColor.name().toLowerCase() + " — damage prevented.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);

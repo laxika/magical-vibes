@@ -43,6 +43,8 @@ public class Permanent {
     @Setter private int awakeningCounters;
     @Setter private boolean loyaltyAbilityUsedThisTurn;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
+    private final Set<CardColor> grantedColors = EnumSet.noneOf(CardColor.class);
+    @Setter private boolean colorOverridden;
     private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
     private final Set<CardType> grantedCardTypes = EnumSet.noneOf(CardType.class);
     private final List<TextReplacement> textReplacements = new ArrayList<>();
@@ -93,6 +95,8 @@ public class Permanent {
         this.awakeningCounters = source.awakeningCounters;
         this.loyaltyAbilityUsedThisTurn = source.loyaltyAbilityUsedThisTurn;
         this.grantedKeywords.addAll(source.grantedKeywords);
+        this.grantedColors.addAll(source.grantedColors);
+        this.colorOverridden = source.colorOverridden;
         this.grantedSubtypes.addAll(source.grantedSubtypes);
         this.grantedCardTypes.addAll(source.grantedCardTypes);
         this.textReplacements.addAll(source.textReplacements);
@@ -164,6 +168,19 @@ public class Permanent {
         return (card.getToughness() != null ? card.getToughness() : 0) + toughnessModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
     }
 
+    public CardColor getEffectiveColor() {
+        if (colorOverridden && !grantedColors.isEmpty()) {
+            return grantedColors.iterator().next();
+        }
+        if (animatedUntilEndOfTurn && animatedColor != null) {
+            return animatedColor;
+        }
+        if (awakeningCounters > 0) {
+            return CardColor.GREEN;
+        }
+        return card.getColor();
+    }
+
     public boolean hasKeyword(Keyword keyword) {
         return card.getKeywords().contains(keyword) || grantedKeywords.contains(keyword);
     }
@@ -179,6 +196,8 @@ public class Permanent {
         this.animatedToughness = 0;
         this.animatedColor = null;
         this.grantedKeywords.clear();
+        this.grantedColors.clear();
+        this.colorOverridden = false;
         this.grantedSubtypes.clear();
         this.grantedCardTypes.clear();
         this.cantBlockIds.clear();

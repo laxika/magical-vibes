@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
@@ -655,6 +656,24 @@ public class CreatureModResolutionService {
         String logEntry = target.getCard().getName() + " gets a -1/-1 counter.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gets a -1/-1 counter", gameData.id, target.getCard().getName());
+    }
+
+    @HandlesEffect(GrantColorUntilEndOfTurnEffect.class)
+    private void resolveGrantColorUntilEndOfTurn(GameData gameData, StackEntry entry, GrantColorUntilEndOfTurnEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        target.getGrantedColors().clear();
+        target.getGrantedColors().add(effect.color());
+        target.setColorOverridden(true);
+
+        String colorName = effect.color().name().charAt(0) + effect.color().name().substring(1).toLowerCase();
+        String logEntry = target.getCard().getName() + " becomes " + colorName + " until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} becomes {} until end of turn", gameData.id, target.getCard().getName(), colorName);
     }
 
     @HandlesEffect(UnattachEquipmentFromTargetPermanentsEffect.class)

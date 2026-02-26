@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentE
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreaturePerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentFromTargetPermanentsEffect;
@@ -59,6 +60,11 @@ public class CreatureModTargetValidators {
     public void validateTargetCreatureCantBlock(TargetValidationContext ctx) {
         Permanent target = tvs.requireBattlefieldTarget(ctx);
         tvs.requireCreature(ctx, target);
+    }
+
+    @ValidatesTarget(GrantColorUntilEndOfTurnEffect.class)
+    public void validateGrantColorUntilEndOfTurn(TargetValidationContext ctx) {
+        tvs.requireBattlefieldTarget(ctx);
     }
 
     @ValidatesTarget(UnattachEquipmentFromTargetPermanentsEffect.class)

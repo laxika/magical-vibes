@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardArtifactOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -34,6 +35,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
@@ -141,8 +144,8 @@ public class AbilityActivationService {
                 if (permanent.getCard().getTargetFilter() != null) {
                     gameQueryService.validateTargetFilter(permanent.getCard().getTargetFilter(), target);
                 }
-                if (gameQueryService.hasProtectionFrom(gameData, target, permanent.getCard().getColor())) {
-                    throw new IllegalStateException(target.getCard().getName() + " has protection from " + permanent.getCard().getColor().name().toLowerCase());
+                if (gameQueryService.hasProtectionFrom(gameData, target, permanent.getEffectiveColor())) {
+                    throw new IllegalStateException(target.getCard().getName() + " has protection from " + permanent.getEffectiveColor().name().toLowerCase());
                 }
             }
         }
@@ -294,6 +297,10 @@ public class AbilityActivationService {
                 .filter(SacrificeMultiplePermanentsCost.class::isInstance)
                 .map(SacrificeMultiplePermanentsCost.class::cast)
                 .findFirst();
+        Optional<TapCreatureCost> tapCreatureCost = abilityEffects.stream()
+                .filter(TapCreatureCost.class::isInstance)
+                .map(TapCreatureCost.class::cast)
+                .findFirst();
 
         // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
         if (!hasSacCreatureCost) {
@@ -312,6 +319,9 @@ public class AbilityActivationService {
             if (matchingCount < multiCost.count()) {
                 throw new IllegalStateException("Not enough permanents to sacrifice (need " + multiCost.count() + ", have " + matchingCount + ")");
             }
+        }
+        if (tapCreatureCost.isPresent() && !hasUntappedMatchingCreature(gameData, playerId, tapCreatureCost.get())) {
+            throw new IllegalStateException("No untapped matching creature to tap");
         }
 
         DiscardCardTypeCost discardCardTypeCost = abilityEffects.stream()
@@ -355,7 +365,8 @@ public class AbilityActivationService {
 
         // Pay mana cost
         if (abilityCost != null) {
-            payManaCost(gameData, playerId, abilityCost, effectiveXValue);
+            boolean artifactContext = gameQueryService.isArtifact(permanent);
+            payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext);
         }
 
         if (discardCardTypeCost != null) {
@@ -399,6 +410,12 @@ public class AbilityActivationService {
             SacrificeMultiplePermanentsCost multiCost = sacMultiplePermanentsCost.get();
             if (handleMultiplePermanentSacrificeCostSelection(gameData, player, permanent, effectiveIndex, effectiveXValue,
                     targetPermanentId, targetZone, multiCost.count(), multiCost.filter())) {
+                return;
+            }
+        }
+        if (tapCreatureCost.isPresent()) {
+            if (handleTapCreatureCostSelection(gameData, player, permanent, effectiveIndex, effectiveXValue,
+                    targetPermanentId, targetZone, tapCreatureCost.get())) {
                 return;
             }
         }
@@ -556,6 +573,117 @@ public class AbilityActivationService {
             return false;
         }
         return battlefield.stream().anyMatch(gameQueryService::isArtifact);
+    }
+
+    private boolean hasUntappedMatchingCreature(GameData gameData, UUID playerId, TapCreatureCost tapCost) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return false;
+        }
+        FilterContext filterContext = FilterContext.of(gameData);
+        return battlefield.stream()
+                .anyMatch(p -> gameQueryService.isCreature(gameData, p)
+                        && !p.isTapped()
+                        && gameQueryService.matchesPermanentPredicate(p, tapCost.predicate(), filterContext));
+    }
+
+    private boolean handleTapCreatureCostSelection(GameData gameData,
+                                                    Player player,
+                                                    Permanent sourcePermanent,
+                                                    int abilityIndex,
+                                                    int xValue,
+                                                    UUID targetPermanentId,
+                                                    Zone targetZone,
+                                                    TapCreatureCost tapCost) {
+        UUID playerId = player.getId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            throw new IllegalStateException("No untapped creature to tap");
+        }
+
+        FilterContext filterContext = FilterContext.of(gameData);
+        List<UUID> validTapIds = battlefield.stream()
+                .filter(p -> gameQueryService.isCreature(gameData, p))
+                .filter(p -> !p.isTapped())
+                .filter(p -> gameQueryService.matchesPermanentPredicate(p, tapCost.predicate(), filterContext))
+                .map(Permanent::getId)
+                .toList();
+        if (validTapIds.isEmpty()) {
+            throw new IllegalStateException("No untapped matching creature to tap");
+        }
+        if (validTapIds.size() == 1) {
+            Permanent onlyChoice = gameQueryService.findPermanentById(gameData, validTapIds.getFirst());
+            if (onlyChoice != null) {
+                tapCreatureAsCost(gameData, player, onlyChoice);
+            }
+            return false;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilityTapCreature(
+                playerId,
+                sourcePermanent.getId(),
+                abilityIndex,
+                xValue,
+                targetPermanentId,
+                targetZone,
+                tapCost.predicate()
+        ));
+        playerInputService.beginPermanentChoice(gameData, playerId, validTapIds,
+                "Choose an untapped creature to tap.");
+        gameBroadcastService.broadcastGameState(gameData);
+        return true;
+    }
+
+    public void completeActivatedAbilityTapCreatureChoice(GameData gameData,
+                                                           Player player,
+                                                           PermanentChoiceContext.ActivatedAbilityTapCreature context,
+                                                           UUID tappedPermanentId) {
+        UUID playerId = player.getId();
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+        if (sourcePermanent == null) {
+            throw new IllegalStateException("Source permanent no longer exists");
+        }
+
+        List<ActivatedAbility> ownAbilities = sourcePermanent.getCard().getActivatedAbilities();
+        List<ActivatedAbility> grantedAbilities = gameQueryService.computeStaticBonus(gameData, sourcePermanent).grantedActivatedAbilities();
+        List<ActivatedAbility> abilities = new ArrayList<>(ownAbilities);
+        abilities.addAll(grantedAbilities);
+        int effectiveIndex = context.abilityIndex() != null ? context.abilityIndex() : 0;
+        if (effectiveIndex < 0 || effectiveIndex >= abilities.size()) {
+            throw new IllegalStateException("Invalid ability index");
+        }
+        ActivatedAbility ability = abilities.get(effectiveIndex);
+        List<CardEffect> abilityEffects = ability.getEffects();
+
+        Permanent tapped = gameQueryService.findPermanentById(gameData, tappedPermanentId);
+        if (tapped == null) {
+            throw new IllegalStateException("Invalid tap target");
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null || !battlefield.contains(tapped)) {
+            throw new IllegalStateException("Must tap a creature you control");
+        }
+        if (!gameQueryService.isCreature(gameData, tapped)) {
+            throw new IllegalStateException("Must tap a creature");
+        }
+        if (tapped.isTapped()) {
+            throw new IllegalStateException("Creature is already tapped");
+        }
+        if (!gameQueryService.matchesPermanentPredicate(gameData, tapped, context.predicate())) {
+            throw new IllegalStateException("Creature does not match the required predicate");
+        }
+
+        tapCreatureAsCost(gameData, player, tapped);
+        activatedAbilityExecutionService.completeActivationAfterCosts(
+                gameData, player, sourcePermanent, ability, abilityEffects,
+                context.xValue() != null ? context.xValue() : 0, context.targetPermanentId(), context.targetZone(), false);
+        recordAbilityActivationUse(gameData, sourcePermanent, effectiveIndex);
+    }
+
+    private void tapCreatureAsCost(GameData gameData, Player player, Permanent tapTarget) {
+        tapTarget.tap();
+        String tapLog = player.getUsername() + " taps " + tapTarget.getCard().getName() + " as a cost.";
+        gameBroadcastService.logAndBroadcast(gameData, tapLog);
     }
 
     private boolean handleArtifactSacrificeCostSelection(GameData gameData,
@@ -882,22 +1010,36 @@ public class AbilityActivationService {
         permanent.setLoyaltyAbilityUsedThisTurn(true);
     }
 
-    private void payManaCost(GameData gameData, UUID playerId, String abilityCost, int effectiveXValue) {
+    private void payManaCost(GameData gameData, UUID playerId, String abilityCost, int effectiveXValue, boolean artifactContext) {
         ManaCost cost = new ManaCost(abilityCost);
         ManaPool pool = gameData.playerManaPools.get(playerId);
         if (cost.hasX()) {
             if (effectiveXValue < 0) {
                 throw new IllegalStateException("X value cannot be negative");
             }
-            if (!cost.canPay(pool, effectiveXValue)) {
-                throw new IllegalStateException("Not enough mana to activate ability");
+            if (artifactContext) {
+                if (!cost.canPay(pool, effectiveXValue, true)) {
+                    throw new IllegalStateException("Not enough mana to activate ability");
+                }
+                cost.pay(pool, effectiveXValue, true);
+            } else {
+                if (!cost.canPay(pool, effectiveXValue)) {
+                    throw new IllegalStateException("Not enough mana to activate ability");
+                }
+                cost.pay(pool, effectiveXValue);
             }
-            cost.pay(pool, effectiveXValue);
         } else {
-            if (!cost.canPay(pool)) {
-                throw new IllegalStateException("Not enough mana to activate ability");
+            if (artifactContext) {
+                if (!cost.canPay(pool, 0, true)) {
+                    throw new IllegalStateException("Not enough mana to activate ability");
+                }
+                cost.pay(pool, 0, true);
+            } else {
+                if (!cost.canPay(pool)) {
+                    throw new IllegalStateException("Not enough mana to activate ability");
+                }
+                cost.pay(pool);
             }
-            cost.pay(pool);
         }
     }
 
@@ -1012,10 +1154,12 @@ public class AbilityActivationService {
                         && !(e instanceof SacrificeMultiplePermanentsCost)
                         && !(e instanceof DiscardCardTypeCost)
                         && !(e instanceof RemoveCounterFromSourceCost)
-                        && !(e instanceof RemoveChargeCountersFromSourceCost))
+                        && !(e instanceof RemoveChargeCountersFromSourceCost)
+                        && !(e instanceof TapCreatureCost))
                 .toList();
         return !effects.isEmpty() && effects.stream().allMatch(e ->
-                e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof DoubleManaPoolEffect);
+                e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect
+                        || e instanceof DoubleManaPoolEffect || e instanceof AwardArtifactOnlyColorlessManaEffect);
     }
 }
 

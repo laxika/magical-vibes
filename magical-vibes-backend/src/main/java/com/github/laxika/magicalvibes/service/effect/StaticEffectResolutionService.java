@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -388,8 +389,14 @@ public class StaticEffectResolutionService {
 
     private boolean matchesStaticFilter(Permanent target, PermanentPredicate filter) {
         if (filter == null) return true;
-        if (filter instanceof PermanentColorInPredicate p)
-            return p.colors().contains(target.getCard().getColor());
+        if (filter instanceof PermanentColorInPredicate p) {
+            if (target.isColorOverridden()) {
+                return target.getGrantedColors().stream().anyMatch(p.colors()::contains);
+            }
+            CardColor effectiveColor = target.getEffectiveColor();
+            return (effectiveColor != null && p.colors().contains(effectiveColor))
+                    || target.getGrantedColors().stream().anyMatch(p.colors()::contains);
+        }
         if (filter instanceof PermanentHasSubtypePredicate p)
             return target.getCard().getSubtypes().contains(p.subtype())
                     || (isCreatureSubtype(p.subtype()) && target.hasKeyword(Keyword.CHANGELING));

@@ -318,12 +318,12 @@ public class GameQueryService {
             return getEffectivePower(gameData, permanent) <= powerAtMostPredicate.maxPower();
         }
         if (predicate instanceof PermanentColorInPredicate colorInPredicate) {
-            CardColor effectiveColor = permanent.isAnimatedUntilEndOfTurn() && permanent.getAnimatedColor() != null
-                    ? permanent.getAnimatedColor()
-                    : permanent.getAwakeningCounters() > 0
-                    ? CardColor.GREEN
-                    : permanent.getCard().getColor();
-            return colorInPredicate.colors().contains(effectiveColor);
+            if (permanent.isColorOverridden()) {
+                return permanent.getGrantedColors().stream().anyMatch(colorInPredicate.colors()::contains);
+            }
+            CardColor effectiveColor = permanent.getEffectiveColor();
+            return (effectiveColor != null && colorInPredicate.colors().contains(effectiveColor))
+                    || permanent.getGrantedColors().stream().anyMatch(colorInPredicate.colors()::contains);
         }
         if (predicate instanceof PermanentAnyOfPredicate anyOfPredicate) {
             for (PermanentPredicate nested : anyOfPredicate.predicates()) {
@@ -656,13 +656,8 @@ public class GameQueryService {
     }
 
     boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature) {
-        CardColor effectiveColor = creature.isAnimatedUntilEndOfTurn() && creature.getAnimatedColor() != null
-                ? creature.getAnimatedColor()
-                : creature.getAwakeningCounters() > 0
-                ? CardColor.GREEN
-                : creature.getCard().getColor();
         return hasAuraWithEffect(gameData, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)
-                || isDamageFromSourcePrevented(gameData, effectiveColor);
+                || isDamageFromSourcePrevented(gameData, creature.getEffectiveColor());
     }
 
     boolean isDamageFromSourcePrevented(GameData gameData, CardColor sourceColor) {

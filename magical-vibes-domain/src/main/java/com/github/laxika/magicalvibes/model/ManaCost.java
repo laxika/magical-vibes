@@ -70,6 +70,25 @@ public class ManaCost {
         return remaining >= genericCost + xValue;
     }
 
+    public boolean canPay(ManaPool pool, int xValue, boolean artifactContext) {
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            if (pool.get(entry.getKey()) < entry.getValue()) {
+                return false;
+            }
+        }
+
+        int remaining = pool.getTotal();
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            remaining -= entry.getValue();
+        }
+
+        if (artifactContext) {
+            remaining += pool.getArtifactOnlyColorless();
+        }
+
+        return remaining >= genericCost + xValue;
+    }
+
     public boolean canPay(ManaPool pool, int xValue, ManaColor xColorRestriction, int additionalGenericCost) {
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             if (pool.get(entry.getKey()) < entry.getValue()) {
@@ -151,6 +170,25 @@ public class ManaCost {
         }
 
         payGenericPreferColorless(pool, genericCost + xValue);
+    }
+
+    public void pay(ManaPool pool, int xValue, boolean artifactContext) {
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            for (int i = 0; i < entry.getValue(); i++) {
+                pool.remove(entry.getKey());
+            }
+        }
+
+        int remainingGeneric = genericCost + xValue;
+
+        // Spend artifact-only colorless first for generic costs
+        if (artifactContext && remainingGeneric > 0) {
+            int fromRestricted = Math.min(remainingGeneric, pool.getArtifactOnlyColorless());
+            pool.removeArtifactOnlyColorless(fromRestricted);
+            remainingGeneric -= fromRestricted;
+        }
+
+        payGenericPreferColorless(pool, remainingGeneric);
     }
 
     public void pay(ManaPool pool, int xValue, ManaColor xColorRestriction, int additionalGenericCost) {

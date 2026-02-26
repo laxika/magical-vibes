@@ -222,9 +222,9 @@ public class TriggerCollectionService {
                         log.info("Game {} - {} triggers on discard, dealing {} damage to {}",
                                 gameData.id, cardName, damage, gameData.playerIdToName.get(discardingPlayerId));
 
-                        if (!gameQueryService.isDamageFromSourcePrevented(gameData, perm.getCard().getColor())
+                        if (!gameQueryService.isDamageFromSourcePrevented(gameData, perm.getEffectiveColor())
                                 && !gameHelper.isSourceDamagePreventedForPlayer(gameData, discardingPlayerId, perm.getId())
-                                && !gameHelper.applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, perm.getCard().getColor())) {
+                                && !gameHelper.applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, perm.getEffectiveColor())) {
                             int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, discardingPlayerId, damage);
                             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, discardingPlayerId, effectiveDamage, cardName);
                             int currentLife = gameData.playerLifeTotals.getOrDefault(discardingPlayerId, 20);
@@ -318,9 +318,9 @@ public class TriggerCollectionService {
                     log.info("Game {} - {} triggers on land tap, dealing {} damage to {}",
                             gameData.id, cardName, damage, gameData.playerIdToName.get(tappingPlayerId));
 
-                    if (!gameQueryService.isDamageFromSourcePrevented(gameData, perm.getCard().getColor())
+                    if (!gameQueryService.isDamageFromSourcePrevented(gameData, perm.getEffectiveColor())
                             && !gameHelper.isSourceDamagePreventedForPlayer(gameData, tappingPlayerId, perm.getId())
-                            && !gameHelper.applyColorDamagePreventionForPlayer(gameData, tappingPlayerId, perm.getCard().getColor())) {
+                            && !gameHelper.applyColorDamagePreventionForPlayer(gameData, tappingPlayerId, perm.getEffectiveColor())) {
                         int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, tappingPlayerId, damage);
                         effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, tappingPlayerId, effectiveDamage, cardName);
                         int currentLife = gameData.playerLifeTotals.getOrDefault(tappingPlayerId, 20);

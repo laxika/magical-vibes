@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 import java.util.UUID;
 
+
+
 public sealed interface PermanentChoiceContext {
 
     record CloneCopy() implements PermanentChoiceContext {}
@@ -57,4 +59,12 @@ public sealed interface PermanentChoiceContext {
                                                        Zone targetZone,
                                                        int remaining,
                                                        PermanentPredicate filter) implements PermanentChoiceContext {}
+
+    record ActivatedAbilityTapCreature(UUID activatingPlayerId,
+                                       UUID sourcePermanentId,
+                                       Integer abilityIndex,
+                                       Integer xValue,
+                                       UUID targetPermanentId,
+                                       Zone targetZone,
+                                       PermanentPredicate predicate) implements PermanentChoiceContext {}
 }

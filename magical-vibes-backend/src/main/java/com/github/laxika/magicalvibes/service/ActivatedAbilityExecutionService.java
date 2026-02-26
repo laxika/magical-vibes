@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateSelfByChargeCountersEf
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardArtifactOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
@@ -37,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
@@ -126,10 +128,12 @@ public class ActivatedAbilityExecutionService {
                 && ability.getLoyaltyCost() == null
                 && !snapshotEffects.isEmpty()
                 && snapshotEffects.stream().anyMatch(e ->
-                e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof DoubleManaPoolEffect)
+                e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect
+                        || e instanceof DoubleManaPoolEffect || e instanceof AwardArtifactOnlyColorlessManaEffect)
                 && snapshotEffects.stream().allMatch(e ->
                 e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect
-                        || e instanceof DoubleManaPoolEffect || e instanceof DealDamageToControllerEffect);
+                        || e instanceof DoubleManaPoolEffect || e instanceof DealDamageToControllerEffect
+                        || e instanceof AwardArtifactOnlyColorlessManaEffect);
 
         if (isManaAbility) {
             resolveManaAbility(gameData, playerId, player, permanent, snapshotEffects);
@@ -156,7 +160,8 @@ public class ActivatedAbilityExecutionService {
                     || effect instanceof SacrificeMultiplePermanentsCost
                     || effect instanceof DiscardCardTypeCost
                     || effect instanceof RemoveCounterFromSourceCost
-                    || effect instanceof RemoveChargeCountersFromSourceCost) {
+                    || effect instanceof RemoveChargeCountersFromSourceCost
+                    || effect instanceof TapCreatureCost) {
                 continue;
             }
             if (effect instanceof CantBlockSourceEffect) {
@@ -188,12 +193,14 @@ public class ActivatedAbilityExecutionService {
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 sessionManager.sendToPlayer(playerId, new ChooseColorMessage(colors, "Choose a color of mana to add."));
                 log.info("Game {} - Awaiting {} to choose a mana color", gameData.id, player.getUsername());
+            } else if (effect instanceof AwardArtifactOnlyColorlessManaEffect aom) {
+                gameData.playerManaPools.get(playerId).addArtifactOnlyColorless(aom.amount());
             } else if (effect instanceof DealDamageToControllerEffect dmg) {
                 String cardName = permanent.getCard().getName();
                 int damage = dmg.damage();
-                if (!gameQueryService.isDamageFromSourcePrevented(gameData, permanent.getCard().getColor())
+                if (!gameQueryService.isDamageFromSourcePrevented(gameData, permanent.getEffectiveColor())
                         && !gameHelper.isSourceDamagePreventedForPlayer(gameData, playerId, permanent.getId())
-                        && !gameHelper.applyColorDamagePreventionForPlayer(gameData, playerId, permanent.getCard().getColor())) {
+                        && !gameHelper.applyColorDamagePreventionForPlayer(gameData, playerId, permanent.getEffectiveColor())) {
                     int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, playerId, damage);
                     effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
                     int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);

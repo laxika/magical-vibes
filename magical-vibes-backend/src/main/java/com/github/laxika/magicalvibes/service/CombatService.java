@@ -422,12 +422,12 @@ public class CombatService {
             }
             if (gameQueryService.hasKeyword(gameData, attacker, Keyword.FEAR)
                     && !gameQueryService.isArtifact(blocker)
-                    && blocker.getCard().getColor() != CardColor.BLACK) {
+                    && blocker.getEffectiveColor() != CardColor.BLACK) {
                 throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (fear)");
             }
             if (gameQueryService.hasKeyword(gameData, attacker, Keyword.INTIMIDATE)
                     && !gameQueryService.isArtifact(blocker)
-                    && blocker.getCard().getColor() != attacker.getCard().getColor()) {
+                    && blocker.getEffectiveColor() != attacker.getEffectiveColor()) {
                 throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (intimidate)");
             }
             for (CardEffect blockerStaticEffect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
@@ -472,7 +472,7 @@ public class CombatService {
             if (blocker.getCantBlockIds().contains(attacker.getId())) {
                 throw new IllegalStateException(blocker.getCard().getName() + " can't block " + attacker.getCard().getName() + " this turn");
             }
-            if (gameQueryService.hasProtectionFrom(gameData, attacker, blocker.getCard().getColor())) {
+            if (gameQueryService.hasProtectionFrom(gameData, attacker, blocker.getEffectiveColor())) {
                 throw new IllegalStateException(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (protection)");
             }
 
@@ -716,12 +716,12 @@ public class CombatService {
         }
         if (gameQueryService.hasKeyword(gameData, attacker, Keyword.FEAR)
                 && !gameQueryService.isArtifact(blocker)
-                && blocker.getCard().getColor() != CardColor.BLACK) {
+                && blocker.getEffectiveColor() != CardColor.BLACK) {
             return false;
         }
         if (gameQueryService.hasKeyword(gameData, attacker, Keyword.INTIMIDATE)
                 && !gameQueryService.isArtifact(blocker)
-                && blocker.getCard().getColor() != attacker.getCard().getColor()) {
+                && blocker.getEffectiveColor() != attacker.getEffectiveColor()) {
             return false;
         }
 
@@ -761,7 +761,7 @@ public class CombatService {
         if (hasCantBlockStatic) return false;
         if (blocker.getCantBlockIds().contains(attacker.getId())) return false;
 
-        return !gameQueryService.hasProtectionFrom(gameData, attacker, blocker.getCard().getColor());
+        return !gameQueryService.hasProtectionFrom(gameData, attacker, blocker.getEffectiveColor());
     }
 
     // ===== Combat damage resolution =====
@@ -905,7 +905,7 @@ public class CombatService {
                             }
                         } else if (gameHelper.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
                             // Source-specific damage prevention — skip first-strike damage
-                        } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
+                        } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getEffectiveColor())) {
                             if (atkHasInfect) {
                                 poisonDamageToDefendingPlayer += power;
                             } else {
@@ -923,7 +923,7 @@ public class CombatService {
                         for (int blkIdx : blkIndices) {
                             Permanent blk = defBf.get(blkIdx);
                             int dmg = Math.min(remaining, gameQueryService.getEffectiveToughness(gameData, blk) - defDamageTaken.getOrDefault(blkIdx, 0));
-                            if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getCard().getColor())) {
+                            if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getEffectiveColor())) {
                                 int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
                                 applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, defDamageTaken);
                                 combatDamageDealt.merge(atk, actualDmg, Integer::sum);
@@ -943,7 +943,7 @@ public class CombatService {
                                 }
                             } else if (gameHelper.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
                                 // Source-specific damage prevention — skip first-strike trample damage
-                            } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
+                            } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getEffectiveColor())) {
                                 if (atkHasInfect) {
                                     poisonDamageToDefendingPlayer += doubledRemaining;
                                 } else {
@@ -961,7 +961,7 @@ public class CombatService {
                         Permanent blk = defBf.get(blkIdx);
                         if ((gameQueryService.hasKeyword(gameData, blk, Keyword.FIRST_STRIKE) || gameQueryService.hasKeyword(gameData, blk, Keyword.DOUBLE_STRIKE))
                                 && !gameQueryService.isPreventedFromDealingDamage(gameData, blk)
-                                && !gameQueryService.hasProtectionFrom(gameData, atk, blk.getCard().getColor())) {
+                                && !gameQueryService.hasProtectionFrom(gameData, atk, blk.getEffectiveColor())) {
                             int actualDmg = gameQueryService.applyDamageMultiplier(gameData, phase1BlockerDamage.getOrDefault(blkIdx, 0));
                             applyCombatCreatureDamage(gameData, blk, atk, atkIdx, actualDmg, atkDamageTaken);
                             combatDamageDealt.merge(blk, actualDmg, Integer::sum);
@@ -1077,7 +1077,7 @@ public class CombatService {
                                 }
                             } else if (gameHelper.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
                                 // Source-specific damage prevention — skip player-assigned damage
-                            } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
+                            } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getEffectiveColor())) {
                                 if (atkHasInfect) {
                                     poisonDamageToDefendingPlayer += actualDmg;
                                 } else {
@@ -1090,7 +1090,7 @@ public class CombatService {
                             for (int blkIdx : blkIndices) {
                                 Permanent blk = defBf.get(blkIdx);
                                 if (blk.getId().equals(targetId)) {
-                                    if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getCard().getColor())) {
+                                    if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getEffectiveColor())) {
                                         int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
                                         applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, defDamageTaken);
                                         combatDamageDealt.merge(atk, actualDmg, Integer::sum);
@@ -1115,7 +1115,7 @@ public class CombatService {
                         }
                     } else if (gameHelper.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
                     // Source-specific damage prevention — skip this attacker's damage
-                } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
+                } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getEffectiveColor())) {
                         if (atkHasInfect) {
                             poisonDamageToDefendingPlayer += power;
                         } else {
@@ -1134,7 +1134,7 @@ public class CombatService {
                         Permanent blk = defBf.get(blkIdx);
                         int remainingToughness = gameQueryService.getEffectiveToughness(gameData, blk) - defDamageTaken.getOrDefault(blkIdx, 0);
                         int dmg = Math.min(remaining, Math.max(0, remainingToughness));
-                        if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getCard().getColor())) {
+                        if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getEffectiveColor())) {
                             int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
                             applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, defDamageTaken);
                             combatDamageDealt.merge(atk, actualDmg, Integer::sum);
@@ -1154,7 +1154,7 @@ public class CombatService {
                             }
                         } else if (gameHelper.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
                             // Source-specific damage prevention — skip trample damage
-                        } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getCard().getColor())) {
+                        } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getEffectiveColor())) {
                             if (atkHasInfect) {
                                 poisonDamageToDefendingPlayer += doubledRemaining;
                             } else {
@@ -1174,7 +1174,7 @@ public class CombatService {
                     boolean blkSkipPhase2 = gameQueryService.hasKeyword(gameData, blk, Keyword.FIRST_STRIKE)
                             && !gameQueryService.hasKeyword(gameData, blk, Keyword.DOUBLE_STRIKE);
                     if (!blkSkipPhase2 && !gameQueryService.isPreventedFromDealingDamage(gameData, blk)
-                            && !gameQueryService.hasProtectionFrom(gameData, atk, blk.getCard().getColor())) {
+                            && !gameQueryService.hasProtectionFrom(gameData, atk, blk.getEffectiveColor())) {
                         int actualDmg = gameQueryService.applyDamageMultiplier(gameData, phase2BlockerDamage.getOrDefault(blkIdx, 0));
                         applyCombatCreatureDamage(gameData, blk, atk, atkIdx, actualDmg, atkDamageTaken);
                         combatDamageDealt.merge(blk, actualDmg, Integer::sum);
