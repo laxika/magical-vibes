@@ -38,7 +38,7 @@ public class TriggeredAbilityQueueService {
             }
 
             if (validTargets.isEmpty()) {
-                // No valid targets â€” trigger can't go on the stack, skip it
+                // No valid targets - trigger can't go on the stack, skip it
                 gameData.pendingDeathTriggerTargets.removeFirst();
                 String logEntry = pending.dyingCard().getName() + "'s death trigger has no valid targets.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -51,9 +51,9 @@ public class TriggeredAbilityQueueService {
             gameData.pendingDeathTriggerTargets.removeFirst();
             gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
-                    pending.dyingCard().getName() + "'s ability â€” Choose target creature.");
+                    pending.dyingCard().getName() + "'s ability - Choose target creature.");
 
-            String logEntry = pending.dyingCard().getName() + "'s death trigger â€” choose a target creature.";
+            String logEntry = pending.dyingCard().getName() + "'s death trigger - choose a target creature.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} death trigger awaiting target selection", gameData.id, pending.dyingCard().getName());
             return;
@@ -86,9 +86,9 @@ public class TriggeredAbilityQueueService {
             gameData.pendingAttackTriggerTargets.removeFirst();
             gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
-                    pending.sourceCard().getName() + "'s ability \u2014 Choose target permanent.");
+                    pending.sourceCard().getName() + "'s ability - Choose target permanent.");
 
-            String logEntry = pending.sourceCard().getName() + "'s attack trigger \u2014 choose a target permanent.";
+            String logEntry = pending.sourceCard().getName() + "'s attack trigger - choose a target permanent.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} attack trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
@@ -119,13 +119,45 @@ public class TriggeredAbilityQueueService {
             gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
                     validPermanentTargets, validPlayerTargets,
-                    pending.discardedCard().getName() + "'s ability â€” Choose any target.");
+                    pending.discardedCard().getName() + "'s ability - Choose any target.");
 
-            String logEntry = pending.discardedCard().getName() + "'s discard trigger â€” choose a target.";
+            String logEntry = pending.discardedCard().getName() + "'s discard trigger - choose a target.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} discard trigger awaiting target selection", gameData.id, pending.discardedCard().getName());
             return;
         }
     }
-}
 
+    public void processNextSpellTargetTrigger(GameData gameData) {
+        while (!gameData.pendingSpellTargetTriggers.isEmpty()) {
+            PermanentChoiceContext.SpellTargetTriggerAnyTarget pending = gameData.pendingSpellTargetTriggers.peekFirst();
+
+            // Collect valid targets: all creatures and planeswalkers on all battlefields + all players
+            List<UUID> validPermanentTargets = new ArrayList<>();
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) continue;
+                for (Permanent p : battlefield) {
+                    if (gameQueryService.isCreature(gameData, p)
+                            || p.getCard().getType() == CardType.PLANESWALKER) {
+                        validPermanentTargets.add(p.getId());
+                    }
+                }
+            }
+
+            List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
+
+            // There are always valid targets (at least the players)
+            gameData.pendingSpellTargetTriggers.removeFirst();
+            gameData.interaction.setPermanentChoiceContext(pending);
+            playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
+                    validPermanentTargets, validPlayerTargets,
+                    pending.sourceCard().getName() + "'s ability - Choose any target.");
+
+            String logEntry = pending.sourceCard().getName() + "'s triggered ability - choose a target.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} spell-target trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
+            return;
+        }
+    }
+}

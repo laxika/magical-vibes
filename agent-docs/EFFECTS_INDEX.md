@@ -30,6 +30,10 @@ Effects that target both players and permanents (any-target): DealDamageToAnyTar
 
 Effects in the `ON_BECOMES_BLOCKED` slot can be registered with `TriggerMode.PER_BLOCKER` via `addEffect(slot, effect, TriggerMode.PER_BLOCKER)`, causing CombatService to create one stack entry per blocking creature (e.g. "whenever this creature becomes blocked **by a creature**"). Cards using this: `SylvanBasilisk`, `EngulfingSlagwurm` (ON_BECOMES_BLOCKED only), `InfiltrationLens`.
 
+### Becomes-target-of-spell trigger
+
+Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the creature an equipment is attached to) becomes the target of a spell. Any targeting effect can be placed in this slot — e.g. `DealDamageToAnyTargetEffect` for "deal 2 damage to any target" when the equipped creature becomes targeted. Cards using this: `LivewireLash`.
+
 ## Wrapper / modifier effects
 
 | Effect | Constructor | Description |

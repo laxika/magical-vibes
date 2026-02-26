@@ -234,6 +234,37 @@ public class PermanentChoiceHandlerService {
             }
 
             turnProgressionService.resolveAutoPass(gameData);
+        } else if (context instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget stt) {
+            // Spell-target trigger targeting any target (e.g. Livewire Lash)
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    stt.sourceCard(),
+                    stt.controllerId(),
+                    stt.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(stt.effects())
+            );
+            entry.setTargetPermanentId(permanentId);
+            gameData.stack.add(entry);
+
+            String targetName = getTargetDisplayName(gameData, permanentId);
+            String logEntry = stt.sourceCard().getName() + "'s triggered ability targets " + targetName + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} spell-target trigger targets {}", gameData.id, stt.sourceCard().getName(), targetName);
+
+            // Process more pending spell target triggers
+            if (!gameData.pendingSpellTargetTriggers.isEmpty()) {
+                triggerCollectionService.processNextSpellTargetTrigger(gameData);
+                return;
+            }
+
+            // Process pending may abilities
+            if (!gameData.pendingMayAbilities.isEmpty()) {
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+
+            gameData.priorityPassedBy.clear();
+            turnProgressionService.resolveAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.DiscardTriggerAnyTarget dtt) {
             // Discard self-trigger targeting any target (creature or player)
             StackEntry entry = new StackEntry(

@@ -78,6 +78,7 @@ public class GameData {
     public final Deque<PermanentChoiceContext.DeathTriggerTarget> pendingDeathTriggerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.DiscardTriggerAnyTarget> pendingDiscardSelfTriggers = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.AttackTriggerTarget> pendingAttackTriggerTargets = new ArrayDeque<>();
+    public final Deque<PermanentChoiceContext.SpellTargetTriggerAnyTarget> pendingSpellTargetTriggers = new ArrayDeque<>();
     public boolean discardCausedByOpponent;
     public final Deque<UUID> extraTurns = new ArrayDeque<>();
     public int additionalCombatMainPhasePairs;
@@ -291,6 +292,7 @@ public class GameData {
         copy.pendingDeathTriggerTargets.addAll(this.pendingDeathTriggerTargets);
         copy.pendingDiscardSelfTriggers.addAll(this.pendingDiscardSelfTriggers);
         copy.pendingAttackTriggerTargets.addAll(this.pendingAttackTriggerTargets);
+        copy.pendingSpellTargetTriggers.addAll(this.pendingSpellTargetTriggers);
         copy.extraTurns.addAll(this.extraTurns);
         this.pendingLibraryBottomReorders.forEach(req ->
                 copy.pendingLibraryBottomReorders.add(new LibraryBottomReorderRequest(req.playerId(), new ArrayList<>(req.cards()))));

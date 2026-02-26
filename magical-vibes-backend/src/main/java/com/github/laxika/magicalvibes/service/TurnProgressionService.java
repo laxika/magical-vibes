@@ -547,6 +547,11 @@ public class TurnProgressionService {
     }
 
     public void resolveAutoPass(GameData gameData) {
+        // Process any pending spell-target triggers (e.g. Livewire Lash)
+        if (!gameData.pendingSpellTargetTriggers.isEmpty()) {
+            triggerCollectionService.processNextSpellTargetTrigger(gameData);
+        }
+
         // Process any pending discard self-triggers before death triggers
         if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
             triggerCollectionService.processNextDiscardSelfTrigger(gameData);

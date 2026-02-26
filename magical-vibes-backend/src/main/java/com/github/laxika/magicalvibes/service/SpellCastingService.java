@@ -470,6 +470,7 @@ public class SpellCastingService {
         log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), card.getName());
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId);
+        triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         gameBroadcastService.broadcastGameState(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }

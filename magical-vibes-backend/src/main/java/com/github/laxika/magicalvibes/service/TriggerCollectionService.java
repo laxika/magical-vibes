@@ -402,4 +402,69 @@ public class TriggerCollectionService {
     public void processNextDiscardSelfTrigger(GameData gameData) {
         triggeredAbilityQueueService.processNextDiscardSelfTrigger(gameData);
     }
+
+    public void checkBecomesTargetOfSpellTriggers(GameData gameData) {
+        if (gameData.stack.isEmpty()) return;
+
+        // The most recently added stack entry is the spell that was just cast
+        StackEntry spellEntry = gameData.stack.getLast();
+
+        // Collect all targeted permanent IDs from the spell
+        List<UUID> targetIds = new ArrayList<>();
+        if (spellEntry.getTargetPermanentId() != null
+                && spellEntry.getTargetZone() == null) {
+            targetIds.add(spellEntry.getTargetPermanentId());
+        }
+        if (spellEntry.getTargetPermanentIds() != null) {
+            targetIds.addAll(spellEntry.getTargetPermanentIds());
+        }
+
+        for (UUID targetId : targetIds) {
+            // Skip player targets
+            if (gameData.playerIds.contains(targetId)) continue;
+
+            Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
+            if (targetPermanent == null) continue;
+
+            UUID controllerId = gameQueryService.findPermanentController(gameData, targetPermanent.getId());
+            if (controllerId == null) continue;
+
+            // Check effects on the targeted permanent itself
+            collectBecomesTargetTriggers(gameData, targetPermanent, controllerId, targetPermanent);
+
+            // Check effects on equipment/auras attached to the targeted permanent
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                if (battlefield == null) continue;
+                for (Permanent attached : battlefield) {
+                    if (attached.getAttachedTo() != null
+                            && attached.getAttachedTo().equals(targetPermanent.getId())) {
+                        collectBecomesTargetTriggers(gameData, attached, controllerId, targetPermanent);
+                    }
+                }
+            }
+        }
+
+        if (!gameData.pendingSpellTargetTriggers.isEmpty()) {
+            processNextSpellTargetTrigger(gameData);
+        }
+    }
+
+    private void collectBecomesTargetTriggers(GameData gameData, Permanent source, UUID controllerId, Permanent targetedCreature) {
+        List<CardEffect> effects = source.getCard().getEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL);
+        if (effects.isEmpty()) return;
+
+        // Use the targeted creature's card as source (since "this creature deals damage")
+        gameData.pendingSpellTargetTriggers.add(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                targetedCreature.getCard(), controllerId, new ArrayList<>(effects)
+        ));
+
+        String logEntry = targetedCreature.getCard().getName() + "'s triggered ability triggers — choose a target for damage.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} becomes-target-of-spell trigger queued", gameData.id, targetedCreature.getCard().getName());
+    }
+
+    public void processNextSpellTargetTrigger(GameData gameData) {
+        triggeredAbilityQueueService.processNextSpellTargetTrigger(gameData);
+    }
 }
