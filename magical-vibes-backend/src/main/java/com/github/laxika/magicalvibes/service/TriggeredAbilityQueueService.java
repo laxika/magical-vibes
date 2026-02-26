@@ -4,6 +4,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -64,13 +67,24 @@ public class TriggeredAbilityQueueService {
         while (!gameData.pendingAttackTriggerTargets.isEmpty()) {
             PermanentChoiceContext.AttackTriggerTarget pending = gameData.pendingAttackTriggerTargets.peekFirst();
 
-            // Collect all permanents as valid targets (Argentum Armor targets any permanent)
+            // Collect valid targets, respecting the card's target filter if present
+            TargetFilter targetFilter = pending.sourceCard().getTargetFilter();
+            FilterContext filterCtx = targetFilter != null
+                    ? new FilterContext(gameData, pending.sourceCard().getId(), pending.controllerId())
+                    : null;
+
             List<UUID> validTargets = new ArrayList<>();
             for (UUID pid : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
-                    validTargets.add(p.getId());
+                    if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
+                        if (gameQueryService.matchesPermanentPredicate(p, ppf.predicate(), filterCtx)) {
+                            validTargets.add(p.getId());
+                        }
+                    } else {
+                        validTargets.add(p.getId());
+                    }
                 }
             }
 

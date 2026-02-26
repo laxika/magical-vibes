@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEquipmentUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameQueryService;
@@ -32,6 +33,11 @@ public class PermanentControlTargetValidators {
     public void validateGainControlOfTargetCreatureUntilEndOfTurn(TargetValidationContext ctx) {
         Permanent target = tvs.requireBattlefieldTarget(ctx);
         tvs.requireCreature(ctx, target);
+    }
+
+    @ValidatesTarget(GainControlOfTargetEquipmentUntilEndOfTurnEffect.class)
+    public void validateGainControlOfTargetEquipmentUntilEndOfTurn(TargetValidationContext ctx) {
+        tvs.requireBattlefieldTarget(ctx);
     }
 
     @ValidatesTarget(GainControlOfTargetAuraEffect.class)

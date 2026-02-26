@@ -318,15 +318,23 @@ public class CombatService {
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             if (!attacker.getCard().getEffects(EffectSlot.ON_ATTACK).isEmpty()) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        attacker.getCard(),
-                        playerId,
-                        attacker.getCard().getName() + "'s attack trigger",
-                        new ArrayList<>(attacker.getCard().getEffects(EffectSlot.ON_ATTACK)),
-                        null,
-                        attacker.getId()
-                ));
+                List<CardEffect> effects = new ArrayList<>(attacker.getCard().getEffects(EffectSlot.ON_ATTACK));
+                boolean needsTarget = effects.stream().anyMatch(CardEffect::canTargetPermanent);
+                if (needsTarget) {
+                    gameData.pendingAttackTriggerTargets.add(
+                            new PermanentChoiceContext.AttackTriggerTarget(
+                                    attacker.getCard(), playerId, effects, attacker.getId()));
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            attacker.getCard(),
+                            playerId,
+                            attacker.getCard().getName() + "'s attack trigger",
+                            effects,
+                            null,
+                            attacker.getId()
+                    ));
+                }
                 String triggerLog = attacker.getCard().getName() + "'s attack ability triggers.";
                 gameData.gameLog.add(triggerLog);
                 log.info("Game {} - {} attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());

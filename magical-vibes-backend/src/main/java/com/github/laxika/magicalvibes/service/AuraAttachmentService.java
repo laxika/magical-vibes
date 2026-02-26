@@ -108,6 +108,15 @@ public class AuraAttachmentService {
                     gameData.playerBattlefields.get(ownerId).add(creature);
                     creature.setSummoningSick(true);
 
+                    // Equipment that changes controllers must be unattached (CR 704.5p)
+                    if (creature.getAttachedTo() != null
+                            && creature.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+                        creature.setAttachedTo(null);
+                        String unattachLog = creature.getCard().getName() + " becomes unattached.";
+                        gameBroadcastService.logAndBroadcast(gameData, unattachLog);
+                        log.info("Game {} - {} unattached on control change", gameData.id, creature.getCard().getName());
+                    }
+
                     String ownerName = gameData.playerIdToName.get(ownerId);
                     String logEntry = creature.getCard().getName() + " returns to " + ownerName + "'s control.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenPerEquipmentOnSour
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEquipmentUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
@@ -388,6 +389,31 @@ public class PermanentControlResolutionService {
 
         creatureControlService.stealCreature(gameData, entry.getControllerId(), target);
         gameData.untilEndOfTurnStolenCreatures.add(target.getId());
+    }
+
+    @HandlesEffect(GainControlOfTargetEquipmentUntilEndOfTurnEffect.class)
+    private void resolveGainControlOfTargetEquipmentUntilEndOfTurn(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) return;
+
+        UUID oldController = findControllerId(gameData, target);
+        if (oldController == null || oldController.equals(entry.getControllerId())) {
+            return;
+        }
+
+        // Gain control of the equipment until end of turn
+        creatureControlService.stealCreature(gameData, entry.getControllerId(), target);
+        gameData.untilEndOfTurnStolenCreatures.add(target.getId());
+
+        // Attach it to the source creature
+        Permanent sourceCreature = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (sourceCreature != null) {
+            target.setAttachedTo(sourceCreature.getId());
+            String attachLog = target.getCard().getName() + " is attached to " + sourceCreature.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, attachLog);
+            log.info("Game {} - {} attached to {} via Ogre Geargrabber ability",
+                    gameData.id, target.getCard().getName(), sourceCreature.getCard().getName());
+        }
     }
 
     @HandlesEffect(TargetPlayerGainsControlOfSourceCreatureEffect.class)
