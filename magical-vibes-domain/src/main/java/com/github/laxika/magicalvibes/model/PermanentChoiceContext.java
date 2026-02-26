@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,20 +21,14 @@ public sealed interface PermanentChoiceContext {
 
     record SacrificeCreature(UUID sacrificingPlayerId) implements PermanentChoiceContext {}
 
-    record ActivatedAbilitySacrificeSubtype(UUID activatingPlayerId,
-                                            UUID sourcePermanentId,
-                                            Integer abilityIndex,
-                                            Integer xValue,
-                                            UUID targetPermanentId,
-                                            Zone targetZone,
-                                            CardSubtype subtype) implements PermanentChoiceContext {}
-
-    record ActivatedAbilitySacrificeArtifact(UUID activatingPlayerId,
-                                             UUID sourcePermanentId,
-                                             Integer abilityIndex,
-                                             Integer xValue,
-                                             UUID targetPermanentId,
-                                             Zone targetZone) implements PermanentChoiceContext {}
+    record ActivatedAbilityCostChoice(UUID activatingPlayerId,
+                                      UUID sourcePermanentId,
+                                      Integer abilityIndex,
+                                      Integer xValue,
+                                      UUID targetPermanentId,
+                                      Zone targetZone,
+                                      CardEffect costEffect,
+                                      int remaining) implements PermanentChoiceContext {}
 
     record DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
 
@@ -51,20 +44,4 @@ public sealed interface PermanentChoiceContext {
 
     record BounceOwnPermanentOrSacrificeSelf(UUID controllerId, UUID sourceCardId) implements PermanentChoiceContext {}
 
-    record ActivatedAbilitySacrificeMultiplePermanents(UUID activatingPlayerId,
-                                                       UUID sourcePermanentId,
-                                                       Integer abilityIndex,
-                                                       Integer xValue,
-                                                       UUID targetPermanentId,
-                                                       Zone targetZone,
-                                                       int remaining,
-                                                       PermanentPredicate filter) implements PermanentChoiceContext {}
-
-    record ActivatedAbilityTapCreature(UUID activatingPlayerId,
-                                       UUID sourcePermanentId,
-                                       Integer abilityIndex,
-                                       Integer xValue,
-                                       UUID targetPermanentId,
-                                       Zone targetZone,
-                                       PermanentPredicate predicate) implements PermanentChoiceContext {}
 }

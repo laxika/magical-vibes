@@ -37,8 +37,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCo
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
@@ -50,6 +48,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -380,40 +379,18 @@ public class AbilityActivationService {
         }
 
         boolean hasSacCreatureCost = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeCreatureCost);
-        Optional<SacrificeSubtypeCreatureCost> sacSubtypeCost = abilityEffects.stream()
-                .filter(SacrificeSubtypeCreatureCost.class::isInstance)
-                .map(SacrificeSubtypeCreatureCost.class::cast)
-                .findFirst();
-        boolean hasSacArtifactCost = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeArtifactCost);
-        Optional<SacrificeMultiplePermanentsCost> sacMultiplePermanentsCost = abilityEffects.stream()
-                .filter(SacrificeMultiplePermanentsCost.class::isInstance)
-                .map(SacrificeMultiplePermanentsCost.class::cast)
-                .findFirst();
-        Optional<TapCreatureCost> tapCreatureCost = abilityEffects.stream()
-                .filter(TapCreatureCost.class::isInstance)
-                .map(TapCreatureCost.class::cast)
-                .findFirst();
+        List<PermanentChoiceCostHandler> permanentChoiceCosts = abilityEffects.stream()
+                .map(this::toPermanentChoiceCostHandler)
+                .filter(Objects::nonNull)
+                .toList();
 
         // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
         if (!hasSacCreatureCost) {
             targetLegalityService.validateActivatedAbilityTargeting(
                     gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard(), effectiveXValue);
         }
-        if (sacSubtypeCost.isPresent() && !hasSubtypeCreatureToSacrifice(gameData, playerId, sacSubtypeCost.get())) {
-            throw new IllegalStateException("Must choose a " + sacSubtypeCost.get().subtype().getDisplayName() + " to sacrifice");
-        }
-        if (hasSacArtifactCost && !hasArtifactToSacrifice(gameData, playerId)) {
-            throw new IllegalStateException("No artifact to sacrifice");
-        }
-        if (sacMultiplePermanentsCost.isPresent()) {
-            SacrificeMultiplePermanentsCost multiCost = sacMultiplePermanentsCost.get();
-            long matchingCount = countMatchingPermanents(gameData, playerId, multiCost.filter());
-            if (matchingCount < multiCost.count()) {
-                throw new IllegalStateException("Not enough permanents to sacrifice (need " + multiCost.count() + ", have " + matchingCount + ")");
-            }
-        }
-        if (tapCreatureCost.isPresent() && !hasUntappedMatchingCreature(gameData, playerId, tapCreatureCost.get())) {
-            throw new IllegalStateException("No untapped matching creature to tap");
+        for (PermanentChoiceCostHandler handler : permanentChoiceCosts) {
+            handler.validateCanPay(gameData, playerId);
         }
 
         ExileCardFromGraveyardCost exileGraveyardCost = abilityEffects.stream()
@@ -510,28 +487,9 @@ public class AbilityActivationService {
                     + " (" + permanent.getChargeCounters() + " remaining).";
             gameBroadcastService.logAndBroadcast(gameData, counterLog);
         }
-        if (sacSubtypeCost.isPresent()) {
-            if (handleSubtypeSacrificeCostSelection(gameData, player, permanent, effectiveIndex, effectiveXValue,
-                    targetPermanentId, targetZone, sacSubtypeCost.get())) {
-                return;
-            }
-        }
-        if (hasSacArtifactCost) {
-            if (handleArtifactSacrificeCostSelection(gameData, player, permanent, effectiveIndex, effectiveXValue,
-                    targetPermanentId, targetZone)) {
-                return;
-            }
-        }
-        if (sacMultiplePermanentsCost.isPresent()) {
-            SacrificeMultiplePermanentsCost multiCost = sacMultiplePermanentsCost.get();
-            if (handleMultiplePermanentSacrificeCostSelection(gameData, player, permanent, effectiveIndex, effectiveXValue,
-                    targetPermanentId, targetZone, multiCost.count(), multiCost.filter())) {
-                return;
-            }
-        }
-        if (tapCreatureCost.isPresent()) {
-            if (handleTapCreatureCostSelection(gameData, player, permanent, effectiveIndex, effectiveXValue,
-                    targetPermanentId, targetZone, tapCreatureCost.get())) {
+        for (PermanentChoiceCostHandler handler : permanentChoiceCosts) {
+            if (handlePermanentChoiceCost(gameData, player, permanent, effectiveIndex,
+                    effectiveXValue, targetPermanentId, targetZone, handler)) {
                 return;
             }
         }
@@ -569,394 +527,224 @@ public class AbilityActivationService {
                 effectiveXValue, targetPermanentId, targetZone, hasSacCreatureCost, effectiveIndex);
     }
 
-    /**
-     * Callback for when a player has chosen which creature of a specific subtype to sacrifice as an
-     * activation cost (e.g. "Sacrifice a Goblin"). Validates the choice, sacrifices the creature,
-     * and completes the ability activation.
-     *
-     * @param gameData             the current game state
-     * @param player               the player who chose the creature
-     * @param context              the stored context from the interactive prompt, containing the source
-     *                             permanent, ability index, and required subtype
-     * @param sacrificedPermanentId the ID of the creature the player chose to sacrifice
-     * @throws IllegalStateException if the source permanent no longer exists, the ability is invalid,
-     *                               or the chosen creature is not a valid sacrifice target
-     */
-    public void completeActivatedAbilitySubtypeSacrificeChoice(GameData gameData,
-                                                               Player player,
-                                                               PermanentChoiceContext.ActivatedAbilitySacrificeSubtype context,
-                                                               UUID sacrificedPermanentId) {
-        UUID playerId = player.getId();
-        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
-        if (sourcePermanent == null) {
-            throw new IllegalStateException("Source permanent no longer exists");
-        }
+    // --- Permanent-choice cost strategy ---
 
-        int effectiveIndex = effectiveAbilityIndex(context.abilityIndex());
-        ActivatedAbility ability = resolveAbility(gameData, sourcePermanent, context.abilityIndex());
-        List<CardEffect> abilityEffects = ability.getEffects();
-        boolean hasSubtypeCost = abilityEffects.stream()
-                .filter(SacrificeSubtypeCreatureCost.class::isInstance)
-                .map(SacrificeSubtypeCreatureCost.class::cast)
-                .anyMatch(c -> c.subtype() == context.subtype());
-        if (!hasSubtypeCost) {
-            throw new IllegalStateException("Activated ability no longer has the required sacrifice cost");
-        }
-
-        Permanent sacrificed = gameQueryService.findPermanentById(gameData, sacrificedPermanentId);
-        if (sacrificed == null) {
-            throw new IllegalStateException("Invalid sacrifice target");
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null || !battlefield.contains(sacrificed)) {
-            throw new IllegalStateException("Must sacrifice a creature you control");
-        }
-        if (!gameQueryService.isCreature(gameData, sacrificed)) {
-            throw new IllegalStateException("Must sacrifice a creature");
-        }
-        if (!sacrificed.getCard().getSubtypes().contains(context.subtype())) {
-            throw new IllegalStateException("Must sacrifice a " + context.subtype().getDisplayName());
-        }
-
-        sacrificePermanentAsCost(gameData, player, sacrificed);
-        completeActivationAndRecord(gameData, player, sourcePermanent, ability, abilityEffects,
-                context.xValue() != null ? context.xValue() : 0, context.targetPermanentId(), context.targetZone(), false, effectiveIndex);
+    private interface PermanentChoiceCostHandler {
+        CardEffect costEffect();
+        void validateCanPay(GameData gameData, UUID playerId);
+        List<UUID> getValidChoiceIds(GameData gameData, UUID playerId);
+        void validateAndPay(GameData gameData, Player player, Permanent chosen);
+        String getPromptMessage(int remaining);
+        int requiredCount();
     }
 
-    private boolean handleSubtypeSacrificeCostSelection(GameData gameData,
-                                                        Player player,
-                                                        Permanent sourcePermanent,
-                                                        int abilityIndex,
-                                                        int xValue,
-                                                        UUID targetPermanentId,
-                                                        Zone targetZone,
-                                                        SacrificeSubtypeCreatureCost subtypeCost) {
-        UUID playerId = player.getId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            throw new IllegalStateException("Invalid battlefield for player");
-        }
+    private class SubtypeSacrificeCostHandler implements PermanentChoiceCostHandler {
+        private final SacrificeSubtypeCreatureCost cost;
+        SubtypeSacrificeCostHandler(SacrificeSubtypeCreatureCost cost) { this.cost = cost; }
 
-        List<UUID> validSacrificeIds = battlefield.stream()
-                .filter(p -> gameQueryService.isCreature(gameData, p))
-                .filter(p -> p.getCard().getSubtypes().contains(subtypeCost.subtype()))
-                .map(Permanent::getId)
-                .toList();
-        if (validSacrificeIds.isEmpty()) {
-            throw new IllegalStateException("Must choose a " + subtypeCost.subtype().getDisplayName() + " to sacrifice");
-        }
-        if (validSacrificeIds.size() == 1) {
-            Permanent onlyChoice = gameQueryService.findPermanentById(gameData, validSacrificeIds.getFirst());
-            if (onlyChoice != null) {
-                sacrificePermanentAsCost(gameData, player, onlyChoice);
+        @Override public CardEffect costEffect() { return cost; }
+        @Override public int requiredCount() { return 1; }
+
+        @Override
+        public void validateCanPay(GameData gameData, UUID playerId) {
+            if (getValidChoiceIds(gameData, playerId).isEmpty()) {
+                throw new IllegalStateException("Must choose a " + cost.subtype().getDisplayName() + " to sacrifice");
             }
-            return false;
         }
 
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilitySacrificeSubtype(
-                playerId,
-                sourcePermanent.getId(),
-                abilityIndex,
-                xValue,
-                targetPermanentId,
-                targetZone,
-                subtypeCost.subtype()
-        ));
-        playerInputService.beginPermanentChoice(gameData, playerId, validSacrificeIds,
-                "Choose a " + subtypeCost.subtype().getDisplayName() + " to sacrifice.");
-        gameBroadcastService.broadcastGameState(gameData);
-        return true;
-    }
-
-    private boolean hasSubtypeCreatureToSacrifice(GameData gameData, UUID playerId, SacrificeSubtypeCreatureCost subtypeCost) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return false;
-        }
-        return battlefield.stream()
-                .anyMatch(p -> gameQueryService.isCreature(gameData, p)
-                        && p.getCard().getSubtypes().contains(subtypeCost.subtype()));
-    }
-
-    private boolean hasArtifactToSacrifice(GameData gameData, UUID playerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return false;
-        }
-        return battlefield.stream().anyMatch(gameQueryService::isArtifact);
-    }
-
-    private boolean hasUntappedMatchingCreature(GameData gameData, UUID playerId, TapCreatureCost tapCost) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return false;
-        }
-        FilterContext filterContext = FilterContext.of(gameData);
-        return battlefield.stream()
-                .anyMatch(p -> gameQueryService.isCreature(gameData, p)
-                        && !p.isTapped()
-                        && gameQueryService.matchesPermanentPredicate(p, tapCost.predicate(), filterContext));
-    }
-
-    private boolean handleTapCreatureCostSelection(GameData gameData,
-                                                    Player player,
-                                                    Permanent sourcePermanent,
-                                                    int abilityIndex,
-                                                    int xValue,
-                                                    UUID targetPermanentId,
-                                                    Zone targetZone,
-                                                    TapCreatureCost tapCost) {
-        UUID playerId = player.getId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            throw new IllegalStateException("No untapped creature to tap");
-        }
-
-        FilterContext filterContext = FilterContext.of(gameData);
-        List<UUID> validTapIds = battlefield.stream()
-                .filter(p -> gameQueryService.isCreature(gameData, p))
-                .filter(p -> !p.isTapped())
-                .filter(p -> gameQueryService.matchesPermanentPredicate(p, tapCost.predicate(), filterContext))
-                .map(Permanent::getId)
-                .toList();
-        if (validTapIds.isEmpty()) {
-            throw new IllegalStateException("No untapped matching creature to tap");
-        }
-        if (validTapIds.size() == 1) {
-            Permanent onlyChoice = gameQueryService.findPermanentById(gameData, validTapIds.getFirst());
-            if (onlyChoice != null) {
-                tapCreatureAsCost(gameData, player, onlyChoice);
-            }
-            return false;
-        }
-
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilityTapCreature(
-                playerId,
-                sourcePermanent.getId(),
-                abilityIndex,
-                xValue,
-                targetPermanentId,
-                targetZone,
-                tapCost.predicate()
-        ));
-        playerInputService.beginPermanentChoice(gameData, playerId, validTapIds,
-                "Choose an untapped creature to tap.");
-        gameBroadcastService.broadcastGameState(gameData);
-        return true;
-    }
-
-    public void completeActivatedAbilityTapCreatureChoice(GameData gameData,
-                                                           Player player,
-                                                           PermanentChoiceContext.ActivatedAbilityTapCreature context,
-                                                           UUID tappedPermanentId) {
-        UUID playerId = player.getId();
-        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
-        if (sourcePermanent == null) {
-            throw new IllegalStateException("Source permanent no longer exists");
-        }
-
-        List<ActivatedAbility> ownAbilities = sourcePermanent.getCard().getActivatedAbilities();
-        List<ActivatedAbility> grantedAbilities = gameQueryService.computeStaticBonus(gameData, sourcePermanent).grantedActivatedAbilities();
-        List<ActivatedAbility> abilities = new ArrayList<>(ownAbilities);
-        abilities.addAll(grantedAbilities);
-        int effectiveIndex = context.abilityIndex() != null ? context.abilityIndex() : 0;
-        if (effectiveIndex < 0 || effectiveIndex >= abilities.size()) {
-            throw new IllegalStateException("Invalid ability index");
-        }
-        ActivatedAbility ability = abilities.get(effectiveIndex);
-        List<CardEffect> abilityEffects = ability.getEffects();
-
-        Permanent tapped = gameQueryService.findPermanentById(gameData, tappedPermanentId);
-        if (tapped == null) {
-            throw new IllegalStateException("Invalid tap target");
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null || !battlefield.contains(tapped)) {
-            throw new IllegalStateException("Must tap a creature you control");
-        }
-        if (!gameQueryService.isCreature(gameData, tapped)) {
-            throw new IllegalStateException("Must tap a creature");
-        }
-        if (tapped.isTapped()) {
-            throw new IllegalStateException("Creature is already tapped");
-        }
-        if (!gameQueryService.matchesPermanentPredicate(gameData, tapped, context.predicate())) {
-            throw new IllegalStateException("Creature does not match the required predicate");
-        }
-
-        tapCreatureAsCost(gameData, player, tapped);
-        activatedAbilityExecutionService.completeActivationAfterCosts(
-                gameData, player, sourcePermanent, ability, abilityEffects,
-                context.xValue() != null ? context.xValue() : 0, context.targetPermanentId(), context.targetZone(), false);
-        recordAbilityActivationUse(gameData, sourcePermanent, effectiveIndex);
-    }
-
-    private void tapCreatureAsCost(GameData gameData, Player player, Permanent tapTarget) {
-        tapTarget.tap();
-        String tapLog = player.getUsername() + " taps " + tapTarget.getCard().getName() + " as a cost.";
-        gameBroadcastService.logAndBroadcast(gameData, tapLog);
-    }
-
-    private boolean handleArtifactSacrificeCostSelection(GameData gameData,
-                                                         Player player,
-                                                         Permanent sourcePermanent,
-                                                         int abilityIndex,
-                                                         int xValue,
-                                                         UUID targetPermanentId,
-                                                         Zone targetZone) {
-        UUID playerId = player.getId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            throw new IllegalStateException("No artifact to sacrifice");
-        }
-
-        List<UUID> validSacrificeIds = battlefield.stream()
-                .filter(gameQueryService::isArtifact)
-                .map(Permanent::getId)
-                .toList();
-        if (validSacrificeIds.isEmpty()) {
-            throw new IllegalStateException("No artifact to sacrifice");
-        }
-        if (validSacrificeIds.size() == 1) {
-            Permanent onlyChoice = gameQueryService.findPermanentById(gameData, validSacrificeIds.getFirst());
-            if (onlyChoice != null) {
-                sacrificePermanentAsCost(gameData, player, onlyChoice);
-            }
-            return false;
-        }
-
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilitySacrificeArtifact(
-                playerId,
-                sourcePermanent.getId(),
-                abilityIndex,
-                xValue,
-                targetPermanentId,
-                targetZone
-        ));
-        playerInputService.beginPermanentChoice(gameData, playerId, validSacrificeIds,
-                "Choose an artifact to sacrifice.");
-        gameBroadcastService.broadcastGameState(gameData);
-        return true;
-    }
-
-    /**
-     * Callback for when a player has chosen which artifact to sacrifice as an activation cost
-     * (e.g. "Sacrifice an artifact"). Validates the choice, sacrifices the artifact,
-     * and completes the ability activation.
-     *
-     * @param gameData             the current game state
-     * @param player               the player who chose the artifact
-     * @param context              the stored context from the interactive prompt, containing the source
-     *                             permanent and ability index
-     * @param sacrificedPermanentId the ID of the artifact the player chose to sacrifice
-     * @throws IllegalStateException if the source permanent no longer exists, the ability is invalid,
-     *                               or the chosen permanent is not a valid artifact to sacrifice
-     */
-    public void completeActivatedAbilityArtifactSacrificeChoice(GameData gameData,
-                                                                Player player,
-                                                                PermanentChoiceContext.ActivatedAbilitySacrificeArtifact context,
-                                                                UUID sacrificedPermanentId) {
-        UUID playerId = player.getId();
-        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
-        if (sourcePermanent == null) {
-            throw new IllegalStateException("Source permanent no longer exists");
-        }
-
-        int effectiveIndex = effectiveAbilityIndex(context.abilityIndex());
-        ActivatedAbility ability = resolveAbility(gameData, sourcePermanent, context.abilityIndex());
-        List<CardEffect> abilityEffects = ability.getEffects();
-        boolean hasArtifactCost = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeArtifactCost);
-        if (!hasArtifactCost) {
-            throw new IllegalStateException("Activated ability no longer has the required sacrifice cost");
-        }
-
-        Permanent sacrificed = gameQueryService.findPermanentById(gameData, sacrificedPermanentId);
-        if (sacrificed == null) {
-            throw new IllegalStateException("Invalid sacrifice target");
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null || !battlefield.contains(sacrificed)) {
-            throw new IllegalStateException("Must sacrifice an artifact you control");
-        }
-        if (!gameQueryService.isArtifact(sacrificed)) {
-            throw new IllegalStateException("Must sacrifice an artifact");
-        }
-
-        sacrificePermanentAsCost(gameData, player, sacrificed);
-        completeActivationAndRecord(gameData, player, sourcePermanent, ability, abilityEffects,
-                context.xValue() != null ? context.xValue() : 0, context.targetPermanentId(), context.targetZone(), false, effectiveIndex);
-    }
-
-    private boolean handleMultiplePermanentSacrificeCostSelection(GameData gameData,
-                                                                   Player player,
-                                                                   Permanent sourcePermanent,
-                                                                   int abilityIndex,
-                                                                   int xValue,
-                                                                   UUID targetPermanentId,
-                                                                   Zone targetZone,
-                                                                   int totalRequired,
-                                                                   PermanentPredicate filter) {
-        UUID playerId = player.getId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            throw new IllegalStateException("Not enough permanents to sacrifice");
-        }
-
-        List<UUID> validSacrificeIds = battlefield.stream()
-                .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, filter))
-                .map(Permanent::getId)
-                .toList();
-        if (validSacrificeIds.size() < totalRequired) {
-            throw new IllegalStateException("Not enough permanents to sacrifice");
-        }
-        if (validSacrificeIds.size() == totalRequired) {
-            // Auto-sacrifice all matching permanents when exactly enough
-            List<Permanent> toSacrifice = battlefield.stream()
-                    .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, filter))
+        @Override
+        public List<UUID> getValidChoiceIds(GameData gameData, UUID playerId) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) return List.of();
+            return battlefield.stream()
+                    .filter(p -> gameQueryService.isCreature(gameData, p))
+                    .filter(p -> p.getCard().getSubtypes().contains(cost.subtype()))
+                    .map(Permanent::getId)
                     .toList();
-            for (Permanent perm : toSacrifice) {
-                sacrificePermanentAsCost(gameData, player, perm);
+        }
+
+        @Override
+        public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
+            if (!gameQueryService.isCreature(gameData, chosen)) {
+                throw new IllegalStateException("Must sacrifice a creature");
+            }
+            if (!chosen.getCard().getSubtypes().contains(cost.subtype())) {
+                throw new IllegalStateException("Must sacrifice a " + cost.subtype().getDisplayName());
+            }
+            sacrificePermanentAsCost(gameData, player, chosen);
+        }
+
+        @Override
+        public String getPromptMessage(int remaining) {
+            return "Choose a " + cost.subtype().getDisplayName() + " to sacrifice.";
+        }
+    }
+
+    private class ArtifactSacrificeCostHandler implements PermanentChoiceCostHandler {
+        private final SacrificeArtifactCost cost;
+        ArtifactSacrificeCostHandler(SacrificeArtifactCost cost) { this.cost = cost; }
+
+        @Override public CardEffect costEffect() { return cost; }
+        @Override public int requiredCount() { return 1; }
+
+        @Override
+        public void validateCanPay(GameData gameData, UUID playerId) {
+            if (getValidChoiceIds(gameData, playerId).isEmpty()) {
+                throw new IllegalStateException("No artifact to sacrifice");
+            }
+        }
+
+        @Override
+        public List<UUID> getValidChoiceIds(GameData gameData, UUID playerId) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) return List.of();
+            return battlefield.stream()
+                    .filter(gameQueryService::isArtifact)
+                    .map(Permanent::getId)
+                    .toList();
+        }
+
+        @Override
+        public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
+            if (!gameQueryService.isArtifact(chosen)) {
+                throw new IllegalStateException("Must sacrifice an artifact");
+            }
+            sacrificePermanentAsCost(gameData, player, chosen);
+        }
+
+        @Override
+        public String getPromptMessage(int remaining) {
+            return "Choose an artifact to sacrifice.";
+        }
+    }
+
+    private class MultiplePermanentSacrificeCostHandler implements PermanentChoiceCostHandler {
+        private final SacrificeMultiplePermanentsCost cost;
+        MultiplePermanentSacrificeCostHandler(SacrificeMultiplePermanentsCost cost) { this.cost = cost; }
+
+        @Override public CardEffect costEffect() { return cost; }
+        @Override public int requiredCount() { return cost.count(); }
+
+        @Override
+        public void validateCanPay(GameData gameData, UUID playerId) {
+            List<UUID> validIds = getValidChoiceIds(gameData, playerId);
+            if (validIds.size() < cost.count()) {
+                throw new IllegalStateException("Not enough permanents to sacrifice (need " + cost.count() + ", have " + validIds.size() + ")");
+            }
+        }
+
+        @Override
+        public List<UUID> getValidChoiceIds(GameData gameData, UUID playerId) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) return List.of();
+            return battlefield.stream()
+                    .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                    .map(Permanent::getId)
+                    .toList();
+        }
+
+        @Override
+        public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
+            if (!gameQueryService.matchesPermanentPredicate(gameData, chosen, cost.filter())) {
+                throw new IllegalStateException("Must sacrifice a matching permanent");
+            }
+            sacrificePermanentAsCost(gameData, player, chosen);
+        }
+
+        @Override
+        public String getPromptMessage(int remaining) {
+            return "Choose a permanent to sacrifice (" + remaining + " remaining).";
+        }
+    }
+
+    private class TapCreatureCostHandler implements PermanentChoiceCostHandler {
+        private final TapCreatureCost cost;
+        TapCreatureCostHandler(TapCreatureCost cost) { this.cost = cost; }
+
+        @Override public CardEffect costEffect() { return cost; }
+        @Override public int requiredCount() { return 1; }
+
+        @Override
+        public void validateCanPay(GameData gameData, UUID playerId) {
+            if (getValidChoiceIds(gameData, playerId).isEmpty()) {
+                throw new IllegalStateException("No untapped matching creature to tap");
+            }
+        }
+
+        @Override
+        public List<UUID> getValidChoiceIds(GameData gameData, UUID playerId) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) return List.of();
+            return battlefield.stream()
+                    .filter(p -> gameQueryService.isCreature(gameData, p))
+                    .filter(p -> !p.isTapped())
+                    .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, cost.predicate()))
+                    .map(Permanent::getId)
+                    .toList();
+        }
+
+        @Override
+        public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
+            if (!gameQueryService.isCreature(gameData, chosen)) {
+                throw new IllegalStateException("Must tap a creature");
+            }
+            if (chosen.isTapped()) {
+                throw new IllegalStateException("Creature is already tapped");
+            }
+            if (!gameQueryService.matchesPermanentPredicate(gameData, chosen, cost.predicate())) {
+                throw new IllegalStateException("Creature does not match the required predicate");
+            }
+            chosen.tap();
+            String tapLog = player.getUsername() + " taps " + chosen.getCard().getName() + " as a cost.";
+            gameBroadcastService.logAndBroadcast(gameData, tapLog);
+        }
+
+        @Override
+        public String getPromptMessage(int remaining) {
+            return "Choose an untapped creature to tap.";
+        }
+    }
+
+    private PermanentChoiceCostHandler toPermanentChoiceCostHandler(CardEffect effect) {
+        if (effect instanceof SacrificeSubtypeCreatureCost c) return new SubtypeSacrificeCostHandler(c);
+        if (effect instanceof SacrificeArtifactCost c) return new ArtifactSacrificeCostHandler(c);
+        if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c);
+        if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c);
+        return null;
+    }
+
+    private boolean handlePermanentChoiceCost(GameData gameData, Player player, Permanent source,
+                                               int abilityIndex, int xValue, UUID targetPermanentId, Zone targetZone,
+                                               PermanentChoiceCostHandler handler) {
+        List<UUID> validIds = handler.getValidChoiceIds(gameData, player.getId());
+        int required = handler.requiredCount();
+        if (validIds.size() <= required) {
+            for (UUID id : validIds) {
+                Permanent chosen = gameQueryService.findPermanentById(gameData, id);
+                if (chosen != null) {
+                    handler.validateAndPay(gameData, player, chosen);
+                }
             }
             return false;
         }
-
-        // More matching permanents than needed — prompt user to choose one at a time
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilitySacrificeMultiplePermanents(
-                playerId,
-                sourcePermanent.getId(),
-                abilityIndex,
-                xValue,
-                targetPermanentId,
-                targetZone,
-                totalRequired,
-                filter
-        ));
-        playerInputService.beginPermanentChoice(gameData, playerId, validSacrificeIds,
-                "Choose a permanent to sacrifice (" + totalRequired + " remaining).");
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilityCostChoice(
+                player.getId(), source.getId(), abilityIndex, xValue, targetPermanentId, targetZone,
+                handler.costEffect(), required));
+        playerInputService.beginPermanentChoice(gameData, player.getId(), validIds,
+                handler.getPromptMessage(required));
         gameBroadcastService.broadcastGameState(gameData);
         return true;
     }
 
     /**
-     * Callback for when a player has chosen one permanent to sacrifice as part of a multi-permanent sacrifice
-     * cost (e.g. "Sacrifice two creatures"). Sacrifices the chosen permanent, then either prompts for the
-     * next choice, auto-sacrifices remaining if exactly enough match, or completes the ability activation
-     * once all required sacrifices are done.
-     *
-     * @param gameData             the current game state
-     * @param player               the player who chose the permanent
-     * @param context              the stored context containing the source permanent, ability index,
-     *                             remaining sacrifice count, and the predicate filter for valid targets
-     * @param sacrificedPermanentId the ID of the permanent the player chose to sacrifice
-     * @throws IllegalStateException if the source permanent no longer exists, the chosen permanent is
-     *                               invalid, or not enough matching permanents remain
+     * Callback for when a player has chosen a permanent for an activated ability's permanent-choice cost
+     * (sacrifice subtype, sacrifice artifact, sacrifice multiple, or tap creature). Validates the choice,
+     * pays the cost, and either re-prompts for additional choices or completes the ability activation.
      */
-    public void completeActivatedAbilityMultiplePermanentSacrificeChoice(GameData gameData,
-                                                                          Player player,
-                                                                          PermanentChoiceContext.ActivatedAbilitySacrificeMultiplePermanents context,
-                                                                          UUID sacrificedPermanentId) {
+    public void completeActivatedAbilityCostChoice(GameData gameData, Player player,
+                                                    PermanentChoiceContext.ActivatedAbilityCostChoice context,
+                                                    UUID chosenPermanentId) {
         UUID playerId = player.getId();
-        PermanentPredicate filter = context.filter();
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
         if (sourcePermanent == null) {
             throw new IllegalStateException("Source permanent no longer exists");
@@ -965,68 +753,52 @@ public class AbilityActivationService {
         int effectiveIndex = effectiveAbilityIndex(context.abilityIndex());
         ActivatedAbility ability = resolveAbility(gameData, sourcePermanent, context.abilityIndex());
         List<CardEffect> abilityEffects = ability.getEffects();
+        if (!abilityEffects.contains(context.costEffect())) {
+            throw new IllegalStateException("Activated ability no longer has the required cost");
+        }
 
-        Permanent sacrificed = gameQueryService.findPermanentById(gameData, sacrificedPermanentId);
-        if (sacrificed == null) {
-            throw new IllegalStateException("Invalid sacrifice target");
+        PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(context.costEffect());
+        if (handler == null) {
+            throw new IllegalStateException("Unknown cost effect type");
+        }
+
+        Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);
+        if (chosen == null) {
+            throw new IllegalStateException("Invalid target permanent");
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null || !battlefield.contains(sacrificed)) {
-            throw new IllegalStateException("Must sacrifice a permanent you control");
-        }
-        if (!gameQueryService.matchesPermanentPredicate(gameData, sacrificed, filter)) {
-            throw new IllegalStateException("Must sacrifice a matching permanent");
+        if (battlefield == null || !battlefield.contains(chosen)) {
+            throw new IllegalStateException("Must choose a permanent you control");
         }
 
-        sacrificePermanentAsCost(gameData, player, sacrificed);
+        handler.validateAndPay(gameData, player, chosen);
 
         int remaining = context.remaining() - 1;
         if (remaining > 0) {
-            // Still more permanents to sacrifice — prompt again
-            List<UUID> validSacrificeIds = battlefield.stream()
-                    .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, filter))
-                    .map(Permanent::getId)
-                    .toList();
-            if (validSacrificeIds.size() < remaining) {
-                throw new IllegalStateException("Not enough permanents remaining to sacrifice");
+            List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
+            if (validIds.size() < remaining) {
+                throw new IllegalStateException("Not enough permanents remaining");
             }
-            if (validSacrificeIds.size() == remaining) {
-                // Auto-sacrifice remaining matching permanents
-                List<Permanent> toSacrifice = battlefield.stream()
-                        .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, filter))
-                        .toList();
-                for (Permanent perm : toSacrifice) {
-                    sacrificePermanentAsCost(gameData, player, perm);
+            if (validIds.size() == remaining) {
+                for (UUID id : validIds) {
+                    Permanent autoPay = gameQueryService.findPermanentById(gameData, id);
+                    if (autoPay != null) {
+                        handler.validateAndPay(gameData, player, autoPay);
+                    }
                 }
             } else {
-                gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilitySacrificeMultiplePermanents(
-                        playerId,
-                        context.sourcePermanentId(),
-                        context.abilityIndex(),
-                        context.xValue(),
-                        context.targetPermanentId(),
-                        context.targetZone(),
-                        remaining,
-                        filter
-                ));
-                playerInputService.beginPermanentChoice(gameData, playerId, validSacrificeIds,
-                        "Choose a permanent to sacrifice (" + remaining + " remaining).");
+                gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilityCostChoice(
+                        playerId, context.sourcePermanentId(), context.abilityIndex(), context.xValue(),
+                        context.targetPermanentId(), context.targetZone(), context.costEffect(), remaining));
+                playerInputService.beginPermanentChoice(gameData, playerId, validIds,
+                        handler.getPromptMessage(remaining));
                 gameBroadcastService.broadcastGameState(gameData);
                 return;
             }
         }
 
-        // All sacrifices complete — put ability on stack
         completeActivationAndRecord(gameData, player, sourcePermanent, ability, abilityEffects,
                 context.xValue() != null ? context.xValue() : 0, context.targetPermanentId(), context.targetZone(), false, effectiveIndex);
-    }
-
-    private long countMatchingPermanents(GameData gameData, UUID playerId, PermanentPredicate filter) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return 0;
-        }
-        return battlefield.stream().filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, filter)).count();
     }
 
     private ActivatedAbility resolveAbility(GameData gameData, Permanent permanent, Integer abilityIndex) {
