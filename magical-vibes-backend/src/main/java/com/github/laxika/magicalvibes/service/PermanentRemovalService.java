@@ -32,6 +32,7 @@ public class PermanentRemovalService {
         UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
+        boolean wasArtifact = gameQueryService.isArtifact(target);
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
@@ -43,6 +44,9 @@ public class PermanentRemovalService {
                     gameData.creatureDeathCountThisTurn.merge(playerId, 1, Integer::sum);
                     gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
                     gameHelper.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());
+                }
+                if (wasArtifact) {
+                    gameHelper.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData);
                 }
                 handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
                 return true;
