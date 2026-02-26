@@ -411,7 +411,7 @@ Pass `null` as filter to allow any card.
 | `DoesntUntapDuringUntapStepEffect` | `()` | this permanent doesn't untap during untap step (static) |
 | `AttachedCreatureDoesntUntapEffect` | `()` | attached creature (aura or equipment) doesn't untap during untap step (static) |
 | `UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect` | `(TurnStep step)` | untap all your permanents during each other player's step |
-| `UntapEachOtherCreatureYouControlEffect` | `()` | untap each other creature you control (ON_ATTACK trigger) |
+| `UntapEachOtherCreatureYouControlEffect` | `(PermanentPredicate filter)` | untap each other creature you control matching filter; `()` no-arg overload untaps all (ON_ATTACK trigger or activated ability) |
 | `UnattachEquipmentFromTargetPermanentsEffect` | `()` | unattach all equipment from target permanents (multi-target) |
 
 ## Control / steal

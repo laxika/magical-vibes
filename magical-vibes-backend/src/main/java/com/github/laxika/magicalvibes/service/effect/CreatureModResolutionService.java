@@ -549,16 +549,22 @@ public class CreatureModResolutionService {
     }
 
     @HandlesEffect(UntapEachOtherCreatureYouControlEffect.class)
-    private void resolveUntapEachOtherCreatureYouControl(GameData gameData, StackEntry entry) {
+    private void resolveUntapEachOtherCreatureYouControl(GameData gameData, StackEntry entry, UntapEachOtherCreatureYouControlEffect effect) {
         UUID controllerId = entry.getControllerId();
         UUID sourceId = entry.getSourcePermanentId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return;
 
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                .withSourceControllerId(entry.getControllerId());
+
         int count = 0;
         for (Permanent p : battlefield) {
             if (p.getId().equals(sourceId)) continue;
             if (!gameQueryService.isCreature(gameData, p)) continue;
+            if (effect.filter() != null
+                    && !gameQueryService.matchesPermanentPredicate(p, effect.filter(), filterContext)) continue;
             if (!p.isTapped()) continue;
 
             p.untap();
