@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEff
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
@@ -633,6 +634,37 @@ public class DamageResolutionService {
         } else {
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
             dealDamageToPlayer(gameData, entry, entry.getControllerId(), rawDamage);
+        }
+
+        gameHelper.checkWinCondition(gameData);
+    }
+
+    @HandlesEffect(DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect.class)
+    void resolveDealDamageToEachOpponentEqualToCardsDrawnThisTurn(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        String cardName = entry.getCard().getName();
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) continue;
+
+            int cardsDrawn = gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0);
+            if (cardsDrawn <= 0) {
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " has drawn no cards this turn — no damage from " + cardName + ".");
+                log.info("Game {} - {} drawn 0 cards this turn, no damage from {}",
+                        gameData.id, playerName, cardName);
+                continue;
+            }
+
+            if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        cardName + "'s damage to " + playerName + " is prevented.");
+            } else {
+                int rawDamage = gameQueryService.applyDamageMultiplier(gameData, cardsDrawn);
+                dealDamageToPlayer(gameData, entry, playerId, rawDamage);
+            }
         }
 
         gameHelper.checkWinCondition(gameData);

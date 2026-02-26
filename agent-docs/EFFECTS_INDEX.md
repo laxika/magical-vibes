@@ -60,6 +60,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect` | `(CardSubtype subtype)` | deal damage to target creature equal to number of controlled permanents of subtype |
 | `DealDamageIfFewCardsInHandEffect` | `(int maxCards, int damage)` | deal N damage to target player if they have maxCards or fewer in hand |
 | `DealDamageOnLandTapEffect` | `(int damage)` | deal N damage to a player whenever they tap a land (Manabarbs-style) |
+| `DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect` | `()` | deal damage to each opponent equal to the number of cards that player has drawn this turn |
 | `DealOrderedDamageToAnyTargetsEffect` | `(List<Integer> damageAmounts)` | deal different amounts to multiple targets (e.g. 3 then 1) |
 | `DealXDamageToAnyTargetEffect` | `()` | deal X damage to any target (X spell) |
 | `DealXDamageToAnyTargetAndGainXLifeEffect` | `()` | deal X damage and gain X life (X spell) |
@@ -236,6 +237,7 @@ Pass `null` as filter to allow any card.
 | `RevealOpponentHandsEffect` | `()` | reveal all opponents' hands |
 | `HeadGamesEffect` | `()` | exchange target player's hand with cards from your library (Head Games) |
 | `RedirectDrawsEffect` | `()` | redirect opponent's draws to controller (static, e.g. Plagiarize-style) |
+| `ShuffleHandIntoLibraryAndDrawEffect` | `()` | each player shuffles cards from their hand into their library, then draws that many cards (wheel effect) |
 
 ## Library manipulation
 

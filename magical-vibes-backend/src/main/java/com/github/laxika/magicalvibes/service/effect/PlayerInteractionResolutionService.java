@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleHandIntoLibraryAndDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -43,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -75,6 +77,46 @@ public class PlayerInteractionResolutionService {
     @HandlesEffect(DrawCardEffect.class)
     private void resolveDrawCards(GameData gameData, StackEntry entry, DrawCardEffect effect) {
         applyDrawCards(gameData, entry.getControllerId(), effect.amount());
+    }
+
+    @HandlesEffect(ShuffleHandIntoLibraryAndDrawEffect.class)
+    private void resolveShuffleHandIntoLibraryAndDraw(GameData gameData, StackEntry entry) {
+        String cardName = entry.getCard().getName();
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> hand = gameData.playerHands.get(playerId);
+            String playerName = gameData.playerIdToName.get(playerId);
+
+            if (hand == null || hand.isEmpty()) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " has no cards in hand to shuffle.");
+                log.info("Game {} - {} has no cards in hand for {}", gameData.id, playerName, cardName);
+                continue;
+            }
+
+            int handSize = hand.size();
+
+            // Shuffle hand into library
+            List<Card> deck = gameData.playerDecks.get(playerId);
+            deck.addAll(hand);
+            hand.clear();
+            Collections.shuffle(deck);
+
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " shuffles " + handSize + " card" + (handSize != 1 ? "s" : "")
+                            + " from hand into their library.");
+            log.info("Game {} - {} shuffles {} cards from hand into library ({})",
+                    gameData.id, playerName, handSize, cardName);
+
+            // Draw that many cards
+            for (int i = 0; i < handSize; i++) {
+                gameHelper.resolveDrawCard(gameData, playerId);
+            }
+
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " draws " + handSize + " card" + (handSize != 1 ? "s" : "") + ".");
+            log.info("Game {} - {} draws {} cards ({})", gameData.id, playerName, handSize, cardName);
+        }
     }
 
     @HandlesEffect(DrawCardsEqualToChargeCountersOnSourceEffect.class)

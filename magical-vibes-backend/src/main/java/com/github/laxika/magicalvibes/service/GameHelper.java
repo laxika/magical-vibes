@@ -1147,6 +1147,9 @@ public class GameHelper {
         Card drawn = deck.removeFirst();
         hand.add(drawn);
 
+        // Track cards drawn this turn (for Molten Psyche, etc.)
+        gameData.cardsDrawnThisTurn.merge(playerId, 1, Integer::sum);
+
         String logEntry = gameData.playerIdToName.get(playerId) + " draws a card.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} draws a card from effect", gameData.id, gameData.playerIdToName.get(playerId));

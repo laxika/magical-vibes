@@ -94,6 +94,9 @@ public class GameData {
     public boolean pendingAwakeningCounterPlacement;
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
 
+    /** Tracks how many cards each player has drawn this turn. */
+    public final Map<UUID, Integer> cardsDrawnThisTurn = new ConcurrentHashMap<>();
+
     /** Tracks which Leonin Arbiter permanent IDs each player has paid {2} for this turn. */
     public final Map<UUID, Set<UUID>> paidSearchTaxPermanentIds = new ConcurrentHashMap<>();
 
@@ -202,6 +205,7 @@ public class GameData {
         copy.playerDamagePreventionShields.putAll(this.playerDamagePreventionShields);
         copy.stolenCreatures.putAll(this.stolenCreatures);
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
+        copy.cardsDrawnThisTurn.putAll(this.cardsDrawnThisTurn);
 
         // --- Map<UUID, Set<TurnStep>> ---
         this.playerAutoStopSteps.forEach((k, v) -> copy.playerAutoStopSteps.put(k, ConcurrentHashMap.newKeySet()));
