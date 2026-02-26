@@ -53,6 +53,18 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Handles activation and cost payment for activated abilities and tap/sacrifice abilities on permanents.
+ *
+ * <p>This service implements the MTG activated ability activation sequence (CR 602.2): declaring the ability,
+ * choosing targets, paying costs (mana, tap, sacrifice, discard, counter removal), and placing the ability
+ * on the stack. It also enforces activation restrictions such as Pithing Needle, timing restrictions,
+ * per-turn activation limits, summoning sickness, and loyalty ability rules.
+ *
+ * <p>When a sacrifice cost requires player choice (e.g. multiple valid creatures to sacrifice), the service
+ * enters an interactive flow: it stores a {@link PermanentChoiceContext}, prompts the player, and resumes
+ * via the corresponding {@code complete*Choice} callback once the player responds.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -68,6 +80,15 @@ public class AbilityActivationService {
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
 
+    /**
+     * Taps a permanent for its mana ability (ON_TAP effects), adding the produced mana to the player's pool.
+     *
+     * @param gameData       the current game state
+     * @param player         the player tapping the permanent
+     * @param permanentIndex index of the permanent on the player's battlefield
+     * @throws IllegalStateException if the permanent is already tapped, has no tap effects,
+     *                               has summoning sickness (creatures without haste), or is blocked by Arrest
+     */
     public void tapPermanent(GameData gameData, Player player, int permanentIndex) {
         UUID playerId = player.getId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -111,6 +132,16 @@ public class AbilityActivationService {
         gameBroadcastService.broadcastGameState(gameData);
     }
 
+    /**
+     * Activates an ON_SACRIFICE ability by sacrificing the source permanent and placing the ability on the stack.
+     *
+     * @param gameData          the current game state
+     * @param player            the player sacrificing the permanent
+     * @param permanentIndex    index of the permanent on the player's battlefield
+     * @param targetPermanentId target for the sacrifice effect (e.g. for destroy-target abilities), or {@code null}
+     * @throws IllegalStateException if the permanent has no sacrifice abilities, is blocked by Pithing Needle
+     *                               or Arrest, or the target is invalid/protected
+     */
     public void sacrificePermanent(GameData gameData, Player player, int permanentIndex, UUID targetPermanentId) {
         UUID playerId = player.getId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -184,10 +215,33 @@ public class AbilityActivationService {
         gameBroadcastService.broadcastGameState(gameData);
     }
 
+    /**
+     * Activates an activated ability on a permanent, validating all costs and restrictions before placing
+     * the ability on the stack. If a sacrifice cost requires player choice, the method enters an interactive
+     * prompt flow and returns without completing activation.
+     *
+     * @param gameData          the current game state
+     * @param player            the player activating the ability
+     * @param permanentIndex    index of the source permanent on the player's battlefield
+     * @param abilityIndex      index of the ability to activate (defaults to 0 if {@code null})
+     * @param xValue            value for X in the mana cost (defaults to 0 if {@code null})
+     * @param targetPermanentId target permanent for the ability, or creature to sacrifice as cost, or {@code null}
+     * @param targetZone        target zone for zone-targeted effects, or {@code null}
+     */
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetPermanentId, Zone targetZone) {
         activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetPermanentId, targetZone, null);
     }
 
+    /**
+     * Callback for when a player has chosen which card to discard as an activated ability's discard cost
+     * (e.g. {@link DiscardCardTypeCost}). Resumes the pending ability activation with the chosen card.
+     *
+     * @param gameData  the current game state
+     * @param player    the player who chose the card
+     * @param cardIndex index of the chosen card in the player's hand
+     * @throws IllegalStateException if there is no pending ability activation, the player is not the one
+     *                               who should be choosing, or the card index is invalid
+     */
     public void handleActivatedAbilityDiscardCostChosen(GameData gameData, Player player, int cardIndex) {
         InteractionContext.CardChoice cardChoice = gameData.interaction.cardChoiceContext();
         if (cardChoice == null || !player.getId().equals(cardChoice.playerId())) {
@@ -237,20 +291,14 @@ public class AbilityActivationService {
         }
 
         Permanent permanent = battlefield.get(permanentIndex);
-        List<ActivatedAbility> ownAbilities = permanent.getCard().getActivatedAbilities();
-        List<ActivatedAbility> grantedAbilities = gameQueryService.computeStaticBonus(gameData, permanent).grantedActivatedAbilities();
-        List<ActivatedAbility> abilities = new ArrayList<>(ownAbilities);
-        abilities.addAll(grantedAbilities);
+        List<ActivatedAbility> abilities = new ArrayList<>(permanent.getCard().getActivatedAbilities());
+        abilities.addAll(gameQueryService.computeStaticBonus(gameData, permanent).grantedActivatedAbilities());
         if (abilities.isEmpty()) {
             throw new IllegalStateException("Permanent has no activated ability");
         }
 
-        int effectiveIndex = abilityIndex != null ? abilityIndex : 0;
-        if (effectiveIndex < 0 || effectiveIndex >= abilities.size()) {
-            throw new IllegalStateException("Invalid ability index");
-        }
-
-        ActivatedAbility ability = abilities.get(effectiveIndex);
+        int effectiveIndex = effectiveAbilityIndex(abilityIndex);
+        ActivatedAbility ability = resolveAbility(gameData, permanent, abilityIndex);
         List<CardEffect> abilityEffects = ability.getEffects();
         String abilityCost = ability.getManaCost();
         boolean isTapAbility = ability.isRequiresTap();
@@ -437,15 +485,7 @@ public class AbilityActivationService {
                 throw new IllegalStateException("Must sacrifice a creature you control");
             }
 
-            // Sacrifice the creature as cost
-            playerBf.remove(sacTarget);
-            gameHelper.addCardToGraveyard(gameData, playerId, sacTarget.getCard(), Zone.BATTLEFIELD);
-            gameHelper.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true);
-            gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
-            triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId);
-
-            String sacLog = player.getUsername() + " sacrifices " + sacTarget.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, sacLog);
+            sacrificePermanentAsCost(gameData, player, sacTarget);
 
             // Clear targetPermanentId so it's not used for effect targeting
             targetPermanentId = null;
@@ -457,11 +497,23 @@ public class AbilityActivationService {
             targetLegalityService.validateActivatedAbilityTargeting(
                     gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard(), effectiveXValue);
         }
-        activatedAbilityExecutionService.completeActivationAfterCosts(
-                gameData, player, permanent, ability, abilityEffects, effectiveXValue, targetPermanentId, targetZone, hasSacCreatureCost);
-        recordAbilityActivationUse(gameData, permanent, effectiveIndex);
+        completeActivationAndRecord(gameData, player, permanent, ability, abilityEffects,
+                effectiveXValue, targetPermanentId, targetZone, hasSacCreatureCost, effectiveIndex);
     }
 
+    /**
+     * Callback for when a player has chosen which creature of a specific subtype to sacrifice as an
+     * activation cost (e.g. "Sacrifice a Goblin"). Validates the choice, sacrifices the creature,
+     * and completes the ability activation.
+     *
+     * @param gameData             the current game state
+     * @param player               the player who chose the creature
+     * @param context              the stored context from the interactive prompt, containing the source
+     *                             permanent, ability index, and required subtype
+     * @param sacrificedPermanentId the ID of the creature the player chose to sacrifice
+     * @throws IllegalStateException if the source permanent no longer exists, the ability is invalid,
+     *                               or the chosen creature is not a valid sacrifice target
+     */
     public void completeActivatedAbilitySubtypeSacrificeChoice(GameData gameData,
                                                                Player player,
                                                                PermanentChoiceContext.ActivatedAbilitySacrificeSubtype context,
@@ -472,15 +524,8 @@ public class AbilityActivationService {
             throw new IllegalStateException("Source permanent no longer exists");
         }
 
-        List<ActivatedAbility> ownAbilities = sourcePermanent.getCard().getActivatedAbilities();
-        List<ActivatedAbility> grantedAbilities = gameQueryService.computeStaticBonus(gameData, sourcePermanent).grantedActivatedAbilities();
-        List<ActivatedAbility> abilities = new ArrayList<>(ownAbilities);
-        abilities.addAll(grantedAbilities);
-        int effectiveIndex = context.abilityIndex() != null ? context.abilityIndex() : 0;
-        if (effectiveIndex < 0 || effectiveIndex >= abilities.size()) {
-            throw new IllegalStateException("Invalid ability index");
-        }
-        ActivatedAbility ability = abilities.get(effectiveIndex);
+        int effectiveIndex = effectiveAbilityIndex(context.abilityIndex());
+        ActivatedAbility ability = resolveAbility(gameData, sourcePermanent, context.abilityIndex());
         List<CardEffect> abilityEffects = ability.getEffects();
         boolean hasSubtypeCost = abilityEffects.stream()
                 .filter(SacrificeSubtypeCreatureCost.class::isInstance)
@@ -505,11 +550,9 @@ public class AbilityActivationService {
             throw new IllegalStateException("Must sacrifice a " + context.subtype().getDisplayName());
         }
 
-        sacrificeCreatureAsCost(gameData, player, sacrificed);
-        activatedAbilityExecutionService.completeActivationAfterCosts(
-                gameData, player, sourcePermanent, ability, abilityEffects,
-                context.xValue() != null ? context.xValue() : 0, context.targetPermanentId(), context.targetZone(), false);
-        recordAbilityActivationUse(gameData, sourcePermanent, effectiveIndex);
+        sacrificePermanentAsCost(gameData, player, sacrificed);
+        completeActivationAndRecord(gameData, player, sourcePermanent, ability, abilityEffects,
+                context.xValue() != null ? context.xValue() : 0, context.targetPermanentId(), context.targetZone(), false, effectiveIndex);
     }
 
     private boolean handleSubtypeSacrificeCostSelection(GameData gameData,
@@ -537,7 +580,7 @@ public class AbilityActivationService {
         if (validSacrificeIds.size() == 1) {
             Permanent onlyChoice = gameQueryService.findPermanentById(gameData, validSacrificeIds.getFirst());
             if (onlyChoice != null) {
-                sacrificeCreatureAsCost(gameData, player, onlyChoice);
+                sacrificePermanentAsCost(gameData, player, onlyChoice);
             }
             return false;
         }
@@ -728,6 +771,19 @@ public class AbilityActivationService {
         return true;
     }
 
+    /**
+     * Callback for when a player has chosen which artifact to sacrifice as an activation cost
+     * (e.g. "Sacrifice an artifact"). Validates the choice, sacrifices the artifact,
+     * and completes the ability activation.
+     *
+     * @param gameData             the current game state
+     * @param player               the player who chose the artifact
+     * @param context              the stored context from the interactive prompt, containing the source
+     *                             permanent and ability index
+     * @param sacrificedPermanentId the ID of the artifact the player chose to sacrifice
+     * @throws IllegalStateException if the source permanent no longer exists, the ability is invalid,
+     *                               or the chosen permanent is not a valid artifact to sacrifice
+     */
     public void completeActivatedAbilityArtifactSacrificeChoice(GameData gameData,
                                                                 Player player,
                                                                 PermanentChoiceContext.ActivatedAbilitySacrificeArtifact context,
@@ -738,15 +794,8 @@ public class AbilityActivationService {
             throw new IllegalStateException("Source permanent no longer exists");
         }
 
-        List<ActivatedAbility> ownAbilities = sourcePermanent.getCard().getActivatedAbilities();
-        List<ActivatedAbility> grantedAbilities = gameQueryService.computeStaticBonus(gameData, sourcePermanent).grantedActivatedAbilities();
-        List<ActivatedAbility> abilities = new ArrayList<>(ownAbilities);
-        abilities.addAll(grantedAbilities);
-        int effectiveIndex = context.abilityIndex() != null ? context.abilityIndex() : 0;
-        if (effectiveIndex < 0 || effectiveIndex >= abilities.size()) {
-            throw new IllegalStateException("Invalid ability index");
-        }
-        ActivatedAbility ability = abilities.get(effectiveIndex);
+        int effectiveIndex = effectiveAbilityIndex(context.abilityIndex());
+        ActivatedAbility ability = resolveAbility(gameData, sourcePermanent, context.abilityIndex());
         List<CardEffect> abilityEffects = ability.getEffects();
         boolean hasArtifactCost = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeArtifactCost);
         if (!hasArtifactCost) {
@@ -766,10 +815,8 @@ public class AbilityActivationService {
         }
 
         sacrificePermanentAsCost(gameData, player, sacrificed);
-        activatedAbilityExecutionService.completeActivationAfterCosts(
-                gameData, player, sourcePermanent, ability, abilityEffects,
-                context.xValue() != null ? context.xValue() : 0, context.targetPermanentId(), context.targetZone(), false);
-        recordAbilityActivationUse(gameData, sourcePermanent, effectiveIndex);
+        completeActivationAndRecord(gameData, player, sourcePermanent, ability, abilityEffects,
+                context.xValue() != null ? context.xValue() : 0, context.targetPermanentId(), context.targetZone(), false, effectiveIndex);
     }
 
     private boolean handleMultiplePermanentSacrificeCostSelection(GameData gameData,
@@ -822,6 +869,20 @@ public class AbilityActivationService {
         return true;
     }
 
+    /**
+     * Callback for when a player has chosen one permanent to sacrifice as part of a multi-permanent sacrifice
+     * cost (e.g. "Sacrifice two creatures"). Sacrifices the chosen permanent, then either prompts for the
+     * next choice, auto-sacrifices remaining if exactly enough match, or completes the ability activation
+     * once all required sacrifices are done.
+     *
+     * @param gameData             the current game state
+     * @param player               the player who chose the permanent
+     * @param context              the stored context containing the source permanent, ability index,
+     *                             remaining sacrifice count, and the predicate filter for valid targets
+     * @param sacrificedPermanentId the ID of the permanent the player chose to sacrifice
+     * @throws IllegalStateException if the source permanent no longer exists, the chosen permanent is
+     *                               invalid, or not enough matching permanents remain
+     */
     public void completeActivatedAbilityMultiplePermanentSacrificeChoice(GameData gameData,
                                                                           Player player,
                                                                           PermanentChoiceContext.ActivatedAbilitySacrificeMultiplePermanents context,
@@ -833,15 +894,8 @@ public class AbilityActivationService {
             throw new IllegalStateException("Source permanent no longer exists");
         }
 
-        List<ActivatedAbility> ownAbilities = sourcePermanent.getCard().getActivatedAbilities();
-        List<ActivatedAbility> grantedAbilities = gameQueryService.computeStaticBonus(gameData, sourcePermanent).grantedActivatedAbilities();
-        List<ActivatedAbility> abilities = new ArrayList<>(ownAbilities);
-        abilities.addAll(grantedAbilities);
-        int effectiveIndex = context.abilityIndex() != null ? context.abilityIndex() : 0;
-        if (effectiveIndex < 0 || effectiveIndex >= abilities.size()) {
-            throw new IllegalStateException("Invalid ability index");
-        }
-        ActivatedAbility ability = abilities.get(effectiveIndex);
+        int effectiveIndex = effectiveAbilityIndex(context.abilityIndex());
+        ActivatedAbility ability = resolveAbility(gameData, sourcePermanent, context.abilityIndex());
         List<CardEffect> abilityEffects = ability.getEffects();
 
         Permanent sacrificed = gameQueryService.findPermanentById(gameData, sacrificedPermanentId);
@@ -895,10 +949,8 @@ public class AbilityActivationService {
         }
 
         // All sacrifices complete — put ability on stack
-        activatedAbilityExecutionService.completeActivationAfterCosts(
-                gameData, player, sourcePermanent, ability, abilityEffects,
-                context.xValue() != null ? context.xValue() : 0, context.targetPermanentId(), context.targetZone(), false);
-        recordAbilityActivationUse(gameData, sourcePermanent, effectiveIndex);
+        completeActivationAndRecord(gameData, player, sourcePermanent, ability, abilityEffects,
+                context.xValue() != null ? context.xValue() : 0, context.targetPermanentId(), context.targetZone(), false, effectiveIndex);
     }
 
     private long countMatchingPermanents(GameData gameData, UUID playerId, PermanentPredicate filter) {
@@ -907,6 +959,29 @@ public class AbilityActivationService {
             return 0;
         }
         return battlefield.stream().filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, filter)).count();
+    }
+
+    private ActivatedAbility resolveAbility(GameData gameData, Permanent permanent, Integer abilityIndex) {
+        List<ActivatedAbility> abilities = new ArrayList<>(permanent.getCard().getActivatedAbilities());
+        abilities.addAll(gameQueryService.computeStaticBonus(gameData, permanent).grantedActivatedAbilities());
+        int idx = abilityIndex != null ? abilityIndex : 0;
+        if (idx < 0 || idx >= abilities.size()) {
+            throw new IllegalStateException("Invalid ability index");
+        }
+        return abilities.get(idx);
+    }
+
+    private int effectiveAbilityIndex(Integer abilityIndex) {
+        return abilityIndex != null ? abilityIndex : 0;
+    }
+
+    private void completeActivationAndRecord(GameData gameData, Player player, Permanent permanent,
+                                              ActivatedAbility ability, List<CardEffect> abilityEffects,
+                                              int xValue, UUID targetPermanentId, Zone targetZone,
+                                              boolean nonTargeting, int abilityIndex) {
+        activatedAbilityExecutionService.completeActivationAfterCosts(
+                gameData, player, permanent, ability, abilityEffects, xValue, targetPermanentId, targetZone, nonTargeting);
+        recordAbilityActivationUse(gameData, permanent, abilityIndex);
     }
 
     private void sacrificePermanentAsCost(GameData gameData, Player player, Permanent sacTarget) {
@@ -921,21 +996,6 @@ public class AbilityActivationService {
             gameHelper.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true);
             gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
         }
-        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId);
-        String sacLog = player.getUsername() + " sacrifices " + sacTarget.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, sacLog);
-    }
-
-    private void sacrificeCreatureAsCost(GameData gameData, Player player, Permanent sacTarget) {
-        UUID playerId = player.getId();
-        List<Permanent> playerBf = gameData.playerBattlefields.get(playerId);
-        if (playerBf == null || !playerBf.contains(sacTarget)) {
-            throw new IllegalStateException("Must sacrifice a creature you control");
-        }
-        playerBf.remove(sacTarget);
-        gameHelper.addCardToGraveyard(gameData, playerId, sacTarget.getCard(), Zone.BATTLEFIELD);
-        gameHelper.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true);
-        gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId);
         String sacLog = player.getUsername() + " sacrifices " + sacTarget.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, sacLog);
