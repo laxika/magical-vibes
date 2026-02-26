@@ -363,6 +363,7 @@ Pass `null` as filter to allow any card.
 | `PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect` | `(Set<CardColor> triggerColors, int amount, boolean onlyOwnSpells)` | put +1/+1 counters when spell of matching color is cast |
 | `PutMinusOneMinusOneCounterOnEachOtherCreatureEffect` | `()` | put a -1/-1 counter on each other creature (all players' creatures except the source permanent) |
 | `EnterWithXChargeCountersEffect` | `()` | enters battlefield with X charge counters (replacement effect, reads X from spell cast) |
+| `EnterWithFixedChargeCountersEffect` | `(int count)` | enters battlefield with N charge counters (replacement effect, fixed count) |
 | `PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect` | `()` | put a -1/-1 counter on each creature target player controls (targets player) |
 | `PutChargeCounterOnSelfEffect` | `()` | put a charge counter on this permanent (self-target, used as activated ability effect) |
 | `PutChargeCounterOnSelfOnArtifactCastEffect` | `()` | trigger descriptor: when you cast an artifact spell, put a charge counter on this permanent. Place in `ON_ANY_PLAYER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into `PutChargeCounterOnSelfEffect` |

@@ -282,8 +282,10 @@ public class LifeResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, lossLog);
         log.info("Game {} - {} loses {} life from {}", gameData.id, targetName, effect.lifeLoss(), entry.getCard().getName());
 
-        // Controller gains life
-        applyGainLife(gameData, controllerId, effect.lifeGain());
+        // Controller gains life (skip if no life gain, e.g. pure life loss effects)
+        if (effect.lifeGain() > 0) {
+            applyGainLife(gameData, controllerId, effect.lifeGain());
+        }
     }
 
     @HandlesEffect(TargetPlayerGainsLifeEffect.class)

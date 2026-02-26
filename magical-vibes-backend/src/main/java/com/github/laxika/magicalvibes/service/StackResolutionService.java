@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
@@ -190,17 +191,29 @@ public class StackResolutionService {
         Permanent perm = new Permanent(card);
 
         // "Enters with X charge counters" — replacement effect (MTG Rule 614.1c)
-        boolean hasChargeCounterEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        boolean hasXChargeCounterEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof EnterWithXChargeCountersEffect);
-        if (hasChargeCounterEffect) {
+        if (hasXChargeCounterEffect) {
             perm.setChargeCounters(entry.getXValue());
+        }
+
+        // "Enters with N charge counters" — replacement effect for fixed count (MTG Rule 614.1c)
+        int fixedChargeCounters = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(e -> e instanceof EnterWithFixedChargeCountersEffect)
+                .map(e -> ((EnterWithFixedChargeCountersEffect) e).count())
+                .findFirst().orElse(0);
+        if (fixedChargeCounters > 0) {
+            perm.setChargeCounters(fixedChargeCounters);
         }
 
         gameHelper.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        if (hasChargeCounterEffect && entry.getXValue() > 0) {
+        if (hasXChargeCounterEffect && entry.getXValue() > 0) {
             String logEntry = card.getName() + " enters the battlefield with " + entry.getXValue() + " charge counters under " + playerName + "'s control.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else if (fixedChargeCounters > 0) {
+            String logEntry = card.getName() + " enters the battlefield with " + fixedChargeCounters + " charge counters under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else {
             String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";

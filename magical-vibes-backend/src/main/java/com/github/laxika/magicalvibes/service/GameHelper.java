@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffec
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
@@ -733,6 +734,7 @@ public class GameHelper {
                 .filter(e -> !(e instanceof ChooseColorEffect))
                 .filter(e -> !(e instanceof CopyPermanentOnEnterEffect))
                 .filter(e -> !(e instanceof EnterWithXChargeCountersEffect))
+                .filter(e -> !(e instanceof EnterWithFixedChargeCountersEffect))
                 .toList();
         if (!triggeredEffects.isEmpty()) {
             List<CardEffect> mayEffects = triggeredEffects.stream().filter(e -> e instanceof MayEffect).toList();
