@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutImprintedCreatureOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -486,6 +487,29 @@ public class GraveyardReturnResolutionService {
 
             log.info("Game {} - Zombie token created for player {}", gameData.id, controllerId);
         }
+    }
+
+    @HandlesEffect(ExileTargetPlayerGraveyardEffect.class)
+    void resolveExileTargetPlayerGraveyard(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+
+        if (graveyard.isEmpty()) {
+            String logEntry = playerName + "'s graveyard is already empty.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        int count = graveyard.size();
+        List<Card> exiledCards = gameData.playerExiledCards.get(targetPlayerId);
+        exiledCards.addAll(graveyard);
+        graveyard.clear();
+
+        String logEntry = playerName + "'s graveyard is exiled (" + count + " card" + (count != 1 ? "s" : "") + ").";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {}'s graveyard ({} cards) exiled", gameData.id, playerName, count);
     }
 
     @HandlesEffect(PutImprintedCreatureOntoBattlefieldEffect.class)
