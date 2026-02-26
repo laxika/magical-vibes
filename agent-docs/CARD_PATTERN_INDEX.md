@@ -96,6 +96,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 |---------|-----------|-------|
 | On death | `b/BogardanFirefiend.java` | ON_DEATH DealDamageToTargetCreatureEffect |
 | Upkeep sacrifice/discard | `r/RazormaneMasticore.java` | UPKEEP_TRIGGERED + DRAW_TRIGGERED |
+| Exile-from-graveyard cost + damage | `m/MoltenTailMasticore.java` | ExileCardFromGraveyardCost(CREATURE) + DealDamageToAnyTargetEffect + RegenerateEffect |
 | Upkeep bounce | `s/StampedingWildebeests.java` | BounceCreatureOnUpkeepEffect |
 | Upkeep token | `v/VerdantForce.java` | EACH_UPKEEP_TRIGGERED CreateCreatureTokenEffect |
 | Upkeep token per equipment | `k/KembaKhaRegent.java` | UPKEEP_TRIGGERED CreateTokenPerEquipmentOnSourceEffect — tokens equal to attached Equipment |

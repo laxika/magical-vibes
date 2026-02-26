@@ -570,7 +570,7 @@ public class GameSimulator {
                 }
             }
             case MAY_ABILITY_CHOICE -> gameService.handleMayAbilityChosen(gd, player, true);
-            case GRAVEYARD_CHOICE -> {
+            case GRAVEYARD_CHOICE, ACTIVATED_ABILITY_GRAVEYARD_EXILE_COST_CHOICE -> {
                 var gc = gd.interaction.graveyardChoiceContext();
                 if (gc != null && gc.validIndices() != null && !gc.validIndices().isEmpty()) {
                     gameService.handleGraveyardCardChosen(gd, player, gc.validIndices().iterator().next());

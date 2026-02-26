@@ -267,7 +267,11 @@ public class GameService {
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
-            graveyardChoiceHandlerService.handleGraveyardCardChosen(gameData, player, cardIndex);
+            if (gameData.interaction.awaitingInputType() == AwaitingInput.ACTIVATED_ABILITY_GRAVEYARD_EXILE_COST_CHOICE) {
+                abilityActivationService.handleActivatedAbilityGraveyardExileCostChosen(gameData, player, cardIndex);
+            } else {
+                graveyardChoiceHandlerService.handleGraveyardCardChosen(gameData, player, cardIndex);
+            }
         }
     }
 

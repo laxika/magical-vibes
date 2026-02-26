@@ -226,6 +226,7 @@ Sacrifice and discard costs go in the `effects` list BEFORE the actual effect. T
 | `SacrificeMultiplePermanentsCost` | `(int count, PermanentPredicate filter)` | "Sacrifice three artifacts: ..." (use with matching predicate) |
 | `SacrificeAllCreaturesYouControlCost` | `()` | "Sacrifice all creatures: ..." |
 | `DiscardCardTypeCost` | `(CardType)` | "Discard a [type] card: ..." |
+| `ExileCardFromGraveyardCost` | `(CardType)` | "Exile a [type] card from your graveyard: ..." (null = any type) |
 | `RemoveCounterFromSourceCost` | `()` | "Remove a counter from this: ..." |
 
 ```java

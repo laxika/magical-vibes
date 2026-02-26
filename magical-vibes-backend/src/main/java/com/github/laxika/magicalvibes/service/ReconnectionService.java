@@ -87,7 +87,7 @@ public class ReconnectionService {
                     resendFromContext(gameData, playerId, pc);
                 }
             }
-            case GRAVEYARD_CHOICE -> {
+            case GRAVEYARD_CHOICE, ACTIVATED_ABILITY_GRAVEYARD_EXILE_COST_CHOICE -> {
                 InteractionContext.GraveyardChoice gc = gameData.interaction.graveyardChoiceContext();
                 if (gc != null) {
                     resendFromContext(gameData, playerId, gc);

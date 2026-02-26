@@ -106,6 +106,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `RemoveCounterFromSourceCost` | `()` | remove a counter from this permanent as cost (prefers -1/-1, then +1/+1) |
 | `RemoveChargeCountersFromSourceCost` | `(int count)` | remove N charge counters from source as cost (e.g. "Remove three charge counters: ..."). Validated and paid in `AbilityActivationService` |
 | `TapCreatureCost` | `(PermanentPredicate predicate)` | tap an untapped creature matching predicate you control as cost. Auto-selects if only one valid target; presents permanent choice if multiple. The creature can be summoning sick (no tap symbol in cost). E.g. `new TapCreatureCost(new PermanentColorInPredicate(Set.of(CardColor.BLUE)))` for "tap an untapped blue creature" |
+| `ExileCardFromGraveyardCost` | `(CardType requiredType)` | exile a card of specific type from your graveyard as cost (null = any). Two-phase async flow: prompts graveyard choice, then resumes activation. Validated and paid in `AbilityActivationService` |
 
 ## Counter spells
 
