@@ -8,6 +8,12 @@ import com.github.laxika.magicalvibes.service.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.ability.cost.ArtifactSacrificeCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentSacrificeCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.PermanentChoiceCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.PermanentSacrificeAction;
+import com.github.laxika.magicalvibes.service.ability.cost.SubtypeSacrificeCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.TapCreatureCostHandler;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -536,189 +542,12 @@ public class AbilityActivationService {
                 effectiveXValue, targetPermanentId, targetZone, hasSacCreatureCost, effectiveIndex);
     }
 
-    // --- Permanent-choice cost strategy ---
-
-    private interface PermanentChoiceCostHandler {
-        CardEffect costEffect();
-        void validateCanPay(GameData gameData, UUID playerId);
-        List<UUID> getValidChoiceIds(GameData gameData, UUID playerId);
-        void validateAndPay(GameData gameData, Player player, Permanent chosen);
-        String getPromptMessage(int remaining);
-        int requiredCount();
-    }
-
-    private class SubtypeSacrificeCostHandler implements PermanentChoiceCostHandler {
-        private final SacrificeSubtypeCreatureCost cost;
-        SubtypeSacrificeCostHandler(SacrificeSubtypeCreatureCost cost) { this.cost = cost; }
-
-        @Override public CardEffect costEffect() { return cost; }
-        @Override public int requiredCount() { return 1; }
-
-        @Override
-        public void validateCanPay(GameData gameData, UUID playerId) {
-            if (getValidChoiceIds(gameData, playerId).isEmpty()) {
-                throw new IllegalStateException("Must choose a " + cost.subtype().getDisplayName() + " to sacrifice");
-            }
-        }
-
-        @Override
-        public List<UUID> getValidChoiceIds(GameData gameData, UUID playerId) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) return List.of();
-            return battlefield.stream()
-                    .filter(p -> gameQueryService.isCreature(gameData, p))
-                    .filter(p -> p.getCard().getSubtypes().contains(cost.subtype()))
-                    .map(Permanent::getId)
-                    .toList();
-        }
-
-        @Override
-        public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
-            if (!gameQueryService.isCreature(gameData, chosen)) {
-                throw new IllegalStateException("Must sacrifice a creature");
-            }
-            if (!chosen.getCard().getSubtypes().contains(cost.subtype())) {
-                throw new IllegalStateException("Must sacrifice a " + cost.subtype().getDisplayName());
-            }
-            sacrificePermanentAsCost(gameData, player, chosen);
-        }
-
-        @Override
-        public String getPromptMessage(int remaining) {
-            return "Choose a " + cost.subtype().getDisplayName() + " to sacrifice.";
-        }
-    }
-
-    private class ArtifactSacrificeCostHandler implements PermanentChoiceCostHandler {
-        private final SacrificeArtifactCost cost;
-        ArtifactSacrificeCostHandler(SacrificeArtifactCost cost) { this.cost = cost; }
-
-        @Override public CardEffect costEffect() { return cost; }
-        @Override public int requiredCount() { return 1; }
-
-        @Override
-        public void validateCanPay(GameData gameData, UUID playerId) {
-            if (getValidChoiceIds(gameData, playerId).isEmpty()) {
-                throw new IllegalStateException("No artifact to sacrifice");
-            }
-        }
-
-        @Override
-        public List<UUID> getValidChoiceIds(GameData gameData, UUID playerId) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) return List.of();
-            return battlefield.stream()
-                    .filter(gameQueryService::isArtifact)
-                    .map(Permanent::getId)
-                    .toList();
-        }
-
-        @Override
-        public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
-            if (!gameQueryService.isArtifact(chosen)) {
-                throw new IllegalStateException("Must sacrifice an artifact");
-            }
-            sacrificePermanentAsCost(gameData, player, chosen);
-        }
-
-        @Override
-        public String getPromptMessage(int remaining) {
-            return "Choose an artifact to sacrifice.";
-        }
-    }
-
-    private class MultiplePermanentSacrificeCostHandler implements PermanentChoiceCostHandler {
-        private final SacrificeMultiplePermanentsCost cost;
-        MultiplePermanentSacrificeCostHandler(SacrificeMultiplePermanentsCost cost) { this.cost = cost; }
-
-        @Override public CardEffect costEffect() { return cost; }
-        @Override public int requiredCount() { return cost.count(); }
-
-        @Override
-        public void validateCanPay(GameData gameData, UUID playerId) {
-            List<UUID> validIds = getValidChoiceIds(gameData, playerId);
-            if (validIds.size() < cost.count()) {
-                throw new IllegalStateException("Not enough permanents to sacrifice (need " + cost.count() + ", have " + validIds.size() + ")");
-            }
-        }
-
-        @Override
-        public List<UUID> getValidChoiceIds(GameData gameData, UUID playerId) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) return List.of();
-            return battlefield.stream()
-                    .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, cost.filter()))
-                    .map(Permanent::getId)
-                    .toList();
-        }
-
-        @Override
-        public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
-            if (!gameQueryService.matchesPermanentPredicate(gameData, chosen, cost.filter())) {
-                throw new IllegalStateException("Must sacrifice a matching permanent");
-            }
-            sacrificePermanentAsCost(gameData, player, chosen);
-        }
-
-        @Override
-        public String getPromptMessage(int remaining) {
-            return "Choose a permanent to sacrifice (" + remaining + " remaining).";
-        }
-    }
-
-    private class TapCreatureCostHandler implements PermanentChoiceCostHandler {
-        private final TapCreatureCost cost;
-        TapCreatureCostHandler(TapCreatureCost cost) { this.cost = cost; }
-
-        @Override public CardEffect costEffect() { return cost; }
-        @Override public int requiredCount() { return 1; }
-
-        @Override
-        public void validateCanPay(GameData gameData, UUID playerId) {
-            if (getValidChoiceIds(gameData, playerId).isEmpty()) {
-                throw new IllegalStateException("No untapped matching creature to tap");
-            }
-        }
-
-        @Override
-        public List<UUID> getValidChoiceIds(GameData gameData, UUID playerId) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) return List.of();
-            return battlefield.stream()
-                    .filter(p -> gameQueryService.isCreature(gameData, p))
-                    .filter(p -> !p.isTapped())
-                    .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, cost.predicate()))
-                    .map(Permanent::getId)
-                    .toList();
-        }
-
-        @Override
-        public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
-            if (!gameQueryService.isCreature(gameData, chosen)) {
-                throw new IllegalStateException("Must tap a creature");
-            }
-            if (chosen.isTapped()) {
-                throw new IllegalStateException("Creature is already tapped");
-            }
-            if (!gameQueryService.matchesPermanentPredicate(gameData, chosen, cost.predicate())) {
-                throw new IllegalStateException("Creature does not match the required predicate");
-            }
-            chosen.tap();
-            String tapLog = player.getUsername() + " taps " + chosen.getCard().getName() + " as a cost.";
-            gameBroadcastService.logAndBroadcast(gameData, tapLog);
-        }
-
-        @Override
-        public String getPromptMessage(int remaining) {
-            return "Choose an untapped creature to tap.";
-        }
-    }
-
-    private PermanentChoiceCostHandler toPermanentChoiceCostHandler(CardEffect effect) {
-        if (effect instanceof SacrificeSubtypeCreatureCost c) return new SubtypeSacrificeCostHandler(c);
-        if (effect instanceof SacrificeArtifactCost c) return new ArtifactSacrificeCostHandler(c);
-        if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c);
-        if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c);
+    PermanentChoiceCostHandler toPermanentChoiceCostHandler(CardEffect effect) {
+        PermanentSacrificeAction sacAction = this::sacrificePermanentAsCost;
+        if (effect instanceof SacrificeSubtypeCreatureCost c) return new SubtypeSacrificeCostHandler(c, gameQueryService, sacAction);
+        if (effect instanceof SacrificeArtifactCost c) return new ArtifactSacrificeCostHandler(c, gameQueryService, sacAction);
+        if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c, gameQueryService, sacAction);
+        if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, gameBroadcastService);
         return null;
     }
 

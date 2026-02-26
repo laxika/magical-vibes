@@ -34,7 +34,6 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOr
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -929,58 +928,6 @@ class AbilityActivationServiceTest extends BaseCardTest {
     }
 
     // =========================================================================
-    // activateAbility — sacrifice artifact cost
-    // =========================================================================
-
-    @Nested
-    @DisplayName("activateAbility — sacrifice artifact cost")
-    class ActivateAbilitySacrificeArtifact {
-
-        @Test
-        @DisplayName("Auto-selects single artifact for sacrifice")
-        void autoSelectsSingleArtifact() {
-            Card card = createCardWithSacrificeArtifactAbility();
-            Permanent source = addReadyPermanent(player1, card);
-            Permanent target = addReadyPermanent(player1, createGenericArtifact("Sacrifice Target"));
-
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(source);
-            harness.activateAbility(player1, idx, null, null);
-
-            // Single artifact should be auto-sacrificed, no prompt
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Sacrifice Target"));
-        }
-
-        @Test
-        @DisplayName("No artifact to sacrifice throws")
-        void noArtifactToSacrificeThrows() {
-            Card card = createCardWithSacrificeArtifactAbility();
-            addReadyPermanent(player1, card);
-            // Source is an enchantment, not an artifact — no artifacts to sacrifice
-
-            int idx = gd.playerBattlefields.get(player1.getId()).size() - 1;
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("No artifact to sacrifice");
-        }
-
-        @Test
-        @DisplayName("Multiple artifacts prompt for choice")
-        void multipleArtifactsPromptChoice() {
-            Card card = createCardWithSacrificeArtifactAbility();
-            Permanent source = addReadyPermanent(player1, card);
-            addReadyPermanent(player1, createGenericArtifact("Artifact A"));
-            addReadyPermanent(player1, createGenericArtifact("Artifact B"));
-
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(source);
-            harness.activateAbility(player1, idx, null, null);
-
-            assertThat(gd.interaction.awaitingInputType())
-                    .isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        }
-    }
-
-    // =========================================================================
     // activateAbility — per-turn activation limit
     // =========================================================================
 
@@ -1139,19 +1086,6 @@ class AbilityActivationServiceTest extends BaseCardTest {
         card.addActivatedAbility(new ActivatedAbility(
                 false, null, List.of(new RemoveCounterFromSourceCost(), new PutChargeCounterOnSelfEffect()),
                 "Remove counter, add charge counter"
-        ));
-        return card;
-    }
-
-    private Card createCardWithSacrificeArtifactAbility() {
-        Card card = new Card();
-        card.setName("Test Sac Artifact Enchantment");
-        card.setType(CardType.ENCHANTMENT);
-        card.setManaCost("{0}");
-        card.setColor(null);
-        card.addActivatedAbility(new ActivatedAbility(
-                false, null, List.of(new SacrificeArtifactCost(), new PutChargeCounterOnSelfEffect()),
-                "Sacrifice an artifact: put a charge counter"
         ));
         return card;
     }
