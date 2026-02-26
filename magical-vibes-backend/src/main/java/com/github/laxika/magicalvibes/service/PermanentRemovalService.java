@@ -42,6 +42,7 @@ public class PermanentRemovalService {
                 if (wasCreature) {
                     gameData.creatureDeathCountThisTurn.merge(playerId, 1, Integer::sum);
                     gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                    gameHelper.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());
                 }
                 handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
                 return true;

@@ -26,7 +26,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -40,6 +42,7 @@ public class TurnProgressionService {
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
+    private final PermanentRemovalService permanentRemovalService;
 
     public void advanceStep(GameData gameData) {
         // Process end-of-combat sacrifices when leaving END_OF_COMBAT
@@ -379,6 +382,22 @@ public class TurnProgressionService {
     }
 
     private void handleEndStepTriggers(GameData gameData) {
+        // Process pending token exiles (e.g. Mimic Vat tokens)
+        if (!gameData.pendingTokenExilesAtEndStep.isEmpty()) {
+            Set<UUID> toExile = new HashSet<>(gameData.pendingTokenExilesAtEndStep);
+            gameData.pendingTokenExilesAtEndStep.clear();
+            for (UUID permId : toExile) {
+                Permanent token = gameQueryService.findPermanentById(gameData, permId);
+                if (token != null) {
+                    permanentRemovalService.removePermanentToExile(gameData, token);
+                    String logEntry = token.getCard().getName() + " token is exiled.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} token exiled at end step (Mimic Vat)", gameData.id, token.getCard().getName());
+                    permanentRemovalService.removeOrphanedAuras(gameData);
+                }
+            }
+        }
+
         // Process pending exile returns (e.g. Argent Sphinx)
         if (!gameData.pendingExileReturns.isEmpty()) {
             List<PendingExileReturn> returns = new ArrayList<>(gameData.pendingExileReturns);

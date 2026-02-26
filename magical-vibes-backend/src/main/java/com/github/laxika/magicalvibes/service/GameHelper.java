@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffec
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
@@ -953,6 +954,30 @@ public class GameHelper {
                 log.info("Game {} - {} triggers (ally creature died)", gameData.id, perm.getCard().getName());
             }
         }
+    }
+
+    public void checkAnyNontokenCreatureDeathTriggers(GameData gameData, Card dyingCard) {
+        if (dyingCard.isToken()) return;
+
+        gameData.forEachPermanent((playerId, perm) -> {
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES);
+            if (effects == null || effects.isEmpty()) return;
+
+            for (CardEffect effect : effects) {
+                if (effect instanceof MayEffect may && may.wrapped() instanceof ImprintDyingCreatureEffect) {
+                    ImprintDyingCreatureEffect imprintEffect = new ImprintDyingCreatureEffect(dyingCard.getId());
+                    gameData.pendingMayAbilities.add(new PendingMayAbility(
+                            perm.getCard(),
+                            playerId,
+                            List.of(imprintEffect),
+                            perm.getCard().getName() + " — " + may.prompt()
+                    ));
+                    String triggerLog = perm.getCard().getName() + "'s imprint ability triggers.";
+                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                    log.info("Game {} - {} imprint triggers (nontoken creature died)", gameData.id, perm.getCard().getName());
+                }
+            }
+        });
     }
 
     void checkAnyCreatureEntersTriggers(GameData gameData, UUID enteringCreatureControllerId, Card enteringCreature) {

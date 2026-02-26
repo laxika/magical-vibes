@@ -1,14 +1,19 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenPerEquipmentOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
@@ -424,6 +429,65 @@ public class PermanentControlResolutionService {
             }
         }
         return null;
+    }
+
+    @HandlesEffect(CreateTokenCopyOfImprintedCardEffect.class)
+    private void resolveCreateTokenCopyOfImprinted(GameData gameData, StackEntry entry) {
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (sourcePermanent == null) {
+            log.info("Game {} - Source permanent no longer on battlefield", gameData.id);
+            return;
+        }
+
+        Card imprintedCard = sourcePermanent.getCard().getImprintedCard();
+        if (imprintedCard == null) {
+            log.info("Game {} - No card imprinted on {}, no token created", gameData.id, sourcePermanent.getCard().getName());
+            return;
+        }
+
+        // Create a token that's a copy of the imprinted card (copying all copiable values)
+        Card tokenCard = new Card();
+        tokenCard.setName(imprintedCard.getName());
+        tokenCard.setType(imprintedCard.getType());
+        tokenCard.setAdditionalTypes(imprintedCard.getAdditionalTypes());
+        tokenCard.setManaCost(imprintedCard.getManaCost() != null ? imprintedCard.getManaCost() : "");
+        tokenCard.setToken(true);
+        tokenCard.setColor(imprintedCard.getColor());
+        tokenCard.setSupertypes(imprintedCard.getSupertypes());
+        tokenCard.setPower(imprintedCard.getPower());
+        tokenCard.setToughness(imprintedCard.getToughness());
+        tokenCard.setSubtypes(imprintedCard.getSubtypes());
+        tokenCard.setCardText(imprintedCard.getCardText());
+
+        // Copy keywords and add haste
+        Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+        if (imprintedCard.getKeywords() != null) {
+            keywords.addAll(imprintedCard.getKeywords());
+        }
+        keywords.add(Keyword.HASTE);
+        tokenCard.setKeywords(keywords);
+
+        // Copy effects and activated abilities (copiable characteristics per CR 707.2)
+        for (EffectSlot slot : EffectSlot.values()) {
+            for (EffectRegistration reg : imprintedCard.getEffectRegistrations(slot)) {
+                tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
+            }
+        }
+        for (ActivatedAbility ability : imprintedCard.getActivatedAbilities()) {
+            tokenCard.addActivatedAbility(ability);
+        }
+
+        Permanent tokenPermanent = new Permanent(tokenCard);
+        gameHelper.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
+
+        // Schedule for exile at beginning of next end step
+        gameData.pendingTokenExilesAtEndStep.add(tokenPermanent.getId());
+
+        String logMsg = "A token copy of " + imprintedCard.getName() + " is created with haste.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - Token copy of {} created via {}", gameData.id, imprintedCard.getName(), sourcePermanent.getCard().getName());
+
+        gameHelper.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, tokenPermanent.getId(), false);
     }
 
 }

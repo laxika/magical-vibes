@@ -88,6 +88,7 @@ public class GameData {
     public final WarpWorldOperationState warpWorldOperation = new WarpWorldOperationState();
     public boolean cleanupDiscardPending;
     public final List<PendingExileReturn> pendingExileReturns = Collections.synchronizedList(new ArrayList<>());
+    public final Set<UUID> pendingTokenExilesAtEndStep = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionIds = new ConcurrentHashMap<>();
     public boolean pendingSacrificeAttackingCreature;
     public boolean pendingAwakeningCounterPlacement;
@@ -249,6 +250,9 @@ public class GameData {
 
         // --- PendingExileReturn list (records with shared Card refs) ---
         copy.pendingExileReturns.addAll(this.pendingExileReturns);
+
+        // --- Pending token exiles at end step (Mimic Vat) ---
+        copy.pendingTokenExilesAtEndStep.addAll(this.pendingTokenExilesAtEndStep);
 
         // --- Map<UUID, Set<UUID>> (source damage prevention) ---
         this.playerSourceDamagePreventionIds.forEach((k, v) -> {

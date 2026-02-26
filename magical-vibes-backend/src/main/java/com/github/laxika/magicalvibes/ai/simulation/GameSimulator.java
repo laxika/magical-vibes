@@ -202,7 +202,7 @@ public class GameSimulator {
 
         EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper, gameQueryService, effectHandlerRegistry, gameBroadcastService, permanentRemovalService);
         TurnProgressionService turnProgressionService = new TurnProgressionService(
-                combatService, gameHelper, gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService);
+                combatService, gameHelper, gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService, permanentRemovalService);
         SpellCastingService spellCastingService = new SpellCastingService(
                 gameQueryService, gameHelper, gameBroadcastService, turnProgressionService, targetLegalityService, permanentRemovalService, triggerCollectionService);
         ActivatedAbilityExecutionService activatedAbilityExecutionService = new ActivatedAbilityExecutionService(

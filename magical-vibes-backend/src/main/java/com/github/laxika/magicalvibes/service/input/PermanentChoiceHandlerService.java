@@ -154,6 +154,12 @@ public class PermanentChoiceHandlerService {
             log.info("Game {} - {} sacrifices {}", gameData.id, playerName, target.getCard().getName());
 
             stateBasedActionService.performStateBasedActions(gameData);
+
+            if (!gameData.pendingMayAbilities.isEmpty()) {
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+
             turnProgressionService.resolveAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.ActivatedAbilitySacrificeSubtype activatedAbilitySacrificeSubtype) {
             abilityActivationService.completeActivatedAbilitySubtypeSacrificeChoice(gameData, player, activatedAbilitySacrificeSubtype, permanentId);
