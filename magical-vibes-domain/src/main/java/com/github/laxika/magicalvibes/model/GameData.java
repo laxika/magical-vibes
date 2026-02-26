@@ -96,9 +96,6 @@ public class GameData {
     /** Tracks which Leonin Arbiter permanent IDs each player has paid {2} for this turn. */
     public final Map<UUID, Set<UUID>> paidSearchTaxPermanentIds = new ConcurrentHashMap<>();
 
-    /** Stores context for a pending Leonin Arbiter search tax MayAbility choice. */
-    public PendingSearchContext pendingSearchContext;
-
     // Combat damage assignment state
     public final Map<Integer, Map<UUID, Integer>> combatDamagePlayerAssignments = new HashMap<>();
     public final List<Integer> combatDamagePendingIndices = new ArrayList<>();
@@ -312,7 +309,6 @@ public class GameData {
             s.addAll(v);
             copy.paidSearchTaxPermanentIds.put(k, s);
         });
-        copy.pendingSearchContext = this.pendingSearchContext; // immutable record
 
         // --- Game log (share reference for simulation — not read during MCTS) ---
         copy.gameLog.addAll(this.gameLog);

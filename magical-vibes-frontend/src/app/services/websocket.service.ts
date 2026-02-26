@@ -66,7 +66,8 @@ export enum MessageType {
   REQUEST_CARD_LIST = 'REQUEST_CARD_LIST',
   CARD_LIST_RESPONSE = 'CARD_LIST_RESPONSE',
   VALID_TARGETS_REQUEST = 'VALID_TARGETS_REQUEST',
-  VALID_TARGETS_RESPONSE = 'VALID_TARGETS_RESPONSE'
+  VALID_TARGETS_RESPONSE = 'VALID_TARGETS_RESPONSE',
+  PAY_SEARCH_TAX = 'PAY_SEARCH_TAX'
 }
 
 export enum GameStatus {
@@ -279,6 +280,7 @@ export interface GameStateNotification {
   playableCardIndices: number[];
   playableGraveyardLandIndices: number[];
   newLogEntries: string[];
+  searchTaxCost: number;
 }
 
 export interface MulliganResolvedNotification {

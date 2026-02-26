@@ -1,11 +1,17 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.ColorChoiceHandlerService;
@@ -75,6 +81,61 @@ public class GameService {
             }
 
             turnProgressionService.resolveAutoPass(gameData);
+        }
+    }
+
+    public void paySearchTax(GameData gameData, Player player) {
+        if (gameData.status != GameStatus.RUNNING) {
+            throw new IllegalStateException("Game is not running");
+        }
+
+        synchronized (gameData) {
+            if (gameData.interaction.isAwaitingInput()) {
+                throw new IllegalStateException("Cannot pay search tax while awaiting input");
+            }
+
+            UUID priorityHolder = gameQueryService.getPriorityPlayerId(gameData);
+            if (priorityHolder == null || !priorityHolder.equals(player.getId())) {
+                throw new IllegalStateException("You do not have priority");
+            }
+
+            // Find unpaid CantSearchLibrariesEffect permanents
+            List<UUID> unpaidArbiterIds = new java.util.ArrayList<>();
+            gameData.forEachPermanent((playerId, permanent) -> {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof CantSearchLibrariesEffect) {
+                        Set<UUID> paidSet = gameData.paidSearchTaxPermanentIds.get(player.getId());
+                        if (paidSet == null || !paidSet.contains(permanent.getId())) {
+                            unpaidArbiterIds.add(permanent.getId());
+                        }
+                    }
+                }
+            });
+
+            if (unpaidArbiterIds.isEmpty()) {
+                throw new IllegalStateException("No unpaid search tax to pay");
+            }
+
+            int totalCost = unpaidArbiterIds.size() * 2;
+            ManaCost cost = new ManaCost("{" + totalCost + "}");
+            ManaPool pool = gameData.playerManaPools.get(player.getId());
+
+            if (pool == null || !cost.canPay(pool)) {
+                throw new IllegalStateException("Not enough mana to pay search tax");
+            }
+
+            cost.pay(pool);
+
+            Set<UUID> paidSet = gameData.paidSearchTaxPermanentIds
+                    .computeIfAbsent(player.getId(), k -> ConcurrentHashMap.newKeySet());
+            paidSet.addAll(unpaidArbiterIds);
+
+            String logEntry = player.getUsername() + " pays {" + totalCost + "} for Leonin Arbiter search tax.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} pays {{}} for Leonin Arbiter search tax (special action)",
+                    gameData.id, player.getUsername(), totalCost);
+
+            gameBroadcastService.broadcastGameState(gameData);
         }
     }
 

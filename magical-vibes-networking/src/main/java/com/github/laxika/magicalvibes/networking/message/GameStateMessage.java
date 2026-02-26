@@ -32,7 +32,8 @@ public record GameStateMessage(
         List<TurnStep> autoStopSteps,
         List<Integer> playableCardIndices,
         List<Integer> playableGraveyardLandIndices,
-        List<String> newLogEntries
+        List<String> newLogEntries,
+        int searchTaxCost
 ) {
     public GameStateMessage(
             GameStatus status,
@@ -54,11 +55,12 @@ public record GameStateMessage(
             List<TurnStep> autoStopSteps,
             List<Integer> playableCardIndices,
             List<Integer> playableGraveyardLandIndices,
-            List<String> newLogEntries
+            List<String> newLogEntries,
+            int searchTaxCost
     ) {
         this(MessageType.GAME_STATE, status, activePlayerId, turnNumber, currentStep, priorityPlayerId,
                 battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters,
                 hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
-                playableGraveyardLandIndices, newLogEntries);
+                playableGraveyardLandIndices, newLogEntries, searchTaxCost);
     }
 }

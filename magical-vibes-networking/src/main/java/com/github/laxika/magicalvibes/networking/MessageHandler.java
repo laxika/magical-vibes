@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.networking.message.CreateDraftRequest;
 import com.github.laxika.magicalvibes.networking.message.DraftPickRequest;
 import com.github.laxika.magicalvibes.networking.message.RequestCardListRequest;
 import com.github.laxika.magicalvibes.networking.message.SubmitDeckRequest;
+import com.github.laxika.magicalvibes.networking.message.PaySearchTaxRequest;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsRequest;
 
 public interface MessageHandler {
@@ -92,6 +93,8 @@ public interface MessageHandler {
     void handleRequestCardList(Connection connection, RequestCardListRequest request) throws Exception;
 
     void handleValidTargetsRequest(Connection connection, ValidTargetsRequest request) throws Exception;
+
+    void handlePaySearchTax(Connection connection, PaySearchTaxRequest request) throws Exception;
 
     void handleTimeout(Connection connection);
 

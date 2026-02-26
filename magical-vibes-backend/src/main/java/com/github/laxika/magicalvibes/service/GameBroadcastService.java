@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
@@ -72,13 +73,14 @@ public class GameBroadcastService {
                     : List.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN);
             List<Integer> playableCardIndices = getPlayableCardIndices(gameData, playerId);
             List<Integer> playableGraveyardLandIndices = getPlayableGraveyardLandIndices(gameData, playerId);
+            int searchTaxCost = getSearchTaxCost(gameData, playerId);
 
             sessionManager.sendToPlayer(playerId, new GameStateMessage(
                     gameData.status, gameData.activePlayerId, gameData.turnNumber,
                     gameData.currentStep, priorityPlayerId,
                     battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters,
                     hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
-                    playableGraveyardLandIndices, newLogEntries
+                    playableGraveyardLandIndices, newLogEntries, searchTaxCost
             ));
         }
     }
@@ -446,6 +448,25 @@ public class GameBroadcastService {
                 getStackViews(data),
                 getGraveyardViews(data)
         );
+    }
+
+    int getSearchTaxCost(GameData gameData, UUID playerId) {
+        int unpaidCount = 0;
+        Set<UUID> paidSet = gameData.paidSearchTaxPermanentIds.get(playerId);
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof CantSearchLibrariesEffect) {
+                        if (paidSet == null || !paidSet.contains(perm.getId())) {
+                            unpaidCount++;
+                        }
+                    }
+                }
+            }
+        }
+        return unpaidCount * 2;
     }
 
     public void logAndBroadcast(GameData gameData, String logEntry) {

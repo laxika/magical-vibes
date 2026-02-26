@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LeoninArbiterTest extends BaseCardTest {
 
-
     // ===== Card properties =====
 
     @Test
@@ -53,15 +52,14 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.castSorcery(player2, 0, 0);
         harness.passBothPriorities(); // resolve Diabolic Tutor
 
-        // Search is prevented — no may ability prompt either (can't afford)
+        // Search is prevented — no mana to pay
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("prevented by Leonin Arbiter"));
     }
 
     @Test
-    @DisplayName("Opponent is prompted to pay {2} for Leonin Arbiter and can search after accepting")
-    void opponentCanSearchWhenPayingTax() {
+    @DisplayName("Opponent can search after paying search tax as special action during priority")
+    void opponentCanSearchWhenPayingTaxDuringPriority() {
         harness.addToBattlefield(player1, new LeoninArbiter());
 
         // Player2 casts Diabolic Tutor with extra mana for Arbiter tax
@@ -75,19 +73,41 @@ class LeoninArbiterTest extends BaseCardTest {
         setupLibrary(player2);
 
         harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities(); // resolve Diabolic Tutor → may ability prompt
 
-        // Player is prompted to pay for Arbiter
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        // While Diabolic Tutor is on the stack, pay the search tax as a special action
+        harness.paySearchTax(player2);
 
-        harness.handleMayAbilityChosen(player2, true); // accept → pay mana, push search entry
-        harness.passBothPriorities(); // resolve re-dispatched search entry
-
-        // Search proceeds — library search prompt shown
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("pays {2} to search (Leonin Arbiter)"));
-        // Mana was deducted for the tax
+        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("pays {2} for Leonin Arbiter search tax"));
+        // Mana deducted for the tax (had 2 remaining after casting Tutor)
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities(); // resolve Diabolic Tutor
+
+        // Search proceeds — tax was paid during priority
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+    }
+
+    @Test
+    @DisplayName("Search is prevented when opponent does not pay search tax before resolution")
+    void searchPreventedWhenNotPaid() {
+        harness.addToBattlefield(player1, new LeoninArbiter());
+
+        harness.setHand(player2, List.of(new DiabolicTutor()));
+        harness.addMana(player2, ManaColor.BLACK, 6); // 4 for Tutor + 2 available but not paid
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        setupLibrary(player2);
+
+        harness.castSorcery(player2, 0, 0);
+        // Do NOT pay search tax — just pass priority
+        harness.passBothPriorities(); // resolve Diabolic Tutor
+
+        // Search is prevented
+        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("prevented by Leonin Arbiter"));
     }
 
     @Test
@@ -116,61 +136,6 @@ class LeoninArbiterTest extends BaseCardTest {
         assertThat(deck).hasSize(deckSizeBefore); // deck preserved (shuffled, not emptied)
     }
 
-    @Test
-    @DisplayName("Library is shuffled when opponent declines to pay Leonin Arbiter tax")
-    void libraryShuffledWhenSearchPreventedDeclined() {
-        harness.addToBattlefield(player1, new LeoninArbiter());
-
-        harness.setHand(player2, List.of(new DiabolicTutor()));
-        harness.addMana(player2, ManaColor.BLACK, 6); // 4 for Tutor + 2 for Arbiter tax
-
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-
-        List<Card> deck = gd.playerDecks.get(player2.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Swamp(), new GrizzlyBears(), new GrizzlyBears()));
-        int deckSizeBefore = deck.size();
-
-        harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities(); // resolve → may ability prompt
-
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        harness.handleMayAbilityChosen(player2, false); // decline
-
-        // Search is prevented but library should still be shuffled
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("declines to pay for Leonin Arbiter"));
-        assertThat(deck).hasSize(deckSizeBefore); // deck preserved (shuffled, not emptied)
-    }
-
-    @Test
-    @DisplayName("Opponent declines to pay for Leonin Arbiter and search is prevented")
-    void opponentDeclinesSearchTax() {
-        harness.addToBattlefield(player1, new LeoninArbiter());
-
-        harness.setHand(player2, List.of(new DiabolicTutor()));
-        harness.addMana(player2, ManaColor.BLACK, 6); // 4 for Tutor + 2 for Arbiter tax
-
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-
-        setupLibrary(player2);
-
-        harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities(); // resolve → may ability prompt
-
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-
-        harness.handleMayAbilityChosen(player2, false); // decline
-
-        // Search is prevented
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("declines to pay for Leonin Arbiter"));
-    }
-
     // ===== Search restriction — controller =====
 
     @Test
@@ -193,7 +158,7 @@ class LeoninArbiterTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Controller can search when they accept paying {2} for Leonin Arbiter")
+    @DisplayName("Controller can search when they pay search tax during priority")
     void controllerCanSearchWhenPayingTax() {
         harness.addToBattlefield(player1, new LeoninArbiter());
 
@@ -207,15 +172,14 @@ class LeoninArbiterTest extends BaseCardTest {
         setupLibrary(player1);
 
         harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities(); // resolve → may ability prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        // Pay search tax while Tutor is on the stack
+        harness.paySearchTax(player1);
 
-        harness.handleMayAbilityChosen(player1, true); // accept
-        harness.passBothPriorities(); // resolve search entry
+        harness.passBothPriorities(); // resolve Diabolic Tutor
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("pays {2} to search (Leonin Arbiter)"));
+        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("pays {2} for Leonin Arbiter search tax"));
     }
 
     // ===== Payment persists until end of turn =====
@@ -225,7 +189,7 @@ class LeoninArbiterTest extends BaseCardTest {
     void paymentPersistsUntilEndOfTurn() {
         harness.addToBattlefield(player1, new LeoninArbiter());
 
-        // First search — player2 pays {2}
+        // First search — player2 pays {2} during priority
         harness.setHand(player2, List.of(new DiabolicTutor()));
         harness.addMana(player2, ManaColor.BLACK, 6);
 
@@ -236,11 +200,8 @@ class LeoninArbiterTest extends BaseCardTest {
         setupLibrary(player2);
 
         harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities(); // resolve → may ability prompt
-
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        harness.handleMayAbilityChosen(player2, true); // accept and pay
-        harness.passBothPriorities(); // resolve search entry
+        harness.paySearchTax(player2);
+        harness.passBothPriorities(); // resolve Diabolic Tutor
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         gs.handleLibraryCardChosen(gd, player2, 0);
@@ -255,7 +216,7 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.castSorcery(player2, 0, 0);
         harness.passBothPriorities();
 
-        // Search should proceed without additional tax payment — no may ability prompt
+        // Search should proceed without additional tax payment
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
     }
 
@@ -277,11 +238,8 @@ class LeoninArbiterTest extends BaseCardTest {
         setupLibrary(player2);
 
         harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities(); // resolve → may ability prompt
-
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        harness.handleMayAbilityChosen(player2, true);
-        harness.passBothPriorities(); // resolve search entry
+        harness.paySearchTax(player2);
+        harness.passBothPriorities(); // resolve
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         gs.handleLibraryCardChosen(gd, player2, 0);
@@ -327,7 +285,7 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.castSorcery(player2, 0, 0);
         harness.passBothPriorities();
 
-        // Search proceeds normally — no Arbiter tax, no may ability prompt
+        // Search proceeds normally — no Arbiter tax
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.gameLog).noneMatch(entry -> entry.contains("Leonin Arbiter"));
     }
@@ -350,14 +308,11 @@ class LeoninArbiterTest extends BaseCardTest {
         setupLibrary(player2);
 
         harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities(); // resolve → may ability prompt
-
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        harness.handleMayAbilityChosen(player2, true);
-        harness.passBothPriorities(); // resolve search entry
+        harness.paySearchTax(player2); // pays {4} for both Arbiters
+        harness.passBothPriorities(); // resolve
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("pays {4} to search (Leonin Arbiter)"));
+        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("pays {4} for Leonin Arbiter search tax"));
     }
 
     @Test
@@ -401,7 +356,7 @@ class LeoninArbiterTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Leonin Arbiter allows Terramorphic Expanse search when player accepts paying {2}")
+    @DisplayName("Leonin Arbiter allows Terramorphic Expanse search when player pays tax during priority")
     void allowsActivatedAbilitySearchWhenPaid() {
         harness.addToBattlefield(player1, new LeoninArbiter());
         harness.addToBattlefield(player1, new TerramorphicExpanse());
@@ -412,16 +367,38 @@ class LeoninArbiterTest extends BaseCardTest {
         deck.addAll(List.of(new Plains(), new Forest()));
 
         harness.activateAbility(player1, 1, null, null);
-        harness.passBothPriorities(); // resolve → may ability prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        // Pay search tax while ability is on the stack
+        harness.paySearchTax(player1);
 
-        harness.handleMayAbilityChosen(player1, true); // accept → pay mana, push search entry
-        harness.passBothPriorities(); // resolve search entry
+        harness.passBothPriorities(); // resolve
 
         // Search proceeds — tax was paid
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("pays {2} to search (Leonin Arbiter)"));
+        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("pays {2} for Leonin Arbiter search tax"));
+    }
+
+    // ===== Special action retains priority =====
+
+    @Test
+    @DisplayName("Paying search tax retains priority (does not pass)")
+    void paySearchTaxRetainsPriority() {
+        harness.addToBattlefield(player1, new LeoninArbiter());
+
+        harness.setHand(player2, List.of(new DiabolicTutor()));
+        harness.addMana(player2, ManaColor.BLACK, 6); // 4 for Tutor + 2 for Arbiter
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castSorcery(player2, 0, 0);
+
+        // Pay search tax
+        harness.paySearchTax(player2);
+
+        // Player still has priority — priorityPassedBy should not include player2
+        assertThat(gd.priorityPassedBy).doesNotContain(player2.getId());
     }
 
     // ===== Helpers =====

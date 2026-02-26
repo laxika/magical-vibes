@@ -139,6 +139,9 @@
     } @else {
       <button class="btn-pass" (click)="passPriority.emit()" [disabled]="!hasPriority">Pass Priority</button>
     }
+    @if (searchTaxCost > 0 && hasPriority) {
+      <button class="btn-pass btn-pass-orange" (click)="paySearchTax.emit()">Pay {{ '{' + searchTaxCost + '}' }} — Leonin Arbiter</button>
+    }
     @if (choice.targeting.choosingXValue) {
       <div class="x-value-banner">
         <span class="x-value-prompt">Choose X for {{ choice.targeting.xValueCardName }}</span>

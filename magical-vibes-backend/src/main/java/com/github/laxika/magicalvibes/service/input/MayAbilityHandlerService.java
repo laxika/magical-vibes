@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
-import com.github.laxika.magicalvibes.model.PendingSearchContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
@@ -40,8 +39,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOw
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchTaxPaymentEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -61,11 +58,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -114,13 +109,6 @@ public class MayAbilityHandlerService {
         boolean isSacrificeUnlessReturnPermanent = ability.effects().stream().anyMatch(e -> e instanceof SacrificeUnlessReturnOwnPermanentTypeToHandEffect);
         if (isSacrificeUnlessReturnPermanent) {
             handleSacrificeUnlessReturnOwnPermanentChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Search tax payment (Leonin Arbiter)
-        boolean isSearchTaxPayment = ability.effects().stream().anyMatch(e -> e instanceof SearchTaxPaymentEffect);
-        if (isSearchTaxPayment) {
-            handleSearchTaxPaymentChoice(gameData, player, accepted, ability);
             return;
         }
 
@@ -531,117 +519,6 @@ public class MayAbilityHandlerService {
             gameData.priorityPassedBy.clear();
             gameBroadcastService.broadcastGameState(gameData);
             turnProgressionService.resolveAutoPass(gameData);
-        }
-    }
-
-    private void handleSearchTaxPaymentChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        PendingSearchContext ctx = gameData.pendingSearchContext;
-        gameData.pendingSearchContext = null;
-
-        if (ctx == null) {
-            log.warn("Game {} - Search tax payment but no pending search context", gameData.id);
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                gameData.priorityPassedBy.clear();
-                gameBroadcastService.broadcastGameState(gameData);
-                turnProgressionService.resolveAutoPass(gameData);
-            }
-            return;
-        }
-
-        if (accepted) {
-            int totalCost = ctx.unpaidArbiterIds().size() * 2;
-            ManaCost cost = new ManaCost("{" + totalCost + "}");
-            ManaPool pool = gameData.playerManaPools.get(player.getId());
-
-            if (!cost.canPay(pool)) {
-                String logEntry = player.getUsername() + " cannot pay {" + totalCost + "} for Leonin Arbiter.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} can't pay search tax at resolution", gameData.id, player.getUsername());
-
-                shuffleLibraryForPreventedSearch(gameData, ctx);
-                playerInputService.processNextMayAbility(gameData);
-                if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                    gameData.priorityPassedBy.clear();
-                    gameBroadcastService.broadcastGameState(gameData);
-                    turnProgressionService.resolveAutoPass(gameData);
-                }
-                return;
-            }
-
-            cost.pay(pool);
-
-            // Mark Arbiters as paid for this turn
-            Set<UUID> paidSet = gameData.paidSearchTaxPermanentIds
-                    .computeIfAbsent(player.getId(), k -> ConcurrentHashMap.newKeySet());
-            paidSet.addAll(ctx.unpaidArbiterIds());
-
-            String logEntry = player.getUsername() + " pays {" + totalCost + "} to search (Leonin Arbiter).";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} pays {} to ignore Leonin Arbiter search restriction",
-                    gameData.id, player.getUsername(), totalCost);
-
-            // Re-dispatch the search by creating a new StackEntry with the search effect
-            StackEntry original = ctx.originalEntry();
-            StackEntry searchEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    original.getCard(),
-                    original.getControllerId(),
-                    "Search (Leonin Arbiter tax paid)",
-                    new ArrayList<>(List.of(ctx.searchEffect())),
-                    original.getXValue(),
-                    original.getTargetPermanentId(),
-                    original.getSourcePermanentId(),
-                    original.getDamageAssignments(),
-                    original.getTargetZone(),
-                    original.getTargetCardIds(),
-                    original.getTargetPermanentIds()
-            );
-            gameData.stack.add(searchEntry);
-        } else {
-            String logEntry = player.getUsername() + " declines to pay for Leonin Arbiter. Library search is prevented.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} declines search tax", gameData.id, player.getUsername());
-
-            shuffleLibraryForPreventedSearch(gameData, ctx);
-        }
-
-        playerInputService.processNextMayAbility(gameData);
-        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-            gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
-        }
-    }
-
-    /**
-     * Shuffles the appropriate library when a search is prevented (mandatory "search...then shuffle"
-     * still shuffles even when the search can't happen). For HeadGames, the target's hand is also
-     * moved on top of their library since that step was deferred.
-     */
-    private void shuffleLibraryForPreventedSearch(GameData gameData, PendingSearchContext ctx) {
-        if (ctx.searchEffect() instanceof HeadGamesEffect) {
-            // HeadGames: hand hasn't been moved to library yet — do it now, then shuffle target's library
-            UUID targetPlayerId = ctx.originalEntry().getTargetPermanentId();
-            List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
-            List<Card> targetDeck = gameData.playerDecks.get(targetPlayerId);
-            String targetName = gameData.playerIdToName.get(targetPlayerId);
-
-            if (targetHand != null && !targetHand.isEmpty()) {
-                int handSize = targetHand.size();
-                for (int i = targetHand.size() - 1; i >= 0; i--) {
-                    targetDeck.addFirst(targetHand.get(i));
-                }
-                targetHand.clear();
-                String logMsg = targetName + " puts " + handSize + " card" + (handSize != 1 ? "s" : "")
-                        + " from their hand on top of their library.";
-                gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            }
-            if (targetDeck != null) Collections.shuffle(targetDeck);
-        } else {
-            UUID controllerId = ctx.originalEntry().getControllerId();
-            List<Card> deck = gameData.playerDecks.get(controllerId);
-            if (deck != null) Collections.shuffle(deck);
         }
     }
 

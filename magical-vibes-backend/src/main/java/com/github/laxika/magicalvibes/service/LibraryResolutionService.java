@@ -10,13 +10,9 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.ManaPool;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
-import com.github.laxika.magicalvibes.model.PendingSearchContext;
 import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchTaxPaymentEffect;
 import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
@@ -47,7 +43,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -243,11 +238,9 @@ public class LibraryResolutionService {
     @HandlesEffect(SearchLibraryForBasicLandToHandEffect.class)
     void resolveSearchLibraryForBasicLandToHand(GameData gameData, StackEntry entry, SearchLibraryForBasicLandToHandEffect effect) {
         UUID controllerId = entry.getControllerId();
-        if (!checkSearchRestriction(gameData, controllerId, entry, effect)) {
-            if (gameData.pendingSearchContext == null) {
-                List<Card> deck = gameData.playerDecks.get(controllerId);
-                if (deck != null) Collections.shuffle(deck);
-            }
+        if (!checkSearchRestriction(gameData, controllerId)) {
+            List<Card> deck = gameData.playerDecks.get(controllerId);
+            if (deck != null) Collections.shuffle(deck);
             return;
         }
 
@@ -292,11 +285,9 @@ public class LibraryResolutionService {
     @HandlesEffect(SearchLibraryForCardTypesToHandEffect.class)
     void resolveSearchLibraryForCardTypesToHand(GameData gameData, StackEntry entry, SearchLibraryForCardTypesToHandEffect effect) {
         UUID controllerId = entry.getControllerId();
-        if (!checkSearchRestriction(gameData, controllerId, entry, effect)) {
-            if (gameData.pendingSearchContext == null) {
-                List<Card> deck = gameData.playerDecks.get(controllerId);
-                if (deck != null) Collections.shuffle(deck);
-            }
+        if (!checkSearchRestriction(gameData, controllerId)) {
+            List<Card> deck = gameData.playerDecks.get(controllerId);
+            if (deck != null) Collections.shuffle(deck);
             return;
         }
 
@@ -360,11 +351,9 @@ public class LibraryResolutionService {
     void resolveSearchLibraryForCardTypesToBattlefield(GameData gameData, StackEntry entry,
                                                        SearchLibraryForCardTypesToBattlefieldEffect effect) {
         UUID controllerId = entry.getControllerId();
-        if (!checkSearchRestriction(gameData, controllerId, entry, effect)) {
-            if (gameData.pendingSearchContext == null) {
-                List<Card> deck = gameData.playerDecks.get(controllerId);
-                if (deck != null) Collections.shuffle(deck);
-            }
+        if (!checkSearchRestriction(gameData, controllerId)) {
+            List<Card> deck = gameData.playerDecks.get(controllerId);
+            if (deck != null) Collections.shuffle(deck);
             return;
         }
 
@@ -448,11 +437,9 @@ public class LibraryResolutionService {
     @HandlesEffect(SearchLibraryForCardToHandEffect.class)
     void resolveSearchLibraryForCardToHand(GameData gameData, StackEntry entry, SearchLibraryForCardToHandEffect effect) {
         UUID controllerId = entry.getControllerId();
-        if (!checkSearchRestriction(gameData, controllerId, entry, effect)) {
-            if (gameData.pendingSearchContext == null) {
-                List<Card> deck = gameData.playerDecks.get(controllerId);
-                if (deck != null) Collections.shuffle(deck);
-            }
+        if (!checkSearchRestriction(gameData, controllerId)) {
+            List<Card> deck = gameData.playerDecks.get(controllerId);
+            if (deck != null) Collections.shuffle(deck);
             return;
         }
 
@@ -484,11 +471,9 @@ public class LibraryResolutionService {
     @HandlesEffect(SearchLibraryForCreatureWithMVXOrLessToHandEffect.class)
     void resolveSearchLibraryForCreatureWithMVXOrLessToHand(GameData gameData, StackEntry entry, SearchLibraryForCreatureWithMVXOrLessToHandEffect effect) {
         UUID controllerId = entry.getControllerId();
-        if (!checkSearchRestriction(gameData, controllerId, entry, effect)) {
-            if (gameData.pendingSearchContext == null) {
-                List<Card> deck = gameData.playerDecks.get(controllerId);
-                if (deck != null) Collections.shuffle(deck);
-            }
+        if (!checkSearchRestriction(gameData, controllerId)) {
+            List<Card> deck = gameData.playerDecks.get(controllerId);
+            if (deck != null) Collections.shuffle(deck);
             return;
         }
 
@@ -535,11 +520,9 @@ public class LibraryResolutionService {
     void resolvePayManaAndSearchLibraryForCardNamedToBattlefield(GameData gameData, StackEntry entry,
                                                                   PayManaAndSearchLibraryForCardNamedToBattlefieldEffect effect) {
         UUID controllerId = entry.getControllerId();
-        if (!checkSearchRestriction(gameData, controllerId, entry, effect)) {
-            if (gameData.pendingSearchContext == null) {
-                List<Card> deck = gameData.playerDecks.get(controllerId);
-                if (deck != null) Collections.shuffle(deck);
-            }
+        if (!checkSearchRestriction(gameData, controllerId)) {
+            List<Card> deck = gameData.playerDecks.get(controllerId);
+            if (deck != null) Collections.shuffle(deck);
             return;
         }
 
@@ -610,28 +593,23 @@ public class LibraryResolutionService {
         String casterName = gameData.playerIdToName.get(casterId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
-        // Check search restriction before moving hand — if MayAbility is queued, the
-        // hand stays in place so the re-dispatched HeadGames entry can handle it normally.
-        if (!checkSearchRestriction(gameData, casterId, entry, effect)) {
-            if (gameData.pendingSearchContext == null) {
-                // Search prevented outright — still execute remaining spell steps per rules:
-                // target puts hand on top of library, then library is shuffled.
-                int handSize = targetHand.size();
-                if (handSize > 0) {
-                    for (int i = targetHand.size() - 1; i >= 0; i--) {
-                        targetDeck.addFirst(targetHand.get(i));
-                    }
-                    targetHand.clear();
-                    String logMsg = targetName + " puts " + handSize + " card" + (handSize != 1 ? "s" : "")
-                            + " from their hand on top of their library.";
-                    gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        // Check search restriction — if unpaid Arbiters exist, search is prevented.
+        if (!checkSearchRestriction(gameData, casterId)) {
+            // Search prevented — still execute remaining spell steps per rules:
+            // target puts hand on top of library, then library is shuffled.
+            int handSize = targetHand.size();
+            if (handSize > 0) {
+                for (int i = targetHand.size() - 1; i >= 0; i--) {
+                    targetDeck.addFirst(targetHand.get(i));
                 }
-                Collections.shuffle(targetDeck);
-                String shuffleLog = targetName + "'s library is shuffled.";
-                gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
+                targetHand.clear();
+                String logMsg = targetName + " puts " + handSize + " card" + (handSize != 1 ? "s" : "")
+                        + " from their hand on top of their library.";
+                gameBroadcastService.logAndBroadcast(gameData, logMsg);
             }
-            // If pendingSearchContext is set (MayAbility prompt), hand move + shuffle
-            // are handled by MayAbilityHandlerService upon accept/decline.
+            Collections.shuffle(targetDeck);
+            String shuffleLog = targetName + "'s library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
             return;
         }
 
@@ -896,70 +874,35 @@ public class LibraryResolutionService {
 
     /**
      * Checks if a library search is prevented by Leonin Arbiter (CantSearchLibrariesEffect).
-     * <ul>
-     *   <li>If no unpaid Arbiters: returns true (proceed with search).</li>
-     *   <li>If the player cannot afford the tax: logs prevention, returns false.</li>
-     *   <li>If the player can afford the tax: stores a {@link PendingSearchContext} and pushes
-     *       a {@link PendingMayAbility} with {@link SearchTaxPaymentEffect} so the player is
-     *       prompted to pay. Returns false (the search handler should not continue — the
-     *       MayAbilityHandler will re-dispatch the search if accepted).</li>
-     * </ul>
+     * Returns true if the search may proceed (no unpaid Arbiters), false if prevented.
+     * Payment is handled as a special action during priority (before the spell resolves).
      */
-    boolean checkSearchRestriction(GameData gameData, UUID searchingPlayerId, StackEntry entry, CardEffect searchEffect) {
-        List<UUID> unpaidArbiterIds = new ArrayList<>();
+    boolean checkSearchRestriction(GameData gameData, UUID searchingPlayerId) {
+        boolean hasUnpaid = false;
 
-        gameData.forEachPermanent((playerId, permanent) -> {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof CantSearchLibrariesEffect) {
-                    Set<UUID> paidSet = gameData.paidSearchTaxPermanentIds.get(searchingPlayerId);
-                    if (paidSet == null || !paidSet.contains(permanent.getId())) {
-                        unpaidArbiterIds.add(permanent.getId());
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof CantSearchLibrariesEffect) {
+                        Set<UUID> paidSet = gameData.paidSearchTaxPermanentIds.get(searchingPlayerId);
+                        if (paidSet == null || !paidSet.contains(perm.getId())) {
+                            hasUnpaid = true;
+                        }
                     }
                 }
             }
-        });
-
-        if (unpaidArbiterIds.isEmpty()) return true;
-
-        int totalCost = unpaidArbiterIds.size() * 2;
-        ManaCost cost = new ManaCost("{" + totalCost + "}");
-        ManaPool pool = gameData.playerManaPools.get(searchingPlayerId);
-
-        if (pool == null || !cost.canPay(pool)) {
-            String playerName = gameData.playerIdToName.get(searchingPlayerId);
-            String logMsg = playerName + "'s library search is prevented by Leonin Arbiter.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            log.info("Game {} - {} can't pay search tax ({} unpaid Arbiter(s)), search prevented",
-                    gameData.id, playerName, unpaidArbiterIds.size());
-            return false;
         }
 
-        // Player can pay — ask via MayAbility system
-        gameData.pendingSearchContext = new PendingSearchContext(entry, searchEffect, unpaidArbiterIds);
+        if (!hasUnpaid) return true;
 
-        String prompt = "Pay {" + totalCost + "} to search your library? (Leonin Arbiter)";
-        // Use the first Arbiter's card as the source for display
-        Card arbiterCard = findArbiterCard(gameData, unpaidArbiterIds.getFirst());
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                arbiterCard, searchingPlayerId, List.of(new SearchTaxPaymentEffect()), prompt
-        ));
-
-        log.info("Game {} - {} prompted to pay {{}} for Leonin Arbiter search tax",
-                gameData.id, gameData.playerIdToName.get(searchingPlayerId), totalCost);
+        String playerName = gameData.playerIdToName.get(searchingPlayerId);
+        String logMsg = playerName + "'s library search is prevented by Leonin Arbiter.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} has unpaid Leonin Arbiter search tax, search prevented",
+                gameData.id, playerName);
         return false;
-    }
-
-    private Card findArbiterCard(GameData gameData, UUID permanentId) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                if (perm.getId().equals(permanentId)) {
-                    return perm.getCard();
-                }
-            }
-        }
-        return null;
     }
 
     private void setImprintedCardOnPermanent(GameData gameData, UUID permanentId, Card card) {

@@ -366,6 +366,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.playableCardIndices.set(new Set(state.playableCardIndices));
     this.playableGraveyardLandIndices.set(new Set(state.playableGraveyardLandIndices ?? []));
     this.autoStopSteps.set(new Set(state.autoStopSteps));
+    this.searchTaxCost.set(state.searchTaxCost ?? 0);
 
     // Switch to stack tab when stack is non-empty
     if (state.stack.length > 0) {
@@ -405,6 +406,7 @@ export class GameComponent implements OnInit, OnDestroy {
   playableCardIndices = signal(new Set<number>());
   playableGraveyardLandIndices = signal(new Set<number>());
   autoStopSteps = signal(new Set<string>());
+  searchTaxCost = signal(0);
 
   isCardPlayable(index: number): boolean {
     return this.playableCardIndices().has(index);
@@ -429,6 +431,10 @@ export class GameComponent implements OnInit, OnDestroy {
     if (g) {
       this.websocketService.send({ type: MessageType.PASS_PRIORITY });
     }
+  }
+
+  paySearchTax(): void {
+    this.websocketService.send({ type: MessageType.PAY_SEARCH_TAX });
   }
 
   toggleAutoStop(step: string): void {

@@ -51,8 +51,10 @@ export class SidePanelComponent {
   @Input() isGraveyardLandPlayable!: (index: number) => boolean;
   @Input() getPlayerName!: (playerId: string) => string;
   @Input() getStackEntryTargetName!: (entry: StackEntry) => string | null;
+  @Input() searchTaxCost = 0;
 
   @Output() passPriority = new EventEmitter<void>();
+  @Output() paySearchTax = new EventEmitter<void>();
   @Output() confirmAttackers = new EventEmitter<void>();
   @Output() confirmBlockers = new EventEmitter<void>();
   @Output() playerBadgeClick = new EventEmitter<number>();

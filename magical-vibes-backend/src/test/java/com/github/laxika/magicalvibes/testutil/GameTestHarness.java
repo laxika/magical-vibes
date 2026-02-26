@@ -474,6 +474,10 @@ public class GameTestHarness {
         gameService.handleMayAbilityChosen(gameData, player, accepted);
     }
 
+    public void paySearchTax(Player player) {
+        gameService.paySearchTax(gameData, player);
+    }
+
     public void handleCombatDamageAssigned(Player player, int attackerIndex, Map<UUID, Integer> assignments) {
         gameService.handleCombatDamageAssigned(gameData, player, attackerIndex, assignments);
     }
