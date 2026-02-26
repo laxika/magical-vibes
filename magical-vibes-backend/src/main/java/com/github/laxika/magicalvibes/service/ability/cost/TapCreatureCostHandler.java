@@ -11,12 +11,23 @@ import com.github.laxika.magicalvibes.service.GameQueryService;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Handles the {@link TapCreatureCost} — the player must tap an untapped creature matching a
+ * {@link com.github.laxika.magicalvibes.model.filter.PermanentPredicate} (e.g. "Tap an untapped
+ * blue creature you control"). Unlike the sacrifice handlers, payment taps the creature rather
+ * than removing it from the battlefield.
+ */
 public class TapCreatureCostHandler implements PermanentChoiceCostHandler {
 
     private final TapCreatureCost cost;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
 
+    /**
+     * @param cost               the cost effect record specifying the creature predicate
+     * @param gameQueryService    used to check creature status and evaluate the predicate
+     * @param gameBroadcastService used to log and broadcast the tap action
+     */
     public TapCreatureCostHandler(TapCreatureCost cost, GameQueryService gameQueryService, GameBroadcastService gameBroadcastService) {
         this.cost = cost;
         this.gameQueryService = gameQueryService;

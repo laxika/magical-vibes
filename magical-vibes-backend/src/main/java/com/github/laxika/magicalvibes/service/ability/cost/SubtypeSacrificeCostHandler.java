@@ -10,12 +10,22 @@ import com.github.laxika.magicalvibes.service.GameQueryService;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Handles the {@link SacrificeSubtypeCreatureCost} — the player must sacrifice one creature
+ * of a specific subtype (e.g. "Sacrifice a Goblin"). Filters the battlefield to creatures
+ * matching the required subtype.
+ */
 public class SubtypeSacrificeCostHandler implements PermanentChoiceCostHandler {
 
     private final SacrificeSubtypeCreatureCost cost;
     private final GameQueryService gameQueryService;
     private final PermanentSacrificeAction sacrificeAction;
 
+    /**
+     * @param cost            the cost effect record specifying the required subtype
+     * @param gameQueryService used to check creature status
+     * @param sacrificeAction  callback that performs the actual sacrifice
+     */
     public SubtypeSacrificeCostHandler(SacrificeSubtypeCreatureCost cost, GameQueryService gameQueryService, PermanentSacrificeAction sacrificeAction) {
         this.cost = cost;
         this.gameQueryService = gameQueryService;

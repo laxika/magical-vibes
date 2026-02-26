@@ -10,12 +10,23 @@ import com.github.laxika.magicalvibes.service.GameQueryService;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Handles the {@link SacrificeMultiplePermanentsCost} — the player must sacrifice N permanents
+ * matching a {@link com.github.laxika.magicalvibes.model.filter.PermanentPredicate} filter
+ * (e.g. "Sacrifice three artifacts"). Unlike the single-sacrifice handlers, {@link #requiredCount()}
+ * returns the count from the cost record, and the player may be prompted multiple times.
+ */
 public class MultiplePermanentSacrificeCostHandler implements PermanentChoiceCostHandler {
 
     private final SacrificeMultiplePermanentsCost cost;
     private final GameQueryService gameQueryService;
     private final PermanentSacrificeAction sacrificeAction;
 
+    /**
+     * @param cost            the cost effect record specifying the count and filter predicate
+     * @param gameQueryService used to evaluate the permanent predicate
+     * @param sacrificeAction  callback that performs the actual sacrifice
+     */
     public MultiplePermanentSacrificeCostHandler(SacrificeMultiplePermanentsCost cost, GameQueryService gameQueryService, PermanentSacrificeAction sacrificeAction) {
         this.cost = cost;
         this.gameQueryService = gameQueryService;

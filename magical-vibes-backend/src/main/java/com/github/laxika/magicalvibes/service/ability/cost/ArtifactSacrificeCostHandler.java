@@ -10,12 +10,21 @@ import com.github.laxika.magicalvibes.service.GameQueryService;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Handles the {@link SacrificeArtifactCost} — the player must sacrifice one artifact they control.
+ * Filters the battlefield to artifacts only and delegates the actual sacrifice to the provided action.
+ */
 public class ArtifactSacrificeCostHandler implements PermanentChoiceCostHandler {
 
     private final SacrificeArtifactCost cost;
     private final GameQueryService gameQueryService;
     private final PermanentSacrificeAction sacrificeAction;
 
+    /**
+     * @param cost            the cost effect record from the ability's effect list
+     * @param gameQueryService used to check permanent types
+     * @param sacrificeAction  callback that performs the actual sacrifice
+     */
     public ArtifactSacrificeCostHandler(SacrificeArtifactCost cost, GameQueryService gameQueryService, PermanentSacrificeAction sacrificeAction) {
         this.cost = cost;
         this.gameQueryService = gameQueryService;
