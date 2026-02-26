@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenOnOwnSpellCastWithCostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnArtifactCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
@@ -126,6 +127,29 @@ public class TriggerCollectionService {
                         && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)
                         && playerId.equals(castingPlayerId)) {
                     List<CardEffect> resolvedEffects = List.of(new GainLifeEffect(trigger.amount()));
+
+                    if (effect instanceof MayEffect may) {
+                        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                                perm.getCard(),
+                                playerId,
+                                resolvedEffects,
+                                perm.getCard().getName() + " — " + may.prompt(),
+                                null,
+                                "{" + trigger.manaCost() + "}"
+                        ));
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s ability",
+                                new ArrayList<>(resolvedEffects)
+                        ));
+                    }
+                } else if (inner instanceof CreateTokenOnOwnSpellCastWithCostEffect trigger
+                        && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)
+                        && playerId.equals(castingPlayerId)) {
+                    List<CardEffect> resolvedEffects = List.of(trigger.tokenEffect());
 
                     if (effect instanceof MayEffect may) {
                         gameData.pendingMayAbilities.add(new PendingMayAbility(

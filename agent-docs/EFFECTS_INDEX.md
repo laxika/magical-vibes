@@ -71,6 +71,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `SacrificeOtherCreatureOrDamageEffect` | `(int damage)` | sacrifice another creature or take N damage (upkeep trigger) |
 | `DealDamageToAnyTargetOnArtifactCastEffect` | `(int manaCost, int damage)` | trigger descriptor: when you cast an artifact spell, may pay {N} to deal N damage to any target. Place in `ON_ANY_PLAYER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into `DealDamageToAnyTargetEffect` |
 | `GainLifeOnOwnSpellCastWithCostEffect` | `(CardPredicate spellFilter, int manaCost, int amount)` | trigger descriptor: when you cast a spell matching the predicate, may pay {N} to gain N life. Only triggers for own spells. Place in `ON_ANY_PLAYER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into `GainLifeEffect` |
+| `CreateTokenOnOwnSpellCastWithCostEffect` | `(CardPredicate spellFilter, int manaCost, CreateCreatureTokenEffect tokenEffect)` | trigger descriptor: when you cast a spell matching the predicate, may pay {N} to create a creature token. Only triggers for own spells. Place in `ON_ANY_PLAYER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into the embedded `CreateCreatureTokenEffect` |
 
 ## Destruction / sacrifice
 
