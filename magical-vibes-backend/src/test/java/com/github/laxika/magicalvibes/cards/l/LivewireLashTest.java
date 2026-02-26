@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.Shunt;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -240,6 +242,55 @@ class LivewireLashTest extends BaseCardTest {
         StackEntry trigger = gd.stack.getLast();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(trigger.getTargetPermanentId()).isEqualTo(player2.getId());
+    }
+
+    // ===== Trigger fires when spell is retargeted onto equipped creature (Shunt) =====
+
+    @Test
+    @DisplayName("Trigger fires when a spell is redirected onto the equipped creature via Shunt")
+    void triggerFiresWhenSpellRetargetedOntoEquippedCreature() {
+        harness.setLife(player2, 20);
+
+        // Player1 has a creature with Livewire Lash and another unequipped creature
+        Permanent equippedCreature = addReadyCreature(player1);
+        Permanent lash = addLashReady(player1);
+        lash.setAttachedTo(equippedCreature.getId());
+
+        Permanent otherCreature = addReadyCreature(player2);
+
+        // Player1 casts Boomerang targeting player2's creature
+        Boomerang boomerang = new Boomerang();
+        harness.setHand(player1, List.of(boomerang));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, otherCreature.getId());
+
+        // No Livewire Lash trigger yet - the spell targets otherCreature, not the equipped one
+        assertThat(gd.interaction.awaitingInputType()).isNull();
+
+        // Player1 passes priority, player2 casts Shunt to redirect Boomerang
+        harness.passPriority(player1);
+        harness.setHand(player2, List.of(new Shunt()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, boomerang.getId());
+
+        // Resolve Shunt - prompts player2 to choose new target
+        harness.passBothPriorities();
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+
+        // Player2 retargets Boomerang onto player1's equipped creature
+        harness.handlePermanentChosen(player2, equippedCreature.getId());
+
+        // Livewire Lash trigger should now fire - prompts player1 to choose any target
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isEqualTo(player1.getId());
+
+        // Player1 targets player2 with the 2 damage
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        // Resolve triggered ability (top of stack), then Boomerang
+        harness.passBothPriorities(); // Resolve trigger - 2 damage to player2
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
     // ===== Helpers =====

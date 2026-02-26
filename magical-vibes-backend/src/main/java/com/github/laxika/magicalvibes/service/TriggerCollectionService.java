@@ -405,10 +405,10 @@ public class TriggerCollectionService {
 
     public void checkBecomesTargetOfSpellTriggers(GameData gameData) {
         if (gameData.stack.isEmpty()) return;
+        checkBecomesTargetOfSpellTriggers(gameData, gameData.stack.getLast());
+    }
 
-        // The most recently added stack entry is the spell that was just cast
-        StackEntry spellEntry = gameData.stack.getLast();
-
+    public void checkBecomesTargetOfSpellTriggers(GameData gameData, StackEntry spellEntry) {
         // Collect all targeted permanent IDs from the spell
         List<UUID> targetIds = new ArrayList<>();
         if (spellEntry.getTargetPermanentId() != null

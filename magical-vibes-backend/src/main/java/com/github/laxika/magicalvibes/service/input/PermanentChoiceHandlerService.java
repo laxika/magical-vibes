@@ -231,6 +231,10 @@ public class PermanentChoiceHandlerService {
                 String logMsg = spellName + " now targets " + targetName + ".";
                 gameBroadcastService.logAndBroadcast(gameData, logMsg);
                 log.info("Game {} - {} retargeted to {}", gameData.id, spellName, targetName);
+
+                // Check becomes-target-of-spell triggers for the new target (e.g. Livewire Lash)
+                triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, targetSpell);
+                if (gameData.interaction.isAwaitingInput()) return;
             }
 
             turnProgressionService.resolveAutoPass(gameData);
