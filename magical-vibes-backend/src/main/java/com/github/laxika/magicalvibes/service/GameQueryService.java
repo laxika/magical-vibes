@@ -84,7 +84,7 @@ public class GameQueryService {
 
     private final StaticEffectHandlerRegistry staticEffectRegistry;
 
-    record StaticBonus(int power, int toughness, Set<Keyword> keywords, Set<CardColor> protectionColors, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects) {
+    public record StaticBonus(int power, int toughness, Set<Keyword> keywords, Set<CardColor> protectionColors, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects) {
         static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), false, List.of(), List.of());
     }
 
@@ -384,7 +384,7 @@ public class GameQueryService {
         return power;
     }
 
-    StaticBonus computeStaticBonus(GameData gameData, Permanent target) {
+    public StaticBonus computeStaticBonus(GameData gameData, Permanent target) {
         boolean isNaturalCreature = target.getCard().getType() == CardType.CREATURE
                 || target.getCard().getAdditionalTypes().contains(CardType.CREATURE);
         StaticBonusAccumulator accumulator = new StaticBonusAccumulator();

@@ -1,4 +1,13 @@
-package com.github.laxika.magicalvibes.service;
+package com.github.laxika.magicalvibes.service.ability;
+
+import com.github.laxika.magicalvibes.service.ActivatedAbilityExecutionService;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.GameQueryService;
+import com.github.laxika.magicalvibes.service.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.PlayerInputService;
+import com.github.laxika.magicalvibes.service.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;

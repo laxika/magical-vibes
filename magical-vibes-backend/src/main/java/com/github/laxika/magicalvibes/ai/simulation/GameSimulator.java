@@ -27,7 +27,7 @@ import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
 import com.github.laxika.magicalvibes.networking.service.StackEntryViewFactory;
-import com.github.laxika.magicalvibes.service.AbilityActivationService;
+import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.ActivatedAbilityExecutionService;
 import com.github.laxika.magicalvibes.service.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.BounceResolutionService;
