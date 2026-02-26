@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnT
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.TapSubtypeBoostSelfAndDamageDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentFromTargetPermanentsEffect;
@@ -727,6 +728,37 @@ public class CreatureModResolutionService {
                 permanentRemovalService.removeOrphanedAuras(gameData);
             }
         }
+    }
+
+    @HandlesEffect(TapSubtypeBoostSelfAndDamageDefenderEffect.class)
+    private void resolveTapSubtypeBoostSelfAndDamageDefender(GameData gameData, StackEntry entry, TapSubtypeBoostSelfAndDamageDefenderEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+
+        // Find all untapped creatures with the required subtype the controller controls
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        List<UUID> eligibleIds = new ArrayList<>();
+        if (battlefield != null) {
+            for (Permanent perm : battlefield) {
+                if (!perm.isTapped()
+                        && gameQueryService.isCreature(gameData, perm)
+                        && gameQueryService.matchesPermanentPredicate(gameData, perm,
+                                new com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate(effect.subtype()))) {
+                    eligibleIds.add(perm.getId());
+                }
+            }
+        }
+
+        if (eligibleIds.isEmpty()) {
+            String logEntry = entry.getCard().getName() + "'s attack ability finds no untapped " + effect.subtype().getDisplayName() + " to tap.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} attack trigger: no eligible {} to tap", gameData.id, entry.getCard().getName(), effect.subtype().getDisplayName());
+            return;
+        }
+
+        gameData.pendingTapSubtypeBoostSourcePermanentId = sourcePermanentId;
+        playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds, eligibleIds.size(),
+                "You may tap any number of untapped " + effect.subtype().getDisplayName() + " you control.");
     }
 
     @HandlesEffect(ProliferateEffect.class)

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.service.CreatureControlService;
@@ -696,6 +697,113 @@ public class PermanentChoiceHandlerService {
             }
 
             gameBroadcastService.broadcastGameState(gameData);
+        } else if (gameData.pendingTapSubtypeBoostSourcePermanentId != null) {
+            UUID sourcePermanentId = gameData.pendingTapSubtypeBoostSourcePermanentId;
+            gameData.pendingTapSubtypeBoostSourcePermanentId = null;
+
+            int count = permanentIds.size();
+
+            if (count == 0) {
+                String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to tap any Myr.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            } else {
+                // Tap the chosen permanents
+                List<String> tappedNames = new ArrayList<>();
+                for (UUID permId : permanentIds) {
+                    Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+                    if (perm != null) {
+                        perm.tap();
+                        tappedNames.add(perm.getCard().getName());
+                    }
+                }
+
+                if (!tappedNames.isEmpty()) {
+                    String tapLog = gameData.playerIdToName.get(playerId) + " taps " + tappedNames.size()
+                            + " Myr: " + String.join(", ", tappedNames) + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, tapLog);
+                    log.info("Game {} - {} taps {} Myr for attack trigger", gameData.id,
+                            gameData.playerIdToName.get(playerId), tappedNames.size());
+                }
+
+                // Boost source permanent +X/+0 (only if still on battlefield)
+                Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                String sourceName;
+                if (sourcePermanent != null) {
+                    sourcePermanent.setPowerModifier(sourcePermanent.getPowerModifier() + count);
+                    sourceName = sourcePermanent.getCard().getName();
+                    String boostLog = sourceName + " gets +" + count + "/+0 until end of turn.";
+                    gameBroadcastService.logAndBroadcast(gameData, boostLog);
+                    log.info("Game {} - {} gets +{}/+0", gameData.id, sourceName, count);
+                } else {
+                    sourceName = "Myr Battlesphere";
+                    log.info("Game {} - Source permanent no longer on battlefield, skipping boost", gameData.id);
+                }
+
+                // Deal X damage to the defending player (happens even if source left battlefield per ruling)
+                UUID defendingPlayerId = gameQueryService.getOpponentId(gameData, playerId);
+                String defenderName = gameData.playerIdToName.get(defendingPlayerId);
+
+                // Check source damage prevention
+                Set<UUID> preventedSources = gameData.playerSourceDamagePreventionIds.get(defendingPlayerId);
+                boolean sourcePrevented = preventedSources != null && preventedSources.contains(sourcePermanentId);
+
+                if (sourcePrevented) {
+                    gameBroadcastService.logAndBroadcast(gameData, sourceName + "'s damage to " + defenderName + " is prevented.");
+                } else {
+                    // Apply damage multiplier (DoubleDamageEffect)
+                    int damage = count;
+                    final int[] multiplier = {1};
+                    gameData.forEachPermanent((pid, p) -> {
+                        for (com.github.laxika.magicalvibes.model.effect.CardEffect e : p.getCard().getEffects(EffectSlot.STATIC)) {
+                            if (e instanceof com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect) {
+                                multiplier[0] *= 2;
+                            }
+                        }
+                    });
+                    damage *= multiplier[0];
+
+                    // Apply global prevention shield
+                    if (gameData.globalDamagePreventionShield > 0 && damage > 0) {
+                        int prevented = Math.min(gameData.globalDamagePreventionShield, damage);
+                        gameData.globalDamagePreventionShield -= prevented;
+                        damage -= prevented;
+                    }
+
+                    // Apply player prevention shield
+                    int shield = gameData.playerDamagePreventionShields.getOrDefault(defendingPlayerId, 0);
+                    if (shield > 0 && damage > 0) {
+                        int prevented = Math.min(shield, damage);
+                        gameData.playerDamagePreventionShields.put(defendingPlayerId, shield - prevented);
+                        damage -= prevented;
+                    }
+
+                    if (damage > 0) {
+                        boolean hasInfect = sourcePermanent != null
+                                && gameQueryService.hasKeyword(gameData, sourcePermanent, Keyword.INFECT);
+                        if (hasInfect) {
+                            int currentPoison = gameData.playerPoisonCounters.getOrDefault(defendingPlayerId, 0);
+                            gameData.playerPoisonCounters.put(defendingPlayerId, currentPoison + damage);
+                            gameBroadcastService.logAndBroadcast(gameData, defenderName + " gets "
+                                    + damage + " poison counter" + (damage > 1 ? "s" : "") + " from " + sourceName + ".");
+                        } else {
+                            int currentLife = gameData.playerLifeTotals.getOrDefault(defendingPlayerId, 20);
+                            gameData.playerLifeTotals.put(defendingPlayerId, currentLife - damage);
+                            gameBroadcastService.logAndBroadcast(gameData, sourceName + " deals "
+                                    + damage + " damage to " + defenderName + ".");
+                        }
+                    }
+                }
+            }
+
+            stateBasedActionService.performStateBasedActions(gameData);
+
+            if (!gameData.pendingMayAbilities.isEmpty()) {
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
         } else {
             throw new IllegalStateException("No pending multi-permanent choice context");
         }

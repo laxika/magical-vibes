@@ -92,6 +92,7 @@ public class GameData {
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionIds = new ConcurrentHashMap<>();
     public boolean pendingSacrificeAttackingCreature;
     public boolean pendingAwakeningCounterPlacement;
+    public UUID pendingTapSubtypeBoostSourcePermanentId;
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
 
     /** Tracks how many cards each player has drawn this turn. */
@@ -177,6 +178,7 @@ public class GameData {
         copy.combatDamagePhase1Complete = this.combatDamagePhase1Complete;
         copy.pendingSacrificeAttackingCreature = this.pendingSacrificeAttackingCreature;
         copy.pendingAwakeningCounterPlacement = this.pendingAwakeningCounterPlacement;
+        copy.pendingTapSubtypeBoostSourcePermanentId = this.pendingTapSubtypeBoostSourcePermanentId;
 
         // --- Set<UUID> (ConcurrentHashMap.newKeySet()) ---
         copy.playerIds.addAll(this.playerIds);

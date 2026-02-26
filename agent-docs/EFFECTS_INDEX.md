@@ -347,6 +347,7 @@ Pass `null` as filter to allow any card.
 | `BoostSelfPerEnchantmentOnBattlefieldEffect` | `(int powerPerEnchantment, int toughnessPerEnchantment)` | +X/+Y per enchantment on battlefield (static) |
 | `BoostSelfPerBlockingCreatureEffect` | `(int powerPerBlockingCreature, int toughnessPerBlockingCreature)` | +X/+Y for each creature blocking this (combat trigger) |
 | `BoostSelfWhenBlockingKeywordEffect` | `(Keyword requiredKeyword, int powerBoost, int toughnessBoost)` | +X/+Y when blocking a creature with the required keyword (e.g. flying). Place in `ON_BLOCK` slot. CombatService converts to BoostSelfEffect at trigger time |
+| `TapSubtypeBoostSelfAndDamageDefenderEffect` | `(CardSubtype subtype)` | when this creature attacks, you may tap any number of untapped creatures of subtype you control → gets +X/+0 until end of turn and deals X damage to defending player. Place in `ON_ATTACK` slot. Prompts multi-permanent choice for eligible untapped creatures |
 
 ## P/T setting / counters
 
