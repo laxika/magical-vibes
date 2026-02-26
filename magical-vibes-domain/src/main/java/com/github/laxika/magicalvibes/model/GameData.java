@@ -378,6 +378,10 @@ public class GameData {
             case InteractionContext.RevealedHandChoice rhc ->
                     targetInteraction.beginRevealedHandChoice(rhc.choosingPlayerId(), rhc.targetPlayerId(),
                             rhc.validIndices(), rhc.remainingCount(), rhc.discardMode(), rhc.chosenCards());
+            case InteractionContext.MultiZoneExileChoice mzec ->
+                    targetInteraction.beginMultiZoneExileChoice(mzec.playerId(),
+                            mzec.validCardIds() != null ? new HashSet<>(mzec.validCardIds()) : null,
+                            mzec.maxCount(), mzec.targetPlayerId(), mzec.controllerId(), mzec.cardName());
             case InteractionContext.CombatDamageAssignment cda ->
                     targetInteraction.beginCombatDamageAssignment(cda.playerId(), cda.attackerIndex(),
                             cda.attackerPermanentId(), cda.attackerName(), cda.totalDamage(),

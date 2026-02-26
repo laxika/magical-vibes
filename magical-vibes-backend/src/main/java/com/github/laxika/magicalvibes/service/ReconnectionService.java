@@ -153,6 +153,12 @@ public class ReconnectionService {
                     resendFromContext(gameData, playerId, rhc);
                 }
             }
+            case MULTI_ZONE_EXILE_CHOICE -> {
+                InteractionContext.MultiZoneExileChoice mzec = gameData.interaction.multiZoneExileChoiceContext();
+                if (mzec != null) {
+                    resendFromContext(gameData, playerId, mzec);
+                }
+            }
             case COMBAT_DAMAGE_ASSIGNMENT -> {
                 InteractionContext.CombatDamageAssignment cda = gameData.interaction.combatDamageAssignmentContext();
                 if (cda != null) {
@@ -237,6 +243,11 @@ public class ReconnectionService {
                 } else if (cc.context() instanceof ColorChoiceContext.CardNameChoice) {
                     options = collectAllCardNamesInGame(gameData);
                     prompt = "Choose a card name.";
+                } else if (cc.context() instanceof ColorChoiceContext.ExileByNameChoice ebn) {
+                    options = collectCardNamesInGameExcluding(gameData, ebn.excludedTypes());
+                    String excludedLabel = ebn.excludedTypes().stream()
+                            .map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
+                    prompt = "Choose a non" + excludedLabel + " card name.";
                 } else if (cc.context() instanceof ColorChoiceContext.KeywordGrantChoice kgc) {
                     options = kgc.options().stream().map(Keyword::name).toList();
                     prompt = "Choose a keyword to grant.";
@@ -334,6 +345,33 @@ public class ReconnectionService {
                 sessionManager.sendToPlayer(playerId, new ChooseFromRevealedHandMessage(
                         cardViews, validIndices, "Choose a card to put on top of " + targetName + "'s library."));
             }
+            case InteractionContext.MultiZoneExileChoice mzec -> {
+                if (!playerId.equals(mzec.playerId())) {
+                    return;
+                }
+                List<UUID> validCardIds = new ArrayList<>(mzec.validCardIds());
+                List<CardView> cardViews = new ArrayList<>();
+                // Collect CardViews from hand, graveyard, and library of target player
+                UUID targetPid = mzec.targetPlayerId();
+                for (Card card : gameData.playerHands.getOrDefault(targetPid, List.of())) {
+                    if (mzec.validCardIds().contains(card.getId())) {
+                        cardViews.add(cardViewFactory.create(card));
+                    }
+                }
+                for (Card card : gameData.playerGraveyards.getOrDefault(targetPid, List.of())) {
+                    if (mzec.validCardIds().contains(card.getId())) {
+                        cardViews.add(cardViewFactory.create(card));
+                    }
+                }
+                for (Card card : gameData.playerDecks.getOrDefault(targetPid, List.of())) {
+                    if (mzec.validCardIds().contains(card.getId())) {
+                        cardViews.add(cardViewFactory.create(card));
+                    }
+                }
+                sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsFromGraveyardsMessage(
+                        validCardIds, cardViews, mzec.maxCount(),
+                        "Choose any number of cards named \"" + mzec.cardName() + "\" to exile."));
+            }
             case InteractionContext.CombatDamageAssignment cda -> {
                 if (!playerId.equals(cda.playerId())) {
                     return;
@@ -365,5 +403,42 @@ public class ReconnectionService {
         }
         gameData.stack.forEach(se -> names.add(se.getCard().getName()));
         return new java.util.ArrayList<>(names);
+    }
+
+    private List<String> collectCardNamesInGameExcluding(GameData gameData, java.util.List<com.github.laxika.magicalvibes.model.CardType> excludedTypes) {
+        java.util.Set<String> names = new java.util.TreeSet<>();
+        for (java.util.UUID pid : gameData.playerIds) {
+            gameData.playerBattlefields.getOrDefault(pid, List.of()).stream()
+                    .filter(p -> !hasExcludedType(p.getCard(), excludedTypes))
+                    .forEach(p -> names.add(p.getCard().getName()));
+            gameData.playerHands.getOrDefault(pid, List.of()).stream()
+                    .filter(c -> !hasExcludedType(c, excludedTypes))
+                    .forEach(c -> names.add(c.getName()));
+            gameData.playerGraveyards.getOrDefault(pid, List.of()).stream()
+                    .filter(c -> !hasExcludedType(c, excludedTypes))
+                    .forEach(c -> names.add(c.getName()));
+            gameData.playerDecks.getOrDefault(pid, List.of()).stream()
+                    .filter(c -> !hasExcludedType(c, excludedTypes))
+                    .forEach(c -> names.add(c.getName()));
+            gameData.playerExiledCards.getOrDefault(pid, List.of()).stream()
+                    .filter(c -> !hasExcludedType(c, excludedTypes))
+                    .forEach(c -> names.add(c.getName()));
+        }
+        gameData.stack.stream()
+                .filter(se -> !hasExcludedType(se.getCard(), excludedTypes))
+                .forEach(se -> names.add(se.getCard().getName()));
+        return new java.util.ArrayList<>(names);
+    }
+
+    private boolean hasExcludedType(com.github.laxika.magicalvibes.model.Card card, java.util.List<com.github.laxika.magicalvibes.model.CardType> excludedTypes) {
+        if (excludedTypes.contains(card.getType())) {
+            return true;
+        }
+        for (com.github.laxika.magicalvibes.model.CardType excluded : excludedTypes) {
+            if (card.getAdditionalTypes().contains(excluded)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

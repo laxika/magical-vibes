@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import java.util.Collections;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -28,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.ArrayList;
 
@@ -80,6 +82,11 @@ public class ColorChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ColorChoiceContext.KeywordGrantChoice ctx) {
             handleKeywordGrantChoice(gameData, player, colorName, ctx);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ColorChoiceContext.ExileByNameChoice ctx) {
+            handleExileByNameChoice(gameData, player, colorName, ctx);
             return;
         }
 
@@ -344,6 +351,133 @@ public class ColorChoiceHandlerService {
         if (!gameData.interaction.isAwaitingInput()) {
             turnProgressionService.resolveAutoPass(gameData);
         }
+    }
+
+    private void handleExileByNameChoice(GameData gameData, Player player, String cardName, ColorChoiceContext.ExileByNameChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+        gameData.interaction.clearColorChoice();
+
+        UUID targetPlayerId = ctx.targetPlayerId();
+        UUID controllerId = ctx.controllerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        String choiceLog = controllerName + " chooses \"" + cardName + "\".";
+        gameBroadcastService.logAndBroadcast(gameData, choiceLog);
+        log.info("Game {} - {} chooses card name \"{}\" for exile from zones", gameData.id, controllerName, cardName);
+
+        // Collect all matching cards across hand, graveyard, and library
+        List<Card> matchingCards = new ArrayList<>();
+
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        if (hand != null) {
+            matchingCards.addAll(hand.stream().filter(c -> c.getName().equals(cardName)).toList());
+        }
+
+        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+        if (graveyard != null) {
+            matchingCards.addAll(graveyard.stream().filter(c -> c.getName().equals(cardName)).toList());
+        }
+
+        List<Card> library = gameData.playerDecks.get(targetPlayerId);
+        if (library != null) {
+            matchingCards.addAll(library.stream().filter(c -> c.getName().equals(cardName)).toList());
+        }
+
+        if (matchingCards.isEmpty()) {
+            // No matching cards — just shuffle library and resolve
+            if (library != null) {
+                Collections.shuffle(library);
+            }
+
+            String exileLog = controllerName + " exiles 0 cards named \"" + cardName + "\" from " + targetName
+                    + "'s hand, graveyard, and library. " + targetName + " shuffles their library.";
+            gameBroadcastService.logAndBroadcast(gameData, exileLog);
+            log.info("Game {} - {} found 0 cards named \"{}\" in {}'s zones", gameData.id, controllerName, cardName, targetName);
+
+            gameData.priorityPassedBy.clear();
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+            return;
+        }
+
+        // Present matching cards for "any number" selection
+        playerInputService.beginMultiZoneExileChoice(gameData, controllerId, matchingCards, targetPlayerId, cardName);
+        gameBroadcastService.broadcastGameState(gameData);
+    }
+
+    public void handleMultiZoneExileCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
+        if (!gameData.interaction.isAwaitingInput(AwaitingInput.MULTI_ZONE_EXILE_CHOICE)) {
+            throw new IllegalStateException("Not awaiting multi-zone exile choice");
+        }
+        InteractionContext.MultiZoneExileChoice ctx = gameData.interaction.multiZoneExileChoiceContext();
+        if (ctx == null || !player.getId().equals(ctx.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+
+        // Validate selected card IDs against valid set
+        Set<UUID> validIds = ctx.validCardIds();
+        for (UUID id : cardIds) {
+            if (!validIds.contains(id)) {
+                throw new IllegalStateException("Invalid card ID: " + id);
+            }
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.interaction.clearMultiZoneExileChoice();
+
+        UUID targetPlayerId = ctx.targetPlayerId();
+        UUID controllerId = ctx.controllerId();
+        String cardName = ctx.cardName();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        Set<UUID> selectedIds = new java.util.HashSet<>(cardIds);
+        List<Card> exiled = gameData.playerExiledCards.get(targetPlayerId);
+        int exiledCount = 0;
+
+        // Remove selected cards from hand
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        if (hand != null) {
+            List<Card> toExile = hand.stream().filter(c -> selectedIds.contains(c.getId())).toList();
+            hand.removeAll(toExile);
+            exiled.addAll(toExile);
+            exiledCount += toExile.size();
+        }
+
+        // Remove selected cards from graveyard
+        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+        if (graveyard != null) {
+            List<Card> toExile = graveyard.stream().filter(c -> selectedIds.contains(c.getId())).toList();
+            graveyard.removeAll(toExile);
+            exiled.addAll(toExile);
+            exiledCount += toExile.size();
+        }
+
+        // Remove selected cards from library
+        List<Card> library = gameData.playerDecks.get(targetPlayerId);
+        if (library != null) {
+            List<Card> toExile = library.stream().filter(c -> selectedIds.contains(c.getId())).toList();
+            library.removeAll(toExile);
+            exiled.addAll(toExile);
+            exiledCount += toExile.size();
+        }
+
+        // Always shuffle target player's library
+        if (library != null) {
+            Collections.shuffle(library);
+        }
+
+        String exileLog = controllerName + " exiles " + exiledCount + " card" + (exiledCount != 1 ? "s" : "")
+                + " named \"" + cardName + "\" from " + targetName + "'s hand, graveyard, and library. "
+                + targetName + " shuffles their library.";
+        gameBroadcastService.logAndBroadcast(gameData, exileLog);
+        log.info("Game {} - {} exiled {} card(s) named \"{}\" from {}'s zones",
+                gameData.id, controllerName, exiledCount, cardName, targetName);
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
     }
 }
 

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -123,6 +124,56 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a card name", gameData.id, playerName);
     }
 
+    public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId, List<CardType> excludedTypes) {
+        ColorChoiceContext.ExileByNameChoice choiceContext = new ColorChoiceContext.ExileByNameChoice(targetPlayerId, choosingPlayerId, excludedTypes);
+        gameData.interaction.beginColorChoice(choosingPlayerId, null, null, choiceContext);
+
+        List<String> cardNames = collectCardNamesInGameExcluding(gameData, excludedTypes);
+        String excludedLabel = excludedTypes.stream().map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
+        String prompt = "Choose a non" + excludedLabel + " card name.";
+        sessionManager.sendToPlayer(choosingPlayerId, new ChooseColorMessage(cardNames, prompt));
+
+        String playerName = gameData.playerIdToName.get(choosingPlayerId);
+        log.info("Game {} - Awaiting {} to choose a card name (exile from zones)", gameData.id, playerName);
+    }
+
+    private List<String> collectCardNamesInGameExcluding(GameData gameData, List<CardType> excludedTypes) {
+        Set<String> names = new TreeSet<>();
+        for (UUID pid : gameData.playerIds) {
+            gameData.playerBattlefields.getOrDefault(pid, List.of()).stream()
+                    .filter(p -> !hasExcludedType(p.getCard(), excludedTypes))
+                    .forEach(p -> names.add(p.getCard().getName()));
+            gameData.playerHands.getOrDefault(pid, List.of()).stream()
+                    .filter(c -> !hasExcludedType(c, excludedTypes))
+                    .forEach(c -> names.add(c.getName()));
+            gameData.playerGraveyards.getOrDefault(pid, List.of()).stream()
+                    .filter(c -> !hasExcludedType(c, excludedTypes))
+                    .forEach(c -> names.add(c.getName()));
+            gameData.playerDecks.getOrDefault(pid, List.of()).stream()
+                    .filter(c -> !hasExcludedType(c, excludedTypes))
+                    .forEach(c -> names.add(c.getName()));
+            gameData.playerExiledCards.getOrDefault(pid, List.of()).stream()
+                    .filter(c -> !hasExcludedType(c, excludedTypes))
+                    .forEach(c -> names.add(c.getName()));
+        }
+        gameData.stack.stream()
+                .filter(se -> !hasExcludedType(se.getCard(), excludedTypes))
+                .forEach(se -> names.add(se.getCard().getName()));
+        return new ArrayList<>(names);
+    }
+
+    private boolean hasExcludedType(Card card, List<CardType> excludedTypes) {
+        if (excludedTypes.contains(card.getType())) {
+            return true;
+        }
+        for (CardType excluded : excludedTypes) {
+            if (card.getAdditionalTypes().contains(excluded)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private List<String> collectAllCardNamesInGame(GameData gameData) {
         Set<String> names = new TreeSet<>();
         for (UUID pid : gameData.playerIds) {
@@ -139,6 +190,20 @@ public class PlayerInputService {
         }
         gameData.stack.forEach(se -> names.add(se.getCard().getName()));
         return new ArrayList<>(names);
+    }
+
+    public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards, UUID targetPlayerId, String cardName) {
+        List<UUID> validCardIds = matchingCards.stream().map(Card::getId).toList();
+        List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
+        int maxCount = matchingCards.size();
+
+        gameData.interaction.beginMultiZoneExileChoice(choosingPlayerId, new HashSet<>(validCardIds), maxCount, targetPlayerId, choosingPlayerId, cardName);
+        sessionManager.sendToPlayer(choosingPlayerId, new ChooseMultipleCardsFromGraveyardsMessage(
+                validCardIds, cardViews, maxCount,
+                "Choose any number of cards named \"" + cardName + "\" to exile."));
+
+        String playerName = gameData.playerIdToName.get(choosingPlayerId);
+        log.info("Game {} - Awaiting {} to choose cards to exile (up to {})", gameData.id, playerName, maxCount);
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId) {

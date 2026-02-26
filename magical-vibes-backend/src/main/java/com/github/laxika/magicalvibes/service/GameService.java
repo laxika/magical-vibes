@@ -281,6 +281,8 @@ public class GameService {
         synchronized (gameData) {
             if (gameData.interaction.awaitingInputType() == AwaitingInput.LIBRARY_REVEAL_CHOICE) {
                 libraryChoiceHandlerService.handleLibraryRevealChoice(gameData, player, cardIds);
+            } else if (gameData.interaction.awaitingInputType() == AwaitingInput.MULTI_ZONE_EXILE_CHOICE) {
+                colorChoiceHandlerService.handleMultiZoneExileCardsChosen(gameData, player, cardIds);
             } else {
                 graveyardChoiceHandlerService.handleMultipleGraveyardCardsChosen(gameData, player, cardIds);
             }

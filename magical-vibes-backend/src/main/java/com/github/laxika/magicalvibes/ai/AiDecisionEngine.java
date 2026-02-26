@@ -1084,6 +1084,21 @@ public class AiDecisionEngine {
             return;
         }
 
+        // Exile by name choice (Memoricide, etc.) — pick the first nonland card in the opponent's hand
+        if (colorChoice.context() instanceof ColorChoiceContext.ExileByNameChoice ctx) {
+            UUID targetId = ctx.targetPlayerId();
+            List<Card> targetHand = gameData.playerHands.getOrDefault(targetId, List.of());
+            String chosenName = targetHand.stream()
+                    .filter(c -> !ctx.excludedTypes().contains(c.getType()))
+                    .map(Card::getName)
+                    .findFirst()
+                    .orElse("Lightning Bolt");
+            log.info("AI: Choosing card name \"{}\" for exile in game {}", chosenName, gameId);
+            final String name = chosenName;
+            send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, name)));
+            return;
+        }
+
         // Pick the color that appears most on opponent's battlefield
         UUID opponentId = getOpponentId(gameData);
         List<Permanent> opponentField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
@@ -1222,6 +1237,18 @@ public class AiDecisionEngine {
     }
 
     private void handleMultiGraveyardChoice(GameData gameData) {
+        // Check if this is a multi-zone exile choice (Memoricide, etc.)
+        if (gameData.interaction.awaitingInputType() == com.github.laxika.magicalvibes.model.AwaitingInput.MULTI_ZONE_EXILE_CHOICE) {
+            InteractionContext.MultiZoneExileChoice mzec = gameData.interaction.multiZoneExileChoiceContext();
+            if (mzec != null && aiPlayer.getId().equals(mzec.playerId())) {
+                // AI always exiles all matching cards
+                List<UUID> chosen = new ArrayList<>(mzec.validCardIds());
+                log.info("AI: Exiling {} cards named \"{}\" in game {}", chosen.size(), mzec.cardName(), gameId);
+                send(() -> messageHandler.handleMultipleGraveyardCardsChosen(selfConnection, new MultipleGraveyardCardsChosenRequest(chosen)));
+            }
+            return;
+        }
+
         InteractionContext.MultiGraveyardChoice multiGraveyardChoice = gameData.interaction.multiGraveyardChoiceContext();
         if (multiGraveyardChoice == null) {
             return;

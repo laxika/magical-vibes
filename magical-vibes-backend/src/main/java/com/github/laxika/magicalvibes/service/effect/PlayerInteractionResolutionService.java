@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAndExileFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
@@ -114,6 +115,13 @@ public class PlayerInteractionResolutionService {
     private void resolveChooseCardFromTargetHandToDiscardHandler(GameData gameData, StackEntry entry, ChooseCardFromTargetHandToDiscardEffect effect) {
         gameData.discardCausedByOpponent = true;
         resolveChooseCardFromTargetHandToDiscard(gameData, entry, effect);
+    }
+
+    @HandlesEffect(ChooseCardNameAndExileFromZonesEffect.class)
+    private void resolveChooseCardNameAndExileFromZones(GameData gameData, StackEntry entry, ChooseCardNameAndExileFromZonesEffect effect) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID controllerId = entry.getControllerId();
+        playerInputService.beginSpellCardNameChoice(gameData, controllerId, targetPlayerId, effect.excludedTypes());
     }
 
     @HandlesEffect(RandomDiscardEffect.class)

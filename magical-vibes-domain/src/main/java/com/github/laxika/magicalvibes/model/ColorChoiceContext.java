@@ -16,4 +16,6 @@ public sealed interface ColorChoiceContext {
     record CardNameChoice(Card card, UUID controllerId) implements ColorChoiceContext {}
 
     record KeywordGrantChoice(UUID targetPermanentId, List<Keyword> options) implements ColorChoiceContext {}
+
+    record ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes) implements ColorChoiceContext {}
 }

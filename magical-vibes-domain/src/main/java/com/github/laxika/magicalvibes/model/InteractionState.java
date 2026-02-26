@@ -56,6 +56,9 @@ public class InteractionState {
     private UUID awaitingLibraryRevealPlayerId;
     private List<Card> awaitingLibraryRevealAllCards;
     private Set<UUID> awaitingLibraryRevealValidCardIds;
+    private UUID awaitingMultiZoneExileChoicePlayerId;
+    private Set<UUID> awaitingMultiZoneExileChoiceValidCardIds;
+    private int awaitingMultiZoneExileChoiceMaxCount;
 
     /**
      * Creates a deep copy of this interaction state for AI simulation.
@@ -112,6 +115,9 @@ public class InteractionState {
         copy.awaitingLibraryRevealPlayerId = this.awaitingLibraryRevealPlayerId;
         copy.awaitingLibraryRevealAllCards = this.awaitingLibraryRevealAllCards != null ? new ArrayList<>(this.awaitingLibraryRevealAllCards) : null;
         copy.awaitingLibraryRevealValidCardIds = this.awaitingLibraryRevealValidCardIds != null ? new HashSet<>(this.awaitingLibraryRevealValidCardIds) : null;
+        copy.awaitingMultiZoneExileChoicePlayerId = this.awaitingMultiZoneExileChoicePlayerId;
+        copy.awaitingMultiZoneExileChoiceValidCardIds = this.awaitingMultiZoneExileChoiceValidCardIds != null ? new HashSet<>(this.awaitingMultiZoneExileChoiceValidCardIds) : null;
+        copy.awaitingMultiZoneExileChoiceMaxCount = this.awaitingMultiZoneExileChoiceMaxCount;
         return copy;
     }
 
@@ -648,6 +654,39 @@ public class InteractionState {
         return new InteractionContext.RevealedHandChoice(awaitingCardChoicePlayerId, awaitingRevealedHandChoiceTargetPlayerId,
                 awaitingCardChoiceValidIndices, awaitingRevealedHandChoiceRemainingCount,
                 awaitingRevealedHandChoiceDiscardMode, awaitingRevealedHandChosenCards);
+    }
+
+    public void beginMultiZoneExileChoice(UUID playerId, Set<UUID> validCardIds, int maxCount, UUID targetPlayerId, UUID controllerId, String cardName) {
+        this.awaitingInput = AwaitingInput.MULTI_ZONE_EXILE_CHOICE;
+        this.awaitingMultiZoneExileChoicePlayerId = playerId;
+        this.awaitingMultiZoneExileChoiceValidCardIds = new HashSet<>(validCardIds);
+        this.awaitingMultiZoneExileChoiceMaxCount = maxCount;
+        this.context = new InteractionContext.MultiZoneExileChoice(playerId, new HashSet<>(validCardIds), maxCount, targetPlayerId, controllerId, cardName);
+    }
+
+    public void clearMultiZoneExileChoice() {
+        this.awaitingMultiZoneExileChoicePlayerId = null;
+        this.awaitingMultiZoneExileChoiceValidCardIds = null;
+        this.awaitingMultiZoneExileChoiceMaxCount = 0;
+    }
+
+    public UUID awaitingMultiZoneExileChoicePlayerId() {
+        return this.awaitingMultiZoneExileChoicePlayerId;
+    }
+
+    public Set<UUID> awaitingMultiZoneExileChoiceValidCardIds() {
+        return this.awaitingMultiZoneExileChoiceValidCardIds;
+    }
+
+    public int awaitingMultiZoneExileChoiceMaxCount() {
+        return this.awaitingMultiZoneExileChoiceMaxCount;
+    }
+
+    public InteractionContext.MultiZoneExileChoice multiZoneExileChoiceContext() {
+        if (context instanceof InteractionContext.MultiZoneExileChoice mzec) return mzec;
+        if (awaitingMultiZoneExileChoicePlayerId == null || awaitingMultiZoneExileChoiceValidCardIds == null) return null;
+        return new InteractionContext.MultiZoneExileChoice(awaitingMultiZoneExileChoicePlayerId,
+                awaitingMultiZoneExileChoiceValidCardIds, awaitingMultiZoneExileChoiceMaxCount, null, null, null);
     }
 
     public void beginCombatDamageAssignment(UUID playerId, int attackerIndex, UUID attackerPermanentId,

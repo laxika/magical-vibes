@@ -276,6 +276,7 @@ Pass `null` as filter to allow any card.
 | `ExileSelfAndReturnAtEndStepEffect` | `()` | exile this permanent, return it at beginning of next end step (Argent Sphinx-style) |
 | `ExileTargetPermanentAndReturnAtEndStepEffect` | `()` | exile target permanent, return it at beginning of next end step under owner's control (Glimmerpoint Stag-style) |
 | `ImprintDyingCreatureEffect` | `(UUID dyingCardId)` or `()` | exile a dying nontoken creature and imprint it on the source permanent; previously imprinted card is returned to its owner's graveyard. No-arg constructor (dyingCardId is null) used in card definition; dyingCardId populated at trigger time |
+| `ChooseCardNameAndExileFromZonesEffect` | `(List<CardType> excludedTypes)` | Two-step interaction: (1) choose a card name (excluding given types), (2) present all matching cards from target player's hand, graveyard, and library for "any number" selection — player chooses 0 to N to exile. Library is always shuffled. Targets player. Uses `MULTI_ZONE_EXILE_CHOICE` awaiting input. Used by Memoricide, Cranial Extraction |
 
 ## Tokens
 

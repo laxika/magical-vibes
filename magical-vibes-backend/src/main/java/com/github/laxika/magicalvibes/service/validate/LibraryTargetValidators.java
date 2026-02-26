@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.validate;
 
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAndExileFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
@@ -27,6 +28,11 @@ public class LibraryTargetValidators {
 
     @ValidatesTarget(RevealTopCardOfLibraryEffect.class)
     public void validateRevealTopCardOfLibrary(TargetValidationContext ctx) {
+        tvs.requireTargetPlayer(ctx);
+    }
+
+    @ValidatesTarget(ChooseCardNameAndExileFromZonesEffect.class)
+    public void validateChooseCardNameAndExileFromZones(TargetValidationContext ctx) {
         tvs.requireTargetPlayer(ctx);
     }
 }

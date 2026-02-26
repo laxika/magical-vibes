@@ -40,6 +40,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Draw + discard | `s/Sift.java` | DrawCardEffect + DiscardCardEffect |
 | Library selection | `t/TellingTime.java` | LookAtTopCardsHandTopBottomEffect |
 | Targeted discard | `d/Distress.java` | ChooseCardFromTargetHandToDiscardEffect |
+| Exile by name (multi-zone) | `m/Memoricide.java` | ChooseCardNameAndExileFromZonesEffect(excludedTypes) — choose nonland name, exile from hand+graveyard+library, shuffle |
 | Tutor to hand | `d/DiabolicTutor.java` | SearchLibraryForCardToHandEffect |
 | Tutor to battlefield | `r/RampantGrowth.java` | SearchLibraryForCardTypesToBattlefieldEffect |
 | Graveyard return (to hand) | `r/Recollect.java` | ReturnCardFromGraveyardEffect(HAND, null, true) — any card, targets graveyard |

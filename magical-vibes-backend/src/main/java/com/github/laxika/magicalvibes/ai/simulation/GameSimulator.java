@@ -590,6 +590,13 @@ public class GameSimulator {
                     gameService.handleMultipleGraveyardCardsChosen(gd, player, chosen);
                 }
             }
+            case MULTI_ZONE_EXILE_CHOICE -> {
+                var mzec = gd.interaction.multiZoneExileChoiceContext();
+                if (mzec != null && mzec.validCardIds() != null && !mzec.validCardIds().isEmpty()) {
+                    List<UUID> chosen = new ArrayList<>(mzec.validCardIds());
+                    gameService.handleMultipleGraveyardCardsChosen(gd, player, chosen);
+                }
+            }
             case COMBAT_DAMAGE_ASSIGNMENT -> {
                 var cda = gd.interaction.combatDamageAssignmentContext();
                 if (cda != null) {
@@ -648,6 +655,7 @@ public class GameSimulator {
             case InteractionContext.LibraryRevealChoice lrc -> lrc.playerId();
             case InteractionContext.HandTopBottomChoice htbc -> htbc.playerId();
             case InteractionContext.RevealedHandChoice rhc -> rhc.choosingPlayerId();
+            case InteractionContext.MultiZoneExileChoice mzec -> mzec.playerId();
             case InteractionContext.CombatDamageAssignment cda -> cda.playerId();
         };
     }
