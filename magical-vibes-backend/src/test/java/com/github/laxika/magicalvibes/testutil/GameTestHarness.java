@@ -139,12 +139,13 @@ public class GameTestHarness {
         CreatureControlService creatureControlService = new CreatureControlService(gameBroadcastService);
         GameHelper gameHelper = new GameHelper(
                 sessionManager, gameRegistry, cardViewFactory, gameQueryService, gameBroadcastService, playerInputService,
-                legendRuleService, triggeredAbilityQueueService, draftRegistry, null, creatureControlService);
+                legendRuleService, triggeredAbilityQueueService, draftRegistry, null, creatureControlService, null);
         AuraAttachmentService auraAttachmentService = new AuraAttachmentService(gameQueryService, gameBroadcastService, gameHelper);
         PermanentRemovalService permanentRemovalService = new PermanentRemovalService(
                 gameHelper, auraAttachmentService, gameQueryService, gameBroadcastService);
         TriggerCollectionService triggerCollectionService = new TriggerCollectionService(
                 gameHelper, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService, triggeredAbilityQueueService);
+        gameHelper.setTriggerCollectionService(triggerCollectionService);
         StateBasedActionService stateBasedActionService = new StateBasedActionService(
                 gameHelper, gameQueryService, gameBroadcastService, permanentRemovalService);
         CombatService combatService = new CombatService(

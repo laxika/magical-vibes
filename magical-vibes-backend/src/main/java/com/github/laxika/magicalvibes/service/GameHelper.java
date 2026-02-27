@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -74,6 +75,8 @@ public class GameHelper {
     private final DraftRegistry draftRegistry;
     private final DraftService draftService;
     private final CreatureControlService creatureControlService;
+    // @Lazy to break circular dependency: TriggerCollectionService → GameHelper → TriggerCollectionService
+    private TriggerCollectionService triggerCollectionService;
 
     public GameHelper(SessionManager sessionManager,
                       GameRegistry gameRegistry,
@@ -85,7 +88,8 @@ public class GameHelper {
                       TriggeredAbilityQueueService triggeredAbilityQueueService,
                       DraftRegistry draftRegistry,
                       DraftService draftService,
-                      CreatureControlService creatureControlService) {
+                      CreatureControlService creatureControlService,
+                      @Lazy TriggerCollectionService triggerCollectionService) {
         this.sessionManager = sessionManager;
         this.gameRegistry = gameRegistry;
         this.cardViewFactory = cardViewFactory;
@@ -97,6 +101,15 @@ public class GameHelper {
         this.draftRegistry = draftRegistry;
         this.draftService = draftService;
         this.creatureControlService = creatureControlService;
+        this.triggerCollectionService = triggerCollectionService;
+    }
+
+    /**
+     * Sets the TriggerCollectionService for manual (non-Spring) construction where
+     * the circular dependency prevents passing it in the constructor.
+     */
+    public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
+        this.triggerCollectionService = triggerCollectionService;
     }
 
     // ===== Lifecycle methods =====
@@ -1195,6 +1208,7 @@ public class GameHelper {
         if (perm.getRegenerationShield() > 0) {
             perm.setRegenerationShield(perm.getRegenerationShield() - 1);
             perm.tap();
+            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm);
             perm.setAttacking(false);
             perm.setBlocking(false);
             perm.getBlockingTargets().clear();
