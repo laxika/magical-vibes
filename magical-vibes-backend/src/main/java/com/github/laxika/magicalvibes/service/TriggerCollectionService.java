@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffe
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardOnOwnSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenOnOwnSpellCastWithCostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAndGrantKeywordOnOwnSpellCastEffect;
@@ -303,6 +306,26 @@ public class TriggerCollectionService {
                                 new ArrayList<>(resolvedEffects),
                                 null,
                                 perm.getId()
+                        ));
+                    }
+                } else if (inner instanceof DrawAndDiscardOnOwnSpellCastEffect trigger
+                        && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) {
+                    List<CardEffect> resolvedEffects = List.of(new DrawCardEffect(), new DiscardCardEffect());
+
+                    if (effect instanceof MayEffect may) {
+                        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                                perm.getCard(),
+                                playerId,
+                                resolvedEffects,
+                                perm.getCard().getName() + " — " + may.prompt()
+                        ));
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s ability",
+                                new ArrayList<>(resolvedEffects)
                         ));
                     }
                 } else if (inner instanceof GiveTargetPlayerPoisonCountersEffect trigger
