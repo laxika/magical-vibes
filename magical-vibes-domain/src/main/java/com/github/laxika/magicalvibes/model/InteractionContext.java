@@ -58,5 +58,5 @@ public sealed interface InteractionContext permits
 
     record CombatDamageAssignment(UUID playerId, int attackerIndex, UUID attackerPermanentId,
                                    String attackerName, int totalDamage, List<CombatDamageTarget> validTargets,
-                                   boolean isTrample) implements InteractionContext {}
+                                   boolean isTrample, boolean isDeathtouch) implements InteractionContext {}
 }

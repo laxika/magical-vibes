@@ -691,10 +691,11 @@ public class InteractionState {
 
     public void beginCombatDamageAssignment(UUID playerId, int attackerIndex, UUID attackerPermanentId,
                                              String attackerName, int totalDamage,
-                                             List<CombatDamageTarget> validTargets, boolean isTrample) {
+                                             List<CombatDamageTarget> validTargets, boolean isTrample,
+                                             boolean isDeathtouch) {
         this.awaitingInput = AwaitingInput.COMBAT_DAMAGE_ASSIGNMENT;
         this.context = new InteractionContext.CombatDamageAssignment(playerId, attackerIndex, attackerPermanentId,
-                attackerName, totalDamage, validTargets, isTrample);
+                attackerName, totalDamage, validTargets, isTrample, isDeathtouch);
     }
 
     public void clearCombatDamageAssignment() {

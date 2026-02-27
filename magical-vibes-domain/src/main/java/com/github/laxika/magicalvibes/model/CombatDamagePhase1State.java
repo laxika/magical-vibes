@@ -19,6 +19,8 @@ public class CombatDamagePhase1State {
     public final int damageRedirectedToGuard;
     public final Map<Integer, List<Integer>> blockerMap;
     public final boolean anyFirstStrike;
+    public final Set<Integer> deathtouchDamagedAttackerIndices;
+    public final Set<Integer> deathtouchDamagedDefenderIndices;
 
     public CombatDamagePhase1State(
             Set<Integer> deadAttackerIndices,
@@ -32,7 +34,9 @@ public class CombatDamagePhase1State {
             int damageToDefendingPlayer,
             int damageRedirectedToGuard,
             Map<Integer, List<Integer>> blockerMap,
-            boolean anyFirstStrike) {
+            boolean anyFirstStrike,
+            Set<Integer> deathtouchDamagedAttackerIndices,
+            Set<Integer> deathtouchDamagedDefenderIndices) {
         this.deadAttackerIndices = deadAttackerIndices;
         this.deadDefenderIndices = deadDefenderIndices;
         this.atkDamageTaken = atkDamageTaken;
@@ -45,5 +49,7 @@ public class CombatDamagePhase1State {
         this.damageRedirectedToGuard = damageRedirectedToGuard;
         this.blockerMap = blockerMap;
         this.anyFirstStrike = anyFirstStrike;
+        this.deathtouchDamagedAttackerIndices = deathtouchDamagedAttackerIndices;
+        this.deathtouchDamagedDefenderIndices = deathtouchDamagedDefenderIndices;
     }
 }

@@ -382,7 +382,7 @@ public class ReconnectionService {
                         .toList();
                 sessionManager.sendToPlayer(playerId, new CombatDamageAssignmentNotification(
                         cda.attackerIndex(), cda.attackerPermanentId().toString(),
-                        cda.attackerName(), cda.totalDamage(), targetViews, cda.isTrample()));
+                        cda.attackerName(), cda.totalDamage(), targetViews, cda.isTrample(), cda.isDeathtouch()));
             }
         }
     }

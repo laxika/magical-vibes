@@ -409,7 +409,7 @@ public class GameData {
             case InteractionContext.CombatDamageAssignment cda ->
                     targetInteraction.beginCombatDamageAssignment(cda.playerId(), cda.attackerIndex(),
                             cda.attackerPermanentId(), cda.attackerName(), cda.totalDamage(),
-                            cda.validTargets(), cda.isTrample());
+                            cda.validTargets(), cda.isTrample(), cda.isDeathtouch());
         }
 
         // Copy discard remaining count (not part of context reconstruction)

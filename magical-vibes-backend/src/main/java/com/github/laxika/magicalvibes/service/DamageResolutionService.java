@@ -373,7 +373,10 @@ public class DamageResolutionService {
                 cardName + " deals " + damage + " damage to " + target.getCard().getName() + ".");
         log.info("Game {} - {} deals {} damage to {}", gameData.id, cardName, damage, target.getCard().getName());
 
-        if (damage >= gameQueryService.getEffectiveToughness(gameData, target)) {
+        boolean sourceHasDeathtouch = hasDeathtouchSource(gameData, entry);
+        boolean isLethal = damage >= gameQueryService.getEffectiveToughness(gameData, target)
+                || (damage >= 1 && sourceHasDeathtouch);
+        if (isLethal) {
             if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
                 gameBroadcastService.logAndBroadcast(gameData,
                         target.getCard().getName() + " is indestructible and survives.");
@@ -389,6 +392,16 @@ public class DamageResolutionService {
             Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
             if (source != null) {
                 return gameQueryService.hasKeyword(gameData, source, Keyword.INFECT);
+            }
+        }
+        return false;
+    }
+
+    private boolean hasDeathtouchSource(GameData gameData, StackEntry entry) {
+        if (entry.getSourcePermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source != null) {
+                return gameQueryService.hasKeyword(gameData, source, Keyword.DEATHTOUCH);
             }
         }
         return false;
@@ -439,6 +452,7 @@ public class DamageResolutionService {
     private void damageAllCreaturesOnBattlefield(GameData gameData, StackEntry entry, int damage, Predicate<Permanent> filter) {
         String cardName = entry.getCard().getName();
         boolean sourceHasInfect = hasInfectSource(gameData, entry);
+        boolean sourceHasDeathtouch = hasDeathtouchSource(gameData, entry);
 
         gameData.forEachBattlefield((playerId, battlefield) -> {
             Set<Integer> deadIndices = new TreeSet<>(Collections.reverseOrder());
@@ -459,7 +473,9 @@ public class DamageResolutionService {
                     }
                 } else {
                     int toughness = gameQueryService.getEffectiveToughness(gameData, p);
-                    if (effectiveDamage >= toughness
+                    boolean isLethal = effectiveDamage >= toughness
+                            || (effectiveDamage >= 1 && sourceHasDeathtouch);
+                    if (isLethal
                             && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)
                             && !gameHelper.tryRegenerate(gameData, p)) {
                         deadIndices.add(i);
@@ -565,7 +581,10 @@ public class DamageResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} bites {} for {} damage", gameData.id, biter.getCard().getName(), target.getCard().getName(), damage);
 
-        if (damage >= gameQueryService.getEffectiveToughness(gameData, target)) {
+        boolean biterHasDeathtouch = gameQueryService.hasKeyword(gameData, biter, Keyword.DEATHTOUCH);
+        boolean biteIsLethal = damage >= gameQueryService.getEffectiveToughness(gameData, target)
+                || (damage >= 1 && biterHasDeathtouch);
+        if (biteIsLethal) {
             if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
                 gameBroadcastService.logAndBroadcast(gameData,
                         target.getCard().getName() + " is indestructible and survives.");

@@ -822,7 +822,9 @@ public class GameSimulator {
         int remaining = cda.totalDamage();
         for (var target : cda.validTargets()) {
             if (target.isPlayer()) continue;
-            int lethal = target.effectiveToughness() - target.currentDamage();
+            int lethal = cda.isDeathtouch()
+                    ? Math.max(0, 1 - target.currentDamage())
+                    : target.effectiveToughness() - target.currentDamage();
             int dmg = Math.min(remaining, lethal);
             if (dmg > 0) {
                 assignments.put(target.id(), dmg);

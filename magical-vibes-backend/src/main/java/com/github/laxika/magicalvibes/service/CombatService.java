@@ -858,6 +858,8 @@ public class CombatService {
         // Track cumulative damage on each creature
         Map<Integer, Integer> atkDamageTaken = new HashMap<>();
         Map<Integer, Integer> defDamageTaken = new HashMap<>();
+        Set<Integer> deathtouchDamagedAttackerIndices = new HashSet<>();
+        Set<Integer> deathtouchDamagedDefenderIndices = new HashSet<>();
         Map<Permanent, Integer> combatDamageDealt = new HashMap<>();
         Map<Permanent, Integer> combatDamageDealtToPlayer = new HashMap<>();
         Map<Permanent, List<UUID>> combatDamageDealtToCreatures = new HashMap<>();
@@ -888,6 +890,8 @@ public class CombatService {
                 Permanent perm = gameQueryService.findPermanentById(gameData, e.getKey());
                 if (perm != null) combatDamageDealerControllers.put(perm, e.getValue());
             }
+            deathtouchDamagedAttackerIndices.addAll(p1.deathtouchDamagedAttackerIndices);
+            deathtouchDamagedDefenderIndices.addAll(p1.deathtouchDamagedDefenderIndices);
         }
 
         // Phase 1: First strike damage (skip on re-entry)
@@ -941,13 +945,17 @@ public class CombatService {
                     // First strike attacker deals damage to blockers
                     if (atkHasFS && !gameQueryService.isPreventedFromDealingDamage(gameData, atk)) {
                         boolean atkHasInfect = gameQueryService.hasKeyword(gameData, atk, Keyword.INFECT);
+                        boolean atkHasDeathtouch = gameQueryService.hasKeyword(gameData, atk, Keyword.DEATHTOUCH);
                         int remaining = gameQueryService.getEffectiveCombatDamage(gameData, atk);
                         for (int blkIdx : blkIndices) {
                             Permanent blk = defBf.get(blkIdx);
-                            int dmg = Math.min(remaining, gameQueryService.getEffectiveToughness(gameData, blk) - defDamageTaken.getOrDefault(blkIdx, 0));
+                            int lethalNeeded = atkHasDeathtouch
+                                    ? Math.max(0, 1 - defDamageTaken.getOrDefault(blkIdx, 0))
+                                    : gameQueryService.getEffectiveToughness(gameData, blk) - defDamageTaken.getOrDefault(blkIdx, 0);
+                            int dmg = Math.min(remaining, lethalNeeded);
                             if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getEffectiveColor())) {
                                 int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
-                                applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, defDamageTaken);
+                                applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, defDamageTaken, deathtouchDamagedDefenderIndices);
                                 combatDamageDealt.merge(atk, actualDmg, Integer::sum);
                                 recordCombatDamageToCreature(gameData, combatDamageDealtToCreatures, combatDamageDealerControllers,
                                         atk, activeId, blk, actualDmg);
@@ -985,7 +993,7 @@ public class CombatService {
                                 && !gameQueryService.isPreventedFromDealingDamage(gameData, blk)
                                 && !gameQueryService.hasProtectionFrom(gameData, atk, blk.getEffectiveColor())) {
                             int actualDmg = gameQueryService.applyDamageMultiplier(gameData, phase1BlockerDamage.getOrDefault(blkIdx, 0));
-                            applyCombatCreatureDamage(gameData, blk, atk, atkIdx, actualDmg, atkDamageTaken);
+                            applyCombatCreatureDamage(gameData, blk, atk, atkIdx, actualDmg, atkDamageTaken, deathtouchDamagedAttackerIndices);
                             combatDamageDealt.merge(blk, actualDmg, Integer::sum);
                             recordCombatDamageToCreature(gameData, combatDamageDealtToCreatures, combatDamageDealerControllers,
                                     blk, defenderId, atk, actualDmg);
@@ -1003,7 +1011,7 @@ public class CombatService {
                 if (effToughness <= 0) {
                     // CR 704.5f: 0 toughness from -1/-1 counters — dies regardless of indestructible
                     deadAttackerIndices.add(atkIdx);
-                } else if (dmg >= effToughness
+                } else if ((dmg >= effToughness || (dmg >= 1 && deathtouchDamagedAttackerIndices.contains(atkIdx)))
                         && !gameQueryService.hasKeyword(gameData, atkBf.get(atkIdx), Keyword.INDESTRUCTIBLE)
                         && !gameHelper.tryRegenerate(gameData, atkBf.get(atkIdx))) {
                     deadAttackerIndices.add(atkIdx);
@@ -1017,7 +1025,7 @@ public class CombatService {
                     int effToughness = gameQueryService.getEffectiveToughness(gameData, defBf.get(blkIdx));
                     if (effToughness <= 0) {
                         deadDefenderIndices.add(blkIdx);
-                    } else if (dmg >= effToughness
+                    } else if ((dmg >= effToughness || (dmg >= 1 && deathtouchDamagedDefenderIndices.contains(blkIdx)))
                             && !gameQueryService.hasKeyword(gameData, defBf.get(blkIdx), Keyword.INDESTRUCTIBLE)
                             && !gameHelper.tryRegenerate(gameData, defBf.get(blkIdx))) {
                         deadDefenderIndices.add(blkIdx);
@@ -1048,7 +1056,8 @@ public class CombatService {
                 gameData.combatDamagePhase1State = savePhase1State(deadAttackerIndices, deadDefenderIndices,
                         atkDamageTaken, defDamageTaken, combatDamageDealt, combatDamageDealtToPlayer,
                         combatDamageDealtToCreatures, combatDamageDealerControllers,
-                        damageToDefendingPlayer, damageRedirectedToGuard, blockerMap, anyFirstStrike);
+                        damageToDefendingPlayer, damageRedirectedToGuard, blockerMap, anyFirstStrike,
+                        deathtouchDamagedAttackerIndices, deathtouchDamagedDefenderIndices);
                 gameData.combatDamagePhase1Complete = true;
                 gameData.combatDamagePendingIndices.addAll(needsManual);
                 sendNextCombatDamageAssignment(gameData, atkBf, defBf, activeId, defenderId);
@@ -1114,7 +1123,7 @@ public class CombatService {
                                 if (blk.getId().equals(targetId)) {
                                     if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getEffectiveColor())) {
                                         int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
-                                        applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, defDamageTaken);
+                                        applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, defDamageTaken, deathtouchDamagedDefenderIndices);
                                         combatDamageDealt.merge(atk, actualDmg, Integer::sum);
                                         recordCombatDamageToCreature(gameData, combatDamageDealtToCreatures, combatDamageDealerControllers,
                                                 atk, activeId, blk, actualDmg);
@@ -1150,15 +1159,18 @@ public class CombatService {
             } else {
                 // Attacker deals damage to surviving blockers (skip first-strike-only, allow double strike)
                 if (!atkSkipPhase2 && !gameQueryService.isPreventedFromDealingDamage(gameData, atk)) {
+                    boolean atkHasDeathtouchP2 = gameQueryService.hasKeyword(gameData, atk, Keyword.DEATHTOUCH);
                     int remaining = gameQueryService.getEffectiveCombatDamage(gameData, atk);
                     for (int blkIdx : blkIndices) {
                         if (deadDefenderIndices.contains(blkIdx)) continue;
                         Permanent blk = defBf.get(blkIdx);
-                        int remainingToughness = gameQueryService.getEffectiveToughness(gameData, blk) - defDamageTaken.getOrDefault(blkIdx, 0);
+                        int remainingToughness = atkHasDeathtouchP2
+                                ? Math.max(0, 1 - defDamageTaken.getOrDefault(blkIdx, 0))
+                                : gameQueryService.getEffectiveToughness(gameData, blk) - defDamageTaken.getOrDefault(blkIdx, 0);
                         int dmg = Math.min(remaining, Math.max(0, remainingToughness));
                         if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getEffectiveColor())) {
                             int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
-                            applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, defDamageTaken);
+                            applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, defDamageTaken, deathtouchDamagedDefenderIndices);
                             combatDamageDealt.merge(atk, actualDmg, Integer::sum);
                             recordCombatDamageToCreature(gameData, combatDamageDealtToCreatures, combatDamageDealerControllers,
                                     atk, activeId, blk, actualDmg);
@@ -1198,7 +1210,7 @@ public class CombatService {
                     if (!blkSkipPhase2 && !gameQueryService.isPreventedFromDealingDamage(gameData, blk)
                             && !gameQueryService.hasProtectionFrom(gameData, atk, blk.getEffectiveColor())) {
                         int actualDmg = gameQueryService.applyDamageMultiplier(gameData, phase2BlockerDamage.getOrDefault(blkIdx, 0));
-                        applyCombatCreatureDamage(gameData, blk, atk, atkIdx, actualDmg, atkDamageTaken);
+                        applyCombatCreatureDamage(gameData, blk, atk, atkIdx, actualDmg, atkDamageTaken, deathtouchDamagedAttackerIndices);
                         combatDamageDealt.merge(blk, actualDmg, Integer::sum);
                         recordCombatDamageToCreature(gameData, combatDamageDealtToCreatures, combatDamageDealerControllers,
                                 blk, defenderId, atk, actualDmg);
@@ -1216,7 +1228,7 @@ public class CombatService {
             int effToughness = gameQueryService.getEffectiveToughness(gameData, atkBf.get(atkIdx));
             if (effToughness <= 0) {
                 deadAttackerIndices.add(atkIdx);
-            } else if (dmg >= effToughness
+            } else if ((dmg >= effToughness || (dmg >= 1 && deathtouchDamagedAttackerIndices.contains(atkIdx)))
                     && !gameQueryService.hasKeyword(gameData, atkBf.get(atkIdx), Keyword.INDESTRUCTIBLE)
                     && !gameHelper.tryRegenerate(gameData, atkBf.get(atkIdx))) {
                 deadAttackerIndices.add(atkIdx);
@@ -1231,7 +1243,7 @@ public class CombatService {
                 int effToughness = gameQueryService.getEffectiveToughness(gameData, defBf.get(blkIdx));
                 if (effToughness <= 0) {
                     deadDefenderIndices.add(blkIdx);
-                } else if (dmg >= effToughness
+                } else if ((dmg >= effToughness || (dmg >= 1 && deathtouchDamagedDefenderIndices.contains(blkIdx)))
                         && !gameQueryService.hasKeyword(gameData, defBf.get(blkIdx), Keyword.INDESTRUCTIBLE)
                         && !gameHelper.tryRegenerate(gameData, defBf.get(blkIdx))) {
                     deadDefenderIndices.add(blkIdx);
@@ -1588,7 +1600,8 @@ public class CombatService {
      * (with prevention shield consumed immediately). Otherwise, accumulates regular damage.
      */
     private void applyCombatCreatureDamage(GameData gameData, Permanent source, Permanent target,
-                                           int targetIdx, int damage, Map<Integer, Integer> damageTakenMap) {
+                                           int targetIdx, int damage, Map<Integer, Integer> damageTakenMap,
+                                           Set<Integer> deathtouchDamagedSet) {
         if (gameQueryService.hasKeyword(gameData, source, Keyword.INFECT)) {
             int afterShield = gameHelper.applyCreaturePreventionShield(gameData, target, damage);
             if (afterShield > 0) {
@@ -1596,6 +1609,9 @@ public class CombatService {
             }
         } else {
             damageTakenMap.merge(targetIdx, damage, Integer::sum);
+        }
+        if (damage > 0 && gameQueryService.hasKeyword(gameData, source, Keyword.DEATHTOUCH)) {
+            deathtouchDamagedSet.add(targetIdx);
         }
     }
 
@@ -1789,7 +1805,8 @@ public class CombatService {
             Map<Permanent, List<UUID>> combatDamageDealtToCreatures,
             Map<Permanent, UUID> combatDamageDealerControllers,
             int damageToDefendingPlayer, int damageRedirectedToGuard,
-            Map<Integer, List<Integer>> blockerMap, boolean anyFirstStrike) {
+            Map<Integer, List<Integer>> blockerMap, boolean anyFirstStrike,
+            Set<Integer> deathtouchDamagedAttackerIndices, Set<Integer> deathtouchDamagedDefenderIndices) {
         // Convert Permanent-keyed maps to UUID-keyed maps for serialization
         Map<UUID, Integer> dealtByUUID = new HashMap<>();
         for (var e : combatDamageDealt.entrySet()) {
@@ -1812,7 +1829,8 @@ public class CombatService {
                 new HashMap<>(atkDamageTaken), new HashMap<>(defDamageTaken),
                 dealtByUUID, dealtToPlayerByUUID, dealtToCreaturesByUUID, dealerControllersByUUID,
                 damageToDefendingPlayer, damageRedirectedToGuard,
-                new LinkedHashMap<>(blockerMap), anyFirstStrike);
+                new LinkedHashMap<>(blockerMap), anyFirstStrike,
+                new HashSet<>(deathtouchDamagedAttackerIndices), new HashSet<>(deathtouchDamagedDefenderIndices));
     }
 
     private void sendNextCombatDamageAssignment(GameData gameData, List<Permanent> atkBf,
@@ -1836,6 +1854,7 @@ public class CombatService {
         }
 
         boolean isTrample = gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE);
+        boolean isDeathtouch = gameQueryService.hasKeyword(gameData, atk, Keyword.DEATHTOUCH);
         boolean addPlayer = isTrample || assignsCombatDamageAsThoughUnblocked(atk);
         if (addPlayer) {
             targetViews.add(new CombatDamageTargetView(
@@ -1862,10 +1881,10 @@ public class CombatService {
         }
 
         gameData.interaction.beginCombatDamageAssignment(activeId, atkIdx, atk.getId(),
-                atk.getCard().getName(), totalDamage, domainTargets, isTrample);
+                atk.getCard().getName(), totalDamage, domainTargets, isTrample, isDeathtouch);
 
         CombatDamageAssignmentNotification notification = new CombatDamageAssignmentNotification(
-                atkIdx, atk.getId().toString(), atk.getCard().getName(), totalDamage, targetViews, isTrample);
+                atkIdx, atk.getId().toString(), atk.getCard().getName(), totalDamage, targetViews, isTrample, isDeathtouch);
         // Mindslaver: redirect combat damage assignment to controlling player
         UUID damageRecipient = activeId;
         if (gameData.mindControlledPlayerId != null
@@ -1923,10 +1942,13 @@ public class CombatService {
 
         // Validate trample: each blocker must receive at least lethal damage
         if (gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)) {
+            boolean atkHasDeathtouchForValidation = gameQueryService.hasKeyword(gameData, atk, Keyword.DEATHTOUCH);
             for (int blkIdx : livingBlockers) {
                 Permanent blk = defBf.get(blkIdx);
-                int lethal = gameQueryService.getEffectiveToughness(gameData, blk)
-                        - p1.defDamageTaken.getOrDefault(blkIdx, 0);
+                int alreadyTaken = p1.defDamageTaken.getOrDefault(blkIdx, 0);
+                int lethal = atkHasDeathtouchForValidation
+                        ? Math.max(0, 1 - alreadyTaken)
+                        : gameQueryService.getEffectiveToughness(gameData, blk) - alreadyTaken;
                 int assigned = assignments.getOrDefault(blk.getId(), 0);
                 if (assigned < lethal) {
                     throw new IllegalStateException("Trample: must assign at least " + lethal

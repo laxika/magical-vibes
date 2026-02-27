@@ -23,6 +23,7 @@ export class DamageChoiceService {
   combatDamageTargets: CombatDamageTargetView[] = [];
   combatDamageAssignments: Map<string, number> = new Map();
   combatDamageIsTrample = false;
+  combatDamageIsDeathtouch = false;
   combatDamageAttackerIndex = -1;
 
   // ========== Message handlers ==========
@@ -34,6 +35,7 @@ export class DamageChoiceService {
     this.combatDamageTargets = msg.validTargets;
     this.combatDamageAssignments = new Map();
     this.combatDamageIsTrample = msg.isTrample;
+    this.combatDamageIsDeathtouch = msg.isDeathtouch;
     this.combatDamageAttackerIndex = msg.attackerIndex;
   }
 
@@ -133,6 +135,7 @@ export class DamageChoiceService {
     this.combatDamageTargets = [];
     this.combatDamageAssignments = new Map();
     this.combatDamageIsTrample = false;
+    this.combatDamageIsDeathtouch = false;
     this.combatDamageAttackerIndex = -1;
   }
 }
