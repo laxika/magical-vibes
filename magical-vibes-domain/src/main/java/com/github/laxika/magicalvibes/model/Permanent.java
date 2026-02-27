@@ -49,6 +49,9 @@ public class Permanent {
     private final Set<CardType> grantedCardTypes = EnumSet.noneOf(CardType.class);
     private final List<TextReplacement> textReplacements = new ArrayList<>();
     private final Set<UUID> cantBlockIds = new HashSet<>();
+    /** Source permanent IDs that prevent this permanent from untapping during its controller's untap step.
+     *  Each entry means: "this permanent doesn't untap for as long as that source permanent remains tapped." */
+    private final Set<UUID> untapPreventedByPermanentIds = new HashSet<>();
 
     public Permanent(Card card) {
         this.id = UUID.randomUUID();
@@ -101,6 +104,7 @@ public class Permanent {
         this.grantedCardTypes.addAll(source.grantedCardTypes);
         this.textReplacements.addAll(source.textReplacements);
         this.cantBlockIds.addAll(source.cantBlockIds);
+        this.untapPreventedByPermanentIds.addAll(source.untapPreventedByPermanentIds);
     }
 
     public Card getOriginalCard() {

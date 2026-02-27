@@ -221,6 +221,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Pump target | `g/GhostWarden.java` | `(true, null, BoostTargetCreatureEffect, true)` |
 | Pump target + filter | `h/HateWeaver.java` | With PermanentPredicateTargetFilter |
 | Tap to tap target | `i/IcyManipulator.java` | TapTargetPermanentEffect + PermanentPredicateTargetFilter |
+| Tap to lock artifact | `r/RustTick.java` | MayNotUntapDuringUntapStepEffect (STATIC) + TapTargetPermanentEffect + PreventTargetUntapWhileSourceTappedEffect + PermanentIsArtifactPredicate |
 | Tap to draw | `a/ArcanisTheOmnipotent.java` | `(true, null, DrawCardEffect, false)` |
 | Draw + discard | `m/MerfolkLooter.java` | DrawCardEffect + DiscardCardEffect |
 | Grant keyword to target | `m/MightWeaver.java` | GrantKeywordEffect with color filter |

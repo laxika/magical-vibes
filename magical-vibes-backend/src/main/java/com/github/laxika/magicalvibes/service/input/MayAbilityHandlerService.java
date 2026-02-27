@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileArtifactFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
@@ -94,6 +95,13 @@ public class MayAbilityHandlerService {
         PendingMayAbility ability = gameData.pendingMayAbilities.removeFirst();
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearMayAbilityChoice();
+
+        // May-not-untap choice from untap step (e.g. Rust Tick)
+        boolean isMayNotUntap = ability.effects().stream().anyMatch(e -> e instanceof MayNotUntapDuringUntapStepEffect);
+        if (isMayNotUntap) {
+            handleMayNotUntapChoice(gameData, player, accepted, ability);
+            return;
+        }
 
         // Counter-unless-pays — handled via the may ability system
         boolean isCounterUnlessPays = ability.effects().stream().anyMatch(e -> e instanceof CounterUnlessPaysEffect);
@@ -724,6 +732,42 @@ public class MayAbilityHandlerService {
         }
 
         throw new IllegalStateException("Unsupported draw replacement kind: " + effect.kind());
+    }
+
+    private void handleMayNotUntapChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        Card sourceCard = ability.sourceCard();
+        UUID controllerId = ability.controllerId();
+
+        // Find the permanent on the battlefield by Card identity
+        Permanent sourcePermanent = null;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (p.getCard().getId().equals(sourceCard.getId())) {
+                    sourcePermanent = p;
+                    break;
+                }
+            }
+        }
+
+        if (accepted && sourcePermanent != null) {
+            sourcePermanent.untap();
+            String logEntry = player.getUsername() + " untaps " + sourceCard.getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} untaps {} (may-not-untap choice)", gameData.id, player.getUsername(), sourceCard.getName());
+        } else {
+            String logEntry = player.getUsername() + " chooses not to untap " + sourceCard.getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} keeps {} tapped (may-not-untap choice)", gameData.id, player.getUsername(), sourceCard.getName());
+        }
+
+        playerInputService.processNextMayAbility(gameData);
+
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            // All may-not-untap choices resolved — complete the turn advance and resume auto-pass
+            turnProgressionService.completeTurnAdvance(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+        }
     }
 }
 

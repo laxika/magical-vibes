@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 import com.github.laxika.magicalvibes.model.effect.AttachedCreatureDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
@@ -517,14 +518,32 @@ public class TurnProgressionService {
 
         gameData.forEachPermanent((playerId, p) -> p.setAttackedThisTurn(false));
 
+        // Clean up stale untap-prevention locks on ALL battlefields before untapping.
+        // A lock is stale if the source permanent is no longer on the battlefield or is no longer tapped.
+        gameData.forEachPermanent((pid, p) -> {
+            if (p.getUntapPreventedByPermanentIds().isEmpty()) return;
+            p.getUntapPreventedByPermanentIds().removeIf(sourceId -> {
+                Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
+                return source == null || !source.isTapped();
+            });
+        });
+
         // Untap all permanents for the new active player (skip those with "doesn't untap" effects)
+        List<Permanent> mayNotUntapPermanents = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(nextActive);
         if (battlefield != null) {
             battlefield.forEach(p -> {
                 boolean hasAttachedDoesntUntap = gameQueryService.hasAuraWithEffect(gameData, p, AttachedCreatureDoesntUntapEffect.class);
                 boolean hasSelfDoesntUntap = p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof DoesntUntapDuringUntapStepEffect);
-                if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap) {
+                boolean hasMayNotUntap = p.isTapped() && p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof MayNotUntapDuringUntapStepEffect);
+                boolean hasUntapLock = !p.getUntapPreventedByPermanentIds().isEmpty();
+
+                if (hasMayNotUntap) {
+                    // Present choice to controller later — skip untap for now
+                    mayNotUntapPermanents.add(p);
+                } else if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasUntapLock) {
                     p.untap();
                 }
                 p.setSummoningSick(false);
@@ -532,10 +551,19 @@ public class TurnProgressionService {
             });
         }
 
-
         String untapLog = nextActiveName + " untaps their permanents.";
         gameBroadcastService.logAndBroadcast(gameData, untapLog);
         log.info("Game {} - {} untaps their permanents", gameData.id, nextActiveName);
+
+        // Queue may-not-untap choices for tapped permanents with MayNotUntapDuringUntapStepEffect
+        for (Permanent p : mayNotUntapPermanents) {
+            gameData.pendingMayAbilities.add(new PendingMayAbility(
+                    p.getCard(),
+                    nextActive,
+                    List.of(new MayNotUntapDuringUntapStepEffect()),
+                    "Untap " + p.getCard().getName() + "?"
+            ));
+        }
 
         gameData.forEachBattlefield((playerId, playerBattlefield) -> {
             if (playerId.equals(nextActive)) return;
@@ -549,9 +577,27 @@ public class TurnProgressionService {
             log.info("Game {} - {} untaps permanents due to Seedborn Muse", gameData.id, playerName);
         });
 
+        // Process pending may-not-untap choices before continuing turn
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
         String logEntry = "Turn " + gameData.turnNumber + " begins. " + nextActiveName + "'s turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - Turn {} begins. Active player: {}", gameData.id, gameData.turnNumber, nextActiveName);
+        gameBroadcastService.broadcastGameState(gameData);
+    }
+
+    /**
+     * Called after all may-not-untap choices have been resolved to finish the turn advance
+     * (log the turn start and broadcast game state).
+     */
+    public void completeTurnAdvance(GameData gameData) {
+        String activeName = gameData.playerIdToName.get(gameData.activePlayerId);
+        String logEntry = "Turn " + gameData.turnNumber + " begins. " + activeName + "'s turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - Turn {} begins. Active player: {}", gameData.id, gameData.turnNumber, activeName);
         gameBroadcastService.broadcastGameState(gameData);
     }
 
