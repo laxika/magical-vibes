@@ -30,7 +30,7 @@ import com.github.laxika.magicalvibes.networking.service.StackEntryViewFactory;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.ability.ActivatedAbilityExecutionService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
-import com.github.laxika.magicalvibes.service.BounceResolutionService;
+import com.github.laxika.magicalvibes.service.battlefield.BounceResolutionService;
 import com.github.laxika.magicalvibes.service.CombatService;
 import com.github.laxika.magicalvibes.service.CopyResolutionService;
 import com.github.laxika.magicalvibes.service.CounterResolutionService;

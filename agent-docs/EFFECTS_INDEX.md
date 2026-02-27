@@ -604,7 +604,7 @@ Pass `null` as filter to allow any card.
 |----------|--------------------|
 | Damage | `DamageResolutionService` |
 | Destruction/sacrifice | `DestructionResolutionService` |
-| Bounce | `BounceResolutionService` |
+| Bounce | `battlefield.BounceResolutionService` |
 | Counter | `CounterResolutionService` |
 | Library/search/mill | `LibraryResolutionService` |
 | Graveyard return/exile | `GraveyardReturnResolutionService` |
