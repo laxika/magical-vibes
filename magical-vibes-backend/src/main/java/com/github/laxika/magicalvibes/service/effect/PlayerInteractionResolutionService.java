@@ -447,13 +447,19 @@ public class PlayerInteractionResolutionService {
             gameHelper.resolveDrawCard(gameData, controllerId);
         }
 
-        int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
-        gameData.playerLifeTotals.put(controllerId, currentLife - count);
+        if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+            String logEntry = playerName + " draws " + count + " card" + (count != 1 ? "s" : "")
+                    + " (" + entry.getCard().getName() + "). " + playerName + "'s life total can't change.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else {
+            int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+            gameData.playerLifeTotals.put(controllerId, currentLife - count);
 
-        String logEntry = playerName + " draws " + count + " card" + (count != 1 ? "s" : "")
-                + " and loses " + count + " life (" + entry.getCard().getName() + ").";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} draws {} and loses {} life from {}", gameData.id, playerName, count, count, entry.getCard().getName());
+            String logEntry = playerName + " draws " + count + " card" + (count != 1 ? "s" : "")
+                    + " and loses " + count + " life (" + entry.getCard().getName() + ").";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} draws {} and loses {} life from {}", gameData.id, playerName, count, count, entry.getCard().getName());
+        }
     }
 
     @HandlesEffect(RedirectDrawsEffect.class)
@@ -570,12 +576,16 @@ public class PlayerInteractionResolutionService {
 
         if (!hasCards) {
             // No cards to discard — auto-apply life loss
-            int currentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
-            gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
-            String logEntry = playerName + " has no cards to discard. " + playerName + " loses " + effect.lifeLoss() + " life.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} loses {} life (no cards to discard, {})",
-                    gameData.id, playerName, effect.lifeLoss(), entry.getCard().getName());
+            if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
+                gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
+            } else {
+                int currentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
+                gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
+                String logEntry = playerName + " has no cards to discard. " + playerName + " loses " + effect.lifeLoss() + " life.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} loses {} life (no cards to discard, {})",
+                        gameData.id, playerName, effect.lifeLoss(), entry.getCard().getName());
+            }
             return;
         }
 

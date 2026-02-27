@@ -327,8 +327,13 @@ public class TriggerCollectionService {
                                 && !gameHelper.applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, perm.getEffectiveColor())) {
                             int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, discardingPlayerId, damage);
                             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, discardingPlayerId, effectiveDamage, cardName);
-                            int currentLife = gameData.playerLifeTotals.getOrDefault(discardingPlayerId, 20);
-                            gameData.playerLifeTotals.put(discardingPlayerId, currentLife - effectiveDamage);
+                            if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
+                                gameBroadcastService.logAndBroadcast(gameData,
+                                        gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change.");
+                            } else {
+                                int currentLife = gameData.playerLifeTotals.getOrDefault(discardingPlayerId, 20);
+                                gameData.playerLifeTotals.put(discardingPlayerId, currentLife - effectiveDamage);
+                            }
                         }
 
                         anyTriggered[0] = true;
@@ -423,8 +428,13 @@ public class TriggerCollectionService {
                             && !gameHelper.applyColorDamagePreventionForPlayer(gameData, tappingPlayerId, perm.getEffectiveColor())) {
                         int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, tappingPlayerId, damage);
                         effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, tappingPlayerId, effectiveDamage, cardName);
-                        int currentLife = gameData.playerLifeTotals.getOrDefault(tappingPlayerId, 20);
-                        gameData.playerLifeTotals.put(tappingPlayerId, currentLife - effectiveDamage);
+                        if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, tappingPlayerId)) {
+                            gameBroadcastService.logAndBroadcast(gameData,
+                                    gameData.playerIdToName.get(tappingPlayerId) + "'s life total can't change.");
+                        } else {
+                            int currentLife = gameData.playerLifeTotals.getOrDefault(tappingPlayerId, 20);
+                            gameData.playerLifeTotals.put(tappingPlayerId, currentLife - effectiveDamage);
+                        }
                     }
 
                     anyTriggered[0] = true;

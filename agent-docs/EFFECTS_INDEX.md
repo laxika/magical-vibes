@@ -351,6 +351,7 @@ Pass `null` as filter to allow any card.
 | `LoseGameIfNotCastFromHandEffect` | `()` | lose the game if not cast from hand (ETB check) |
 | `WinGameIfCreaturesInGraveyardEffect` | `(int threshold)` | win if N+ creature cards in graveyard |
 | `CantLoseGameEffect` | `()` | you can't lose and opponents can't win (static) |
+| `LifeTotalCantChangeEffect` | `()` | controller's life total can't change (static) |
 
 ## Creature pump / boost
 

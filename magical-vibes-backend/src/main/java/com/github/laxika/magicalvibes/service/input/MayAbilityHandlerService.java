@@ -497,12 +497,16 @@ public class MayAbilityHandlerService {
         }
 
         // Declined or no cards — lose life
-        int currentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
-        gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
+        if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
+            gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + "'s life total can't change.");
+        } else {
+            int currentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
+            gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
 
-        String logEntry = player.getUsername() + " loses " + effect.lifeLoss() + " life. (" + ability.sourceCard().getName() + ")";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} loses {} life (declined discard, {})", gameData.id, player.getUsername(), effect.lifeLoss(), ability.sourceCard().getName());
+            String logEntry = player.getUsername() + " loses " + effect.lifeLoss() + " life. (" + ability.sourceCard().getName() + ")";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} loses {} life (declined discard, {})", gameData.id, player.getUsername(), effect.lifeLoss(), ability.sourceCard().getName());
+        }
 
         stateBasedActionService.performStateBasedActions(gameData);
         playerInputService.processNextMayAbility(gameData);

@@ -779,6 +779,9 @@ public class PermanentChoiceHandlerService {
                             gameData.playerPoisonCounters.put(defendingPlayerId, currentPoison + damage);
                             gameBroadcastService.logAndBroadcast(gameData, defenderName + " gets "
                                     + damage + " poison counter" + (damage > 1 ? "s" : "") + " from " + sourceName + ".");
+                        } else if (!gameQueryService.canPlayerLifeChange(gameData, defendingPlayerId)) {
+                            gameBroadcastService.logAndBroadcast(gameData,
+                                    defenderName + "'s life total can't change.");
                         } else {
                             int currentLife = gameData.playerLifeTotals.getOrDefault(defendingPlayerId, 20);
                             gameData.playerLifeTotals.put(defendingPlayerId, currentLife - damage);

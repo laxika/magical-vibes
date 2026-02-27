@@ -182,11 +182,16 @@ public class DamageResolutionService {
 
         // Life gain is independent of damage prevention — always happens if the spell resolves
         UUID controllerId = entry.getControllerId();
-        int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
-        gameData.playerLifeTotals.put(controllerId, currentLife + xValue);
-        String controllerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, controllerName + " gains " + xValue + " life.");
-        log.info("Game {} - {} gains {} life", gameData.id, controllerName, xValue);
+        if (gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+            int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+            gameData.playerLifeTotals.put(controllerId, currentLife + xValue);
+            String controllerName = gameData.playerIdToName.get(controllerId);
+            gameBroadcastService.logAndBroadcast(gameData, controllerName + " gains " + xValue + " life.");
+            log.info("Game {} - {} gains {} life", gameData.id, controllerName, xValue);
+        } else {
+            String controllerName = gameData.playerIdToName.get(controllerId);
+            gameBroadcastService.logAndBroadcast(gameData, controllerName + "'s life total can't change.");
+        }
 
         gameHelper.checkWinCondition(gameData);
     }
@@ -317,11 +322,16 @@ public class DamageResolutionService {
         // Life gain is independent of damage prevention — always happens if the spell resolves
         int lifeGain = effect.lifeGain();
         UUID controllerId = entry.getControllerId();
-        int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
-        gameData.playerLifeTotals.put(controllerId, currentLife + lifeGain);
-        String controllerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, controllerName + " gains " + lifeGain + " life.");
-        log.info("Game {} - {} gains {} life", gameData.id, controllerName, lifeGain);
+        if (gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+            int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+            gameData.playerLifeTotals.put(controllerId, currentLife + lifeGain);
+            String controllerName = gameData.playerIdToName.get(controllerId);
+            gameBroadcastService.logAndBroadcast(gameData, controllerName + " gains " + lifeGain + " life.");
+            log.info("Game {} - {} gains {} life", gameData.id, controllerName, lifeGain);
+        } else {
+            String controllerName = gameData.playerIdToName.get(controllerId);
+            gameBroadcastService.logAndBroadcast(gameData, controllerName + "'s life total can't change.");
+        }
 
         gameHelper.checkWinCondition(gameData);
     }
@@ -492,6 +502,10 @@ public class DamageResolutionService {
                     gameBroadcastService.logAndBroadcast(gameData,
                             playerName + " gets " + effectiveDamage + " poison counters from " + cardName + ".");
                 }
+            } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + "'s life total can't change.");
             } else {
                 int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
                 gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);

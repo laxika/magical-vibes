@@ -430,12 +430,16 @@ public class GraveyardReturnResolutionService {
 
         // Gain life after exile
         if (effect.lifeGain() > 0) {
-            Integer currentLife = gameData.playerLifeTotals.get(controllerId);
-            gameData.playerLifeTotals.put(controllerId, currentLife + effect.lifeGain());
+            if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+                gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
+            } else {
+                Integer currentLife = gameData.playerLifeTotals.get(controllerId);
+                gameData.playerLifeTotals.put(controllerId, currentLife + effect.lifeGain());
 
-            String lifeLogEntry = playerName + " gains " + effect.lifeGain() + " life.";
-            gameBroadcastService.logAndBroadcast(gameData, lifeLogEntry);
-            log.info("Game {} - {} gains {} life", gameData.id, playerName, effect.lifeGain());
+                String lifeLogEntry = playerName + " gains " + effect.lifeGain() + " life.";
+                gameBroadcastService.logAndBroadcast(gameData, lifeLogEntry);
+                log.info("Game {} - {} gains {} life", gameData.id, playerName, effect.lifeGain());
+            }
         }
     }
 

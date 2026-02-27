@@ -215,12 +215,16 @@ public class ActivatedAbilityExecutionService {
                         && !gameHelper.applyColorDamagePreventionForPlayer(gameData, playerId, permanent.getEffectiveColor())) {
                     int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, playerId, damage);
                     effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
-                    int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
-                    gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
-                    if (effectiveDamage > 0) {
-                        String logEntry = player.getUsername() + " takes " + effectiveDamage + " damage from " + cardName + ".";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                        log.info("Game {} - {} takes {} damage from {}", gameData.id, player.getUsername(), effectiveDamage, cardName);
+                    if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                        gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + "'s life total can't change.");
+                    } else {
+                        int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+                        gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
+                        if (effectiveDamage > 0) {
+                            String logEntry = player.getUsername() + " takes " + effectiveDamage + " damage from " + cardName + ".";
+                            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                            log.info("Game {} - {} takes {} damage from {}", gameData.id, player.getUsername(), effectiveDamage, cardName);
+                        }
                     }
                 }
             }

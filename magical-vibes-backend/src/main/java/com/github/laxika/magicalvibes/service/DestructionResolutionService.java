@@ -146,13 +146,18 @@ public class DestructionResolutionService {
         }
 
         if (totalDeaths > 0) {
-            int currentLife = gameData.playerLifeTotals.getOrDefault(targetControllerId, 20);
-            gameData.playerLifeTotals.put(targetControllerId, currentLife - totalDeaths);
+            if (!gameQueryService.canPlayerLifeChange(gameData, targetControllerId)) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        gameData.playerIdToName.get(targetControllerId) + "'s life total can't change.");
+            } else {
+                int currentLife = gameData.playerLifeTotals.getOrDefault(targetControllerId, 20);
+                gameData.playerLifeTotals.put(targetControllerId, currentLife - totalDeaths);
 
-            String playerName = gameData.playerIdToName.get(targetControllerId);
-            String lifeLog = playerName + " loses " + totalDeaths + " life (" + entry.getCard().getName() + ").";
-            gameBroadcastService.logAndBroadcast(gameData, lifeLog);
-            log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, totalDeaths, entry.getCard().getName());
+                String playerName = gameData.playerIdToName.get(targetControllerId);
+                String lifeLog = playerName + " loses " + totalDeaths + " life (" + entry.getCard().getName() + ").";
+                gameBroadcastService.logAndBroadcast(gameData, lifeLog);
+                log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, totalDeaths, entry.getCard().getName());
+            }
         }
 
         gameHelper.checkWinCondition(gameData);
@@ -201,14 +206,19 @@ public class DestructionResolutionService {
                 && !gameHelper.applyColorDamagePreventionForPlayer(gameData, landControllerId, entry.getCard().getColor())) {
             int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, landControllerId, damage);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, landControllerId, effectiveDamage, cardName);
-            int currentLife = gameData.playerLifeTotals.getOrDefault(landControllerId, 20);
-            gameData.playerLifeTotals.put(landControllerId, currentLife - effectiveDamage);
+            if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, landControllerId)) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        gameData.playerIdToName.get(landControllerId) + "'s life total can't change.");
+            } else {
+                int currentLife = gameData.playerLifeTotals.getOrDefault(landControllerId, 20);
+                gameData.playerLifeTotals.put(landControllerId, currentLife - effectiveDamage);
 
-            if (effectiveDamage > 0) {
-                String playerName = gameData.playerIdToName.get(landControllerId);
-                String damageLog = playerName + " takes " + effectiveDamage + " damage from " + cardName + ".";
-                gameBroadcastService.logAndBroadcast(gameData, damageLog);
-                log.info("Game {} - {} takes {} damage from {}", gameData.id, playerName, effectiveDamage, cardName);
+                if (effectiveDamage > 0) {
+                    String playerName = gameData.playerIdToName.get(landControllerId);
+                    String damageLog = playerName + " takes " + effectiveDamage + " damage from " + cardName + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, damageLog);
+                    log.info("Game {} - {} takes {} damage from {}", gameData.id, playerName, effectiveDamage, cardName);
+                }
             }
         } else {
             String preventLog = cardName + "'s damage to " + gameData.playerIdToName.get(landControllerId) + " is prevented.";
@@ -361,13 +371,17 @@ public class DestructionResolutionService {
             } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, controllerId, entry.getCard().getColor())) {
                 int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, controllerId, damage);
                 effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, controllerId, effectiveDamage, cardName);
-                int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
-                gameData.playerLifeTotals.put(controllerId, currentLife - effectiveDamage);
+                if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+                    gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
+                } else {
+                    int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+                    gameData.playerLifeTotals.put(controllerId, currentLife - effectiveDamage);
 
-                if (effectiveDamage > 0) {
-                    String logEntry = cardName + " deals " + effectiveDamage + " damage to " + playerName + ".";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - {} deals {} damage to {} (no creatures to sacrifice)", gameData.id, cardName, effectiveDamage, playerName);
+                    if (effectiveDamage > 0) {
+                        String logEntry = cardName + " deals " + effectiveDamage + " damage to " + playerName + ".";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} deals {} damage to {} (no creatures to sacrifice)", gameData.id, cardName, effectiveDamage, playerName);
+                    }
                 }
             }
 
@@ -477,13 +491,18 @@ public class DestructionResolutionService {
 
         // Gain life equal to toughness regardless of destruction result
         UUID controllerId = entry.getControllerId();
-        int currentLife = gameData.playerLifeTotals.get(controllerId);
-        gameData.playerLifeTotals.put(controllerId, currentLife + toughness);
+        if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    gameData.playerIdToName.get(controllerId) + "'s life total can't change.");
+        } else {
+            int currentLife = gameData.playerLifeTotals.get(controllerId);
+            gameData.playerLifeTotals.put(controllerId, currentLife + toughness);
 
-        String playerName = gameData.playerIdToName.get(controllerId);
-        String lifeLog = playerName + " gains " + toughness + " life (equal to " + target.getCard().getName() + "'s toughness).";
-        gameBroadcastService.logAndBroadcast(gameData, lifeLog);
-        log.info("Game {} - {} gains {} life from {}'s toughness", gameData.id, playerName, toughness, target.getCard().getName());
+            String playerName = gameData.playerIdToName.get(controllerId);
+            String lifeLog = playerName + " gains " + toughness + " life (equal to " + target.getCard().getName() + "'s toughness).";
+            gameBroadcastService.logAndBroadcast(gameData, lifeLog);
+            log.info("Game {} - {} gains {} life from {}'s toughness", gameData.id, playerName, toughness, target.getCard().getName());
+        }
     }
 }
 

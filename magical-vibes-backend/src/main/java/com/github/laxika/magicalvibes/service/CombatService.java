@@ -1312,11 +1312,16 @@ public class CombatService {
         damageToDefendingPlayer = gameHelper.applyPlayerPreventionShield(gameData, defenderId, damageToDefendingPlayer);
         damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, damageToDefendingPlayer, "combat");
         if (damageToDefendingPlayer > 0) {
-            int currentLife = gameData.playerLifeTotals.getOrDefault(defenderId, 20);
-            gameData.playerLifeTotals.put(defenderId, currentLife - damageToDefendingPlayer);
+            if (gameQueryService.canPlayerLifeChange(gameData, defenderId)) {
+                int currentLife = gameData.playerLifeTotals.getOrDefault(defenderId, 20);
+                gameData.playerLifeTotals.put(defenderId, currentLife - damageToDefendingPlayer);
 
-            String logEntry = gameData.playerIdToName.get(defenderId) + " takes " + damageToDefendingPlayer + " combat damage.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                String logEntry = gameData.playerIdToName.get(defenderId) + " takes " + damageToDefendingPlayer + " combat damage.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            } else {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        gameData.playerIdToName.get(defenderId) + "'s life total can't change.");
+            }
         }
 
         // Apply poison counters from infect combat damage
@@ -1416,6 +1421,11 @@ public class CombatService {
     }
 
     private void grantLifeToPlayer(GameData gameData, UUID playerId, int amount, String source) {
+        if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    gameData.playerIdToName.get(playerId) + "'s life total can't change.");
+            return;
+        }
         int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
         gameData.playerLifeTotals.put(playerId, currentLife + amount);
         String logEntry = gameData.playerIdToName.get(playerId) + " gains " + amount + " life from " + source + ".";
