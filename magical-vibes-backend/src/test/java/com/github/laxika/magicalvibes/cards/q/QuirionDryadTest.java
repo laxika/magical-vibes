@@ -26,12 +26,12 @@ class QuirionDryadTest extends BaseCardTest {
     void hasCorrectProperties() {
         QuirionDryad card = new QuirionDryad();
 
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).getFirst())
+        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
                 .isInstanceOf(PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect.class);
 
         PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger =
-                (PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect) card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).getFirst();
+                (PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
         assertThat(trigger.triggerColors()).isEqualTo(Set.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED));
         assertThat(trigger.amount()).isEqualTo(1);
         assertThat(trigger.onlyOwnSpells()).isTrue();

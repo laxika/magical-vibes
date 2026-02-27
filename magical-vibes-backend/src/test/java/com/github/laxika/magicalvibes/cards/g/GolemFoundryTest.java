@@ -28,10 +28,10 @@ class GolemFoundryTest extends BaseCardTest {
     void hasArtifactCastTrigger() {
         GolemFoundry card = new GolemFoundry();
 
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).getFirst())
+        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
                 .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).getFirst();
+        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
         assertThat(may.wrapped()).isInstanceOf(PutChargeCounterOnSelfOnArtifactCastEffect.class);
     }
 

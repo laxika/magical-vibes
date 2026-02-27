@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class Lifesmith extends Card {
 
     public Lifesmith() {
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new MayEffect(
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
                 new GainLifeOnOwnSpellCastWithCostEffect(new CardTypePredicate(CardType.ARTIFACT), 1, 3),
                 "Pay {1} to gain 3 life?"
         ));

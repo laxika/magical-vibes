@@ -17,7 +17,7 @@ import java.util.Set;
 public class Myrsmith extends Card {
 
     public Myrsmith() {
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new MayEffect(
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
                 new CreateTokenOnOwnSpellCastWithCostEffect(
                         new CardTypePredicate(CardType.ARTIFACT),
                         1,

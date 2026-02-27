@@ -38,10 +38,10 @@ class HandOfThePraetorsTest extends BaseCardTest {
         PermanentHasKeywordPredicate filter = (PermanentHasKeywordPredicate) boost.filter();
         assertThat(filter.keyword()).isEqualTo(Keyword.INFECT);
 
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).getFirst())
+        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
                 .isInstanceOf(GiveTargetPlayerPoisonCountersEffect.class);
-        GiveTargetPlayerPoisonCountersEffect trigger = (GiveTargetPlayerPoisonCountersEffect) card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).getFirst();
+        GiveTargetPlayerPoisonCountersEffect trigger = (GiveTargetPlayerPoisonCountersEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
         assertThat(trigger.amount()).isEqualTo(1);
         assertThat(trigger.spellFilter()).isNotNull();
     }

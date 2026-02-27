@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 public class InexorableTide extends Card {
 
     public InexorableTide() {
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new ProliferateEffect());
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new ProliferateEffect());
     }
 }

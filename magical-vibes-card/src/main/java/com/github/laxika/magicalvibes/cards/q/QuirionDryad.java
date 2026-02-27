@@ -12,7 +12,7 @@ import java.util.Set;
 public class QuirionDryad extends Card {
 
     public QuirionDryad() {
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect(
                         Set.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED),
                         1,

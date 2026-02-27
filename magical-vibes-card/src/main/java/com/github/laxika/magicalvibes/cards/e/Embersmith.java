@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 public class Embersmith extends Card {
 
     public Embersmith() {
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new MayEffect(
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
                 new DealDamageToAnyTargetOnArtifactCastEffect(1, 1),
                 "Pay {1} to deal 1 damage to any target?"
         ));

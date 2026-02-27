@@ -27,10 +27,10 @@ class MyrsmithTest extends BaseCardTest {
     void hasCorrectStructure() {
         Myrsmith card = new Myrsmith();
 
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).getFirst())
+        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
                 .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).getFirst();
+        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
         assertThat(mayEffect.wrapped()).isInstanceOf(CreateTokenOnOwnSpellCastWithCostEffect.class);
         CreateTokenOnOwnSpellCastWithCostEffect trigger =
                 (CreateTokenOnOwnSpellCastWithCostEffect) mayEffect.wrapped();

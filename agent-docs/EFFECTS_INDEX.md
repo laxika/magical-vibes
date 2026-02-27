@@ -86,9 +86,10 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `FirstTargetDealsPowerDamageToSecondTargetEffect` | `()` | first target creature deals damage equal to its power to second target creature (bite mechanic) |
 | `DoubleDamageEffect` | `()` | double all damage dealt (static) |
 | `SacrificeOtherCreatureOrDamageEffect` | `(int damage)` | sacrifice another creature or take N damage (upkeep trigger) |
-| `DealDamageToAnyTargetOnArtifactCastEffect` | `(int manaCost, int damage)` | trigger descriptor: when you cast an artifact spell, may pay {N} to deal N damage to any target. Place in `ON_ANY_PLAYER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into `DealDamageToAnyTargetEffect` |
-| `GainLifeOnOwnSpellCastWithCostEffect` | `(CardPredicate spellFilter, int manaCost, int amount)` | trigger descriptor: when you cast a spell matching the predicate, may pay {N} to gain N life. Only triggers for own spells. Place in `ON_ANY_PLAYER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into `GainLifeEffect` |
-| `CreateTokenOnOwnSpellCastWithCostEffect` | `(CardPredicate spellFilter, int manaCost, CreateCreatureTokenEffect tokenEffect)` | trigger descriptor: when you cast a spell matching the predicate, may pay {N} to create a creature token. Only triggers for own spells. Place in `ON_ANY_PLAYER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into the embedded `CreateCreatureTokenEffect` |
+| `BoostAndGrantKeywordOnOwnSpellCastEffect` | `(CardPredicate spellFilter, int powerBoost, int toughnessBoost, Keyword keyword)` | trigger descriptor: when you cast a spell matching the predicate, may have target creature get +X/+Y and gain keyword until end of turn. Only triggers for own spells. Place in `ON_CONTROLLER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into `BoostTargetCreatureEffect` + `GrantKeywordEffect(keyword, TARGET)` |
+| `DealDamageToAnyTargetOnArtifactCastEffect` | `(int manaCost, int damage)` | trigger descriptor: when you cast an artifact spell, may pay {N} to deal N damage to any target. Place in `ON_CONTROLLER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into `DealDamageToAnyTargetEffect` |
+| `GainLifeOnOwnSpellCastWithCostEffect` | `(CardPredicate spellFilter, int manaCost, int amount)` | trigger descriptor: when you cast a spell matching the predicate, may pay {N} to gain N life. Only triggers for own spells. Place in `ON_CONTROLLER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into `GainLifeEffect` |
+| `CreateTokenOnOwnSpellCastWithCostEffect` | `(CardPredicate spellFilter, int manaCost, CreateCreatureTokenEffect tokenEffect)` | trigger descriptor: when you cast a spell matching the predicate, may pay {N} to create a creature token. Only triggers for own spells. Place in `ON_CONTROLLER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into the embedded `CreateCreatureTokenEffect` |
 
 ## Destruction / sacrifice
 
@@ -340,7 +341,7 @@ Pass `null` as filter to allow any card.
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `GiveEachPlayerPoisonCountersEffect` | `(int amount)` | give each player N poison counters (including controller). Used for ETB effects like Ichor Rats |
-| `GiveTargetPlayerPoisonCountersEffect` | `(int amount)` or `(int amount, CardPredicate spellFilter)` | give target player N poison counters. With `spellFilter`, doubles as trigger descriptor for `ON_ANY_PLAYER_CASTS_SPELL`: fires when controller casts a spell matching the predicate. Resolves into a copy with `spellFilter == null` |
+| `GiveTargetPlayerPoisonCountersEffect` | `(int amount)` or `(int amount, CardPredicate spellFilter)` | give target player N poison counters. With `spellFilter`, doubles as trigger descriptor for `ON_CONTROLLER_CASTS_SPELL`: fires when controller casts a spell matching the predicate. Resolves into a copy with `spellFilter == null` |
 
 ## Win / lose game
 
@@ -380,13 +381,13 @@ Pass `null` as filter to allow any card.
 | `PowerToughnessEqualToControlledSubtypeCountEffect` | `(CardSubtype subtype)` | P/T = number of permanents of subtype you control (static) |
 | `PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect` | `()` | P/T = number of creature cards in all graveyards (static) |
 | `PutCountersOnSourceEffect` | `(int powerModifier, int toughnessModifier, int amount)` | put N counters on this creature (e.g. `(1,1,1)` for +1/+1, `(-1,-1,2)` for two -1/-1) |
-| `PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect` | `(Set<CardColor> triggerColors, int amount, boolean onlyOwnSpells)` | put +1/+1 counters when spell of matching color is cast |
+| `PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect` | `(Set<CardColor> triggerColors, int amount, boolean onlyOwnSpells)` | put +1/+1 counters when spell of matching color is cast. Use `ON_CONTROLLER_CASTS_SPELL` with `onlyOwnSpells=true` for "whenever you cast" cards; use `ON_ANY_PLAYER_CASTS_SPELL` with `onlyOwnSpells=false` for "whenever a player casts" cards |
 | `PutMinusOneMinusOneCounterOnEachOtherCreatureEffect` | `()` | put a -1/-1 counter on each other creature (all players' creatures except the source permanent) |
 | `EnterWithXChargeCountersEffect` | `()` | enters battlefield with X charge counters (replacement effect, reads X from spell cast) |
 | `EnterWithFixedChargeCountersEffect` | `(int count)` | enters battlefield with N charge counters (replacement effect, fixed count) |
 | `PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect` | `()` | put a -1/-1 counter on each creature target player controls (targets player) |
 | `PutChargeCounterOnSelfEffect` | `()` | put a charge counter on this permanent (self-target, used as activated ability effect) |
-| `PutChargeCounterOnSelfOnArtifactCastEffect` | `()` | trigger descriptor: when you cast an artifact spell, put a charge counter on this permanent. Place in `ON_ANY_PLAYER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into `PutChargeCounterOnSelfEffect` |
+| `PutChargeCounterOnSelfOnArtifactCastEffect` | `()` | trigger descriptor: when you cast an artifact spell, put a charge counter on this permanent. Place in `ON_CONTROLLER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into `PutChargeCounterOnSelfEffect` |
 | `PutMinusOneMinusOneCounterOnTargetCreatureEffect` | `()` | put a -1/-1 counter on target creature (targets permanent) |
 | `ProliferateEffect` | `()` | proliferate: choose any number of permanents with counters, add one of each counter type already there |
 | `PutAwakeningCountersOnTargetLandsEffect` | `()` | combat damage trigger: choose any number of lands you control, put an awakening counter on each. Lands with awakening counters are 8/8 green Elemental creatures (permanent). Place in `ON_COMBAT_DAMAGE_TO_PLAYER` slot. Handled inline in CombatService via multi-permanent choice |

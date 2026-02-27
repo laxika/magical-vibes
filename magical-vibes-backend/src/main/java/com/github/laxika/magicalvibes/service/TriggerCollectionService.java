@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenOnOwnSpellCastWithCostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAndGrantKeywordOnOwnSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnArtifactCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
@@ -24,6 +26,8 @@ import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfOnArtifactCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeOnOwnSpellCastWithCostEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
@@ -80,7 +84,41 @@ public class TriggerCollectionService {
                 } else if (inner instanceof PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger
                         && spellCard.getColor() != null
                         && trigger.triggerColors().contains(spellCard.getColor())
-                        && (!trigger.onlyOwnSpells() || playerId.equals(castingPlayerId))) {
+                        && !trigger.onlyOwnSpells()) {
+                    List<CardEffect> resolvedEffects = List.of(new PutCountersOnSourceEffect(1, 1, trigger.amount()));
+
+                    if (effect instanceof MayEffect may) {
+                        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                                perm.getCard(),
+                                playerId,
+                                resolvedEffects,
+                                perm.getCard().getName() + " — " + may.prompt()
+                        ));
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s ability",
+                                new ArrayList<>(resolvedEffects),
+                                null,
+                                perm.getId()
+                        ));
+                    }
+                }
+            }
+        });
+
+        // Check ON_CONTROLLER_CASTS_SPELL effects (only fire for controller's own spells)
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (!playerId.equals(castingPlayerId)) return;
+
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)) {
+                CardEffect inner = effect instanceof MayEffect m ? m.wrapped() : effect;
+
+                if (inner instanceof PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger
+                        && spellCard.getColor() != null
+                        && trigger.triggerColors().contains(spellCard.getColor())) {
                     List<CardEffect> resolvedEffects = List.of(new PutCountersOnSourceEffect(1, 1, trigger.amount()));
 
                     if (effect instanceof MayEffect may) {
@@ -102,8 +140,7 @@ public class TriggerCollectionService {
                         ));
                     }
                 } else if (inner instanceof DealDamageToAnyTargetOnArtifactCastEffect trigger
-                        && spellCard.getType() == CardType.ARTIFACT
-                        && playerId.equals(castingPlayerId)) {
+                        && spellCard.getType() == CardType.ARTIFACT) {
                     List<CardEffect> resolvedEffects = List.of(new DealDamageToAnyTargetEffect(trigger.damage()));
 
                     if (effect instanceof MayEffect may) {
@@ -124,9 +161,31 @@ public class TriggerCollectionService {
                                 new ArrayList<>(resolvedEffects)
                         ));
                     }
+                } else if (inner instanceof BoostAndGrantKeywordOnOwnSpellCastEffect trigger
+                        && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) {
+                    List<CardEffect> resolvedEffects = List.of(
+                            new BoostTargetCreatureEffect(trigger.powerBoost(), trigger.toughnessBoost()),
+                            new GrantKeywordEffect(trigger.keyword(), GrantScope.TARGET)
+                    );
+
+                    if (effect instanceof MayEffect may) {
+                        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                                perm.getCard(),
+                                playerId,
+                                resolvedEffects,
+                                perm.getCard().getName() + " — " + may.prompt()
+                        ));
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s ability",
+                                new ArrayList<>(resolvedEffects)
+                        ));
+                    }
                 } else if (inner instanceof GainLifeOnOwnSpellCastWithCostEffect trigger
-                        && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)
-                        && playerId.equals(castingPlayerId)) {
+                        && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) {
                     List<CardEffect> resolvedEffects = List.of(new GainLifeEffect(trigger.amount()));
 
                     if (effect instanceof MayEffect may) {
@@ -148,8 +207,7 @@ public class TriggerCollectionService {
                         ));
                     }
                 } else if (inner instanceof CreateTokenOnOwnSpellCastWithCostEffect trigger
-                        && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)
-                        && playerId.equals(castingPlayerId)) {
+                        && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) {
                     List<CardEffect> resolvedEffects = List.of(trigger.tokenEffect());
 
                     if (effect instanceof MayEffect may) {
@@ -171,8 +229,7 @@ public class TriggerCollectionService {
                         ));
                     }
                 } else if (inner instanceof PutChargeCounterOnSelfOnArtifactCastEffect
-                        && spellCard.getType() == CardType.ARTIFACT
-                        && playerId.equals(castingPlayerId)) {
+                        && spellCard.getType() == CardType.ARTIFACT) {
                     List<CardEffect> resolvedEffects = List.of(new PutChargeCounterOnSelfEffect());
 
                     if (effect instanceof MayEffect may) {
@@ -195,8 +252,7 @@ public class TriggerCollectionService {
                     }
                 } else if (inner instanceof GiveTargetPlayerPoisonCountersEffect trigger
                         && trigger.spellFilter() != null
-                        && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)
-                        && playerId.equals(castingPlayerId)) {
+                        && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) {
                     // Find the opponent to auto-target
                     UUID opponentId = gameData.orderedPlayerIds.stream()
                             .filter(id -> !id.equals(playerId))
@@ -213,8 +269,7 @@ public class TriggerCollectionService {
                         entry.setTargetPermanentId(opponentId);
                         gameData.stack.add(entry);
                     }
-                } else if (inner instanceof ProliferateEffect
-                        && playerId.equals(castingPlayerId)) {
+                } else if (inner instanceof ProliferateEffect) {
                     List<CardEffect> resolvedEffects = List.of(new ProliferateEffect());
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,

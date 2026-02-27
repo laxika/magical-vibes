@@ -25,7 +25,7 @@ class InexorableTideTest extends BaseCardTest {
     void hasProliferateOnSpellCastEffect() {
         InexorableTide card = new InexorableTide();
 
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)).singleElement()
+        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).singleElement()
                 .isInstanceOf(ProliferateEffect.class);
     }
 

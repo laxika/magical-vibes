@@ -19,7 +19,7 @@ public class GolemFoundry extends Card {
 
     public GolemFoundry() {
         // Whenever you cast an artifact spell, you may put a charge counter on Golem Foundry.
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new MayEffect(
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
                 new PutChargeCounterOnSelfOnArtifactCastEffect(),
                 "Put a charge counter on Golem Foundry?"
         ));

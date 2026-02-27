@@ -28,10 +28,10 @@ class LifesmithTest extends BaseCardTest {
     void hasCorrectStructure() {
         Lifesmith card = new Lifesmith();
 
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).getFirst())
+        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
                 .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).getFirst();
+        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
         assertThat(mayEffect.wrapped()).isInstanceOf(GainLifeOnOwnSpellCastWithCostEffect.class);
         GainLifeOnOwnSpellCastWithCostEffect trigger = (GainLifeOnOwnSpellCastWithCostEffect) mayEffect.wrapped();
         assertThat(trigger.spellFilter()).isInstanceOf(CardTypePredicate.class);
