@@ -114,6 +114,19 @@ public class GameHelper {
 
     // ===== Lifecycle methods =====
 
+    public void resolveMillPlayer(GameData gameData, UUID targetPlayerId, int count) {
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        int cardsToMill = Math.min(count, deck.size());
+        for (int i = 0; i < cardsToMill; i++) {
+            Card card = deck.removeFirst();
+            addCardToGraveyard(gameData, targetPlayerId, card);
+        }
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+        String logEntry = playerName + " mills " + cardsToMill + " card" + (cardsToMill != 1 ? "s" : "") + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} mills {} cards", gameData.id, playerName, cardsToMill);
+    }
+
     public void addCardToGraveyard(GameData gameData, UUID ownerId, Card card) {
         addCardToGraveyard(gameData, ownerId, card, null);
     }

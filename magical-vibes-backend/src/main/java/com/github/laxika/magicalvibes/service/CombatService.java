@@ -44,6 +44,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 
 import com.github.laxika.magicalvibes.model.effect.PutAwakeningCountersOnTargetLandsEffect;
+import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RandomDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
@@ -1527,6 +1529,22 @@ public class CombatService {
                     gameData.pendingAwakeningCounterPlacement = true;
                     playerInputService.beginMultiPermanentChoice(gameData, attackerId, validLandIds, validLandIds.size(), "Choose any number of lands to put awakening counters on.");
                     return;
+                } else if (effect instanceof MetalcraftConditionalEffect metalcraft) {
+                    List<Permanent> bf = gameData.playerBattlefields.get(attackerId);
+                    long artifactCount = bf == null ? 0 : bf.stream()
+                            .filter(gameQueryService::isArtifact)
+                            .count();
+                    if (artifactCount < 3) {
+                        log.info("Game {} - {}'s metalcraft combat damage trigger does not fire (only {} artifacts)",
+                                gameData.id, creature.getCard().getName(), artifactCount);
+                        continue;
+                    }
+                    CardEffect wrapped = metalcraft.wrapped();
+                    if (wrapped instanceof MillTargetPlayerEffect millEffect) {
+                        String logEntry = creature.getCard().getName() + "'s metalcraft ability triggers:";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameHelper.resolveMillPlayer(gameData, defenderId, millEffect.count());
+                    }
                 } else if (effect instanceof TargetPlayerLosesGameEffect) {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -1537,7 +1555,7 @@ public class CombatService {
                             null,
                             creature.getId()
                     ));
-                    String logEntry = creature.getCard().getName() + "'s ability triggers â€” " + gameData.playerIdToName.get(defenderId) + " loses the game.";
+                    String logEntry = creature.getCard().getName() + "'s ability triggers \u2014 " + gameData.playerIdToName.get(defenderId) + " loses the game.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 }
             }

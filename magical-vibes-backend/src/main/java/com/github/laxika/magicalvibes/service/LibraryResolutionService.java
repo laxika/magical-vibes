@@ -94,20 +94,7 @@ public class LibraryResolutionService {
 
     @HandlesEffect(MillTargetPlayerEffect.class)
     void resolveMillTargetPlayer(GameData gameData, StackEntry entry, MillTargetPlayerEffect mill) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
-        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
-        String playerName = gameData.playerIdToName.get(targetPlayerId);
-
-        int cardsToMill = Math.min(mill.count(), deck.size());
-        for (int i = 0; i < cardsToMill; i++) {
-            Card card = deck.removeFirst();
-            gameHelper.addCardToGraveyard(gameData, targetPlayerId, card);
-        }
-
-        String logEntry = playerName + " mills " + cardsToMill + " card" + (cardsToMill != 1 ? "s" : "") + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-
-        log.info("Game {} - {} mills {} cards", gameData.id, playerName, cardsToMill);
+        gameHelper.resolveMillPlayer(gameData, entry.getTargetPermanentId(), mill.count());
     }
 
     @HandlesEffect(MillTargetPlayerByChargeCountersEffect.class)
