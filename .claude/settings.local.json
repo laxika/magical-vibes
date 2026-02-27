@@ -40,7 +40,9 @@
       "Bash(./gradlew test:*)",
       "Bash(./gradlew compileJava:*)",
       "Bash(./gradlew :magical-vibes-backend:cleanTest:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(git rm:*)",
+      "Bash(git:*)"
     ]
   }
 }
