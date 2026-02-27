@@ -10,4 +10,6 @@ public record GrantKeywordEffect(Keyword keyword, GrantScope scope, PermanentPre
     }
 
     @Override public boolean canTargetPermanent() { return scope == GrantScope.TARGET; }
+
+    @Override public boolean isSelfTargeting() { return scope == GrantScope.SELF; }
 }

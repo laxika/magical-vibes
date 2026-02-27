@@ -11,6 +11,23 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 5. If your new effect targets something, override the appropriate `canTarget*()` method(s) on `CardEffect` to return `true` (see targeting section below).
 6. If your new effect requires target validation, add a `@ValidatesTarget`-annotated method in the appropriate validator class under `service/validate/` (see target validator map at bottom).
 
+## Marker interfaces
+
+| Interface | Extends | Purpose |
+|-----------|---------|---------|
+| `CostEffect` | `CardEffect` | Marks effects that represent additional costs (sacrifice, discard, exile, counter removal, tap creature). Cost effects are filtered out during effect snapshotting and excluded from mana ability detection. Implement this instead of `CardEffect` for new cost effects. |
+| `ManaProducingEffect` | `CardEffect` | Marks effects that produce mana. Used to identify mana abilities (CR 605.1a) without listing individual effect types. Implement this instead of `CardEffect` for new mana-producing effects. |
+
+### `isSelfTargeting()` default method on `CardEffect`
+
+Effects that implicitly target their source permanent (boost-self, animate-self, regenerate-self, etc.) override `isSelfTargeting()` to return `true`. This is used by `ActivatedAbilityExecutionService` to auto-assign the source as the target when no explicit target is provided.
+
+Effects returning `true`: `BoostSelfEffect`, `UntapSelfEffect`, `AnimateSelfEffect`, `AnimateSelfByChargeCountersEffect`, `AnimateSelfWithStatsEffect`, `AnimateLandEffect`, `PutChargeCounterOnSelfEffect`.
+
+Conditional: `RegenerateEffect` → `!targetsPermanent()`, `GrantKeywordEffect` → `scope == SELF`.
+
+---
+
 ## Effect targeting declarations
 
 Effects declare what they can target via default methods on `CardEffect`. `Card.isNeedsTarget()` and `Card.isNeedsSpellTarget()` are derived automatically — never call `setNeedsTarget`/`setNeedsSpellTarget`.

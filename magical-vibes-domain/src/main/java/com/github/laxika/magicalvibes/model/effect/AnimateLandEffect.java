@@ -9,4 +9,7 @@ import java.util.Set;
 
 public record AnimateLandEffect(int power, int toughness, List<CardSubtype> grantedSubtypes,
                                 Set<Keyword> grantedKeywords, CardColor animatedColor) implements CardEffect {
+
+    @Override
+    public boolean isSelfTargeting() { return true; }
 }

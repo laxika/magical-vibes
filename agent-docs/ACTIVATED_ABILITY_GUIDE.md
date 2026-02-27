@@ -217,6 +217,8 @@ new ActivatedAbility(requiresTap, manaCost, effects,
 
 Sacrifice and discard costs go in the `effects` list BEFORE the actual effect. The engine processes them in order.
 
+All cost effects implement the `CostEffect` marker interface (which extends `CardEffect`). When creating a new cost effect, implement `CostEffect` instead of `CardEffect` — this ensures it is automatically filtered out during effect snapshotting and excluded from mana ability detection.
+
 | Cost effect | Constructor | Use when |
 |------------|-------------|----------|
 | `SacrificeSelfCost` | `()` | "Sacrifice this: ..." |

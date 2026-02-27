@@ -10,4 +10,7 @@ public record RegenerateEffect(boolean targetsPermanent) implements CardEffect {
     public boolean canTargetPermanent() {
         return targetsPermanent;
     }
+
+    @Override
+    public boolean isSelfTargeting() { return !targetsPermanent; }
 }

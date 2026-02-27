@@ -36,16 +36,14 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardArtifactOnlyColorlessManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
@@ -945,21 +943,9 @@ public class AbilityActivationService {
             return false;
         }
         List<CardEffect> effects = ability.getEffects().stream()
-                .filter(e -> !(e instanceof SacrificeSelfCost)
-                        && !(e instanceof SacrificeCreatureCost)
-                        && !(e instanceof SacrificeSubtypeCreatureCost)
-                        && !(e instanceof SacrificeArtifactCost)
-                        && !(e instanceof SacrificeMultiplePermanentsCost)
-                        && !(e instanceof DiscardCardTypeCost)
-                        && !(e instanceof ExileCardFromGraveyardCost)
-                        && !(e instanceof RemoveCounterFromSourceCost)
-                        && !(e instanceof RemoveChargeCountersFromSourceCost)
-                        && !(e instanceof TapCreatureCost))
+                .filter(e -> !(e instanceof CostEffect))
                 .toList();
-        return !effects.isEmpty() && effects.stream().allMatch(e ->
-                e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect
-                        || e instanceof DoubleManaPoolEffect || e instanceof AwardArtifactOnlyColorlessManaEffect
-                        || e instanceof AwardMyrOnlyColorlessManaEffect);
+        return !effects.isEmpty() && effects.stream().allMatch(e -> e instanceof ManaProducingEffect);
     }
 }
 

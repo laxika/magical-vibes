@@ -1,4 +1,4 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-public record RemoveCounterFromSourceCost() implements CardEffect {
+public record RemoveCounterFromSourceCost() implements CostEffect {
 }

@@ -5,4 +5,13 @@ public interface CardEffect {
     default boolean canTargetPermanent() { return false; }
     default boolean canTargetSpell() { return false; }
     default boolean canTargetGraveyard() { return false; }
+
+    /**
+     * Returns {@code true} if this effect implicitly targets its source permanent
+     * (e.g. boost-self, animate-self, regenerate-self). Used by
+     * {@code ActivatedAbilityExecutionService} to auto-assign the source as
+     * the target when no explicit target is provided.
+     */
+    default boolean isSelfTargeting() { return false; }
 }
+

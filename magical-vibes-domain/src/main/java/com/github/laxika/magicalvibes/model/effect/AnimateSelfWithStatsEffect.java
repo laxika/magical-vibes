@@ -8,4 +8,7 @@ import java.util.Set;
 
 public record AnimateSelfWithStatsEffect(int power, int toughness, List<CardSubtype> grantedSubtypes,
                                           Set<Keyword> grantedKeywords) implements CardEffect {
+
+    @Override
+    public boolean isSelfTargeting() { return true; }
 }

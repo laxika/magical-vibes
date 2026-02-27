@@ -10,38 +10,22 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
-import com.github.laxika.magicalvibes.model.effect.AnimateSelfByChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardArtifactOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import lombok.RequiredArgsConstructor;
@@ -120,12 +104,7 @@ public class ActivatedAbilityExecutionService {
         UUID effectiveTargetId = targetPermanentId;
         if (effectiveTargetId == null) {
             boolean needsSelfTarget = abilityEffects.stream().anyMatch(e ->
-                    (e instanceof RegenerateEffect regen && !regen.targetsPermanent() && !permanent.getCard().isAura())
-                            || e instanceof BoostSelfEffect || e instanceof UntapSelfEffect
-                            || e instanceof AnimateSelfEffect || e instanceof AnimateSelfByChargeCountersEffect
-                            || e instanceof AnimateSelfWithStatsEffect
-                            || e instanceof AnimateLandEffect || e instanceof PutChargeCounterOnSelfEffect
-                            || (e instanceof GrantKeywordEffect grant && grant.scope() == GrantScope.SELF));
+                    e.isSelfTargeting() && !(e instanceof RegenerateEffect && permanent.getCard().isAura()));
             if (needsSelfTarget) {
                 effectiveTargetId = permanent.getId();
             }
@@ -164,15 +143,8 @@ public class ActivatedAbilityExecutionService {
         boolean isManaAbility = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget()
                 && ability.getLoyaltyCost() == null
                 && !snapshotEffects.isEmpty()
-                && snapshotEffects.stream().anyMatch(e ->
-                e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect
-                        || e instanceof DoubleManaPoolEffect || e instanceof AwardArtifactOnlyColorlessManaEffect
-                        || e instanceof AwardMyrOnlyColorlessManaEffect)
-                && snapshotEffects.stream().allMatch(e ->
-                e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect
-                        || e instanceof DoubleManaPoolEffect || e instanceof DealDamageToControllerEffect
-                        || e instanceof AwardArtifactOnlyColorlessManaEffect
-                        || e instanceof AwardMyrOnlyColorlessManaEffect);
+                && snapshotEffects.stream().anyMatch(e -> e instanceof ManaProducingEffect)
+                && snapshotEffects.stream().allMatch(e -> e instanceof ManaProducingEffect || e instanceof DealDamageToControllerEffect);
 
         if (isManaAbility) {
             resolveManaAbility(gameData, playerId, player, permanent, snapshotEffects);
@@ -192,16 +164,7 @@ public class ActivatedAbilityExecutionService {
     private List<CardEffect> snapshotEffects(List<CardEffect> abilityEffects, Permanent permanent) {
         List<CardEffect> snapshotEffects = new ArrayList<>();
         for (CardEffect effect : abilityEffects) {
-            if (effect instanceof SacrificeSelfCost
-                    || effect instanceof SacrificeCreatureCost
-                    || effect instanceof SacrificeSubtypeCreatureCost
-                    || effect instanceof SacrificeArtifactCost
-                    || effect instanceof SacrificeMultiplePermanentsCost
-                    || effect instanceof DiscardCardTypeCost
-                    || effect instanceof ExileCardFromGraveyardCost
-                    || effect instanceof RemoveCounterFromSourceCost
-                    || effect instanceof RemoveChargeCountersFromSourceCost
-                    || effect instanceof TapCreatureCost) {
+            if (effect instanceof CostEffect) {
                 continue;
             }
             if (effect instanceof CantBlockSourceEffect) {
@@ -275,41 +238,26 @@ public class ActivatedAbilityExecutionService {
                                     UUID effectiveTargetId,
                                     Zone targetZone) {
         Zone effectiveTargetZone = targetZone;
-        StackEntry stackEntry;
         if (ability.isNeedsSpellTarget()) {
             effectiveTargetZone = Zone.STACK;
         }
-        if (effectiveTargetZone != null && effectiveTargetZone != Zone.BATTLEFIELD) {
-            stackEntry = new StackEntry(
-                    StackEntryType.ACTIVATED_ABILITY,
-                    permanent.getCard(),
-                    playerId,
-                    permanent.getCard().getName() + "'s ability",
-                    snapshotEffects,
-                    effectiveXValue,
-                    effectiveTargetId,
-                    permanent.getId(),
-                    Map.of(),
-                    effectiveTargetZone,
-                    List.of(),
-                    List.of()
-            );
-        } else {
-            stackEntry = new StackEntry(
-                    StackEntryType.ACTIVATED_ABILITY,
-                    permanent.getCard(),
-                    playerId,
-                    permanent.getCard().getName() + "'s ability",
-                    snapshotEffects,
-                    effectiveXValue,
-                    effectiveTargetId,
-                    permanent.getId(),
-                    Map.of(),
-                    null,
-                    List.of(),
-                    List.of()
-            );
+        if (effectiveTargetZone == Zone.BATTLEFIELD) {
+            effectiveTargetZone = null;
         }
+        StackEntry stackEntry = new StackEntry(
+                StackEntryType.ACTIVATED_ABILITY,
+                permanent.getCard(),
+                playerId,
+                permanent.getCard().getName() + "'s ability",
+                snapshotEffects,
+                effectiveXValue,
+                effectiveTargetId,
+                permanent.getId(),
+                Map.of(),
+                effectiveTargetZone,
+                List.of(),
+                List.of()
+        );
         stackEntry.setTargetFilter(ability.getTargetFilter());
         gameData.stack.add(stackEntry);
         stateBasedActionService.performStateBasedActions(gameData);
