@@ -13,5 +13,13 @@ public interface CardEffect {
      * the target when no explicit target is provided.
      */
     default boolean isSelfTargeting() { return false; }
+
+    /**
+     * Returns {@code true} if this effect is a characteristic-defining ability
+     * that sets power and/or toughness (e.g. "* / * where * is ...").
+     * Used by copy effects with P/T overrides (CR 707.9d): when a copy effect
+     * provides specific P/T values, CDAs that define P/T are not copied.
+     */
+    default boolean isPowerToughnessDefining() { return false; }
 }
 

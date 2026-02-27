@@ -610,7 +610,7 @@ public class GameHelper {
 
     // ===== Clone / Legend =====
 
-    void applyCloneCopy(Permanent clonePerm, Permanent targetPerm) {
+    void applyCloneCopy(Permanent clonePerm, Permanent targetPerm, Integer powerOverride, Integer toughnessOverride) {
         Card target = targetPerm.getCard();
         Card copy = new Card();
         copy.setName(target.getName());
@@ -620,13 +620,19 @@ public class GameHelper {
         copy.setSupertypes(target.getSupertypes());
         copy.setSubtypes(target.getSubtypes());
         copy.setCardText(target.getCardText());
-        copy.setPower(target.getPower());
-        copy.setToughness(target.getToughness());
+        copy.setPower(powerOverride != null ? powerOverride : target.getPower());
+        copy.setToughness(toughnessOverride != null ? toughnessOverride : target.getToughness());
         copy.setKeywords(target.getKeywords());
         copy.setSetCode(target.getSetCode());
         copy.setCollectorNumber(target.getCollectorNumber());
+        boolean hasPTOverride = powerOverride != null || toughnessOverride != null;
         for (EffectSlot slot : EffectSlot.values()) {
             for (EffectRegistration reg : target.getEffectRegistrations(slot)) {
+                // CR 707.9d: when a copy effect provides specific P/T values,
+                // characteristic-defining abilities that define P/T are not copied
+                if (hasPTOverride && reg.effect().isPowerToughnessDefining()) {
+                    continue;
+                }
                 copy.addEffect(slot, reg.effect(), reg.triggerMode());
             }
         }
@@ -657,6 +663,8 @@ public class GameHelper {
         gameData.cloneOperation.card = card;
         gameData.cloneOperation.controllerId = controllerId;
         gameData.cloneOperation.etbTargetId = targetPermanentId;
+        gameData.cloneOperation.powerOverride = copyEffect.powerOverride();
+        gameData.cloneOperation.toughnessOverride = copyEffect.toughnessOverride();
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.CloneCopy());
 
         gameData.pendingMayAbilities.add(new PendingMayAbility(
@@ -673,17 +681,21 @@ public class GameHelper {
         Card card = gameData.cloneOperation.card;
         UUID controllerId = gameData.cloneOperation.controllerId;
         UUID etbTargetId = gameData.cloneOperation.etbTargetId;
+        Integer powerOverride = gameData.cloneOperation.powerOverride;
+        Integer toughnessOverride = gameData.cloneOperation.toughnessOverride;
 
         gameData.cloneOperation.card = null;
         gameData.cloneOperation.controllerId = null;
         gameData.cloneOperation.etbTargetId = null;
+        gameData.cloneOperation.powerOverride = null;
+        gameData.cloneOperation.toughnessOverride = null;
 
         Permanent perm = new Permanent(card);
 
         if (targetPermanentId != null) {
             Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetPermanentId);
             if (targetPerm != null) {
-                applyCloneCopy(perm, targetPerm);
+                applyCloneCopy(perm, targetPerm, powerOverride, toughnessOverride);
             }
         }
 

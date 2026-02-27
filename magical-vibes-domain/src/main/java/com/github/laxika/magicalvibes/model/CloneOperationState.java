@@ -7,4 +7,6 @@ public class CloneOperationState {
     public Card card;
     public UUID controllerId;
     public UUID etbTargetId;
+    public Integer powerOverride;
+    public Integer toughnessOverride;
 }
