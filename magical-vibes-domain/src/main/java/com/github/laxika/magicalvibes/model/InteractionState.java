@@ -21,6 +21,7 @@ public class InteractionState {
     private Set<Integer> awaitingGraveyardChoiceValidIndices;
     private GraveyardChoiceDestination graveyardChoiceDestination;
     private List<Card> graveyardChoiceCardPool;
+    private boolean graveyardChoiceGainLifeEqualToManaValue;
     private UUID awaitingColorChoicePlayerId;
     private UUID awaitingColorChoicePermanentId;
     private UUID pendingColorChoiceETBTargetId;
@@ -80,6 +81,7 @@ public class InteractionState {
         copy.awaitingGraveyardChoiceValidIndices = this.awaitingGraveyardChoiceValidIndices != null ? new HashSet<>(this.awaitingGraveyardChoiceValidIndices) : null;
         copy.graveyardChoiceDestination = this.graveyardChoiceDestination;
         copy.graveyardChoiceCardPool = this.graveyardChoiceCardPool != null ? new ArrayList<>(this.graveyardChoiceCardPool) : null;
+        copy.graveyardChoiceGainLifeEqualToManaValue = this.graveyardChoiceGainLifeEqualToManaValue;
         copy.awaitingColorChoicePlayerId = this.awaitingColorChoicePlayerId;
         copy.awaitingColorChoicePermanentId = this.awaitingColorChoicePermanentId;
         copy.pendingColorChoiceETBTargetId = this.pendingColorChoiceETBTargetId;
@@ -230,6 +232,7 @@ public class InteractionState {
         this.awaitingGraveyardChoiceValidIndices = null;
         this.graveyardChoiceDestination = null;
         this.graveyardChoiceCardPool = null;
+        this.graveyardChoiceGainLifeEqualToManaValue = false;
     }
 
     public void prepareGraveyardChoice(GraveyardChoiceDestination destination, List<Card> cardPool) {
@@ -243,6 +246,14 @@ public class InteractionState {
 
     public List<Card> graveyardChoiceCardPool() {
         return this.graveyardChoiceCardPool;
+    }
+
+    public void setGraveyardChoiceGainLifeEqualToManaValue(boolean value) {
+        this.graveyardChoiceGainLifeEqualToManaValue = value;
+    }
+
+    public boolean graveyardChoiceGainLifeEqualToManaValue() {
+        return this.graveyardChoiceGainLifeEqualToManaValue;
     }
 
     public void beginColorChoice(UUID playerId, UUID permanentId, UUID etbTargetPermanentId, ColorChoiceContext choiceContext) {

@@ -109,6 +109,10 @@ public class GraveyardReturnResolutionService {
 
         permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
         moveCardToDestination(gameData, controllerId, targetCard, effect.destination());
+
+        if (effect.gainLifeEqualToManaValue()) {
+            applyLifeGainEqualToManaValue(gameData, controllerId, targetCard);
+        }
     }
 
     private void resolveReturnAll(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
@@ -222,6 +226,7 @@ public class GraveyardReturnResolutionService {
         String prompt = "Return a " + filterLabel + " from your graveyard to " + destText + ".";
 
         gameData.interaction.prepareGraveyardChoice(effect.destination(), null);
+        gameData.interaction.setGraveyardChoiceGainLifeEqualToManaValue(effect.gainLifeEqualToManaValue());
         playerInputService.beginGraveyardChoice(gameData, controllerId, matchingIndices, prompt);
     }
 
@@ -337,6 +342,21 @@ public class GraveyardReturnResolutionService {
             return String.join(" or ", parts);
         }
         return "card";
+    }
+
+    private void applyLifeGainEqualToManaValue(GameData gameData, UUID controllerId, Card card) {
+        int manaValue = card.getManaValue();
+        if (manaValue <= 0) return;
+        String playerName = gameData.playerIdToName.get(controllerId);
+        if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+            gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
+            return;
+        }
+        int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+        gameData.playerLifeTotals.put(controllerId, currentLife + manaValue);
+        String logEntry = playerName + " gains " + manaValue + " life.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} gains {} life (equal to {}'s mana value)", gameData.id, playerName, manaValue, card.getName());
     }
 
     @HandlesEffect(PutCardFromOpponentGraveyardOntoBattlefieldEffect.class)

@@ -57,6 +57,7 @@ public class GraveyardChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
         GraveyardChoiceDestination destination = graveyardChoice.destination();
+        boolean gainLifeEqualToManaValue = gameData.interaction.graveyardChoiceGainLifeEqualToManaValue();
         gameData.interaction.clearGraveyardChoice();
 
         if (cardIndex == -1) {
@@ -87,6 +88,18 @@ public class GraveyardChoiceHandlerService {
                     String logEntry = player.getUsername() + " returns " + card.getName() + " from graveyard to hand.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} returns {} from graveyard to hand", gameData.id, player.getUsername(), card.getName());
+
+                    if (gainLifeEqualToManaValue) {
+                        int manaValue = card.getManaValue();
+                        if (manaValue > 0 && gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                            int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+                            gameData.playerLifeTotals.put(playerId, currentLife + manaValue);
+                            String lifeLog = player.getUsername() + " gains " + manaValue + " life.";
+                            gameBroadcastService.logAndBroadcast(gameData, lifeLog);
+                            log.info("Game {} - {} gains {} life (equal to {}'s mana value)",
+                                    gameData.id, player.getUsername(), manaValue, card.getName());
+                        }
+                    }
                 }
                 case BATTLEFIELD -> {
                     Permanent perm = new Permanent(card);

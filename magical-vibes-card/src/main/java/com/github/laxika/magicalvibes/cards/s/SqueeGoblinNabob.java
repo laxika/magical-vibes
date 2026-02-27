@@ -14,6 +14,6 @@ public class SqueeGoblinNabob extends Card {
 
     public SqueeGoblinNabob() {
         addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
-                new MayEffect(new ReturnCardFromGraveyardEffect(GraveyardChoiceDestination.HAND, new CardIsSelfPredicate(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, true, false, null), "Return Squee, Goblin Nabob from your graveyard to your hand?"));
+                new MayEffect(new ReturnCardFromGraveyardEffect(GraveyardChoiceDestination.HAND, new CardIsSelfPredicate(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, true, false, null, false), "Return Squee, Goblin Nabob from your graveyard to your hand?"));
     }
 }

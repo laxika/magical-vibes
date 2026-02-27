@@ -21,7 +21,7 @@ public class NoRestForTheWicked extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new ReturnCardFromGraveyardEffect(GraveyardChoiceDestination.HAND, new CardTypePredicate(CardType.CREATURE), GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, true, true, null)
+                        new ReturnCardFromGraveyardEffect(GraveyardChoiceDestination.HAND, new CardTypePredicate(CardType.CREATURE), GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, true, true, null, false)
                 ),
                 "Sacrifice No Rest for the Wicked: Return to your hand all creature cards put into your graveyard from the battlefield this turn."
         ));

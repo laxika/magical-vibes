@@ -12,21 +12,22 @@ public record ReturnCardFromGraveyardEffect(
         boolean targetGraveyard,
         boolean returnAll,
         boolean thisTurnOnly,
-        PermanentPredicate attachmentTarget
+        PermanentPredicate attachmentTarget,
+        boolean gainLifeEqualToManaValue
 ) implements CardEffect {
 
     public ReturnCardFromGraveyardEffect(GraveyardChoiceDestination destination, CardPredicate filter) {
-        this(destination, filter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, false, false, null);
+        this(destination, filter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, false, false, null, false);
     }
 
     public ReturnCardFromGraveyardEffect(GraveyardChoiceDestination destination, CardPredicate filter,
                                          GraveyardSearchScope source) {
-        this(destination, filter, source, false, false, false, null);
+        this(destination, filter, source, false, false, false, null, false);
     }
 
     public ReturnCardFromGraveyardEffect(GraveyardChoiceDestination destination, CardPredicate filter,
                                          boolean targetGraveyard) {
-        this(destination, filter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, targetGraveyard, false, false, null);
+        this(destination, filter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, targetGraveyard, false, false, null, false);
     }
 
     @Override

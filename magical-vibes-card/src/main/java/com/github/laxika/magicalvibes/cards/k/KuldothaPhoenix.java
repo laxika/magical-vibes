@@ -21,7 +21,7 @@ public class KuldothaPhoenix extends Card {
                                         GraveyardChoiceDestination.BATTLEFIELD,
                                         new CardIsSelfPredicate(),
                                         GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
-                                        false, true, false, null
+                                        false, true, false, null, false
                                 ),
                                 "Pay {4} to return Kuldotha Phoenix to the battlefield?"
                         )

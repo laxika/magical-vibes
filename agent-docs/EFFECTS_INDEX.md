@@ -171,7 +171,8 @@ ReturnCardFromGraveyardEffect(
     boolean targetGraveyard,                 // true = player chooses whose graveyard to search at cast time
     boolean returnAll,                       // true = return all matching cards, false = choose one
     boolean thisTurnOnly,                    // true = only cards put there from battlefield this turn
-    PermanentPredicate attachmentTarget      // non-null = aura attaches to matching permanent on ETB
+    PermanentPredicate attachmentTarget,     // non-null = aura attaches to matching permanent on ETB
+    boolean gainLifeEqualToManaValue         // true = controller gains life equal to returned card's mana value
 )
 ```
 
@@ -179,9 +180,9 @@ ReturnCardFromGraveyardEffect(
 
 | Constructor | Equivalent canonical | When to use |
 |-------------|---------------------|-------------|
-| `(destination, filter)` | `(destination, filter, CONTROLLERS_GRAVEYARD, false, false, false, null)` | choose one from controller's graveyard (most common) |
-| `(destination, filter, source)` | `(destination, filter, source, false, false, false, null)` | choose one from a specific scope (e.g. ALL_GRAVEYARDS) |
-| `(destination, filter, targetGraveyard)` | `(destination, filter, CONTROLLERS_GRAVEYARD, targetGraveyard, false, false, null)` | targets graveyard at cast time (for spells like Recollect, Recover) |
+| `(destination, filter)` | `(destination, filter, CONTROLLERS_GRAVEYARD, false, false, false, null, false)` | choose one from controller's graveyard (most common) |
+| `(destination, filter, source)` | `(destination, filter, source, false, false, false, null, false)` | choose one from a specific scope (e.g. ALL_GRAVEYARDS) |
+| `(destination, filter, targetGraveyard)` | `(destination, filter, CONTROLLERS_GRAVEYARD, targetGraveyard, false, false, null, false)` | targets graveyard at cast time (for spells like Recollect, Recover) |
 
 **CardPredicate filter system** (in `model/filter/`):
 
@@ -238,7 +239,8 @@ Pass `null` as filter to allow any card.
 | Beacon of Unrest | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardAnyOfPredicate(...), ALL_GRAVEYARDS)` — artifact or creature from any graveyard |
 | Nomad Mythmaker | canonical constructor with `attachmentTarget = new PermanentIsCreaturePredicate()` — aura to battlefield attached to creature |
 | Squee, Goblin Nabob | `ReturnCardFromGraveyardEffect(HAND, new CardIsSelfPredicate(), CONTROLLERS_GRAVEYARD, false, true, false, null)` — self-return |
-| No Rest for the Wicked | `ReturnCardFromGraveyardEffect(HAND, new CardTypePredicate(CREATURE), CONTROLLERS_GRAVEYARD, false, true, true, null)` — all creatures that died this turn |
+| No Rest for the Wicked | `ReturnCardFromGraveyardEffect(HAND, new CardTypePredicate(CREATURE), CONTROLLERS_GRAVEYARD, false, true, true, null, false)` — all creatures that died this turn |
+| Razor Hippogriff | `ReturnCardFromGraveyardEffect(HAND, new CardTypePredicate(ARTIFACT), CONTROLLERS_GRAVEYARD, false, false, false, null, true)` — artifact to hand + gain life equal to mana value |
 
 ### Other graveyard effects
 
