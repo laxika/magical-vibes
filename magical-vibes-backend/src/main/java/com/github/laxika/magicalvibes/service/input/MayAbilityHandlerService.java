@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
@@ -97,6 +98,13 @@ public class MayAbilityHandlerService {
         boolean isCounterUnlessPays = ability.effects().stream().anyMatch(e -> e instanceof CounterUnlessPaysEffect);
         if (isCounterUnlessPays) {
             handleCounterUnlessPaysChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Lose-life-unless-discard — handled via the may ability system
+        boolean isLoseLifeUnlessDiscard = ability.effects().stream().anyMatch(e -> e instanceof LoseLifeUnlessDiscardEffect);
+        if (isLoseLifeUnlessDiscard) {
+            handleLoseLifeUnlessDiscardChoice(gameData, player, accepted, ability);
             return;
         }
 
@@ -446,6 +454,55 @@ public class MayAbilityHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} is no longer on the battlefield, decline is a no-op", gameData.id, sourceCard.getName());
         }
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        playerInputService.processNextMayAbility(gameData);
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            gameData.priorityPassedBy.clear();
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+        }
+    }
+
+    private void handleLoseLifeUnlessDiscardChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        LoseLifeUnlessDiscardEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof LoseLifeUnlessDiscardEffect)
+                .map(e -> (LoseLifeUnlessDiscardEffect) e)
+                .findFirst().orElseThrow();
+
+        UUID targetPlayerId = ability.controllerId();
+
+        if (accepted) {
+            List<Card> hand = gameData.playerHands.get(targetPlayerId);
+            List<Integer> validIndices = new ArrayList<>();
+            if (hand != null) {
+                for (int i = 0; i < hand.size(); i++) {
+                    validIndices.add(i);
+                }
+            }
+
+            if (!validIndices.isEmpty()) {
+                gameData.discardCausedByOpponent = false;
+                gameData.interaction.setDiscardRemainingCount(1);
+                playerInputService.beginDiscardChoice(gameData, targetPlayerId, validIndices,
+                        "Choose a card to discard.");
+
+                String logEntry = player.getUsername() + " chooses to discard a card.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} accepts lose-life-unless-discard for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
+                return;
+            }
+
+            // Hand changed since prompt — no cards left, fall through to life loss
+        }
+
+        // Declined or no cards — lose life
+        int currentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
+        gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
+
+        String logEntry = player.getUsername() + " loses " + effect.lifeLoss() + " life. (" + ability.sourceCard().getName() + ")";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} loses {} life (declined discard, {})", gameData.id, player.getUsername(), effect.lifeLoss(), ability.sourceCard().getName());
 
         stateBasedActionService.performStateBasedActions(gameData);
         playerInputService.processNextMayAbility(gameData);

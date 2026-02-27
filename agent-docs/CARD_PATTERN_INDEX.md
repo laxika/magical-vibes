@@ -117,6 +117,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | May gain life on spell cast | `a/AngelsFeather.java` | MayEffect(GainLifeOnSpellCastEffect(CardColorPredicate)) — also `g/GolemsHeart.java` with CardTypePredicate |
 | May pay to deal damage on artifact cast | `e/Embersmith.java` | MayEffect(DealDamageToAnyTargetOnArtifactCastEffect) — pay mana + any-target trigger |
 | May pay to create token on artifact cast | `m/Myrsmith.java` | MayEffect(CreateTokenOnOwnSpellCastWithCostEffect) — pay mana + create token trigger |
+| Opponent spell punisher (discard or life) | `p/PainfulQuandary.java` | ON_OPPONENT_CASTS_SPELL LoseLifeUnlessDiscardEffect(5) — opponent chooses discard or lose life |
 | Land tap trigger | `m/Manabarbs.java` | ON_ANY_PLAYER_TAPS_LAND DealDamageOnLandTapEffect |
 | End step self-destruct | `s/SparkElemental.java` | END_STEP_TRIGGERED SacrificeSelfEffect |
 | Discarded by opponent | `g/GuerrillaTactics.java` | ON_SELF_DISCARDED_BY_OPPONENT DealDamageToAnyTargetEffect |

@@ -333,6 +333,7 @@ Pass `null` as filter to allow any card.
 | `TargetPlayerLosesLifeAndControllerGainsLifeEffect` | `(int lifeLoss, int lifeGain)` | drain: target loses N, you gain M |
 | `EnchantedCreatureControllerLosesLifeEffect` | `(int amount, UUID affectedPlayerId)` | enchanted creature's controller loses N life (trigger) |
 | `EachPlayerLosesLifePerCreatureControlledEffect` | `(int lifePerCreature)` | each player loses N life per creature they control |
+| `LoseLifeUnlessDiscardEffect` | `(int lifeLoss)` | target player loses N life unless they discard a card. Punisher choice made by the affected player. Place in `ON_OPPONENT_CASTS_SPELL` slot. Resolved via `PlayerInteractionResolutionService` → may ability prompt → discard choice or life loss |
 
 ## Poison counters
 

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCounter
 import com.github.laxika.magicalvibes.model.effect.RandomDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
@@ -556,6 +557,32 @@ public class PlayerInteractionResolutionService {
         }
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 sourceCard, controllerId, List.of(effect), prompt
+        ));
+    }
+
+    @HandlesEffect(LoseLifeUnlessDiscardEffect.class)
+    private void resolveLoseLifeUnlessDiscard(GameData gameData, StackEntry entry, LoseLifeUnlessDiscardEffect effect) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        boolean hasCards = hand != null && !hand.isEmpty();
+
+        if (!hasCards) {
+            // No cards to discard — auto-apply life loss
+            int currentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
+            gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
+            String logEntry = playerName + " has no cards to discard. " + playerName + " loses " + effect.lifeLoss() + " life.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} loses {} life (no cards to discard, {})",
+                    gameData.id, playerName, effect.lifeLoss(), entry.getCard().getName());
+            return;
+        }
+
+        // Has cards — ask the target player via the may ability system
+        String prompt = "Discard a card? If you don't, you lose " + effect.lifeLoss() + " life. (" + entry.getCard().getName() + ")";
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                entry.getCard(), targetPlayerId, List.of(effect), prompt
         ));
     }
 

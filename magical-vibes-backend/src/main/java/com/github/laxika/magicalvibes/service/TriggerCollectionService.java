@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerE
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeOnOwnSpellCastWithCostEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeOnSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -222,6 +223,26 @@ public class TriggerCollectionService {
                             perm.getCard().getName() + "'s ability",
                             new ArrayList<>(resolvedEffects)
                     ));
+                }
+            }
+        });
+
+        // Check ON_OPPONENT_CASTS_SPELL effects (only fire for opponents' spells)
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (playerId.equals(castingPlayerId)) return;
+
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL)) {
+                if (effect instanceof LoseLifeUnlessDiscardEffect trigger) {
+                    List<CardEffect> resolvedEffects = List.of(trigger);
+                    StackEntry entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            playerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(resolvedEffects)
+                    );
+                    entry.setTargetPermanentId(castingPlayerId);
+                    gameData.stack.add(entry);
                 }
             }
         });
