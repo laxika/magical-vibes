@@ -67,6 +67,41 @@ public class ActivatedAbilityExecutionService {
     private final PlayerInputService playerInputService;
     private final SessionManager sessionManager;
 
+    /**
+     * Completes an activated ability activation after all additional costs (mana, sacrifice creature,
+     * discard, exile from graveyard, etc.) have already been paid by the caller.
+     *
+     * <p>This method performs the remaining activation steps in order:
+     * <ol>
+     *   <li>Determines the effective target — auto-targets the source permanent for self-targeting
+     *       effects (e.g. {@code BoostSelfEffect}, {@code RegenerateEffect}, {@code AnimateSelfEffect}).</li>
+     *   <li>Taps the permanent if the ability requires a tap cost.</li>
+     *   <li>Snapshots charge counters into {@code effectiveXValue} for counter-dependent effects
+     *       (e.g. {@code DrawCardsEqualToChargeCountersOnSourceEffect}) so the value survives sacrifice.</li>
+     *   <li>Executes {@link com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost} if present —
+     *       removes the permanent from the battlefield, adds it to the graveyard, and collects death triggers.</li>
+     *   <li>Logs the activation and broadcasts to all players.</li>
+     *   <li>Snapshots the effect list — filters out cost effects and bakes runtime values into effects
+     *       like {@code CantBlockSourceEffect} (source permanent ID) and
+     *       {@code PreventNextColorDamageToControllerEffect} (chosen color).</li>
+     *   <li>Detects whether the ability is a mana ability (CR 605.1a: no target, could add mana,
+     *       not a loyalty ability) and resolves it immediately without the stack, or pushes a
+     *       {@link StackEntry} onto the stack for non-mana abilities.</li>
+     * </ol>
+     *
+     * @param gameData                          the current game state
+     * @param player                            the player activating the ability
+     * @param permanent                         the permanent whose ability is being activated
+     * @param ability                           the activated ability definition
+     * @param abilityEffects                    the full effect list including cost effects
+     * @param effectiveXValue                   the X value (from user input or 0); may be overridden
+     *                                          by charge counter snapshotting
+     * @param targetPermanentId                 the chosen target permanent, or {@code null} if none
+     * @param targetZone                        the zone of the target, or {@code null} for battlefield targets
+     * @param markAsNonTargetingForSacCreatureCost if {@code true}, marks the resulting stack entry as
+     *                                          non-targeting (used when the target selection was for a
+     *                                          sacrifice-creature cost, not the ability's actual target)
+     */
     public void completeActivationAfterCosts(GameData gameData,
                                              Player player,
                                              Permanent permanent,
