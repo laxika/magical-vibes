@@ -685,18 +685,20 @@ public class CreatureModResolutionService {
     }
 
     @HandlesEffect(PutMinusOneMinusOneCounterOnTargetCreatureEffect.class)
-    private void resolvePutMinusOneMinusOneCounterOnTargetCreature(GameData gameData, StackEntry entry) {
+    private void resolvePutMinusOneMinusOneCounterOnTargetCreature(GameData gameData, StackEntry entry, PutMinusOneMinusOneCounterOnTargetCreatureEffect effect) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
             log.info("Game {} - Target creature no longer on battlefield, effect fizzles", gameData.id);
             return;
         }
 
-        target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() + 1);
+        int count = effect.count();
+        target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() + count);
 
-        String logEntry = target.getCard().getName() + " gets a -1/-1 counter.";
+        String counterText = count == 1 ? "a -1/-1 counter" : count + " -1/-1 counters";
+        String logEntry = target.getCard().getName() + " gets " + counterText + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} gets a -1/-1 counter", gameData.id, target.getCard().getName());
+        log.info("Game {} - {} gets {} -1/-1 counter(s)", gameData.id, target.getCard().getName(), count);
     }
 
     @HandlesEffect(GrantColorUntilEndOfTurnEffect.class)

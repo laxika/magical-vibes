@@ -403,7 +403,7 @@ Pass `null` as filter to allow any card.
 | `PutChargeCounterOnSelfEffect` | `()` | put a charge counter on this permanent (self-target, used as activated ability effect) |
 | `PutChargeCounterOnSelfOnArtifactCastEffect` | `()` | trigger descriptor: when you cast an artifact spell, put a charge counter on this permanent. Place in `ON_CONTROLLER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into `PutChargeCounterOnSelfEffect` |
 | `DrawAndDiscardOnOwnSpellCastEffect` | `(CardPredicate spellFilter)` | trigger descriptor: when you cast a matching spell, draw a card then discard a card (loot). Place in `ON_CONTROLLER_CASTS_SPELL` slot, typically wrapped in `MayEffect`. Resolves into `DrawCardEffect` + `DiscardCardEffect` |
-| `PutMinusOneMinusOneCounterOnTargetCreatureEffect` | `()` | put a -1/-1 counter on target creature (targets permanent) |
+| `PutMinusOneMinusOneCounterOnTargetCreatureEffect` | `(int count)` / `()` | put count -1/-1 counters on target creature (targets permanent). No-arg defaults to 1 |
 | `ProliferateEffect` | `()` | proliferate: choose any number of permanents with counters, add one of each counter type already there |
 | `PutAwakeningCountersOnTargetLandsEffect` | `()` | combat damage trigger: choose any number of lands you control, put an awakening counter on each. Lands with awakening counters are 8/8 green Elemental creatures (permanent). Place in `ON_COMBAT_DAMAGE_TO_PLAYER` slot. Handled inline in CombatService via multi-permanent choice |
 
