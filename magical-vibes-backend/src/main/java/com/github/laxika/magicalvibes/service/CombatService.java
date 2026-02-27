@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreature
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -100,6 +101,19 @@ public class CombatService {
                 boolean defenderMatches = defenderBattlefield != null && defenderBattlefield.stream()
                         .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, restriction.defenderPermanentPredicate()));
                 if (!defenderMatches) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isCantBeBlockedDueToDefenderCondition(GameData gameData, Permanent attacker, List<Permanent> defenderBattlefield) {
+        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantBeBlockedIfDefenderControlsMatchingPermanentEffect restriction) {
+                boolean defenderMatches = defenderBattlefield != null && defenderBattlefield.stream()
+                        .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, restriction.defenderPermanentPredicate()));
+                if (defenderMatches) {
                     return true;
                 }
             }
@@ -374,8 +388,10 @@ public class CombatService {
 
         // Filter out attackers that can't be blocked
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
         attackerIndices = attackerIndices.stream()
                 .filter(idx -> !gameQueryService.hasCantBeBlocked(gameData, attackerBattlefield.get(idx)))
+                .filter(idx -> !isCantBeBlockedDueToDefenderCondition(gameData, attackerBattlefield.get(idx), defenderBattlefield))
                 .toList();
 
         if (blockable.isEmpty() || attackerIndices.isEmpty()) {
@@ -438,6 +454,9 @@ public class CombatService {
             Permanent attacker = attackerBattlefield.get(attackerIdx);
             Permanent blocker = defenderBattlefield.get(blockerIdx);
             if (gameQueryService.hasCantBeBlocked(gameData, attacker)) {
+                throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked");
+            }
+            if (isCantBeBlockedDueToDefenderCondition(gameData, attacker, defenderBattlefield)) {
                 throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked");
             }
             if (gameQueryService.hasKeyword(gameData, attacker, Keyword.FLYING)
@@ -733,6 +752,7 @@ public class CombatService {
                                      Permanent attacker,
                                      List<Permanent> defenderBattlefield) {
         if (gameQueryService.hasCantBeBlocked(gameData, attacker)) return false;
+        if (isCantBeBlockedDueToDefenderCondition(gameData, attacker, defenderBattlefield)) return false;
 
         if (gameQueryService.hasKeyword(gameData, attacker, Keyword.FLYING)
                 && !gameQueryService.hasKeyword(gameData, blocker, Keyword.FLYING)
