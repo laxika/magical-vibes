@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
+import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -118,6 +119,9 @@ public class CardChoiceHandlerService {
 
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
 
+        // Check if a spell should return to hand based on the discarded card type (e.g. Psychic Miasma)
+        checkPendingReturnToHandOnDiscard(gameData, card);
+
         int remainingDiscards = gameData.interaction.decrementDiscardRemainingCount();
 
         if (remainingDiscards > 0 && !hand.isEmpty()) {
@@ -126,6 +130,7 @@ public class CardChoiceHandlerService {
             gameData.interaction.clearAwaitingInput();
             gameData.interaction.clearCardChoice();
             gameData.interaction.setDiscardRemainingCount(0);
+            finalizePendingReturnToHandOnDiscard(gameData);
 
             // After cleanup discard, apply end-of-turn resets (CR 514.2)
             if (gameData.cleanupDiscardPending) {
@@ -293,6 +298,31 @@ public class CardChoiceHandlerService {
         log.info("Game {} - {} puts {} onto the battlefield", gameData.id, player.getUsername(), card.getName());
 
         gameHelper.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
+    }
+
+    private void checkPendingReturnToHandOnDiscard(GameData gameData, Card discardedCard) {
+        PendingReturnToHandOnDiscardType pending = gameData.pendingReturnToHandOnDiscardType;
+        if (pending == null) {
+            return;
+        }
+        if (discardedCard.getType() == pending.requiredType()
+                || discardedCard.getAdditionalTypes().contains(pending.requiredType())) {
+            gameData.playerHands.get(pending.controllerId()).add(pending.card());
+            String logEntry = pending.card().getName() + " is returned to its owner's hand.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} returned to hand (land discarded)", gameData.id, pending.card().getName());
+            gameData.pendingReturnToHandOnDiscardType = null;
+        }
+    }
+
+    private void finalizePendingReturnToHandOnDiscard(GameData gameData) {
+        PendingReturnToHandOnDiscardType pending = gameData.pendingReturnToHandOnDiscardType;
+        if (pending == null) {
+            return;
+        }
+        // No matching card type was discarded — spell goes to graveyard as normal
+        gameHelper.addCardToGraveyard(gameData, pending.controllerId(), pending.card());
+        gameData.pendingReturnToHandOnDiscardType = null;
     }
 }
 

@@ -80,6 +80,7 @@ public class GameData {
     public final Deque<PermanentChoiceContext.AttackTriggerTarget> pendingAttackTriggerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.SpellTargetTriggerAnyTarget> pendingSpellTargetTriggers = new ArrayDeque<>();
     public boolean discardCausedByOpponent;
+    public PendingReturnToHandOnDiscardType pendingReturnToHandOnDiscardType;
     public final Deque<UUID> extraTurns = new ArrayDeque<>();
     public int additionalCombatMainPhasePairs;
     public int lastBroadcastedLogSize = 0;

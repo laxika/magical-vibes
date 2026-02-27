@@ -293,6 +293,10 @@ public class StackResolutionService {
                     hand.add(entry.getCard());
                     String returnLog = entry.getCard().getName() + " is returned to its owner's hand.";
                     gameBroadcastService.logAndBroadcast(gameData, returnLog);
+                } else if (gameData.pendingReturnToHandOnDiscardType != null) {
+                    // Spell disposition deferred — will be resolved after the async discard
+                    // completes (e.g. Psychic Miasma: goes to hand if a land is discarded,
+                    // otherwise to graveyard).
                 } else if (entry.getEffectsToResolve().stream()
                         .anyMatch(e -> e instanceof ShuffleIntoLibraryEffect)) {
                     // Ensure the card is shuffled into library even when an earlier effect

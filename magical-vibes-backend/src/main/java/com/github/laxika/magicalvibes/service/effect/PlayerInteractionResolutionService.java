@@ -27,6 +27,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTyp
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleHandIntoLibraryAndDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsReturnSelfIfCardTypeEffect;
+import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -152,6 +154,18 @@ public class PlayerInteractionResolutionService {
     private void resolveTargetPlayerDiscards(GameData gameData, StackEntry entry, TargetPlayerDiscardsEffect effect) {
         gameData.discardCausedByOpponent = true;
         resolveDiscardCards(gameData, entry.getTargetPermanentId(), effect.amount());
+    }
+
+    @HandlesEffect(TargetPlayerDiscardsReturnSelfIfCardTypeEffect.class)
+    private void resolveTargetPlayerDiscardsReturnSelfIfCardType(GameData gameData, StackEntry entry, TargetPlayerDiscardsReturnSelfIfCardTypeEffect effect) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
+        if (targetHand != null && !targetHand.isEmpty()) {
+            gameData.pendingReturnToHandOnDiscardType = new PendingReturnToHandOnDiscardType(
+                    entry.getCard(), entry.getControllerId(), effect.returnIfType());
+        }
+        gameData.discardCausedByOpponent = true;
+        resolveDiscardCards(gameData, targetPlayerId, effect.amount());
     }
 
     @HandlesEffect(ChooseCardFromTargetHandToDiscardEffect.class)
