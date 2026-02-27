@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreaturePerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
@@ -224,6 +225,14 @@ public class StaticEffectResolutionService {
                 accumulator.addKeywords(boost.grantedKeywords());
             } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
                 accumulator.addProtectionColors(protection.colors());
+            } else if (wrapped instanceof AnimateSelfWithStatsEffect animate) {
+                accumulator.setSelfBecomeCreature(true);
+                accumulator.addPower(animate.power());
+                accumulator.addToughness(animate.toughness());
+                for (CardSubtype subtype : animate.grantedSubtypes()) {
+                    accumulator.addGrantedSubtype(subtype);
+                }
+                accumulator.addKeywords(animate.grantedKeywords());
             }
         }
     }
@@ -264,18 +273,24 @@ public class StaticEffectResolutionService {
             boolean ownCheck = scope != GrantScope.OWN_CREATURES || context.targetOnSameBattlefield();
             if (!ownCheck) return false;
             boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
-            return isEffectivelyCreature(context.target(), hasAnimateArtifacts)
+            return isEffectivelyCreature(context.gameData(), context.target(), hasAnimateArtifacts)
                     && matchesStaticFilter(context.target(), filter);
         }
         return false;
     }
 
     private boolean isEffectivelyCreature(Permanent permanent, boolean hasAnimateArtifacts) {
+        return isEffectivelyCreature(null, permanent, hasAnimateArtifacts);
+    }
+
+    private boolean isEffectivelyCreature(GameData gameData, Permanent permanent, boolean hasAnimateArtifacts) {
         if (permanent.getCard().getType() == CardType.CREATURE) return true;
         if (permanent.getCard().getAdditionalTypes().contains(CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
         if (permanent.getAwakeningCounters() > 0) return true;
-        return hasAnimateArtifacts && gameQueryService.isArtifact(permanent);
+        if (hasAnimateArtifacts && gameQueryService.isArtifact(permanent)) return true;
+        if (gameData != null) return gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent);
+        return false;
     }
 
     @HandlesStaticEffect(value = PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect.class, selfOnly = true)

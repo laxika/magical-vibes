@@ -20,6 +20,7 @@ public class StaticBonusAccumulator {
     private final Set<Keyword> keywords = new HashSet<>();
     private final Set<CardColor> protectionColors = EnumSet.noneOf(CardColor.class);
     private boolean animatedCreature;
+    private boolean selfBecomeCreature;
     private final List<ActivatedAbility> grantedActivatedAbilities = new ArrayList<>();
     private final List<CardEffect> grantedEffects = new ArrayList<>();
     private final Set<CardColor> grantedColors = EnumSet.noneOf(CardColor.class);
@@ -61,6 +62,14 @@ public class StaticBonusAccumulator {
 
     public boolean isAnimatedCreature() {
         return animatedCreature;
+    }
+
+    public void setSelfBecomeCreature(boolean selfBecomeCreature) {
+        this.selfBecomeCreature = selfBecomeCreature;
+    }
+
+    public boolean isSelfBecomeCreature() {
+        return selfBecomeCreature;
     }
 
     public void addProtectionColors(Set<CardColor> colors) {

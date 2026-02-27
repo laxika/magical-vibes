@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
+import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedBySpellColorsEffect;
@@ -224,7 +226,26 @@ public class GameQueryService {
         if (permanent.getCard().getAdditionalTypes().contains(CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
         if (permanent.getAwakeningCounters() > 0) return true;
-        if (isArtifact(permanent)) return hasAnimateArtifactEffect(gameData);
+        if (isArtifact(permanent) && hasAnimateArtifactEffect(gameData)) return true;
+        return hasSelfBecomeCreatureEffect(gameData, permanent);
+    }
+
+    public boolean hasSelfBecomeCreatureEffect(GameData gameData, Permanent permanent) {
+        for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof MetalcraftConditionalEffect metalcraft
+                    && metalcraft.wrapped() instanceof AnimateSelfWithStatsEffect) {
+                for (UUID playerId : gameData.orderedPlayerIds) {
+                    List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                    if (battlefield != null && battlefield.contains(permanent)) {
+                        int artifactCount = 0;
+                        for (Permanent p : battlefield) {
+                            if (isArtifact(p)) artifactCount++;
+                        }
+                        if (artifactCount >= 3) return true;
+                    }
+                }
+            }
+        }
         return false;
     }
 
@@ -436,7 +457,7 @@ public class GameQueryService {
             }
         }
 
-        boolean isSelfAnimated = target.isAnimatedUntilEndOfTurn() || target.getAwakeningCounters() > 0;
+        boolean isSelfAnimated = target.isAnimatedUntilEndOfTurn() || target.getAwakeningCounters() > 0 || accumulator.isSelfBecomeCreature();
         if (!isNaturalCreature
                 && !accumulator.isAnimatedCreature()
                 && !isSelfAnimated
