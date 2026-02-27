@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffec
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
@@ -999,6 +1000,25 @@ public class GameHelper {
                     String triggerLog = perm.getCard().getName() + "'s imprint ability triggers.";
                     gameBroadcastService.logAndBroadcast(gameData, triggerLog);
                     log.info("Game {} - {} imprint triggers (nontoken creature died)", gameData.id, perm.getCard().getName());
+                } else if (effect instanceof MayPayManaEffect mayPay
+                        && mayPay.wrapped() instanceof ReturnDyingCreatureToBattlefieldAndAttachSourceEffect) {
+                    // Nim Deathmantle pattern: only trigger for creatures in this player's graveyard
+                    List<Card> playerGraveyard = gameData.playerGraveyards.get(playerId);
+                    if (playerGraveyard == null || playerGraveyard.stream().noneMatch(c -> c.getId().equals(dyingCard.getId()))) {
+                        return;
+                    }
+                    var returnEffect = new ReturnDyingCreatureToBattlefieldAndAttachSourceEffect(dyingCard.getId());
+                    gameData.pendingMayAbilities.add(new PendingMayAbility(
+                            perm.getCard(),
+                            playerId,
+                            List.of(returnEffect),
+                            perm.getCard().getName() + " — Pay " + mayPay.manaCost() + " to return " + dyingCard.getName() + " to the battlefield?",
+                            dyingCard.getId(),
+                            mayPay.manaCost()
+                    ));
+                    String triggerLog = perm.getCard().getName() + "'s ability triggers (" + dyingCard.getName() + " died).";
+                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                    log.info("Game {} - {} return trigger fires (nontoken creature {} died)", gameData.id, perm.getCard().getName(), dyingCard.getName());
                 }
             }
         });

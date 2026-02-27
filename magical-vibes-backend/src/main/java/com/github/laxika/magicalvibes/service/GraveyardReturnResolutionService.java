@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardEff
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutImprintedCreatureOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -553,5 +554,54 @@ public class GraveyardReturnResolutionService {
 
         log.info("Game {} - {} puts imprinted creature {} onto battlefield",
                 gameData.id, playerName, imprintedCard.getName());
+    }
+
+    @HandlesEffect(ReturnDyingCreatureToBattlefieldAndAttachSourceEffect.class)
+    void resolveReturnDyingCreatureAndAttachSource(GameData gameData, StackEntry entry,
+                                                    ReturnDyingCreatureToBattlefieldAndAttachSourceEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        // Find the dying card in the controller's graveyard
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        if (graveyard == null) {
+            log.info("Game {} - Return+attach fizzles, no graveyard for {}", gameData.id, playerName);
+            return;
+        }
+        Card dyingCard = null;
+        for (Card card : graveyard) {
+            if (card.getId().equals(effect.dyingCardId())) {
+                dyingCard = card;
+                break;
+            }
+        }
+        if (dyingCard == null) {
+            String logEntry = entry.getCard().getName() + "'s ability fizzles (card is no longer in graveyard).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - Return+attach fizzles, card not in {}'s graveyard", gameData.id, playerName);
+            return;
+        }
+
+        // Remove from graveyard
+        graveyard.remove(dyingCard);
+
+        // Put onto the battlefield
+        Permanent creature = new Permanent(dyingCard);
+        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, creature);
+
+        String enterLog = dyingCard.getName() + " returns to the battlefield under " + playerName + "'s control.";
+        gameBroadcastService.logAndBroadcast(gameData, enterLog);
+        log.info("Game {} - {} returns {} to battlefield via {}", gameData.id, playerName, dyingCard.getName(), entry.getCard().getName());
+
+        // Attach the source equipment to the returned creature
+        Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (equipment != null) {
+            equipment.setAttachedTo(creature.getId());
+            String attachLog = entry.getCard().getName() + " is now attached to " + dyingCard.getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, attachLog);
+            log.info("Game {} - {} attached to {}", gameData.id, entry.getCard().getName(), dyingCard.getName());
+        }
+
+        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, dyingCard, null, false);
     }
 }

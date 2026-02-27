@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,14 +27,24 @@ public class PermanentViewFactory {
     private final CardViewFactory cardViewFactory;
 
     public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities) {
+        return create(p, bonusPower, bonusToughness, bonusKeywords, animatedCreature, grantedActivatedAbilities, Set.of(), List.of(), false, false);
+    }
+
+    public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes) {
+        return create(p, bonusPower, bonusToughness, bonusKeywords, animatedCreature, grantedActivatedAbilities, staticGrantedColors, staticGrantedSubtypes, false, false);
+    }
+
+    public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, boolean colorOverriding, boolean subtypeOverriding) {
         Set<Keyword> allKeywords = new HashSet<>(p.getGrantedKeywords());
         allKeywords.addAll(bonusKeywords);
         CardView cardView = cardViewFactory.create(p.getCard());
         cardView = applyTextReplacements(cardView, p);
         cardView = applyGrantedSubtypes(cardView, p);
+        cardView = applyStaticGrantedSubtypes(cardView, staticGrantedSubtypes, subtypeOverriding);
         cardView = applyAwakeningCounterSubtype(cardView, p);
         cardView = applyGrantedCardTypes(cardView, p);
         cardView = applyGrantedActivatedAbilities(cardView, grantedActivatedAbilities);
+        cardView = applyStaticGrantedColors(cardView, p, staticGrantedColors, colorOverriding);
         return new PermanentView(
                 p.getId(), cardView,
                 p.isTapped(), p.isAttacking(), p.isBlocking(),
@@ -140,6 +152,76 @@ public class PermanentViewFactory {
                 modifiedText, cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
                 cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
+                cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
+                cardView.hasConvoke()
+        );
+    }
+
+    private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = EnumSet.of(
+            CardSubtype.FOREST,
+            CardSubtype.MOUNTAIN,
+            CardSubtype.ISLAND,
+            CardSubtype.PLAINS,
+            CardSubtype.SWAMP,
+            CardSubtype.AURA,
+            CardSubtype.EQUIPMENT,
+            CardSubtype.AJANI
+    );
+
+    private CardView applyStaticGrantedSubtypes(CardView cardView, List<CardSubtype> staticGrantedSubtypes, boolean subtypeOverriding) {
+        if (staticGrantedSubtypes.isEmpty()) {
+            return cardView;
+        }
+        List<CardSubtype> mergedSubtypes;
+        if (subtypeOverriding) {
+            // Keep only non-creature subtypes from the original, then add the granted ones
+            mergedSubtypes = new ArrayList<>();
+            for (CardSubtype subtype : cardView.subtypes()) {
+                if (NON_CREATURE_SUBTYPES.contains(subtype)) {
+                    mergedSubtypes.add(subtype);
+                }
+            }
+        } else {
+            mergedSubtypes = new ArrayList<>(cardView.subtypes());
+        }
+        for (CardSubtype subtype : staticGrantedSubtypes) {
+            if (!mergedSubtypes.contains(subtype)) {
+                mergedSubtypes.add(subtype);
+            }
+        }
+        return new CardView(
+                cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), mergedSubtypes,
+                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
+                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
+                cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
+                cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
+                cardView.hasConvoke()
+        );
+    }
+
+    private CardView applyStaticGrantedColors(CardView cardView, Permanent p, Set<CardColor> staticGrantedColors, boolean colorOverriding) {
+        // Determine the effective color: static grants add to permanent's colors
+        // If the permanent already has a color override (from non-static effects), use that
+        if (staticGrantedColors.isEmpty() && !p.isColorOverridden()) {
+            return cardView;
+        }
+        CardColor effectiveColor = cardView.color();
+        if (p.isColorOverridden() && !p.getGrantedColors().isEmpty()) {
+            effectiveColor = p.getGrantedColors().iterator().next();
+        }
+        if (!staticGrantedColors.isEmpty()) {
+            // Static color grants take precedence for display if the card has no color
+            // For multicolor, we display the first granted color as primary
+            effectiveColor = staticGrantedColors.iterator().next();
+        }
+        if (effectiveColor == cardView.color()) {
+            return cardView;
+        }
+        return new CardView(
+                cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), cardView.subtypes(),
+                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
+                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
+                cardView.collectorNumber(), effectiveColor, cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke()
         );

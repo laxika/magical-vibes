@@ -84,8 +84,8 @@ public class GameQueryService {
 
     private final StaticEffectHandlerRegistry staticEffectRegistry;
 
-    public record StaticBonus(int power, int toughness, Set<Keyword> keywords, Set<CardColor> protectionColors, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects) {
-        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), false, List.of(), List.of());
+    public record StaticBonus(int power, int toughness, Set<Keyword> keywords, Set<CardColor> protectionColors, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects, Set<CardColor> grantedColors, List<CardSubtype> grantedSubtypes, boolean colorOverriding, boolean subtypeOverriding) {
+        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), false, false);
     }
 
     public Permanent findPermanentById(GameData gameData, UUID permanentId) {
@@ -429,7 +429,9 @@ public class GameQueryService {
                 && !isSelfAnimated
                 && accumulator.getKeywords().isEmpty()
                 && accumulator.getGrantedActivatedAbilities().isEmpty()
-                && accumulator.getProtectionColors().isEmpty()) {
+                && accumulator.getProtectionColors().isEmpty()
+                && accumulator.getGrantedColors().isEmpty()
+                && accumulator.getGrantedSubtypes().isEmpty()) {
             return StaticBonus.NONE;
         }
 
@@ -441,7 +443,7 @@ public class GameQueryService {
             toughness += manaValue;
         }
 
-        return new StaticBonus(power, toughness, accumulator.getKeywords(), accumulator.getProtectionColors(), accumulator.isAnimatedCreature() || isSelfAnimated, accumulator.getGrantedActivatedAbilities(), accumulator.getGrantedEffects());
+        return new StaticBonus(power, toughness, accumulator.getKeywords(), accumulator.getProtectionColors(), accumulator.isAnimatedCreature() || isSelfAnimated, accumulator.getGrantedActivatedAbilities(), accumulator.getGrantedEffects(), accumulator.getGrantedColors(), accumulator.getGrantedSubtypes(), accumulator.isColorOverriding(), accumulator.isSubtypeOverriding());
     }
 
     public boolean hasProtectionFrom(GameData gameData, Permanent target, CardColor sourceColor) {

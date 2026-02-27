@@ -219,6 +219,7 @@ Pass `null` as filter to allow any card.
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
+| `ReturnDyingCreatureToBattlefieldAndAttachSourceEffect` | `(UUID dyingCardId)` or `()` | return a dying nontoken creature to the battlefield and attach the source equipment to it. No-arg constructor (dyingCardId is null) used in card definition; dyingCardId populated at trigger time in GameHelper. Wrap in MayPayManaEffect for "you may pay {X}" triggers. Used by Nim Deathmantle |
 | `PutCardFromOpponentGraveyardOntoBattlefieldEffect` | `(boolean tapped)` | put target artifact/creature with MV=X from opponent's graveyard onto battlefield under your control (tapped if `tapped=true`), then mill that player X cards |
 | `PutImprintedCreatureOntoBattlefieldEffect` | `()` | when this creature dies, reveal imprinted card; if creature, put onto battlefield (Clone Shell dies trigger) |
 
@@ -382,6 +383,8 @@ Pass `null` as filter to allow any card.
 | `GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect` | `()` | this creature has all activated abilities of all creature cards in all graveyards (static, selfOnly). Used by Necrotic Ooze |
 | `GrantAdditionalBlockEffect` | `(int additionalBlocks)` | can block N additional creatures |
 | `RegenerateEffect` | `()` or `(boolean targetsPermanent)` | regenerate self (default) or target creature when `targetsPermanent=true` |
+| `GrantColorEffect` | `(CardColor color, GrantScope scope)` or `(CardColor color, GrantScope scope, boolean overriding)` | grant a color to permanents matching scope. When `overriding=true`, replaces all existing colors (e.g. "is a black Zombie"). Scope: `EQUIPPED_CREATURE`, `ENCHANTED_CREATURE`, etc. Used by Nim Deathmantle |
+| `GrantSubtypeEffect` | `(CardSubtype subtype, GrantScope scope)` or `(CardSubtype subtype, GrantScope scope, boolean overriding)` | grant a creature subtype to permanents matching scope. When `overriding=true`, replaces all existing creature subtypes (non-creature subtypes like Equipment/Aura are preserved). Scope: `EQUIPPED_CREATURE`, `ENCHANTED_CREATURE`, etc. Used by Nim Deathmantle |
 | `GrantColorUntilEndOfTurnEffect` | `(CardColor color)` | target permanent becomes the specified color until end of turn. Per CR 105.3, replaces all previous colors (sets `colorOverridden` flag, clears existing `grantedColors`). Cleared on `resetModifiers()`. Checked by `PermanentColorInPredicate` for static effects, targeting, and costs |
 
 ## Combat restrictions / evasion

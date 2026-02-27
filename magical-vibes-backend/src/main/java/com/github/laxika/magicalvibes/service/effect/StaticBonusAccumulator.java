@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
+
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -20,6 +22,10 @@ public class StaticBonusAccumulator {
     private boolean animatedCreature;
     private final List<ActivatedAbility> grantedActivatedAbilities = new ArrayList<>();
     private final List<CardEffect> grantedEffects = new ArrayList<>();
+    private final Set<CardColor> grantedColors = EnumSet.noneOf(CardColor.class);
+    private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
+    private boolean colorOverriding;
+    private boolean subtypeOverriding;
 
     public void addPower(int amount) {
         power += amount;
@@ -79,6 +85,40 @@ public class StaticBonusAccumulator {
 
     public List<CardEffect> getGrantedEffects() {
         return grantedEffects;
+    }
+
+    public void addGrantedColor(CardColor color) {
+        grantedColors.add(color);
+    }
+
+    public Set<CardColor> getGrantedColors() {
+        return grantedColors;
+    }
+
+    public void addGrantedSubtype(CardSubtype subtype) {
+        if (!grantedSubtypes.contains(subtype)) {
+            grantedSubtypes.add(subtype);
+        }
+    }
+
+    public List<CardSubtype> getGrantedSubtypes() {
+        return grantedSubtypes;
+    }
+
+    public boolean isColorOverriding() {
+        return colorOverriding;
+    }
+
+    public void setColorOverriding(boolean colorOverriding) {
+        this.colorOverriding = colorOverriding;
+    }
+
+    public boolean isSubtypeOverriding() {
+        return subtypeOverriding;
+    }
+
+    public void setSubtypeOverriding(boolean subtypeOverriding) {
+        this.subtypeOverriding = subtypeOverriding;
     }
 }
 

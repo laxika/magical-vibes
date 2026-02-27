@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
@@ -224,7 +225,8 @@ public class MayAbilityHandlerService {
                     e instanceof PutChargeCounterOnSelfEffect
                             || e instanceof AnimateSelfEffect || e instanceof AnimateSelfByChargeCountersEffect
                             || e instanceof AnimateSelfWithStatsEffect || e instanceof BoostSelfEffect
-                            || e instanceof ImprintDyingCreatureEffect);
+                            || e instanceof ImprintDyingCreatureEffect
+                            || e instanceof ReturnDyingCreatureToBattlefieldAndAttachSourceEffect);
             if (needsSelfTarget) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(ability.controllerId());
                 if (battlefield != null) {
