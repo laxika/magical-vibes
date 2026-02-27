@@ -707,6 +707,7 @@ public class PermanentChoiceHandlerService {
                     Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                     if (perm != null) {
                         perm.tap();
+                        triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm);
                         tappedNames.add(perm.getCard().getName());
                     }
                 }

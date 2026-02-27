@@ -309,6 +309,7 @@ public class CombatService {
             attacker.setAttacking(true);
             if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.VIGILANCE)) {
                 attacker.tap();
+                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, attacker);
             }
         }
 

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesXLifeAndCont
 import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifePerCreatureControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveEachPlayerPoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GiveEnchantedPermanentControllerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
@@ -331,6 +332,23 @@ public class LifeResolutionService {
             return;
         }
         applyGainLife(gameData, targetPlayerId, effect.amount());
+    }
+
+    @HandlesEffect(GiveEnchantedPermanentControllerPoisonCountersEffect.class)
+    private void resolveGiveEnchantedPermanentControllerPoisonCounters(GameData gameData, StackEntry entry,
+                                                                       GiveEnchantedPermanentControllerPoisonCountersEffect effect) {
+        UUID playerId = effect.affectedPlayerId();
+        if (playerId == null) return;
+
+        int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
+        gameData.playerPoisonCounters.put(playerId, currentPoison + effect.amount());
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        String logEntry = playerName + " gets " + effect.amount() + " poison counter" + (effect.amount() > 1 ? "s" : "")
+                + " (" + entry.getCard().getName() + ").";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName, effect.amount(), entry.getCard().getName());
     }
 
     @HandlesEffect(GiveEachPlayerPoisonCountersEffect.class)

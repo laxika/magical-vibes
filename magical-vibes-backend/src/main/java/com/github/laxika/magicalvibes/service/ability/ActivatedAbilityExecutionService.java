@@ -118,8 +118,17 @@ public class ActivatedAbilityExecutionService {
             }
         }
 
+        // Collect "enchanted permanent becomes tapped" triggers (e.g. Relic Putrescence).
+        // We fire the check now (before a possible sacrifice cost removes the aura from the
+        // battlefield) but defer adding the entries to the stack so they end up ON TOP of the
+        // activated ability — per CR rules the trigger resolves first for non-mana abilities.
+        List<StackEntry> deferredTapTriggers = List.of();
         if (ability.isRequiresTap()) {
             permanent.tap();
+            int stackBefore = gameData.stack.size();
+            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
+            deferredTapTriggers = new ArrayList<>(gameData.stack.subList(stackBefore, gameData.stack.size()));
+            gameData.stack.subList(stackBefore, gameData.stack.size()).clear();
         }
 
         // Snapshot charge counters before sacrifice so the value survives in the stack entry's xValue
@@ -157,6 +166,8 @@ public class ActivatedAbilityExecutionService {
 
         if (isManaAbility) {
             resolveManaAbility(gameData, playerId, player, permanent, snapshotEffects);
+            // Mana resolves immediately, then "becomes tapped" triggers go on the stack
+            gameData.stack.addAll(deferredTapTriggers);
             return;
         }
 
@@ -164,6 +175,8 @@ public class ActivatedAbilityExecutionService {
         if (markAsNonTargetingForSacCreatureCost && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setNonTargeting(true);
         }
+        // Add "becomes tapped" triggers ON TOP of the ability so they resolve first (per CR rules)
+        gameData.stack.addAll(deferredTapTriggers);
 
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);

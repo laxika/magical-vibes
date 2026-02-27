@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardOnOwnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GiveEnchantedPermanentControllerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenOnOwnSpellCastWithCostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAndGrantKeywordOnOwnSpellCastEffect;
@@ -654,5 +655,44 @@ public class TriggerCollectionService {
 
     public void processNextSpellTargetTrigger(GameData gameData) {
         triggeredAbilityQueueService.processNextSpellTargetTrigger(gameData);
+    }
+
+    public void checkEnchantedPermanentTapTriggers(GameData gameData, Permanent tappedPermanent) {
+        // Find the controller of the tapped permanent
+        UUID tappedPermanentControllerId = null;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf != null && bf.contains(tappedPermanent)) {
+                tappedPermanentControllerId = pid;
+                break;
+            }
+        }
+        if (tappedPermanentControllerId == null) return;
+        final UUID controllerId = tappedPermanentControllerId;
+
+        gameData.forEachPermanent((auraOwnerId, perm) -> {
+            if (perm.getAttachedTo() == null || !perm.getAttachedTo().equals(tappedPermanent.getId())) {
+                return;
+            }
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)) {
+                if (effect instanceof GiveEnchantedPermanentControllerPoisonCountersEffect e) {
+                    GiveEnchantedPermanentControllerPoisonCountersEffect resolved =
+                            new GiveEnchantedPermanentControllerPoisonCountersEffect(e.amount(), controllerId);
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            auraOwnerId,
+                            perm.getCard().getName() + "'s triggered ability",
+                            new ArrayList<>(List.of(resolved)),
+                            null,
+                            perm.getId()
+                    ));
+                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                    log.info("Game {} - {} triggers on enchanted permanent tap ({})",
+                            gameData.id, perm.getCard().getName(), tappedPermanent.getCard().getName());
+                }
+            }
+        });
     }
 }

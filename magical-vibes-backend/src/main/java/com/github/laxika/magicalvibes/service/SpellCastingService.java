@@ -216,6 +216,7 @@ public class SpellCastingService {
                         .orElse(null);
                 if (creature != null) {
                     creature.tap();
+                    triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, creature);
                 }
             }
             convokeContributions = contributions;

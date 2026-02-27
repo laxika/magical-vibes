@@ -145,6 +145,9 @@ public class AbilityActivationService {
             triggerCollectionService.checkLandTapTriggers(gameData, playerId, permanent.getId());
         }
 
+        // Check for "whenever enchanted permanent becomes tapped" triggers (e.g. Relic Putrescence)
+        triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
+
         gameBroadcastService.broadcastGameState(gameData);
     }
 

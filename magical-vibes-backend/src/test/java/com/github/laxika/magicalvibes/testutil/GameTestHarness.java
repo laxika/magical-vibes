@@ -178,7 +178,7 @@ public class GameTestHarness {
                 new GraveyardReturnResolutionService(gameHelper, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService),
                 new BounceResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService),
                 new LifeResolutionService(gameQueryService, gameBroadcastService),
-                new CreatureModResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService),
+                new CreatureModResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService),
                 new PlayerInteractionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager, cardViewFactory, permanentRemovalService, triggerCollectionService),
                 new PermanentControlResolutionService(gameHelper, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService, creatureControlService),
                 new TurnResolutionService(gameHelper, combatService, gameBroadcastService, auraAttachmentService),

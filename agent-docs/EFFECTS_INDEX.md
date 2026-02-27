@@ -352,6 +352,7 @@ Pass `null` as filter to allow any card.
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `GiveEachPlayerPoisonCountersEffect` | `(int amount)` | give each player N poison counters (including controller). Used for ETB effects like Ichor Rats |
+| `GiveEnchantedPermanentControllerPoisonCountersEffect` | `(int amount)` or `(int amount, UUID affectedPlayerId)` | give N poison counter(s) to the controller of the enchanted permanent. Used on `ON_ENCHANTED_PERMANENT_TAPPED` slot. `affectedPlayerId` is null in card definition; baked in at trigger time by `TriggerCollectionService.checkEnchantedPermanentTapTriggers` |
 | `GiveTargetPlayerPoisonCountersEffect` | `(int amount)` or `(int amount, CardPredicate spellFilter)` | give target player N poison counters. With `spellFilter`, doubles as trigger descriptor for `ON_CONTROLLER_CASTS_SPELL`: fires when controller casts a spell matching the predicate. Resolves into a copy with `spellFilter == null` |
 
 ## Win / lose game

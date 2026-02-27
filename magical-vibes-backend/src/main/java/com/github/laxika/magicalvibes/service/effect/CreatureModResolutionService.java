@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -65,6 +66,7 @@ public class CreatureModResolutionService {
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final PermanentRemovalService permanentRemovalService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @HandlesEffect(AnimateLandEffect.class)
     private void resolveAnimateLand(GameData gameData, StackEntry entry, AnimateLandEffect effect) {
@@ -443,7 +445,11 @@ public class CreatureModResolutionService {
                             .withSourceCardId(entry.getCard().getId())
                             .withSourceControllerId(entry.getControllerId()))) return;
 
+            boolean wasTapped = p.isTapped();
             p.tap();
+            if (!wasTapped) {
+                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, p);
+            }
 
             String logMsg = entry.getCard().getName() + " taps " + p.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
@@ -466,6 +472,7 @@ public class CreatureModResolutionService {
             log.info("Game {} - {} untaps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
         } else {
             target.tap();
+            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, target);
             String logEntry = entry.getCard().getName() + " taps " + target.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} taps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
@@ -481,7 +488,11 @@ public class CreatureModResolutionService {
                 if (target == null) {
                     continue;
                 }
+                boolean wasTapped = target.isTapped();
                 target.tap();
+                if (!wasTapped) {
+                    triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, target);
+                }
                 String logMsg = entry.getCard().getName() + " taps " + target.getCard().getName() + ".";
                 gameBroadcastService.logAndBroadcast(gameData, logMsg);
                 log.info("Game {} - {} taps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
@@ -495,7 +506,11 @@ public class CreatureModResolutionService {
             return;
         }
 
+        boolean wasTapped = target.isTapped();
         target.tap();
+        if (!wasTapped) {
+            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, target);
+        }
 
         String logEntry = entry.getCard().getName() + " taps " + target.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
