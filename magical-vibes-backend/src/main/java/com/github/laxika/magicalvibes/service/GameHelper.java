@@ -565,7 +565,7 @@ public class GameHelper {
         return damage - prevented;
     }
 
-    int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage) {
+    public int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage) {
         damage = applyGlobalPreventionShield(gameData, damage);
         int shield = gameData.playerDamagePreventionShields.getOrDefault(playerId, 0);
         if (shield <= 0 || damage <= 0) return damage;
@@ -574,13 +574,13 @@ public class GameHelper {
         return damage - prevented;
     }
 
-    boolean isSourceDamagePreventedForPlayer(GameData gameData, UUID playerId, UUID sourcePermanentId) {
+    public boolean isSourceDamagePreventedForPlayer(GameData gameData, UUID playerId, UUID sourcePermanentId) {
         if (sourcePermanentId == null) return false;
         Set<UUID> preventedSources = gameData.playerSourceDamagePreventionIds.get(playerId);
         return preventedSources != null && preventedSources.contains(sourcePermanentId);
     }
 
-    boolean applyColorDamagePreventionForPlayer(GameData gameData, UUID playerId, CardColor sourceColor) {
+    public boolean applyColorDamagePreventionForPlayer(GameData gameData, UUID playerId, CardColor sourceColor) {
         if (sourceColor == null) return false;
         Map<CardColor, Integer> colorMap = gameData.playerColorDamagePreventionCount.get(playerId);
         if (colorMap == null) return false;

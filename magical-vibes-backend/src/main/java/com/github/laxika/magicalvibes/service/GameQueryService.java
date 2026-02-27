@@ -662,7 +662,7 @@ public class GameQueryService {
                 || isDamageFromSourcePrevented(gameData, creature.getEffectiveColor());
     }
 
-    boolean isDamageFromSourcePrevented(GameData gameData, CardColor sourceColor) {
+    public boolean isDamageFromSourcePrevented(GameData gameData, CardColor sourceColor) {
         return sourceColor != null && gameData.preventDamageFromColors.contains(sourceColor);
     }
 }
