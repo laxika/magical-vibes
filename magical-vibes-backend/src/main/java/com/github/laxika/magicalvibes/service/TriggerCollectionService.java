@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenOnOwnSpellCastWithCostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -105,6 +106,60 @@ public class TriggerCollectionService {
                                 perm.getId()
                         ));
                     }
+                } else if (inner instanceof CopySpellForEachOtherSubtypePermanentEffect trigger
+                        && trigger.spellSnapshot() == null) {
+                    // Only triggers for instant or sorcery spells
+                    if (spellCard.getType() != CardType.INSTANT && spellCard.getType() != CardType.SORCERY) continue;
+
+                    // Find the spell on the stack
+                    StackEntry spellEntry = null;
+                    for (StackEntry se : gameData.stack) {
+                        if (se.getCard().getId().equals(spellCard.getId())) {
+                            spellEntry = se;
+                            break;
+                        }
+                    }
+                    if (spellEntry == null) continue;
+
+                    // Determine the single unique target (if any).
+                    // Per CR: triggers when spell "targets only a single Golem and no other object or player".
+                    // A spell with multiple target slots all pointing at the same Golem still qualifies.
+                    UUID singleTargetId = null;
+
+                    if (spellEntry.getTargetPermanentId() != null
+                            && spellEntry.getTargetZone() == null
+                            && spellEntry.getTargetPermanentIds().isEmpty()) {
+                        // Single-target spell targeting a battlefield permanent
+                        singleTargetId = spellEntry.getTargetPermanentId();
+                    } else if (spellEntry.getTargetPermanentId() == null
+                            && !spellEntry.getTargetPermanentIds().isEmpty()
+                            && spellEntry.getTargetPermanentIds().stream().distinct().count() == 1) {
+                        // Multi-target spell where every slot targets the same permanent
+                        singleTargetId = spellEntry.getTargetPermanentIds().getFirst();
+                    }
+
+                    if (singleTargetId == null) continue;
+                    if (gameData.playerIds.contains(singleTargetId)) continue;
+
+                    // The targeted permanent must have the matching subtype
+                    Permanent targetPerm = gameQueryService.findPermanentById(gameData, singleTargetId);
+                    if (targetPerm == null) continue;
+                    if (!targetPerm.getCard().getSubtypes().contains(trigger.subtype())) continue;
+
+                    // Snapshot the spell so copies can be created even if the original is countered
+                    StackEntry snapshot = new StackEntry(spellEntry);
+
+                    CopySpellForEachOtherSubtypePermanentEffect resolutionEffect =
+                            new CopySpellForEachOtherSubtypePermanentEffect(
+                                    trigger.subtype(), snapshot, castingPlayerId, singleTargetId);
+
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            playerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(resolutionEffect))
+                    ));
                 }
             }
         });
