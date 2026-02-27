@@ -366,6 +366,7 @@ class BounceResolutionServiceTest extends BaseCardTest {
             harness.addToBattlefield(player1, new IcyManipulator());
 
             harness.setHand(player1, List.of(new HurkylsRecall()));
+            harness.setHand(player2, List.of());
             harness.addMana(player1, ManaColor.BLUE, 2);
 
             // Hurkyl's targets player1 (self) — should only return artifacts player1 OWNS
@@ -391,6 +392,7 @@ class BounceResolutionServiceTest extends BaseCardTest {
             gd.permanentControlStolenCreatures.add(stolen.getId());
 
             harness.setHand(player1, List.of(new HurkylsRecall()));
+            harness.setHand(player2, List.of());
             harness.addMana(player1, ManaColor.BLUE, 2);
 
             // Hurkyl's targets player2 — should return artifacts player2 OWNS, even from player1's battlefield

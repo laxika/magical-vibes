@@ -8,6 +8,7 @@ nul
 token-usage-output.txt
 
 **/build
+**/build2
 
 # Database
 magical-vibes.db
