@@ -75,9 +75,9 @@ public class BounceResolutionService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
-                permanentRemovalService.removeOrphanedAuras(gameData);
                 UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
                 gameData.stolenCreatures.remove(target.getId());
+                permanentRemovalService.removeOrphanedAuras(gameData);
                 List<Card> hand = gameData.playerHands.get(ownerId);
                 hand.add(target.getOriginalCard());
 
