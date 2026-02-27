@@ -355,6 +355,59 @@ class BounceResolutionServiceTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("Stolen artifact on target's battlefield is NOT returned (target controls but doesn't own it)")
+        void stolenArtifactOnTargetBattlefieldNotReturned() {
+            // Angel's Feather is owned by player2 but permanently stolen and sitting on player1's battlefield
+            Permanent stolen = addPermanent(player1, new AngelsFeather());
+            gd.stolenCreatures.put(stolen.getId(), player2.getId());
+            gd.permanentControlStolenCreatures.add(stolen.getId());
+
+            // Player1 also has their own artifact
+            harness.addToBattlefield(player1, new IcyManipulator());
+
+            harness.setHand(player1, List.of(new HurkylsRecall()));
+            harness.addMana(player1, ManaColor.BLUE, 2);
+
+            // Hurkyl's targets player1 (self) — should only return artifacts player1 OWNS
+            harness.castInstant(player1, 0, player1.getId());
+            harness.passBothPriorities();
+
+            // The stolen Angel's Feather should NOT be returned to hand (player1 controls it but player2 owns it)
+            assertThat(gd.playerHands.get(player1.getId()))
+                    .noneMatch(c -> c.getName().equals("Angel's Feather"));
+            assertThat(gd.playerHands.get(player2.getId()))
+                    .noneMatch(c -> c.getName().equals("Angel's Feather"));
+            // Icy Manipulator is owned by player1 so it SHOULD be returned
+            assertThat(gd.playerHands.get(player1.getId()))
+                    .anyMatch(c -> c.getName().equals("Icy Manipulator"));
+        }
+
+        @Test
+        @DisplayName("Artifact owned by target but controlled by opponent IS returned")
+        void artifactOwnedByTargetButControlledByOpponentIsReturned() {
+            // Angel's Feather is owned by player2 but permanently stolen and sitting on player1's battlefield
+            Permanent stolen = addPermanent(player1, new AngelsFeather());
+            gd.stolenCreatures.put(stolen.getId(), player2.getId());
+            gd.permanentControlStolenCreatures.add(stolen.getId());
+
+            harness.setHand(player1, List.of(new HurkylsRecall()));
+            harness.addMana(player1, ManaColor.BLUE, 2);
+
+            // Hurkyl's targets player2 — should return artifacts player2 OWNS, even from player1's battlefield
+            harness.castInstant(player1, 0, player2.getId());
+            harness.passBothPriorities();
+
+            // The stolen Angel's Feather should be returned to player2's hand (the owner)
+            assertThat(gd.playerHands.get(player2.getId()))
+                    .anyMatch(c -> c.getName().equals("Angel's Feather"));
+            // It should be removed from player1's battlefield
+            assertThat(gd.playerBattlefields.get(player1.getId()))
+                    .noneMatch(p -> p.getCard().getName().equals("Angel's Feather"));
+            // stolenCreatures entry should be cleaned up
+            assertThat(gd.stolenCreatures).doesNotContainKey(stolen.getId());
+        }
+
+        @Test
         @DisplayName("Can target self to return own artifacts")
         void canTargetSelf() {
             harness.addToBattlefield(player1, new AngelsFeather());

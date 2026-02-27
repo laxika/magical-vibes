@@ -130,28 +130,27 @@ public class BounceResolutionService {
             return;
         }
 
-        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
-        if (battlefield == null) {
-            return;
-        }
+        List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
 
-        List<Permanent> artifactsToReturn = battlefield.stream()
-                .filter(gameQueryService::isArtifact)
-                .toList();
+        gameData.forEachBattlefield((controllingPlayerId, battlefield) -> {
+            List<Permanent> artifactsToReturn = battlefield.stream()
+                    .filter(gameQueryService::isArtifact)
+                    .filter(p -> {
+                        UUID ownerId = gameData.stolenCreatures.getOrDefault(p.getId(), controllingPlayerId);
+                        return ownerId.equals(targetPlayerId);
+                    })
+                    .toList();
 
-        if (artifactsToReturn.isEmpty()) {
-            return;
-        }
+            for (Permanent artifact : artifactsToReturn) {
+                battlefield.remove(artifact);
+                gameData.stolenCreatures.remove(artifact.getId());
+                targetHand.add(artifact.getOriginalCard());
 
-        for (Permanent artifact : artifactsToReturn) {
-            battlefield.remove(artifact);
-            List<Card> hand = gameData.playerHands.get(targetPlayerId);
-            hand.add(artifact.getOriginalCard());
-
-            String logEntry = artifact.getCard().getName() + " is returned to its owner's hand.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} returned to owner's hand by {}", gameData.id, artifact.getCard().getName(), entry.getCard().getName());
-        }
+                String logEntry = artifact.getCard().getName() + " is returned to its owner's hand.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} returned to owner's hand by {}", gameData.id, artifact.getCard().getName(), entry.getCard().getName());
+            }
+        });
 
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
