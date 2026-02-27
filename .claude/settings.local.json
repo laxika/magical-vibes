@@ -36,7 +36,8 @@
       "Bash(tail:*)",
       "Bash(comm:*)",
       "Bash(head:*)",
-      "WebFetch(domain:www.mtgsalvation.com)"
+      "WebFetch(domain:www.mtgsalvation.com)",
+      "Bash(./gradlew test:*)"
     ]
   }
 }
