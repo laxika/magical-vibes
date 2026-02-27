@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -19,9 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -30,7 +26,6 @@ import java.util.concurrent.ThreadLocalRandom;
 @RequiredArgsConstructor
 public class BounceResolutionService {
 
-    private final GameHelper gameHelper;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
@@ -38,17 +33,7 @@ public class BounceResolutionService {
 
     @HandlesEffect(ReturnSelfToHandEffect.class)
     void resolveReturnSelfToHand(GameData gameData, StackEntry entry) {
-        UUID controllerId = entry.getControllerId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        List<Card> hand = gameData.playerHands.get(controllerId);
-
-        Permanent toReturn = null;
-        for (Permanent p : battlefield) {
-            if (p.getCard().getName().equals(entry.getCard().getName())) {
-                toReturn = p;
-                break;
-            }
-        }
+        Permanent toReturn = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
 
         if (toReturn == null) {
             String logEntry = entry.getCard().getName() + " is no longer on the battlefield.";
@@ -56,9 +41,8 @@ public class BounceResolutionService {
             return;
         }
 
-        battlefield.remove(toReturn);
+        permanentRemovalService.removePermanentToHand(gameData, toReturn);
         permanentRemovalService.removeOrphanedAuras(gameData);
-        hand.add(toReturn.getOriginalCard());
 
         String logEntry = entry.getCard().getName() + " is returned to its owner's hand.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -72,53 +56,38 @@ public class BounceResolutionService {
             return;
         }
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield != null && battlefield.remove(target)) {
-                UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
-                gameData.stolenCreatures.remove(target.getId());
-                permanentRemovalService.removeOrphanedAuras(gameData);
-                List<Card> hand = gameData.playerHands.get(ownerId);
-                hand.add(target.getOriginalCard());
+        if (permanentRemovalService.removePermanentToHand(gameData, target)) {
+            permanentRemovalService.removeOrphanedAuras(gameData);
 
-                String logEntry = target.getCard().getName() + " is returned to its owner's hand.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} returned to owner's hand by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
-
-                break;
-            }
+            String logEntry = target.getCard().getName() + " is returned to its owner's hand.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} returned to owner's hand by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
         }
     }
 
     @HandlesEffect(ReturnCreaturesToOwnersHandEffect.class)
     void resolveReturnCreaturesToOwnersHand(GameData gameData, StackEntry entry, ReturnCreaturesToOwnersHandEffect bounce) {
-        Set<UUID> affectedPlayers = new HashSet<>();
-        gameData.forEachBattlefield((playerId, battlefield) -> {
-            List<Permanent> creaturesToReturn = battlefield.stream()
-                    .filter(p -> gameQueryService.isCreature(gameData, p))
-                    .filter(p -> gameQueryService.matchesFilters(
-                            p,
-                            bounce.filters(),
-                            FilterContext.of(gameData)
-                                    .withSourceCardId(entry.getCard().getId())
-                                    .withSourceControllerId(entry.getControllerId())))
-                    .toList();
+        List<Permanent> creaturesToReturn = new ArrayList<>();
+        gameData.forEachBattlefield((playerId, battlefield) ->
+                creaturesToReturn.addAll(battlefield.stream()
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .filter(p -> gameQueryService.matchesFilters(
+                                p,
+                                bounce.filters(),
+                                FilterContext.of(gameData)
+                                        .withSourceCardId(entry.getCard().getId())
+                                        .withSourceControllerId(entry.getControllerId())))
+                        .toList()));
 
-            for (Permanent creature : creaturesToReturn) {
-                battlefield.remove(creature);
-                UUID ownerId = gameData.stolenCreatures.getOrDefault(creature.getId(), playerId);
-                gameData.stolenCreatures.remove(creature.getId());
-                List<Card> hand = gameData.playerHands.get(ownerId);
-                hand.add(creature.getOriginalCard());
-                affectedPlayers.add(ownerId);
+        for (Permanent creature : creaturesToReturn) {
+            permanentRemovalService.removePermanentToHand(gameData, creature);
 
-                String logEntry = creature.getCard().getName() + " is returned to its owner's hand.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} returned to owner's hand by {}", gameData.id, creature.getCard().getName(), entry.getCard().getName());
-            }
-        });
+            String logEntry = creature.getCard().getName() + " is returned to its owner's hand.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} returned to owner's hand by {}", gameData.id, creature.getCard().getName(), entry.getCard().getName());
+        }
 
-        if (!affectedPlayers.isEmpty()) {
+        if (!creaturesToReturn.isEmpty()) {
             permanentRemovalService.removeOrphanedAuras(gameData);
         }
     }
@@ -130,27 +99,23 @@ public class BounceResolutionService {
             return;
         }
 
-        List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
+        List<Permanent> artifactsToReturn = new ArrayList<>();
+        gameData.forEachBattlefield((controllingPlayerId, battlefield) ->
+                artifactsToReturn.addAll(battlefield.stream()
+                        .filter(gameQueryService::isArtifact)
+                        .filter(p -> {
+                            UUID ownerId = gameData.stolenCreatures.getOrDefault(p.getId(), controllingPlayerId);
+                            return ownerId.equals(targetPlayerId);
+                        })
+                        .toList()));
 
-        gameData.forEachBattlefield((controllingPlayerId, battlefield) -> {
-            List<Permanent> artifactsToReturn = battlefield.stream()
-                    .filter(gameQueryService::isArtifact)
-                    .filter(p -> {
-                        UUID ownerId = gameData.stolenCreatures.getOrDefault(p.getId(), controllingPlayerId);
-                        return ownerId.equals(targetPlayerId);
-                    })
-                    .toList();
+        for (Permanent artifact : artifactsToReturn) {
+            permanentRemovalService.removePermanentToHand(gameData, artifact);
 
-            for (Permanent artifact : artifactsToReturn) {
-                battlefield.remove(artifact);
-                gameData.stolenCreatures.remove(artifact.getId());
-                targetHand.add(artifact.getOriginalCard());
-
-                String logEntry = artifact.getCard().getName() + " is returned to its owner's hand.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} returned to owner's hand by {}", gameData.id, artifact.getCard().getName(), entry.getCard().getName());
-            }
-        });
+            String logEntry = artifact.getCard().getName() + " is returned to its owner's hand.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} returned to owner's hand by {}", gameData.id, artifact.getCard().getName(), entry.getCard().getName());
+        }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
     }

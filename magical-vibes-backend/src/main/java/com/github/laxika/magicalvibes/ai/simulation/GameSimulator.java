@@ -187,7 +187,7 @@ public class GameSimulator {
                 new CopyResolutionService(gameBroadcastService, gameQueryService),
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
                 new GraveyardReturnResolutionService(gameHelper, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService),
-                new BounceResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService),
+                new BounceResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService),
                 new LifeResolutionService(gameQueryService, gameBroadcastService),
                 new CreatureModResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService),
                 new PlayerInteractionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService, noOpSession, cardViewFactory, permanentRemovalService, triggerCollectionService),

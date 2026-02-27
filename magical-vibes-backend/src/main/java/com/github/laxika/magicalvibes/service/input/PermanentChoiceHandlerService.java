@@ -170,14 +170,8 @@ public class PermanentChoiceHandlerService {
                 throw new IllegalStateException("Target creature no longer exists");
             }
 
-            UUID bouncingPlayerId = bounceCreature.bouncingPlayerId();
-            List<Permanent> battlefield = gameData.playerBattlefields.get(bouncingPlayerId);
-            if (battlefield != null && battlefield.remove(target)) {
+            if (permanentRemovalService.removePermanentToHand(gameData, target)) {
                 permanentRemovalService.removeOrphanedAuras(gameData);
-                UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), bouncingPlayerId);
-                gameData.stolenCreatures.remove(target.getId());
-                List<Card> hand = gameData.playerHands.get(ownerId);
-                hand.add(target.getOriginalCard());
 
                 String logEntry = target.getCard().getName() + " is returned to its owner's hand.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -193,14 +187,8 @@ public class PermanentChoiceHandlerService {
                 throw new IllegalStateException("Target permanent no longer exists");
             }
 
-            UUID controllerId = bounceOrSac.controllerId();
-            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-            if (battlefield != null && battlefield.remove(target)) {
+            if (permanentRemovalService.removePermanentToHand(gameData, target)) {
                 permanentRemovalService.removeOrphanedAuras(gameData);
-                UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
-                gameData.stolenCreatures.remove(target.getId());
-                List<Card> hand = gameData.playerHands.get(ownerId);
-                hand.add(target.getOriginalCard());
 
                 String logEntry = target.getCard().getName() + " is returned to its owner's hand.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);

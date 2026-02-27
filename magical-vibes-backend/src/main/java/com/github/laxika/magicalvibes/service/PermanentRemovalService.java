@@ -56,6 +56,20 @@ public class PermanentRemovalService {
         return false;
     }
 
+    public boolean removePermanentToHand(GameData gameData, Permanent target) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null && battlefield.remove(target)) {
+                UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
+                gameData.stolenCreatures.remove(target.getId());
+                List<Card> hand = gameData.playerHands.get(ownerId);
+                hand.add(target.getOriginalCard());
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean removePermanentToExile(GameData gameData, Permanent target) {
         // Capture unattach-sacrifice info before removal
         UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
