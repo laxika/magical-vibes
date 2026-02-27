@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect;
@@ -81,6 +82,56 @@ public class DestructionResolutionService {
             String logEntry = perm.getCard().getName() + " is destroyed.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} is destroyed", gameData.id, perm.getCard().getName());
+        }
+    }
+
+    @HandlesEffect(DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect.class)
+    void resolveDestroyNonlandPermanentsByChargeCounterManaValue(GameData gameData, StackEntry entry) {
+        int targetManaValue = entry.getXValue();
+        String cardName = entry.getCard().getName();
+        List<Permanent> toDestroy = new ArrayList<>();
+
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            for (Permanent perm : battlefield) {
+                // Skip lands (including permanents that gained the land type)
+                if (perm.getCard().getType() == CardType.LAND
+                        || perm.getCard().getAdditionalTypes().contains(CardType.LAND)) {
+                    continue;
+                }
+                if (perm.getCard().getManaValue() == targetManaValue) {
+                    toDestroy.add(perm);
+                }
+            }
+        });
+
+        if (toDestroy.isEmpty()) {
+            String logEntry = cardName + " resolves but finds no nonland permanents with mana value " + targetManaValue + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} finds no nonland permanents with mana value {}", gameData.id, cardName, targetManaValue);
+            return;
+        }
+
+        // Snapshot indestructible status before any removals (simultaneous destruction)
+        Set<Permanent> indestructible = new HashSet<>();
+        for (Permanent perm : toDestroy) {
+            if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
+                indestructible.add(perm);
+            }
+        }
+
+        for (Permanent perm : toDestroy) {
+            if (indestructible.contains(perm)) {
+                String logEntry = perm.getCard().getName() + " is indestructible.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                continue;
+            }
+            if (gameHelper.tryRegenerate(gameData, perm)) {
+                continue;
+            }
+            permanentRemovalService.removePermanentToGraveyard(gameData, perm);
+            String logEntry = perm.getCard().getName() + " is destroyed.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), cardName);
         }
     }
 

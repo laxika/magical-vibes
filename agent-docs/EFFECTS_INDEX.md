@@ -109,6 +109,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `SacrificeSelfEffect` | `()` | sacrifice this permanent |
 | `SacrificeUnlessDiscardCardTypeEffect` | `(CardType requiredType)` | sacrifice unless you discard a card of type (null = any) |
 | `SacrificeUnlessReturnOwnPermanentTypeToHandEffect` | `(CardType permanentType)` | sacrifice this permanent unless you return a permanent of the specified type you control to its owner's hand (ETB bounce-or-sacrifice, e.g. Glint Hawk) |
+| `DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect` | `()` | destroy each nonland permanent with mana value equal to the number of charge counters on source (reads snapshotted count from xValue). Used by Ratchet Bomb |
 | `SacrificeAtEndOfCombatEffect` | `()` | sacrifice at end of combat |
 
 ### Sacrifice costs (for activated abilities)
