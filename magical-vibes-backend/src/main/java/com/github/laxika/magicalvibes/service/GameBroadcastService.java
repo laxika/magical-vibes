@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffec
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSharedCardTypeWithImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
@@ -388,7 +389,38 @@ public class GameBroadcastService {
                 reduction += reduceEffect.amount();
             }
         }
+
+        // Cost reduction from battlefield permanents with imprinted cards (e.g. Semblance Anvil)
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield != null) {
+            for (Permanent perm : battlefield) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof ReduceOwnCastCostForSharedCardTypeWithImprintEffect reduceEffect) {
+                        Card imprinted = perm.getCard().getImprintedCard();
+                        if (imprinted != null && sharesCardType(card, imprinted)) {
+                            reduction += reduceEffect.amount();
+                        }
+                    }
+                }
+            }
+        }
+
         return reduction;
+    }
+
+    private boolean sharesCardType(Card spell, Card imprinted) {
+        EnumSet<CardType> spellTypes = EnumSet.of(spell.getType());
+        spellTypes.addAll(spell.getAdditionalTypes());
+
+        EnumSet<CardType> imprintedTypes = EnumSet.of(imprinted.getType());
+        imprintedTypes.addAll(imprinted.getAdditionalTypes());
+
+        for (CardType type : spellTypes) {
+            if (imprintedTypes.contains(type)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean anyOpponentControlsAtLeastNMoreCreatures(GameData gameData, UUID playerId, int minimumDifference) {

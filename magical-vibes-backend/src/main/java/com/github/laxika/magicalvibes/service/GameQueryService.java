@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
@@ -167,6 +168,9 @@ public class GameQueryService {
         }
         if (predicate instanceof CardIsAuraPredicate) {
             return card.isAura();
+        }
+        if (predicate instanceof CardNotPredicate p) {
+            return !matchesCardPredicate(card, p.predicate(), sourceCardId);
         }
         if (predicate instanceof CardAllOfPredicate p) {
             return p.predicates().stream().allMatch(sub -> matchesCardPredicate(card, sub, sourceCardId));

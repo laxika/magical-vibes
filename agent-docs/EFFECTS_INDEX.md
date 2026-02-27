@@ -193,6 +193,7 @@ ReturnCardFromGraveyardEffect(
 | `CardKeywordPredicate` | `(Keyword keyword)` | cards with a given keyword (INFECT, FLYING, etc.) |
 | `CardIsSelfPredicate` | `()` | only the source card itself (Squee-style self-return) |
 | `CardIsAuraPredicate` | `()` | aura cards |
+| `CardNotPredicate` | `(CardPredicate predicate)` | NOT — inverts a predicate |
 | `CardAllOfPredicate` | `(List<CardPredicate> predicates)` | AND — all predicates must match |
 | `CardAnyOfPredicate` | `(List<CardPredicate> predicates)` | OR — any predicate matches |
 
@@ -309,7 +310,7 @@ Pass `null` as filter to allow any card.
 | `ExileSelfAndReturnAtEndStepEffect` | `()` | exile this permanent, return it at beginning of next end step (Argent Sphinx-style) |
 | `ExileTargetPermanentAndReturnAtEndStepEffect` | `()` | exile target permanent, return it at beginning of next end step under owner's control (Glimmerpoint Stag-style) |
 | `ImprintDyingCreatureEffect` | `(UUID dyingCardId)` or `()` | exile a dying nontoken creature and imprint it on the source permanent; previously imprinted card is returned to its owner's graveyard. No-arg constructor (dyingCardId is null) used in card definition; dyingCardId populated at trigger time |
-| `ExileArtifactFromHandToImprintEffect` | `()` | exiles an artifact card from the controller's hand and imprints it on the source permanent. Used by Prototype Portal's ETB trigger |
+| `ExileFromHandToImprintEffect` | `(CardPredicate filter, String description)` | exiles a card matching the predicate from the controller's hand and imprints it on the source permanent. Description is used in the player prompt. Prototype Portal: `CardTypePredicate(ARTIFACT)`, Semblance Anvil: `CardNotPredicate(CardTypePredicate(LAND))` |
 | `ChooseCardNameAndExileFromZonesEffect` | `(List<CardType> excludedTypes)` | Two-step interaction: (1) choose a card name (excluding given types), (2) present all matching cards from target player's hand, graveyard, and library for "any number" selection — player chooses 0 to N to exile. Library is always shuffled. Targets player. Uses `MULTI_ZONE_EXILE_CHOICE` awaiting input. Used by Memoricide, Cranial Extraction |
 | `ExileTargetPlayerGraveyardEffect` | `()` | exile all cards from target player's graveyard. Targets player. Used by Nihil Spellbomb |
 
@@ -558,6 +559,7 @@ Pass `null` as filter to allow any card.
 | `IncreaseOpponentCastCostEffect` | `(Set<CardType> affectedTypes, int amount)` | opponent's spells of types cost N more (static) |
 | `RequirePaymentToAttackEffect` | `(int amountPerAttacker)` | must pay N mana per attacking creature (static) |
 | `ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect` | `(int minimumCreatureDifference, int amount)` | reduce cast cost by N if opponent has M+ more creatures |
+| `ReduceOwnCastCostForSharedCardTypeWithImprintEffect` | `(int amount)` | reduce cast cost of controller's spells by N if they share a card type with the imprinted card (static, Semblance Anvil) |
 | `NoMaximumHandSizeEffect` | `()` | you have no maximum hand size (static) |
 | `EnterPermanentsOfTypesTappedEffect` | `(Set<CardType> cardTypes)` | permanents of specified types enter tapped (static) |
 | `EntersTappedUnlessFewLandsEffect` | `(int maxOtherLands)` | enters tapped unless you control N or fewer other lands (fast lands, static) |

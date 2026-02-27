@@ -2,12 +2,11 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.ExileArtifactFromHandToImprintEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -157,9 +156,8 @@ public class ExileResolutionService {
         log.info("Game {} - {} imprinted on {}", gameData.id, dyingCard.getName(), sourcePermanent.getCard().getName());
     }
 
-    @HandlesEffect(ExileArtifactFromHandToImprintEffect.class)
-    void resolveExileArtifactFromHandToImprint(GameData gameData, StackEntry entry) {
-        // Find the source permanent (Prototype Portal) on the battlefield
+    @HandlesEffect(ExileFromHandToImprintEffect.class)
+    void resolveExileFromHandToImprint(GameData gameData, StackEntry entry, ExileFromHandToImprintEffect effect) {
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (sourcePermanent == null) {
             log.info("Game {} - Source permanent no longer on battlefield, imprint from hand fizzles", gameData.id);
@@ -173,23 +171,21 @@ public class ExileResolutionService {
             return;
         }
 
-        // Filter for artifact cards in hand
-        List<Integer> artifactIndices = new ArrayList<>();
+        List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
-            Card card = hand.get(i);
-            if (card.getType() == CardType.ARTIFACT || card.getAdditionalTypes().contains(CardType.ARTIFACT)) {
-                artifactIndices.add(i);
+            if (gameQueryService.matchesCardPredicate(hand.get(i), effect.filter(), null)) {
+                validIndices.add(i);
             }
         }
 
-        if (artifactIndices.isEmpty()) {
+        if (validIndices.isEmpty()) {
             String playerName = gameData.playerIdToName.get(controllerId);
-            log.info("Game {} - {} has no artifact cards in hand, imprint from hand skipped", gameData.id, playerName);
+            log.info("Game {} - {} has no matching cards in hand, imprint from hand skipped", gameData.id, playerName);
             return;
         }
 
-        playerInputService.beginImprintFromHandChoice(gameData, controllerId, artifactIndices,
-                "Choose an artifact card from your hand to exile and imprint.", sourcePermanent.getId());
+        playerInputService.beginImprintFromHandChoice(gameData, controllerId, validIndices,
+                "Choose " + effect.description() + " from your hand to exile and imprint.", sourcePermanent.getId());
     }
 }
 
