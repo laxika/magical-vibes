@@ -23,9 +23,9 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
@@ -310,7 +310,7 @@ public class GameHelper {
                         List.of(may.wrapped()),
                         dyingCard.getName() + " — " + may.prompt()
                 ));
-            } else if (effect instanceof BoostTargetCreatureEffect || effect instanceof DealDamageToTargetCreatureEffect) {
+            } else if (effect.canTargetPermanent() || effect.canTargetPlayer()) {
                 // Targeted death trigger — queue for target selection after current action completes
                 gameData.pendingDeathTriggerTargets.add(new PermanentChoiceContext.DeathTriggerTarget(
                         dyingCard, controllerId, new ArrayList<>(List.of(effect))

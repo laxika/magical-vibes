@@ -310,27 +310,21 @@ public class PermanentChoiceHandlerService {
             gameData.priorityPassedBy.clear();
             turnProgressionService.resolveAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.DeathTriggerTarget dtt) {
-            Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
-            if (target != null) {
-                // Create the triggered ability stack entry with the chosen target
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        dtt.dyingCard(),
-                        dtt.controllerId(),
-                        dtt.dyingCard().getName() + "'s ability",
-                        new ArrayList<>(dtt.effects())
-                );
-                entry.setTargetPermanentId(permanentId);
-                gameData.stack.add(entry);
+            // Create the triggered ability stack entry with the chosen target (permanent or player)
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    dtt.dyingCard(),
+                    dtt.controllerId(),
+                    dtt.dyingCard().getName() + "'s ability",
+                    new ArrayList<>(dtt.effects())
+            );
+            entry.setTargetPermanentId(permanentId);
+            gameData.stack.add(entry);
 
-                String logEntry = dtt.dyingCard().getName() + "'s death trigger targets " + target.getCard().getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} death trigger targets {}", gameData.id, dtt.dyingCard().getName(), target.getCard().getName());
-            } else {
-                String logEntry = dtt.dyingCard().getName() + "'s death trigger has no valid target.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} death trigger target no longer exists", gameData.id, dtt.dyingCard().getName());
-            }
+            String targetName = getTargetDisplayName(gameData, permanentId);
+            String logEntry = dtt.dyingCard().getName() + "'s death trigger targets " + targetName + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} death trigger targets {}", gameData.id, dtt.dyingCard().getName(), targetName);
 
             // Process more pending death trigger targets
             if (!gameData.pendingDeathTriggerTargets.isEmpty()) {

@@ -28,8 +28,14 @@ public class TriggeredAbilityQueueService {
         while (!gameData.pendingDeathTriggerTargets.isEmpty()) {
             PermanentChoiceContext.DeathTriggerTarget pending = gameData.pendingDeathTriggerTargets.peekFirst();
 
+            // Check if any effect can target players (any-target effects)
+            boolean canTargetPlayers = pending.effects().stream().anyMatch(e -> e.canTargetPlayer());
+
             // Collect valid creature targets from all battlefields
             List<UUID> validTargets = new ArrayList<>();
+            if (canTargetPlayers) {
+                validTargets.addAll(gameData.orderedPlayerIds);
+            }
             for (UUID pid : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
@@ -53,10 +59,11 @@ public class TriggeredAbilityQueueService {
             // Remove from queue and begin permanent choice
             gameData.pendingDeathTriggerTargets.removeFirst();
             gameData.interaction.setPermanentChoiceContext(pending);
+            String targetDescription = canTargetPlayers ? "any target" : "target creature";
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
-                    pending.dyingCard().getName() + "'s ability - Choose target creature.");
+                    pending.dyingCard().getName() + "'s ability - Choose " + targetDescription + ".");
 
-            String logEntry = pending.dyingCard().getName() + "'s death trigger - choose a target creature.";
+            String logEntry = pending.dyingCard().getName() + "'s death trigger - choose " + targetDescription + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} death trigger awaiting target selection", gameData.id, pending.dyingCard().getName());
             return;
