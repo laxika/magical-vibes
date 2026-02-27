@@ -100,6 +100,7 @@ public class GameService {
             case InteractionContext.HandTopBottomChoice htbc -> controlledId.equals(htbc.playerId());
             case InteractionContext.RevealedHandChoice rhc -> controlledId.equals(rhc.choosingPlayerId());
             case InteractionContext.CombatDamageAssignment cda -> controlledId.equals(cda.playerId());
+            case InteractionContext.MultiZoneExileChoice mzec -> controlledId.equals(mzec.playerId());
         };
     }
 
