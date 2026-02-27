@@ -70,7 +70,6 @@ public class GameHelper {
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final LegendRuleService legendRuleService;
-    private final AuraAttachmentService auraAttachmentService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final DraftRegistry draftRegistry;
     private final DraftService draftService;
@@ -83,7 +82,6 @@ public class GameHelper {
                       GameBroadcastService gameBroadcastService,
                       PlayerInputService playerInputService,
                       LegendRuleService legendRuleService,
-                      AuraAttachmentService auraAttachmentService,
                       TriggeredAbilityQueueService triggeredAbilityQueueService,
                       DraftRegistry draftRegistry,
                       DraftService draftService,
@@ -95,7 +93,6 @@ public class GameHelper {
         this.gameBroadcastService = gameBroadcastService;
         this.playerInputService = playerInputService;
         this.legendRuleService = legendRuleService;
-        this.auraAttachmentService = auraAttachmentService;
         this.triggeredAbilityQueueService = triggeredAbilityQueueService;
         this.draftRegistry = draftRegistry;
         this.draftService = draftService;
@@ -498,8 +495,6 @@ public class GameHelper {
                 p.setRegenerationShield(0);
             }
         });
-
-        auraAttachmentService.returnStolenCreatures(gameData, true);
 
         gameData.playerDamagePreventionShields.clear();
         gameData.globalDamagePreventionShield = 0;

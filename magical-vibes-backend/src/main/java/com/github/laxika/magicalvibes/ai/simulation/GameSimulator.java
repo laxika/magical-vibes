@@ -143,13 +143,13 @@ public class GameSimulator {
         this.gameRegistry = new GameRegistry();
 
         LegendRuleService legendRuleService = new LegendRuleService(gameQueryService, playerInputService);
-        AuraAttachmentService auraAttachmentService = new AuraAttachmentService(gameQueryService, gameBroadcastService);
         TriggeredAbilityQueueService triggeredAbilityQueueService = new TriggeredAbilityQueueService(
                 gameQueryService, gameBroadcastService, playerInputService);
         CreatureControlService creatureControlService = new CreatureControlService(gameBroadcastService);
         GameHelper gameHelper = new GameHelper(
                 noOpSession, gameRegistry, cardViewFactory, gameQueryService, gameBroadcastService, playerInputService,
-                legendRuleService, auraAttachmentService, triggeredAbilityQueueService, draftRegistry, null, creatureControlService);
+                legendRuleService, triggeredAbilityQueueService, draftRegistry, null, creatureControlService);
+        AuraAttachmentService auraAttachmentService = new AuraAttachmentService(gameQueryService, gameBroadcastService, gameHelper);
         PermanentRemovalService permanentRemovalService = new PermanentRemovalService(
                 gameHelper, auraAttachmentService, gameQueryService, gameBroadcastService);
         TriggerCollectionService triggerCollectionService = new TriggerCollectionService(
@@ -191,7 +191,7 @@ public class GameSimulator {
                 new CreatureModResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService),
                 new PlayerInteractionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService, noOpSession, cardViewFactory, permanentRemovalService, triggerCollectionService),
                 new PermanentControlResolutionService(gameHelper, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService, creatureControlService),
-                new TurnResolutionService(gameHelper, combatService, gameBroadcastService),
+                new TurnResolutionService(gameHelper, combatService, gameBroadcastService, auraAttachmentService),
                 new EquipResolutionService(gameQueryService, gameBroadcastService, permanentRemovalService),
                 new CardSpecificResolutionService(gameHelper, gameQueryService, gameBroadcastService, noOpSession, cardViewFactory),
                 new WinConditionResolutionService(gameHelper, gameBroadcastService, gameQueryService)
@@ -202,7 +202,7 @@ public class GameSimulator {
 
         EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper, gameQueryService, effectHandlerRegistry, gameBroadcastService, permanentRemovalService);
         TurnProgressionService turnProgressionService = new TurnProgressionService(
-                combatService, gameHelper, gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService, permanentRemovalService);
+                combatService, gameHelper, gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService, permanentRemovalService, auraAttachmentService);
         SpellCastingService spellCastingService = new SpellCastingService(
                 gameQueryService, gameHelper, gameBroadcastService, turnProgressionService, targetLegalityService, permanentRemovalService, triggerCollectionService);
         ActivatedAbilityExecutionService activatedAbilityExecutionService = new ActivatedAbilityExecutionService(

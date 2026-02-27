@@ -33,6 +33,7 @@ public class TurnResolutionService {
     private final GameHelper gameHelper;
     private final CombatService combatService;
     private final GameBroadcastService gameBroadcastService;
+    private final AuraAttachmentService auraAttachmentService;
 
     @HandlesEffect(ExtraTurnEffect.class)
     private void resolveExtraTurn(GameData gameData, StackEntry entry, ExtraTurnEffect effect) {
@@ -81,6 +82,7 @@ public class TurnResolutionService {
         // Rule 723.1d: Skip to cleanup step
         gameData.currentStep = TurnStep.CLEANUP;
         gameHelper.resetEndOfTurnModifiers(gameData);
+        auraAttachmentService.returnStolenCreatures(gameData, true);
         gameData.priorityPassedBy.clear();
 
         // Flag so resolveTopOfStack exiles the resolving card instead of graveyard (rule 723.1b)

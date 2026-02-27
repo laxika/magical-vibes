@@ -43,6 +43,7 @@ public class TurnProgressionService {
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
     private final PermanentRemovalService permanentRemovalService;
+    private final AuraAttachmentService auraAttachmentService;
 
     public void advanceStep(GameData gameData) {
         // Process end-of-combat sacrifices when leaving END_OF_COMBAT
@@ -108,6 +109,7 @@ public class TurnProgressionService {
                 }
                 // CR 514.2: Remove damage and end "until end of turn" effects
                 gameHelper.resetEndOfTurnModifiers(gameData);
+                auraAttachmentService.returnStolenCreatures(gameData, true);
             }
         } else {
             advanceTurn(gameData);
@@ -579,6 +581,7 @@ public class TurnProgressionService {
 
     public void applyCleanupResets(GameData gameData) {
         gameHelper.resetEndOfTurnModifiers(gameData);
+        auraAttachmentService.returnStolenCreatures(gameData, true);
     }
 
     public void resolveAutoPass(GameData gameData) {
