@@ -188,7 +188,7 @@ public class ActivatedAbilityExecutionService {
     private void resolveManaAbility(GameData gameData, UUID playerId, Player player, Permanent permanent, List<CardEffect> snapshotEffects) {
         for (CardEffect effect : snapshotEffects) {
             if (effect instanceof AwardManaEffect award) {
-                gameData.playerManaPools.get(playerId).add(award.color());
+                gameData.playerManaPools.get(playerId).add(award.color(), award.amount());
             } else if (effect instanceof DoubleManaPoolEffect) {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 for (ManaColor color : ManaColor.values()) {

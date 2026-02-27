@@ -477,7 +477,7 @@ Pass `null` as filter to allow any card.
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
-| `AwardManaEffect` | `(ManaColor color)` | add one mana of specified color |
+| `AwardManaEffect` | `(ManaColor color, int amount)` or `(ManaColor color)` (defaults amount to 1) | add N mana of specified color |
 | `AwardAnyColorManaEffect` | `()` | add one mana of any color |
 | `AddManaOnEnchantedLandTapEffect` | `(ManaColor color, int amount)` | when enchanted land is tapped, add N mana of color |
 | `DoubleManaPoolEffect` | `()` | double your mana pool |

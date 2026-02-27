@@ -392,7 +392,7 @@ public class SpellEvaluator {
                     && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) continue;
             for (CardEffect manaEffect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
                 if (manaEffect instanceof com.github.laxika.magicalvibes.model.effect.AwardManaEffect me) {
-                    virtualPool.add(me.color());
+                    virtualPool.add(me.color(), me.amount());
                 } else if (manaEffect instanceof com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect) {
                     virtualPool.add(ManaColor.COLORLESS);
                 }

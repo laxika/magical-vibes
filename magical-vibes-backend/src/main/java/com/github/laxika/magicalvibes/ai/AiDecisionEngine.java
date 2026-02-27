@@ -374,7 +374,7 @@ public class AiDecisionEngine {
                 }
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
                     if (effect instanceof AwardManaEffect manaEffect) {
-                        virtual.add(manaEffect.color());
+                        virtual.add(manaEffect.color(), manaEffect.amount());
                     } else if (effect instanceof AwardAnyColorManaEffect) {
                         // Conservatively add colorless — it can pay generic costs
                         virtual.add(ManaColor.COLORLESS);

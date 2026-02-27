@@ -706,7 +706,7 @@ public class GameSimulator {
             if (gameQueryService.isCreature(gd, perm) && perm.isSummoningSick()
                     && !gameQueryService.hasKeyword(gd, perm, Keyword.HASTE)) continue;
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
-                if (effect instanceof AwardManaEffect me) virtual.add(me.color());
+                if (effect instanceof AwardManaEffect me) virtual.add(me.color(), me.amount());
                 else if (effect instanceof AwardAnyColorManaEffect) virtual.add(ManaColor.COLORLESS);
             }
         }

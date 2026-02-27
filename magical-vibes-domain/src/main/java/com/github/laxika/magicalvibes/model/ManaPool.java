@@ -29,6 +29,10 @@ public class ManaPool {
         pool.merge(color, 1, Integer::sum);
     }
 
+    public void add(ManaColor color, int amount) {
+        pool.merge(color, amount, Integer::sum);
+    }
+
     public void clear() {
         for (ManaColor color : ManaColor.values()) {
             pool.put(color, 0);

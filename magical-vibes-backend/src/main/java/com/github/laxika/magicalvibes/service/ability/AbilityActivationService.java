@@ -130,7 +130,7 @@ public class AbilityActivationService {
         ManaPool manaPool = gameData.playerManaPools.get(playerId);
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
             if (effect instanceof AwardManaEffect awardMana) {
-                manaPool.add(awardMana.color());
+                manaPool.add(awardMana.color(), awardMana.amount());
             }
         }
 
