@@ -42,6 +42,12 @@
       </div>
     }
 
+    @if (isMindControlling) {
+      <div class="combat-banner mind-control-banner">
+        <span>Mindslaver — You control {{ mindControlledPlayerName }}'s turn</span>
+      </div>
+    }
+
     @if (choice.targeting.convoking) {
       <div class="combat-banner targeting-banner">
         <span>Tap creatures to help cast {{ choice.targeting.convokeCardName }} ({{ choice.targeting.convokeSelectedCreatureIds().length }} tapped)</span>
@@ -329,7 +335,7 @@
         }
         @if (opponentHand.length > 0) {
           <div class="revealed-hand-row">
-            <div class="revealed-hand-label">Revealed Hand ({{ opponentHand.length }})</div>
+            <div class="revealed-hand-label">{{ isMindControlling ? 'Your Hand' : 'Revealed Hand' }} ({{ opponentHand.length }})</div>
             <div class="revealed-hand-cards">
               @for (card of opponentHand; track $index) {
                 <app-card-display [card]="card" class="revealed-hand-card" (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
@@ -577,7 +583,7 @@
     }
 
     <div class="hand-area">
-      <div class="hand-label">Your Hand ({{ hand.length }} cards)</div>
+      <div class="hand-label">{{ isMindControlling ? mindControlledPlayerName + "'s Hand (Mind Control)" : 'Your Hand' }} ({{ hand.length }} cards)</div>
       <div class="hand-cards">
         @for (card of hand; track $index) {
           <app-card-display

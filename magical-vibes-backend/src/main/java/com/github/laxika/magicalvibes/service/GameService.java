@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -52,12 +53,64 @@ public class GameService {
     private final MulliganService mulliganService;
     private final ReconnectionService reconnectionService;
 
+    /**
+     * When Mindslaver control is active, remaps the controlling player to act as
+     * the controlled player when the controlled player should be acting (has priority
+     * or is the expected respondent for an interaction).
+     * If the controller is acting as themselves (e.g., passing their own priority as
+     * non-active player), the original player is returned.
+     */
+    private Player resolveActingPlayer(GameData gameData, Player player) {
+        if (gameData.mindControllerPlayerId == null) return player;
+        if (!player.getId().equals(gameData.mindControllerPlayerId)) return player;
+        UUID controlledId = gameData.mindControlledPlayerId;
+        if (controlledId == null) return player;
+
+        // Check if the controlled player is the expected respondent for an interaction
+        if (gameData.interaction.isAwaitingInput()) {
+            InteractionContext ctx = gameData.interaction.currentContext();
+            if (ctx != null && controlledPlayerMatchesContext(ctx, controlledId)) {
+                return new Player(controlledId, gameData.playerIdToName.get(controlledId));
+            }
+        }
+
+        // Check if the controlled player currently holds priority
+        UUID priorityHolder = gameQueryService.getPriorityPlayerId(gameData);
+        if (controlledId.equals(priorityHolder)) {
+            return new Player(controlledId, gameData.playerIdToName.get(controlledId));
+        }
+
+        return player; // Controller acts as themselves
+    }
+
+    private boolean controlledPlayerMatchesContext(InteractionContext ctx, UUID controlledId) {
+        return switch (ctx) {
+            case InteractionContext.AttackerDeclaration ad -> controlledId.equals(ad.activePlayerId());
+            case InteractionContext.BlockerDeclaration bd -> controlledId.equals(bd.defenderId());
+            case InteractionContext.CardChoice cc -> controlledId.equals(cc.playerId());
+            case InteractionContext.PermanentChoice pc -> controlledId.equals(pc.playerId());
+            case InteractionContext.GraveyardChoice gc -> controlledId.equals(gc.playerId());
+            case InteractionContext.ColorChoice cc -> controlledId.equals(cc.playerId());
+            case InteractionContext.MayAbilityChoice mc -> controlledId.equals(mc.playerId());
+            case InteractionContext.MultiPermanentChoice mpc -> controlledId.equals(mpc.playerId());
+            case InteractionContext.MultiGraveyardChoice mgc -> controlledId.equals(mgc.playerId());
+            case InteractionContext.LibraryReorder lr -> controlledId.equals(lr.playerId());
+            case InteractionContext.LibrarySearch ls -> controlledId.equals(ls.playerId());
+            case InteractionContext.LibraryRevealChoice lrc -> controlledId.equals(lrc.playerId());
+            case InteractionContext.HandTopBottomChoice htbc -> controlledId.equals(htbc.playerId());
+            case InteractionContext.RevealedHandChoice rhc -> controlledId.equals(rhc.choosingPlayerId());
+            case InteractionContext.CombatDamageAssignment cda -> controlledId.equals(cda.playerId());
+        };
+    }
+
     public void passPriority(GameData gameData, Player player) {
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
         }
 
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+
             if (gameData.interaction.isAwaitingInput()) {
                 throw new IllegalStateException("Cannot pass priority while awaiting input");
             }
@@ -179,24 +232,28 @@ public class GameService {
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments) {
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, List.of(), List.of(), false, null);
         }
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments, List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds) {
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds, false, null);
         }
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments, List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard) {
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, null);
         }
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments, List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId) {
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId);
         }
     }
@@ -207,6 +264,7 @@ public class GameService {
         }
 
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
             abilityActivationService.tapPermanent(gameData, player, permanentIndex);
         }
     }
@@ -217,6 +275,7 @@ public class GameService {
         }
 
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
             abilityActivationService.sacrificePermanent(gameData, player, permanentIndex, targetPermanentId);
         }
     }
@@ -227,6 +286,7 @@ public class GameService {
         }
 
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
             abilityActivationService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetPermanentId, targetZone);
         }
     }
@@ -250,24 +310,28 @@ public class GameService {
 
     public void handleColorChosen(GameData gameData, Player player, String colorName) {
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
             colorChoiceHandlerService.handleColorChosen(gameData, player, colorName);
         }
     }
 
     public void handleCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
             cardChoiceHandlerService.handleCardChosen(gameData, player, cardIndex);
         }
     }
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
             permanentChoiceHandlerService.handlePermanentChosen(gameData, player, permanentId);
         }
     }
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
             if (gameData.interaction.awaitingInputType() == AwaitingInput.ACTIVATED_ABILITY_GRAVEYARD_EXILE_COST_CHOICE) {
                 abilityActivationService.handleActivatedAbilityGraveyardExileCostChosen(gameData, player, cardIndex);
             } else {
@@ -278,12 +342,14 @@ public class GameService {
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
             permanentChoiceHandlerService.handleMultiplePermanentsChosen(gameData, player, permanentIds);
         }
     }
 
     public void handleMultipleGraveyardCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
             if (gameData.interaction.awaitingInputType() == AwaitingInput.LIBRARY_REVEAL_CHOICE) {
                 libraryChoiceHandlerService.handleLibraryRevealChoice(gameData, player, cardIds);
             } else if (gameData.interaction.awaitingInputType() == AwaitingInput.MULTI_ZONE_EXILE_CHOICE) {
@@ -296,24 +362,28 @@ public class GameService {
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
             mayAbilityHandlerService.handleMayAbilityChosen(gameData, player, accepted);
         }
     }
 
     public void handleLibraryCardsReordered(GameData gameData, Player player, List<Integer> cardOrder) {
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
             libraryChoiceHandlerService.handleLibraryCardsReordered(gameData, player, cardOrder);
         }
     }
 
     public void handleHandTopBottomChosen(GameData gameData, Player player, int handCardIndex, int topCardIndex) {
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
             libraryChoiceHandlerService.handleHandTopBottomChosen(gameData, player, handCardIndex, topCardIndex);
         }
     }
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
             libraryChoiceHandlerService.handleLibraryCardChosen(gameData, player, cardIndex);
         }
     }
@@ -322,18 +392,21 @@ public class GameService {
 
     public void declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices) {
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
             turnProgressionService.handleCombatResult(combatService.declareAttackers(gameData, player, attackerIndices), gameData);
         }
     }
 
     public void declareBlockers(GameData gameData, Player player, List<BlockerAssignment> blockerAssignments) {
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
             turnProgressionService.handleCombatResult(combatService.declareBlockers(gameData, player, blockerAssignments), gameData);
         }
     }
 
     public void handleCombatDamageAssigned(GameData gameData, Player player, int attackerIndex, Map<UUID, Integer> assignments) {
         synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
             combatService.handleCombatDamageAssigned(gameData, attackerIndex, assignments);
             turnProgressionService.handleCombatResult(combatService.resolveCombatDamage(gameData), gameData);
         }

@@ -215,6 +215,7 @@ export interface Game {
   poisonCounters: number[];
   stack: StackEntry[];
   graveyards: Card[][];
+  mindControlledPlayerId?: string | null;
 }
 
 export interface LobbyGame {
@@ -281,6 +282,7 @@ export interface GameStateNotification {
   playableGraveyardLandIndices: number[];
   newLogEntries: string[];
   searchTaxCost: number;
+  mindControlledPlayerId?: string | null;
 }
 
 export interface MulliganResolvedNotification {

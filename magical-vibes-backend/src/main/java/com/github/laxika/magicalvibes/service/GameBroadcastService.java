@@ -76,12 +76,23 @@ public class GameBroadcastService {
             List<Integer> playableGraveyardLandIndices = getPlayableGraveyardLandIndices(gameData, playerId);
             int searchTaxCost = getSearchTaxCost(gameData, playerId);
 
+            // Mindslaver: controller sees the controlled player's hand and playable indices
+            if (gameData.mindControllerPlayerId != null && playerId.equals(gameData.mindControllerPlayerId)) {
+                UUID controlledId = gameData.mindControlledPlayerId;
+                if (controlledId != null) {
+                    opponentHand = gameData.playerHands.getOrDefault(controlledId, List.of())
+                            .stream().map(cardViewFactory::create).toList();
+                    playableCardIndices = getPlayableCardIndices(gameData, controlledId);
+                    playableGraveyardLandIndices = getPlayableGraveyardLandIndices(gameData, controlledId);
+                }
+            }
+
             sessionManager.sendToPlayer(playerId, new GameStateMessage(
                     gameData.status, gameData.activePlayerId, gameData.turnNumber,
                     gameData.currentStep, priorityPlayerId,
                     battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters,
                     hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
-                    playableGraveyardLandIndices, newLogEntries, searchTaxCost
+                    playableGraveyardLandIndices, newLogEntries, searchTaxCost, gameData.mindControlledPlayerId
             ));
         }
     }
@@ -127,6 +138,9 @@ public class GameBroadcastService {
     }
 
     List<CardView> getRevealedOpponentHand(GameData gameData, UUID playerId) {
+        // Mindslaver: controller always sees the controlled player's hand
+        // (handled separately in broadcastGameState — overrides opponentHand for controller)
+
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return List.of();
         boolean reveals = false;

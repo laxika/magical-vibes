@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlTargetPlayerNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
@@ -88,6 +89,24 @@ public class TurnResolutionService {
         String logEntry = "The turn ends.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - End the turn effect resolved, skipping to cleanup", gameData.id);
+    }
+
+    @HandlesEffect(ControlTargetPlayerNextTurnEffect.class)
+    private void resolveControlTargetPlayerNextTurn(GameData gameData, StackEntry entry, ControlTargetPlayerNextTurnEffect effect) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            return;
+        }
+
+        UUID controllerId = entry.getControllerId();
+        gameData.pendingTurnControl.put(targetPlayerId, controllerId);
+
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        String logEntry = controllerName + " will control " + targetName + " during their next turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} will control {} during their next turn (Mindslaver)",
+                gameData.id, controllerName, targetName);
     }
 
     @HandlesEffect(AdditionalCombatMainPhaseEffect.class)

@@ -469,6 +469,10 @@ public class TurnProgressionService {
     }
 
     void advanceTurn(GameData gameData) {
+        // Clear any active mind control from the ending turn
+        gameData.mindControlledPlayerId = null;
+        gameData.mindControllerPlayerId = null;
+
         UUID nextActive;
         if (!gameData.extraTurns.isEmpty()) {
             nextActive = gameData.extraTurns.pollFirst();
@@ -480,6 +484,17 @@ public class TurnProgressionService {
         String nextActiveName = gameData.playerIdToName.get(nextActive);
 
         gameData.activePlayerId = nextActive;
+
+        // Check for pending Mindslaver control on the new active player
+        UUID pendingController = gameData.pendingTurnControl.remove(nextActive);
+        if (pendingController != null && gameData.playerIds.contains(pendingController)) {
+            gameData.mindControlledPlayerId = nextActive;
+            gameData.mindControllerPlayerId = pendingController;
+            String controllerName = gameData.playerIdToName.get(pendingController);
+            String controlLog = controllerName + " controls " + nextActiveName + " this turn (Mindslaver).";
+            gameBroadcastService.logAndBroadcast(gameData, controlLog);
+            log.info("Game {} - {} controls {} this turn (Mindslaver)", gameData.id, controllerName, nextActiveName);
+        }
         gameData.turnNumber++;
         gameData.currentStep = TurnStep.first();
         gameData.interaction.clearAwaitingInput();

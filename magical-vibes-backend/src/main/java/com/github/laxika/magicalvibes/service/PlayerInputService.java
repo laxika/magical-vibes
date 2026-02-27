@@ -33,9 +33,22 @@ public class PlayerInputService {
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
 
+    /**
+     * When mind control is active, redirect messages intended for the controlled player
+     * to the controlling player instead, so they can make decisions on their behalf.
+     */
+    private UUID resolveMessageRecipient(GameData gameData, UUID playerId) {
+        if (gameData.mindControlledPlayerId != null
+                && gameData.mindControlledPlayerId.equals(playerId)
+                && gameData.mindControllerPlayerId != null) {
+            return gameData.mindControllerPlayerId;
+        }
+        return playerId;
+    }
+
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         gameData.interaction.beginCardChoice(AwaitingInput.CARD_CHOICE, playerId, new HashSet<>(validIndices), null);
-        sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(validIndices, prompt));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromHandMessage(validIndices, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a card from hand", gameData.id, playerName);
@@ -43,7 +56,7 @@ public class PlayerInputService {
 
     public void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID targetPermanentId) {
         gameData.interaction.beginCardChoice(AwaitingInput.TARGETED_CARD_CHOICE, playerId, new HashSet<>(validIndices), targetPermanentId);
-        sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(validIndices, prompt));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromHandMessage(validIndices, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a card from hand (targeted)", gameData.id, playerName);
@@ -51,7 +64,7 @@ public class PlayerInputService {
 
     public void beginPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, String prompt) {
         gameData.interaction.beginPermanentChoice(playerId, new HashSet<>(validIds), gameData.interaction.permanentChoiceContext());
-        sessionManager.sendToPlayer(playerId, new ChoosePermanentMessage(validIds, prompt));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChoosePermanentMessage(validIds, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a permanent", gameData.id, playerName);
@@ -61,7 +74,7 @@ public class PlayerInputService {
         Set<UUID> allValidIds = new HashSet<>(validPermanentIds);
         allValidIds.addAll(validPlayerIds);
         gameData.interaction.beginPermanentChoice(playerId, allValidIds, gameData.interaction.permanentChoiceContext());
-        sessionManager.sendToPlayer(playerId, new ChoosePermanentMessage(validPermanentIds, validPlayerIds, prompt));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChoosePermanentMessage(validPermanentIds, validPlayerIds, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose any target", gameData.id, playerName);
@@ -71,7 +84,7 @@ public class PlayerInputService {
         boolean allGraveyards = gameData.interaction.graveyardChoiceCardPool() != null;
         gameData.interaction.beginGraveyardChoice(playerId, new HashSet<>(validIndices),
                 gameData.interaction.graveyardChoiceDestination(), gameData.interaction.graveyardChoiceCardPool());
-        sessionManager.sendToPlayer(playerId, new ChooseCardFromGraveyardMessage(validIndices, prompt, allGraveyards));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromGraveyardMessage(validIndices, prompt, allGraveyards));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a card from graveyard", gameData.id, playerName);
@@ -79,7 +92,7 @@ public class PlayerInputService {
 
     public void beginMultiPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, int maxCount, String prompt) {
         gameData.interaction.beginMultiPermanentChoice(playerId, new HashSet<>(validIds), maxCount);
-        sessionManager.sendToPlayer(playerId, new ChooseMultiplePermanentsMessage(validIds, maxCount, prompt));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseMultiplePermanentsMessage(validIds, maxCount, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose up to {} permanents", gameData.id, playerName, maxCount);
@@ -87,7 +100,7 @@ public class PlayerInputService {
 
     void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<UUID> validCardIds, List<CardView> cardViews, int maxCount, String prompt) {
         gameData.interaction.beginMultiGraveyardChoice(playerId, new HashSet<>(validCardIds), maxCount);
-        sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsFromGraveyardsMessage(validCardIds, cardViews, maxCount, prompt));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseMultipleCardsFromGraveyardsMessage(validCardIds, cardViews, maxCount, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose up to {} cards from graveyards", gameData.id, playerName, maxCount);
@@ -96,7 +109,7 @@ public class PlayerInputService {
     void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetPermanentId) {
         gameData.interaction.beginColorChoice(playerId, permanentId, etbTargetPermanentId, gameData.interaction.colorChoiceContext());
         List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-        sessionManager.sendToPlayer(playerId, new ChooseColorMessage(colors, "Choose a color."));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseColorMessage(colors, "Choose a color."));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a color", gameData.id, playerName);
@@ -107,7 +120,7 @@ public class PlayerInputService {
         gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
 
         List<String> optionNames = options.stream().map(Keyword::name).toList();
-        sessionManager.sendToPlayer(playerId, new ChooseColorMessage(optionNames, "Choose a keyword to grant."));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseColorMessage(optionNames, "Choose a keyword to grant."));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a keyword", gameData.id, playerName);
@@ -118,7 +131,7 @@ public class PlayerInputService {
         gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
 
         List<String> cardNames = collectAllCardNamesInGame(gameData);
-        sessionManager.sendToPlayer(playerId, new ChooseColorMessage(cardNames, "Choose a card name."));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseColorMessage(cardNames, "Choose a card name."));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a card name", gameData.id, playerName);
@@ -218,7 +231,7 @@ public class PlayerInputService {
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         gameData.interaction.beginCardChoice(AwaitingInput.DISCARD_CHOICE, playerId, new HashSet<>(validIndices), null);
-        sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(validIndices, prompt));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromHandMessage(validIndices, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a card to discard", gameData.id, playerName);
@@ -233,7 +246,7 @@ public class PlayerInputService {
 
         List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
         List<CardView> cardViews = targetHand.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(choosingPlayerId, new ChooseFromRevealedHandMessage(cardViews, validIndices, prompt));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, choosingPlayerId), new ChooseFromRevealedHandMessage(cardViews, validIndices, prompt));
 
         String playerName = gameData.playerIdToName.get(choosingPlayerId);
         log.info("Game {} - Awaiting {} to choose a card from revealed hand", gameData.id, playerName);
@@ -246,7 +259,7 @@ public class PlayerInputService {
 
         PendingMayAbility next = gameData.pendingMayAbilities.getFirst();
         gameData.interaction.beginMayAbilityChoice(next.controllerId(), next.description());
-        sessionManager.sendToPlayer(next.controllerId(), new MayAbilityMessage(next.description()));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, next.controllerId()), new MayAbilityMessage(next.description()));
 
         String playerName = gameData.playerIdToName.get(next.controllerId());
         log.info("Game {} - Awaiting {} to decide on may ability: {}", gameData.id, playerName, next.description());

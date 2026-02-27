@@ -101,6 +101,18 @@ public class GameData {
     /** Tracks which Leonin Arbiter permanent IDs each player has paid {2} for this turn. */
     public final Map<UUID, Set<UUID>> paidSearchTaxPermanentIds = new ConcurrentHashMap<>();
 
+    // Mindslaver — turn control
+    /** Delayed effect: targetPlayerId -> controllerId, consumed when target player's turn begins. */
+    public final Map<UUID, UUID> pendingTurnControl = new ConcurrentHashMap<>();
+    /** Non-null when a player is being controlled this turn (the controlled player's ID). */
+    public UUID mindControlledPlayerId;
+    /** Non-null when a player is being controlled this turn (the controlling player's ID). */
+    public UUID mindControllerPlayerId;
+
+    /** Stores context for a pending Leonin Arbiter search tax MayAbility choice. */
+    public PendingSearchContext pendingSearchContext;
+
+
     // Combat damage assignment state
     public final Map<Integer, Map<UUID, Integer>> combatDamagePlayerAssignments = new HashMap<>();
     public final List<Integer> combatDamagePendingIndices = new ArrayList<>();
@@ -319,6 +331,11 @@ public class GameData {
             s.addAll(v);
             copy.paidSearchTaxPermanentIds.put(k, s);
         });
+
+        // --- Mindslaver turn control ---
+        copy.pendingTurnControl.putAll(this.pendingTurnControl);
+        copy.mindControlledPlayerId = this.mindControlledPlayerId;
+        copy.mindControllerPlayerId = this.mindControllerPlayerId;
 
         // --- Game log (share reference for simulation — not read during MCTS) ---
         copy.gameLog.addAll(this.gameLog);

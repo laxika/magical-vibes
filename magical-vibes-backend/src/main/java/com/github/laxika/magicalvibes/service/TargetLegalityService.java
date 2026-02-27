@@ -76,6 +76,17 @@ public class TargetLegalityService {
                         FilterContext.of(gameData)
                                 .withSourceCardId(sourceCard.getId())
                                 .withSourceControllerId(playerId));
+            } else if (gameData.playerIds.contains(targetPermanentId)
+                    && ability.getTargetFilter() instanceof PlayerPredicateTargetFilter playerFilter) {
+                // Player target — validate PlayerPredicateTargetFilter (e.g. "target opponent")
+                if (playerFilter.predicate() instanceof PlayerRelationPredicate rel) {
+                    if (rel.relation() == PlayerRelation.OPPONENT && playerId.equals(targetPermanentId)) {
+                        throw new IllegalStateException(playerFilter.errorMessage());
+                    }
+                    if (rel.relation() == PlayerRelation.SELF && !playerId.equals(targetPermanentId)) {
+                        throw new IllegalStateException(playerFilter.errorMessage());
+                    }
+                }
             }
         }
 

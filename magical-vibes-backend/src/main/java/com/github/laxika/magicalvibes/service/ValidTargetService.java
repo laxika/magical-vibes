@@ -99,7 +99,7 @@ public class ValidTargetService {
 
         if (targetsPlayer) {
             for (UUID playerId : gameData.playerIds) {
-                if (isValidAbilityPlayerTarget(gameData, playerId, controllerId)) {
+                if (isValidAbilityPlayerTarget(gameData, ability, playerId, controllerId)) {
                     validPlayerIds.add(playerId);
                 }
             }
@@ -268,10 +268,23 @@ public class ValidTargetService {
         return true;
     }
 
-    private boolean isValidAbilityPlayerTarget(GameData gameData, UUID playerId, UUID controllerId) {
+    private boolean isValidAbilityPlayerTarget(GameData gameData, ActivatedAbility ability, UUID playerId, UUID controllerId) {
         if (gameQueryService.playerHasShroud(gameData, playerId)) {
             return false;
         }
+
+        // PlayerPredicateTargetFilter (e.g. "target opponent" for Mindslaver)
+        if (ability.getTargetFilter() instanceof PlayerPredicateTargetFilter playerFilter) {
+            if (playerFilter.predicate() instanceof PlayerRelationPredicate rel) {
+                if (rel.relation() == PlayerRelation.OPPONENT && controllerId.equals(playerId)) {
+                    return false;
+                }
+                if (rel.relation() == PlayerRelation.SELF && !controllerId.equals(playerId)) {
+                    return false;
+                }
+            }
+        }
+
         return true;
     }
 }

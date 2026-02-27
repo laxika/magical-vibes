@@ -480,6 +480,7 @@ Pass `null` as filter to allow any card.
 | `ExtraTurnEffect` | `(int count)` | take N extra turns |
 | `AdditionalCombatMainPhaseEffect` | `(int count)` | get N additional combat + main phases |
 | `EndTurnEffect` | `()` | end the turn |
+| `ControlTargetPlayerNextTurnEffect` | `()` | control target player during their next turn (Mindslaver) |
 
 ## Animate / transform
 

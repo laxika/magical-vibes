@@ -255,12 +255,32 @@ export class GameComponent implements OnInit, OnDestroy {
     return this.game()?.graveyards?.[this.opponentPlayerIndex] ?? [];
   }
 
+  get isMindControlling(): boolean {
+    const g = this.game();
+    return g != null && g.mindControlledPlayerId != null;
+  }
+
+  get mindControlledPlayerName(): string {
+    const g = this.game();
+    if (!g || !g.mindControlledPlayerId) return '';
+    const idx = g.playerIds.indexOf(g.mindControlledPlayerId);
+    return idx >= 0 ? g.playerNames[idx] : '';
+  }
+
   get opponentHand(): Card[] {
-    return this.game()?.opponentHand ?? [];
+    const g = this.game();
+    if (this.isMindControlling) {
+      return g?.hand ?? [];
+    }
+    return g?.opponentHand ?? [];
   }
 
   get hand(): Card[] {
-    return this.game()?.hand ?? [];
+    const g = this.game();
+    if (this.isMindControlling) {
+      return g?.opponentHand ?? [];
+    }
+    return g?.hand ?? [];
   }
 
   get player1DeckSize(): number {
@@ -358,7 +378,8 @@ export class GameComponent implements OnInit, OnDestroy {
       mulliganCount: state.mulliganCount,
       manaPool: state.manaPool,
       autoStopSteps: state.autoStopSteps,
-      gameLog: [...g.gameLog, ...state.newLogEntries]
+      gameLog: [...g.gameLog, ...state.newLogEntries],
+      mindControlledPlayerId: state.mindControlledPlayerId ?? null
     };
     this.game.set(updated);
     this.websocketService.currentGame = updated;

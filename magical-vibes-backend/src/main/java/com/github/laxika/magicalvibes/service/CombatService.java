@@ -247,7 +247,14 @@ public class CombatService {
 
         List<Integer> mustAttack = getMustAttackIndices(gameData, activeId, attackable);
         gameData.interaction.beginAttackerDeclaration(activeId);
-        sessionManager.sendToPlayer(activeId, new AvailableAttackersMessage(attackable, mustAttack));
+        // Mindslaver: redirect attacker prompt to the controlling player
+        UUID recipient = activeId;
+        if (gameData.mindControlledPlayerId != null
+                && gameData.mindControlledPlayerId.equals(activeId)
+                && gameData.mindControllerPlayerId != null) {
+            recipient = gameData.mindControllerPlayerId;
+        }
+        sessionManager.sendToPlayer(recipient, new AvailableAttackersMessage(attackable, mustAttack));
     }
 
     CombatResult declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices) {
@@ -375,7 +382,14 @@ public class CombatService {
 
         Map<Integer, List<Integer>> legalPairs = computeLegalBlockPairs(gameData, blockable, attackerIndices, defenderId, activeId);
         gameData.interaction.beginBlockerDeclaration(defenderId);
-        sessionManager.sendToPlayer(defenderId, new AvailableBlockersMessage(blockable, attackerIndices, legalPairs));
+        // Mindslaver: redirect blocker prompt to the controlling player
+        UUID blockerRecipient = defenderId;
+        if (gameData.mindControlledPlayerId != null
+                && gameData.mindControlledPlayerId.equals(defenderId)
+                && gameData.mindControllerPlayerId != null) {
+            blockerRecipient = gameData.mindControllerPlayerId;
+        }
+        sessionManager.sendToPlayer(blockerRecipient, new AvailableBlockersMessage(blockable, attackerIndices, legalPairs));
         return CombatResult.DONE;
     }
 
@@ -1842,7 +1856,14 @@ public class CombatService {
 
         CombatDamageAssignmentNotification notification = new CombatDamageAssignmentNotification(
                 atkIdx, atk.getId().toString(), atk.getCard().getName(), totalDamage, targetViews, isTrample);
-        sessionManager.sendToPlayer(activeId, notification);
+        // Mindslaver: redirect combat damage assignment to controlling player
+        UUID damageRecipient = activeId;
+        if (gameData.mindControlledPlayerId != null
+                && gameData.mindControlledPlayerId.equals(activeId)
+                && gameData.mindControllerPlayerId != null) {
+            damageRecipient = gameData.mindControllerPlayerId;
+        }
+        sessionManager.sendToPlayer(damageRecipient, notification);
     }
 
     void handleCombatDamageAssigned(GameData gameData, int attackerIndex, Map<UUID, Integer> assignments) {
