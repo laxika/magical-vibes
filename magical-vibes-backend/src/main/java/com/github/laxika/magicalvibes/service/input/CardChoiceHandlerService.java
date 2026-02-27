@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -48,6 +49,10 @@ public class CardChoiceHandlerService {
 
         if (awaitingInput == AwaitingInput.REVEALED_HAND_CHOICE) {
             handleRevealedHandCardChosen(gameData, player, cardIndex);
+            return;
+        }
+        if (awaitingInput == AwaitingInput.IMPRINT_FROM_HAND_CHOICE) {
+            handleImprintFromHandCardChosen(gameData, player, cardIndex);
             return;
         }
 
@@ -220,6 +225,46 @@ public class CardChoiceHandlerService {
 
             turnProgressionService.resolveAutoPass(gameData);
         }
+    }
+
+    private void handleImprintFromHandCardChosen(GameData gameData, Player player, int cardIndex) {
+        InteractionContext.CardChoice cardChoice = gameData.interaction.cardChoiceContext();
+        if (cardChoice == null || !player.getId().equals(cardChoice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+
+        Set<Integer> validIndices = cardChoice.validIndices();
+        if (!validIndices.contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        UUID playerId = player.getId();
+        UUID sourcePermanentId = cardChoice.targetPermanentId();
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.interaction.clearCardChoice();
+
+        List<Card> hand = gameData.playerHands.get(playerId);
+        Card card = hand.remove(cardIndex);
+
+        // Add to controller's exile zone
+        gameData.playerExiledCards.computeIfAbsent(playerId, k -> new ArrayList<>()).add(card);
+
+        // Imprint on source permanent
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (sourcePermanent != null) {
+            sourcePermanent.getCard().setImprintedCard(card);
+
+            String logEntry = card.getName() + " is exiled and imprinted on " + sourcePermanent.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} imprinted {} from hand on {}", gameData.id, player.getUsername(), card.getName(), sourcePermanent.getCard().getName());
+        } else {
+            String logEntry = card.getName() + " is exiled (source permanent no longer on the battlefield).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - Source permanent left battlefield, {} exiled without imprinting", gameData.id, card.getName());
+        }
+
+        turnProgressionService.resolveAutoPass(gameData);
     }
 
     private void resolveTargetedCardChoice(GameData gameData, Player player, UUID playerId, List<Card> hand, Card card, UUID targetPermanentId) {

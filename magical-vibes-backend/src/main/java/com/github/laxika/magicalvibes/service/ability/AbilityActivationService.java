@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -463,6 +464,24 @@ public class AbilityActivationService {
             int required = removeChargeCost.get().count();
             if (permanent.getChargeCounters() < required) {
                 throw new IllegalStateException("Not enough charge counters (need " + required + ", have " + permanent.getChargeCounters() + ")");
+            }
+        }
+
+        // Validate X value for Prototype Portal-style abilities:
+        // Per ruling: "You may not activate the second ability if no card has been exiled with Prototype Portal."
+        // X is defined by the exiled card's mana value (not chosen freely), so no imprint = can't activate.
+        CreateTokenCopyOfImprintedCardEffect imprintedCopyEffect = abilityEffects.stream()
+                .filter(CreateTokenCopyOfImprintedCardEffect.class::isInstance)
+                .map(CreateTokenCopyOfImprintedCardEffect.class::cast)
+                .findFirst().orElse(null);
+        if (imprintedCopyEffect != null && !imprintedCopyEffect.exileAtEndStep()) {
+            Card imprintedCard = permanent.getCard().getImprintedCard();
+            if (imprintedCard == null) {
+                throw new IllegalStateException("No card has been exiled with " + permanent.getCard().getName());
+            }
+            int requiredX = imprintedCard.getManaValue();
+            if (effectiveXValue != requiredX) {
+                throw new IllegalStateException("X must equal the mana value of the imprinted card (" + requiredX + ")");
             }
         }
 

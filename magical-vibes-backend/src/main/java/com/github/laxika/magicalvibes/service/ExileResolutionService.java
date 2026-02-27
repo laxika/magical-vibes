@@ -2,15 +2,18 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.ExileArtifactFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +29,7 @@ public class ExileResolutionService {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
+    private final PlayerInputService playerInputService;
 
     @HandlesEffect(ExileTargetPermanentEffect.class)
     void resolveExileTargetPermanent(GameData gameData, StackEntry entry) {
@@ -151,6 +155,41 @@ public class ExileResolutionService {
         String logMsg = dyingCard.getName() + " is exiled and imprinted on " + sourcePermanent.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} imprinted on {}", gameData.id, dyingCard.getName(), sourcePermanent.getCard().getName());
+    }
+
+    @HandlesEffect(ExileArtifactFromHandToImprintEffect.class)
+    void resolveExileArtifactFromHandToImprint(GameData gameData, StackEntry entry) {
+        // Find the source permanent (Prototype Portal) on the battlefield
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (sourcePermanent == null) {
+            log.info("Game {} - Source permanent no longer on battlefield, imprint from hand fizzles", gameData.id);
+            return;
+        }
+
+        UUID controllerId = entry.getControllerId();
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        if (hand == null || hand.isEmpty()) {
+            log.info("Game {} - Controller has no cards in hand, imprint from hand skipped", gameData.id);
+            return;
+        }
+
+        // Filter for artifact cards in hand
+        List<Integer> artifactIndices = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            Card card = hand.get(i);
+            if (card.getType() == CardType.ARTIFACT || card.getAdditionalTypes().contains(CardType.ARTIFACT)) {
+                artifactIndices.add(i);
+            }
+        }
+
+        if (artifactIndices.isEmpty()) {
+            String playerName = gameData.playerIdToName.get(controllerId);
+            log.info("Game {} - {} has no artifact cards in hand, imprint from hand skipped", gameData.id, playerName);
+            return;
+        }
+
+        playerInputService.beginImprintFromHandChoice(gameData, controllerId, artifactIndices,
+                "Choose an artifact card from your hand to exile and imprint.", sourcePermanent.getId());
     }
 }
 

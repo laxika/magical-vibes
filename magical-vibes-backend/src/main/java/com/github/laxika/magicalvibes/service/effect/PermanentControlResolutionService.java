@@ -459,16 +459,17 @@ public class PermanentControlResolutionService {
     }
 
     @HandlesEffect(CreateTokenCopyOfImprintedCardEffect.class)
-    private void resolveCreateTokenCopyOfImprinted(GameData gameData, StackEntry entry) {
+    private void resolveCreateTokenCopyOfImprinted(GameData gameData, StackEntry entry, CreateTokenCopyOfImprintedCardEffect effect) {
+        // Per rulings (Mimic Vat, Prototype Portal): if the source permanent has left the battlefield
+        // by the time the ability resolves, the token is still created. The imprinted card reference
+        // is preserved via entry.getCard() (a snapshot captured when the ability went on the stack).
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (sourcePermanent == null) {
-            log.info("Game {} - Source permanent no longer on battlefield", gameData.id);
-            return;
-        }
 
-        Card imprintedCard = sourcePermanent.getCard().getImprintedCard();
+        Card imprintedCard = sourcePermanent != null
+                ? sourcePermanent.getCard().getImprintedCard()
+                : entry.getCard().getImprintedCard();
         if (imprintedCard == null) {
-            log.info("Game {} - No card imprinted on {}, no token created", gameData.id, sourcePermanent.getCard().getName());
+            log.info("Game {} - No card imprinted on {}, no token created", gameData.id, entry.getCard().getName());
             return;
         }
 
@@ -486,12 +487,14 @@ public class PermanentControlResolutionService {
         tokenCard.setSubtypes(imprintedCard.getSubtypes());
         tokenCard.setCardText(imprintedCard.getCardText());
 
-        // Copy keywords and add haste
+        // Copy keywords (conditionally add haste)
         Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
         if (imprintedCard.getKeywords() != null) {
             keywords.addAll(imprintedCard.getKeywords());
         }
-        keywords.add(Keyword.HASTE);
+        if (effect.grantHaste()) {
+            keywords.add(Keyword.HASTE);
+        }
         tokenCard.setKeywords(keywords);
 
         // Copy effects and activated abilities (copiable characteristics per CR 707.2)
@@ -507,10 +510,14 @@ public class PermanentControlResolutionService {
         Permanent tokenPermanent = new Permanent(tokenCard);
         gameHelper.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
 
-        // Schedule for exile at beginning of next end step
-        gameData.pendingTokenExilesAtEndStep.add(tokenPermanent.getId());
+        // Conditionally schedule for exile at beginning of next end step
+        if (effect.exileAtEndStep()) {
+            gameData.pendingTokenExilesAtEndStep.add(tokenPermanent.getId());
+        }
 
-        String logMsg = "A token copy of " + imprintedCard.getName() + " is created with haste.";
+        String logMsg = effect.grantHaste()
+                ? "A token copy of " + imprintedCard.getName() + " is created with haste."
+                : "A token copy of " + imprintedCard.getName() + " is created.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - Token copy of {} created via {}", gameData.id, imprintedCard.getName(), sourcePermanent.getCard().getName());
 

@@ -193,6 +193,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Charge counter trigger + activated token | `g/GolemFoundry.java` | MayEffect(PutChargeCounterOnSelfOnArtifactCastEffect) on ON_ANY_PLAYER_CASTS_SPELL + activated RemoveChargeCountersFromSourceCost(3) + CreateCreatureTokenEffect |
 | Enters with fixed charge counters + tap-remove ability | `n/NecrogenCenser.java` | EnterWithFixedChargeCountersEffect(2) + tap+RemoveChargeCountersFromSourceCost(1)+TargetPlayerLosesLifeAndControllerGainsLifeEffect |
 | Type-changing tap ability | `l/LiquimetalCoating.java` | Tap: AddCardTypeToTargetPermanentEffect(ARTIFACT) — target permanent becomes artifact until end of turn |
+| Hand-imprint + X-cost token | `p/PrototypePortal.java` | ON_ENTER_BATTLEFIELD MayEffect(ExileArtifactFromHandToImprintEffect) + activated {X}+tap CreateTokenCopyOfImprintedCardEffect(false, false) — imprint artifact from hand on ETB, pay X (imprinted card's mana cost) to create permanent token copy |
 
 ## Equipment
 
