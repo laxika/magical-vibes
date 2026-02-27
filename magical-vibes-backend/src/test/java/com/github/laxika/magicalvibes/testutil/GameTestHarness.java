@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.service.DestructionResolutionService;
 import com.github.laxika.magicalvibes.service.DraftRegistry;
 import com.github.laxika.magicalvibes.service.ExileResolutionService;
 import com.github.laxika.magicalvibes.service.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.AuraAttachmentService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;

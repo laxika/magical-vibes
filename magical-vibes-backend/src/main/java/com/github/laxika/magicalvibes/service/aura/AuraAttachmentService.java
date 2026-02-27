@@ -1,4 +1,8 @@
-package com.github.laxika.magicalvibes.service;
+package com.github.laxika.magicalvibes.service.aura;
+
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -14,6 +18,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Handles aura and attachment lifecycle: removing orphaned auras when their target leaves the
+ * battlefield, detaching equipment, and returning stolen creatures to their owners when the
+ * controlling effect ends.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -23,6 +32,14 @@ public class AuraAttachmentService {
     private final GameBroadcastService gameBroadcastService;
     private final GameHelper gameHelper;
 
+    /**
+     * Removes auras whose enchanted permanent no longer exists and detaches equipment whose
+     * equipped creature has left the battlefield (CR 303.4c, CR 301.5c). Orphaned auras are
+     * put into their owner's graveyard; equipment simply becomes unattached. After cleanup,
+     * also returns permanently-stolen creatures whose controlling effect has ended.
+     *
+     * @param gameData the current game state
+     */
     public void removeOrphanedAuras(GameData gameData) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -50,6 +67,15 @@ public class AuraAttachmentService {
         returnStolenCreatures(gameData, false);
     }
 
+    /**
+     * Returns stolen creatures to their original owners when the controlling effect has ended.
+     * Creatures kept by a {@link ControlEnchantedCreatureEffect} aura or an enchantment-dependent
+     * steal that is still enchanted are not returned. Permanent control changes are also skipped.
+     *
+     * @param gameData              the current game state
+     * @param includeUntilEndOfTurn if {@code true}, only processes until-end-of-turn steals
+     *                              (e.g. Threaten); if {@code false}, only processes non-temporary steals
+     */
     public void returnStolenCreatures(GameData gameData, boolean includeUntilEndOfTurn) {
         if (gameData.stolenCreatures.isEmpty()) return;
 
