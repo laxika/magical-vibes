@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndControllerLos
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndBoostSelfByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeTargetThenRevealUntilTypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -52,6 +53,12 @@ public class DestructionTargetValidators {
 
     @ValidatesTarget(DestroyTargetPermanentAndBoostSelfByManaValueEffect.class)
     public void validateDestroyTargetArtifactAndBoostSelfByManaValue(TargetValidationContext ctx) {
+        Permanent target = tvs.requireBattlefieldTarget(ctx);
+        tvs.checkProtection(ctx, target);
+    }
+
+    @ValidatesTarget(SacrificeTargetThenRevealUntilTypeToBattlefieldEffect.class)
+    public void validateSacrificeTargetThenRevealUntilType(TargetValidationContext ctx) {
         Permanent target = tvs.requireBattlefieldTarget(ctx);
         tvs.checkProtection(ctx, target);
     }

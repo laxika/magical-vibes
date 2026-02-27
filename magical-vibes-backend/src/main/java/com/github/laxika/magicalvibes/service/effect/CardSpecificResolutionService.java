@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.GenesisWaveEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KothEmblemEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeTargetThenRevealUntilTypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -26,6 +27,8 @@ import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
+import com.github.laxika.magicalvibes.service.LegendRuleService;
+import com.github.laxika.magicalvibes.service.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -40,6 +43,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -51,6 +55,8 @@ public class CardSpecificResolutionService {
     private final GameBroadcastService gameBroadcastService;
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
+    private final PermanentRemovalService permanentRemovalService;
+    private final LegendRuleService legendRuleService;
 
     @HandlesEffect(WarpWorldEffect.class)
     void resolveWarpWorld(GameData gameData, StackEntry entry) {
@@ -301,6 +307,107 @@ public class CardSpecificResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gets Koth emblem", gameData.id, playerName);
+    }
+
+    @HandlesEffect(SacrificeTargetThenRevealUntilTypeToBattlefieldEffect.class)
+    void resolveSacrificeTargetThenRevealUntilTypeToBattlefield(GameData gameData, StackEntry entry,
+                                                                 SacrificeTargetThenRevealUntilTypeToBattlefieldEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        UUID targetControllerId = gameQueryService.findPermanentController(gameData, entry.getTargetPermanentId());
+        if (targetControllerId == null) {
+            return;
+        }
+
+        String targetControllerName = gameData.playerIdToName.get(targetControllerId);
+        String targetName = target.getCard().getName();
+
+        // Sacrifice the targeted permanent
+        permanentRemovalService.removePermanentToGraveyard(gameData, target);
+        String sacrificeLog = targetControllerName + " sacrifices " + targetName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, sacrificeLog);
+
+        // Reveal cards from the top of the controller's library until a matching card is found
+        List<Card> deck = gameData.playerDecks.get(targetControllerId);
+        List<Card> revealedCards = new ArrayList<>();
+        Card foundCard = null;
+
+        while (!deck.isEmpty()) {
+            Card card = deck.removeFirst();
+            revealedCards.add(card);
+            if (cardMatchesAnyType(card, effect.cardTypes())) {
+                foundCard = card;
+                break;
+            }
+        }
+
+        if (revealedCards.isEmpty()) {
+            String emptyLog = targetControllerName + "'s library is empty — no cards are revealed.";
+            gameBroadcastService.logAndBroadcast(gameData, emptyLog);
+            return;
+        }
+
+        String revealedNames = revealedCards.stream().map(Card::getName).collect(Collectors.joining(", "));
+        String revealLog = targetControllerName + " reveals " + revealedNames + ".";
+        gameBroadcastService.logAndBroadcast(gameData, revealLog);
+
+        if (foundCard == null) {
+            // No matching card found — shuffle all revealed cards back into the library
+            deck.addAll(revealedCards);
+            Collections.shuffle(deck);
+            String noMatchLog = targetControllerName + " reveals their entire library — no matching card found. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, noMatchLog);
+            return;
+        }
+
+        // Put the found card onto the battlefield under the controller's control
+        Permanent perm = new Permanent(foundCard);
+        gameHelper.putPermanentOntoBattlefield(gameData, targetControllerId, perm);
+
+        String enterLog = foundCard.getName() + " enters the battlefield under " + targetControllerName + "'s control.";
+        gameBroadcastService.logAndBroadcast(gameData, enterLog);
+
+        // Handle ETB effects for creatures
+        boolean isCreature = foundCard.getType() == CardType.CREATURE
+                || foundCard.getAdditionalTypes().contains(CardType.CREATURE);
+        if (isCreature) {
+            gameHelper.handleCreatureEnteredBattlefield(gameData, targetControllerId, foundCard, null, false);
+        }
+
+        // Handle planeswalkers
+        if (foundCard.getType() == CardType.PLANESWALKER && foundCard.getLoyalty() != null) {
+            perm.setLoyaltyCounters(foundCard.getLoyalty());
+            perm.setSummoningSick(false);
+        }
+
+        // Shuffle all other revealed cards back into the library
+        revealedCards.remove(foundCard);
+        if (!revealedCards.isEmpty()) {
+            deck.addAll(revealedCards);
+        }
+        Collections.shuffle(deck);
+
+        String shuffleLog = targetControllerName + " shuffles their library.";
+        gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
+
+        // Check legend rule
+        if (!gameData.interaction.isAwaitingInput()) {
+            legendRuleService.checkLegendRule(gameData, targetControllerId);
+        }
+
+        log.info("Game {} - {} sacrificed {}, {} enters the battlefield",
+                gameData.id, targetControllerName, targetName, foundCard.getName());
+    }
+
+    private boolean cardMatchesAnyType(Card card, Set<CardType> types) {
+        if (types.contains(card.getType())) return true;
+        for (CardType additionalType : card.getAdditionalTypes()) {
+            if (types.contains(additionalType)) return true;
+        }
+        return false;
     }
 
     private List<UUID> findLegalAuraAttachments(GameData gameData, Card auraCard, UUID auraControllerId, List<UUID> baseTargetIds) {
