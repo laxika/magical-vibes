@@ -344,6 +344,19 @@ public class CombatService {
         sessionManager.sendToPlayer(getEffectiveRecipient(gameData, activeId), new AvailableAttackersMessage(attackable, mustAttack));
     }
 
+    /**
+     * Validates and processes a player's attacker declaration. Checks that the declaring player is
+     * the active player, validates indices against legal attackers, enforces attack requirements
+     * (CR 508.1d), deducts any attack tax (e.g. Ghostly Prison), taps non-vigilance attackers,
+     * and collects ON_ATTACK triggers with APNAP ordering.
+     *
+     * @param gameData       the current game state
+     * @param player         the player declaring attackers
+     * @param attackerIndices battlefield indices of creatures to declare as attackers
+     * @return {@link CombatResult} indicating how the game should proceed
+     * @throws IllegalStateException if not awaiting attacker declaration, the player is not active,
+     *                               indices are invalid, or attack requirements are not satisfied
+     */
     public CombatResult declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.ATTACKER_DECLARATION)) {
             throw new IllegalStateException("Not awaiting attacker declaration");
@@ -447,6 +460,15 @@ public class CombatService {
         return CombatResult.AUTO_PASS_ONLY;
     }
 
+    /**
+     * Initiates the declare-blockers step. Computes which defending creatures can block and which
+     * attackers are blockable (filtering out creatures with "can't be blocked" abilities), then sends
+     * an {@link AvailableBlockersMessage} with legal block pairs to the defending player. If no
+     * blockers or no blockable attackers exist, the step is skipped automatically.
+     *
+     * @param gameData the current game state
+     * @return {@link CombatResult} indicating how the game should proceed
+     */
     public CombatResult handleDeclareBlockersStep(GameData gameData) {
         UUID activeId = gameData.activePlayerId;
         UUID defenderId = gameQueryService.getOpponentId(gameData, activeId);
@@ -472,6 +494,20 @@ public class CombatService {
         return CombatResult.DONE;
     }
 
+    /**
+     * Validates and processes a player's blocker declaration. Checks that the declaring player is
+     * the defender, validates each blocker-attacker pair against legal blocks (evasion, protection,
+     * menace, max-blockers restrictions), enforces "must block" requirements (lure effects and
+     * per-creature must-block), marks creatures as blocking, and collects ON_BLOCK and
+     * ON_BECOMES_BLOCKED triggers with APNAP ordering.
+     *
+     * @param gameData           the current game state
+     * @param player             the defending player declaring blockers
+     * @param blockerAssignments list of blocker-to-attacker index pairings
+     * @return {@link CombatResult} indicating how the game should proceed
+     * @throws IllegalStateException if not awaiting blocker declaration, the player is not the
+     *                               defender, or any assignment is invalid
+     */
     public CombatResult declareBlockers(GameData gameData, Player player, List<BlockerAssignment> blockerAssignments) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.BLOCKER_DECLARATION)) {
             throw new IllegalStateException("Not awaiting blocker declaration");
@@ -862,6 +898,17 @@ public class CombatService {
 
     // ===== Combat damage resolution =====
 
+    /**
+     * Resolves combat damage for the current combat phase. Handles first strike and regular damage
+     * phases, manual damage assignment (for trample / multiple blockers), damage redirection
+     * (e.g. Kjeldoran Royal Guard), lifelink, infect (poison counters and -1/-1 counters),
+     * deathtouch, prevention shields, and creature death. After damage is applied, processes
+     * combat damage triggers (ON_COMBAT_DAMAGE_TO_PLAYER, ON_COMBAT_DAMAGE_TO_CREATURE) and
+     * checks win conditions.
+     *
+     * @param gameData the current game state
+     * @return {@link CombatResult} indicating how the game should proceed
+     */
     public CombatResult resolveCombatDamage(GameData gameData) {
         if (gameData.preventAllCombatDamage) {
             String logEntry = "All combat damage is prevented.";
