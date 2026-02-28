@@ -870,49 +870,35 @@ public class CombatService {
             }
         }
 
-        int damageToDefendingPlayer = 0;
-        int poisonDamageToDefendingPlayer = 0;
-        int infectDamageRedirectedToGuard = 0;
-        Set<Integer> deadAttackerIndices = new TreeSet<>(Collections.reverseOrder());
-        Set<Integer> deadDefenderIndices = new TreeSet<>(Collections.reverseOrder());
-
-        // Track cumulative damage on each creature
-        Map<Integer, Integer> atkDamageTaken = new HashMap<>();
-        Map<Integer, Integer> defDamageTaken = new HashMap<>();
-        Set<Integer> deathtouchDamagedAttackerIndices = new HashSet<>();
-        Set<Integer> deathtouchDamagedDefenderIndices = new HashSet<>();
-        Map<Permanent, Integer> combatDamageDealt = new HashMap<>();
-        Map<Permanent, Integer> combatDamageDealtToPlayer = new HashMap<>();
-        Map<Permanent, List<UUID>> combatDamageDealtToCreatures = new HashMap<>();
-        Map<Permanent, UUID> combatDamageDealerControllers = new HashMap<>();
+        CombatDamageState state = new CombatDamageState();
 
         // Restore phase 1 state if re-entering after damage assignment
         if (gameData.combatDamagePhase1Complete) {
             CombatDamagePhase1State p1 = gameData.combatDamagePhase1State;
-            deadAttackerIndices.addAll(p1.deadAttackerIndices);
-            deadDefenderIndices.addAll(p1.deadDefenderIndices);
-            atkDamageTaken.putAll(p1.atkDamageTaken);
-            defDamageTaken.putAll(p1.defDamageTaken);
-            damageToDefendingPlayer = p1.damageToDefendingPlayer;
-            damageRedirectedToGuard = p1.damageRedirectedToGuard;
+            state.deadAttackerIndices.addAll(p1.deadAttackerIndices);
+            state.deadDefenderIndices.addAll(p1.deadDefenderIndices);
+            state.atkDamageTaken.putAll(p1.atkDamageTaken);
+            state.defDamageTaken.putAll(p1.defDamageTaken);
+            state.damageToDefendingPlayer = p1.damageToDefendingPlayer;
+            state.damageRedirectedToGuard = p1.damageRedirectedToGuard;
             for (var e : p1.combatDamageDealt.entrySet()) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, e.getKey());
-                if (perm != null) combatDamageDealt.put(perm, e.getValue());
+                if (perm != null) state.combatDamageDealt.put(perm, e.getValue());
             }
             for (var e : p1.combatDamageDealtToPlayer.entrySet()) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, e.getKey());
-                if (perm != null) combatDamageDealtToPlayer.put(perm, e.getValue());
+                if (perm != null) state.combatDamageDealtToPlayer.put(perm, e.getValue());
             }
             for (var e : p1.combatDamageDealtToCreatures.entrySet()) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, e.getKey());
-                if (perm != null) combatDamageDealtToCreatures.put(perm, new ArrayList<>(e.getValue()));
+                if (perm != null) state.combatDamageDealtToCreatures.put(perm, new ArrayList<>(e.getValue()));
             }
             for (var e : p1.combatDamageDealerControllers.entrySet()) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, e.getKey());
-                if (perm != null) combatDamageDealerControllers.put(perm, e.getValue());
+                if (perm != null) state.combatDamageDealerControllers.put(perm, e.getValue());
             }
-            deathtouchDamagedAttackerIndices.addAll(p1.deathtouchDamagedAttackerIndices);
-            deathtouchDamagedDefenderIndices.addAll(p1.deathtouchDamagedDefenderIndices);
+            state.deathtouchDamagedAttackerIndices.addAll(p1.deathtouchDamagedAttackerIndices);
+            state.deathtouchDamagedDefenderIndices.addAll(p1.deathtouchDamagedDefenderIndices);
         }
 
         // Phase 1: First strike damage (skip on re-entry)
@@ -946,21 +932,21 @@ public class CombatService {
                         boolean atkHasInfect = gameQueryService.hasKeyword(gameData, atk, Keyword.INFECT);
                         if (redirectTarget != null) {
                             if (atkHasInfect) {
-                                infectDamageRedirectedToGuard += power;
+                                state.infectDamageRedirectedToGuard += power;
                             } else {
-                                damageRedirectedToGuard += power;
+                                state.damageRedirectedToGuard += power;
                             }
                         } else if (gameHelper.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
                             // Source-specific damage prevention — skip first-strike damage
                         } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getEffectiveColor())) {
                             if (atkHasInfect) {
-                                poisonDamageToDefendingPlayer += power;
+                                state.poisonDamageToDefendingPlayer += power;
                             } else {
-                                damageToDefendingPlayer += power;
+                                state.damageToDefendingPlayer += power;
                             }
                         }
-                        combatDamageDealt.merge(atk, power, Integer::sum);
-                        combatDamageDealtToPlayer.merge(atk, power, Integer::sum);
+                        state.combatDamageDealt.merge(atk, power, Integer::sum);
+                        state.combatDamageDealtToPlayer.merge(atk, power, Integer::sum);
                     }
                 } else {
                     // First strike attacker deals damage to blockers
@@ -971,15 +957,14 @@ public class CombatService {
                         for (int blkIdx : blkIndices) {
                             Permanent blk = defBf.get(blkIdx);
                             int lethalNeeded = atkHasDeathtouch
-                                    ? Math.max(0, 1 - defDamageTaken.getOrDefault(blkIdx, 0))
-                                    : gameQueryService.getEffectiveToughness(gameData, blk) - defDamageTaken.getOrDefault(blkIdx, 0);
+                                    ? Math.max(0, 1 - state.defDamageTaken.getOrDefault(blkIdx, 0))
+                                    : gameQueryService.getEffectiveToughness(gameData, blk) - state.defDamageTaken.getOrDefault(blkIdx, 0);
                             int dmg = Math.min(remaining, lethalNeeded);
                             if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getEffectiveColor())) {
                                 int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
-                                applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, defDamageTaken, deathtouchDamagedDefenderIndices);
-                                combatDamageDealt.merge(atk, actualDmg, Integer::sum);
-                                recordCombatDamageToCreature(gameData, combatDamageDealtToCreatures, combatDamageDealerControllers,
-                                        atk, activeId, blk, actualDmg);
+                                applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, state.defDamageTaken, state.deathtouchDamagedDefenderIndices);
+                                state.combatDamageDealt.merge(atk, actualDmg, Integer::sum);
+                                recordCombatDamageToCreature(gameData, state, atk, activeId, blk, actualDmg);
                             }
                             remaining -= dmg;
                         }
@@ -988,21 +973,21 @@ public class CombatService {
                             int doubledRemaining = gameQueryService.applyDamageMultiplier(gameData, remaining);
                             if (redirectTarget != null) {
                                 if (atkHasInfect) {
-                                    infectDamageRedirectedToGuard += doubledRemaining;
+                                    state.infectDamageRedirectedToGuard += doubledRemaining;
                                 } else {
-                                    damageRedirectedToGuard += doubledRemaining;
+                                    state.damageRedirectedToGuard += doubledRemaining;
                                 }
                             } else if (gameHelper.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
                                 // Source-specific damage prevention — skip first-strike trample damage
                             } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getEffectiveColor())) {
                                 if (atkHasInfect) {
-                                    poisonDamageToDefendingPlayer += doubledRemaining;
+                                    state.poisonDamageToDefendingPlayer += doubledRemaining;
                                 } else {
-                                    damageToDefendingPlayer += doubledRemaining;
+                                    state.damageToDefendingPlayer += doubledRemaining;
                                 }
                             }
-                            combatDamageDealt.merge(atk, doubledRemaining, Integer::sum);
-                            combatDamageDealtToPlayer.merge(atk, doubledRemaining, Integer::sum);
+                            state.combatDamageDealt.merge(atk, doubledRemaining, Integer::sum);
+                            state.combatDamageDealtToPlayer.merge(atk, doubledRemaining, Integer::sum);
                         }
                     }
                 }
@@ -1014,10 +999,9 @@ public class CombatService {
                                 && !gameQueryService.isPreventedFromDealingDamage(gameData, blk)
                                 && !gameQueryService.hasProtectionFrom(gameData, atk, blk.getEffectiveColor())) {
                             int actualDmg = gameQueryService.applyDamageMultiplier(gameData, phase1BlockerDamage.getOrDefault(blkIdx, 0));
-                            applyCombatCreatureDamage(gameData, blk, atk, atkIdx, actualDmg, atkDamageTaken, deathtouchDamagedAttackerIndices);
-                            combatDamageDealt.merge(blk, actualDmg, Integer::sum);
-                            recordCombatDamageToCreature(gameData, combatDamageDealtToCreatures, combatDamageDealerControllers,
-                                    blk, defenderId, atk, actualDmg);
+                            applyCombatCreatureDamage(gameData, blk, atk, atkIdx, actualDmg, state.atkDamageTaken, state.deathtouchDamagedAttackerIndices);
+                            state.combatDamageDealt.merge(blk, actualDmg, Integer::sum);
+                            recordCombatDamageToCreature(gameData, state, blk, defenderId, atk, actualDmg);
                         }
                     }
                 }
@@ -1025,31 +1009,31 @@ public class CombatService {
 
             // Determine phase 1 casualties (apply prevention shields)
             for (int atkIdx : attackingIndices) {
-                int dmg = atkDamageTaken.getOrDefault(atkIdx, 0);
+                int dmg = state.atkDamageTaken.getOrDefault(atkIdx, 0);
                 dmg = gameHelper.applyCreaturePreventionShield(gameData, atkBf.get(atkIdx), dmg);
-                atkDamageTaken.put(atkIdx, dmg);
+                state.atkDamageTaken.put(atkIdx, dmg);
                 int effToughness = gameQueryService.getEffectiveToughness(gameData, atkBf.get(atkIdx));
                 if (effToughness <= 0) {
                     // CR 704.5f: 0 toughness from -1/-1 counters — dies regardless of indestructible
-                    deadAttackerIndices.add(atkIdx);
-                } else if ((dmg >= effToughness || (dmg >= 1 && deathtouchDamagedAttackerIndices.contains(atkIdx)))
+                    state.deadAttackerIndices.add(atkIdx);
+                } else if ((dmg >= effToughness || (dmg >= 1 && state.deathtouchDamagedAttackerIndices.contains(atkIdx)))
                         && !gameQueryService.hasKeyword(gameData, atkBf.get(atkIdx), Keyword.INDESTRUCTIBLE)
                         && !gameHelper.tryRegenerate(gameData, atkBf.get(atkIdx))) {
-                    deadAttackerIndices.add(atkIdx);
+                    state.deadAttackerIndices.add(atkIdx);
                 }
             }
             for (List<Integer> blkIndices : blockerMap.values()) {
                 for (int blkIdx : blkIndices) {
-                    int dmg = defDamageTaken.getOrDefault(blkIdx, 0);
+                    int dmg = state.defDamageTaken.getOrDefault(blkIdx, 0);
                     dmg = gameHelper.applyCreaturePreventionShield(gameData, defBf.get(blkIdx), dmg);
-                    defDamageTaken.put(blkIdx, dmg);
+                    state.defDamageTaken.put(blkIdx, dmg);
                     int effToughness = gameQueryService.getEffectiveToughness(gameData, defBf.get(blkIdx));
                     if (effToughness <= 0) {
-                        deadDefenderIndices.add(blkIdx);
-                    } else if ((dmg >= effToughness || (dmg >= 1 && deathtouchDamagedDefenderIndices.contains(blkIdx)))
+                        state.deadDefenderIndices.add(blkIdx);
+                    } else if ((dmg >= effToughness || (dmg >= 1 && state.deathtouchDamagedDefenderIndices.contains(blkIdx)))
                             && !gameQueryService.hasKeyword(gameData, defBf.get(blkIdx), Keyword.INDESTRUCTIBLE)
                             && !gameHelper.tryRegenerate(gameData, defBf.get(blkIdx))) {
-                        deadDefenderIndices.add(blkIdx);
+                        state.deadDefenderIndices.add(blkIdx);
                     }
                 }
             }
@@ -1060,25 +1044,21 @@ public class CombatService {
             List<Integer> needsManual = new ArrayList<>();
             for (var bEntry : blockerMap.entrySet()) {
                 int bAtkIdx = bEntry.getKey();
-                if (deadAttackerIndices.contains(bAtkIdx)) continue;
+                if (state.deadAttackerIndices.contains(bAtkIdx)) continue;
                 Permanent bAtk = atkBf.get(bAtkIdx);
                 boolean bAtkSkipPhase2 = gameQueryService.hasKeyword(gameData, bAtk, Keyword.FIRST_STRIKE)
                         && !gameQueryService.hasKeyword(gameData, bAtk, Keyword.DOUBLE_STRIKE);
                 if (bAtkSkipPhase2) continue;
                 if (gameQueryService.isPreventedFromDealingDamage(gameData, bAtk)) continue;
                 List<Integer> livingBlockers = bEntry.getValue().stream()
-                        .filter(i -> !deadDefenderIndices.contains(i))
+                        .filter(i -> !state.deadDefenderIndices.contains(i))
                         .toList();
                 if (needsManualDamageAssignment(gameData, bAtk, livingBlockers)) {
                     needsManual.add(bAtkIdx);
                 }
             }
             if (!needsManual.isEmpty()) {
-                gameData.combatDamagePhase1State = savePhase1State(deadAttackerIndices, deadDefenderIndices,
-                        atkDamageTaken, defDamageTaken, combatDamageDealt, combatDamageDealtToPlayer,
-                        combatDamageDealtToCreatures, combatDamageDealerControllers,
-                        damageToDefendingPlayer, damageRedirectedToGuard, blockerMap, anyFirstStrike,
-                        deathtouchDamagedAttackerIndices, deathtouchDamagedDefenderIndices);
+                gameData.combatDamagePhase1State = savePhase1State(state, blockerMap, anyFirstStrike);
                 gameData.combatDamagePhase1Complete = true;
                 gameData.combatDamagePendingIndices.addAll(needsManual);
                 sendNextCombatDamageAssignment(gameData, atkBf, defBf, activeId, defenderId);
@@ -1091,7 +1071,7 @@ public class CombatService {
         Map<Integer, Integer> phase2BlockerDamage = new HashMap<>();
         for (List<Integer> blkList : blockerMap.values()) {
             for (int blkIdx : blkList) {
-                if (!deadDefenderIndices.contains(blkIdx)) {
+                if (!state.deadDefenderIndices.contains(blkIdx)) {
                     phase2BlockerDamage.putIfAbsent(blkIdx,
                             gameQueryService.getEffectiveCombatDamage(gameData, defBf.get(blkIdx)));
                 }
@@ -1102,7 +1082,7 @@ public class CombatService {
         for (var entry : blockerMap.entrySet()) {
             int atkIdx = entry.getKey();
             List<Integer> blkIndices = entry.getValue();
-            if (deadAttackerIndices.contains(atkIdx)) continue;
+            if (state.deadAttackerIndices.contains(atkIdx)) continue;
 
             Permanent atk = atkBf.get(atkIdx);
             boolean atkSkipPhase2 = gameQueryService.hasKeyword(gameData, atk, Keyword.FIRST_STRIKE)
@@ -1123,31 +1103,30 @@ public class CombatService {
                             int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
                             if (redirectTarget != null) {
                                 if (atkHasInfect) {
-                                    infectDamageRedirectedToGuard += actualDmg;
+                                    state.infectDamageRedirectedToGuard += actualDmg;
                                 } else {
-                                    damageRedirectedToGuard += actualDmg;
+                                    state.damageRedirectedToGuard += actualDmg;
                                 }
                             } else if (gameHelper.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
                                 // Source-specific damage prevention — skip player-assigned damage
                             } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getEffectiveColor())) {
                                 if (atkHasInfect) {
-                                    poisonDamageToDefendingPlayer += actualDmg;
+                                    state.poisonDamageToDefendingPlayer += actualDmg;
                                 } else {
-                                    damageToDefendingPlayer += actualDmg;
+                                    state.damageToDefendingPlayer += actualDmg;
                                 }
                             }
-                            combatDamageDealt.merge(atk, actualDmg, Integer::sum);
-                            combatDamageDealtToPlayer.merge(atk, actualDmg, Integer::sum);
+                            state.combatDamageDealt.merge(atk, actualDmg, Integer::sum);
+                            state.combatDamageDealtToPlayer.merge(atk, actualDmg, Integer::sum);
                         } else {
                             for (int blkIdx : blkIndices) {
                                 Permanent blk = defBf.get(blkIdx);
                                 if (blk.getId().equals(targetId)) {
                                     if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getEffectiveColor())) {
                                         int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
-                                        applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, defDamageTaken, deathtouchDamagedDefenderIndices);
-                                        combatDamageDealt.merge(atk, actualDmg, Integer::sum);
-                                        recordCombatDamageToCreature(gameData, combatDamageDealtToCreatures, combatDamageDealerControllers,
-                                                atk, activeId, blk, actualDmg);
+                                        applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, state.defDamageTaken, state.deathtouchDamagedDefenderIndices);
+                                        state.combatDamageDealt.merge(atk, actualDmg, Integer::sum);
+                                        recordCombatDamageToCreature(gameData, state, atk, activeId, blk, actualDmg);
                                     }
                                     break;
                                 }
@@ -1161,21 +1140,21 @@ public class CombatService {
                     int power = gameQueryService.applyDamageMultiplier(gameData, gameQueryService.getEffectiveCombatDamage(gameData, atk));
                     if (redirectTarget != null) {
                         if (atkHasInfect) {
-                            infectDamageRedirectedToGuard += power;
+                            state.infectDamageRedirectedToGuard += power;
                         } else {
-                            damageRedirectedToGuard += power;
+                            state.damageRedirectedToGuard += power;
                         }
                     } else if (gameHelper.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
                     // Source-specific damage prevention — skip this attacker's damage
                 } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getEffectiveColor())) {
                         if (atkHasInfect) {
-                            poisonDamageToDefendingPlayer += power;
+                            state.poisonDamageToDefendingPlayer += power;
                         } else {
-                            damageToDefendingPlayer += power;
+                            state.damageToDefendingPlayer += power;
                         }
                     }
-                    combatDamageDealt.merge(atk, power, Integer::sum);
-                    combatDamageDealtToPlayer.merge(atk, power, Integer::sum);
+                    state.combatDamageDealt.merge(atk, power, Integer::sum);
+                    state.combatDamageDealtToPlayer.merge(atk, power, Integer::sum);
                 }
             } else {
                 // Attacker deals damage to surviving blockers (skip first-strike-only, allow double strike)
@@ -1183,18 +1162,17 @@ public class CombatService {
                     boolean atkHasDeathtouchP2 = gameQueryService.hasKeyword(gameData, atk, Keyword.DEATHTOUCH);
                     int remaining = gameQueryService.getEffectiveCombatDamage(gameData, atk);
                     for (int blkIdx : blkIndices) {
-                        if (deadDefenderIndices.contains(blkIdx)) continue;
+                        if (state.deadDefenderIndices.contains(blkIdx)) continue;
                         Permanent blk = defBf.get(blkIdx);
                         int remainingToughness = atkHasDeathtouchP2
-                                ? Math.max(0, 1 - defDamageTaken.getOrDefault(blkIdx, 0))
-                                : gameQueryService.getEffectiveToughness(gameData, blk) - defDamageTaken.getOrDefault(blkIdx, 0);
+                                ? Math.max(0, 1 - state.defDamageTaken.getOrDefault(blkIdx, 0))
+                                : gameQueryService.getEffectiveToughness(gameData, blk) - state.defDamageTaken.getOrDefault(blkIdx, 0);
                         int dmg = Math.min(remaining, Math.max(0, remainingToughness));
                         if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getEffectiveColor())) {
                             int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
-                            applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, defDamageTaken, deathtouchDamagedDefenderIndices);
-                            combatDamageDealt.merge(atk, actualDmg, Integer::sum);
-                            recordCombatDamageToCreature(gameData, combatDamageDealtToCreatures, combatDamageDealerControllers,
-                                    atk, activeId, blk, actualDmg);
+                            applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, state.defDamageTaken, state.deathtouchDamagedDefenderIndices);
+                            state.combatDamageDealt.merge(atk, actualDmg, Integer::sum);
+                            recordCombatDamageToCreature(gameData, state, atk, activeId, blk, actualDmg);
                         }
                         remaining -= dmg;
                     }
@@ -1203,38 +1181,37 @@ public class CombatService {
                         int doubledRemaining = gameQueryService.applyDamageMultiplier(gameData, remaining);
                         if (redirectTarget != null) {
                             if (atkHasInfect) {
-                                infectDamageRedirectedToGuard += doubledRemaining;
+                                state.infectDamageRedirectedToGuard += doubledRemaining;
                             } else {
-                                damageRedirectedToGuard += doubledRemaining;
+                                state.damageRedirectedToGuard += doubledRemaining;
                             }
                         } else if (gameHelper.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
                             // Source-specific damage prevention — skip trample damage
                         } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getEffectiveColor())) {
                             if (atkHasInfect) {
-                                poisonDamageToDefendingPlayer += doubledRemaining;
+                                state.poisonDamageToDefendingPlayer += doubledRemaining;
                             } else {
-                                damageToDefendingPlayer += doubledRemaining;
+                                state.damageToDefendingPlayer += doubledRemaining;
                             }
                         }
-                        combatDamageDealt.merge(atk, doubledRemaining, Integer::sum);
-                        combatDamageDealtToPlayer.merge(atk, doubledRemaining, Integer::sum);
+                        state.combatDamageDealt.merge(atk, doubledRemaining, Integer::sum);
+                        state.combatDamageDealtToPlayer.merge(atk, doubledRemaining, Integer::sum);
                     }
                 }
             }
             if (!blkIndices.isEmpty()) {
                 // Surviving blockers deal damage to attacker (skip first-strike-only, allow double strike)
                 for (int blkIdx : blkIndices) {
-                    if (deadDefenderIndices.contains(blkIdx)) continue;
+                    if (state.deadDefenderIndices.contains(blkIdx)) continue;
                     Permanent blk = defBf.get(blkIdx);
                     boolean blkSkipPhase2 = gameQueryService.hasKeyword(gameData, blk, Keyword.FIRST_STRIKE)
                             && !gameQueryService.hasKeyword(gameData, blk, Keyword.DOUBLE_STRIKE);
                     if (!blkSkipPhase2 && !gameQueryService.isPreventedFromDealingDamage(gameData, blk)
                             && !gameQueryService.hasProtectionFrom(gameData, atk, blk.getEffectiveColor())) {
                         int actualDmg = gameQueryService.applyDamageMultiplier(gameData, phase2BlockerDamage.getOrDefault(blkIdx, 0));
-                        applyCombatCreatureDamage(gameData, blk, atk, atkIdx, actualDmg, atkDamageTaken, deathtouchDamagedAttackerIndices);
-                        combatDamageDealt.merge(blk, actualDmg, Integer::sum);
-                        recordCombatDamageToCreature(gameData, combatDamageDealtToCreatures, combatDamageDealerControllers,
-                                blk, defenderId, atk, actualDmg);
+                        applyCombatCreatureDamage(gameData, blk, atk, atkIdx, actualDmg, state.atkDamageTaken, state.deathtouchDamagedAttackerIndices);
+                        state.combatDamageDealt.merge(blk, actualDmg, Integer::sum);
+                        recordCombatDamageToCreature(gameData, state, blk, defenderId, atk, actualDmg);
                     }
                 }
             }
@@ -1242,51 +1219,51 @@ public class CombatService {
 
         // Determine phase 2 casualties (apply prevention shields)
         for (int atkIdx : attackingIndices) {
-            if (deadAttackerIndices.contains(atkIdx)) continue;
-            int dmg = atkDamageTaken.getOrDefault(atkIdx, 0);
+            if (state.deadAttackerIndices.contains(atkIdx)) continue;
+            int dmg = state.atkDamageTaken.getOrDefault(atkIdx, 0);
             dmg = gameHelper.applyCreaturePreventionShield(gameData, atkBf.get(atkIdx), dmg);
-            atkDamageTaken.put(atkIdx, dmg);
+            state.atkDamageTaken.put(atkIdx, dmg);
             int effToughness = gameQueryService.getEffectiveToughness(gameData, atkBf.get(atkIdx));
             if (effToughness <= 0) {
-                deadAttackerIndices.add(atkIdx);
-            } else if ((dmg >= effToughness || (dmg >= 1 && deathtouchDamagedAttackerIndices.contains(atkIdx)))
+                state.deadAttackerIndices.add(atkIdx);
+            } else if ((dmg >= effToughness || (dmg >= 1 && state.deathtouchDamagedAttackerIndices.contains(atkIdx)))
                     && !gameQueryService.hasKeyword(gameData, atkBf.get(atkIdx), Keyword.INDESTRUCTIBLE)
                     && !gameHelper.tryRegenerate(gameData, atkBf.get(atkIdx))) {
-                deadAttackerIndices.add(atkIdx);
+                state.deadAttackerIndices.add(atkIdx);
             }
         }
         for (List<Integer> blkIndices : blockerMap.values()) {
             for (int blkIdx : blkIndices) {
-                if (deadDefenderIndices.contains(blkIdx)) continue;
-                int dmg = defDamageTaken.getOrDefault(blkIdx, 0);
+                if (state.deadDefenderIndices.contains(blkIdx)) continue;
+                int dmg = state.defDamageTaken.getOrDefault(blkIdx, 0);
                 dmg = gameHelper.applyCreaturePreventionShield(gameData, defBf.get(blkIdx), dmg);
-                defDamageTaken.put(blkIdx, dmg);
+                state.defDamageTaken.put(blkIdx, dmg);
                 int effToughness = gameQueryService.getEffectiveToughness(gameData, defBf.get(blkIdx));
                 if (effToughness <= 0) {
-                    deadDefenderIndices.add(blkIdx);
-                } else if ((dmg >= effToughness || (dmg >= 1 && deathtouchDamagedDefenderIndices.contains(blkIdx)))
+                    state.deadDefenderIndices.add(blkIdx);
+                } else if ((dmg >= effToughness || (dmg >= 1 && state.deathtouchDamagedDefenderIndices.contains(blkIdx)))
                         && !gameQueryService.hasKeyword(gameData, defBf.get(blkIdx), Keyword.INDESTRUCTIBLE)
                         && !gameHelper.tryRegenerate(gameData, defBf.get(blkIdx))) {
-                    deadDefenderIndices.add(blkIdx);
+                    state.deadDefenderIndices.add(blkIdx);
                 }
             }
         }
 
         // Apply infect redirected damage to guard creature as -1/-1 counters
-        if (redirectTarget != null && infectDamageRedirectedToGuard > 0) {
-            infectDamageRedirectedToGuard = gameHelper.applyCreaturePreventionShield(gameData, redirectTarget, infectDamageRedirectedToGuard);
-            if (infectDamageRedirectedToGuard > 0) {
-                redirectTarget.setMinusOneMinusOneCounters(redirectTarget.getMinusOneMinusOneCounters() + infectDamageRedirectedToGuard);
-                String redirectLog = redirectTarget.getCard().getName() + " gets " + infectDamageRedirectedToGuard + " -1/-1 counters from redirected infect damage.";
+        if (redirectTarget != null && state.infectDamageRedirectedToGuard > 0) {
+            state.infectDamageRedirectedToGuard = gameHelper.applyCreaturePreventionShield(gameData, redirectTarget, state.infectDamageRedirectedToGuard);
+            if (state.infectDamageRedirectedToGuard > 0) {
+                redirectTarget.setMinusOneMinusOneCounters(redirectTarget.getMinusOneMinusOneCounters() + state.infectDamageRedirectedToGuard);
+                String redirectLog = redirectTarget.getCard().getName() + " gets " + state.infectDamageRedirectedToGuard + " -1/-1 counters from redirected infect damage.";
                 gameBroadcastService.logAndBroadcast(gameData, redirectLog);
             }
         }
 
         // Apply redirected damage to guard creature (e.g. Kjeldoran Royal Guard)
-        if (redirectTarget != null && (damageRedirectedToGuard > 0 || (infectDamageRedirectedToGuard > 0 && gameQueryService.getEffectiveToughness(gameData, redirectTarget) <= 0))) {
-            damageRedirectedToGuard = gameHelper.applyCreaturePreventionShield(gameData, redirectTarget, damageRedirectedToGuard);
-            if (damageRedirectedToGuard > 0) {
-                String redirectLog = redirectTarget.getCard().getName() + " absorbs " + damageRedirectedToGuard + " redirected combat damage.";
+        if (redirectTarget != null && (state.damageRedirectedToGuard > 0 || (state.infectDamageRedirectedToGuard > 0 && gameQueryService.getEffectiveToughness(gameData, redirectTarget) <= 0))) {
+            state.damageRedirectedToGuard = gameHelper.applyCreaturePreventionShield(gameData, redirectTarget, state.damageRedirectedToGuard);
+            if (state.damageRedirectedToGuard > 0) {
+                String redirectLog = redirectTarget.getCard().getName() + " absorbs " + state.damageRedirectedToGuard + " redirected combat damage.";
                 gameBroadcastService.logAndBroadcast(gameData, redirectLog);
             }
 
@@ -1296,7 +1273,7 @@ public class CombatService {
                 permanentRemovalService.removePermanentToGraveyard(gameData, redirectTarget);
                 String deathLog = redirectTarget.getCard().getName() + " dies from 0 toughness.";
                 gameBroadcastService.logAndBroadcast(gameData, deathLog);
-            } else if (damageRedirectedToGuard >= guardToughness
+            } else if (state.damageRedirectedToGuard >= guardToughness
                     && !gameQueryService.hasKeyword(gameData, redirectTarget, Keyword.INDESTRUCTIBLE)
                     && !gameHelper.tryRegenerate(gameData, redirectTarget)) {
                 permanentRemovalService.removePermanentToGraveyard(gameData, redirectTarget);
@@ -1306,14 +1283,14 @@ public class CombatService {
         }
 
         // Process lifelink before removing dead creatures
-        processLifelink(gameData, combatDamageDealt);
+        processLifelink(gameData, state.combatDamageDealt);
 
         // Process life gain from damage triggers (e.g. Spirit Link) before removing dead creatures
-        processGainLifeEqualToDamageDealt(gameData, combatDamageDealt);
+        processGainLifeEqualToDamageDealt(gameData, state.combatDamageDealt);
 
         // Remove dead creatures (descending order to preserve indices) and move to graveyard
         List<String> deadCreatureNames = new ArrayList<>();
-        for (int idx : deadAttackerIndices) {
+        for (int idx : state.deadAttackerIndices) {
             Permanent dead = atkBf.get(idx);
             deadCreatureNames.add(gameData.playerIdToName.get(activeId) + "'s " + dead.getCard().getName());
             // Stolen creatures go to their owner's graveyard
@@ -1324,7 +1301,7 @@ public class CombatService {
             gameHelper.checkAllyCreatureDeathTriggers(gameData, activeId);
             atkBf.remove(idx);
         }
-        for (int idx : deadDefenderIndices) {
+        for (int idx : state.deadDefenderIndices) {
             Permanent dead = defBf.get(idx);
             deadCreatureNames.add(gameData.playerIdToName.get(defenderId) + "'s " + dead.getCard().getName());
             // Stolen creatures go to their owner's graveyard
@@ -1335,21 +1312,21 @@ public class CombatService {
             gameHelper.checkAllyCreatureDeathTriggers(gameData, defenderId);
             defBf.remove(idx);
         }
-        if (!deadAttackerIndices.isEmpty() || !deadDefenderIndices.isEmpty()) {
+        if (!state.deadAttackerIndices.isEmpty() || !state.deadDefenderIndices.isEmpty()) {
             permanentRemovalService.removeOrphanedAuras(gameData);
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         // Apply life loss (with prevention shield and Pariah redirect)
-        damageToDefendingPlayer = gameHelper.applyPlayerPreventionShield(gameData, defenderId, damageToDefendingPlayer);
-        damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, damageToDefendingPlayer, "combat");
-        if (damageToDefendingPlayer > 0) {
+        state.damageToDefendingPlayer = gameHelper.applyPlayerPreventionShield(gameData, defenderId, state.damageToDefendingPlayer);
+        state.damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, state.damageToDefendingPlayer, "combat");
+        if (state.damageToDefendingPlayer > 0) {
             if (gameQueryService.canPlayerLifeChange(gameData, defenderId)) {
                 int currentLife = gameData.playerLifeTotals.getOrDefault(defenderId, 20);
-                gameData.playerLifeTotals.put(defenderId, currentLife - damageToDefendingPlayer);
+                gameData.playerLifeTotals.put(defenderId, currentLife - state.damageToDefendingPlayer);
 
-                String logEntry = gameData.playerIdToName.get(defenderId) + " takes " + damageToDefendingPlayer + " combat damage.";
+                String logEntry = gameData.playerIdToName.get(defenderId) + " takes " + state.damageToDefendingPlayer + " combat damage.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
             } else {
                 gameBroadcastService.logAndBroadcast(gameData,
@@ -1358,12 +1335,12 @@ public class CombatService {
         }
 
         // Apply poison counters from infect combat damage
-        poisonDamageToDefendingPlayer = gameHelper.applyPlayerPreventionShield(gameData, defenderId, poisonDamageToDefendingPlayer);
-        if (poisonDamageToDefendingPlayer > 0) {
+        state.poisonDamageToDefendingPlayer = gameHelper.applyPlayerPreventionShield(gameData, defenderId, state.poisonDamageToDefendingPlayer);
+        if (state.poisonDamageToDefendingPlayer > 0) {
             int currentPoison = gameData.playerPoisonCounters.getOrDefault(defenderId, 0);
-            gameData.playerPoisonCounters.put(defenderId, currentPoison + poisonDamageToDefendingPlayer);
+            gameData.playerPoisonCounters.put(defenderId, currentPoison + state.poisonDamageToDefendingPlayer);
 
-            String logEntry = gameData.playerIdToName.get(defenderId) + " gets " + poisonDamageToDefendingPlayer + " poison counters.";
+            String logEntry = gameData.playerIdToName.get(defenderId) + " gets " + state.poisonDamageToDefendingPlayer + " poison counters.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         }
 
@@ -1374,12 +1351,12 @@ public class CombatService {
 
 
 
-        if (!deadAttackerIndices.isEmpty() || !deadDefenderIndices.isEmpty()) {
+        if (!state.deadAttackerIndices.isEmpty() || !state.deadDefenderIndices.isEmpty()) {
 
         }
 
         log.info("Game {} - Combat damage resolved: {} damage to defender, {} creatures died",
-                gameData.id, damageToDefendingPlayer, deadAttackerIndices.size() + deadDefenderIndices.size());
+                gameData.id, state.damageToDefendingPlayer, state.deadAttackerIndices.size() + state.deadDefenderIndices.size());
 
         // Check win condition
         if (gameHelper.checkWinCondition(gameData)) {
@@ -1387,13 +1364,13 @@ public class CombatService {
         }
 
         int stackSizeBeforeDamageTriggers = gameData.stack.size();
-        processCombatDamageToCreatureTriggers(gameData, combatDamageDealtToCreatures, combatDamageDealerControllers);
+        processCombatDamageToCreatureTriggers(gameData, state.combatDamageDealtToCreatures, state.combatDamageDealerControllers);
 
         // Process combat damage to player triggers (e.g. Cephalid Constable) after all combat is resolved
-        processCombatDamageToPlayerTriggers(gameData, combatDamageDealtToPlayer, activeId, defenderId);
+        processCombatDamageToPlayerTriggers(gameData, state.combatDamageDealtToPlayer, activeId, defenderId);
 
         // Process defender-side damage triggers (e.g. Dissipation Field)
-        for (var dmgEntry : combatDamageDealtToPlayer.entrySet()) {
+        for (var dmgEntry : state.combatDamageDealtToPlayer.entrySet()) {
             if (dmgEntry.getValue() > 0) {
                 triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, defenderId, dmgEntry.getKey().getId());
             }
@@ -1627,8 +1604,7 @@ public class CombatService {
     }
 
     private void recordCombatDamageToCreature(GameData gameData,
-                                              Map<Permanent, List<UUID>> combatDamageDealtToCreatures,
-                                              Map<Permanent, UUID> combatDamageDealerControllers,
+                                              CombatDamageState state,
                                               Permanent source,
                                               UUID controllerId,
                                               Permanent target,
@@ -1636,8 +1612,8 @@ public class CombatService {
         if (damage <= 0) {
             return;
         }
-        combatDamageDealerControllers.putIfAbsent(source, controllerId);
-        combatDamageDealtToCreatures.computeIfAbsent(source, ignored -> new ArrayList<>()).add(target.getId());
+        state.combatDamageDealerControllers.putIfAbsent(source, controllerId);
+        state.combatDamageDealtToCreatures.computeIfAbsent(source, ignored -> new ArrayList<>()).add(target.getId());
         gameHelper.recordCreatureDamagedByPermanent(gameData, source.getId(), target, damage);
     }
 
@@ -1844,39 +1820,33 @@ public class CombatService {
         return false;
     }
 
-    private CombatDamagePhase1State savePhase1State(
-            Set<Integer> deadAttackerIndices, Set<Integer> deadDefenderIndices,
-            Map<Integer, Integer> atkDamageTaken, Map<Integer, Integer> defDamageTaken,
-            Map<Permanent, Integer> combatDamageDealt, Map<Permanent, Integer> combatDamageDealtToPlayer,
-            Map<Permanent, List<UUID>> combatDamageDealtToCreatures,
-            Map<Permanent, UUID> combatDamageDealerControllers,
-            int damageToDefendingPlayer, int damageRedirectedToGuard,
-            Map<Integer, List<Integer>> blockerMap, boolean anyFirstStrike,
-            Set<Integer> deathtouchDamagedAttackerIndices, Set<Integer> deathtouchDamagedDefenderIndices) {
+    private CombatDamagePhase1State savePhase1State(CombatDamageState state,
+                                                    Map<Integer, List<Integer>> blockerMap,
+                                                    boolean anyFirstStrike) {
         // Convert Permanent-keyed maps to UUID-keyed maps for serialization
         Map<UUID, Integer> dealtByUUID = new HashMap<>();
-        for (var e : combatDamageDealt.entrySet()) {
+        for (var e : state.combatDamageDealt.entrySet()) {
             dealtByUUID.put(e.getKey().getId(), e.getValue());
         }
         Map<UUID, Integer> dealtToPlayerByUUID = new HashMap<>();
-        for (var e : combatDamageDealtToPlayer.entrySet()) {
+        for (var e : state.combatDamageDealtToPlayer.entrySet()) {
             dealtToPlayerByUUID.put(e.getKey().getId(), e.getValue());
         }
         Map<UUID, List<UUID>> dealtToCreaturesByUUID = new HashMap<>();
-        for (var e : combatDamageDealtToCreatures.entrySet()) {
+        for (var e : state.combatDamageDealtToCreatures.entrySet()) {
             dealtToCreaturesByUUID.put(e.getKey().getId(), new ArrayList<>(e.getValue()));
         }
         Map<UUID, UUID> dealerControllersByUUID = new HashMap<>();
-        for (var e : combatDamageDealerControllers.entrySet()) {
+        for (var e : state.combatDamageDealerControllers.entrySet()) {
             dealerControllersByUUID.put(e.getKey().getId(), e.getValue());
         }
         return new CombatDamagePhase1State(
-                new TreeSet<>(deadAttackerIndices), new TreeSet<>(deadDefenderIndices),
-                new HashMap<>(atkDamageTaken), new HashMap<>(defDamageTaken),
+                new TreeSet<>(state.deadAttackerIndices), new TreeSet<>(state.deadDefenderIndices),
+                new HashMap<>(state.atkDamageTaken), new HashMap<>(state.defDamageTaken),
                 dealtByUUID, dealtToPlayerByUUID, dealtToCreaturesByUUID, dealerControllersByUUID,
-                damageToDefendingPlayer, damageRedirectedToGuard,
+                state.damageToDefendingPlayer, state.damageRedirectedToGuard,
                 new LinkedHashMap<>(blockerMap), anyFirstStrike,
-                new HashSet<>(deathtouchDamagedAttackerIndices), new HashSet<>(deathtouchDamagedDefenderIndices));
+                new HashSet<>(state.deathtouchDamagedAttackerIndices), new HashSet<>(state.deathtouchDamagedDefenderIndices));
     }
 
     private void sendNextCombatDamageAssignment(GameData gameData, List<Permanent> atkBf,
