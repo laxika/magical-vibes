@@ -48,6 +48,7 @@ public class Permanent {
     private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
     private final Set<CardType> grantedCardTypes = EnumSet.noneOf(CardType.class);
     private final List<TextReplacement> textReplacements = new ArrayList<>();
+    private final Set<CardType> protectionFromCardTypes = EnumSet.noneOf(CardType.class);
     private final Set<UUID> cantBlockIds = new HashSet<>();
     private final Set<UUID> mustBlockIds = new HashSet<>();
     /** Source permanent IDs that prevent this permanent from untapping during its controller's untap step.
@@ -104,6 +105,7 @@ public class Permanent {
         this.grantedSubtypes.addAll(source.grantedSubtypes);
         this.grantedCardTypes.addAll(source.grantedCardTypes);
         this.textReplacements.addAll(source.textReplacements);
+        this.protectionFromCardTypes.addAll(source.protectionFromCardTypes);
         this.cantBlockIds.addAll(source.cantBlockIds);
         this.mustBlockIds.addAll(source.mustBlockIds);
         this.untapPreventedByPermanentIds.addAll(source.untapPreventedByPermanentIds);
@@ -206,6 +208,7 @@ public class Permanent {
         this.colorOverridden = false;
         this.grantedSubtypes.clear();
         this.grantedCardTypes.clear();
+        this.protectionFromCardTypes.clear();
         this.cantBlockIds.clear();
         this.mustBlockIds.clear();
     }

@@ -500,6 +500,28 @@ public class GameQueryService {
         return false;
     }
 
+    public boolean hasProtectionFromSourceCardTypes(GameData gameData, Permanent target, Permanent source) {
+        Set<CardType> protectedTypes = target.getProtectionFromCardTypes();
+        if (protectedTypes.isEmpty()) return false;
+        if (protectedTypes.contains(CardType.ARTIFACT) && isArtifact(source)) return true;
+        if (protectedTypes.contains(CardType.CREATURE) && isCreature(gameData, source)) return true;
+        if (protectedTypes.contains(source.getCard().getType())) return true;
+        for (CardType type : source.getCard().getAdditionalTypes()) {
+            if (protectedTypes.contains(type)) return true;
+        }
+        return false;
+    }
+
+    public boolean hasProtectionFromSourceCardTypes(Permanent target, Card sourceCard) {
+        Set<CardType> protectedTypes = target.getProtectionFromCardTypes();
+        if (protectedTypes.isEmpty()) return false;
+        if (protectedTypes.contains(sourceCard.getType())) return true;
+        for (CardType type : sourceCard.getAdditionalTypes()) {
+            if (protectedTypes.contains(type)) return true;
+        }
+        return false;
+    }
+
     public boolean cantBeTargetedBySpellColor(GameData gameData, Permanent target, CardColor spellColor) {
         if (spellColor == null) {
             return false;

@@ -853,7 +853,8 @@ public class CombatService {
         if (blocker.getCantBlockIds().contains(attacker.getId())) {
             return Optional.of(blocker.getCard().getName() + " can't block " + attacker.getCard().getName() + " this turn");
         }
-        if (gameQueryService.hasProtectionFrom(gameData, attacker, blocker.getEffectiveColor())) {
+        if (gameQueryService.hasProtectionFrom(gameData, attacker, blocker.getEffectiveColor())
+                || gameQueryService.hasProtectionFromSourceCardTypes(gameData, attacker, blocker)) {
             return Optional.of(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (protection)");
         }
         return Optional.empty();
@@ -1276,7 +1277,8 @@ public class CombatService {
                     Permanent blk = defBf.get(blkIdx);
                     boolean blkParticipates = participatesInDamagePhase(gameData, blk, isFirstStrikePhase);
                     if (blkParticipates && !gameQueryService.isPreventedFromDealingDamage(gameData, blk)
-                            && !gameQueryService.hasProtectionFrom(gameData, atk, blk.getEffectiveColor())) {
+                            && !gameQueryService.hasProtectionFrom(gameData, atk, blk.getEffectiveColor())
+                            && !gameQueryService.hasProtectionFromSourceCardTypes(gameData, atk, blk)) {
                         int actualDmg = gameQueryService.applyDamageMultiplier(gameData, blockerDamage.getOrDefault(blkIdx, 0));
                         applyCombatCreatureDamage(gameData, blk, atk, atkIdx, actualDmg, state.atkDamageTaken, state.deathtouchDamagedAttackerIndices);
                         state.combatDamageDealt.merge(blk, actualDmg, Integer::sum);
@@ -1310,7 +1312,8 @@ public class CombatService {
                     ? Math.max(0, 1 - state.defDamageTaken.getOrDefault(blkIdx, 0))
                     : gameQueryService.getEffectiveToughness(gameData, blk) - state.defDamageTaken.getOrDefault(blkIdx, 0);
             int dmg = Math.min(remaining, Math.max(0, lethalNeeded));
-            if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getEffectiveColor())) {
+            if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getEffectiveColor())
+                    && !gameQueryService.hasProtectionFromSourceCardTypes(gameData, blk, atk)) {
                 int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
                 applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, state.defDamageTaken, state.deathtouchDamagedDefenderIndices);
                 state.combatDamageDealt.merge(atk, actualDmg, Integer::sum);
@@ -1346,7 +1349,8 @@ public class CombatService {
                 for (int blkIdx : blkIndices) {
                     Permanent blk = defBf.get(blkIdx);
                     if (blk.getId().equals(targetId)) {
-                        if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getEffectiveColor())) {
+                        if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getEffectiveColor())
+                                && !gameQueryService.hasProtectionFromSourceCardTypes(gameData, blk, atk)) {
                             int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
                             applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, state.defDamageTaken, state.deathtouchDamagedDefenderIndices);
                             state.combatDamageDealt.merge(atk, actualDmg, Integer::sum);

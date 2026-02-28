@@ -118,6 +118,10 @@ public class ValidTargetService {
         if (gameQueryService.hasProtectionFrom(gameData, perm, sourceColor)) {
             return false;
         }
+        // Protection from source card type
+        if (gameQueryService.hasProtectionFromSourceCardTypes(perm, card)) {
+            return false;
+        }
 
         // Shroud
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.SHROUD)) {
@@ -261,6 +265,15 @@ public class ValidTargetService {
                     e.canTargetPermanent() && (e.getClass().getSimpleName().contains("DealDamage")
                             || e.getClass().getSimpleName().contains("Destroy")));
             if (dealsDamage && gameQueryService.hasProtectionFrom(gameData, perm, sourceCard.getColor())) {
+                return false;
+            }
+        }
+        // Protection from source card type (for abilities that deal damage)
+        {
+            boolean dealsDamage = ability.getEffects().stream().anyMatch(e ->
+                    e.canTargetPermanent() && (e.getClass().getSimpleName().contains("DealDamage")
+                            || e.getClass().getSimpleName().contains("Destroy")));
+            if (dealsDamage && gameQueryService.hasProtectionFromSourceCardTypes(perm, sourceCard)) {
                 return false;
             }
         }

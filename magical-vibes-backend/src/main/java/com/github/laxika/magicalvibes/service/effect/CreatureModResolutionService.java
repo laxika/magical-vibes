@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromCardTypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
@@ -736,6 +737,22 @@ public class CreatureModResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} becomes {} until end of turn", gameData.id, target.getCard().getName(), colorName);
+    }
+
+    @HandlesEffect(GrantProtectionFromCardTypeUntilEndOfTurnEffect.class)
+    private void resolveGrantProtectionFromCardTypeUntilEndOfTurn(GameData gameData, StackEntry entry, GrantProtectionFromCardTypeUntilEndOfTurnEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        target.getProtectionFromCardTypes().add(effect.cardType());
+
+        String typeName = effect.cardType().getDisplayName().toLowerCase() + "s";
+        String logEntry = target.getCard().getName() + " gains protection from " + typeName + " until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} gains protection from {} until end of turn", gameData.id, target.getCard().getName(), typeName);
     }
 
     @HandlesEffect(UnattachEquipmentFromTargetPermanentsEffect.class)

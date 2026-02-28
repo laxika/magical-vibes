@@ -127,6 +127,9 @@ public class CopyResolutionService {
             if (spellCard.getColor() != null && gameQueryService.hasProtectionFrom(gameData, perm, spellCard.getColor())) {
                 return;
             }
+            if (gameQueryService.hasProtectionFromSourceCardTypes(perm, spellCard)) {
+                return;
+            }
 
             eligibleTargets.add(perm);
         });

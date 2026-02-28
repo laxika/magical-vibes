@@ -103,6 +103,10 @@ public class TargetLegalityService {
             throw new IllegalStateException(target.getCard().getName() + " has protection from " + card.getColor().name().toLowerCase());
         }
 
+        if (target != null && card.isNeedsTarget() && gameQueryService.hasProtectionFromSourceCardTypes(target, card)) {
+            throw new IllegalStateException(target.getCard().getName() + " has protection from " + card.getType().getDisplayName().toLowerCase() + "s");
+        }
+
         if (target != null && card.isNeedsTarget() && gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)) {
             throw new IllegalStateException(target.getCard().getName() + " has shroud and can't be targeted");
         }
@@ -177,6 +181,9 @@ public class TargetLegalityService {
                 }
                 if (card.isNeedsTarget() && gameQueryService.hasProtectionFrom(gameData, target, card.getColor())) {
                     throw new IllegalStateException(target.getCard().getName() + " has protection from " + card.getColor().name().toLowerCase());
+                }
+                if (card.isNeedsTarget() && gameQueryService.hasProtectionFromSourceCardTypes(target, card)) {
+                    throw new IllegalStateException(target.getCard().getName() + " has protection from " + card.getType().getDisplayName().toLowerCase() + "s");
                 }
                 if (card.isNeedsTarget() && gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)) {
                     throw new IllegalStateException(target.getCard().getName() + " has shroud and can't be targeted");
