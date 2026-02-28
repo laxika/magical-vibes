@@ -102,6 +102,10 @@ public class GameData {
     /** Tracks how many cards each player has drawn this turn. */
     public final Map<UUID, Integer> cardsDrawnThisTurn = new ConcurrentHashMap<>();
 
+    /** Tracks which permanents dealt combat damage to which players this turn.
+     *  Maps source permanent UUID → set of damaged player UUIDs. */
+    public final Map<UUID, Set<UUID>> combatDamageToPlayersThisTurn = new ConcurrentHashMap<>();
+
     /** Tracks which Leonin Arbiter permanent IDs each player has paid {2} for this turn. */
     public final Map<UUID, Set<UUID>> paidSearchTaxPermanentIds = new ConcurrentHashMap<>();
 
@@ -227,6 +231,11 @@ public class GameData {
         copy.stolenCreatures.putAll(this.stolenCreatures);
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
         copy.cardsDrawnThisTurn.putAll(this.cardsDrawnThisTurn);
+        this.combatDamageToPlayersThisTurn.forEach((k, v) -> {
+            Set<UUID> s = ConcurrentHashMap.newKeySet();
+            s.addAll(v);
+            copy.combatDamageToPlayersThisTurn.put(k, s);
+        });
 
         // --- Map<UUID, Set<TurnStep>> ---
         this.playerAutoStopSteps.forEach((k, v) -> copy.playerAutoStopSteps.put(k, ConcurrentHashMap.newKeySet()));

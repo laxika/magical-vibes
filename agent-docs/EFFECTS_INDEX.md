@@ -117,6 +117,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `SacrificeUnlessDiscardCardTypeEffect` | `(CardType requiredType)` | sacrifice unless you discard a card of type (null = any) |
 | `SacrificeUnlessReturnOwnPermanentTypeToHandEffect` | `(CardType permanentType)` | sacrifice this permanent unless you return a permanent of the specified type you control to its owner's hand (ETB bounce-or-sacrifice, e.g. Glint Hawk) |
 | `DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect` | `()` | destroy each nonland permanent with mana value equal to the number of charge counters on source (reads snapshotted count from xValue). Used by Ratchet Bomb |
+| `DestroyNonlandPermanentsWithManaValueXDealtCombatDamageEffect` | `()` | destroy each nonland permanent with mana value equal to X whose controller was dealt combat damage by the source permanent this turn. Reads X from xValue, checks combatDamageToPlayersThisTurn. Used by Steel Hellkite |
 | `SacrificeAtEndOfCombatEffect` | `()` | sacrifice at end of combat |
 | `SacrificeTargetThenRevealUntilTypeToBattlefieldEffect` | `(Set<CardType> cardTypes)` | sacrifice the targeted permanent, then its controller reveals cards from the top of their library until a card matching one of the specified types is found; that card is put onto the battlefield under that player's control, and all other revealed cards are shuffled into their library. Polymorph-style effect (used by Shape Anew for artifact→artifact) |
 

@@ -59,6 +59,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -999,6 +1000,11 @@ public class CombatService {
             Permanent creature = entry.getKey();
             int damageDealt = entry.getValue();
             if (damageDealt <= 0) continue;
+
+            // Track which permanents dealt combat damage to which players this turn
+            gameData.combatDamageToPlayersThisTurn
+                    .computeIfAbsent(creature.getId(), k -> ConcurrentHashMap.newKeySet())
+                    .add(defenderId);
 
             List<CardEffect> allDamageEffects = new ArrayList<>();
             allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));

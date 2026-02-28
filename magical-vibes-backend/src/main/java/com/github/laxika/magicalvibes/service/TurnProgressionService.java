@@ -513,6 +513,7 @@ public class TurnProgressionService {
         gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.clear();
         gameData.creatureDeathCountThisTurn.clear();
         gameData.cardsDrawnThisTurn.clear();
+        gameData.combatDamageToPlayersThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
         gameData.additionalCombatMainPhasePairs = 0;
         gameData.cleanupDiscardPending = false;

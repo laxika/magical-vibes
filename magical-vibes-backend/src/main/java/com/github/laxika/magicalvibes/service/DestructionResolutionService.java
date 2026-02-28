@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueXDealtCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect;
@@ -87,13 +88,36 @@ public class DestructionResolutionService {
 
     @HandlesEffect(DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect.class)
     void resolveDestroyNonlandPermanentsByChargeCounterManaValue(GameData gameData, StackEntry entry) {
-        int targetManaValue = entry.getXValue();
-        String cardName = entry.getCard().getName();
-        List<Permanent> toDestroy = new ArrayList<>();
+        destroyNonlandPermanentsByManaValue(gameData, entry.getXValue(), entry.getCard().getName(), null);
+    }
 
+    @HandlesEffect(DestroyNonlandPermanentsWithManaValueXDealtCombatDamageEffect.class)
+    void resolveDestroyNonlandPermanentsByManaValueXDealtCombatDamage(GameData gameData, StackEntry entry) {
+        String cardName = entry.getCard().getName();
+
+        Set<UUID> damagedPlayerIds = gameData.combatDamageToPlayersThisTurn
+                .getOrDefault(entry.getSourcePermanentId(), Set.of());
+        if (damagedPlayerIds.isEmpty()) {
+            String logEntry = cardName + " resolves but " + cardName + " dealt no combat damage to any player this turn.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} resolves but dealt no combat damage to any player this turn", gameData.id, cardName);
+            return;
+        }
+
+        destroyNonlandPermanentsByManaValue(gameData, entry.getXValue(), cardName, damagedPlayerIds);
+    }
+
+    /**
+     * Shared logic for destroying all nonland permanents with a given mana value.
+     *
+     * @param playerFilter if non-null, only permanents controlled by players in this set are considered
+     */
+    private void destroyNonlandPermanentsByManaValue(GameData gameData, int targetManaValue,
+                                                      String cardName, Set<UUID> playerFilter) {
+        List<Permanent> toDestroy = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) -> {
+            if (playerFilter != null && !playerFilter.contains(playerId)) return;
             for (Permanent perm : battlefield) {
-                // Skip lands (including permanents that gained the land type)
                 if (perm.getCard().getType() == CardType.LAND
                         || perm.getCard().getAdditionalTypes().contains(CardType.LAND)) {
                     continue;
