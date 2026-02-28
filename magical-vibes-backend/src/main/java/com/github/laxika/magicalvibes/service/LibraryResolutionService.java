@@ -298,20 +298,23 @@ public class LibraryResolutionService {
             return;
         }
 
+        int maxMV = effect.maxManaValue();
         List<Card> matchingCards = new ArrayList<>();
         for (Card card : deck) {
             boolean matchesType = requestedTypes.contains(card.getType())
                     || card.getAdditionalTypes().stream().anyMatch(requestedTypes::contains);
-            if (matchesType) {
+            if (matchesType && card.getManaValue() <= maxMV) {
                 matchingCards.add(card);
             }
         }
 
+        String mvSuffix = maxMV < Integer.MAX_VALUE ? " with mana value " + maxMV + " or less" : "";
+
         if (matchingCards.isEmpty()) {
             Collections.shuffle(deck);
-            String logMsg = playerName + " searches their library but finds no " + requestedTypeText + " cards. Library is shuffled.";
+            String logMsg = playerName + " searches their library but finds no " + requestedTypeText + " cards" + mvSuffix + ". Library is shuffled.";
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            log.info("Game {} - {} searches library, no {} cards found", gameData.id, playerName, requestedTypeText);
+            log.info("Game {} - {} searches library, no {} cards{} found", gameData.id, playerName, requestedTypeText, mvSuffix);
             return;
         }
 
@@ -320,7 +323,7 @@ public class LibraryResolutionService {
         List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
                 cardViews,
-                "Search your library for a " + requestedTypeText + " card to reveal and put into your hand.",
+                "Search your library for a " + requestedTypeText + " card" + mvSuffix + " to reveal and put into your hand.",
                 true
         ));
 
