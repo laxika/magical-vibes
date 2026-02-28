@@ -362,3 +362,4 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` | Any permanent deals damage to this permanent's controller |
 | `ON_ALLY_PERMANENT_SACRIFICED` | A permanent you control is sacrificed (not this one — "another") |
 | `ON_BECOMES_TARGET_OF_SPELL` | Fires when the permanent (or a permanent this is attached to) becomes the target of a spell. Used by equipment like Livewire Lash |
+| `ON_EQUIPPED_CREATURE_DIES` | The creature this equipment is attached to dies. Only checked for equipment permanents. Used by Sylvok Lifestaff |

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.DraftData;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -989,6 +990,32 @@ public class GameHelper {
                 String triggerLog = perm.getCard().getName() + "'s ability triggers.";
                 gameBroadcastService.logAndBroadcast(gameData, triggerLog);
                 log.info("Game {} - {} triggers (ally creature died)", gameData.id, perm.getCard().getName());
+            }
+        }
+    }
+
+    public void checkEquippedCreatureDeathTriggers(GameData gameData, UUID dyingCreatureId, UUID dyingCreatureControllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(dyingCreatureControllerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : battlefield) {
+            if (!dyingCreatureId.equals(perm.getAttachedTo())) continue;
+            if (!perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) continue;
+
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DIES);
+            if (effects == null || effects.isEmpty()) continue;
+
+            for (CardEffect effect : effects) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        dyingCreatureControllerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect))
+                ));
+                String triggerLog = perm.getCard().getName() + "'s ability triggers (equipped creature died).";
+                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                log.info("Game {} - {} triggers (equipped creature died)", gameData.id, perm.getCard().getName());
             }
         }
     }

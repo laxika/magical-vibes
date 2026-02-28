@@ -45,6 +45,7 @@ public class PermanentRemovalService {
                     gameData.creatureDeathCountThisTurn.merge(playerId, 1, Integer::sum);
                     gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
                     gameHelper.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());
+                    gameHelper.checkEquippedCreatureDeathTriggers(gameData, target.getId(), playerId);
                 }
                 if (wasArtifact) {
                     gameHelper.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData);
