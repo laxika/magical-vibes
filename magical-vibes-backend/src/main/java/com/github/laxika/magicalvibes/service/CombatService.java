@@ -792,26 +792,10 @@ public class CombatService {
         }
 
         // Check if any combat creature has first strike or double strike
-        boolean anyFirstStrike = false;
-        for (int atkIdx : attackingIndices) {
-            if (gameQueryService.hasKeyword(gameData, atkBf.get(atkIdx), Keyword.FIRST_STRIKE)
-                    || gameQueryService.hasKeyword(gameData, atkBf.get(atkIdx), Keyword.DOUBLE_STRIKE)) {
-                anyFirstStrike = true;
-                break;
-            }
-        }
-        if (!anyFirstStrike) {
-            for (List<Integer> blkIndices : blockerMap.values()) {
-                for (int blkIdx : blkIndices) {
-                    if (gameQueryService.hasKeyword(gameData, defBf.get(blkIdx), Keyword.FIRST_STRIKE)
-                            || gameQueryService.hasKeyword(gameData, defBf.get(blkIdx), Keyword.DOUBLE_STRIKE)) {
-                        anyFirstStrike = true;
-                        break;
-                    }
-                }
-                if (anyFirstStrike) break;
-            }
-        }
+        boolean anyFirstStrike = attackingIndices.stream()
+                        .anyMatch(i -> hasFirstOrDoubleStrike(gameData, atkBf.get(i)))
+                || blockerMap.values().stream().flatMapToInt(l -> l.stream().mapToInt(i -> i))
+                        .anyMatch(i -> hasFirstOrDoubleStrike(gameData, defBf.get(i)));
 
         CombatDamageState state = new CombatDamageState();
 
@@ -1149,11 +1133,7 @@ public class CombatService {
             if (!isFirstStrikePhase && state.deadAttackerIndices.contains(atkIdx)) continue;
 
             Permanent atk = atkBf.get(atkIdx);
-            boolean atkParticipates = isFirstStrikePhase
-                    ? gameQueryService.hasKeyword(gameData, atk, Keyword.FIRST_STRIKE)
-                            || gameQueryService.hasKeyword(gameData, atk, Keyword.DOUBLE_STRIKE)
-                    : !gameQueryService.hasKeyword(gameData, atk, Keyword.FIRST_STRIKE)
-                            || gameQueryService.hasKeyword(gameData, atk, Keyword.DOUBLE_STRIKE);
+            boolean atkParticipates = participatesInDamagePhase(gameData, atk, isFirstStrikePhase);
 
             // Phase 2: check for player-provided damage assignment
             Map<UUID, Integer> playerAssignment = isFirstStrikePhase ? null
@@ -1186,11 +1166,7 @@ public class CombatService {
                 for (int blkIdx : blkIndices) {
                     if (!isFirstStrikePhase && state.deadDefenderIndices.contains(blkIdx)) continue;
                     Permanent blk = defBf.get(blkIdx);
-                    boolean blkParticipates = isFirstStrikePhase
-                            ? gameQueryService.hasKeyword(gameData, blk, Keyword.FIRST_STRIKE)
-                                    || gameQueryService.hasKeyword(gameData, blk, Keyword.DOUBLE_STRIKE)
-                            : !gameQueryService.hasKeyword(gameData, blk, Keyword.FIRST_STRIKE)
-                                    || gameQueryService.hasKeyword(gameData, blk, Keyword.DOUBLE_STRIKE);
+                    boolean blkParticipates = participatesInDamagePhase(gameData, blk, isFirstStrikePhase);
                     if (blkParticipates && !gameQueryService.isPreventedFromDealingDamage(gameData, blk)
                             && !gameQueryService.hasProtectionFrom(gameData, atk, blk.getEffectiveColor())) {
                         int actualDmg = gameQueryService.applyDamageMultiplier(gameData, blockerDamage.getOrDefault(blkIdx, 0));
@@ -1316,29 +1292,25 @@ public class CombatService {
                                               UUID activeId, UUID defenderId) {
         List<String> deadCreatureNames = new ArrayList<>();
         for (int idx : state.deadAttackerIndices) {
-            Permanent dead = atkBf.get(idx);
-            deadCreatureNames.add(gameData.playerIdToName.get(activeId) + "'s " + dead.getCard().getName());
-            // Stolen creatures go to their owner's graveyard
-            UUID atkGraveyardOwner = gameData.stolenCreatures.getOrDefault(dead.getId(), activeId);
-            gameData.stolenCreatures.remove(dead.getId());
-            gameHelper.addCardToGraveyard(gameData, atkGraveyardOwner, dead.getOriginalCard(), Zone.BATTLEFIELD);
-            gameHelper.collectDeathTrigger(gameData, dead.getCard(), activeId, true);
-            gameHelper.checkAllyCreatureDeathTriggers(gameData, activeId);
-            atkBf.remove(idx);
+            processDeadCreature(gameData, atkBf, activeId, deadCreatureNames, idx);
         }
         for (int idx : state.deadDefenderIndices) {
-            Permanent dead = defBf.get(idx);
-            deadCreatureNames.add(gameData.playerIdToName.get(defenderId) + "'s " + dead.getCard().getName());
-            // Stolen creatures go to their owner's graveyard
-            UUID defGraveyardOwner = gameData.stolenCreatures.getOrDefault(dead.getId(), defenderId);
-            gameData.stolenCreatures.remove(dead.getId());
-            gameHelper.addCardToGraveyard(gameData, defGraveyardOwner, dead.getOriginalCard(), Zone.BATTLEFIELD);
-            gameHelper.collectDeathTrigger(gameData, dead.getCard(), defenderId, true);
-            gameHelper.checkAllyCreatureDeathTriggers(gameData, defenderId);
-            defBf.remove(idx);
+            processDeadCreature(gameData, defBf, defenderId, deadCreatureNames, idx);
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
         return deadCreatureNames;
+    }
+
+    private void processDeadCreature(GameData gameData, List<Permanent> battlefield,
+                                      UUID controllerId, List<String> deadNames, int idx) {
+        Permanent dead = battlefield.get(idx);
+        deadNames.add(gameData.playerIdToName.get(controllerId) + "'s " + dead.getCard().getName());
+        UUID graveyardOwner = gameData.stolenCreatures.getOrDefault(dead.getId(), controllerId);
+        gameData.stolenCreatures.remove(dead.getId());
+        gameHelper.addCardToGraveyard(gameData, graveyardOwner, dead.getOriginalCard(), Zone.BATTLEFIELD);
+        gameHelper.collectDeathTrigger(gameData, dead.getCard(), controllerId, true);
+        gameHelper.checkAllyCreatureDeathTriggers(gameData, controllerId);
+        battlefield.remove(idx);
     }
 
     private void applyPlayerDamage(GameData gameData, CombatDamageState state, UUID defenderId) {
@@ -1461,8 +1433,7 @@ public class CombatService {
             for (int blkIdx : blkList) {
                 Permanent blk = defBf.get(blkIdx);
                 if (requireFirstStrike) {
-                    if (gameQueryService.hasKeyword(gameData, blk, Keyword.FIRST_STRIKE)
-                            || gameQueryService.hasKeyword(gameData, blk, Keyword.DOUBLE_STRIKE)) {
+                    if (hasFirstOrDoubleStrike(gameData, blk)) {
                         blockerDamage.putIfAbsent(blkIdx,
                                 gameQueryService.getEffectiveCombatDamage(gameData, blk));
                     }
@@ -1633,10 +1604,7 @@ public class CombatService {
         int totalEntries = gameData.stack.size() - startIndex;
         if (totalEntries <= 1) return;
 
-        List<StackEntry> newEntries = new ArrayList<>();
-        for (int i = startIndex; i < gameData.stack.size(); i++) {
-            newEntries.add(gameData.stack.get(i));
-        }
+        List<StackEntry> newEntries = new ArrayList<>(gameData.stack.subList(startIndex, gameData.stack.size()));
 
         List<StackEntry> apTriggers = new ArrayList<>();
         List<StackEntry> napTriggers = new ArrayList<>();
@@ -1652,11 +1620,25 @@ public class CombatService {
         if (apTriggers.isEmpty() || napTriggers.isEmpty()) return;
 
         // Remove new entries and re-add in APNAP order: AP first (bottom), NAP on top
-        for (int i = gameData.stack.size() - 1; i >= startIndex; i--) {
-            gameData.stack.remove(i);
-        }
+        gameData.stack.subList(startIndex, gameData.stack.size()).clear();
         gameData.stack.addAll(apTriggers);
         gameData.stack.addAll(napTriggers);
+    }
+
+    private boolean hasFirstOrDoubleStrike(GameData gameData, Permanent creature) {
+        return gameQueryService.hasKeyword(gameData, creature, Keyword.FIRST_STRIKE)
+                || gameQueryService.hasKeyword(gameData, creature, Keyword.DOUBLE_STRIKE);
+    }
+
+    /**
+     * Returns true if the creature deals damage in the given phase.
+     * Phase 1 (first strike): creatures with first strike or double strike.
+     * Phase 2 (regular): creatures without first strike, or with double strike.
+     */
+    private boolean participatesInDamagePhase(GameData gameData, Permanent creature, boolean isFirstStrikePhase) {
+        boolean hasFirstStrike = gameQueryService.hasKeyword(gameData, creature, Keyword.FIRST_STRIKE);
+        boolean hasDoubleStrike = gameQueryService.hasKeyword(gameData, creature, Keyword.DOUBLE_STRIKE);
+        return isFirstStrikePhase ? (hasFirstStrike || hasDoubleStrike) : (!hasFirstStrike || hasDoubleStrike);
     }
 
     private boolean assignsCombatDamageAsThoughUnblocked(Permanent attacker) {
@@ -1728,41 +1710,29 @@ public class CombatService {
                 .toList();
 
         List<CombatDamageTargetView> targetViews = new ArrayList<>();
+        List<CombatDamageTarget> domainTargets = new ArrayList<>();
         for (int blkIdx : livingBlockers) {
             Permanent blk = defBf.get(blkIdx);
+            int toughness = gameQueryService.getEffectiveToughness(gameData, blk);
+            int damageTaken = p1.defDamageTaken.getOrDefault(blkIdx, 0);
             targetViews.add(new CombatDamageTargetView(
-                    blk.getId().toString(), blk.getCard().getName(),
-                    gameQueryService.getEffectiveToughness(gameData, blk),
-                    p1.defDamageTaken.getOrDefault(blkIdx, 0),
-                    false));
+                    blk.getId().toString(), blk.getCard().getName(), toughness, damageTaken, false));
+            domainTargets.add(new CombatDamageTarget(
+                    blk.getId(), blk.getCard().getName(), toughness, damageTaken, false));
         }
 
         boolean isTrample = gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE);
         boolean isDeathtouch = gameQueryService.hasKeyword(gameData, atk, Keyword.DEATHTOUCH);
         boolean addPlayer = isTrample || assignsCombatDamageAsThoughUnblocked(atk);
         if (addPlayer) {
+            String defenderName = gameData.playerIdToName.get(defenderId);
             targetViews.add(new CombatDamageTargetView(
-                    defenderId.toString(), gameData.playerIdToName.get(defenderId),
-                    0, 0, true));
+                    defenderId.toString(), defenderName, 0, 0, true));
+            domainTargets.add(new CombatDamageTarget(
+                    defenderId, defenderName, 0, 0, true));
         }
 
         int totalDamage = gameQueryService.getEffectiveCombatDamage(gameData, atk);
-
-        // Build domain targets for interaction context
-        List<CombatDamageTarget> domainTargets = new ArrayList<>();
-        for (int blkIdx : livingBlockers) {
-            Permanent blk = defBf.get(blkIdx);
-            domainTargets.add(new CombatDamageTarget(
-                    blk.getId(), blk.getCard().getName(),
-                    gameQueryService.getEffectiveToughness(gameData, blk),
-                    p1.defDamageTaken.getOrDefault(blkIdx, 0),
-                    false));
-        }
-        if (addPlayer) {
-            domainTargets.add(new CombatDamageTarget(
-                    defenderId, gameData.playerIdToName.get(defenderId),
-                    0, 0, true));
-        }
 
         gameData.interaction.beginCombatDamageAssignment(activeId, atkIdx, atk.getId(),
                 atk.getCard().getName(), totalDamage, domainTargets, isTrample, isDeathtouch);
