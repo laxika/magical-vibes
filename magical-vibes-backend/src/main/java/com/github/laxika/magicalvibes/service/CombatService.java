@@ -473,6 +473,8 @@ public class CombatService {
 
         validateMaximumBlockRequirements(gameData, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
+        validatePerCreatureMustBlockRequirements(gameData, attackerBattlefield, defenderBattlefield, blockable,
+                blockerAssignments);
 
         gameData.interaction.clearAwaitingInput();
 
@@ -670,6 +672,47 @@ public class CombatService {
             int maxSatisfiable = Math.min(getMaxBlocksForCreature(blocker, defenderBattlefield), possibleLureBlocks);
             if (currentLureBlocks < maxSatisfiable) {
                 throw new IllegalStateException(blocker.getCard().getName() + " must block enchanted creature if able");
+            }
+        }
+    }
+
+    private void validatePerCreatureMustBlockRequirements(GameData gameData,
+                                                          List<Permanent> attackerBattlefield,
+                                                          List<Permanent> defenderBattlefield,
+                                                          List<Integer> blockable,
+                                                          List<BlockerAssignment> blockerAssignments) {
+        for (int blockerIdx : blockable) {
+            Permanent blocker = defenderBattlefield.get(blockerIdx);
+            if (blocker.getMustBlockIds().isEmpty()) {
+                continue;
+            }
+
+            // Find which must-block sources are attacking and can be legally blocked
+            Set<Integer> requiredAttackerIndices = new HashSet<>();
+            for (UUID mustBlockId : blocker.getMustBlockIds()) {
+                for (int i = 0; i < attackerBattlefield.size(); i++) {
+                    Permanent attacker = attackerBattlefield.get(i);
+                    if (attacker.isAttacking() && attacker.getId().equals(mustBlockId)
+                            && canBlockAttacker(gameData, blocker, attacker, defenderBattlefield)) {
+                        requiredAttackerIndices.add(i);
+                    }
+                }
+            }
+
+            if (requiredAttackerIndices.isEmpty()) {
+                continue;
+            }
+
+            int currentMustBlocks = 0;
+            for (BlockerAssignment assignment : blockerAssignments) {
+                if (assignment.blockerIndex() == blockerIdx && requiredAttackerIndices.contains(assignment.attackerIndex())) {
+                    currentMustBlocks++;
+                }
+            }
+
+            int maxSatisfiable = Math.min(getMaxBlocksForCreature(blocker, defenderBattlefield), requiredAttackerIndices.size());
+            if (currentMustBlocks < maxSatisfiable) {
+                throw new IllegalStateException(blocker.getCard().getName() + " must block target creature this turn if able");
             }
         }
     }

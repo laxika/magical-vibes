@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfPerBlockingCreatureE
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -403,6 +404,24 @@ public class CreatureModResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} can't block {} this turn", gameData.id, target.getCard().getName(), sourceName);
+    }
+
+    @HandlesEffect(MustBlockSourceEffect.class)
+    private void resolveMustBlockSource(GameData gameData, StackEntry entry, MustBlockSourceEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null || effect.sourcePermanentId() == null) {
+            return;
+        }
+
+        Permanent source = gameQueryService.findPermanentById(gameData, effect.sourcePermanentId());
+        String sourceName = source != null ? source.getCard().getName() : entry.getCard().getName();
+
+        target.getMustBlockIds().add(effect.sourcePermanentId());
+
+        String logEntry = target.getCard().getName() + " must block " + sourceName + " this turn if able.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} must block {} this turn if able", gameData.id, target.getCard().getName(), sourceName);
     }
 
     @HandlesEffect(TargetCreatureCantBlockThisTurnEffect.class)
