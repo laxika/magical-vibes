@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.service;
+package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
@@ -49,6 +49,12 @@ import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamag
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.GameQueryService;
+import com.github.laxika.magicalvibes.service.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.PlayerInputService;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -83,7 +89,7 @@ public class CombatService {
 
     // ===== Query methods =====
 
-    List<Integer> getAttackableCreatureIndices(GameData gameData, UUID playerId) {
+    public List<Integer> getAttackableCreatureIndices(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
         UUID defenderId = gameQueryService.getOpponentId(gameData, playerId);
@@ -137,7 +143,7 @@ public class CombatService {
     /**
      * Returns attackable indices whose creature has at least one "attacks each combat if able" requirement.
      */
-    List<Integer> getMustAttackIndices(GameData gameData, UUID playerId, List<Integer> attackableIndices) {
+    public List<Integer> getMustAttackIndices(GameData gameData, UUID playerId, List<Integer> attackableIndices) {
         int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
         if (taxPerCreature > 0) {
             return List.of();
@@ -211,7 +217,7 @@ public class CombatService {
         }
     }
 
-    List<Integer> getBlockableCreatureIndices(GameData gameData, UUID playerId) {
+    public List<Integer> getBlockableCreatureIndices(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
         List<Integer> indices = new ArrayList<>();
@@ -228,7 +234,7 @@ public class CombatService {
         return indices;
     }
 
-    Map<Integer, List<Integer>> computeLegalBlockPairs(GameData gameData,
+    public Map<Integer, List<Integer>> computeLegalBlockPairs(GameData gameData,
                                                        List<Integer> blockerIndices,
                                                        List<Integer> attackerIndices,
                                                        UUID defenderId,
@@ -250,7 +256,7 @@ public class CombatService {
         return pairs;
     }
 
-    List<Integer> getAttackingCreatureIndices(GameData gameData, UUID playerId) {
+    public List<Integer> getAttackingCreatureIndices(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
         List<Integer> indices = new ArrayList<>();
@@ -264,7 +270,7 @@ public class CombatService {
 
     // ===== Combat flow methods =====
 
-    void handleDeclareAttackersStep(GameData gameData) {
+    public void handleDeclareAttackersStep(GameData gameData) {
         UUID activeId = gameData.activePlayerId;
         List<Integer> attackable = getAttackableCreatureIndices(gameData, activeId);
 
@@ -1785,7 +1791,7 @@ public class CombatService {
         sessionManager.sendToPlayer(getEffectiveRecipient(gameData, activeId), notification);
     }
 
-    void handleCombatDamageAssigned(GameData gameData, int attackerIndex, Map<UUID, Integer> assignments) {
+    public void handleCombatDamageAssigned(GameData gameData, int attackerIndex, Map<UUID, Integer> assignments) {
         if (!gameData.combatDamagePhase1Complete) {
             throw new IllegalStateException("Not in combat damage assignment phase");
         }
@@ -1860,7 +1866,7 @@ public class CombatService {
 
     // ===== Combat state management =====
 
-    void clearCombatState(GameData gameData) {
+    public void clearCombatState(GameData gameData) {
         gameData.forEachBattlefield((playerId, battlefield) ->
                 battlefield.forEach(Permanent::clearCombatState));
         // Clear combat damage assignment state
@@ -1870,7 +1876,7 @@ public class CombatService {
         gameData.combatDamagePhase1State = null;
     }
 
-    void processEndOfCombatSacrifices(GameData gameData) {
+    public void processEndOfCombatSacrifices(GameData gameData) {
         gameData.forEachBattlefield((playerId, battlefield) -> {
             List<Permanent> toSacrifice = battlefield.stream()
                     .filter(p -> gameData.permanentsToSacrificeAtEndOfCombat.contains(p.getId()))

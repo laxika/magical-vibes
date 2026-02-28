@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes;
+package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.cards.a.AngelicWall;
 import com.github.laxika.magicalvibes.cards.b.BlightMamba;

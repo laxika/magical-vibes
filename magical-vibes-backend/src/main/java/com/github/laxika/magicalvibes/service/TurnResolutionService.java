@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffe
 import com.github.laxika.magicalvibes.model.effect.ControlTargetPlayerNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
+import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
