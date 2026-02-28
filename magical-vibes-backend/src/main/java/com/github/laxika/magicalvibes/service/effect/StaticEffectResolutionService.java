@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffe
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
@@ -410,6 +411,39 @@ public class StaticEffectResolutionService {
         });
         accumulator.addPower(count[0] * boost.powerPerEquipment());
         accumulator.addToughness(count[0] * boost.toughnessPerEquipment());
+    }
+
+    @HandlesStaticEffect(value = EquippedConditionalEffect.class, selfOnly = true)
+    private void resolveEquippedConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        if (!isEquipped(context)) return;
+        var equipped = (EquippedConditionalEffect) effect;
+        CardEffect wrapped = equipped.wrapped();
+        if (wrapped instanceof GrantKeywordEffect grant) {
+            if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
+                accumulator.addKeyword(grant.keyword());
+            }
+        } else if (wrapped instanceof StaticBoostEffect boost) {
+            accumulator.addPower(boost.powerBoost());
+            accumulator.addToughness(boost.toughnessBoost());
+            accumulator.addKeywords(boost.grantedKeywords());
+        } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
+            accumulator.addProtectionColors(protection.colors());
+        }
+    }
+
+    private boolean isEquipped(StaticEffectContext context) {
+        for (UUID playerId : context.gameData().orderedPlayerIds) {
+            List<Permanent> bf = context.gameData().playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent permanent : bf) {
+                if (permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
+                        && permanent.getAttachedTo() != null
+                        && permanent.getAttachedTo().equals(context.target().getId())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @HandlesStaticEffect(value = PowerToughnessEqualToControlledSubtypeCountEffect.class, selfOnly = true)
