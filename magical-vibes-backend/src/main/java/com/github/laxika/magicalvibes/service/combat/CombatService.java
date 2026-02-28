@@ -344,7 +344,7 @@ public class CombatService {
         sessionManager.sendToPlayer(getEffectiveRecipient(gameData, activeId), new AvailableAttackersMessage(attackable, mustAttack));
     }
 
-    CombatResult declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices) {
+    public CombatResult declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.ATTACKER_DECLARATION)) {
             throw new IllegalStateException("Not awaiting attacker declaration");
         }
@@ -447,7 +447,7 @@ public class CombatService {
         return CombatResult.AUTO_PASS_ONLY;
     }
 
-    CombatResult handleDeclareBlockersStep(GameData gameData) {
+    public CombatResult handleDeclareBlockersStep(GameData gameData) {
         UUID activeId = gameData.activePlayerId;
         UUID defenderId = gameQueryService.getOpponentId(gameData, activeId);
         List<Integer> blockable = getBlockableCreatureIndices(gameData, defenderId);
@@ -472,7 +472,7 @@ public class CombatService {
         return CombatResult.DONE;
     }
 
-    CombatResult declareBlockers(GameData gameData, Player player, List<BlockerAssignment> blockerAssignments) {
+    public CombatResult declareBlockers(GameData gameData, Player player, List<BlockerAssignment> blockerAssignments) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.BLOCKER_DECLARATION)) {
             throw new IllegalStateException("Not awaiting blocker declaration");
         }
@@ -862,7 +862,7 @@ public class CombatService {
 
     // ===== Combat damage resolution =====
 
-    CombatResult resolveCombatDamage(GameData gameData) {
+    public CombatResult resolveCombatDamage(GameData gameData) {
         if (gameData.preventAllCombatDamage) {
             String logEntry = "All combat damage is prevented.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);

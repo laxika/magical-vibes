@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.service;
+package com.github.laxika.magicalvibes.service.combat;
 
 public enum CombatResult {
     ADVANCE_AND_AUTO_PASS,

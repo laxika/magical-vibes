@@ -448,7 +448,7 @@ public class GameHelper {
         gameData.warpWorldOperation.sourceName = null;
     }
 
-    boolean checkWinCondition(GameData gameData) {
+    public boolean checkWinCondition(GameData gameData) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             int life = gameData.playerLifeTotals.getOrDefault(playerId, 20);
             int poison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
@@ -577,7 +577,7 @@ public class GameHelper {
         return damage - prevented;
     }
 
-    int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage) {
+    public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage) {
         if (permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
         if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
         damage = applyGlobalPreventionShield(gameData, damage);
@@ -615,7 +615,7 @@ public class GameHelper {
 
     // ===== Mana =====
 
-    void payGenericMana(ManaPool pool, int amount) {
+    public void payGenericMana(ManaPool pool, int amount) {
         int remaining = amount;
         while (remaining > 0) {
             ManaColor highestColor = null;
@@ -1242,7 +1242,7 @@ public class GameHelper {
 
     // ===== Regeneration =====
 
-    boolean tryRegenerate(GameData gameData, Permanent perm) {
+    public boolean tryRegenerate(GameData gameData, Permanent perm) {
         if (perm.isCantRegenerateThisTurn()) {
             return false;
         }

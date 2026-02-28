@@ -713,11 +713,11 @@ public class GameQueryService {
         return multiplier[0];
     }
 
-    int applyDamageMultiplier(GameData gameData, int damage) {
+    public int applyDamageMultiplier(GameData gameData, int damage) {
         return damage * getDamageMultiplier(gameData);
     }
 
-    boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature) {
+    public boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature) {
         return hasAuraWithEffect(gameData, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)
                 || isDamageFromSourcePrevented(gameData, creature.getEffectiveColor())
                 || gameData.permanentsPreventedFromDealingDamage.contains(creature.getId());

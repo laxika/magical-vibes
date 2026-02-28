@@ -461,7 +461,7 @@ public class GameBroadcastService {
         return count;
     }
 
-    int getAttackPaymentPerCreature(GameData gameData, UUID attackingPlayerId) {
+    public int getAttackPaymentPerCreature(GameData gameData, UUID attackingPlayerId) {
         UUID defenderId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
         if (defenderBattlefield == null) return 0;
