@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffec
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypeToExileAndImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithMVXOrLessToHandEffect;
@@ -421,6 +422,73 @@ public class LibraryResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} searching library for matching card to put onto battlefield ({} found, tapped={})",
                 gameData.id, playerName, matchingCards.size(), effect.entersTapped());
+    }
+
+    @HandlesEffect(SearchLibraryForCardTypeToExileAndImprintEffect.class)
+    void resolveSearchLibraryForCardTypeToExileAndImprint(GameData gameData, StackEntry entry,
+                                                          SearchLibraryForCardTypeToExileAndImprintEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        if (!checkSearchRestriction(gameData, controllerId)) {
+            List<Card> deck = gameData.playerDecks.get(controllerId);
+            if (deck != null) Collections.shuffle(deck);
+            return;
+        }
+
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        if (deck == null || deck.isEmpty()) {
+            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> matchingCards = new ArrayList<>();
+        for (Card card : deck) {
+            boolean matchesType = effect.cardTypes().contains(card.getType())
+                    || card.getAdditionalTypes().stream().anyMatch(effect.cardTypes()::contains);
+            if (matchesType) {
+                matchingCards.add(card);
+            }
+        }
+
+        if (matchingCards.isEmpty()) {
+            Collections.shuffle(deck);
+            String logMsg = playerName + " searches their library but finds no matching cards. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - {} searches library, no matching cards found for imprint", gameData.id, playerName);
+            return;
+        }
+
+        gameData.imprintSourcePermanentId = entry.getSourcePermanentId();
+
+        String prompt = "Search your library for a land card to exile (imprint).";
+
+        gameData.interaction.beginLibrarySearch(
+                controllerId,
+                matchingCards,
+                false,
+                true,
+                null,
+                0,
+                null,
+                false,
+                true,
+                prompt,
+                LibrarySearchDestination.EXILE_IMPRINT
+        );
+
+        List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
+                cardViews,
+                prompt,
+                true
+        ));
+
+        String logMsg = playerName + " searches their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} searching library for card to exile and imprint ({} found)",
+                gameData.id, playerName, matchingCards.size());
     }
 
     private boolean isBasicLandOnlyFilter(SearchLibraryForCardTypesToBattlefieldEffect effect) {

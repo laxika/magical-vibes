@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreaturePerMatchingLandNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreaturePerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEquipmentAttachedEffect;
@@ -76,6 +77,34 @@ public class StaticEffectResolutionService {
             accumulator.addPower(boost.powerBoost());
             accumulator.addToughness(boost.toughnessBoost());
         }
+    }
+
+    @HandlesStaticEffect(BoostAttachedCreaturePerMatchingLandNameEffect.class)
+    private void resolveBoostAttachedCreaturePerMatchingLandName(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostAttachedCreaturePerMatchingLandNameEffect) effect;
+        if (context.source().getAttachedTo() == null
+                || !context.source().getAttachedTo().equals(context.target().getId())) {
+            return;
+        }
+
+        Card imprintedCard = context.source().getCard().getImprintedCard();
+        if (imprintedCard == null) {
+            return;
+        }
+
+        String imprintedName = imprintedCard.getName();
+        final int[] count = {0};
+        context.gameData().forEachPermanent((playerId, permanent) -> {
+            if (permanent.getCard().getType() == CardType.LAND
+                    || permanent.getCard().getAdditionalTypes().contains(CardType.LAND)) {
+                if (imprintedName.equals(permanent.getCard().getName())) {
+                    count[0]++;
+                }
+            }
+        });
+
+        accumulator.addPower(count[0] * boost.powerPerMatch());
+        accumulator.addToughness(count[0] * boost.toughnessPerMatch());
     }
 
     @HandlesStaticEffect(BoostEnchantedCreaturePerControlledSubtypeEffect.class)

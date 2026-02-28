@@ -305,6 +305,13 @@ public class LibraryChoiceHandlerService {
 
         if (destination == LibrarySearchDestination.HAND) {
             gameData.playerHands.get(handOwnerId).add(chosenCard);
+        } else if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
+            gameData.playerExiledCards.get(playerId).add(chosenCard);
+            UUID sourcePermanentId = gameData.imprintSourcePermanentId;
+            if (sourcePermanentId != null) {
+                setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
+                gameData.imprintSourcePermanentId = null;
+            }
         } else {
             Permanent perm = new Permanent(chosenCard);
             gameHelper.putPermanentOntoBattlefield(gameData, handOwnerId, perm);
