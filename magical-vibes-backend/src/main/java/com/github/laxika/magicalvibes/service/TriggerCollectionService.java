@@ -403,6 +403,7 @@ public class TriggerCollectionService {
 
                         if (!gameQueryService.isDamageFromSourcePrevented(gameData, perm.getEffectiveColor())
                                 && !gameHelper.isSourceDamagePreventedForPlayer(gameData, discardingPlayerId, perm.getId())
+                                && !gameData.permanentsPreventedFromDealingDamage.contains(perm.getId())
                                 && !gameHelper.applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, perm.getEffectiveColor())) {
                             int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, discardingPlayerId, damage);
                             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, discardingPlayerId, effectiveDamage, cardName);
@@ -504,6 +505,7 @@ public class TriggerCollectionService {
 
                     if (!gameQueryService.isDamageFromSourcePrevented(gameData, perm.getEffectiveColor())
                             && !gameHelper.isSourceDamagePreventedForPlayer(gameData, tappingPlayerId, perm.getId())
+                            && !gameData.permanentsPreventedFromDealingDamage.contains(perm.getId())
                             && !gameHelper.applyColorDamagePreventionForPlayer(gameData, tappingPlayerId, perm.getEffectiveColor())) {
                         int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, tappingPlayerId, damage);
                         effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, tappingPlayerId, effectiveDamage, cardName);

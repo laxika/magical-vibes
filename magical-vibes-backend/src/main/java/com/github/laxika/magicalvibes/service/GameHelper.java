@@ -529,6 +529,7 @@ public class GameHelper {
         gameData.combatDamageRedirectTarget = null;
         gameData.playerColorDamagePreventionCount.clear();
         gameData.playerSourceDamagePreventionIds.clear();
+        gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.drawReplacementTargetToController.clear();
     }
 

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageByTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
@@ -94,6 +95,22 @@ public class PreventionResolutionService {
         gameData.playerColorDamagePreventionCount
                 .computeIfAbsent(controllerId, k -> new ConcurrentHashMap<>())
                 .merge(chosenColor, 1, Integer::sum);
+    }
+
+    @HandlesEffect(PreventAllDamageByTargetCreatureEffect.class)
+    void resolvePreventAllDamageByTargetCreatures(GameData gameData, StackEntry entry) {
+        List<UUID> targetIds = entry.getTargetPermanentIds();
+        if (targetIds == null || targetIds.isEmpty()) return;
+
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) continue;
+
+            gameData.permanentsPreventedFromDealingDamage.add(targetId);
+            String logEntry = "All damage " + target.getCard().getName() + " would deal this turn is prevented.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} prevented from dealing damage this turn", gameData.id, target.getCard().getName());
+        }
     }
 
     @HandlesEffect(PreventAllDamageFromChosenSourceEffect.class)

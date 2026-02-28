@@ -697,7 +697,8 @@ public class GameQueryService {
 
     boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature) {
         return hasAuraWithEffect(gameData, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)
-                || isDamageFromSourcePrevented(gameData, creature.getEffectiveColor());
+                || isDamageFromSourcePrevented(gameData, creature.getEffectiveColor())
+                || gameData.permanentsPreventedFromDealingDamage.contains(creature.getId());
     }
 
     public boolean isDamageFromSourcePrevented(GameData gameData, CardColor sourceColor) {

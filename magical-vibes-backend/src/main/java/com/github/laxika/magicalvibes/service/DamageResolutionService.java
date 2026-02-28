@@ -450,7 +450,8 @@ public class DamageResolutionService {
 
         if (!targetIsPlayer && targetPermanent == null) return;
 
-        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())
+                || (entry.getSourcePermanentId() != null && gameData.permanentsPreventedFromDealingDamage.contains(entry.getSourcePermanentId()))) {
             gameBroadcastService.logAndBroadcast(gameData, cardName + "'s damage is prevented.");
         } else if (targetIsPlayer) {
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
@@ -520,7 +521,8 @@ public class DamageResolutionService {
 
     private void dealDamageToPlayer(GameData gameData, StackEntry entry, UUID playerId, int rawDamage) {
         String cardName = entry.getCard().getName();
-        if (gameHelper.isSourceDamagePreventedForPlayer(gameData, playerId, entry.getSourcePermanentId())) {
+        if (gameHelper.isSourceDamagePreventedForPlayer(gameData, playerId, entry.getSourcePermanentId())
+                || (entry.getSourcePermanentId() != null && gameData.permanentsPreventedFromDealingDamage.contains(entry.getSourcePermanentId()))) {
             gameBroadcastService.logAndBroadcast(gameData, cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
             return;
         }
