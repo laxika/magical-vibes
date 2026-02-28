@@ -32,6 +32,7 @@ public class Permanent {
     @Setter private boolean cantBeBlocked;
     @Setter private boolean cantBlockThisTurn;
     @Setter private boolean cantRegenerateThisTurn;
+    @Setter private boolean powerToughnessSwitched;
     @Setter private boolean animatedUntilEndOfTurn;
     @Setter private int animatedPower;
     @Setter private int animatedToughness;
@@ -89,6 +90,7 @@ public class Permanent {
         this.cantBeBlocked = source.cantBeBlocked;
         this.cantBlockThisTurn = source.cantBlockThisTurn;
         this.cantRegenerateThisTurn = source.cantRegenerateThisTurn;
+        this.powerToughnessSwitched = source.powerToughnessSwitched;
         this.animatedUntilEndOfTurn = source.animatedUntilEndOfTurn;
         this.animatedPower = source.animatedPower;
         this.animatedToughness = source.animatedToughness;
@@ -157,6 +159,20 @@ public class Permanent {
     }
 
     public int getEffectivePower() {
+        if (powerToughnessSwitched) {
+            return getRawToughness();
+        }
+        return getRawPower();
+    }
+
+    public int getEffectiveToughness() {
+        if (powerToughnessSwitched) {
+            return getRawPower();
+        }
+        return getRawToughness();
+    }
+
+    private int getRawPower() {
         if (animatedUntilEndOfTurn) {
             return animatedPower + powerModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
         }
@@ -166,7 +182,7 @@ public class Permanent {
         return (card.getPower() != null ? card.getPower() : 0) + powerModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
     }
 
-    public int getEffectiveToughness() {
+    private int getRawToughness() {
         if (animatedUntilEndOfTurn) {
             return animatedToughness + toughnessModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
         }
@@ -196,6 +212,7 @@ public class Permanent {
     public void resetModifiers() {
         this.powerModifier = 0;
         this.toughnessModifier = 0;
+        this.powerToughnessSwitched = false;
         this.cantBeBlocked = false;
         this.cantBlockThisTurn = false;
         this.cantRegenerateThisTurn = false;

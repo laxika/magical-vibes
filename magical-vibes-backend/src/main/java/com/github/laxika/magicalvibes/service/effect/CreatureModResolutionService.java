@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnE
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
+import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TapSubtypeBoostSelfAndDamageDefenderEffect;
@@ -261,6 +262,21 @@ public class CreatureModResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gets +{}/+{}", gameData.id, target.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
+    }
+
+    @HandlesEffect(SwitchPowerToughnessEffect.class)
+    private void resolveSwitchPowerToughness(GameData gameData, StackEntry entry, SwitchPowerToughnessEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        target.setPowerToughnessSwitched(!target.isPowerToughnessSwitched());
+
+        String logEntry = target.getCard().getName() + "'s power and toughness are switched until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {}'s power and toughness switched", gameData.id, target.getCard().getName());
     }
 
     @HandlesEffect(BoostFirstTargetCreatureEffect.class)

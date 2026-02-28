@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffec
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromCardTypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentFromTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
@@ -66,6 +67,12 @@ public class CreatureModTargetValidators {
 
     @ValidatesTarget(MustBlockSourceEffect.class)
     public void validateMustBlockSource(TargetValidationContext ctx) {
+        Permanent target = tvs.requireBattlefieldTarget(ctx);
+        tvs.requireCreature(ctx, target);
+    }
+
+    @ValidatesTarget(SwitchPowerToughnessEffect.class)
+    public void validateSwitchPowerToughness(TargetValidationContext ctx) {
         Permanent target = tvs.requireBattlefieldTarget(ctx);
         tvs.requireCreature(ctx, target);
     }
