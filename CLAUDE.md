@@ -1,3 +1,4 @@
+- Do not use `cd` in Bash commands. The working directory is already correct and persists between calls.
 - Do not start committing changes until I tell you to do so.
 - Make sure that the way we are implementing the cards and the rules is accurate. Having non-rules-correct behavior in the engine is not fine nor acceptable!
 - If you need any rules clarification feel free to search the web! Being rules accurate is our number one priority.
