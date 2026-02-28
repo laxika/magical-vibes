@@ -1043,7 +1043,33 @@ public class CombatService {
                 gameData.stack.add(se);
                 gameBroadcastService.logAndBroadcast(gameData, creature.getCard().getName() + "'s combat damage trigger goes on the stack.");
             }
+
+            // Check attached equipment/auras for combat damage to player triggers
+            checkAttachedCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId);
         }
+    }
+
+    private void checkAttachedCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId, UUID defenderId) {
+        gameData.forEachPermanent((ownerId, perm) -> {
+            if (perm.getAttachedTo() != null && perm.getAttachedTo().equals(creature.getId())) {
+                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER);
+                if (!effects.isEmpty()) {
+                    StackEntry se = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            attackerId,
+                            perm.getCard().getName() + "'s triggered ability",
+                            new ArrayList<>(effects),
+                            defenderId,
+                            perm.getId()
+                    );
+                    se.setNonTargeting(true);
+                    gameData.stack.add(se);
+                    String logEntry = perm.getCard().getName() + "'s combat damage trigger goes on the stack.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                }
+            }
+        });
     }
 
     private void processCombatDamageToCreatureTriggers(GameData gameData,

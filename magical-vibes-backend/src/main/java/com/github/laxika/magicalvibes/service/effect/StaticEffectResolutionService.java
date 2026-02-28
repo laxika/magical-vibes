@@ -107,6 +107,15 @@ public class StaticEffectResolutionService {
         accumulator.addToughness(count[0] * boost.toughnessPerMatch());
     }
 
+    @HandlesStaticEffect(ProtectionFromColorsEffect.class)
+    private void resolveProtectionFromColors(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var protection = (ProtectionFromColorsEffect) effect;
+        if (context.source().getAttachedTo() != null
+                && context.source().getAttachedTo().equals(context.target().getId())) {
+            accumulator.addProtectionColors(protection.colors());
+        }
+    }
+
     @HandlesStaticEffect(BoostEnchantedCreaturePerControlledSubtypeEffect.class)
     private void resolveBoostEnchantedCreaturePerControlledSubtype(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostEnchantedCreaturePerControlledSubtypeEffect) effect;
