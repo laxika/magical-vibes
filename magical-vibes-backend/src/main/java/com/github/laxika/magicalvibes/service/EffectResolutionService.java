@@ -27,8 +27,18 @@ public class EffectResolutionService {
     private final PermanentRemovalService permanentRemovalService;
 
     void resolveEffects(GameData gameData, StackEntry entry) {
+        resolveEffectsFrom(gameData, entry, 0);
+    }
+
+    /**
+     * Resume resolving effects on the given stack entry starting from the specified index.
+     * Called after an async input (e.g. proliferate choice) completes to continue
+     * resolving remaining effects of the same spell/ability.
+     */
+    public void resolveEffectsFrom(GameData gameData, StackEntry entry, int startIndex) {
         List<CardEffect> effects = entry.getEffectsToResolve();
-        for (CardEffect effect : effects) {
+        for (int i = startIndex; i < effects.size(); i++) {
+            CardEffect effect = effects.get(i);
             CardEffect effectToResolve = effect;
 
             // Metalcraft intervening-if: re-check condition at resolution time
@@ -53,9 +63,14 @@ public class EffectResolutionService {
                 log.warn("No handler for effect: {}", effectToResolve.getClass().getSimpleName());
             }
             if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
-                break;
+                // Store state for resumption after async input completes
+                gameData.pendingEffectResolutionEntry = entry;
+                gameData.pendingEffectResolutionIndex = i + 1;
+                return;
             }
         }
+        gameData.pendingEffectResolutionEntry = null;
+        gameData.pendingEffectResolutionIndex = 0;
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 

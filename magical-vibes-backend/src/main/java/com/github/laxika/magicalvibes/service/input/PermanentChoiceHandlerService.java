@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.service.CreatureControlService;
+import com.github.laxika.magicalvibes.service.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
@@ -48,6 +49,7 @@ public class PermanentChoiceHandlerService {
     private final TriggerCollectionService triggerCollectionService;
     private final CreatureControlService creatureControlService;
     private final TurnProgressionService turnProgressionService;
+    private final EffectResolutionService effectResolutionService;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)) {
@@ -676,6 +678,13 @@ public class PermanentChoiceHandlerService {
             if (!gameData.pendingMayAbilities.isEmpty()) {
                 playerInputService.processNextMayAbility(gameData);
                 return;
+            }
+
+            // Resume resolving remaining effects on the same spell/ability (e.g. "Proliferate. Draw a card.")
+            if (gameData.pendingEffectResolutionEntry != null) {
+                effectResolutionService.resolveEffectsFrom(gameData,
+                        gameData.pendingEffectResolutionEntry,
+                        gameData.pendingEffectResolutionIndex);
             }
 
             gameBroadcastService.broadcastGameState(gameData);
