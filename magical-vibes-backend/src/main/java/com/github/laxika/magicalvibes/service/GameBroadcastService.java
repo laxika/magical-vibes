@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSharedCardTypeWithImprintEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfMetalcraftEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
@@ -387,6 +388,15 @@ public class GameBroadcastService {
             if (effect instanceof ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect reduceEffect
                     && anyOpponentControlsAtLeastNMoreCreatures(gameData, playerId, reduceEffect.minimumCreatureDifference())) {
                 reduction += reduceEffect.amount();
+            }
+            if (effect instanceof ReduceOwnCastCostIfMetalcraftEffect metalcraftReduce) {
+                List<Permanent> ownBattlefield = gameData.playerBattlefields.get(playerId);
+                long artifactCount = ownBattlefield == null ? 0 : ownBattlefield.stream()
+                        .filter(gameQueryService::isArtifact)
+                        .count();
+                if (artifactCount >= 3) {
+                    reduction += metalcraftReduce.amount();
+                }
             }
         }
 

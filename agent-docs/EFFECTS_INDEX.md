@@ -564,6 +564,7 @@ Pass `null` as filter to allow any card.
 | `RequirePaymentToAttackEffect` | `(int amountPerAttacker)` | must pay N mana per attacking creature (static) |
 | `ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect` | `(int minimumCreatureDifference, int amount)` | reduce cast cost by N if opponent has M+ more creatures |
 | `ReduceOwnCastCostForSharedCardTypeWithImprintEffect` | `(int amount)` | reduce cast cost of controller's spells by N if they share a card type with the imprinted card (static, Semblance Anvil) |
+| `ReduceOwnCastCostIfMetalcraftEffect` | `(int amount)` | reduce this spell's cast cost by N if controller has metalcraft (3+ artifacts) (static, Stoic Rebuttal) |
 | `NoMaximumHandSizeEffect` | `()` | you have no maximum hand size (static) |
 | `EnterPermanentsOfTypesTappedEffect` | `(Set<CardType> cardTypes)` | permanents of specified types enter tapped (static) |
 | `EntersTappedUnlessFewLandsEffect` | `(int maxOtherLands)` | enters tapped unless you control N or fewer other lands (fast lands, static) |
