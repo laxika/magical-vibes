@@ -15,7 +15,9 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.RandomDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.PutAwakeningCountersOnTargetLandsEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
@@ -181,10 +183,71 @@ public class PlayerInteractionResolutionService {
         playerInputService.beginSpellCardNameChoice(gameData, controllerId, targetPlayerId, effect.excludedTypes());
     }
 
-    @HandlesEffect(RandomDiscardEffect.class)
-    private void resolveRandomDiscard(GameData gameData, StackEntry entry, RandomDiscardEffect effect) {
-        gameData.discardCausedByOpponent = false;
-        resolveRandomDiscardCards(gameData, entry.getControllerId(), entry.getCard().getName(), effect.amount());
+    @HandlesEffect(TargetPlayerRandomDiscardEffect.class)
+    private void resolveTargetPlayerRandomDiscard(GameData gameData, StackEntry entry, TargetPlayerRandomDiscardEffect effect) {
+        gameData.discardCausedByOpponent = effect.causedByOpponent();
+        UUID playerId = effect.causedByOpponent() ? entry.getTargetPermanentId() : entry.getControllerId();
+        resolveRandomDiscardCards(gameData, playerId, entry.getCard().getName(), effect.amount());
+    }
+
+    @HandlesEffect(ReturnPermanentsOnCombatDamageToPlayerEffect.class)
+    private void resolveReturnPermanentsOnCombatDamage(GameData gameData, StackEntry entry) {
+        UUID defenderId = entry.getTargetPermanentId();
+        int damageDealt = entry.getXValue();
+        UUID attackerId = entry.getControllerId();
+        String creatureName = entry.getCard().getName();
+
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        List<UUID> validIds = new ArrayList<>();
+        if (defenderBattlefield != null) {
+            for (Permanent perm : defenderBattlefield) {
+                validIds.add(perm.getId());
+            }
+        }
+
+        if (validIds.isEmpty()) {
+            String logEntry = creatureName + "'s ability triggers, but " + gameData.playerIdToName.get(defenderId) + " has no permanents.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        String logEntry = creatureName + "'s ability triggers — " + gameData.playerIdToName.get(attackerId) + " may return up to " + damageDealt + " permanent" + (damageDealt > 1 ? "s" : "") + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} combat damage trigger: {} damage, {} valid targets", gameData.id, creatureName, damageDealt, validIds.size());
+
+        gameData.pendingCombatDamageBounceTargetPlayerId = defenderId;
+        int maxCount = Math.min(damageDealt, validIds.size());
+        playerInputService.beginMultiPermanentChoice(gameData, attackerId, validIds, maxCount, "Return up to " + damageDealt + " permanent" + (damageDealt > 1 ? "s" : "") + " to their owner's hand.");
+    }
+
+    @HandlesEffect(PutAwakeningCountersOnTargetLandsEffect.class)
+    private void resolvePutAwakeningCounters(GameData gameData, StackEntry entry) {
+        UUID attackerId = entry.getControllerId();
+        String creatureName = entry.getCard().getName();
+
+        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(attackerId);
+        List<UUID> validLandIds = new ArrayList<>();
+        if (attackerBattlefield != null) {
+            for (Permanent perm : attackerBattlefield) {
+                if (perm.getCard().getType() == CardType.LAND
+                        || perm.getCard().getAdditionalTypes().contains(CardType.LAND)) {
+                    validLandIds.add(perm.getId());
+                }
+            }
+        }
+
+        if (validLandIds.isEmpty()) {
+            String logEntry = creatureName + "'s ability triggers, but " + gameData.playerIdToName.get(attackerId) + " controls no lands.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        String logEntry = creatureName + "'s ability triggers — " + gameData.playerIdToName.get(attackerId) + " may put awakening counters on lands.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} combat damage trigger: {} valid lands", gameData.id, creatureName, validLandIds.size());
+
+        gameData.pendingAwakeningCounterPlacement = true;
+        playerInputService.beginMultiPermanentChoice(gameData, attackerId, validLandIds, validLandIds.size(), "Choose any number of lands to put awakening counters on.");
     }
 
     private void applyOpponentMayPlayCreature(GameData gameData, UUID controllerId) {

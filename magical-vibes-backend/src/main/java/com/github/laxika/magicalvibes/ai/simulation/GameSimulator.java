@@ -202,8 +202,11 @@ public class GameSimulator {
         }
 
         EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper, gameQueryService, effectHandlerRegistry, gameBroadcastService, permanentRemovalService);
+        StackResolutionService stackResolutionService = new StackResolutionService(
+                gameHelper, legendRuleService, stateBasedActionService, gameQueryService, targetLegalityService,
+                gameBroadcastService, effectResolutionService, playerInputService, triggerCollectionService, creatureControlService);
         TurnProgressionService turnProgressionService = new TurnProgressionService(
-                combatService, gameHelper, gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService, permanentRemovalService, auraAttachmentService);
+                combatService, gameHelper, gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService, permanentRemovalService, auraAttachmentService, stackResolutionService);
         SpellCastingService spellCastingService = new SpellCastingService(
                 gameQueryService, gameHelper, gameBroadcastService, turnProgressionService, targetLegalityService, permanentRemovalService, triggerCollectionService);
         ActivatedAbilityExecutionService activatedAbilityExecutionService = new ActivatedAbilityExecutionService(
@@ -228,9 +231,6 @@ public class GameSimulator {
         LibraryChoiceHandlerService libraryChoiceHandlerService = new LibraryChoiceHandlerService(
                 noOpSession, gameQueryService, gameHelper, legendRuleService, stateBasedActionService, gameBroadcastService,
                 cardViewFactory, turnProgressionService, playerInputService);
-        StackResolutionService stackResolutionService = new StackResolutionService(
-                gameHelper, legendRuleService, stateBasedActionService, gameQueryService, targetLegalityService,
-                gameBroadcastService, effectResolutionService, playerInputService, triggerCollectionService, creatureControlService);
         MulliganService mulliganService = new MulliganService(
                 noOpSession, gameBroadcastService, turnProgressionService);
         ReconnectionService reconnectionService = new ReconnectionService(

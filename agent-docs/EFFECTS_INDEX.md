@@ -263,7 +263,7 @@ Pass `null` as filter to allow any card.
 | `DiscardCardEffect` | `(int amount)` | discard N cards |
 | `TargetPlayerDiscardsEffect` | `(int amount)` | target player discards N cards |
 | `TargetPlayerDiscardsReturnSelfIfCardTypeEffect` | `(int amount, CardType returnIfType)` | target player discards N cards; if a discarded card matches the type, return the source spell from graveyard to owner's hand (e.g. Psychic Miasma) |
-| `RandomDiscardEffect` | `(int amount)` | discard N cards at random |
+| `TargetPlayerRandomDiscardEffect` | `(int amount, boolean causedByOpponent)` | target player discards N cards at random. Convenience ctors: `()` → amount=1, causedByOpponent=true (e.g. Hypnotic Specter); `(int amount)` → causedByOpponent=false (e.g. Goblin Lore self-discard). When `causedByOpponent=true`, uses `entry.getTargetPermanentId()` for who discards and sets `discardCausedByOpponent = true`; when `false`, uses `entry.getControllerId()`. |
 | `ChooseCardFromTargetHandToDiscardEffect` | `(int count, List<CardType> excludedTypes)` | choose N cards from target's hand to discard (excludedTypes can't be chosen) |
 | `ChooseCardsFromTargetHandToTopOfLibraryEffect` | `(int count)` | choose N cards from target hand to put on top of library |
 | `LookAtHandEffect` | `()` | look at target player's hand |

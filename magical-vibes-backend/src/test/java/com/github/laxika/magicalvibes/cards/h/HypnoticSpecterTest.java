@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.RandomDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -41,7 +41,7 @@ class HypnoticSpecterTest extends BaseCardTest {
         HypnoticSpecter card = new HypnoticSpecter();
 
         assertThat(card.getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER).getFirst()).isInstanceOf(RandomDiscardEffect.class);
+        assertThat(card.getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER).getFirst()).isInstanceOf(TargetPlayerRandomDiscardEffect.class);
     }
 
     // ===== Combat damage trigger =====
@@ -153,8 +153,7 @@ class HypnoticSpecterTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.gameLog).anyMatch(log ->
-                log.contains("Hypnotic Specter") && log.contains("Grizzly Bears") && log.contains("at random"));
+        assertThat(gd.gameLog).anyMatch(log -> log.contains("Grizzly Bears") && log.contains("at random"));
     }
 }
 

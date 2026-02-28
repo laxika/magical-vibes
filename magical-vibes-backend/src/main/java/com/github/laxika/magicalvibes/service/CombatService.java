@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CombatDamagePhase1State;
 import com.github.laxika.magicalvibes.model.CombatDamageTarget;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -46,10 +45,9 @@ import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEf
 
 import com.github.laxika.magicalvibes.model.effect.PutAwakeningCountersOnTargetLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.RandomDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
@@ -1411,6 +1409,12 @@ public class CombatService {
             return CombatResult.DONE;
         }
 
+        // If combat damage triggers were added to the stack, don't advance the step yet —
+        // let the auto-pass loop resolve the stack first, then it will advance naturally.
+        if (gameData.stack.size() > stackSizeBeforeDamageTriggers) {
+            return CombatResult.AUTO_PASS_RESOLVE_COMBAT_TRIGGERS;
+        }
+
         return CombatResult.ADVANCE_AND_AUTO_PASS;
     }
 
@@ -1477,79 +1481,75 @@ public class CombatService {
             allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
             allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
             for (CardEffect effect : allDamageEffects) {
-                if (effect instanceof DrawCardEffect drawEffect) {
-                    String logEntry = creature.getCard().getName() + "'s ability triggers — " + gameData.playerIdToName.get(attackerId) + " draws " + drawEffect.amount() + " card" + (drawEffect.amount() > 1 ? "s" : "") + ".";
+                if (effect instanceof DrawCardEffect) {
+                    StackEntry se = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            creature.getCard(),
+                            attackerId,
+                            creature.getCard().getName() + "'s triggered ability",
+                            List.of(effect)
+                    );
+                    se.setNonTargeting(true);
+                    gameData.stack.add(se);
+                    String logEntry = creature.getCard().getName() + "'s combat damage trigger goes on the stack.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    for (int i = 0; i < drawEffect.amount(); i++) {
-                        gameHelper.resolveDrawCard(gameData, attackerId);
-                    }
-                } else if (effect instanceof ExileTopCardsRepeatOnDuplicateEffect exileEffect) {
-                    gameHelper.resolveExileTopCardsRepeatOnDuplicate(gameData, creature, defenderId, exileEffect);
-                } else if (effect instanceof RandomDiscardEffect randomDiscardEffect) {
-                    List<Card> defenderHand = gameData.playerHands.get(defenderId);
-                    if (defenderHand == null || defenderHand.isEmpty()) {
-                        String logEntry = creature.getCard().getName() + "'s ability triggers, but " + gameData.playerIdToName.get(defenderId) + " has no cards to discard.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    } else {
-                        gameData.discardCausedByOpponent = true;
-                        for (int i = 0; i < randomDiscardEffect.amount(); i++) {
-                            List<Card> currentHand = gameData.playerHands.get(defenderId);
-                            if (currentHand.isEmpty()) break;
-                            int randomIndex = java.util.concurrent.ThreadLocalRandom.current().nextInt(currentHand.size());
-                            Card discarded = currentHand.remove(randomIndex);
-                            gameHelper.addCardToGraveyard(gameData, defenderId, discarded);
-                            String logEntry = creature.getCard().getName() + "'s ability triggers — " + gameData.playerIdToName.get(defenderId) + " discards " + discarded.getName() + " at random.";
-                            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                            log.info("Game {} - {} triggers random discard: {} discards {}", gameData.id, creature.getCard().getName(), gameData.playerIdToName.get(defenderId), discarded.getName());
-                            triggerCollectionService.checkDiscardTriggers(gameData, defenderId, discarded);
-                        }
-                    }
+                } else if (effect instanceof ExileTopCardsRepeatOnDuplicateEffect) {
+                    StackEntry se = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            creature.getCard(),
+                            attackerId,
+                            creature.getCard().getName() + "'s triggered ability",
+                            List.of(effect),
+                            defenderId,
+                            creature.getId()
+                    );
+                    se.setNonTargeting(true);
+                    gameData.stack.add(se);
+                    String logEntry = creature.getCard().getName() + "'s combat damage trigger goes on the stack.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                } else if (effect instanceof TargetPlayerRandomDiscardEffect) {
+                    StackEntry se = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            creature.getCard(),
+                            attackerId,
+                            creature.getCard().getName() + "'s triggered ability",
+                            List.of(effect),
+                            defenderId,
+                            creature.getId()
+                    );
+                    se.setNonTargeting(true);
+                    gameData.stack.add(se);
+                    String logEntry = creature.getCard().getName() + "'s combat damage trigger goes on the stack.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 } else if (effect instanceof ReturnPermanentsOnCombatDamageToPlayerEffect) {
-                    // Collect valid permanents the damaged player controls
-                    List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
-                    List<UUID> validIds = new ArrayList<>();
-                    for (Permanent perm : defenderBattlefield) {
-                        validIds.add(perm.getId());
-                    }
-
-                    if (validIds.isEmpty()) {
-                        String logEntry = creature.getCard().getName() + "'s ability triggers, but " + gameData.playerIdToName.get(defenderId) + " has no permanents.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                        continue;
-                    }
-
-                    String logEntry = creature.getCard().getName() + "'s ability triggers — " + gameData.playerIdToName.get(attackerId) + " may return up to " + damageDealt + " permanent" + (damageDealt > 1 ? "s" : "") + ".";
+                    StackEntry se = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            creature.getCard(),
+                            attackerId,
+                            creature.getCard().getName() + "'s triggered ability",
+                            List.of(effect),
+                            damageDealt,
+                            defenderId,
+                            null
+                    );
+                    se.setNonTargeting(true);
+                    gameData.stack.add(se);
+                    String logEntry = creature.getCard().getName() + "'s combat damage trigger goes on the stack.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - {} combat damage trigger: {} damage, {} valid targets", gameData.id, creature.getCard().getName(), damageDealt, validIds.size());
-
-                    gameData.pendingCombatDamageBounceTargetPlayerId = defenderId;
-                    int maxCount = Math.min(damageDealt, validIds.size());
-                    playerInputService.beginMultiPermanentChoice(gameData, attackerId, validIds, maxCount, "Return up to " + damageDealt + " permanent" + (damageDealt > 1 ? "s" : "") + " to their owner's hand.");
-                    return;
                 } else if (effect instanceof PutAwakeningCountersOnTargetLandsEffect) {
-                    List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(attackerId);
-                    List<UUID> validLandIds = new ArrayList<>();
-                    for (Permanent perm : attackerBattlefield) {
-                        if (perm.getCard().getType() == CardType.LAND
-                                || perm.getCard().getAdditionalTypes().contains(CardType.LAND)) {
-                            validLandIds.add(perm.getId());
-                        }
-                    }
-
-                    if (validLandIds.isEmpty()) {
-                        String logEntry = creature.getCard().getName() + "'s ability triggers, but " + gameData.playerIdToName.get(attackerId) + " controls no lands.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                        continue;
-                    }
-
-                    String logEntry = creature.getCard().getName() + "'s ability triggers — " + gameData.playerIdToName.get(attackerId) + " may put awakening counters on lands.";
+                    StackEntry se = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            creature.getCard(),
+                            attackerId,
+                            creature.getCard().getName() + "'s triggered ability",
+                            List.of(effect)
+                    );
+                    se.setNonTargeting(true);
+                    gameData.stack.add(se);
+                    String logEntry = creature.getCard().getName() + "'s combat damage trigger goes on the stack.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - {} combat damage trigger: {} valid lands", gameData.id, creature.getCard().getName(), validLandIds.size());
-
-                    gameData.pendingAwakeningCounterPlacement = true;
-                    playerInputService.beginMultiPermanentChoice(gameData, attackerId, validLandIds, validLandIds.size(), "Choose any number of lands to put awakening counters on.");
-                    return;
                 } else if (effect instanceof MetalcraftConditionalEffect metalcraft) {
+                    // Intervening-if: check metalcraft at trigger time
                     List<Permanent> bf = gameData.playerBattlefields.get(attackerId);
                     long artifactCount = bf == null ? 0 : bf.stream()
                             .filter(gameQueryService::isArtifact)
@@ -1559,12 +1559,19 @@ public class CombatService {
                                 gameData.id, creature.getCard().getName(), artifactCount);
                         continue;
                     }
-                    CardEffect wrapped = metalcraft.wrapped();
-                    if (wrapped instanceof MillTargetPlayerEffect millEffect) {
-                        String logEntry = creature.getCard().getName() + "'s metalcraft ability triggers:";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                        gameHelper.resolveMillPlayer(gameData, defenderId, millEffect.count());
-                    }
+                    StackEntry se = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            creature.getCard(),
+                            attackerId,
+                            creature.getCard().getName() + "'s triggered ability",
+                            List.of(metalcraft),
+                            defenderId,
+                            creature.getId()
+                    );
+                    se.setNonTargeting(true);
+                    gameData.stack.add(se);
+                    String logEntry = creature.getCard().getName() + "'s metalcraft ability triggers:";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 } else if (effect instanceof TargetPlayerLosesGameEffect) {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,

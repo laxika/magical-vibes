@@ -191,8 +191,11 @@ public class GameTestHarness {
             scanEffectHandlers(service, effectHandlerRegistry);
         }
         EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper, gameQueryService, effectHandlerRegistry, gameBroadcastService, permanentRemovalService);
+        StackResolutionService stackResolutionService = new StackResolutionService(
+                gameHelper, legendRuleService, stateBasedActionService, gameQueryService, targetLegalityService,
+                gameBroadcastService, effectResolutionService, playerInputService, triggerCollectionService, creatureControlService);
         TurnProgressionService turnProgressionService = new TurnProgressionService(
-                combatService, gameHelper, gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService, permanentRemovalService, auraAttachmentService);
+                combatService, gameHelper, gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService, permanentRemovalService, auraAttachmentService, stackResolutionService);
         SpellCastingService spellCastingService = new SpellCastingService(
                 gameQueryService, gameHelper, gameBroadcastService, turnProgressionService, targetLegalityService, permanentRemovalService, triggerCollectionService);
         ActivatedAbilityExecutionService activatedAbilityExecutionService = new ActivatedAbilityExecutionService(
@@ -217,9 +220,6 @@ public class GameTestHarness {
         LibraryChoiceHandlerService libraryChoiceHandlerService = new LibraryChoiceHandlerService(
                 sessionManager, gameQueryService, gameHelper, legendRuleService, stateBasedActionService, gameBroadcastService,
                 cardViewFactory, turnProgressionService, playerInputService);
-        StackResolutionService stackResolutionService = new StackResolutionService(
-                gameHelper, legendRuleService, stateBasedActionService, gameQueryService, targetLegalityService,
-                gameBroadcastService, effectResolutionService, playerInputService, triggerCollectionService, creatureControlService);
         MulliganService mulliganService = new MulliganService(
                 sessionManager, gameBroadcastService, turnProgressionService);
         ReconnectionService reconnectionService = new ReconnectionService(

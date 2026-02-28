@@ -82,7 +82,6 @@ class PhageTheUntouchableTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.gameLog).anyMatch(log -> log.contains("Bob loses the game from Phage the Untouchable"));

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
@@ -95,6 +96,12 @@ public class LibraryResolutionService {
     @HandlesEffect(MillTargetPlayerEffect.class)
     void resolveMillTargetPlayer(GameData gameData, StackEntry entry, MillTargetPlayerEffect mill) {
         gameHelper.resolveMillPlayer(gameData, entry.getTargetPermanentId(), mill.count());
+    }
+
+    @HandlesEffect(ExileTopCardsRepeatOnDuplicateEffect.class)
+    void resolveExileTopCardsRepeatOnDuplicate(GameData gameData, StackEntry entry, ExileTopCardsRepeatOnDuplicateEffect effect) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        gameHelper.resolveExileTopCardsRepeatOnDuplicate(gameData, entry.getCard(), targetPlayerId, effect);
     }
 
     @HandlesEffect(MillTargetPlayerByChargeCountersEffect.class)

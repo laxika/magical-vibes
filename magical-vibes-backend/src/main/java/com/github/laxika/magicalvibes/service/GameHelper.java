@@ -1236,11 +1236,11 @@ public class GameHelper {
 
     // ===== Exile (used by CombatService) =====
 
-    void resolveExileTopCardsRepeatOnDuplicate(GameData gameData, Permanent creature, UUID targetPlayerId, ExileTopCardsRepeatOnDuplicateEffect effect) {
+    void resolveExileTopCardsRepeatOnDuplicate(GameData gameData, Card sourceCard, UUID targetPlayerId, ExileTopCardsRepeatOnDuplicateEffect effect) {
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         List<Card> exiled = gameData.playerExiledCards.get(targetPlayerId);
         String playerName = gameData.playerIdToName.get(targetPlayerId);
-        String creatureName = creature.getCard().getName();
+        String creatureName = sourceCard.getName();
 
         String triggerLog = creatureName + "'s ability triggers — " + playerName + " exiles cards from the top of their library.";
         gameBroadcastService.logAndBroadcast(gameData, triggerLog);

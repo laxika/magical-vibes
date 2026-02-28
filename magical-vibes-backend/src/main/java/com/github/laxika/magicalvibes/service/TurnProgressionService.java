@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
+import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -46,6 +49,7 @@ public class TurnProgressionService {
     private final TriggerCollectionService triggerCollectionService;
     private final PermanentRemovalService permanentRemovalService;
     private final AuraAttachmentService auraAttachmentService;
+    private final StackResolutionService stackResolutionService;
 
     public void advanceStep(GameData gameData) {
         // Process end-of-combat sacrifices when leaving END_OF_COMBAT
@@ -621,8 +625,44 @@ public class TurnProgressionService {
         if (result == CombatResult.ADVANCE_AND_AUTO_PASS || result == CombatResult.ADVANCE_ONLY) {
             advanceStep(gameData);
         }
-        if (result == CombatResult.ADVANCE_AND_AUTO_PASS || result == CombatResult.AUTO_PASS_ONLY) {
+        if (result == CombatResult.AUTO_PASS_RESOLVE_COMBAT_TRIGGERS) {
+            resolveAutoPassCombatTriggers(gameData);
+        }
+        if (result == CombatResult.ADVANCE_AND_AUTO_PASS || result == CombatResult.AUTO_PASS_ONLY
+                || result == CombatResult.AUTO_PASS_RESOLVE_COMBAT_TRIGGERS) {
             resolveAutoPass(gameData);
+        }
+    }
+
+    private void resolveAutoPassCombatTriggers(GameData gameData) {
+        for (int safety = 0; safety < 100; safety++) {
+            if (gameData.stack.isEmpty()) return;
+            if (gameData.interaction.isAwaitingInput()) return;
+            if (gameData.status == GameStatus.FINISHED) return;
+
+            UUID stackPriorityHolder = gameQueryService.getPriorityPlayerId(gameData);
+            if (stackPriorityHolder == null) {
+                // Both passed — resolve top of stack
+                stackResolutionService.resolveTopOfStack(gameData);
+                // After resolution, if user interaction is needed (e.g. multi-permanent choice), stop
+                if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
+                    return;
+                }
+                gameData.priorityPassedBy.clear();
+                continue;
+            }
+
+            List<Integer> playable = gameBroadcastService.getPlayableCardIndices(gameData, stackPriorityHolder);
+            boolean hasActivatable = hasInstantSpeedActivatedAbility(gameData, stackPriorityHolder);
+
+            if (!playable.isEmpty() || hasActivatable) {
+                // Player can respond to the triggered ability — stop and let them
+                gameBroadcastService.broadcastGameState(gameData);
+                return;
+            }
+
+            // Auto-pass for this player
+            gameData.priorityPassedBy.add(stackPriorityHolder);
         }
     }
 
@@ -704,5 +744,34 @@ public class TurnProgressionService {
         // Safety: if we somehow looped 100 times, broadcast current state and stop
         log.warn("Game {} - resolveAutoPass hit safety limit", gameData.id);
         gameBroadcastService.broadcastGameState(gameData);
+    }
+
+    private boolean hasInstantSpeedActivatedAbility(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+
+        for (Permanent perm : battlefield) {
+            for (ActivatedAbility ability : perm.getCard().getActivatedAbilities()) {
+                // Skip sorcery-speed and upkeep-only abilities
+                if (ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED
+                        || ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP) {
+                    continue;
+                }
+
+                // Skip mana abilities (all non-cost effects are ManaProducingEffect)
+                boolean isManaAbility = ability.getEffects().stream()
+                        .allMatch(e -> e instanceof ManaProducingEffect);
+                if (isManaAbility) continue;
+
+                // Skip loyalty abilities
+                if (ability.getLoyaltyCost() != null) continue;
+
+                // Skip if ability requires tap and permanent is tapped
+                if (ability.isRequiresTap() && perm.isTapped()) continue;
+
+                return true;
+            }
+        }
+        return false;
     }
 }
