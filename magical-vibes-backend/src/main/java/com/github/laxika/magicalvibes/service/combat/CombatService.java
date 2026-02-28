@@ -67,6 +67,14 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Manages the complete combat phase lifecycle including attacker/blocker declaration,
+ * combat damage calculation and assignment, and end-of-combat cleanup.
+ *
+ * <p>Handles all combat-related rules including first/double strike, trample, deathtouch,
+ * lifelink, landwalk evasion, blocking restrictions, and combat triggers (ON_ATTACK, ON_BLOCK,
+ * ON_COMBAT_DAMAGE_TO_PLAYER, ON_COMBAT_DAMAGE_TO_CREATURE).
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -89,6 +97,15 @@ public class CombatService {
 
     // ===== Query methods =====
 
+    /**
+     * Returns the battlefield indices of creatures the given player can legally declare as attackers.
+     * Filters out tapped creatures, summoning-sick creatures without haste, defenders, and creatures
+     * restricted by aura or land-based attack conditions.
+     *
+     * @param gameData the current game state
+     * @param playerId the attacking player's ID
+     * @return list of battlefield indices eligible to attack
+     */
     public List<Integer> getAttackableCreatureIndices(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
@@ -141,7 +158,14 @@ public class CombatService {
     }
 
     /**
-     * Returns attackable indices whose creature has at least one "attacks each combat if able" requirement.
+     * Returns the subset of attackable indices whose creatures have at least one
+     * "attacks each combat if able" requirement (e.g. {@link MustAttackEffect}).
+     * Returns an empty list if an attack tax is in effect (CR 508.1d).
+     *
+     * @param gameData         the current game state
+     * @param playerId         the attacking player's ID
+     * @param attackableIndices indices already determined to be legal attackers
+     * @return list of indices that must be declared as attackers
      */
     public List<Integer> getMustAttackIndices(GameData gameData, UUID playerId, List<Integer> attackableIndices) {
         int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
@@ -217,6 +241,15 @@ public class CombatService {
         }
     }
 
+    /**
+     * Returns the battlefield indices of creatures the given player can legally declare as blockers.
+     * Filters out tapped creatures, creatures with {@link CantBlockEffect}, creatures temporarily
+     * prevented from blocking this turn, and creatures enchanted with effects that prevent blocking.
+     *
+     * @param gameData the current game state
+     * @param playerId the defending player's ID
+     * @return list of battlefield indices eligible to block
+     */
     public List<Integer> getBlockableCreatureIndices(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
@@ -234,6 +267,18 @@ public class CombatService {
         return indices;
     }
 
+    /**
+     * Computes which attackers each potential blocker can legally block, accounting for
+     * evasion abilities (flying, landwalk, fear, intimidate, shadow, horsemanship),
+     * blocking restrictions, and "can only be blocked by" filters.
+     *
+     * @param gameData       the current game state
+     * @param blockerIndices indices of potential blockers on the defender's battlefield
+     * @param attackerIndices indices of declared attackers on the attacker's battlefield
+     * @param defenderId     the defending player's ID
+     * @param attackerId     the attacking player's ID
+     * @return map from each blocker index to the list of attacker indices it can legally block
+     */
     public Map<Integer, List<Integer>> computeLegalBlockPairs(GameData gameData,
                                                        List<Integer> blockerIndices,
                                                        List<Integer> attackerIndices,
@@ -256,6 +301,13 @@ public class CombatService {
         return pairs;
     }
 
+    /**
+     * Returns the battlefield indices of creatures currently declared as attackers for the given player.
+     *
+     * @param gameData the current game state
+     * @param playerId the attacking player's ID
+     * @return list of battlefield indices of attacking creatures
+     */
     public List<Integer> getAttackingCreatureIndices(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
@@ -270,6 +322,13 @@ public class CombatService {
 
     // ===== Combat flow methods =====
 
+    /**
+     * Initiates the declare-attackers step. Computes which creatures can attack and which must attack,
+     * then sends an {@link AvailableAttackersMessage} to the active player. If no creatures can attack,
+     * the step is skipped automatically.
+     *
+     * @param gameData the current game state
+     */
     public void handleDeclareAttackersStep(GameData gameData) {
         UUID activeId = gameData.activePlayerId;
         List<Integer> attackable = getAttackableCreatureIndices(gameData, activeId);
@@ -1791,6 +1850,17 @@ public class CombatService {
         sessionManager.sendToPlayer(getEffectiveRecipient(gameData, activeId), notification);
     }
 
+    /**
+     * Processes a player's combat damage assignment for a single attacker. Validates that total assigned
+     * damage equals the attacker's power, that all targets are valid (living blockers and/or the defending
+     * player for trample), and that trample assignments meet the lethal-damage-first requirement (CR 702.19c).
+     *
+     * @param gameData      the current game state
+     * @param attackerIndex the battlefield index of the attacker whose damage is being assigned
+     * @param assignments   map from target ID (blocker permanent ID or defending player ID) to damage amount
+     * @throws IllegalStateException if not in the combat damage assignment phase, the attacker is not pending,
+     *                               or the assignment is invalid
+     */
     public void handleCombatDamageAssigned(GameData gameData, int attackerIndex, Map<UUID, Integer> assignments) {
         if (!gameData.combatDamagePhase1Complete) {
             throw new IllegalStateException("Not in combat damage assignment phase");
@@ -1866,6 +1936,13 @@ public class CombatService {
 
     // ===== Combat state management =====
 
+    /**
+     * Resets all combat-related state on permanents and game data. Clears attacking/blocking flags
+     * on all permanents and removes combat damage assignment tracking from the game data.
+     * Called at the end of combat or when combat is skipped.
+     *
+     * @param gameData the current game state
+     */
     public void clearCombatState(GameData gameData) {
         gameData.forEachBattlefield((playerId, battlefield) ->
                 battlefield.forEach(Permanent::clearCombatState));
@@ -1876,6 +1953,13 @@ public class CombatService {
         gameData.combatDamagePhase1State = null;
     }
 
+    /**
+     * Sacrifices all permanents marked for end-of-combat sacrifice (e.g. creatures created by
+     * temporary token effects). Moves them to the graveyard, fires death triggers, and cleans up
+     * orphaned auras.
+     *
+     * @param gameData the current game state
+     */
     public void processEndOfCombatSacrifices(GameData gameData) {
         gameData.forEachBattlefield((playerId, battlefield) -> {
             List<Permanent> toSacrifice = battlefield.stream()
