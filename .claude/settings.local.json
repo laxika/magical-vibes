@@ -44,7 +44,21 @@
       "Bash(git rm:*)",
       "Bash(git:*)",
       "Bash(./gradlew compileTestJava:*)",
-      "Bash(./gradlew :magical-vibes-backend:compileJava:*)"
+      "Bash(./gradlew :magical-vibes-backend:compileJava:*)",
+      "Bash(chmod +x:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/block-cd.sh"
+          }
+        ]
+      }
     ]
   }
 }
