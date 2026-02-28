@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.FirstTargetDealsPowerDamageToSecondTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSourcePowerToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect;
@@ -261,6 +262,25 @@ public class DamageResolutionService {
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, effect.cantRegenerate());
+        gameHelper.checkWinCondition(gameData);
+    }
+
+    @HandlesEffect(DealDamageEqualToSourcePowerToAnyTargetEffect.class)
+    void resolveDealDamageEqualToSourcePowerToAnyTarget(GameData gameData, StackEntry entry) {
+        UUID targetId = entry.getTargetPermanentId();
+        if (targetId == null) return;
+
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId == null) return;
+
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (source == null) return;
+
+        int power = gameQueryService.getEffectivePower(gameData, source);
+        if (power <= 0) return;
+
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power);
+        resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
         gameHelper.checkWinCondition(gameData);
     }
 
