@@ -45,7 +45,7 @@
       "Bash(git:*)",
       "Bash(./gradlew compileTestJava:*)",
       "Bash(./gradlew :magical-vibes-backend:compileJava:*)",
-      "Bash(chmod +x:*)"
+      "Bash(./gradlew :magical-vibes-card:compileJava:*)"
     ]
   },
   "hooks": {
