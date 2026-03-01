@@ -72,7 +72,7 @@ class TrigonOfThoughtTest extends BaseCardTest {
     @DisplayName("Enters the battlefield with 3 charge counters")
     void entersWithThreeChargeCounters() {
         harness.setHand(player1, List.of(new TrigonOfThought()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();

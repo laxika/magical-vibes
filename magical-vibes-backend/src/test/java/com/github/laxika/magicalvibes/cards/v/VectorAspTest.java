@@ -202,7 +202,7 @@ class VectorAspTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(0);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(0);
     }
 
     // ===== Fizzle =====
