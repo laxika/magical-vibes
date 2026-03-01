@@ -48,7 +48,7 @@ public class PermanentRemovalService {
                     gameHelper.checkEquippedCreatureDeathTriggers(gameData, target.getId(), playerId);
                 }
                 if (wasArtifact) {
-                    gameHelper.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData);
+                    gameHelper.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData, graveyardOwnerId);
                 }
                 handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
                 return true;

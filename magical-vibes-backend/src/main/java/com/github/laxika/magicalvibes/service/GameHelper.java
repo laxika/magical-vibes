@@ -1069,24 +1069,54 @@ public class GameHelper {
         }
     }
 
-    public void checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(GameData gameData) {
+    public void checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID graveyardOwnerId) {
         gameData.forEachPermanent((playerId, perm) -> {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD);
-            if (effects == null || effects.isEmpty()) return;
+            if (effects != null && !effects.isEmpty()) {
+                for (CardEffect effect : effects) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            playerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(effect)),
+                            null,
+                            perm.getId()
+                    ));
+                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                    log.info("Game {} - {} triggers (artifact put into graveyard from battlefield)", gameData.id, perm.getCard().getName());
+                }
+            }
 
-            for (CardEffect effect : effects) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        playerId,
-                        perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(effect)),
-                        null,
-                        perm.getId()
-                ));
-                String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                log.info("Game {} - {} triggers (artifact put into graveyard from battlefield)", gameData.id, perm.getCard().getName());
+            // Opponent-specific triggers: only fire if the graveyard owner is an opponent of this permanent's controller
+            if (!playerId.equals(graveyardOwnerId)) {
+                List<CardEffect> opponentEffects = perm.getCard().getEffects(EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD);
+                if (opponentEffects != null && !opponentEffects.isEmpty()) {
+                    for (CardEffect effect : opponentEffects) {
+                        if (effect instanceof MayEffect may) {
+                            gameData.pendingMayAbilities.add(new PendingMayAbility(
+                                    perm.getCard(),
+                                    playerId,
+                                    List.of(may.wrapped()),
+                                    perm.getCard().getName() + " — " + may.prompt()
+                            ));
+                        } else {
+                            gameData.stack.add(new StackEntry(
+                                    StackEntryType.TRIGGERED_ABILITY,
+                                    perm.getCard(),
+                                    playerId,
+                                    perm.getCard().getName() + "'s ability",
+                                    new ArrayList<>(List.of(effect)),
+                                    null,
+                                    perm.getId()
+                            ));
+                        }
+                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                        log.info("Game {} - {} triggers (opponent artifact put into graveyard from battlefield)", gameData.id, perm.getCard().getName());
+                    }
+                }
             }
         });
     }
