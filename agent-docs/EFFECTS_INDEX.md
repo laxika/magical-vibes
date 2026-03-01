@@ -390,6 +390,7 @@ Pass `null` as filter to allow any card.
 | `BoostTargetCreatureXEffect` | `(int powerMultiplier, int toughnessMultiplier)` | target creature gets +(multiplier*X)/+(multiplier*X) until end of turn, where X is mana paid |
 | `BoostAllCreaturesXEffect` | `(int powerMultiplier, int toughnessMultiplier)` or `(int powerMultiplier, int toughnessMultiplier, PermanentPredicate filter)` | all creatures get +X/+X where X is mana paid. Optional `PermanentPredicate filter` to restrict which creatures are affected |
 | `BoostAttachedCreatureEffect` | `(int powerBoost, int toughnessBoost)` | enchanted/equipped creature gets +X/+Y (static, works for both auras and equipment) |
+| `BoostAttachedCreaturePerCardsInAllGraveyardsEffect` | `(CardPredicate filter)` | equipped creature gets +X/+X where X = cards in all graveyards matching filter |
 | `BoostAttachedCreaturePerMatchingLandNameEffect` | `(int powerPerMatch, int toughnessPerMatch)` | equipped creature gets +X/+Y per land on the battlefield with the same name as the imprinted card |
 | `BoostEnchantedCreaturePerControlledSubtypeEffect` | `(CardSubtype subtype, int powerPerSubtype, int toughnessPerSubtype)` | enchanted creature gets +X/+Y per controlled subtype |
 | `BoostByOtherCreaturesWithSameNameEffect` | `(int powerPerCreature, int toughnessPerCreature)` | +X/+Y per other creature with same name (static) |
@@ -570,6 +571,7 @@ Pass `null` as filter to allow any card.
 |--------|-------------|--------|
 | `EquipEffect` | `()` | equip to target creature |
 | `BoostAttachedCreatureEffect` | `(int powerBoost, int toughnessBoost)` | equipped creature gets +X/+Y (static) |
+| `BoostAttachedCreaturePerCardsInAllGraveyardsEffect` | `(CardPredicate filter)` | equipped creature gets +X/+X where X = cards in all graveyards matching filter (static) |
 | `BoostAttachedCreaturePerMatchingLandNameEffect` | `(int powerPerMatch, int toughnessPerMatch)` | equipped creature gets +X/+Y per land matching imprinted card name (static) |
 | `SacrificeOnUnattachEffect` | `()` | whenever this equipment becomes unattached, sacrifice the previously-equipped creature (static marker) |
 

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -24,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreaturePerCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreaturePerMatchingLandNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreaturePerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
@@ -79,6 +82,19 @@ public class StaticEffectResolutionService {
             accumulator.addPower(boost.powerBoost());
             accumulator.addToughness(boost.toughnessBoost());
         }
+    }
+
+    @HandlesStaticEffect(BoostAttachedCreaturePerCardsInAllGraveyardsEffect.class)
+    private void resolveBoostAttachedCreaturePerCardsInAllGraveyards(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostAttachedCreaturePerCardsInAllGraveyardsEffect) effect;
+        if (context.source().getAttachedTo() == null
+                || !context.source().getAttachedTo().equals(context.target().getId())) {
+            return;
+        }
+
+        int count = countCardsInAllGraveyards(context.gameData(), boost.filter());
+        accumulator.addPower(count);
+        accumulator.addToughness(count);
     }
 
     @HandlesStaticEffect(BoostAttachedCreaturePerMatchingLandNameEffect.class)
@@ -335,17 +351,7 @@ public class StaticEffectResolutionService {
 
     @HandlesStaticEffect(value = PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect.class, selfOnly = true)
     private void resolvePowerToughnessEqualToCreatureCardsInAllGraveyards(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        GameData gameData = context.gameData();
-        int count = 0;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard == null) continue;
-            for (Card card : graveyard) {
-                if (card.getType() == CardType.CREATURE || card.getAdditionalTypes().contains(CardType.CREATURE)) {
-                    count++;
-                }
-            }
-        }
+        int count = countCardsInAllGraveyards(context.gameData(), new CardTypePredicate(CardType.CREATURE));
         accumulator.addPower(count);
         accumulator.addToughness(count);
     }
@@ -560,6 +566,21 @@ public class StaticEffectResolutionService {
 
     private static boolean isCreatureSubtype(CardSubtype subtype) {
         return !NON_CREATURE_SUBTYPES.contains(subtype);
+    }
+
+    private int countCardsInAllGraveyards(GameData gameData, CardPredicate filter) {
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card card : graveyard) {
+                if (card.isToken()) continue;
+                if (gameQueryService.matchesCardPredicate(card, filter, null)) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     private boolean hasAnimateArtifactEffect(GameData gameData) {

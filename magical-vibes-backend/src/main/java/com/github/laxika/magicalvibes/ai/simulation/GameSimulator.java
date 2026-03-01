@@ -92,8 +92,8 @@ import com.github.laxika.magicalvibes.service.input.ColorChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
-import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.XValueChoiceHandlerService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.invoke.MethodHandle;
