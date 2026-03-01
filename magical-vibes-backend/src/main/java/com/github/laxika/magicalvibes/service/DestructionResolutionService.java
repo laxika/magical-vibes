@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyEquipmentAttachedToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueXDealtCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -192,6 +194,31 @@ public class DestructionResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} is destroyed by {}'s ability",
                 gameData.id, target.getCard().getName(), entry.getCard().getName());
+    }
+
+    @HandlesEffect(DestroyEquipmentAttachedToTargetCreatureEffect.class)
+    void resolveDestroyEquipmentAttachedToTargetCreature(GameData gameData, StackEntry entry) {
+        UUID targetId = entry.getTargetPermanentId();
+        if (targetId == null) {
+            return;
+        }
+
+        List<Permanent> equipmentToDestroy = new ArrayList<>();
+        gameData.forEachPermanent((playerId, p) -> {
+            if (targetId.equals(p.getAttachedTo())
+                    && p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+                equipmentToDestroy.add(p);
+            }
+        });
+
+        for (Permanent equipment : equipmentToDestroy) {
+            if (permanentRemovalService.tryDestroyPermanent(gameData, equipment)) {
+                String logEntry = equipment.getCard().getName() + " is destroyed.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} is destroyed by {}", gameData.id,
+                        equipment.getCard().getName(), entry.getCard().getName());
+            }
+        }
     }
 
     @HandlesEffect(DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect.class)
