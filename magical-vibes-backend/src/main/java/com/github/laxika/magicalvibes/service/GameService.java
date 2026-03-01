@@ -286,13 +286,17 @@ public class GameService {
     }
 
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetPermanentId, Zone targetZone) {
+        activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetPermanentId, targetZone, null);
+    }
+
+    public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetPermanentId, Zone targetZone, List<UUID> targetPermanentIds) {
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
         }
 
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            abilityActivationService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetPermanentId, targetZone);
+            abilityActivationService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetPermanentId, targetZone, targetPermanentIds);
         }
     }
 

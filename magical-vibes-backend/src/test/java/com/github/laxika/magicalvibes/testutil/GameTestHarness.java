@@ -419,6 +419,10 @@ public class GameTestHarness {
         gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetPermanentId, targetZone);
     }
 
+    public void activateAbilityWithMultiTargets(Player player, int permanentIndex, int abilityIndex, List<UUID> targetPermanentIds) {
+        gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, null, null, null, targetPermanentIds);
+    }
+
     public void handlePermanentChosen(Player player, UUID permanentId) {
         gameService.handlePermanentChosen(gameData, player, permanentId);
     }

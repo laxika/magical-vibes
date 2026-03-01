@@ -58,6 +58,50 @@ public class TargetLegalityService {
         }
     }
 
+    public void validateMultiTargetAbility(GameData gameData, UUID playerId, ActivatedAbility ability, List<UUID> targetPermanentIds, Card sourceCard) {
+        if (targetPermanentIds == null || targetPermanentIds.size() < ability.getMinTargets() || targetPermanentIds.size() > ability.getMaxTargets()) {
+            throw new IllegalStateException("Must target between " + ability.getMinTargets() + " and " + ability.getMaxTargets() + " targets");
+        }
+        if (new java.util.HashSet<>(targetPermanentIds).size() != targetPermanentIds.size()) {
+            throw new IllegalStateException("All targets must be different");
+        }
+
+        List<TargetFilter> perPositionFilters = ability.getMultiTargetFilters();
+        for (int i = 0; i < targetPermanentIds.size(); i++) {
+            UUID targetId = targetPermanentIds.get(i);
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                throw new IllegalStateException("Invalid target");
+            }
+
+            // Shroud
+            if (gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)) {
+                throw new IllegalStateException(target.getCard().getName() + " has shroud and can't be targeted");
+            }
+            // Hexproof (only blocks if target is opponent's)
+            if (gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF)) {
+                UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
+                if (targetController != null && !targetController.equals(playerId)) {
+                    throw new IllegalStateException(target.getCard().getName() + " has hexproof and can't be targeted");
+                }
+            }
+            // CantBeTargetOfSpellsOrAbilitiesEffect
+            if (gameQueryService.hasGrantedEffect(gameData, target, CantBeTargetOfSpellsOrAbilitiesEffect.class)) {
+                UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
+                if (targetController != null && !targetController.equals(playerId)) {
+                    throw new IllegalStateException(target.getCard().getName() + " has hexproof and can't be targeted");
+                }
+            }
+            // Per-position filter
+            if (i < perPositionFilters.size() && perPositionFilters.get(i) != null) {
+                gameQueryService.validateTargetFilter(perPositionFilters.get(i), target,
+                        FilterContext.of(gameData)
+                                .withSourceCardId(sourceCard.getId())
+                                .withSourceControllerId(playerId));
+            }
+        }
+    }
+
     public void validateActivatedAbilityTargeting(GameData gameData,
                                                   UUID playerId,
                                                   ActivatedAbility ability,

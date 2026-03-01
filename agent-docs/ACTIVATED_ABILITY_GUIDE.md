@@ -213,6 +213,19 @@ new ActivatedAbility(requiresTap, manaCost, effects,
 
 ---
 
+### 9. Multi-target ability constructor
+
+```java
+new ActivatedAbility(requiresTap, manaCost, effects, description,
+    multiTargetFilters, minTargets, maxTargets)
+```
+
+**Use when:** The ability targets multiple permanents (e.g. Brass Squire: "Attach target Equipment you control to target creature you control"). Each position in `multiTargetFilters` (a `List<TargetFilter>`) constrains the corresponding target selection. `minTargets` and `maxTargets` define the required count. The frontend enters multi-target selection mode when `maxTargets > 1`. Targets are passed via `StackEntry.getTargetPermanentIds()`.
+
+Cards: `BrassSquire` (2 targets: Equipment + creature)
+
+---
+
 ## Costs in the effects list
 
 Sacrifice and discard costs go in the `effects` list BEFORE the actual effect. The engine processes them in order.

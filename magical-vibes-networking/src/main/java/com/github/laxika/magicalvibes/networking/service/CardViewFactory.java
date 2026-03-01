@@ -50,6 +50,8 @@ public class CardViewFactory {
                 ability.isNeedsTarget(),
                 ability.isNeedsSpellTarget(),
                 ability.getManaCost(),
-                ability.getLoyaltyCost());
+                ability.getLoyaltyCost(),
+                ability.getMinTargets(),
+                ability.getMaxTargets());
     }
 }

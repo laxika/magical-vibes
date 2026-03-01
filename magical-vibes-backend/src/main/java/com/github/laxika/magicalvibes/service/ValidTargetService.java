@@ -81,8 +81,31 @@ public class ValidTargetService {
     }
 
     public ValidTargetsResponse computeValidTargetsForAbility(GameData gameData, Card sourceCard, ActivatedAbility ability, UUID controllerId, int permanentIndex) {
+        return computeValidTargetsForAbility(gameData, sourceCard, ability, controllerId, permanentIndex, List.of());
+    }
+
+    public ValidTargetsResponse computeValidTargetsForAbility(GameData gameData, Card sourceCard, ActivatedAbility ability, UUID controllerId, int permanentIndex, List<UUID> alreadySelectedIds) {
         List<UUID> validPermanentIds = new ArrayList<>();
         List<UUID> validPlayerIds = new ArrayList<>();
+        Set<UUID> excludeIds = alreadySelectedIds != null && !alreadySelectedIds.isEmpty() ? Set.copyOf(alreadySelectedIds) : Set.of();
+
+        if (ability.isMultiTarget()) {
+            // Multi-target ability: use per-position filter
+            int positionIndex = alreadySelectedIds != null ? alreadySelectedIds.size() : 0;
+            TargetFilter positionFilter = positionIndex < ability.getMultiTargetFilters().size()
+                    ? ability.getMultiTargetFilters().get(positionIndex)
+                    : null;
+
+            gameData.forEachPermanent((playerId, perm) -> {
+                if (excludeIds.contains(perm.getId())) return;
+                if (isValidAbilityPermanentTarget(gameData, sourceCard, ability, perm, controllerId, false, permanentIndex, positionFilter)) {
+                    validPermanentIds.add(perm.getId());
+                }
+            });
+
+            String prompt = "Select targets for " + sourceCard.getName() + " ability";
+            return new ValidTargetsResponse(validPermanentIds, validPlayerIds, ability.getMinTargets(), ability.getMaxTargets(), prompt);
+        }
 
         boolean targetsPlayer = ability.getEffects().stream().anyMatch(CardEffect::canTargetPlayer);
         boolean targetsPermanent = ability.getEffects().stream().anyMatch(CardEffect::canTargetPermanent);
@@ -91,7 +114,7 @@ public class ValidTargetService {
 
         if (targetsPermanent) {
             gameData.forEachPermanent((playerId, perm) -> {
-                if (isValidAbilityPermanentTarget(gameData, sourceCard, ability, perm, controllerId, targetsBlockingThis, permanentIndex)) {
+                if (isValidAbilityPermanentTarget(gameData, sourceCard, ability, perm, controllerId, targetsBlockingThis, permanentIndex, null)) {
                     validPermanentIds.add(perm.getId());
                 }
             });
@@ -221,7 +244,8 @@ public class ValidTargetService {
 
     private boolean isValidAbilityPermanentTarget(GameData gameData, Card sourceCard, ActivatedAbility ability,
                                                    Permanent perm, UUID controllerId,
-                                                   boolean targetsBlockingThis, int sourcePermanentIndex) {
+                                                   boolean targetsBlockingThis, int sourcePermanentIndex,
+                                                   TargetFilter positionFilter) {
         // Special case: targeting blocking creature
         if (targetsBlockingThis) {
             if (!gameQueryService.isCreature(gameData, perm) || !perm.isBlocking()) {
@@ -280,6 +304,18 @@ public class ValidTargetService {
                     e.canTargetPermanent() && (e.getClass().getSimpleName().contains("DealDamage")
                             || e.getClass().getSimpleName().contains("Destroy")));
             if (dealsDamage && gameQueryService.hasProtectionFromSourceCardTypes(perm, sourceCard)) {
+                return false;
+            }
+        }
+
+        // Per-position filter for multi-target abilities
+        if (positionFilter != null) {
+            try {
+                FilterContext filterContext = FilterContext.of(gameData)
+                        .withSourceCardId(sourceCard.getId())
+                        .withSourceControllerId(controllerId);
+                gameQueryService.validateTargetFilter(positionFilter, perm, filterContext);
+            } catch (IllegalStateException e) {
                 return false;
             }
         }

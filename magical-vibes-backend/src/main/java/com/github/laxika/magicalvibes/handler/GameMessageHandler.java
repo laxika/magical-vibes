@@ -388,7 +388,7 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
-            gameService.activateAbility(gameData, player, request.permanentIndex(), request.abilityIndex(), request.xValue(), request.targetPermanentId(), request.targetZone());
+            gameService.activateAbility(gameData, player, request.permanentIndex(), request.abilityIndex(), request.xValue(), request.targetPermanentId(), request.targetZone(), request.targetPermanentIds());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -846,7 +846,8 @@ public class GameMessageHandler implements MessageHandler {
                     }
                     com.github.laxika.magicalvibes.model.ActivatedAbility ability = abilities.get(request.abilityIndex());
                     response = validTargetService.computeValidTargetsForAbility(
-                            gameData, permanent.getCard(), ability, player.getId(), request.permanentIndex());
+                            gameData, permanent.getCard(), ability, player.getId(), request.permanentIndex(),
+                            request.alreadySelectedIds() != null ? request.alreadySelectedIds() : java.util.List.of());
                 } else {
                     handleError(connection, "Invalid valid targets request");
                     return;

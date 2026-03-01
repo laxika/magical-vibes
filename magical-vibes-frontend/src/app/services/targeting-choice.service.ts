@@ -90,6 +90,10 @@ export class TargetingChoiceService {
       this.multiTargeting = true;
       this.multiTargetMinCount = msg.minTargets;
       this.multiTargetMaxCount = msg.maxTargets;
+      if (this.targetingForAbility) {
+        this.multiTargetCardIndex = this.targetingCardIndex;
+        this.multiTargetCardName = this.targetingCardName;
+      }
       this.multiTargetSelectedIds.set([]);
     } else {
       // Single target mode
@@ -348,7 +352,16 @@ export class TargetingChoiceService {
     if (current.includes(permanentId)) return;
     if (current.length >= this.multiTargetMaxCount) return;
     if (!this.validTargetPermanentIds().has(permanentId)) return;
-    this.multiTargetSelectedIds.set([...current, permanentId]);
+    const newSelected = [...current, permanentId];
+    this.multiTargetSelectedIds.set(newSelected);
+    // Refresh valid targets for next position
+    if (newSelected.length < this.multiTargetMaxCount) {
+      if (this.targetingForAbility) {
+        this.sendValidTargetsRequest(null, this.multiTargetCardIndex, this.targetingAbilityIndex, newSelected);
+      } else {
+        this.sendValidTargetsRequest(this.multiTargetCardIndex, null, null, newSelected);
+      }
+    }
   }
 
   addMultiTargetPlayer(playerIndex: number): void {
@@ -368,7 +381,11 @@ export class TargetingChoiceService {
     const newSelected = this.multiTargetSelectedIds().filter(id => id !== permanentId);
     this.multiTargetSelectedIds.set(newSelected);
     // Request refreshed valid targets from backend with updated already-selected list
-    this.sendValidTargetsRequest(this.multiTargetCardIndex, null, null, newSelected);
+    if (this.targetingForAbility) {
+      this.sendValidTargetsRequest(null, this.multiTargetCardIndex, this.targetingAbilityIndex, newSelected);
+    } else {
+      this.sendValidTargetsRequest(this.multiTargetCardIndex, null, null, newSelected);
+    }
   }
 
   confirmMultiTargets(): void {
@@ -383,6 +400,19 @@ export class TargetingChoiceService {
     this.multiTargetSelectedIds.set([]);
     this.validTargetPermanentIds.set(new Set());
     this.validTargetPlayerIds.set(new Set());
+
+    if (this.targetingForAbility) {
+      // Multi-target activated ability (e.g. Brass Squire)
+      this.websocketService.send({
+        type: MessageType.ACTIVATE_ABILITY,
+        permanentIndex: this.multiTargetCardIndex,
+        abilityIndex: this.targetingAbilityIndex,
+        targetPermanentIds: this.pendingMultiTargetIds
+      });
+      this.resetTargetingState();
+      this.resetMultiTargetState();
+      return;
+    }
 
     // If card has convoke, enter convoke mode
     if (card?.hasConvoke) {
@@ -407,6 +437,8 @@ export class TargetingChoiceService {
     this.validTargetPermanentIds.set(new Set());
     this.validTargetPlayerIds.set(new Set());
     this.pendingConvokeCard = null;
+    this.targetingForAbility = false;
+    this.targetingAbilityIndex = -1;
   }
 
   isMultiTargetSelected(permanentId: string): boolean {
@@ -620,6 +652,8 @@ export class TargetingChoiceService {
       this.targetingForAbility = true;
       this.targetingAbilityIndex = abilityIndex;
       this.pendingAbilityXValue = null;
+      this.multiTargetCardIndex = permanentIndex;
+      this.multiTargetCardName = perm.card.name;
       this.sendValidTargetsRequest(null, permanentIndex, abilityIndex);
       return;
     }

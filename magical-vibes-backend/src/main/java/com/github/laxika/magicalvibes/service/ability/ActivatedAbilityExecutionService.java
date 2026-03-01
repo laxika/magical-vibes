@@ -104,6 +104,19 @@ public class ActivatedAbilityExecutionService {
                                              UUID targetPermanentId,
                                              Zone targetZone,
                                              boolean markAsNonTargetingForSacCreatureCost) {
+        completeActivationAfterCosts(gameData, player, permanent, ability, abilityEffects, effectiveXValue, targetPermanentId, targetZone, markAsNonTargetingForSacCreatureCost, null);
+    }
+
+    public void completeActivationAfterCosts(GameData gameData,
+                                             Player player,
+                                             Permanent permanent,
+                                             ActivatedAbility ability,
+                                             List<CardEffect> abilityEffects,
+                                             int effectiveXValue,
+                                             UUID targetPermanentId,
+                                             Zone targetZone,
+                                             boolean markAsNonTargetingForSacCreatureCost,
+                                             List<UUID> targetPermanentIds) {
         UUID playerId = player.getId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
@@ -174,7 +187,7 @@ public class ActivatedAbilityExecutionService {
             return;
         }
 
-        pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId, targetZone);
+        pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId, targetZone, targetPermanentIds);
         if (markAsNonTargetingForSacCreatureCost && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setNonTargeting(true);
         }
@@ -268,7 +281,8 @@ public class ActivatedAbilityExecutionService {
                                     List<CardEffect> snapshotEffects,
                                     int effectiveXValue,
                                     UUID effectiveTargetId,
-                                    Zone targetZone) {
+                                    Zone targetZone,
+                                    List<UUID> targetPermanentIds) {
         Zone effectiveTargetZone = targetZone;
         if (ability.isNeedsSpellTarget()) {
             effectiveTargetZone = Zone.STACK;
@@ -276,6 +290,7 @@ public class ActivatedAbilityExecutionService {
         if (effectiveTargetZone == Zone.BATTLEFIELD) {
             effectiveTargetZone = null;
         }
+        List<UUID> effectiveTargetPermanentIds = targetPermanentIds != null ? targetPermanentIds : List.of();
         StackEntry stackEntry = new StackEntry(
                 StackEntryType.ACTIVATED_ABILITY,
                 permanent.getCard(),
@@ -288,7 +303,7 @@ public class ActivatedAbilityExecutionService {
                 Map.of(),
                 effectiveTargetZone,
                 List.of(),
-                List.of()
+                effectiveTargetPermanentIds
         );
         stackEntry.setTargetFilter(ability.getTargetFilter());
         gameData.stack.add(stackEntry);

@@ -253,7 +253,11 @@ public class AbilityActivationService {
      * @param targetZone        target zone for zone-targeted effects, or {@code null}
      */
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetPermanentId, Zone targetZone) {
-        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetPermanentId, targetZone, null, null);
+        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetPermanentId, targetZone, null, null, null);
+    }
+
+    public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetPermanentId, Zone targetZone, List<UUID> targetPermanentIds) {
+        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetPermanentId, targetZone, null, null, targetPermanentIds);
     }
 
     /**
@@ -301,6 +305,7 @@ public class AbilityActivationService {
                 pending.targetPermanentId(),
                 pending.targetZone(),
                 cardIndex,
+                null,
                 null
         );
     }
@@ -342,12 +347,14 @@ public class AbilityActivationService {
                 pending.targetPermanentId(),
                 pending.targetZone(),
                 null,
-                cardIndex
+                cardIndex,
+                null
         );
     }
 
     private void activateAbilityInternal(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue,
-                                         UUID targetPermanentId, Zone targetZone, Integer discardCardIndex, Integer exileGraveyardCardIndex) {
+                                         UUID targetPermanentId, Zone targetZone, Integer discardCardIndex, Integer exileGraveyardCardIndex,
+                                         List<UUID> targetPermanentIds) {
         int effectiveXValue = xValue != null ? xValue : 0;
 
         UUID playerId = player.getId();
@@ -408,7 +415,9 @@ public class AbilityActivationService {
                 .toList();
 
         // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
-        if (!hasSacCreatureCost) {
+        if (ability.isMultiTarget()) {
+            targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability, targetPermanentIds, permanent.getCard());
+        } else if (!hasSacCreatureCost) {
             targetLegalityService.validateActivatedAbilityTargeting(
                     gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard(), effectiveXValue);
         }
@@ -566,7 +575,7 @@ public class AbilityActivationService {
                     gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard(), effectiveXValue);
         }
         completeActivationAndRecord(gameData, player, permanent, ability, abilityEffects,
-                effectiveXValue, targetPermanentId, targetZone, hasSacCreatureCost, effectiveIndex);
+                effectiveXValue, targetPermanentId, targetZone, hasSacCreatureCost, effectiveIndex, targetPermanentIds);
     }
 
     PermanentChoiceCostHandler toPermanentChoiceCostHandler(CardEffect effect) {
@@ -684,8 +693,15 @@ public class AbilityActivationService {
                                               ActivatedAbility ability, List<CardEffect> abilityEffects,
                                               int xValue, UUID targetPermanentId, Zone targetZone,
                                               boolean nonTargeting, int abilityIndex) {
+        completeActivationAndRecord(gameData, player, permanent, ability, abilityEffects, xValue, targetPermanentId, targetZone, nonTargeting, abilityIndex, null);
+    }
+
+    private void completeActivationAndRecord(GameData gameData, Player player, Permanent permanent,
+                                              ActivatedAbility ability, List<CardEffect> abilityEffects,
+                                              int xValue, UUID targetPermanentId, Zone targetZone,
+                                              boolean nonTargeting, int abilityIndex, List<UUID> targetPermanentIds) {
         activatedAbilityExecutionService.completeActivationAfterCosts(
-                gameData, player, permanent, ability, abilityEffects, xValue, targetPermanentId, targetZone, nonTargeting);
+                gameData, player, permanent, ability, abilityEffects, xValue, targetPermanentId, targetZone, nonTargeting, targetPermanentIds);
         recordAbilityActivationUse(gameData, permanent, abilityIndex);
     }
 

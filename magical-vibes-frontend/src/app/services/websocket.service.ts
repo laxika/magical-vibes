@@ -137,6 +137,8 @@ export interface ActivatedAbilityView {
   needsSpellTarget: boolean;
   manaCost: string | null;
   loyaltyCost: number | null;
+  minTargets: number;
+  maxTargets: number;
 }
 
 export interface Card {

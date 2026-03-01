@@ -16,34 +16,50 @@ public class ActivatedAbility {
     private final Integer loyaltyCost;
     private final Integer maxActivationsPerTurn;
     private final ActivationTimingRestriction timingRestriction;
+    private final List<TargetFilter> multiTargetFilters;
+    private final int minTargets;
+    private final int maxTargets;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
-        this(requiresTap, manaCost, effects, description, null, null, null, null);
+        this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1);
     }
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description, TargetFilter targetFilter) {
-        this(requiresTap, manaCost, effects, description, targetFilter, null, null, null);
+        this(requiresTap, manaCost, effects, description, targetFilter, null, null, null, List.of(), 1, 1);
     }
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description, Integer maxActivationsPerTurn) {
-        this(requiresTap, manaCost, effects, description, null, null, maxActivationsPerTurn, null);
+        this(requiresTap, manaCost, effects, description, null, null, maxActivationsPerTurn, null, List.of(), 1, 1);
     }
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description, ActivationTimingRestriction timingRestriction) {
-        this(requiresTap, manaCost, effects, description, null, null, null, timingRestriction);
+        this(requiresTap, manaCost, effects, description, null, null, null, timingRestriction, List.of(), 1, 1);
     }
 
     // Loyalty ability constructor
     public ActivatedAbility(int loyaltyCost, List<CardEffect> effects, String description) {
-        this(false, null, effects, description, null, loyaltyCost, null, null);
+        this(false, null, effects, description, null, loyaltyCost, null, null, List.of(), 1, 1);
     }
 
     // Loyalty ability constructor with target filter
     public ActivatedAbility(int loyaltyCost, List<CardEffect> effects, String description, TargetFilter targetFilter) {
-        this(false, null, effects, description, targetFilter, loyaltyCost, null, null);
+        this(false, null, effects, description, targetFilter, loyaltyCost, null, null, List.of(), 1, 1);
+    }
+
+    // Multi-target ability constructor (e.g. Brass Squire: target Equipment + target creature)
+    public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description,
+                            List<TargetFilter> multiTargetFilters, int minTargets, int maxTargets) {
+        this(requiresTap, manaCost, effects, description, null, null, null, null, multiTargetFilters, minTargets, maxTargets);
     }
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description, TargetFilter targetFilter, Integer loyaltyCost, Integer maxActivationsPerTurn, ActivationTimingRestriction timingRestriction) {
+        this(requiresTap, manaCost, effects, description, targetFilter, loyaltyCost, maxActivationsPerTurn, timingRestriction, List.of(), 1, 1);
+    }
+
+    public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description,
+                            TargetFilter targetFilter, Integer loyaltyCost, Integer maxActivationsPerTurn,
+                            ActivationTimingRestriction timingRestriction,
+                            List<TargetFilter> multiTargetFilters, int minTargets, int maxTargets) {
         this.requiresTap = requiresTap;
         this.manaCost = manaCost;
         this.effects = effects;
@@ -52,10 +68,18 @@ public class ActivatedAbility {
         this.loyaltyCost = loyaltyCost;
         this.maxActivationsPerTurn = maxActivationsPerTurn;
         this.timingRestriction = timingRestriction;
+        this.multiTargetFilters = multiTargetFilters != null ? multiTargetFilters : List.of();
+        this.minTargets = minTargets;
+        this.maxTargets = maxTargets;
     }
 
     public boolean isNeedsTarget() {
-        return effects.stream().anyMatch(e -> e.canTargetPlayer() || e.canTargetPermanent() || e.canTargetGraveyard());
+        return !multiTargetFilters.isEmpty()
+                || effects.stream().anyMatch(e -> e.canTargetPlayer() || e.canTargetPermanent() || e.canTargetGraveyard());
+    }
+
+    public boolean isMultiTarget() {
+        return !multiTargetFilters.isEmpty();
     }
 
     public boolean isNeedsSpellTarget() {
