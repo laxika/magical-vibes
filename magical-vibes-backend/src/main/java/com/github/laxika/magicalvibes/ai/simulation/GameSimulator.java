@@ -32,7 +32,7 @@ import com.github.laxika.magicalvibes.service.ability.ActivatedAbilityExecutionS
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BounceResolutionService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
-import com.github.laxika.magicalvibes.service.CopyResolutionService;
+import com.github.laxika.magicalvibes.service.battlefield.CopyResolutionService;
 import com.github.laxika.magicalvibes.service.CounterResolutionService;
 import com.github.laxika.magicalvibes.service.CreatureControlService;
 import com.github.laxika.magicalvibes.service.DamageResolutionService;
