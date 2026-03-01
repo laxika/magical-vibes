@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutXMinusOneMinusOneCountersOnEachCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
@@ -681,6 +682,23 @@ public class CreatureModResolutionService {
         String logEntry = entry.getCard().getName() + " untaps " + count + " other creature(s) you control.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} untaps {} other creature(s)", gameData.id, entry.getCard().getName(), count);
+    }
+
+    @HandlesEffect(PutXMinusOneMinusOneCountersOnEachCreatureEffect.class)
+    private void resolvePutXMinusOneMinusOneCountersOnEachCreature(GameData gameData, StackEntry entry) {
+        int xValue = entry.getXValue();
+        final int[] count = {0};
+
+        gameData.forEachPermanent((playerId, p) -> {
+            if (!gameQueryService.isCreature(gameData, p)) return;
+
+            p.setMinusOneMinusOneCounters(p.getMinusOneMinusOneCounters() + xValue);
+            count[0]++;
+        });
+
+        String logEntry = entry.getCard().getName() + " puts " + xValue + " -1/-1 counter(s) on " + count[0] + " creature(s).";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} puts {} -1/-1 counter(s) on {} creature(s)", gameData.id, entry.getCard().getName(), xValue, count[0]);
     }
 
     @HandlesEffect(PutMinusOneMinusOneCounterOnEachOtherCreatureEffect.class)
