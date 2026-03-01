@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.service.input.ColorChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
+import com.github.laxika.magicalvibes.service.input.XValueChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.effect.CreatureModResolutionService;
 import com.github.laxika.magicalvibes.service.effect.CardSpecificResolutionService;
@@ -218,6 +219,9 @@ public class GameTestHarness {
         MayAbilityHandlerService mayAbilityHandlerService = new MayAbilityHandlerService(
                 gameQueryService, gameHelper, stateBasedActionService, gameBroadcastService,
                 playerInputService, turnProgressionService, targetLegalityService, sessionManager, permanentRemovalService, triggerCollectionService);
+        XValueChoiceHandlerService xValueChoiceHandlerService = new XValueChoiceHandlerService(
+                gameBroadcastService, stateBasedActionService,
+                playerInputService, turnProgressionService, effectResolutionService);
         LibraryChoiceHandlerService libraryChoiceHandlerService = new LibraryChoiceHandlerService(
                 sessionManager, gameQueryService, gameHelper, legendRuleService, stateBasedActionService, gameBroadcastService,
                 cardViewFactory, turnProgressionService, playerInputService);
@@ -231,7 +235,7 @@ public class GameTestHarness {
                 turnProgressionService,
                 colorChoiceHandlerService, cardChoiceHandlerService,
                 permanentChoiceHandlerService, graveyardChoiceHandlerService,
-                mayAbilityHandlerService, libraryChoiceHandlerService,
+                mayAbilityHandlerService, xValueChoiceHandlerService, libraryChoiceHandlerService,
                 spellCastingService,
                 stackResolutionService, abilityActivationService, mulliganService, reconnectionService);
         lobbyService = new LobbyService(gameRegistry, gameBroadcastService);
@@ -481,6 +485,10 @@ public class GameTestHarness {
 
     public void handleMayAbilityChosen(Player player, boolean accepted) {
         gameService.handleMayAbilityChosen(gameData, player, accepted);
+    }
+
+    public void handleXValueChosen(Player player, int chosenValue) {
+        gameService.handleXValueChosen(gameData, player, chosenValue);
     }
 
     public void paySearchTax(Player player) {

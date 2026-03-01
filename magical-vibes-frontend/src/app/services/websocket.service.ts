@@ -67,7 +67,9 @@ export enum MessageType {
   CARD_LIST_RESPONSE = 'CARD_LIST_RESPONSE',
   VALID_TARGETS_REQUEST = 'VALID_TARGETS_REQUEST',
   VALID_TARGETS_RESPONSE = 'VALID_TARGETS_RESPONSE',
-  PAY_SEARCH_TAX = 'PAY_SEARCH_TAX'
+  PAY_SEARCH_TAX = 'PAY_SEARCH_TAX',
+  X_VALUE_CHOICE = 'X_VALUE_CHOICE',
+  X_VALUE_CHOSEN = 'X_VALUE_CHOSEN'
 }
 
 export enum GameStatus {
@@ -331,6 +333,13 @@ export interface ChooseColorNotification {
 export interface MayAbilityNotification {
   type: MessageType;
   prompt: string;
+}
+
+export interface XValueChoiceNotification {
+  type: MessageType;
+  prompt: string;
+  maxValue: number;
+  cardName: string;
 }
 
 export interface ChoosePermanentNotification {
@@ -611,7 +620,8 @@ export class WebsocketService {
               message.type === MessageType.CHOOSE_HAND_TOP_BOTTOM ||
               message.type === MessageType.CHOOSE_FROM_REVEALED_HAND ||
               message.type === MessageType.CHOOSE_CARD_FROM_GRAVEYARD ||
-              message.type === MessageType.COMBAT_DAMAGE_ASSIGNMENT) {
+              message.type === MessageType.COMBAT_DAMAGE_ASSIGNMENT ||
+              message.type === MessageType.X_VALUE_CHOICE) {
             this.pendingGameInputMessage = message;
           }
 

@@ -1029,13 +1029,31 @@ public class GameHelper {
             if (effects == null || effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        dyingCreatureControllerId,
-                        perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(effect))
-                ));
+                if (effect instanceof MayPayManaEffect mayPay) {
+                    gameData.pendingMayAbilities.add(new PendingMayAbility(
+                            perm.getCard(),
+                            dyingCreatureControllerId,
+                            List.of(mayPay.wrapped()),
+                            perm.getCard().getName() + " — " + mayPay.prompt(),
+                            null,
+                            mayPay.manaCost()
+                    ));
+                } else if (effect instanceof MayEffect may) {
+                    gameData.pendingMayAbilities.add(new PendingMayAbility(
+                            perm.getCard(),
+                            dyingCreatureControllerId,
+                            List.of(may.wrapped()),
+                            perm.getCard().getName() + " — " + may.prompt()
+                    ));
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            dyingCreatureControllerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(effect))
+                    ));
+                }
                 String triggerLog = perm.getCard().getName() + "'s ability triggers.";
                 gameBroadcastService.logAndBroadcast(gameData, triggerLog);
                 log.info("Game {} - {} triggers (ally creature died)", gameData.id, perm.getCard().getName());

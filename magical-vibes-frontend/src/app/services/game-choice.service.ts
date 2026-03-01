@@ -7,11 +7,12 @@ import {
   ChooseCardFromLibraryNotification, RevealHandNotification,
   ChooseFromRevealedHandNotification, ChooseCardFromGraveyardNotification,
   ChooseHandTopBottomNotification, CombatDamageAssignmentNotification,
-  ValidTargetsResponse
+  ValidTargetsResponse, XValueChoiceNotification
 } from './websocket.service';
 import { TargetingChoiceService } from './targeting-choice.service';
 import { LibraryChoiceService } from './library-choice.service';
 import { DamageChoiceService } from './damage-choice.service';
+import { isPermanentCreature } from '../components/game/battlefield.utils';
 
 @Injectable({ providedIn: 'root' })
 export class GameChoiceService {
@@ -85,6 +86,12 @@ export class GameChoiceService {
   graveyardChoicePrompt = '';
   graveyardChoiceAllGraveyards = false;
 
+  // --- X value choice state ---
+  awaitingXValueChoice = false;
+  xValueChoicePrompt = '';
+  xValueChoiceMaxValue = 0;
+  xValueChoiceInput = 0;
+
   // ========== Message handlers ==========
 
   handleChooseCardFromHand(msg: ChooseCardFromHandNotification): void {
@@ -148,6 +155,13 @@ export class GameChoiceService {
     this.graveyardChoiceIndices = msg.cardIndices;
     this.graveyardChoicePrompt = msg.prompt;
     this.graveyardChoiceAllGraveyards = msg.allGraveyards;
+  }
+
+  handleXValueChoice(msg: XValueChoiceNotification): void {
+    this.awaitingXValueChoice = true;
+    this.xValueChoicePrompt = msg.prompt;
+    this.xValueChoiceMaxValue = msg.maxValue;
+    this.xValueChoiceInput = msg.maxValue;
   }
 
   // --- Delegated handlers ---
@@ -228,6 +242,30 @@ export class GameChoiceService {
     });
     this.awaitingMayAbility = false;
     this.mayAbilityPrompt = '';
+  }
+
+  confirmXValueChoice(): void {
+    if (!this.awaitingXValueChoice) return;
+    this.websocketService.send({
+      type: MessageType.X_VALUE_CHOSEN,
+      chosenValue: this.xValueChoiceInput
+    });
+    this.awaitingXValueChoice = false;
+    this.xValueChoicePrompt = '';
+    this.xValueChoiceMaxValue = 0;
+    this.xValueChoiceInput = 0;
+  }
+
+  cancelXValueChoice(): void {
+    if (!this.awaitingXValueChoice) return;
+    this.websocketService.send({
+      type: MessageType.X_VALUE_CHOSEN,
+      chosenValue: 0
+    });
+    this.awaitingXValueChoice = false;
+    this.xValueChoicePrompt = '';
+    this.xValueChoiceMaxValue = 0;
+    this.xValueChoiceInput = 0;
   }
 
   choosePermanent(permanentId: string): void {
@@ -339,6 +377,13 @@ export class GameChoiceService {
 
   isRevealedHandCardChoosable(index: number): boolean {
     return this.choosingFromRevealedHand && this.revealedHandChoosableIndices.has(index);
+  }
+
+  // ========== X value mana tapping ==========
+
+  canTapForMana(perm: Permanent): boolean {
+    return this.awaitingXValueChoice && !perm.tapped && perm.card.hasTapAbility
+      && !(perm.summoningSick && isPermanentCreature(perm));
   }
 
   // ========== Graveyard choice ==========

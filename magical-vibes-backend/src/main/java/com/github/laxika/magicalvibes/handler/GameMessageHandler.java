@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.networking.message.RequestCardListRequest;
 import com.github.laxika.magicalvibes.networking.message.SubmitDeckRequest;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsRequest;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
+import com.github.laxika.magicalvibes.networking.message.XValueChosenRequest;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.ai.AiPlayerService;
 import com.github.laxika.magicalvibes.model.DraftData;
@@ -852,6 +853,27 @@ public class GameMessageHandler implements MessageHandler {
                 }
             }
             connection.sendMessage(objectMapper.writeValueAsString(response));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            handleError(connection, e.getMessage());
+        }
+    }
+
+    @Override
+    public void handleXValueChosen(Connection connection, XValueChosenRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
+        try {
+            gameService.handleXValueChosen(gameData, player, request.chosenValue());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

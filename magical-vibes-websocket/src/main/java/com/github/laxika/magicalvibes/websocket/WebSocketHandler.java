@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.networking.message.RequestCardListRequest;
 import com.github.laxika.magicalvibes.networking.message.SubmitDeckRequest;
 import com.github.laxika.magicalvibes.networking.message.PaySearchTaxRequest;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsRequest;
+import com.github.laxika.magicalvibes.networking.message.XValueChosenRequest;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -125,6 +126,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 case REQUEST_CARD_LIST -> messageHandler.handleRequestCardList(connection, objectMapper.treeToValue(jsonNode, RequestCardListRequest.class));
                 case VALID_TARGETS_REQUEST -> messageHandler.handleValidTargetsRequest(connection, objectMapper.treeToValue(jsonNode, ValidTargetsRequest.class));
                 case PAY_SEARCH_TAX -> messageHandler.handlePaySearchTax(connection, objectMapper.treeToValue(jsonNode, PaySearchTaxRequest.class));
+                case X_VALUE_CHOSEN -> messageHandler.handleXValueChosen(connection, objectMapper.treeToValue(jsonNode, XValueChosenRequest.class));
                 default -> messageHandler.handleError(connection, "Unknown message type: " + type);
             }
         } catch (Exception e) {

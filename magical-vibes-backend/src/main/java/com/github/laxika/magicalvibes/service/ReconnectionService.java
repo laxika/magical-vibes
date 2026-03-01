@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanent
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
+import com.github.laxika.magicalvibes.networking.message.XValueChoiceMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
@@ -164,6 +165,12 @@ public class ReconnectionService {
                 InteractionContext.CombatDamageAssignment cda = gameData.interaction.combatDamageAssignmentContext();
                 if (cda != null) {
                     resendFromContext(gameData, playerId, cda);
+                }
+            }
+            case X_VALUE_CHOICE -> {
+                InteractionContext.XValueChoice xvc = gameData.interaction.xValueChoiceContext();
+                if (xvc != null) {
+                    resendFromContext(gameData, playerId, xvc);
                 }
             }
         }
@@ -384,6 +391,12 @@ public class ReconnectionService {
                 sessionManager.sendToPlayer(playerId, new CombatDamageAssignmentNotification(
                         cda.attackerIndex(), cda.attackerPermanentId().toString(),
                         cda.attackerName(), cda.totalDamage(), targetViews, cda.isTrample(), cda.isDeathtouch()));
+            }
+            case InteractionContext.XValueChoice xvc -> {
+                if (playerId.equals(xvc.playerId())) {
+                    sessionManager.sendToPlayer(playerId, new XValueChoiceMessage(
+                            xvc.prompt(), xvc.maxValue(), xvc.cardName()));
+                }
             }
         }
     }

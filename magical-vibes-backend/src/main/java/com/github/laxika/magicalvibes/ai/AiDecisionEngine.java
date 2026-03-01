@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.networking.message.HandTopBottomChosenRequ
 import com.github.laxika.magicalvibes.networking.message.KeepHandRequest;
 import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.XValueChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
 import com.github.laxika.magicalvibes.networking.message.MultipleGraveyardCardsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
@@ -97,6 +98,7 @@ public class AiDecisionEngine {
             case "CHOOSE_MULTIPLE_PERMANENTS" -> handleMultiPermanentChoice(gameData);
             case "CHOOSE_COLOR" -> handleColorChoice(gameData);
             case "MAY_ABILITY_CHOICE" -> handleMayAbilityChoice(gameData);
+            case "X_VALUE_CHOICE" -> handleXValueChoice(gameData);
             case "REORDER_LIBRARY_CARDS" -> handleReorderCards(gameData);
             case "CHOOSE_CARD_FROM_LIBRARY" -> handleLibrarySearch(gameData);
             case "CHOOSE_CARD_FROM_GRAVEYARD" -> handleGraveyardChoice(gameData);
@@ -1139,6 +1141,23 @@ public class AiDecisionEngine {
         // Generally accept may abilities
         log.info("AI: Accepting may ability in game {}", gameId);
         send(() -> messageHandler.handleMayAbilityChosen(selfConnection, new MayAbilityChosenRequest(null, true)));
+    }
+
+    private void handleXValueChoice(GameData gameData) {
+        InteractionContext.XValueChoice xValueChoice = gameData.interaction.xValueChoiceContext();
+        if (xValueChoice == null) {
+            return;
+        }
+        UUID choicePlayerId = xValueChoice.playerId();
+
+        if (!aiPlayer.getId().equals(choicePlayerId)) {
+            return;
+        }
+
+        // AI pays the maximum X value available
+        int chosenValue = xValueChoice.maxValue();
+        log.info("AI: Choosing X={} for {} in game {}", chosenValue, xValueChoice.cardName(), gameId);
+        send(() -> messageHandler.handleXValueChosen(selfConnection, new XValueChosenRequest(null, chosenValue)));
     }
 
     private void handleReorderCards(GameData gameData) {

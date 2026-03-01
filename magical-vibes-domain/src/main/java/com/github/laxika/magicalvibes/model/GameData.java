@@ -69,6 +69,7 @@ public class GameData {
     public int pendingProliferateCount;
     public StackEntry pendingEffectResolutionEntry;
     public int pendingEffectResolutionIndex;
+    public Integer chosenXValue;
     public final Set<UUID> permanentsToSacrificeAtEndOfCombat = ConcurrentHashMap.newKeySet();
     public PendingAbilityActivation pendingAbilityActivation;
     public final Map<UUID, UUID> drawReplacementTargetToController = new ConcurrentHashMap<>();
@@ -193,6 +194,7 @@ public class GameData {
         copy.pendingEffectResolutionEntry = this.pendingEffectResolutionEntry != null
                 ? new StackEntry(this.pendingEffectResolutionEntry) : null;
         copy.pendingEffectResolutionIndex = this.pendingEffectResolutionIndex;
+        copy.chosenXValue = this.chosenXValue;
         copy.pendingAbilityActivation = this.pendingAbilityActivation; // immutable record
         copy.endTurnRequested = this.endTurnRequested;
         copy.discardCausedByOpponent = this.discardCausedByOpponent;

@@ -335,6 +335,7 @@ Pass `null` as filter to allow any card.
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `GainLifeEffect` | `(int amount)` | gain N life |
+| `PayXManaGainXLifeEffect` | `()` | on resolution, pays all available mana from the controller's pool as X and gains X life. Used for "you may pay {X}. If you do, you gain X life" triggered abilities where payment happens during resolution (e.g. Vigil for the Lost) |
 | `GainLifeForEachSubtypeOnBattlefieldEffect` | `(CardSubtype subtype)` | gain 1 life per permanent with given subtype on the battlefield (all players) |
 | `GainLifePerControlledCreatureEffect` | `()` | gain 1 life per creature you control |
 | `GainLifePerCreatureOnBattlefieldEffect` | `()` | gain 1 life per creature on the battlefield (all players) |

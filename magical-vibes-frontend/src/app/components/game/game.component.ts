@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, WebSocketMessage, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, ChooseMultipleCardsFromGraveyardsNotification, StackEntry, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification, ChooseFromRevealedHandNotification, ChooseCardFromGraveyardNotification, ChooseHandTopBottomNotification, CombatDamageAssignmentNotification, ValidTargetsResponse } from '../../services/websocket.service';
+import { WebsocketService, WebSocketMessage, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, ChooseMultipleCardsFromGraveyardsNotification, StackEntry, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification, ChooseFromRevealedHandNotification, ChooseCardFromGraveyardNotification, ChooseHandTopBottomNotification, CombatDamageAssignmentNotification, ValidTargetsResponse, XValueChoiceNotification } from '../../services/websocket.service';
 import { GameChoiceService } from '../../services/game-choice.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { MulliganModalComponent } from './mulligan-modal/mulligan-modal.component';
@@ -185,6 +185,10 @@ export class GameComponent implements OnInit, OnDestroy {
 
     if (message.type === MessageType.VALID_TARGETS_RESPONSE) {
       this.choice.handleValidTargetsResponse(message as ValidTargetsResponse);
+    }
+
+    if (message.type === MessageType.X_VALUE_CHOICE) {
+      this.choice.handleXValueChoice(message as XValueChoiceNotification);
     }
   }
 
@@ -387,6 +391,10 @@ export class GameComponent implements OnInit, OnDestroy {
     this.playableCardIndices.set(new Set(state.playableCardIndices));
     this.playableGraveyardLandIndices.set(new Set(state.playableGraveyardLandIndices ?? []));
     this.autoStopSteps.set(new Set(state.autoStopSteps));
+
+    if (this.choice.awaitingXValueChoice) {
+      this.choice.xValueChoiceMaxValue = this.totalMana;
+    }
     this.searchTaxCost.set(state.searchTaxCost ?? 0);
 
     // Switch to stack tab when stack is non-empty
@@ -790,6 +798,13 @@ export class GameComponent implements OnInit, OnDestroy {
       const perm = this.myBattlefield[index];
       if (perm && this.choice.targeting.isValidTarget(perm)) {
         this.choice.targeting.selectTarget(perm.id);
+      }
+      return;
+    }
+    if (this.choice.awaitingXValueChoice) {
+      const perm = this.myBattlefield[index];
+      if (perm && this.choice.canTapForMana(perm)) {
+        this.websocketService.send({ type: MessageType.TAP_PERMANENT, permanentIndex: index });
       }
       return;
     }

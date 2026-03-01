@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.networking.message.RequestCardListRequest;
 import com.github.laxika.magicalvibes.networking.message.SubmitDeckRequest;
 import com.github.laxika.magicalvibes.networking.message.PaySearchTaxRequest;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsRequest;
+import com.github.laxika.magicalvibes.networking.message.XValueChosenRequest;
 
 public interface MessageHandler {
 
@@ -95,6 +96,8 @@ public interface MessageHandler {
     void handleValidTargetsRequest(Connection connection, ValidTargetsRequest request) throws Exception;
 
     void handlePaySearchTax(Connection connection, PaySearchTaxRequest request) throws Exception;
+
+    void handleXValueChosen(Connection connection, XValueChosenRequest request) throws Exception;
 
     void handleTimeout(Connection connection);
 

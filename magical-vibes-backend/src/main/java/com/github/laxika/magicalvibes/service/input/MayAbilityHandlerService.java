@@ -199,24 +199,46 @@ public class MayAbilityHandlerService {
             return;
         }
 
-        // Mana payment for may-pay triggers (e.g. Embersmith "pay {1}")
+        // Mana payment for may-pay triggers (e.g. Embersmith "pay {1}", Vigil for the Lost "pay {X}")
+        int xValuePaid = 0;
         if (accepted && ability.manaCost() != null) {
             ManaCost cost = new ManaCost(ability.manaCost());
             ManaPool pool = gameData.playerManaPools.get(player.getId());
-            if (!cost.canPay(pool)) {
-                String logEntry = player.getUsername() + " cannot pay " + ability.manaCost() + " for " + ability.sourceCard().getName() + "'s ability.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} can't pay {} for may ability", gameData.id, player.getUsername(), ability.manaCost());
 
-                playerInputService.processNextMayAbility(gameData);
-                if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                    gameData.priorityPassedBy.clear();
-                    gameBroadcastService.broadcastGameState(gameData);
-                    turnProgressionService.resolveAutoPass(gameData);
+            if (cost.hasX()) {
+                // X cost: pay all available mana as X
+                int maxX = cost.calculateMaxX(pool);
+                if (maxX <= 0) {
+                    String logEntry = player.getUsername() + " has no mana to pay for " + ability.sourceCard().getName() + "'s ability.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} has no mana for X may ability", gameData.id, player.getUsername());
+
+                    playerInputService.processNextMayAbility(gameData);
+                    if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                        gameData.priorityPassedBy.clear();
+                        gameBroadcastService.broadcastGameState(gameData);
+                        turnProgressionService.resolveAutoPass(gameData);
+                    }
+                    return;
                 }
-                return;
+                xValuePaid = maxX;
+                cost.pay(pool, maxX);
+            } else {
+                if (!cost.canPay(pool)) {
+                    String logEntry = player.getUsername() + " cannot pay " + ability.manaCost() + " for " + ability.sourceCard().getName() + "'s ability.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} can't pay {} for may ability", gameData.id, player.getUsername(), ability.manaCost());
+
+                    playerInputService.processNextMayAbility(gameData);
+                    if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                        gameData.priorityPassedBy.clear();
+                        gameBroadcastService.broadcastGameState(gameData);
+                        turnProgressionService.resolveAutoPass(gameData);
+                    }
+                    return;
+                }
+                cost.pay(pool);
             }
-            cost.pay(pool);
         }
 
         // Targeted may ability (e.g. "you may deal 3 damage to target creature", "you may destroy target Equipment")
@@ -234,7 +256,8 @@ public class MayAbilityHandlerService {
                     ability.sourceCard(),
                     ability.controllerId(),
                     ability.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(ability.effects())
+                    new ArrayList<>(ability.effects()),
+                    xValuePaid
             );
 
             // Self-targeting effects need the source permanent's ID to resolve

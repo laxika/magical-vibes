@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -63,9 +64,11 @@ public class EffectResolutionService {
                 log.warn("No handler for effect: {}", effectToResolve.getClass().getSimpleName());
             }
             if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
-                // Store state for resumption after async input completes
+                // Store state for resumption after async input completes.
+                // X_VALUE_CHOICE re-runs the same effect (it checks chosenXValue on re-entry).
+                boolean rerunCurrentEffect = gameData.interaction.isAwaitingInput(AwaitingInput.X_VALUE_CHOICE);
                 gameData.pendingEffectResolutionEntry = entry;
-                gameData.pendingEffectResolutionIndex = i + 1;
+                gameData.pendingEffectResolutionIndex = rerunCurrentEffect ? i : i + 1;
                 return;
             }
         }

@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerServic
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
+import com.github.laxika.magicalvibes.service.input.XValueChoiceHandlerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -47,6 +48,7 @@ public class GameService {
     private final PermanentChoiceHandlerService permanentChoiceHandlerService;
     private final GraveyardChoiceHandlerService graveyardChoiceHandlerService;
     private final MayAbilityHandlerService mayAbilityHandlerService;
+    private final XValueChoiceHandlerService xValueChoiceHandlerService;
     private final LibraryChoiceHandlerService libraryChoiceHandlerService;
     private final SpellCastingService spellCastingService;
     private final StackResolutionService stackResolutionService;
@@ -366,6 +368,13 @@ public class GameService {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             mayAbilityHandlerService.handleMayAbilityChosen(gameData, player, accepted);
+        }
+    }
+
+    public void handleXValueChosen(GameData gameData, Player player, int chosenValue) {
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            xValueChoiceHandlerService.handleXValueChosen(gameData, player, chosenValue);
         }
     }
 

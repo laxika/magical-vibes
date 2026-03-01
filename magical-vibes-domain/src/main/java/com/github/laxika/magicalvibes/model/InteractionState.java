@@ -717,4 +717,14 @@ public class InteractionState {
         if (context instanceof InteractionContext.CombatDamageAssignment cda) return cda;
         return null;
     }
+
+    public void beginXValueChoice(UUID playerId, int maxValue, String prompt, String cardName) {
+        this.awaitingInput = AwaitingInput.X_VALUE_CHOICE;
+        this.context = new InteractionContext.XValueChoice(playerId, maxValue, prompt, cardName);
+    }
+
+    public InteractionContext.XValueChoice xValueChoiceContext() {
+        if (context instanceof InteractionContext.XValueChoice xvc) return xvc;
+        return null;
+    }
 }

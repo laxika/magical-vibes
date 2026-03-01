@@ -170,5 +170,24 @@
         </div>
       </div>
     }
+    @if (choice.awaitingXValueChoice) {
+      <div class="x-value-banner">
+        <span class="x-value-prompt">{{ choice.xValueChoicePrompt }}</span>
+        <div class="x-value-controls">
+          <button class="x-value-arrow x-value-down" (click)="choice.xValueChoiceInput = choice.xValueChoiceInput - 1" [disabled]="choice.xValueChoiceInput <= 0">
+            <svg viewBox="0 0 12 8" fill="currentColor"><path d="M1 1l5 5 5-5"/></svg>
+          </button>
+          <span class="x-value-display">{{ choice.xValueChoiceInput }}</span>
+          <button class="x-value-arrow x-value-up" (click)="choice.xValueChoiceInput = choice.xValueChoiceInput + 1" [disabled]="choice.xValueChoiceInput >= choice.xValueChoiceMaxValue">
+            <svg viewBox="0 0 12 8" fill="currentColor"><path d="M1 7l5-5 5 5"/></svg>
+          </button>
+        </div>
+        <span class="x-value-max">max {{ choice.xValueChoiceMaxValue }}</span>
+        <div class="x-value-buttons">
+          <button class="btn-x-value" (click)="choice.confirmXValueChoice()" [disabled]="choice.xValueChoiceInput < 0 || choice.xValueChoiceInput > choice.xValueChoiceMaxValue">Pay</button>
+          <button class="btn-x-value" (click)="choice.cancelXValueChoice()">Don't Pay</button>
+        </div>
+      </div>
+    }
   </div>
 </div>

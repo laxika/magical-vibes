@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesXLifeAndCont
 import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifePerCreatureControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerCardsInHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PayXManaGainXLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveEachPlayerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveEnchantedPermanentControllerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
@@ -29,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameQueryService;
+import com.github.laxika.magicalvibes.service.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -43,10 +46,61 @@ public class LifeResolutionService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+    private final PlayerInputService playerInputService;
 
     @HandlesEffect(GainLifeEffect.class)
     private void resolveGainLife(GameData gameData, StackEntry entry, GainLifeEffect effect) {
         applyGainLife(gameData, entry.getControllerId(), effect.amount());
+    }
+
+    @HandlesEffect(PayXManaGainXLifeEffect.class)
+    private void resolvePayXManaGainXLife(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+
+        // Re-entry after player chose X value
+        if (gameData.chosenXValue != null) {
+            int chosenValue = gameData.chosenXValue;
+            gameData.chosenXValue = null;
+            String cardName = entry.getCard().getName();
+            String playerName = gameData.playerIdToName.get(controllerId);
+
+            if (chosenValue == 0) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " chooses X=0 for " + cardName + "'s ability.");
+                log.info("Game {} - {} chooses X=0 for {}", gameData.id, playerName, cardName);
+                return;
+            }
+
+            ManaPool pool = gameData.playerManaPools.get(controllerId);
+            new ManaCost("{0}").pay(pool, chosenValue);
+
+            if (gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+                int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+                gameData.playerLifeTotals.put(controllerId, currentLife + chosenValue);
+
+                String logEntry = playerName + " pays {" + chosenValue + "} and gains " + chosenValue + " life (" + cardName + ").";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} pays {} mana and gains {} life from {}",
+                        gameData.id, playerName, chosenValue, chosenValue, cardName);
+            } else {
+                gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
+            }
+            return;
+        }
+
+        // First call: prompt for X value
+        ManaPool pool = gameData.playerManaPools.get(controllerId);
+        int maxX = pool.getTotal() + pool.getArtifactOnlyColorless() + pool.getMyrOnlyColorless();
+        if (maxX <= 0) {
+            String playerName = gameData.playerIdToName.get(controllerId);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " has no mana to pay for " + entry.getCard().getName() + "'s ability.");
+            log.info("Game {} - {} has no mana for {}'s pay-X ability", gameData.id,
+                    gameData.playerIdToName.get(controllerId), entry.getCard().getName());
+            return;
+        }
+        String prompt = "Pay {X} for " + entry.getCard().getName() + "? You gain X life.";
+        playerInputService.beginXValueChoice(gameData, controllerId, maxX, prompt, entry.getCard().getName());
     }
 
     private void applyGainLife(GameData gameData, UUID controllerId, int amount) {

@@ -20,7 +20,8 @@ public sealed interface InteractionContext permits
         InteractionContext.HandTopBottomChoice,
         InteractionContext.RevealedHandChoice,
         InteractionContext.MultiZoneExileChoice,
-        InteractionContext.CombatDamageAssignment {
+        InteractionContext.CombatDamageAssignment,
+        InteractionContext.XValueChoice {
 
     record AttackerDeclaration(UUID activePlayerId) implements InteractionContext {}
 
@@ -59,4 +60,6 @@ public sealed interface InteractionContext permits
     record CombatDamageAssignment(UUID playerId, int attackerIndex, UUID attackerPermanentId,
                                    String attackerName, int totalDamage, List<CombatDamageTarget> validTargets,
                                    boolean isTrample, boolean isDeathtouch) implements InteractionContext {}
+
+    record XValueChoice(UUID playerId, int maxValue, String prompt, String cardName) implements InteractionContext {}
 }
