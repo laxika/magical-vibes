@@ -450,6 +450,7 @@ Pass `null` as filter to allow any card.
 | `AssignCombatDamageAsThoughUnblockedEffect` | `()` | assign combat damage as though unblocked (static) |
 | `AssignCombatDamageWithToughnessEffect` | `()` | assign combat damage using toughness instead of power (static) |
 | `MakeTargetUnblockableEffect` | `()` | target creature is unblockable this turn |
+| `MakeAllCreaturesUnblockableEffect` | `()` | all creatures on all battlefields can't be blocked this turn |
 | `TargetCreatureCantBlockThisTurnEffect` | `()` | target creature can't block this turn |
 | `EnchantedCreatureCantAttackOrBlockEffect` | `()` | enchanted creature can't attack or block (static, Pacifism-style) |
 | `EnchantedCreatureCantActivateAbilitiesEffect` | `()` | enchanted creature's activated abilities can't be activated (static, Arrest-style) |
@@ -609,6 +610,8 @@ Pass `null` as filter to allow any card.
 |--------|-------------|--------|
 | `AjaniUltimateEffect` | `()` | Ajani's ultimate: put 100 counters (planeswalker-specific) |
 | `KothEmblemEffect` | `()` | Koth's emblem: Mountains you control have '{T}: This land deals 1 damage to any target.' |
+| `VenserEmblemEffect` | `()` | Venser's emblem: "Whenever you cast a spell, exile target permanent." Creates emblem with ExileTargetOnControllerSpellCastEffect |
+| `ExileTargetOnControllerSpellCastEffect` | `()` | Marker effect stored in Emblem.staticEffects. Triggers when controller casts a spell, prompting target permanent choice then exiling it |
 | `GenesisWaveEffect` | `()` | reveal top X cards, put any number of permanent cards with MV ≤ X onto battlefield, rest to graveyard. X read from `StackEntry.getXValue()` |
 
 ---

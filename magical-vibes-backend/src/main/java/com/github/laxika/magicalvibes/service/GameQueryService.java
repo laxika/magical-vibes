@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
@@ -683,6 +684,27 @@ public class GameQueryService {
             }
             if (!matchesPermanentPredicate(target, controlledFilter.predicate(), filterContext)) {
                 throw new IllegalStateException(controlledFilter.errorMessage());
+            }
+            return;
+        }
+        if (filter instanceof OwnedPermanentPredicateTargetFilter ownedFilter) {
+            if (gameData == null || sourceControllerId == null) {
+                throw new IllegalStateException(ownedFilter.errorMessage());
+            }
+            boolean ownedByController = false;
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                if (battlefield != null && battlefield.contains(target)) {
+                    UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
+                    ownedByController = ownerId.equals(sourceControllerId);
+                    break;
+                }
+            }
+            if (!ownedByController) {
+                throw new IllegalStateException(ownedFilter.errorMessage());
+            }
+            if (!matchesPermanentPredicate(target, ownedFilter.predicate(), filterContext)) {
+                throw new IllegalStateException(ownedFilter.errorMessage());
             }
             return;
         }

@@ -81,6 +81,7 @@ public class GameData {
     public final Deque<PermanentChoiceContext.DiscardTriggerAnyTarget> pendingDiscardSelfTriggers = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.AttackTriggerTarget> pendingAttackTriggerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.SpellTargetTriggerAnyTarget> pendingSpellTargetTriggers = new ArrayDeque<>();
+    public final Deque<PermanentChoiceContext.EmblemTriggerTarget> pendingEmblemTriggerTargets = new ArrayDeque<>();
     public boolean discardCausedByOpponent;
     public PendingReturnToHandOnDiscardType pendingReturnToHandOnDiscardType;
     public final Deque<UUID> extraTurns = new ArrayDeque<>();
@@ -328,6 +329,7 @@ public class GameData {
         copy.pendingDiscardSelfTriggers.addAll(this.pendingDiscardSelfTriggers);
         copy.pendingAttackTriggerTargets.addAll(this.pendingAttackTriggerTargets);
         copy.pendingSpellTargetTriggers.addAll(this.pendingSpellTargetTriggers);
+        copy.pendingEmblemTriggerTargets.addAll(this.pendingEmblemTriggerTargets);
         copy.extraTurns.addAll(this.extraTurns);
         this.pendingLibraryBottomReorders.forEach(req ->
                 copy.pendingLibraryBottomReorders.add(new LibraryBottomReorderRequest(req.playerId(), new ArrayList<>(req.cards()))));

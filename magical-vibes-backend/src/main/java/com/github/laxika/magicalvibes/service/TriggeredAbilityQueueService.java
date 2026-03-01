@@ -181,4 +181,39 @@ public class TriggeredAbilityQueueService {
             return;
         }
     }
+
+    public void processNextEmblemTriggerTarget(GameData gameData) {
+        while (!gameData.pendingEmblemTriggerTargets.isEmpty()) {
+            PermanentChoiceContext.EmblemTriggerTarget pending = gameData.pendingEmblemTriggerTargets.peekFirst();
+
+            // Collect valid targets: all permanents on all battlefields
+            List<UUID> validTargets = new ArrayList<>();
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) continue;
+                for (Permanent p : battlefield) {
+                    validTargets.add(p.getId());
+                }
+            }
+
+            if (validTargets.isEmpty()) {
+                gameData.pendingEmblemTriggerTargets.removeFirst();
+                String logEntry = pending.emblemDescription() + "'s trigger has no valid targets.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} emblem trigger skipped (no valid permanent targets)",
+                        gameData.id, pending.emblemDescription());
+                continue;
+            }
+
+            gameData.pendingEmblemTriggerTargets.removeFirst();
+            gameData.interaction.setPermanentChoiceContext(pending);
+            playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
+                    pending.emblemDescription() + "'s ability - Choose target permanent to exile.");
+
+            String logEntry = pending.emblemDescription() + "'s triggered ability - choose target permanent.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} emblem trigger awaiting target selection", gameData.id, pending.emblemDescription());
+            return;
+        }
+    }
 }

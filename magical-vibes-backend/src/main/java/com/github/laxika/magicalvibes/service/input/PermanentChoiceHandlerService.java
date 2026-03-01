@@ -419,6 +419,42 @@ public class PermanentChoiceHandlerService {
 
             gameData.priorityPassedBy.clear();
             turnProgressionService.resolveAutoPass(gameData);
+        } else if (context instanceof PermanentChoiceContext.EmblemTriggerTarget ett) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+            if (target != null) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        ett.sourceCard(),
+                        ett.controllerId(),
+                        ett.emblemDescription() + "'s ability",
+                        new ArrayList<>(ett.effects())
+                );
+                entry.setTargetPermanentId(permanentId);
+                gameData.stack.add(entry);
+
+                String logEntry = ett.emblemDescription() + "'s ability targets " + target.getCard().getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} emblem trigger targets {}", gameData.id, ett.emblemDescription(), target.getCard().getName());
+            } else {
+                String logEntry = ett.emblemDescription() + "'s ability has no valid target.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} emblem trigger target no longer exists", gameData.id, ett.emblemDescription());
+            }
+
+            // Process remaining pending emblem triggers
+            if (!gameData.pendingEmblemTriggerTargets.isEmpty()) {
+                triggerCollectionService.processNextEmblemTriggerTarget(gameData);
+                return;
+            }
+
+            // Process pending may abilities
+            if (!gameData.pendingMayAbilities.isEmpty()) {
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+
+            gameData.priorityPassedBy.clear();
+            turnProgressionService.resolveAutoPass(gameData);
         } else if (gameData.interaction.pendingAuraCard() != null) {
             Card auraCard = gameData.interaction.consumePendingAuraCard();
 

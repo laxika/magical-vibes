@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordToTargetEff
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromCardTypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.MakeAllCreaturesUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -490,6 +491,19 @@ public class CreatureModResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} can't be blocked this turn", gameData.id, target.getCard().getName());
+    }
+
+    @HandlesEffect(MakeAllCreaturesUnblockableEffect.class)
+    private void resolveMakeAllCreaturesUnblockable(GameData gameData, StackEntry entry) {
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (gameQueryService.isCreature(gameData, perm)) {
+                perm.setCantBeBlocked(true);
+            }
+        });
+
+        String logEntry = "Creatures can't be blocked this turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - All creatures can't be blocked this turn", gameData.id);
     }
 
     @HandlesEffect(TapCreaturesEffect.class)

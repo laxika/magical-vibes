@@ -16,7 +16,9 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GenesisWaveEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.KothEmblemEffect;
+import com.github.laxika.magicalvibes.model.effect.VenserEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetThenRevealUntilTypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -299,7 +301,7 @@ public class CardSpecificResolutionService {
         Emblem emblem = new Emblem(controllerId, List.of(
                 new GrantActivatedAbilityEffect(mountainAbility, GrantScope.OWN_PERMANENTS,
                         new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN))
-        ));
+        ), entry.getCard());
 
         gameData.emblems.add(emblem);
 
@@ -307,6 +309,23 @@ public class CardSpecificResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gets Koth emblem", gameData.id, playerName);
+    }
+
+    @HandlesEffect(VenserEmblemEffect.class)
+    void resolveVenserEmblem(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        Emblem emblem = new Emblem(controllerId, List.of(
+                new ExileTargetOnControllerSpellCastEffect()
+        ), entry.getCard());
+
+        gameData.emblems.add(emblem);
+
+        String logEntry = playerName + " gets an emblem with \"Whenever you cast a spell, exile target permanent.\".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} gets Venser emblem", gameData.id, playerName);
     }
 
     @HandlesEffect(SacrificeTargetThenRevealUntilTypeToBattlefieldEffect.class)

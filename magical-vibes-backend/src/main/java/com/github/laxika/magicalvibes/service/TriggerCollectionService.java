@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
@@ -30,6 +31,8 @@ import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCounter
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfOnArtifactCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -381,6 +384,28 @@ public class TriggerCollectionService {
             }
         });
 
+        // Check emblem spell cast triggers (e.g. Venser's emblem)
+        for (Emblem emblem : gameData.emblems) {
+            if (!emblem.controllerId().equals(castingPlayerId)) continue;
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (effect instanceof ExileTargetOnControllerSpellCastEffect) {
+                    gameData.pendingEmblemTriggerTargets.add(new PermanentChoiceContext.EmblemTriggerTarget(
+                            "Venser's emblem",
+                            emblem.controllerId(),
+                            List.of(new ExileTargetPermanentEffect()),
+                            emblem.sourceCard()
+                    ));
+                }
+            }
+        }
+
+        if (!gameData.pendingEmblemTriggerTargets.isEmpty()) {
+            triggeredAbilityQueueService.processNextEmblemTriggerTarget(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
         playerInputService.processNextMayAbility(gameData);
     }
 
@@ -657,6 +682,10 @@ public class TriggerCollectionService {
 
     public void processNextSpellTargetTrigger(GameData gameData) {
         triggeredAbilityQueueService.processNextSpellTargetTrigger(gameData);
+    }
+
+    public void processNextEmblemTriggerTarget(GameData gameData) {
+        triggeredAbilityQueueService.processNextEmblemTriggerTarget(gameData);
     }
 
     public void checkEnchantedPermanentTapTriggers(GameData gameData, Permanent tappedPermanent) {

@@ -44,4 +44,6 @@ public sealed interface PermanentChoiceContext {
 
     record BounceOwnPermanentOrSacrificeSelf(UUID controllerId, UUID sourceCardId) implements PermanentChoiceContext {}
 
+    record EmblemTriggerTarget(String emblemDescription, UUID controllerId, List<CardEffect> effects, Card sourceCard) implements PermanentChoiceContext {}
+
 }
