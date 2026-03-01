@@ -117,7 +117,7 @@ class TrigonOfThoughtTest extends BaseCardTest {
         int initialHandSize = gd.playerHands.get(player1.getId()).size();
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(trigon.getChargeCounters()).isEqualTo(2);
@@ -138,13 +138,13 @@ class TrigonOfThoughtTest extends BaseCardTest {
 
         // First activation
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         trigon.untap();
 
         // Second activation
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(trigon.getChargeCounters()).isEqualTo(1);
@@ -162,7 +162,7 @@ class TrigonOfThoughtTest extends BaseCardTest {
         trigon.setChargeCounters(0);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -178,13 +178,13 @@ class TrigonOfThoughtTest extends BaseCardTest {
 
         // First activation taps it
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         // Cannot activate again while tapped
         assertThat(trigon.isTapped()).isTrue();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

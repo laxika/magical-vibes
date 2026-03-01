@@ -117,7 +117,7 @@ class TrigonOfMendingTest extends BaseCardTest {
         int initialLife = gd.playerLifeTotals.get(player1.getId());
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.activateAbility(player1, 1, null, player1.getId());
+        harness.activateAbility(player1, 0, 1, null, player1.getId());
         harness.passBothPriorities();
 
         assertThat(trigon.getChargeCounters()).isEqualTo(2);
@@ -137,7 +137,7 @@ class TrigonOfMendingTest extends BaseCardTest {
         int initialLife = gd.playerLifeTotals.get(player2.getId());
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
         harness.passBothPriorities();
 
         assertThat(trigon.getChargeCounters()).isEqualTo(0);
@@ -158,13 +158,13 @@ class TrigonOfMendingTest extends BaseCardTest {
 
         // First activation
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.activateAbility(player1, 1, null, player1.getId());
+        harness.activateAbility(player1, 0, 1, null, player1.getId());
         harness.passBothPriorities();
         trigon.untap();
 
         // Second activation
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.activateAbility(player1, 1, null, player1.getId());
+        harness.activateAbility(player1, 0, 1, null, player1.getId());
         harness.passBothPriorities();
 
         assertThat(trigon.getChargeCounters()).isEqualTo(1);
@@ -182,7 +182,7 @@ class TrigonOfMendingTest extends BaseCardTest {
         trigon.setChargeCounters(0);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, player1.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -198,13 +198,13 @@ class TrigonOfMendingTest extends BaseCardTest {
 
         // First activation taps it
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.activateAbility(player1, 1, null, player1.getId());
+        harness.activateAbility(player1, 0, 1, null, player1.getId());
         harness.passBothPriorities();
 
         // Cannot activate again while tapped
         assertThat(trigon.isTapped()).isTrue();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, player1.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
