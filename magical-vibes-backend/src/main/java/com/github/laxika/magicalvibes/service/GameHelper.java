@@ -130,11 +130,16 @@ public class GameHelper {
         log.info("Game {} - {} mills {} cards", gameData.id, playerName, cardsToMill);
     }
 
-    public void addCardToGraveyard(GameData gameData, UUID ownerId, Card card) {
-        addCardToGraveyard(gameData, ownerId, card, null);
+    /**
+     * Adds a card to its owner's graveyard, or applies a replacement effect (e.g. shuffle into library).
+     * Returns true if the card was actually put into the graveyard, false if a replacement effect was applied.
+     * Callers should skip "dies" / graveyard triggers when this returns false (CR 614.6).
+     */
+    public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card) {
+        return addCardToGraveyard(gameData, ownerId, card, null);
     }
 
-    public void addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
+    public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
         if (card.isShufflesIntoLibraryFromGraveyard()) {
             List<Card> deck = gameData.playerDecks.get(ownerId);
             deck.add(card);
@@ -143,9 +148,11 @@ public class GameHelper {
             gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
             log.info("Game {} - {} replacement effect: shuffled into library instead of graveyard", gameData.id, card.getName());
             updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
+            return false;
         } else {
             gameData.playerGraveyards.get(ownerId).add(card);
             updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone);
+            return true;
         }
     }
 

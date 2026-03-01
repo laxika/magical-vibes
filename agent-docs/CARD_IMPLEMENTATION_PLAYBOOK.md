@@ -114,6 +114,10 @@ public class ExampleCard extends Card {
   - prefer `setTargetFilter(new PermanentPredicateTargetFilter(...))` over ad-hoc `TargetFilter` permutations
   - compose with `PermanentAllOfPredicate`, `PermanentAnyOfPredicate`, and atoms like `PermanentIsCreaturePredicate`, `PermanentIsTappedPredicate`, `PermanentColorInPredicate`, `PermanentHasSubtypePredicate`
 
+- Shuffle-into-library replacement effect ("if would be put into graveyard from anywhere, shuffle into library instead"):
+  - `setShufflesIntoLibraryFromGraveyard(true)` — Card property (not an effect), checked in `GameHelper.addCardToGraveyard()`. Works for all zone transitions that route through graveyard: combat death, sacrifice, mill, discard, spell resolution.
+  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/b/BlightsteelColossus.java`, `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/l/LegacyWeapon.java`
+
 ## Targeting checklist
 
 - Targeting is computed automatically from effects — both for spells (`Card`) and activated abilities (`ActivatedAbility`).

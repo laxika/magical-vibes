@@ -206,10 +206,12 @@ public class AbilityActivationService {
         // Sacrifice: remove from battlefield, add to graveyard
         boolean wasCreature = gameQueryService.isCreature(gameData, permanent);
         battlefield.remove(permanentIndex);
-        gameHelper.addCardToGraveyard(gameData, playerId, permanent.getOriginalCard(), Zone.BATTLEFIELD);
-        gameHelper.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature);
-        if (wasCreature) {
-            gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+        boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, permanent.getOriginalCard(), Zone.BATTLEFIELD);
+        if (wentToGraveyard) {
+            gameHelper.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature);
+            if (wasCreature) {
+                gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+            }
         }
         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId);
         permanentRemovalService.removeOrphanedAuras(gameData);
@@ -694,8 +696,8 @@ public class AbilityActivationService {
             throw new IllegalStateException("Must sacrifice a permanent you control");
         }
         playerBf.remove(sacTarget);
-        gameHelper.addCardToGraveyard(gameData, playerId, sacTarget.getCard(), Zone.BATTLEFIELD);
-        if (gameQueryService.isCreature(gameData, sacTarget)) {
+        boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, sacTarget.getCard(), Zone.BATTLEFIELD);
+        if (wentToGraveyard && gameQueryService.isCreature(gameData, sacTarget)) {
             gameHelper.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true);
             gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
         }

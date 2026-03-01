@@ -34,9 +34,11 @@ public class StateBasedActionService {
                     it.remove();
                     UUID graveyardOwnerId = gameData.stolenCreatures.getOrDefault(p.getId(), playerId);
                     gameData.stolenCreatures.remove(p.getId());
-                    gameHelper.addCardToGraveyard(gameData, graveyardOwnerId, p.getOriginalCard(), Zone.BATTLEFIELD);
-                    gameHelper.collectDeathTrigger(gameData, p.getCard(), playerId, true);
-                    gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                    boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, graveyardOwnerId, p.getOriginalCard(), Zone.BATTLEFIELD);
+                    if (wentToGraveyard) {
+                        gameHelper.collectDeathTrigger(gameData, p.getCard(), playerId, true);
+                        gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                    }
                     String logEntry = p.getCard().getName() + " is put into the graveyard (0 toughness).";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} dies to state-based actions (0 toughness)", gameData.id, p.getCard().getName());

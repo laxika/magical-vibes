@@ -144,10 +144,12 @@ public class ActivatedAbilityExecutionService {
         if (shouldSacrifice) {
             boolean wasCreature = gameQueryService.isCreature(gameData, permanent);
             battlefield.remove(permanent);
-            gameHelper.addCardToGraveyard(gameData, playerId, permanent.getCard(), Zone.BATTLEFIELD);
-            gameHelper.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature);
-            if (wasCreature) {
-                gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+            boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, permanent.getCard(), Zone.BATTLEFIELD);
+            if (wentToGraveyard) {
+                gameHelper.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature);
+                if (wasCreature) {
+                    gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                }
             }
         }
 

@@ -1466,9 +1466,11 @@ public class CombatService {
         deadNames.add(gameData.playerIdToName.get(controllerId) + "'s " + dead.getCard().getName());
         UUID graveyardOwner = gameData.stolenCreatures.getOrDefault(dead.getId(), controllerId);
         gameData.stolenCreatures.remove(dead.getId());
-        gameHelper.addCardToGraveyard(gameData, graveyardOwner, dead.getOriginalCard(), Zone.BATTLEFIELD);
-        gameHelper.collectDeathTrigger(gameData, dead.getCard(), controllerId, true);
-        gameHelper.checkAllyCreatureDeathTriggers(gameData, controllerId);
+        boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, graveyardOwner, dead.getOriginalCard(), Zone.BATTLEFIELD);
+        if (wentToGraveyard) {
+            gameHelper.collectDeathTrigger(gameData, dead.getCard(), controllerId, true);
+            gameHelper.checkAllyCreatureDeathTriggers(gameData, controllerId);
+        }
         battlefield.remove(idx);
     }
 
@@ -2019,10 +2021,12 @@ public class CombatService {
             for (Permanent perm : toSacrifice) {
                 boolean wasCreature = gameQueryService.isCreature(gameData, perm);
                 battlefield.remove(perm);
-                gameHelper.addCardToGraveyard(gameData, playerId, perm.getOriginalCard(), Zone.BATTLEFIELD);
-                gameHelper.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature);
-                if (wasCreature) {
-                    gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, perm.getOriginalCard(), Zone.BATTLEFIELD);
+                if (wentToGraveyard) {
+                    gameHelper.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature);
+                    if (wasCreature) {
+                        gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                    }
                 }
                 String logEntry = perm.getCard().getName() + " is sacrificed.";
                 gameData.gameLog.add(logEntry);

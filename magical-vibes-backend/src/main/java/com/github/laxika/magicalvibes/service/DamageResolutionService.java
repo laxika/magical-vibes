@@ -515,9 +515,11 @@ public class DamageResolutionService {
                 Permanent dead = battlefield.get(idx);
                 gameBroadcastService.logAndBroadcast(gameData,
                         playerName + "'s " + dead.getCard().getName() + " is destroyed by " + cardName + ".");
-                gameHelper.addCardToGraveyard(gameData, playerId, dead.getOriginalCard(), Zone.BATTLEFIELD);
-                gameHelper.collectDeathTrigger(gameData, dead.getCard(), playerId, true);
-                gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, dead.getOriginalCard(), Zone.BATTLEFIELD);
+                if (wentToGraveyard) {
+                    gameHelper.collectDeathTrigger(gameData, dead.getCard(), playerId, true);
+                    gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                }
                 battlefield.remove(idx);
             }
         });

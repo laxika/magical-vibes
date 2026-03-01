@@ -38,17 +38,20 @@ public class PermanentRemovalService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
                 UUID graveyardOwnerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
-                gameHelper.addCardToGraveyard(gameData, graveyardOwnerId, target.getOriginalCard(), Zone.BATTLEFIELD);
+                boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, graveyardOwnerId, target.getOriginalCard(), Zone.BATTLEFIELD);
                 gameData.stolenCreatures.remove(target.getId());
-                gameHelper.collectDeathTrigger(gameData, target.getCard(), playerId, wasCreature);
-                if (wasCreature) {
-                    gameData.creatureDeathCountThisTurn.merge(playerId, 1, Integer::sum);
-                    gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
-                    gameHelper.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());
-                    gameHelper.checkEquippedCreatureDeathTriggers(gameData, target.getId(), playerId);
-                }
-                if (wasArtifact) {
-                    gameHelper.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData, graveyardOwnerId);
+                // Skip "dies" and graveyard triggers if a replacement effect redirected the card (CR 614.6)
+                if (wentToGraveyard) {
+                    gameHelper.collectDeathTrigger(gameData, target.getCard(), playerId, wasCreature);
+                    if (wasCreature) {
+                        gameData.creatureDeathCountThisTurn.merge(playerId, 1, Integer::sum);
+                        gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                        gameHelper.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());
+                        gameHelper.checkEquippedCreatureDeathTriggers(gameData, target.getId(), playerId);
+                    }
+                    if (wasArtifact) {
+                        gameHelper.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData, graveyardOwnerId);
+                    }
                 }
                 handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
                 return true;

@@ -129,10 +129,12 @@ public class PermanentChoiceHandlerService {
             for (Permanent perm : toRemove) {
                 boolean wasCreature = gameQueryService.isCreature(gameData, perm);
                 battlefield.remove(perm);
-                gameHelper.addCardToGraveyard(gameData, playerId, perm.getOriginalCard(), Zone.BATTLEFIELD);
-                gameHelper.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature);
-                if (wasCreature) {
-                    gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, perm.getOriginalCard(), Zone.BATTLEFIELD);
+                if (wentToGraveyard) {
+                    gameHelper.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature);
+                    if (wasCreature) {
+                        gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                    }
                 }
                 String logEntry = perm.getCard().getName() + " is put into the graveyard (legend rule).";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
