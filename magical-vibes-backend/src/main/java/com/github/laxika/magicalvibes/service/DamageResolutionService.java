@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainL
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSourcePowerToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetControllerIfTargetHasKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
@@ -696,6 +697,33 @@ public class DamageResolutionService {
         } else {
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
             dealDamageToPlayer(gameData, entry, entry.getControllerId(), rawDamage);
+        }
+
+        gameHelper.checkWinCondition(gameData);
+    }
+
+    @HandlesEffect(DealDamageToTargetControllerIfTargetHasKeywordEffect.class)
+    void resolveDealDamageToTargetControllerIfTargetHasKeyword(
+            GameData gameData,
+            StackEntry entry,
+            DealDamageToTargetControllerIfTargetHasKeywordEffect effect
+    ) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) return;
+
+        if (!gameQueryService.hasKeyword(gameData, target, effect.keyword())) {
+            return;
+        }
+
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        String cardName = entry.getCard().getName();
+
+        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    cardName + "'s damage to " + gameData.playerIdToName.get(controllerId) + " is prevented.");
+        } else {
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+            dealDamageToPlayer(gameData, entry, controllerId, rawDamage);
         }
 
         gameHelper.checkWinCondition(gameData);
