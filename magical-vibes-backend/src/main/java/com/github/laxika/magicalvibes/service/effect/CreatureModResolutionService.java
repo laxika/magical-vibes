@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
+import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachAttackingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnTargetCreatureEffect;
@@ -736,6 +737,23 @@ public class CreatureModResolutionService {
         String logEntry = entry.getCard().getName() + " puts a -1/-1 counter on " + count + " creature(s) target player controls.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} puts -1/-1 counter on {} creature(s) target player controls", gameData.id, entry.getCard().getName(), count);
+    }
+
+    @HandlesEffect(PutMinusOneMinusOneCounterOnEachAttackingCreatureEffect.class)
+    private void resolvePutMinusOneMinusOneCounterOnEachAttackingCreature(GameData gameData, StackEntry entry) {
+        final int[] count = {0};
+
+        gameData.forEachPermanent((playerId, p) -> {
+            if (!p.isAttacking()) return;
+            if (!gameQueryService.isCreature(gameData, p)) return;
+
+            p.setMinusOneMinusOneCounters(p.getMinusOneMinusOneCounters() + 1);
+            count[0]++;
+        });
+
+        String logEntry = entry.getCard().getName() + " puts a -1/-1 counter on " + count[0] + " attacking creature(s).";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} puts -1/-1 counter on {} attacking creature(s)", gameData.id, entry.getCard().getName(), count[0]);
     }
 
     @HandlesEffect(PutCountersOnSourceEffect.class)
