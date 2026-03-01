@@ -140,7 +140,7 @@ public class StackResolutionService {
                 boolean hasControlEffect = card.getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
                 if (hasControlEffect) {
-                    creatureControlService.stealCreature(gameData, controllerId, target);
+                    creatureControlService.stealPermanent(gameData, controllerId, target);
                 }
 
                 // Process aura ETB effects (e.g., Volition Reins)

@@ -328,14 +328,7 @@ public class PermanentControlResolutionService {
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (aura == null) return;
 
-        UUID currentControllerId = null;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf != null && bf.contains(aura)) {
-                currentControllerId = pid;
-                break;
-            }
-        }
+        UUID currentControllerId = gameQueryService.findPermanentController(gameData, aura.getId());
         if (currentControllerId != null && !currentControllerId.equals(casterId)) {
             gameData.playerBattlefields.get(currentControllerId).remove(aura);
             gameData.playerBattlefields.get(casterId).add(aura);
@@ -373,7 +366,7 @@ public class PermanentControlResolutionService {
             return;
         }
 
-        creatureControlService.stealCreature(gameData, entry.getControllerId(), target);
+        creatureControlService.stealPermanent(gameData, entry.getControllerId(), target);
         gameData.enchantmentDependentStolenCreatures.add(target.getId());
     }
 
@@ -382,12 +375,12 @@ public class PermanentControlResolutionService {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) return;
 
-        UUID oldController = findControllerId(gameData, target);
+        UUID oldController = gameQueryService.findPermanentController(gameData, target.getId());
         if (oldController == null || oldController.equals(entry.getControllerId())) {
             return;
         }
 
-        creatureControlService.stealCreature(gameData, entry.getControllerId(), target);
+        creatureControlService.stealPermanent(gameData, entry.getControllerId(), target);
         gameData.untilEndOfTurnStolenCreatures.add(target.getId());
     }
 
@@ -396,13 +389,13 @@ public class PermanentControlResolutionService {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) return;
 
-        UUID oldController = findControllerId(gameData, target);
+        UUID oldController = gameQueryService.findPermanentController(gameData, target.getId());
         if (oldController == null || oldController.equals(entry.getControllerId())) {
             return;
         }
 
         // Gain control of the equipment until end of turn
-        creatureControlService.stealCreature(gameData, entry.getControllerId(), target);
+        creatureControlService.stealPermanent(gameData, entry.getControllerId(), target);
         gameData.untilEndOfTurnStolenCreatures.add(target.getId());
 
         // Attach it to the source creature
@@ -444,18 +437,8 @@ public class PermanentControlResolutionService {
             return;
         }
 
-        creatureControlService.stealCreature(gameData, newControllerId, source);
+        creatureControlService.stealPermanent(gameData, newControllerId, source);
         gameData.permanentControlStolenCreatures.add(source.getId());
-    }
-
-    private UUID findControllerId(GameData gameData, Permanent permanent) {
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-            if (battlefield != null && battlefield.contains(permanent)) {
-                return pid;
-            }
-        }
-        return null;
     }
 
     @HandlesEffect(CreateTokenCopyOfImprintedCardEffect.class)

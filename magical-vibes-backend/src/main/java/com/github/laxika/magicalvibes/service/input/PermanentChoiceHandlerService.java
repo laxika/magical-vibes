@@ -490,7 +490,7 @@ public class PermanentChoiceHandlerService {
                 boolean hasControlEffect = auraCard.getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
                 if (hasControlEffect) {
-                    creatureControlService.stealCreature(gameData, playerId, enchantTarget);
+                    creatureControlService.stealPermanent(gameData, playerId, enchantTarget);
                 }
 
                 String playerName = gameData.playerIdToName.get(playerId);

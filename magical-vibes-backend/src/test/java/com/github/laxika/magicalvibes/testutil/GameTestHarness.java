@@ -136,7 +136,7 @@ public class GameTestHarness {
         LegendRuleService legendRuleService = new LegendRuleService(gameQueryService, playerInputService);
         TriggeredAbilityQueueService triggeredAbilityQueueService = new TriggeredAbilityQueueService(
                 gameQueryService, gameBroadcastService, playerInputService);
-        CreatureControlService creatureControlService = new CreatureControlService(gameBroadcastService);
+        CreatureControlService creatureControlService = new CreatureControlService(gameBroadcastService, gameQueryService);
         GameHelper gameHelper = new GameHelper(
                 sessionManager, gameRegistry, cardViewFactory, gameQueryService, gameBroadcastService, playerInputService,
                 legendRuleService, triggeredAbilityQueueService, draftRegistry, null, creatureControlService, null);

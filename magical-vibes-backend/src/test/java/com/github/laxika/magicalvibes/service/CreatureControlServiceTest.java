@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -14,8 +15,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CreatureControlServiceTest extends BaseCardTest {
 
-    private final CreatureControlService creatureControlService =
-            new CreatureControlService(new GameBroadcastService(null, null, null, null, null));
+    private CreatureControlService creatureControlService;
+
+    @BeforeEach
+    void setUpService() {
+        creatureControlService = new CreatureControlService(new GameBroadcastService(null, null, null, null, null), gqs);
+    }
 
     private Permanent addCreature(UUID playerId, GrizzlyBears card) {
         Permanent permanent = new Permanent(card);
@@ -32,15 +37,15 @@ class CreatureControlServiceTest extends BaseCardTest {
     }
 
     @Nested
-    @DisplayName("stealCreature")
-    class StealCreature {
+    @DisplayName("stealPermanent")
+    class StealPermanent {
 
         @Test
         @DisplayName("Moves creature from original owner's battlefield to new controller's battlefield")
         void movesCreatureBetweenBattlefields() {
             Permanent bear = addCreature(player1.getId(), new GrizzlyBears());
 
-            creatureControlService.stealCreature(gd, player2.getId(), bear);
+            creatureControlService.stealPermanent(gd, player2.getId(), bear);
 
             assertThat(gd.playerBattlefields.get(player1.getId()))
                     .noneMatch(p -> p.getId().equals(bear.getId()));
@@ -54,7 +59,7 @@ class CreatureControlServiceTest extends BaseCardTest {
             Permanent bear = addCreature(player1.getId(), new GrizzlyBears());
             assertThat(bear.isSummoningSick()).isFalse();
 
-            creatureControlService.stealCreature(gd, player2.getId(), bear);
+            creatureControlService.stealPermanent(gd, player2.getId(), bear);
 
             assertThat(bear.isSummoningSick()).isTrue();
         }
@@ -64,7 +69,7 @@ class CreatureControlServiceTest extends BaseCardTest {
         void recordsOriginalOwner() {
             Permanent bear = addCreature(player1.getId(), new GrizzlyBears());
 
-            creatureControlService.stealCreature(gd, player2.getId(), bear);
+            creatureControlService.stealPermanent(gd, player2.getId(), bear);
 
             assertThat(gd.stolenCreatures).containsEntry(bear.getId(), player1.getId());
         }
@@ -75,11 +80,11 @@ class CreatureControlServiceTest extends BaseCardTest {
             Permanent bear = addCreature(player1.getId(), new GrizzlyBears());
 
             // First steal: player1 -> player2
-            creatureControlService.stealCreature(gd, player2.getId(), bear);
+            creatureControlService.stealPermanent(gd, player2.getId(), bear);
             assertThat(gd.stolenCreatures).containsEntry(bear.getId(), player1.getId());
 
             // Second steal: player2 -> player1 (back to original, but entry stays)
-            creatureControlService.stealCreature(gd, player1.getId(), bear);
+            creatureControlService.stealPermanent(gd, player1.getId(), bear);
 
             // Original owner should still be player1 (first entry preserved)
             assertThat(gd.stolenCreatures).containsEntry(bear.getId(), player1.getId());
@@ -90,7 +95,7 @@ class CreatureControlServiceTest extends BaseCardTest {
         void doesNothingWhenAlreadyControlled() {
             Permanent bear = addCreature(player1.getId(), new GrizzlyBears());
 
-            creatureControlService.stealCreature(gd, player1.getId(), bear);
+            creatureControlService.stealPermanent(gd, player1.getId(), bear);
 
             // Creature should still be on player1's battlefield, unchanged
             assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -107,7 +112,7 @@ class CreatureControlServiceTest extends BaseCardTest {
             int p1Size = gd.playerBattlefields.get(player1.getId()).size();
             int p2Size = gd.playerBattlefields.get(player2.getId()).size();
 
-            creatureControlService.stealCreature(gd, player2.getId(), orphan);
+            creatureControlService.stealPermanent(gd, player2.getId(), orphan);
 
             assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(p1Size);
             assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(p2Size);
@@ -120,7 +125,7 @@ class CreatureControlServiceTest extends BaseCardTest {
             Permanent bear = addCreature(player1.getId(), new GrizzlyBears());
             int logSizeBefore = gd.gameLog.size();
 
-            creatureControlService.stealCreature(gd, player2.getId(), bear);
+            creatureControlService.stealPermanent(gd, player2.getId(), bear);
 
             assertThat(gd.gameLog).hasSizeGreaterThan(logSizeBefore);
             assertThat(gd.gameLog).anyMatch(log ->
@@ -133,7 +138,7 @@ class CreatureControlServiceTest extends BaseCardTest {
             Permanent bear = addCreature(player1.getId(), new GrizzlyBears());
             String player2Name = gd.playerIdToName.get(player2.getId());
 
-            creatureControlService.stealCreature(gd, player2.getId(), bear);
+            creatureControlService.stealPermanent(gd, player2.getId(), bear);
 
             assertThat(gd.gameLog).anyMatch(log -> log.contains(player2Name));
         }
@@ -144,8 +149,8 @@ class CreatureControlServiceTest extends BaseCardTest {
             Permanent bear = addCreature(player1.getId(), new GrizzlyBears());
             Permanent angel = addCreature(player1.getId(), new SerraAngel());
 
-            creatureControlService.stealCreature(gd, player2.getId(), bear);
-            creatureControlService.stealCreature(gd, player2.getId(), angel);
+            creatureControlService.stealPermanent(gd, player2.getId(), bear);
+            creatureControlService.stealPermanent(gd, player2.getId(), angel);
 
             assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
             assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -162,11 +167,11 @@ class CreatureControlServiceTest extends BaseCardTest {
             Permanent bear = addCreature(player2.getId(), new GrizzlyBears());
 
             // Player1 steals from player2
-            creatureControlService.stealCreature(gd, player1.getId(), bear);
+            creatureControlService.stealPermanent(gd, player1.getId(), bear);
             assertThat(gd.stolenCreatures).containsEntry(bear.getId(), player2.getId());
 
             // Player2 steals it back
-            creatureControlService.stealCreature(gd, player2.getId(), bear);
+            creatureControlService.stealPermanent(gd, player2.getId(), bear);
 
             // Original owner entry should still point to player2 (the true original)
             assertThat(gd.stolenCreatures).containsEntry(bear.getId(), player2.getId());

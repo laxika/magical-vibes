@@ -418,7 +418,7 @@ public class GameHelper {
                 if (hasControlEffect) {
                     Permanent target = gameQueryService.findPermanentById(gameData, placement.attachmentTargetId());
                     if (target != null) {
-                        creatureControlService.stealCreature(gameData, controllerId, target);
+                        creatureControlService.stealPermanent(gameData, controllerId, target);
                     }
                 }
             }

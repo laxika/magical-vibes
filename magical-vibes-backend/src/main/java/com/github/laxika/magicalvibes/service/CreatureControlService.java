@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -15,16 +14,10 @@ import java.util.UUID;
 public class CreatureControlService {
 
     private final GameBroadcastService gameBroadcastService;
+    private final GameQueryService gameQueryService;
 
-    public void stealCreature(GameData gameData, UUID newControllerId, Permanent creature) {
-        UUID originalOwnerId = null;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf != null && bf.contains(creature)) {
-                originalOwnerId = pid;
-                break;
-            }
-        }
+    public void stealPermanent(GameData gameData, UUID newControllerId, Permanent creature) {
+        UUID originalOwnerId = gameQueryService.findPermanentController(gameData, creature.getId());
         if (originalOwnerId == null || originalOwnerId.equals(newControllerId)) {
             return;
         }
