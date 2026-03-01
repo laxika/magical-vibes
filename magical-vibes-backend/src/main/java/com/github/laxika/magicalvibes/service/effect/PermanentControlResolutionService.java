@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEquipmentU
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
@@ -248,6 +249,29 @@ public class PermanentControlResolutionService {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
                 log.info("Game {} - {} put on bottom of {}'s library",
+                        gameData.id, target.getCard().getName(), gameData.playerIdToName.get(playerId));
+                break;
+            }
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    @HandlesEffect(PutTargetOnTopOfLibraryEffect.class)
+    private void resolvePutTargetOnTopOfLibrary(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) return;
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null && battlefield.remove(target)) {
+                gameData.playerDecks.get(playerId).add(0, target.getOriginalCard());
+
+                String logEntry = target.getCard().getName() + " is put on top of "
+                        + gameData.playerIdToName.get(playerId) + "'s library.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+                log.info("Game {} - {} put on top of {}'s library",
                         gameData.id, target.getCard().getName(), gameData.playerIdToName.get(playerId));
                 break;
             }

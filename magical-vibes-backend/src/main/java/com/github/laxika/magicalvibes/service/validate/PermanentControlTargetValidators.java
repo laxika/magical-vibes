@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEquipmentUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
@@ -58,6 +59,11 @@ public class PermanentControlTargetValidators {
         if (target == null || !gameQueryService.isCreature(ctx.gameData(), target)) {
             throw new IllegalStateException("Target must be a creature");
         }
+    }
+
+    @ValidatesTarget(PutTargetOnTopOfLibraryEffect.class)
+    public void validatePutTargetOnTopOfLibrary(TargetValidationContext ctx) {
+        tvs.requireBattlefieldTarget(ctx);
     }
 
     @ValidatesTarget(TargetPlayerGainsControlOfSourceCreatureEffect.class)
