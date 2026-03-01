@@ -142,6 +142,11 @@ public class StackResolutionService {
                 if (hasControlEffect) {
                     creatureControlService.stealCreature(gameData, controllerId, target);
                 }
+
+                // Process aura ETB effects (e.g., Volition Reins)
+                if (!gameData.interaction.isAwaitingInput()) {
+                    gameHelper.processCreatureETBEffects(gameData, controllerId, card, entry.getTargetPermanentId(), true);
+                }
             }
         } else {
             gameHelper.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(card));
