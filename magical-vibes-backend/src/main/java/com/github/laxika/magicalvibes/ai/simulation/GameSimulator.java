@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.TurnResolutionService;
+import com.github.laxika.magicalvibes.service.ValidTargetService;
 import com.github.laxika.magicalvibes.service.effect.CardSpecificResolutionService;
 import com.github.laxika.magicalvibes.service.effect.CreatureModResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
@@ -175,6 +176,7 @@ public class GameSimulator {
             scanTargetValidators(bean, targetValidatorRegistry);
         }
         TargetLegalityService targetLegalityService = new TargetLegalityService(gameQueryService, targetValidationService);
+        ValidTargetService validTargetService = new ValidTargetService(gameQueryService);
 
         EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
         List<Object> effectServices = List.of(
@@ -184,7 +186,7 @@ public class GameSimulator {
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new CounterResolutionService(gameHelper, gameBroadcastService, gameQueryService),
                 new ExileResolutionService(gameHelper, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService),
-                new CopyResolutionService(gameBroadcastService, gameQueryService),
+                new CopyResolutionService(gameBroadcastService, validTargetService),
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
                 new GraveyardReturnResolutionService(gameHelper, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService),
                 new BounceResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService),

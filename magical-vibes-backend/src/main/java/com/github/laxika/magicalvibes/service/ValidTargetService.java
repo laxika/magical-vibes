@@ -110,16 +110,20 @@ public class ValidTargetService {
         return new ValidTargetsResponse(validPermanentIds, validPlayerIds, 1, 1, prompt);
     }
 
-    private boolean isValidPermanentTarget(GameData gameData, Card card, Permanent perm, UUID controllerId,
-                                            boolean isMultiTarget, TargetFilter positionFilter) {
-        CardColor sourceColor = card.getColor();
+    /**
+     * Checks whether a permanent can legally be targeted by a spell cast by the given controller.
+     * Evaluates shroud, hexproof, CantBeTargetOfSpellsOrAbilities, protection from color,
+     * protection from card types, cant-be-targeted-by-spell-color, and the spell's TargetFilter.
+     */
+    public boolean canPermanentBeTargetedBySpell(GameData gameData, Permanent perm, Card spellCard, UUID castingPlayerId) {
+        CardColor sourceColor = spellCard.getColor();
 
         // Protection from source color
         if (gameQueryService.hasProtectionFrom(gameData, perm, sourceColor)) {
             return false;
         }
         // Protection from source card type
-        if (gameQueryService.hasProtectionFromSourceCardTypes(perm, card)) {
+        if (gameQueryService.hasProtectionFromSourceCardTypes(perm, spellCard)) {
             return false;
         }
 
@@ -131,7 +135,7 @@ public class ValidTargetService {
         // Hexproof (only blocks if target is opponent's)
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.HEXPROOF)) {
             UUID targetController = gameQueryService.findPermanentController(gameData, perm.getId());
-            if (targetController != null && !targetController.equals(controllerId)) {
+            if (targetController != null && !targetController.equals(castingPlayerId)) {
                 return false;
             }
         }
@@ -139,7 +143,7 @@ public class ValidTargetService {
         // CantBeTargetOfSpellsOrAbilitiesEffect (granted hexproof-like)
         if (gameQueryService.hasGrantedEffect(gameData, perm, CantBeTargetOfSpellsOrAbilitiesEffect.class)) {
             UUID targetController = gameQueryService.findPermanentController(gameData, perm.getId());
-            if (targetController != null && !targetController.equals(controllerId)) {
+            if (targetController != null && !targetController.equals(castingPlayerId)) {
                 return false;
             }
         }
@@ -150,15 +154,24 @@ public class ValidTargetService {
         }
 
         // Card's TargetFilter
-        if (card.getTargetFilter() != null) {
+        if (spellCard.getTargetFilter() != null) {
             try {
                 FilterContext filterContext = FilterContext.of(gameData)
-                        .withSourceCardId(card.getId())
-                        .withSourceControllerId(controllerId);
-                gameQueryService.validateTargetFilter(card.getTargetFilter(), perm, filterContext);
+                        .withSourceCardId(spellCard.getId())
+                        .withSourceControllerId(castingPlayerId);
+                gameQueryService.validateTargetFilter(spellCard.getTargetFilter(), perm, filterContext);
             } catch (IllegalStateException e) {
                 return false;
             }
+        }
+
+        return true;
+    }
+
+    private boolean isValidPermanentTarget(GameData gameData, Card card, Permanent perm, UUID controllerId,
+                                            boolean isMultiTarget, TargetFilter positionFilter) {
+        if (!canPermanentBeTargetedBySpell(gameData, perm, card, controllerId)) {
+            return false;
         }
 
         // Per-position filter for multi-target spells
@@ -181,13 +194,6 @@ public class ValidTargetService {
                 return false;
             }
         }
-
-        // Effect-level validation: use the TargetValidationService logic inline
-        // For spells with no TargetFilter and no multi-target, the TargetValidationService checks
-        // creature/player type constraints. We replicate the essential checks here.
-        // The TargetFilter already handles the filter predicate constraints (e.g. "nonblack creature").
-        // Effect-specific constraints (e.g. "must be attacking") are handled by effect validators.
-        // We rely on the TargetFilter being the canonical source of truth.
 
         return true;
     }

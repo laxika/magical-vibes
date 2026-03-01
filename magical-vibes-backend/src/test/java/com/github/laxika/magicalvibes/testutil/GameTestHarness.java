@@ -166,6 +166,7 @@ public class GameTestHarness {
             scanTargetValidators(bean, targetValidatorRegistry);
         }
         TargetLegalityService targetLegalityService = new TargetLegalityService(gameQueryService, targetValidationService);
+        ValidTargetService validTargetService = new ValidTargetService(gameQueryService);
         EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
         List<Object> effectServices = List.of(
                 new DamageResolutionService(gameHelper, gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService),
@@ -174,7 +175,7 @@ public class GameTestHarness {
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new CounterResolutionService(gameHelper, gameBroadcastService, gameQueryService),
                 new ExileResolutionService(gameHelper, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService),
-                new CopyResolutionService(gameBroadcastService, gameQueryService),
+                new CopyResolutionService(gameBroadcastService, validTargetService),
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
                 new GraveyardReturnResolutionService(gameHelper, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService),
                 new BounceResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService),
@@ -236,7 +237,6 @@ public class GameTestHarness {
         lobbyService = new LobbyService(gameRegistry, gameBroadcastService);
 
         // Create the MessageHandler (GameMessageHandler) for AI tests
-        ValidTargetService validTargetService = new ValidTargetService(gameQueryService);
         messageHandler = new GameMessageHandler(
                 null, gameService, gameBroadcastService, lobbyService, gameRegistry,
                 sessionManager, new JacksonConfig().objectMapper(),

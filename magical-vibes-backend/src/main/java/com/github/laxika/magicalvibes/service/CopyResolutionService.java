@@ -3,18 +3,13 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
-import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,7 +24,7 @@ import java.util.UUID;
 public class CopyResolutionService {
 
     private final GameBroadcastService gameBroadcastService;
-    private final GameQueryService gameQueryService;
+    private final ValidTargetService validTargetService;
 
     @HandlesEffect(CopySpellEffect.class)
     void resolveCopySpell(GameData gameData, StackEntry entry) {
@@ -49,26 +44,10 @@ public class CopyResolutionService {
             return;
         }
 
-        // Create a copy Card with a new identity but same properties
-        Card copyCard = createCopyCard(targetEntry.getCard());
-
         // Create a copy of the stack entry preserving all fields, with the copy's controller
         UUID copyControllerId = entry.getControllerId();
-        StackEntry copyEntry = new StackEntry(
-                targetEntry.getEntryType(),
-                copyCard,
-                copyControllerId,
-                "Copy of " + targetEntry.getCard().getName(),
-                new ArrayList<>(targetEntry.getEffectsToResolve()),
-                targetEntry.getXValue(),
-                targetEntry.getTargetPermanentId(),
-                targetEntry.getSourcePermanentId(),
-                targetEntry.getDamageAssignments(),
-                targetEntry.getTargetZone(),
-                targetEntry.getTargetCardIds() != null ? new ArrayList<>(targetEntry.getTargetCardIds()) : null,
-                targetEntry.getTargetPermanentIds() != null ? new ArrayList<>(targetEntry.getTargetPermanentIds()) : null
-        );
-        copyEntry.setCopy(true);
+        Card copyCard = createCopyCard(targetEntry.getCard());
+        StackEntry copyEntry = createCopyStackEntry(targetEntry, copyCard, copyControllerId, targetEntry.getTargetPermanentId());
 
         gameData.stack.add(copyEntry);
 
@@ -105,53 +84,14 @@ public class CopyResolutionService {
         gameData.forEachPermanent((pid, perm) -> {
             if (perm.getId().equals(originalTargetId)) return;
             if (!perm.getCard().getSubtypes().contains(subtype)) return;
-
-            // Check if the spell could legally target this permanent
-            if (spellCard.getTargetFilter() instanceof PermanentPredicateTargetFilter ppf) {
-                if (!gameQueryService.matchesPermanentPredicate(gameData, perm, ppf.predicate())) {
-                    return;
-                }
-            }
-            if (gameQueryService.hasKeyword(gameData, perm, Keyword.SHROUD)) return;
-            if (gameQueryService.hasKeyword(gameData, perm, Keyword.HEXPROOF)) {
-                UUID permController = gameQueryService.findPermanentController(gameData, perm.getId());
-                if (permController != null && !permController.equals(castingPlayerId)) return;
-            }
-            if (gameQueryService.hasGrantedEffect(gameData, perm, CantBeTargetOfSpellsOrAbilitiesEffect.class)) {
-                UUID permController = gameQueryService.findPermanentController(gameData, perm.getId());
-                if (permController != null && !permController.equals(castingPlayerId)) return;
-            }
-            if (spellCard.getColor() != null && gameQueryService.cantBeTargetedBySpellColor(gameData, perm, spellCard.getColor())) {
-                return;
-            }
-            if (spellCard.getColor() != null && gameQueryService.hasProtectionFrom(gameData, perm, spellCard.getColor())) {
-                return;
-            }
-            if (gameQueryService.hasProtectionFromSourceCardTypes(perm, spellCard)) {
-                return;
-            }
+            if (!validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spellCard, castingPlayerId)) return;
 
             eligibleTargets.add(perm);
         });
 
         for (Permanent target : eligibleTargets) {
             Card copyCard = createCopyCard(spellCard);
-
-            StackEntry copyEntry = new StackEntry(
-                    spellSnapshot.getEntryType(),
-                    copyCard,
-                    castingPlayerId,
-                    "Copy of " + spellCard.getName(),
-                    new ArrayList<>(spellSnapshot.getEffectsToResolve()),
-                    spellSnapshot.getXValue(),
-                    target.getId(),
-                    spellSnapshot.getSourcePermanentId(),
-                    spellSnapshot.getDamageAssignments(),
-                    spellSnapshot.getTargetZone(),
-                    spellSnapshot.getTargetCardIds() != null ? new ArrayList<>(spellSnapshot.getTargetCardIds()) : null,
-                    spellSnapshot.getTargetPermanentIds() != null ? new ArrayList<>(spellSnapshot.getTargetPermanentIds()) : null
-            );
-            copyEntry.setCopy(true);
+            StackEntry copyEntry = createCopyStackEntry(spellSnapshot, copyCard, castingPlayerId, target.getId());
 
             gameData.stack.add(copyEntry);
 
@@ -162,6 +102,25 @@ public class CopyResolutionService {
         log.info("Game {} - {} triggers, creating {} copies of {} for each other {}",
                 gameData.id, entry.getCard().getName(), eligibleTargets.size(),
                 spellCard.getName(), subtype.getDisplayName());
+    }
+
+    private StackEntry createCopyStackEntry(StackEntry source, Card copyCard, UUID controllerId, UUID targetPermanentId) {
+        StackEntry copy = new StackEntry(
+                source.getEntryType(),
+                copyCard,
+                controllerId,
+                "Copy of " + source.getCard().getName(),
+                new ArrayList<>(source.getEffectsToResolve()),
+                source.getXValue(),
+                targetPermanentId,
+                source.getSourcePermanentId(),
+                source.getDamageAssignments(),
+                source.getTargetZone(),
+                source.getTargetCardIds() != null ? new ArrayList<>(source.getTargetCardIds()) : null,
+                source.getTargetPermanentIds() != null ? new ArrayList<>(source.getTargetPermanentIds()) : null
+        );
+        copy.setCopy(true);
+        return copy;
     }
 
     private Card createCopyCard(Card original) {
