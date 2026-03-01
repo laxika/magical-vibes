@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesXLifeAndControllerGainsLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifePerCreatureControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -334,6 +335,13 @@ public class LifeResolutionService {
 
         if (totalLifeLost > 0) {
             applyGainLife(gameData, controllerId, totalLifeLost);
+        }
+    }
+
+    @HandlesEffect(EachPlayerLosesLifeEffect.class)
+    private void resolveEachPlayerLosesLife(GameData gameData, StackEntry entry, EachPlayerLosesLifeEffect effect) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            applyLifeLoss(gameData, playerId, effect.amount(), entry.getCard().getName());
         }
     }
 
