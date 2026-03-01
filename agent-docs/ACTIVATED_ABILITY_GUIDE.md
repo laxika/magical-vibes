@@ -276,6 +276,7 @@ Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon
 | `PermanentIsArtifactPredicate` | `()` | artifacts |
 | `PermanentIsLandPredicate` | `()` | lands |
 | `PermanentIsEnchantmentPredicate` | `()` | enchantments |
+| `PermanentIsPlaneswalkerPredicate` | `()` | planeswalkers |
 | `PermanentIsTappedPredicate` | `()` | tapped permanents |
 | `PermanentIsAttackingPredicate` | `()` | attacking creatures |
 | `PermanentIsBlockingPredicate` | `()` | blocking creatures |

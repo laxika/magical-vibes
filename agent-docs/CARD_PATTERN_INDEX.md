@@ -237,6 +237,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Draw + discard | `m/MerfolkLooter.java` | DrawCardEffect + DiscardCardEffect |
 | Grant keyword to target | `m/MightWeaver.java` | GrantKeywordEffect with color filter |
 | Sacrifice self for effect | `b/BottleGnomes.java` | SacrificeSelfCost + effect |
+| Sacrifice self + damage player/pw | `v/VulshokReplica.java` | SacrificeSelfCost + DealDamageToAnyTargetEffect + PermanentIsPlaneswalkerPredicate filter (restricts to players + planeswalkers) |
 | Sacrifice self + choose source prevention | `a/AuriokReplica.java` | SacrificeSelfCost + PreventAllDamageFromChosenSourceEffect (prompts permanent choice on resolution) |
 | Sacrifice subtype for effect | `s/SiegeGangCommander.java` | SacrificeSubtypeCreatureCost + DealDamageToAnyTargetEffect |
 | Sacrifice artifact for effect | `b/BarrageOgre.java` | SacrificeArtifactCost + DealDamageToAnyTargetEffect (tap + sac artifact) |
