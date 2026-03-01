@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -153,6 +154,9 @@ public class GameHelper {
         applySelfEnterTapped(permanent);
         applyConditionalEnterTapped(gameData, controllerId, permanent);
         gameData.playerBattlefields.get(controllerId).add(permanent);
+        gameData.permanentsEnteredBattlefieldThisTurn
+                .computeIfAbsent(controllerId, k -> new ArrayList<>())
+                .add(permanent.getCard());
     }
 
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes) {
@@ -160,6 +164,9 @@ public class GameHelper {
         applySelfEnterTapped(permanent);
         applyConditionalEnterTapped(gameData, controllerId, permanent);
         gameData.playerBattlefields.get(controllerId).add(permanent);
+        gameData.permanentsEnteredBattlefieldThisTurn
+                .computeIfAbsent(controllerId, k -> new ArrayList<>())
+                .add(permanent.getCard());
     }
 
     public Set<CardType> snapshotEnterTappedTypes(GameData gameData) {
@@ -849,6 +856,9 @@ public class GameHelper {
         checkAllyCreatureEntersTriggers(gameData, controllerId, card);
         checkAllyArtifactEntersTriggers(gameData, controllerId, card);
         checkAnyCreatureEntersTriggers(gameData, controllerId, card);
+        if (card.getType() == CardType.LAND) {
+            checkOpponentLandEntersTriggers(gameData, controllerId);
+        }
     }
 
     private void handleGraveyardExileETBTargeting(GameData gameData, UUID controllerId, Card card,
@@ -969,6 +979,45 @@ public class GameHelper {
                         gameData.id, perm.getCard().getName(), enteringCard.getName());
             }
         }
+    }
+
+    void checkOpponentLandEntersTriggers(GameData gameData, UUID landControllerId) {
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            if (playerId.equals(landControllerId)) return;
+
+            for (Permanent perm : battlefield) {
+                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD);
+                if (effects == null || effects.isEmpty()) continue;
+
+                for (CardEffect effect : effects) {
+                    CardEffect effectToResolve = effect;
+
+                    if (effect instanceof PermanentEnteredThisTurnConditionalEffect conditional) {
+                        List<Card> entered = gameData.permanentsEnteredBattlefieldThisTurn
+                                .getOrDefault(landControllerId, List.of());
+                        long matchCount = entered.stream()
+                                .filter(c -> gameQueryService.matchesCardPredicate(c, conditional.predicate(), null))
+                                .count();
+                        if (matchCount < conditional.minCount()) continue;
+                        effectToResolve = conditional.wrapped();
+                    }
+
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            playerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(effectToResolve)),
+                            landControllerId,
+                            perm.getId()
+                    ));
+
+                    String logEntry = perm.getCard().getName() + "'s ability triggers.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} triggers on opponent land entering", gameData.id, perm.getCard().getName());
+                }
+            }
+        });
     }
 
     public void checkAllyCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId) {

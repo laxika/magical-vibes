@@ -40,6 +40,7 @@ public class GameData {
     public int turnNumber;
     public final Set<UUID> priorityPassedBy = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> landsPlayedThisTurn = new ConcurrentHashMap<>();
+    public final Map<UUID, List<Card>> permanentsEnteredBattlefieldThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> spellsCastThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, List<Permanent>> playerBattlefields = new ConcurrentHashMap<>();
     public final Map<UUID, ManaPool> playerManaPools = new ConcurrentHashMap<>();
@@ -225,6 +226,8 @@ public class GameData {
         copy.mulliganCounts.putAll(this.mulliganCounts);
         copy.playerNeedsToBottom.putAll(this.playerNeedsToBottom);
         copy.landsPlayedThisTurn.putAll(this.landsPlayedThisTurn);
+        this.permanentsEnteredBattlefieldThisTurn.forEach((k, v) ->
+                copy.permanentsEnteredBattlefieldThisTurn.put(k, new ArrayList<>(v)));
         copy.spellsCastThisTurn.putAll(this.spellsCastThisTurn);
         copy.playerLifeTotals.putAll(this.playerLifeTotals);
         copy.playerPoisonCounters.putAll(this.playerPoisonCounters);

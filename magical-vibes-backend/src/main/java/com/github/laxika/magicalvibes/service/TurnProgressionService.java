@@ -510,6 +510,7 @@ public class TurnProgressionService {
         gameData.interaction.clearAwaitingInput();
         gameData.priorityPassedBy.clear();
         gameData.landsPlayedThisTurn.clear();
+        gameData.permanentsEnteredBattlefieldThisTurn.clear();
         gameData.spellsCastThisTurn.clear();
         gameData.activatedAbilityUsesThisTurn.clear();
         gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.clear();
