@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesXLifeAndControllerGainsLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifePerCreatureControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifePerCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveEachPlayerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveEnchantedPermanentControllerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
@@ -62,6 +63,20 @@ public class LifeResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gains {} life", gameData.id, playerName, amount);
+    }
+
+    @HandlesEffect(GainLifePerCardsInHandEffect.class)
+    private void resolveGainLifePerCardsInHand(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        int cardCount = hand != null ? hand.size() : 0;
+        if (cardCount == 0) {
+            String playerName = gameData.playerIdToName.get(controllerId);
+            String logEntry = playerName + " gains no life (no cards in hand).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+        applyGainLife(gameData, controllerId, cardCount);
     }
 
     @HandlesEffect(GainLifePerCreatureOnBattlefieldEffect.class)

@@ -337,6 +337,7 @@ Pass `null` as filter to allow any card.
 | `GainLifeForEachSubtypeOnBattlefieldEffect` | `(CardSubtype subtype)` | gain 1 life per permanent with given subtype on the battlefield (all players) |
 | `GainLifePerControlledCreatureEffect` | `()` | gain 1 life per creature you control |
 | `GainLifePerCreatureOnBattlefieldEffect` | `()` | gain 1 life per creature on the battlefield (all players) |
+| `GainLifePerCardsInHandEffect` | `()` | gain 1 life per card in controller's hand (upkeep trigger) |
 | `GainLifePerGraveyardCardEffect` | `()` | gain life equal to cards in graveyard |
 | `GainLifeEqualToTargetToughnessEffect` | `()` | gain life equal to target creature's toughness |
 | `GainLifeEqualToToughnessEffect` | `()` | gain life equal to own toughness (self, e.g. dies trigger) |
