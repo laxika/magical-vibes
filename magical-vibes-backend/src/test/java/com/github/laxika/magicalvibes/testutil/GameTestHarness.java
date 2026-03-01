@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.networking.service.StackEntryViewFactory;
 import com.github.laxika.magicalvibes.service.battlefield.BounceResolutionService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.battlefield.CopyResolutionService;
-import com.github.laxika.magicalvibes.service.CounterResolutionService;
+import com.github.laxika.magicalvibes.service.battlefield.CounterResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.DamageResolutionService;
 import com.github.laxika.magicalvibes.service.DestructionResolutionService;
