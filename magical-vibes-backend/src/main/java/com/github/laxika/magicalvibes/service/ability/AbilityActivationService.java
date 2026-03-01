@@ -396,7 +396,7 @@ public class AbilityActivationService {
 
         // Validate spell target for abilities that counter spells
         if (ability.isNeedsSpellTarget()) {
-            targetLegalityService.validateSpellTargetOnStack(gameData, targetPermanentId, ability.getTargetFilter());
+            targetLegalityService.validateSpellTargetOnStack(gameData, targetPermanentId, ability.getTargetFilter(), playerId);
         }
 
         boolean hasSacCreatureCost = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeCreatureCost);

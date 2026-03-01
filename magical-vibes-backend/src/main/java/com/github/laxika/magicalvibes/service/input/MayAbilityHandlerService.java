@@ -641,7 +641,7 @@ public class MayAbilityHandlerService {
             for (StackEntry se : gameData.stack) {
                 if (se.getCard().getId().equals(copyCardId)) continue; // exclude the copy itself
                 try {
-                    targetLegalityService.validateSpellTargetOnStack(gameData, se.getCard().getId(), copiedCard.getTargetFilter());
+                    targetLegalityService.validateSpellTargetOnStack(gameData, se.getCard().getId(), copiedCard.getTargetFilter(), copyEntry.getControllerId());
                     validTargets.add(se.getCard().getId());
                 } catch (IllegalStateException ignored) {
                     // Invalid target for copied spell filter; skip.

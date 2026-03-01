@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredi
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
@@ -41,7 +42,7 @@ public class TargetLegalityService {
     private final GameQueryService gameQueryService;
     private final TargetValidationService targetValidationService;
 
-    public void validateSpellTargetOnStack(GameData gameData, UUID targetId, TargetFilter targetFilter) {
+    public void validateSpellTargetOnStack(GameData gameData, UUID targetId, TargetFilter targetFilter, UUID controllerId) {
         if (targetId == null) {
             throw new IllegalStateException("Must target a spell on the stack");
         }
@@ -52,7 +53,7 @@ public class TargetLegalityService {
         }
 
         if (targetFilter instanceof StackEntryPredicateTargetFilter filter
-                && !matchesStackEntryPredicate(targetSpell, filter.predicate())) {
+                && !matchesStackEntryPredicate(gameData, targetSpell, filter.predicate(), controllerId)) {
             throw new IllegalStateException(filter.errorMessage());
         }
     }
@@ -334,7 +335,7 @@ public class TargetLegalityService {
                 && stackEntry.getTargetCardIds().isEmpty();
     }
 
-    public boolean matchesStackEntryPredicate(StackEntry stackEntry, StackEntryPredicate predicate) {
+    public boolean matchesStackEntryPredicate(GameData gameData, StackEntry stackEntry, StackEntryPredicate predicate, UUID controllerId) {
         if (predicate instanceof StackEntryTypeInPredicate typeInPredicate) {
             return typeInPredicate.spellTypes().contains(stackEntry.getEntryType());
         }
@@ -344,9 +345,12 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryIsSingleTargetPredicate) {
             return isSingleTargetSpell(stackEntry);
         }
+        if (predicate instanceof StackEntryTargetsYourPermanentPredicate) {
+            return targetsAPermanentControlledBy(gameData, stackEntry, controllerId);
+        }
         if (predicate instanceof StackEntryAnyOfPredicate anyOfPredicate) {
             for (StackEntryPredicate nested : anyOfPredicate.predicates()) {
-                if (matchesStackEntryPredicate(stackEntry, nested)) {
+                if (matchesStackEntryPredicate(gameData, stackEntry, nested, controllerId)) {
                     return true;
                 }
             }
@@ -354,14 +358,34 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryAllOfPredicate allOfPredicate) {
             for (StackEntryPredicate nested : allOfPredicate.predicates()) {
-                if (!matchesStackEntryPredicate(stackEntry, nested)) {
+                if (!matchesStackEntryPredicate(gameData, stackEntry, nested, controllerId)) {
                     return false;
                 }
             }
             return true;
         }
         if (predicate instanceof StackEntryNotPredicate notPredicate) {
-            return !matchesStackEntryPredicate(stackEntry, notPredicate.predicate());
+            return !matchesStackEntryPredicate(gameData, stackEntry, notPredicate.predicate(), controllerId);
+        }
+        return false;
+    }
+
+    private boolean targetsAPermanentControlledBy(GameData gameData, StackEntry stackEntry, UUID controllerId) {
+        // Check single target
+        if (stackEntry.getTargetPermanentId() != null) {
+            UUID targetController = gameQueryService.findPermanentController(gameData, stackEntry.getTargetPermanentId());
+            if (controllerId.equals(targetController)) {
+                return true;
+            }
+        }
+        // Check multiple targets
+        if (stackEntry.getTargetPermanentIds() != null) {
+            for (UUID targetId : stackEntry.getTargetPermanentIds()) {
+                UUID targetController = gameQueryService.findPermanentController(gameData, targetId);
+                if (controllerId.equals(targetController)) {
+                    return true;
+                }
+            }
         }
         return false;
     }

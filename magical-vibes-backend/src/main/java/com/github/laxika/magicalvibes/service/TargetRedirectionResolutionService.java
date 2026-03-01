@@ -94,7 +94,7 @@ public class TargetRedirectionResolutionService {
 
         try {
             if (spellCard.isNeedsSpellTarget()) {
-                targetLegalityService.validateSpellTargetOnStack(gameData, candidateTargetId, spellCard.getTargetFilter());
+                targetLegalityService.validateSpellTargetOnStack(gameData, candidateTargetId, spellCard.getTargetFilter(), targetSpell.getControllerId());
                 return true;
             }
 

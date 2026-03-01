@@ -300,6 +300,7 @@ Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon
 | `StackEntryIsSingleTargetPredicate` | `()` | spells with exactly one target |
 | `StackEntryAllOfPredicate` | `(List<StackEntryPredicate>)` | AND composition |
 | `StackEntryAnyOfPredicate` | `(List<StackEntryPredicate>)` | OR composition |
+| `StackEntryTargetsYourPermanentPredicate` | `()` | spells targeting a permanent you control |
 | `StackEntryNotPredicate` | `(StackEntryPredicate)` | NOT inversion |
 
 ### PlayerPredicate compositions

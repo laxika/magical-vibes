@@ -145,7 +145,7 @@ public class SpellCastingService {
 
         // Validate spell target (targeting a spell on the stack)
         if (card.isNeedsSpellTarget()) {
-            targetLegalityService.validateSpellTargetOnStack(gameData, targetPermanentId, card.getTargetFilter());
+            targetLegalityService.validateSpellTargetOnStack(gameData, targetPermanentId, card.getTargetFilter(), playerId);
         }
 
         ReturnCardFromGraveyardEffect graveyardReturnEffect = (ReturnCardFromGraveyardEffect) card.getEffects(EffectSlot.SPELL).stream()
