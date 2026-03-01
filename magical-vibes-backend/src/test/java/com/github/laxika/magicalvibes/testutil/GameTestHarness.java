@@ -348,6 +348,10 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null);
     }
 
+    public void castInstant(Player player, int cardIndex, int xValue, UUID targetPermanentId) {
+        gameService.playCard(gameData, player, cardIndex, xValue, targetPermanentId, null);
+    }
+
     public void castInstant(Player player, int cardIndex, List<UUID> targetPermanentIds) {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetPermanentIds, List.of());
     }

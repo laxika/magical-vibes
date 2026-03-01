@@ -25,6 +25,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Damage all creatures | `p/Pyroclasm.java` | MassDamageEffect |
 | Damage filtered creatures + players | `h/Hurricane.java` | MassDamageEffect (X, filter, damagesPlayers) |
 | Pump target | `g/GiantGrowth.java` | BoostTargetCreatureEffect |
+| X pump target | `u/UntamedMight.java` | BoostTargetCreatureXEffect |
 | Pump all + keyword | `o/Overrun.java` | BoostAllOwnCreaturesEffect + GrantKeywordEffect |
 | Targeted destroy | `t/Terror.java` | DestroyTargetPermanentEffect + target filter |
 | Multi-effect removal | `c/Condemn.java` | PutTargetOnBottomOfLibrary + GainLifeEqualToTargetToughness |

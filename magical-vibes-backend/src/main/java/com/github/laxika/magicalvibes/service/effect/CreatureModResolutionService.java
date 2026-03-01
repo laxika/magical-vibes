@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostFirstTargetCreatureEffec
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureXEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordToTargetEffect;
@@ -262,6 +263,27 @@ public class CreatureModResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gets +{}/+{}", gameData.id, target.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
+    }
+
+    @HandlesEffect(BoostTargetCreatureXEffect.class)
+    private void resolveBoostTargetCreatureX(GameData gameData, StackEntry entry, BoostTargetCreatureXEffect effect) {
+        int xValue = entry.getXValue();
+        int powerBoost = effect.powerMultiplier() * xValue;
+        int toughnessBoost = effect.toughnessMultiplier() * xValue;
+
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        target.setPowerModifier(target.getPowerModifier() + powerBoost);
+        target.setToughnessModifier(target.getToughnessModifier() + toughnessBoost);
+
+        String logEntry = String.format("%s gets %+d/%+d until end of turn.",
+                target.getCard().getName(), powerBoost, toughnessBoost);
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} gets {}/{}", gameData.id, target.getCard().getName(), powerBoost, toughnessBoost);
     }
 
     @HandlesEffect(SwitchPowerToughnessEffect.class)
