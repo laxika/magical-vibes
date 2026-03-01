@@ -104,6 +104,7 @@ public class GameService {
             case InteractionContext.RevealedHandChoice rhc -> controlledId.equals(rhc.choosingPlayerId());
             case InteractionContext.CombatDamageAssignment cda -> controlledId.equals(cda.playerId());
             case InteractionContext.MultiZoneExileChoice mzec -> controlledId.equals(mzec.playerId());
+            case InteractionContext.XValueChoice xvc -> controlledId.equals(xvc.playerId());
         };
     }
 

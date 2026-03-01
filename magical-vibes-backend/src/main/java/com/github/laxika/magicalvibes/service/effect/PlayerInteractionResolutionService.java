@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawXCardsForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAwakeningCountersOnTargetLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardEffect;
@@ -82,6 +83,23 @@ public class PlayerInteractionResolutionService {
     @HandlesEffect(DrawCardEffect.class)
     private void resolveDrawCards(GameData gameData, StackEntry entry, DrawCardEffect effect) {
         applyDrawCards(gameData, entry.getControllerId(), effect.amount());
+    }
+
+    @HandlesEffect(DrawXCardsForTargetPlayerEffect.class)
+    private void resolveDrawXCardsForTargetPlayer(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        int amount = entry.getXValue();
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+        String cardName = entry.getCard().getName();
+
+        for (int i = 0; i < amount; i++) {
+            gameHelper.resolveDrawCard(gameData, targetPlayerId);
+        }
+
+        String logEntry = playerName + " draws " + amount + " card" + (amount != 1 ? "s" : "")
+                + " (" + cardName + ").";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} draws {} from {}", gameData.id, playerName, amount, cardName);
     }
 
     @HandlesEffect(ShuffleHandIntoLibraryAndDrawEffect.class)

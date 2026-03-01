@@ -432,6 +432,8 @@ public class GameData {
                     targetInteraction.beginCombatDamageAssignment(cda.playerId(), cda.attackerIndex(),
                             cda.attackerPermanentId(), cda.attackerName(), cda.totalDamage(),
                             cda.validTargets(), cda.isTrample(), cda.isDeathtouch());
+            case InteractionContext.XValueChoice xvc ->
+                    targetInteraction.beginXValueChoice(xvc.playerId(), xvc.maxValue(), xvc.prompt(), xvc.cardName());
         }
 
         // Copy discard remaining count (not part of context reconstruction)

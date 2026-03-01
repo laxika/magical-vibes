@@ -92,6 +92,7 @@ import com.github.laxika.magicalvibes.service.input.ColorChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
+import com.github.laxika.magicalvibes.service.input.XValueChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -190,7 +191,7 @@ public class GameSimulator {
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
                 new GraveyardReturnResolutionService(gameHelper, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService),
                 new BounceResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService),
-                new LifeResolutionService(gameQueryService, gameBroadcastService),
+                new LifeResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new CreatureModResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService),
                 new PlayerInteractionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService, noOpSession, cardViewFactory, permanentRemovalService, triggerCollectionService),
                 new PermanentControlResolutionService(gameHelper, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService, creatureControlService),
@@ -233,6 +234,8 @@ public class GameSimulator {
         LibraryChoiceHandlerService libraryChoiceHandlerService = new LibraryChoiceHandlerService(
                 noOpSession, gameQueryService, gameHelper, legendRuleService, stateBasedActionService, gameBroadcastService,
                 cardViewFactory, turnProgressionService, playerInputService);
+        XValueChoiceHandlerService xValueChoiceHandlerService = new XValueChoiceHandlerService(
+                gameBroadcastService, stateBasedActionService, playerInputService, turnProgressionService, effectResolutionService);
         MulliganService mulliganService = new MulliganService(
                 noOpSession, gameBroadcastService, turnProgressionService);
         ReconnectionService reconnectionService = new ReconnectionService(
@@ -244,7 +247,7 @@ public class GameSimulator {
                 turnProgressionService,
                 colorChoiceHandlerService, cardChoiceHandlerService,
                 permanentChoiceHandlerService, graveyardChoiceHandlerService,
-                mayAbilityHandlerService, libraryChoiceHandlerService,
+                mayAbilityHandlerService, xValueChoiceHandlerService, libraryChoiceHandlerService,
                 spellCastingService,
                 stackResolutionService, abilityActivationService, mulliganService, reconnectionService);
 
@@ -660,6 +663,7 @@ public class GameSimulator {
             case InteractionContext.RevealedHandChoice rhc -> rhc.choosingPlayerId();
             case InteractionContext.MultiZoneExileChoice mzec -> mzec.playerId();
             case InteractionContext.CombatDamageAssignment cda -> cda.playerId();
+            case InteractionContext.XValueChoice xvc -> xvc.playerId();
         };
     }
 
