@@ -106,7 +106,8 @@ public enum CardSubtype {
     SNAKE("Snake"),
     GERM("Germ"),
     LOCUS("Locus"),
-    MYR("Myr");
+    MYR("Myr"),
+    HOUND("Hound");
 
     @Getter
     private final String displayName;
