@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
@@ -526,6 +527,36 @@ public class GameQueryService {
             if (protectedTypes.contains(type)) return true;
         }
         return false;
+    }
+
+    public boolean hasProtectionFromSource(GameData gameData, Permanent target, Permanent source) {
+        return hasProtectionFrom(gameData, target, source.getEffectiveColor())
+                || hasProtectionFromSourceCardTypes(gameData, target, source);
+    }
+
+    public boolean hasProtectionFromSource(GameData gameData, Permanent target, Card sourceCard) {
+        return hasProtectionFrom(gameData, target, sourceCard.getColor())
+                || hasProtectionFromSourceCardTypes(target, sourceCard);
+    }
+
+    public boolean hasKeywordOnSource(GameData gameData, StackEntry entry, Keyword keyword) {
+        if (entry.getSourcePermanentId() != null) {
+            Permanent source = findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source != null) {
+                return hasKeyword(gameData, source, keyword);
+            }
+        }
+        return false;
+    }
+
+    public boolean sourceHasKeyword(GameData gameData, StackEntry entry, Permanent explicitSource, Keyword keyword) {
+        return explicitSource != null
+                ? hasKeyword(gameData, explicitSource, keyword)
+                : hasKeywordOnSource(gameData, entry, keyword);
+    }
+
+    public boolean isLethalDamage(int damage, int effectiveToughness, boolean deathtouch) {
+        return damage >= effectiveToughness || (damage >= 1 && deathtouch);
     }
 
     public boolean cantBeTargetedBySpellColor(GameData gameData, Permanent target, CardColor spellColor) {

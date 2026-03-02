@@ -893,8 +893,7 @@ public class CombatService {
         if (blocker.getCantBlockIds().contains(attacker.getId())) {
             return Optional.of(blocker.getCard().getName() + " can't block " + attacker.getCard().getName() + " this turn");
         }
-        if (gameQueryService.hasProtectionFrom(gameData, attacker, blocker.getEffectiveColor())
-                || gameQueryService.hasProtectionFromSourceCardTypes(gameData, attacker, blocker)) {
+        if (gameQueryService.hasProtectionFromSource(gameData, attacker, blocker)) {
             return Optional.of(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (protection)");
         }
         return Optional.empty();
@@ -1328,8 +1327,7 @@ public class CombatService {
                     Permanent blk = defBf.get(blkIdx);
                     boolean blkParticipates = participatesInDamagePhase(gameData, blk, isFirstStrikePhase);
                     if (blkParticipates && !gameQueryService.isPreventedFromDealingDamage(gameData, blk)
-                            && !gameQueryService.hasProtectionFrom(gameData, atk, blk.getEffectiveColor())
-                            && !gameQueryService.hasProtectionFromSourceCardTypes(gameData, atk, blk)) {
+                            && !gameQueryService.hasProtectionFromSource(gameData, atk, blk)) {
                         int actualDmg = gameQueryService.applyDamageMultiplier(gameData, blockerDamage.getOrDefault(blkIdx, 0));
                         applyCombatCreatureDamage(gameData, blk, atk, atkIdx, actualDmg, state.atkDamageTaken, state.deathtouchDamagedAttackerIndices);
                         state.combatDamageDealt.merge(blk, actualDmg, Integer::sum);
@@ -1363,8 +1361,7 @@ public class CombatService {
                     ? Math.max(0, 1 - state.defDamageTaken.getOrDefault(blkIdx, 0))
                     : gameQueryService.getEffectiveToughness(gameData, blk) - state.defDamageTaken.getOrDefault(blkIdx, 0);
             int dmg = Math.min(remaining, Math.max(0, lethalNeeded));
-            if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getEffectiveColor())
-                    && !gameQueryService.hasProtectionFromSourceCardTypes(gameData, blk, atk)) {
+            if (!gameQueryService.hasProtectionFromSource(gameData, blk, atk)) {
                 int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
                 applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, state.defDamageTaken, state.deathtouchDamagedDefenderIndices);
                 state.combatDamageDealt.merge(atk, actualDmg, Integer::sum);
@@ -1400,8 +1397,7 @@ public class CombatService {
                 for (int blkIdx : blkIndices) {
                     Permanent blk = defBf.get(blkIdx);
                     if (blk.getId().equals(targetId)) {
-                        if (!gameQueryService.hasProtectionFrom(gameData, blk, atk.getEffectiveColor())
-                                && !gameQueryService.hasProtectionFromSourceCardTypes(gameData, blk, atk)) {
+                        if (!gameQueryService.hasProtectionFromSource(gameData, blk, atk)) {
                             int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
                             applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, state.defDamageTaken, state.deathtouchDamagedDefenderIndices);
                             state.combatDamageDealt.merge(atk, actualDmg, Integer::sum);
@@ -1440,7 +1436,7 @@ public class CombatService {
                 permanentRemovalService.removePermanentToGraveyard(gameData, redirectTarget);
                 String deathLog = redirectTarget.getCard().getName() + " dies from 0 toughness.";
                 gameBroadcastService.logAndBroadcast(gameData, deathLog);
-            } else if (state.damageRedirectedToGuard >= guardToughness
+            } else if (gameQueryService.isLethalDamage(state.damageRedirectedToGuard, guardToughness, false)
                     && !gameQueryService.hasKeyword(gameData, redirectTarget, Keyword.INDESTRUCTIBLE)
                     && !gameHelper.tryRegenerate(gameData, redirectTarget)) {
                 permanentRemovalService.removePermanentToGraveyard(gameData, redirectTarget);
@@ -1530,7 +1526,7 @@ public class CombatService {
             int effToughness = gameQueryService.getEffectiveToughness(gameData, battlefield.get(idx));
             if (effToughness <= 0) {
                 deadSet.add(idx);
-            } else if ((dmg >= effToughness || (dmg >= 1 && deathtouchSet.contains(idx)))
+            } else if (gameQueryService.isLethalDamage(dmg, effToughness, deathtouchSet.contains(idx))
                     && !gameQueryService.hasKeyword(gameData, battlefield.get(idx), Keyword.INDESTRUCTIBLE)
                     && !gameHelper.tryRegenerate(gameData, battlefield.get(idx))) {
                 deadSet.add(idx);

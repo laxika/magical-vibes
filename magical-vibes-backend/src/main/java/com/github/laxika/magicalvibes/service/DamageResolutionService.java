@@ -81,7 +81,7 @@ public class DamageResolutionService {
         for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
             Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
             if (target == null) continue;
-            if (hasProtectionFromSource(gameData, target, entry)) continue;
+            if (gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard())) continue;
 
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, assignment.getValue());
             if (dealCreatureDamage(gameData, entry, target, rawDamage)) {
@@ -243,7 +243,7 @@ public class DamageResolutionService {
             if (targetIsPlayer) {
                 dealDamageToPlayer(gameData, entry, targetId, damage);
             } else {
-                if (!hasProtectionFromSource(gameData, targetPermanent, entry)) {
+                if (!gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard())) {
                     if (dealCreatureDamage(gameData, entry, targetPermanent, damage)) {
                         destroyed.add(targetPermanent);
                     }
@@ -300,7 +300,7 @@ public class DamageResolutionService {
 
         String sourceName = damageSource != null ? damageSource.getCard().getName() : entry.getCard().getName();
 
-        boolean sourceHasInfect = sourceHasKeyword(gameData, entry, damageSource, Keyword.INFECT);
+        boolean sourceHasInfect = gameQueryService.sourceHasKeyword(gameData, entry, damageSource, Keyword.INFECT);
 
         if (sourceHasInfect) {
             if (damage > 0) {
@@ -317,9 +317,8 @@ public class DamageResolutionService {
                 sourceName + " deals " + damage + " damage to " + target.getCard().getName() + ".");
         log.info("Game {} - {} deals {} damage to {}", gameData.id, sourceName, damage, target.getCard().getName());
 
-        boolean sourceHasDeathtouch = sourceHasKeyword(gameData, entry, damageSource, Keyword.DEATHTOUCH);
-        boolean isLethal = damage >= gameQueryService.getEffectiveToughness(gameData, target)
-                || (damage >= 1 && sourceHasDeathtouch);
+        boolean sourceHasDeathtouch = gameQueryService.sourceHasKeyword(gameData, entry, damageSource, Keyword.DEATHTOUCH);
+        boolean isLethal = gameQueryService.isLethalDamage(damage, gameQueryService.getEffectiveToughness(gameData, target), sourceHasDeathtouch);
         if (isLethal) {
             if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
                 gameBroadcastService.logAndBroadcast(gameData,
@@ -329,22 +328,6 @@ public class DamageResolutionService {
             return !gameHelper.tryRegenerate(gameData, target);
         }
         return false;
-    }
-
-    private boolean hasKeywordOnSource(GameData gameData, StackEntry entry, Keyword keyword) {
-        if (entry.getSourcePermanentId() != null) {
-            Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-            if (source != null) {
-                return gameQueryService.hasKeyword(gameData, source, keyword);
-            }
-        }
-        return false;
-    }
-
-    private boolean sourceHasKeyword(GameData gameData, StackEntry entry, Permanent damageSource, Keyword keyword) {
-        return damageSource != null
-                ? gameQueryService.hasKeyword(gameData, damageSource, keyword)
-                : hasKeywordOnSource(gameData, entry, keyword);
     }
 
     private void destroyPermanent(GameData gameData, Permanent target) {
@@ -390,17 +373,12 @@ public class DamageResolutionService {
 
     private boolean isDamagePreventedForCreature(GameData gameData, StackEntry entry, Permanent target) {
         if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())
-                || hasProtectionFromSource(gameData, target, entry)) {
+                || gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard())) {
             gameBroadcastService.logAndBroadcast(gameData,
                     entry.getCard().getName() + "'s damage is prevented.");
             return true;
         }
         return false;
-    }
-
-    private boolean hasProtectionFromSource(GameData gameData, Permanent target, StackEntry entry) {
-        return gameQueryService.hasProtectionFrom(gameData, target, entry.getCard().getColor())
-                || gameQueryService.hasProtectionFromSourceCardTypes(target, entry.getCard());
     }
 
     private boolean isSourcePermanentPreventedFromDealingDamage(GameData gameData, StackEntry entry) {
@@ -422,7 +400,7 @@ public class DamageResolutionService {
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         } else {
             if (isSourcePermanentPreventedFromDealingDamage(gameData, entry)
-                    || hasProtectionFromSource(gameData, targetPermanent, entry)) {
+                    || gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard())) {
                 gameBroadcastService.logAndBroadcast(gameData, cardName + "'s damage is prevented.");
                 return;
             }
@@ -445,7 +423,7 @@ public class DamageResolutionService {
         List<Permanent> destroyed = new ArrayList<>();
         for (Permanent p : permanents) {
             if (!filter.test(p)) continue;
-            if (hasProtectionFromSource(gameData, p, entry)) continue;
+            if (gameQueryService.hasProtectionFromSource(gameData, p, entry.getCard())) continue;
             if (dealCreatureDamage(gameData, entry, p, damage)) {
                 destroyed.add(p);
             }
@@ -464,7 +442,7 @@ public class DamageResolutionService {
             int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
 
-            boolean sourceHasInfect = hasKeywordOnSource(gameData, entry, Keyword.INFECT);
+            boolean sourceHasInfect = gameQueryService.hasKeywordOnSource(gameData, entry, Keyword.INFECT);
 
             if (sourceHasInfect) {
                 if (effectiveDamage > 0) {
@@ -519,9 +497,8 @@ public class DamageResolutionService {
         }
 
         // Use the biting creature's color for protection checks (not the spell's color)
-        CardColor biterColor = biter.getEffectiveColor();
-        if (gameQueryService.hasProtectionFrom(gameData, target, biterColor)
-                || gameQueryService.hasProtectionFromSourceCardTypes(gameData, target, biter)) {
+        if (gameQueryService.hasProtectionFromSource(gameData, target, biter)) {
+            CardColor biterColor = biter.getEffectiveColor();
             String logEntry = target.getCard().getName() + " has protection from " + (biterColor != null ? biterColor.name().toLowerCase() : "source") + " — damage prevented.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
