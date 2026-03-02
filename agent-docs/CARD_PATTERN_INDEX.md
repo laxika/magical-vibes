@@ -209,6 +209,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 |---------|-----------|-------|
 | Targeted ETB + activated ability | `c/ContagionClasp.java` | ON_ENTER_BATTLEFIELD PutMinusOneMinusOneCounterOnTargetCreatureEffect + tap+mana ProliferateEffect activated ability |
 | Sac creature for counter + sac self for draw | `c/CullingDais.java` | Two abilities: tap+SacrificeCreatureCost+PutChargeCounterOnSelfEffect, mana+SacrificeSelfCost+DrawCardsEqualToChargeCountersOnSourceEffect |
+| ETB + death draw (simple) | `i/IchorWellspring.java` | ON_ENTER_BATTLEFIELD DrawCardEffect + ON_DEATH DrawCardEffect — draws on ETB and when destroyed/sacrificed |
 | Spellbomb (sac for effect + may-pay draw) | `f/FlightSpellbomb.java` | Tap+SacrificeSelfCost+GrantKeywordEffect(TARGET) ability + ON_DEATH MayPayManaEffect("{U}", DrawCardEffect(1)) — Spellbomb cycle pattern |
 | Charge counter trigger + activated token | `g/GolemFoundry.java` | MayEffect(PutChargeCounterOnSelfOnArtifactCastEffect) on ON_ANY_PLAYER_CASTS_SPELL + activated RemoveChargeCountersFromSourceCost(3) + CreateCreatureTokenEffect |
 | Enters with fixed charge counters + tap-remove ability | `n/NecrogenCenser.java` | EnterWithFixedChargeCountersEffect(2) + tap+RemoveChargeCountersFromSourceCost(1)+TargetPlayerLosesLifeAndControllerGainsLifeEffect |
