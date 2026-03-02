@@ -211,7 +211,7 @@ public class GameTestHarness {
                 playerInputService, turnProgressionService, legendRuleService);
         CardChoiceHandlerService cardChoiceHandlerService = new CardChoiceHandlerService(
                 gameQueryService, gameHelper, gameBroadcastService,
-                playerInputService, triggerCollectionService, turnProgressionService, abilityActivationService);
+                playerInputService, triggerCollectionService, turnProgressionService, abilityActivationService, effectResolutionService);
         PermanentChoiceHandlerService permanentChoiceHandlerService = new PermanentChoiceHandlerService(
                 gameQueryService, gameHelper, gameBroadcastService, abilityActivationService,
                 permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, creatureControlService, turnProgressionService, effectResolutionService);

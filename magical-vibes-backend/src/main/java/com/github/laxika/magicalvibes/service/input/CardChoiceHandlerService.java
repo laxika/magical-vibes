@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.service.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.GameQueryService;
@@ -36,6 +37,7 @@ public class CardChoiceHandlerService {
     private final TriggerCollectionService triggerCollectionService;
     private final TurnProgressionService turnProgressionService;
     private final AbilityActivationService abilityActivationService;
+    private final EffectResolutionService effectResolutionService;
 
     public void handleCardChosen(GameData gameData, Player player, int cardIndex) {
         AwaitingInput awaitingInput = gameData.interaction.awaitingInputType();
@@ -142,6 +144,14 @@ public class CardChoiceHandlerService {
             if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
                 triggerCollectionService.processNextDiscardSelfTrigger(gameData);
                 return;
+            }
+
+            // Resume resolving remaining effects on the same spell/ability
+            // (e.g. "Target player discards a card, then mills a card.")
+            if (gameData.pendingEffectResolutionEntry != null) {
+                effectResolutionService.resolveEffectsFrom(gameData,
+                        gameData.pendingEffectResolutionEntry,
+                        gameData.pendingEffectResolutionIndex);
             }
 
             turnProgressionService.resolveAutoPass(gameData);
