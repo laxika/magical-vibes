@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEquipmentAttachedToTargetCreatureEffect;
@@ -30,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 @Slf4j
 @Service
@@ -201,6 +203,54 @@ public class DestructionResolutionService {
         log.info("Game {} - {} gains {} life ({})", gameData.id, playerName, amount, reason);
     }
 
+    /**
+     * Deals noncombat damage to a player with full prevention pipeline
+     * (source prevention, color prevention, shields, redirection, life change check).
+     */
+    private void dealNoncombatDamageToPlayer(GameData gameData, UUID playerId, int baseDamage,
+                                              String cardName, CardColor sourceColor) {
+        int damage = gameQueryService.applyDamageMultiplier(gameData, baseDamage);
+
+        if (gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
+                || gameHelper.applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor)) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
+            return;
+        }
+
+        int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, playerId, damage);
+        effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
+
+        if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    gameData.playerIdToName.get(playerId) + "'s life total can't change.");
+            return;
+        }
+
+        int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+        gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
+
+        if (effectiveDamage > 0) {
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    cardName + " deals " + effectiveDamage + " damage to " + playerName + ".");
+            log.info("Game {} - {} deals {} damage to {}", gameData.id, cardName, effectiveDamage, playerName);
+        }
+    }
+
+    private List<UUID> collectCreatureIds(GameData gameData, UUID playerId, Predicate<Permanent> additionalFilter) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        List<UUID> ids = new ArrayList<>();
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (gameQueryService.isCreature(gameData, p) && additionalFilter.test(p)) {
+                    ids.add(p.getId());
+                }
+            }
+        }
+        return ids;
+    }
+
     @HandlesEffect(DestroyTargetPermanentEffect.class)
     void resolveDestroyTargetPermanent(GameData gameData, StackEntry entry, DestroyTargetPermanentEffect destroy) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
@@ -296,31 +346,8 @@ public class DestructionResolutionService {
         tryDestroyAndLog(gameData, target, entry.getCard().getName());
 
         // Deal damage to the land's controller regardless of whether destruction succeeded
-        String cardName = entry.getCard().getName();
-        int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
-
-        if (!gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())
-                && !gameHelper.applyColorDamagePreventionForPlayer(gameData, landControllerId, entry.getCard().getColor())) {
-            int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, landControllerId, damage);
-            effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, landControllerId, effectiveDamage, cardName);
-            if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, landControllerId)) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        gameData.playerIdToName.get(landControllerId) + "'s life total can't change.");
-            } else {
-                int currentLife = gameData.playerLifeTotals.getOrDefault(landControllerId, 20);
-                gameData.playerLifeTotals.put(landControllerId, currentLife - effectiveDamage);
-
-                if (effectiveDamage > 0) {
-                    String playerName = gameData.playerIdToName.get(landControllerId);
-                    String damageLog = playerName + " takes " + effectiveDamage + " damage from " + cardName + ".";
-                    gameBroadcastService.logAndBroadcast(gameData, damageLog);
-                    log.info("Game {} - {} takes {} damage from {}", gameData.id, playerName, effectiveDamage, cardName);
-                }
-            }
-        } else {
-            String preventLog = cardName + "'s damage to " + gameData.playerIdToName.get(landControllerId) + " is prevented.";
-            gameBroadcastService.logAndBroadcast(gameData, preventLog);
-        }
+        dealNoncombatDamageToPlayer(gameData, landControllerId, effect.damage(),
+                entry.getCard().getName(), entry.getCard().getColor());
 
         gameHelper.checkWinCondition(gameData);
     }
@@ -354,15 +381,7 @@ public class DestructionResolutionService {
         int count = artifactCount >= 3 ? effect.metalcraftCount() : effect.baseCount();
 
         // Collect attacking creatures on target player's battlefield
-        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
-        List<UUID> attackingCreatureIds = new ArrayList<>();
-        if (battlefield != null) {
-            for (Permanent p : battlefield) {
-                if (p.isAttacking() && gameQueryService.isCreature(gameData, p)) {
-                    attackingCreatureIds.add(p.getId());
-                }
-            }
-        }
+        List<UUID> attackingCreatureIds = collectCreatureIds(gameData, targetPlayerId, Permanent::isAttacking);
 
         if (attackingCreatureIds.isEmpty()) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);
@@ -400,15 +419,7 @@ public class DestructionResolutionService {
     }
 
     void performSacrificeCreatureForPlayer(GameData gameData, UUID targetPlayerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
-        List<UUID> creatureIds = new ArrayList<>();
-        if (battlefield != null) {
-            for (Permanent p : battlefield) {
-                if (gameQueryService.isCreature(gameData, p)) {
-                    creatureIds.add(p.getId());
-                }
-            }
-        }
+        List<UUID> creatureIds = collectCreatureIds(gameData, targetPlayerId, p -> true);
 
         if (creatureIds.isEmpty()) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);
@@ -436,44 +447,15 @@ public class DestructionResolutionService {
     @HandlesEffect(SacrificeOtherCreatureOrDamageEffect.class)
     void resolveSacrificeOtherCreatureOrDamage(GameData gameData, StackEntry entry, SacrificeOtherCreatureOrDamageEffect effect) {
         UUID controllerId = entry.getControllerId();
-        String playerName = gameData.playerIdToName.get(controllerId);
         String cardName = entry.getCard().getName();
         UUID sourceCardId = entry.getCard().getId();
 
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        List<UUID> otherCreatureIds = new ArrayList<>();
-        if (battlefield != null) {
-            for (Permanent p : battlefield) {
-                if (gameQueryService.isCreature(gameData, p) && !p.getCard().getId().equals(sourceCardId)) {
-                    otherCreatureIds.add(p.getId());
-                }
-            }
-        }
+        List<UUID> otherCreatureIds = collectCreatureIds(gameData, controllerId,
+                p -> !p.getCard().getId().equals(sourceCardId));
 
         if (otherCreatureIds.isEmpty()) {
             // Can't sacrifice — deal damage to controller
-            int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
-
-            if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
-                String logEntry = cardName + "'s damage is prevented.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, controllerId, entry.getCard().getColor())) {
-                int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, controllerId, damage);
-                effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, controllerId, effectiveDamage, cardName);
-                if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
-                    gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
-                } else {
-                    int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
-                    gameData.playerLifeTotals.put(controllerId, currentLife - effectiveDamage);
-
-                    if (effectiveDamage > 0) {
-                        String logEntry = cardName + " deals " + effectiveDamage + " damage to " + playerName + ".";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                        log.info("Game {} - {} deals {} damage to {} (no creatures to sacrifice)", gameData.id, cardName, effectiveDamage, playerName);
-                    }
-                }
-            }
-
+            dealNoncombatDamageToPlayer(gameData, controllerId, effect.damage(), cardName, entry.getCard().getColor());
             gameHelper.checkWinCondition(gameData);
             return;
         }
