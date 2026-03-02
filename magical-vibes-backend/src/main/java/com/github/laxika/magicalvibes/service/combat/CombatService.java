@@ -1170,13 +1170,9 @@ public class CombatService {
             for (CardEffect effect : allDamageEffects) {
                 // Metalcraft: intervening-if check at trigger time
                 if (effect instanceof MetalcraftConditionalEffect metalcraft) {
-                    List<Permanent> bf = gameData.playerBattlefields.get(attackerId);
-                    long artifactCount = bf == null ? 0 : bf.stream()
-                            .filter(gameQueryService::isArtifact)
-                            .count();
-                    if (artifactCount < 3) {
-                        log.info("Game {} - {}'s metalcraft combat damage trigger does not fire (only {} artifacts)",
-                                gameData.id, creature.getCard().getName(), artifactCount);
+                    if (!gameQueryService.isMetalcraftMet(gameData, attackerId)) {
+                        log.info("Game {} - {}'s metalcraft combat damage trigger does not fire",
+                                gameData.id, creature.getCard().getName());
                         continue;
                     }
                     StackEntry se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,

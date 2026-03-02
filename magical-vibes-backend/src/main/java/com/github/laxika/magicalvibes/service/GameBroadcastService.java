@@ -390,11 +390,7 @@ public class GameBroadcastService {
                 reduction += reduceEffect.amount();
             }
             if (effect instanceof ReduceOwnCastCostIfMetalcraftEffect metalcraftReduce) {
-                List<Permanent> ownBattlefield = gameData.playerBattlefields.get(playerId);
-                long artifactCount = ownBattlefield == null ? 0 : ownBattlefield.stream()
-                        .filter(gameQueryService::isArtifact)
-                        .count();
-                if (artifactCount >= 3) {
+                if (gameQueryService.isMetalcraftMet(gameData, playerId)) {
                     reduction += metalcraftReduce.amount();
                 }
             }

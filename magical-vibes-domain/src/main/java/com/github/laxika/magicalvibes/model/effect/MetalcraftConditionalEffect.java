@@ -7,7 +7,17 @@ package com.github.laxika.magicalvibes.model.effect;
  * For static effects, the wrapped effect (e.g. GrantKeywordEffect, StaticBoostEffect) is applied
  * only while the metalcraft condition is met.
  */
-public record MetalcraftConditionalEffect(CardEffect wrapped) implements CardEffect {
+public record MetalcraftConditionalEffect(CardEffect wrapped) implements ConditionalEffect {
+
+    @Override
+    public String conditionName() {
+        return "metalcraft";
+    }
+
+    @Override
+    public String conditionNotMetReason() {
+        return "fewer than three artifacts";
+    }
 
     @Override
     public boolean canTargetPlayer() {

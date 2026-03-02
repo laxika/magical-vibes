@@ -6,7 +6,17 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@code metalcraftEffect}; otherwise resolves {@code baseEffect}.
  * Targeting delegates to both inner effects so target selection works for either path.
  */
-public record MetalcraftReplacementEffect(CardEffect baseEffect, CardEffect metalcraftEffect) implements CardEffect {
+public record MetalcraftReplacementEffect(CardEffect baseEffect, CardEffect metalcraftEffect) implements ReplacementConditionalEffect {
+
+    @Override
+    public CardEffect upgradedEffect() {
+        return metalcraftEffect;
+    }
+
+    @Override
+    public String conditionName() {
+        return "metalcraft";
+    }
 
     @Override
     public boolean canTargetPlayer() {

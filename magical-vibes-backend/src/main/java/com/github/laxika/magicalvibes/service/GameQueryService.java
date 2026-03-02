@@ -244,16 +244,24 @@ public class GameQueryService {
                 for (UUID playerId : gameData.orderedPlayerIds) {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                     if (battlefield != null && battlefield.contains(permanent)) {
-                        int artifactCount = 0;
-                        for (Permanent p : battlefield) {
-                            if (isArtifact(p)) artifactCount++;
-                        }
-                        if (artifactCount >= 3) return true;
+                        if (isMetalcraftMet(gameData, playerId)) return true;
                     }
                 }
             }
         }
         return false;
+    }
+
+    /**
+     * Returns {@code true} if the given player controls three or more artifacts (metalcraft).
+     */
+    public boolean isMetalcraftMet(GameData gameData, UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+        long artifactCount = battlefield.stream()
+                .filter(this::isArtifact)
+                .count();
+        return artifactCount >= 3;
     }
 
     public boolean isArtifact(Permanent permanent) {

@@ -725,11 +725,7 @@ public class AbilityActivationService {
     private void validateTimingRestrictions(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability) {
         if (ability.getTimingRestriction() != null) {
             if (ability.getTimingRestriction() == ActivationTimingRestriction.METALCRAFT) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                long artifactCount = battlefield == null ? 0 : battlefield.stream()
-                        .filter(gameQueryService::isArtifact)
-                        .count();
-                if (artifactCount < 3) {
+                if (!gameQueryService.isMetalcraftMet(gameData, playerId)) {
                     throw new IllegalStateException("Metalcraft — activate only if you control three or more artifacts");
                 }
             }

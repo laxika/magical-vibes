@@ -193,7 +193,7 @@ public class GameTestHarness {
         for (Object service : effectServices) {
             scanEffectHandlers(service, effectHandlerRegistry);
         }
-        EffectResolutionService effectResolutionService = new EffectResolutionService(gameHelper, gameQueryService, effectHandlerRegistry, gameBroadcastService, permanentRemovalService);
+        EffectResolutionService effectResolutionService = new EffectResolutionService(gameQueryService, effectHandlerRegistry, gameBroadcastService, permanentRemovalService);
         StackResolutionService stackResolutionService = new StackResolutionService(
                 gameHelper, legendRuleService, stateBasedActionService, gameQueryService, targetLegalityService,
                 gameBroadcastService, effectResolutionService, playerInputService, triggerCollectionService, creatureControlService);

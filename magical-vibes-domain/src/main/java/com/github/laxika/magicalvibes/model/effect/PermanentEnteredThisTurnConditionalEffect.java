@@ -11,7 +11,17 @@ public record PermanentEnteredThisTurnConditionalEffect(
         CardEffect wrapped,
         CardPredicate predicate,
         int minCount
-) implements CardEffect {
+) implements ConditionalEffect {
+
+    @Override
+    public String conditionName() {
+        return "permanent entered this turn";
+    }
+
+    @Override
+    public String conditionNotMetReason() {
+        return "not enough permanents entered the battlefield this turn";
+    }
 
     @Override
     public boolean canTargetPlayer() {

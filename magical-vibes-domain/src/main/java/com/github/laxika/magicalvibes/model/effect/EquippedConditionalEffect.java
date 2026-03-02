@@ -5,7 +5,17 @@ package com.github.laxika.magicalvibes.model.effect;
  * The wrapped effect only applies as long as this creature has at least one Equipment attached.
  * Analogous to MetalcraftConditionalEffect but with an "is equipped" condition instead of "3+ artifacts".
  */
-public record EquippedConditionalEffect(CardEffect wrapped) implements CardEffect {
+public record EquippedConditionalEffect(CardEffect wrapped) implements ConditionalEffect {
+
+    @Override
+    public String conditionName() {
+        return "equipped";
+    }
+
+    @Override
+    public String conditionNotMetReason() {
+        return "not equipped";
+    }
 
     @Override
     public boolean canTargetPlayer() {

@@ -428,14 +428,8 @@ public class DestructionResolutionService {
 
         // Check metalcraft at resolution time (intervening-if)
         UUID controllerId = entry.getControllerId();
-        List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(controllerId);
-        long artifactCount = 0;
-        if (controllerBattlefield != null) {
-            artifactCount = controllerBattlefield.stream()
-                    .filter(gameQueryService::isArtifact)
-                    .count();
-        }
-        int count = artifactCount >= 3 ? effect.metalcraftCount() : effect.baseCount();
+        int count = gameQueryService.isMetalcraftMet(gameData, controllerId)
+                ? effect.metalcraftCount() : effect.baseCount();
 
         // Collect attacking creatures on target player's battlefield
         List<UUID> attackingCreatureIds = collectCreatureIds(gameData, targetPlayerId, Permanent::isAttacking);

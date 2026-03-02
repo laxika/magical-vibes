@@ -216,11 +216,7 @@ public class TurnProgressionService {
 
                     // Unwrap MetalcraftConditionalEffect — check metalcraft before offering the ability
                     if (innerEffect instanceof MetalcraftConditionalEffect metalcraft) {
-                        List<Permanent> mcBattlefield = gameData.playerBattlefields.get(activePlayerId);
-                        long artifactCount = mcBattlefield == null ? 0 : mcBattlefield.stream()
-                                .filter(gameQueryService::isArtifact)
-                                .count();
-                        if (artifactCount < 3) {
+                        if (!gameQueryService.isMetalcraftMet(gameData, activePlayerId)) {
                             log.info("Game {} - {} graveyard metalcraft ability skipped (fewer than three artifacts)",
                                     gameData.id, card.getName());
                             continue;

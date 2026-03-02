@@ -802,11 +802,7 @@ public class GameHelper {
                     // Metalcraft intervening-if: only trigger if controller has 3+ artifacts
                     .filter(e -> {
                         if (e instanceof MetalcraftConditionalEffect) {
-                            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-                            long artifactCount = bf == null ? 0 : bf.stream()
-                                    .filter(gameQueryService::isArtifact)
-                                    .count();
-                            return artifactCount >= 3;
+                            return gameQueryService.isMetalcraftMet(gameData, controllerId);
                         }
                         return true;
                     })

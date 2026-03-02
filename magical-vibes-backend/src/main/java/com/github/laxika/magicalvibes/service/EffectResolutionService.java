@@ -1,12 +1,18 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplacementConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +27,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class EffectResolutionService {
 
-    private final GameHelper gameHelper;
     private final GameQueryService gameQueryService;
     private final EffectHandlerRegistry registry;
     private final GameBroadcastService gameBroadcastService;
@@ -42,18 +47,20 @@ public class EffectResolutionService {
             CardEffect effect = effects.get(i);
             CardEffect effectToResolve = effect;
 
-            // Metalcraft intervening-if: re-check condition at resolution time
-            if (effect instanceof MetalcraftConditionalEffect metalcraft) {
-                if (!isMetalcraftMet(gameData, entry.getControllerId())) {
-                    String logEntry = entry.getCard().getName() + "'s metalcraft ability does nothing (fewer than three artifacts).";
+            // Conditional wrapper: re-check condition at resolution time (intervening-if)
+            if (effect instanceof ConditionalEffect conditional) {
+                if (!evaluateCondition(gameData, entry, conditional)) {
+                    String logEntry = entry.getCard().getName() + "'s " + conditional.conditionName()
+                            + " ability does nothing (" + conditional.conditionNotMetReason() + ").";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - Metalcraft condition no longer met for {}", gameData.id, entry.getCard().getName());
+                    log.info("Game {} - {} condition no longer met for {}", gameData.id,
+                            conditional.conditionName(), entry.getCard().getName());
                     continue;
                 }
-                effectToResolve = metalcraft.wrapped();
-            } else if (effect instanceof MetalcraftReplacementEffect replacement) {
-                effectToResolve = isMetalcraftMet(gameData, entry.getControllerId())
-                        ? replacement.metalcraftEffect()
+                effectToResolve = conditional.wrapped();
+            } else if (effect instanceof ReplacementConditionalEffect replacement) {
+                effectToResolve = evaluateCondition(gameData, entry, replacement)
+                        ? replacement.upgradedEffect()
                         : replacement.baseEffect();
             }
 
@@ -77,12 +84,61 @@ public class EffectResolutionService {
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
-    private boolean isMetalcraftMet(GameData gameData, UUID controllerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) return false;
-        long artifactCount = battlefield.stream()
-                .filter(gameQueryService::isArtifact)
+    /**
+     * Evaluates whether the condition of a {@link ConditionalEffect} is currently met.
+     */
+    private boolean evaluateCondition(GameData gameData, StackEntry entry, ConditionalEffect conditional) {
+        return switch (conditional) {
+            case MetalcraftConditionalEffect ignored ->
+                    gameQueryService.isMetalcraftMet(gameData, entry.getControllerId());
+            case EquippedConditionalEffect ignored ->
+                    isSourceEquipped(gameData, entry);
+            case PermanentEnteredThisTurnConditionalEffect petc ->
+                    isPermanentEnteredThisTurnConditionMet(gameData, entry.getControllerId(), petc);
+            default -> {
+                log.warn("Unknown conditional effect type: {}", conditional.getClass().getSimpleName());
+                yield false;
+            }
+        };
+    }
+
+    /**
+     * Evaluates whether the condition of a {@link ReplacementConditionalEffect} is currently met.
+     */
+    private boolean evaluateCondition(GameData gameData, StackEntry entry, ReplacementConditionalEffect replacement) {
+        return switch (replacement) {
+            case MetalcraftReplacementEffect ignored ->
+                    gameQueryService.isMetalcraftMet(gameData, entry.getControllerId());
+            default -> {
+                log.warn("Unknown replacement conditional effect type: {}", replacement.getClass().getSimpleName());
+                yield false;
+            }
+        };
+    }
+
+    private boolean isSourceEquipped(GameData gameData, StackEntry entry) {
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId == null) return false;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                if (perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
+                        && sourcePermanentId.equals(perm.getAttachedTo())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isPermanentEnteredThisTurnConditionMet(GameData gameData, UUID controllerId,
+                                                           PermanentEnteredThisTurnConditionalEffect petc) {
+        List<Card> entered = gameData.permanentsEnteredBattlefieldThisTurn
+                .getOrDefault(controllerId, List.of());
+        long matchCount = entered.stream()
+                .filter(c -> gameQueryService.matchesCardPredicate(c, petc.predicate(), null))
                 .count();
-        return artifactCount >= 3;
+        return matchCount >= petc.minCount();
     }
 }
