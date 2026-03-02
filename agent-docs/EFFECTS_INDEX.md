@@ -461,6 +461,7 @@ Pass `null` as filter to allow any card.
 | `MakeTargetUnblockableEffect` | `()` | target creature is unblockable this turn |
 | `MakeAllCreaturesUnblockableEffect` | `()` | all creatures on all battlefields can't be blocked this turn |
 | `TargetCreatureCantBlockThisTurnEffect` | `()` | target creature can't block this turn |
+| `TargetPlayerCreaturesCantBlockThisTurnEffect` | `()` | all creatures controlled by target player (or planeswalker's controller) can't block this turn — uses shared target, no own targeting |
 | `EnchantedCreatureCantAttackOrBlockEffect` | `()` | enchanted creature can't attack or block (static, Pacifism-style) |
 | `EnchantedCreatureCantActivateAbilitiesEffect` | `()` | enchanted creature's activated abilities can't be activated (static, Arrest-style) |
 

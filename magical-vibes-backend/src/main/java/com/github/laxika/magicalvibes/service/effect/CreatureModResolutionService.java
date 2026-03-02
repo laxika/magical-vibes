@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.PutXMinusOneMinusOneCountersO
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerCreaturesCantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TapSubtypeBoostSelfAndDamageDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
@@ -478,6 +479,40 @@ public class CreatureModResolutionService {
         String logEntry = target.getCard().getName() + " can't block this turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} can't block this turn", gameData.id, target.getCard().getName());
+    }
+
+    @HandlesEffect(TargetPlayerCreaturesCantBlockThisTurnEffect.class)
+    private void resolveTargetPlayerCreaturesCantBlock(GameData gameData, StackEntry entry) {
+        UUID targetId = entry.getTargetPermanentId();
+        if (targetId == null) return;
+
+        // Determine the affected player: if target is a player, use directly;
+        // if target is a planeswalker, use its controller
+        UUID affectedPlayerId;
+        if (gameData.playerIds.contains(targetId)) {
+            affectedPlayerId = targetId;
+        } else {
+            affectedPlayerId = gameQueryService.findPermanentController(gameData, targetId);
+            if (affectedPlayerId == null) return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(affectedPlayerId);
+        if (battlefield == null) return;
+
+        String playerName = gameData.playerIdToName.get(affectedPlayerId);
+        int count = 0;
+        for (Permanent p : battlefield) {
+            if (gameQueryService.isCreature(gameData, p)) {
+                p.setCantBlockThisTurn(true);
+                count++;
+            }
+        }
+
+        if (count > 0) {
+            String logEntry = "Creatures controlled by " + playerName + " can't block this turn.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} creatures controlled by {} can't block this turn", gameData.id, count, playerName);
+        }
     }
 
     @HandlesEffect(MakeTargetUnblockableEffect.class)
