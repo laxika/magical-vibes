@@ -865,6 +865,19 @@ public class CreatureModResolutionService {
         String logEntry = target.getCard().getName() + " gets " + counterText + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gets {} -1/-1 counter(s)", gameData.id, target.getCard().getName(), count);
+
+        if (effect.regenerateIfSurvives()) {
+            int effectiveToughness = gameQueryService.getEffectiveToughness(gameData, target);
+            if (effectiveToughness >= 1) {
+                target.setRegenerationShield(target.getRegenerationShield() + 1);
+
+                String regenLog = target.getCard().getName() + " gains a regeneration shield.";
+                gameBroadcastService.logAndBroadcast(gameData, regenLog);
+                log.info("Game {} - {} gains a regeneration shield (toughness {})", gameData.id, target.getCard().getName(), effectiveToughness);
+            } else {
+                log.info("Game {} - {} has toughness {}, no regeneration shield", gameData.id, target.getCard().getName(), effectiveToughness);
+            }
+        }
     }
 
     @HandlesEffect(GrantColorUntilEndOfTurnEffect.class)
