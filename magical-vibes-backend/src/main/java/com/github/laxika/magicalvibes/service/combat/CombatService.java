@@ -260,7 +260,8 @@ public class CombatService {
                     && !p.isTapped()
                     && !p.isCantBlockThisTurn()
                     && p.getCard().getEffects(EffectSlot.STATIC).stream().noneMatch(CantBlockEffect.class::isInstance)
-                    && !gameQueryService.hasAuraWithEffect(gameData, p, EnchantedCreatureCantAttackOrBlockEffect.class)) {
+                    && !gameQueryService.hasAuraWithEffect(gameData, p, EnchantedCreatureCantAttackOrBlockEffect.class)
+                    && !gameQueryService.hasAuraWithEffect(gameData, p, CantBlockEffect.class)) {
                 indices.add(i);
             }
         }
@@ -884,6 +885,9 @@ public class CombatService {
         boolean hasCantBlockStatic = blocker.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CantBlockEffect.class::isInstance);
         if (hasCantBlockStatic) {
+            return Optional.of(blocker.getCard().getName() + " can't block");
+        }
+        if (gameQueryService.hasAuraWithEffect(gameData, blocker, CantBlockEffect.class)) {
             return Optional.of(blocker.getCard().getName() + " can't block");
         }
         if (blocker.getCantBlockIds().contains(attacker.getId())) {
