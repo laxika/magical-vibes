@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.validate;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
@@ -17,6 +18,11 @@ public class LifeTargetValidators {
 
     @ValidatesTarget(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class)
     public void validateTargetPlayerLosesLifeAndControllerGainsLife(TargetValidationContext ctx) {
+        tvs.requireTargetPlayer(ctx);
+    }
+
+    @ValidatesTarget(TargetPlayerLosesLifeEffect.class)
+    public void validateTargetPlayerLosesLife(TargetValidationContext ctx) {
         tvs.requireTargetPlayer(ctx);
     }
 

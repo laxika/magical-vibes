@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffec
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
@@ -399,6 +400,23 @@ public class LifeResolutionService {
         // Controller gains life (skip if no life gain, e.g. pure life loss effects)
         if (effect.lifeGain() > 0) {
             applyGainLife(gameData, controllerId, effect.lifeGain());
+        }
+    }
+
+    @HandlesEffect(TargetPlayerLosesLifeEffect.class)
+    private void resolveTargetPlayerLosesLife(GameData gameData, StackEntry entry, TargetPlayerLosesLifeEffect effect) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
+            gameBroadcastService.logAndBroadcast(gameData, targetName + "'s life total can't change.");
+        } else {
+            int targetCurrentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
+            gameData.playerLifeTotals.put(targetPlayerId, targetCurrentLife - effect.amount());
+
+            String lossLog = targetName + " loses " + effect.amount() + " life (" + entry.getCard().getName() + ").";
+            gameBroadcastService.logAndBroadcast(gameData, lossLog);
+            log.info("Game {} - {} loses {} life from {}", gameData.id, targetName, effect.amount(), entry.getCard().getName());
         }
     }
 
