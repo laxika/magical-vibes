@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.DistantMemoriesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
@@ -197,6 +199,42 @@ public class LibraryResolutionService {
         }
 
         log.info("Game {} - {} reveals top card of library", gameData.id, playerName);
+    }
+
+    @HandlesEffect(CastTopOfLibraryWithoutPayingManaCostEffect.class)
+    void resolveCastTopOfLibraryWithoutPaying(GameData gameData, StackEntry entry, CastTopOfLibraryWithoutPayingManaCostEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String sourceName = entry.getCard().getName();
+
+        if (deck.isEmpty()) {
+            String logEntry = playerName + "'s library is empty (" + sourceName + ").";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        Card topCard = deck.getFirst();
+
+        String logEntry = playerName + " looks at the top card of their library (" + sourceName + ").";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} looks at top card: {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
+
+        boolean matches = effect.castableTypes().contains(topCard.getType());
+        if (!matches) {
+            String noMatch = "The top card is not a castable type.";
+            gameBroadcastService.logAndBroadcast(gameData, noMatch);
+            log.info("Game {} - Top card {} doesn't match castable types", gameData.id, topCard.getName());
+            return;
+        }
+
+        // Card matches — queue may ability to cast the spell without paying mana cost
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                topCard,
+                controllerId,
+                List.of(effect),
+                sourceName + " — Cast " + topCard.getName() + " without paying its mana cost?"
+        ));
     }
 
     @HandlesEffect(ReorderTopCardsOfLibraryEffect.class)

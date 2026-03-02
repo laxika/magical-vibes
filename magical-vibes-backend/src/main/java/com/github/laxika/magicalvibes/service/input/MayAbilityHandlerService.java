@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
@@ -98,6 +99,20 @@ public class MayAbilityHandlerService {
         PendingMayAbility ability = gameData.pendingMayAbilities.removeFirst();
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearMayAbilityChoice();
+
+        // Cast-from-library-without-paying — e.g. Galvanoth (second phase: cast prompt)
+        // The first may (look at top card) has the source creature as sourceCard,
+        // the second may (cast the spell) has the instant/sorcery as sourceCard.
+        // We only intercept the second phase — the first goes through the generic path
+        // so the CastTopOfLibraryWithoutPayingManaCostEffect resolves via @HandlesEffect.
+        CastTopOfLibraryWithoutPayingManaCostEffect castFromLibEffect = ability.effects().stream()
+                .filter(e -> e instanceof CastTopOfLibraryWithoutPayingManaCostEffect)
+                .map(e -> (CastTopOfLibraryWithoutPayingManaCostEffect) e)
+                .findFirst().orElse(null);
+        if (castFromLibEffect != null && castFromLibEffect.castableTypes().contains(ability.sourceCard().getType())) {
+            handleCastFromLibraryChoice(gameData, player, accepted, ability);
+            return;
+        }
 
         // May-not-untap choice from untap step (e.g. Rust Tick)
         boolean isMayNotUntap = ability.effects().stream().anyMatch(e -> e instanceof MayNotUntapDuringUntapStepEffect);
@@ -912,6 +927,94 @@ public class MayAbilityHandlerService {
         String logEntry = originalName + " becomes a copy of " + targetName + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} becomes a copy of {}", gameData.id, originalName, targetName);
+
+        playerInputService.processNextMayAbility(gameData);
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            gameData.priorityPassedBy.clear();
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+        }
+    }
+
+    private void handleCastFromLibraryChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        Card cardToCast = ability.sourceCard();
+        String playerName = player.getUsername();
+
+        if (accepted) {
+            List<Card> deck = gameData.playerDecks.get(player.getId());
+
+            // Verify the card is still on top of the library
+            if (deck.isEmpty() || !deck.getFirst().getId().equals(cardToCast.getId())) {
+                String logEntry = cardToCast.getName() + " is no longer on top of the library.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} no longer on top of library for cast-from-library", gameData.id, cardToCast.getName());
+            } else {
+                deck.removeFirst();
+
+                List<CardEffect> spellEffects = new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
+                StackEntryType spellType = cardToCast.getType() == CardType.INSTANT
+                        ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
+
+                if (cardToCast.isNeedsTarget()) {
+                    // Targeted spell — need to choose target before putting on stack
+                    List<UUID> validTargets = new ArrayList<>();
+                    for (UUID pid : gameData.orderedPlayerIds) {
+                        List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                        if (battlefield == null) continue;
+                        for (Permanent p : battlefield) {
+                            if (cardToCast.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
+                                if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+                                    validTargets.add(p.getId());
+                                }
+                            } else if (gameQueryService.isCreature(gameData, p)) {
+                                validTargets.add(p.getId());
+                            }
+                        }
+                    }
+                    boolean canTargetPlayer = spellEffects.stream().anyMatch(CardEffect::canTargetPlayer);
+                    if (canTargetPlayer) {
+                        validTargets.addAll(gameData.orderedPlayerIds);
+                    }
+
+                    if (validTargets.isEmpty()) {
+                        // No valid targets — spell can't be cast, put card back on top of library
+                        deck.addFirst(cardToCast);
+                        String logEntry = cardToCast.getName() + " has no valid targets.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} cast-from-library has no valid targets", gameData.id, cardToCast.getName());
+                    } else {
+                        gameData.interaction.setPermanentChoiceContext(
+                                new PermanentChoiceContext.LibraryCastSpellTarget(cardToCast, player.getId(), spellEffects, spellType));
+                        playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
+                                "Choose a target for " + cardToCast.getName() + ".");
+
+                        String logEntry = playerName + " casts " + cardToCast.getName() + " without paying its mana cost — choosing target.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} casts {} from library, choosing target", gameData.id, playerName, cardToCast.getName());
+                        return; // Wait for target choice
+                    }
+                } else {
+                    // Non-targeted spell — put directly on stack
+                    gameData.stack.add(new StackEntry(
+                            spellType, cardToCast, player.getId(), cardToCast.getName(),
+                            spellEffects, 0, (UUID) null, null
+                    ));
+
+                    gameData.spellsCastThisTurn.merge(player.getId(), 1, Integer::sum);
+                    gameData.priorityPassedBy.clear();
+
+                    String logEntry = playerName + " casts " + cardToCast.getName() + " without paying its mana cost.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} casts {} from library without paying mana", gameData.id, playerName, cardToCast.getName());
+
+                    triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, player.getId());
+                }
+            }
+        } else {
+            String logEntry = playerName + " declines to cast " + cardToCast.getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines to cast {} from library", gameData.id, playerName, cardToCast.getName());
+        }
 
         playerInputService.processNextMayAbility(gameData);
         if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
