@@ -753,5 +753,19 @@ public class GameQueryService {
     public boolean isDamageFromSourcePrevented(GameData gameData, CardColor sourceColor) {
         return sourceColor != null && gameData.preventDamageFromColors.contains(sourceColor);
     }
+
+    public int countControlledSubtypePermanents(GameData gameData, UUID controllerId, CardSubtype subtype) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return 0;
+        }
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (permanent.getCard().getSubtypes().contains(subtype)) {
+                count++;
+            }
+        }
+        return count;
+    }
 }
 
