@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageCon
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndBoostSelfByManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndGainLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAttackingCreaturesEffect;
@@ -572,6 +573,40 @@ public class DestructionResolutionService {
             String boostLog = entry.getCard().getName() + " gets +" + manaValue + "/+0 until end of turn.";
             gameBroadcastService.logAndBroadcast(gameData, boostLog);
             log.info("Game {} - {} gets +{}/+0 from {}'s mana value", gameData.id, entry.getCard().getName(), manaValue, target.getCard().getName());
+        }
+    }
+
+    @HandlesEffect(DestroyTargetPermanentAndGainLifeEqualToManaValueEffect.class)
+    void resolveDestroyTargetPermanentAndGainLifeEqualToManaValue(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        int manaValue = target.getCard().getManaValue();
+
+        // Attempt to destroy the target
+        if (permanentRemovalService.tryDestroyPermanent(gameData, target)) {
+            String logEntry = target.getCard().getName() + " is destroyed by " + entry.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} destroyed by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
+        }
+
+        // Gain life equal to mana value regardless of destruction result
+        UUID controllerId = entry.getControllerId();
+        if (manaValue > 0) {
+            if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        gameData.playerIdToName.get(controllerId) + "'s life total can't change.");
+            } else {
+                int currentLife = gameData.playerLifeTotals.get(controllerId);
+                gameData.playerLifeTotals.put(controllerId, currentLife + manaValue);
+
+                String playerName = gameData.playerIdToName.get(controllerId);
+                String lifeLog = playerName + " gains " + manaValue + " life (equal to " + target.getCard().getName() + "'s mana value).";
+                gameBroadcastService.logAndBroadcast(gameData, lifeLog);
+                log.info("Game {} - {} gains {} life from {}'s mana value", gameData.id, playerName, manaValue, target.getCard().getName());
+            }
         }
     }
 
