@@ -1,5 +1,10 @@
-package com.github.laxika.magicalvibes.service;
+package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.GameQueryService;
+import com.github.laxika.magicalvibes.service.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -33,6 +38,14 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.function.Predicate;
 
+/**
+ * Resolves destruction and sacrifice effects from the stack.
+ *
+ * <p>Handles targeted destruction, mass destruction (board wipes), equipment destruction,
+ * creature sacrifice (including opponent-forced sacrifices), and compound effects that
+ * combine destruction with life loss, life gain, damage, or power boosts.
+ * All methods respect indestructible, regeneration, and damage prevention rules.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -44,6 +57,11 @@ public class DestructionResolutionService {
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
 
+    /**
+     * Resolves a {@link DestroyAllPermanentsEffect}, destroying all permanents matching the
+     * effect's target types and optional predicate filter. Respects the {@code onlyOpponents}
+     * flag, indestructible, and regeneration (unless {@code cannotBeRegenerated} is set).
+     */
     @HandlesEffect(DestroyAllPermanentsEffect.class)
     void resolveDestroyAllPermanents(GameData gameData, StackEntry entry, DestroyAllPermanentsEffect effect) {
         List<Permanent> toDestroy = new ArrayList<>();
@@ -69,11 +87,22 @@ public class DestructionResolutionService {
         destroyBatch(gameData, toDestroy, entry.getCard().getName(), skipRegeneration);
     }
 
+    /**
+     * Resolves a {@link DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect},
+     * destroying all nonland permanents whose mana value equals the stack entry's X value
+     * (derived from charge counters).
+     */
     @HandlesEffect(DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect.class)
     void resolveDestroyNonlandPermanentsByChargeCounterManaValue(GameData gameData, StackEntry entry) {
         destroyNonlandPermanentsByManaValue(gameData, entry.getXValue(), entry.getCard().getName(), null);
     }
 
+    /**
+     * Resolves a {@link DestroyNonlandPermanentsWithManaValueXDealtCombatDamageEffect},
+     * destroying all nonland permanents whose mana value equals X, but only those controlled
+     * by players who were dealt combat damage by the source this turn. Fizzles if the source
+     * dealt no combat damage this turn.
+     */
     @HandlesEffect(DestroyNonlandPermanentsWithManaValueXDealtCombatDamageEffect.class)
     void resolveDestroyNonlandPermanentsByManaValueXDealtCombatDamage(GameData gameData, StackEntry entry) {
         String cardName = entry.getCard().getName();
@@ -251,6 +280,10 @@ public class DestructionResolutionService {
         return ids;
     }
 
+    /**
+     * Resolves a {@link DestroyTargetPermanentEffect}, destroying the targeted permanent.
+     * Respects the effect's {@code cannotBeRegenerated} flag.
+     */
     @HandlesEffect(DestroyTargetPermanentEffect.class)
     void resolveDestroyTargetPermanent(GameData gameData, StackEntry entry, DestroyTargetPermanentEffect destroy) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
@@ -261,6 +294,10 @@ public class DestructionResolutionService {
         tryDestroyAndLog(gameData, target, entry.getCard().getName(), destroy.cannotBeRegenerated());
     }
 
+    /**
+     * Resolves a {@link DestroyEquipmentAttachedToTargetCreatureEffect}, finding and destroying
+     * all Equipment attached to the targeted creature.
+     */
     @HandlesEffect(DestroyEquipmentAttachedToTargetCreatureEffect.class)
     void resolveDestroyEquipmentAttachedToTargetCreature(GameData gameData, StackEntry entry) {
         UUID targetId = entry.getTargetPermanentId();
@@ -281,6 +318,11 @@ public class DestructionResolutionService {
         }
     }
 
+    /**
+     * Resolves a {@link DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect}, destroying
+     * the targeted creature and then causing its controller to lose life equal to the total
+     * number of creatures that died this turn (across all players).
+     */
     @HandlesEffect(DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect.class)
     void resolveDestroyTargetAndControllerLosesLifePerCreatureDeaths(GameData gameData, StackEntry entry,
                                                                      DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect effect) {
@@ -322,6 +364,11 @@ public class DestructionResolutionService {
         gameHelper.checkWinCondition(gameData);
     }
 
+    /**
+     * Resolves a {@link DestroyTargetLandAndDamageControllerEffect}, destroying the targeted
+     * land and dealing noncombat damage to its controller. The damage is dealt regardless of
+     * whether the destruction succeeds. Fizzles if the target is not a land.
+     */
     @HandlesEffect(DestroyTargetLandAndDamageControllerEffect.class)
     void resolveDestroyTargetLandAndDamageController(GameData gameData, StackEntry entry,
                                                       DestroyTargetLandAndDamageControllerEffect effect) {
@@ -352,6 +399,10 @@ public class DestructionResolutionService {
         gameHelper.checkWinCondition(gameData);
     }
 
+    /**
+     * Resolves a {@link SacrificeCreatureEffect}, forcing the targeted player to sacrifice
+     * a creature. Delegates to {@link #performSacrificeCreatureForPlayer}.
+     */
     @HandlesEffect(SacrificeCreatureEffect.class)
     void resolveSacrificeCreature(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
@@ -362,6 +413,12 @@ public class DestructionResolutionService {
         performSacrificeCreatureForPlayer(gameData, targetPlayerId);
     }
 
+    /**
+     * Resolves a {@link SacrificeAttackingCreaturesEffect}, forcing the targeted player to
+     * sacrifice a number of attacking creatures. The count depends on whether the controller
+     * has metalcraft (3+ artifacts). If fewer attacking creatures exist than required, all
+     * are sacrificed automatically; otherwise the player is prompted to choose.
+     */
     @HandlesEffect(SacrificeAttackingCreaturesEffect.class)
     void resolveSacrificeAttackingCreatures(GameData gameData, StackEntry entry, SacrificeAttackingCreaturesEffect effect) {
         UUID targetPlayerId = entry.getTargetPermanentId();
@@ -408,6 +465,10 @@ public class DestructionResolutionService {
                 count, "Choose " + count + " attacking creature" + (count > 1 ? "s" : "") + " to sacrifice.");
     }
 
+    /**
+     * Resolves an {@link EachOpponentSacrificesCreatureEffect}, forcing each opponent of
+     * the controller to sacrifice a creature in turn order.
+     */
     @HandlesEffect(EachOpponentSacrificesCreatureEffect.class)
     void resolveEachOpponentSacrificesCreature(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
@@ -418,6 +479,14 @@ public class DestructionResolutionService {
         }
     }
 
+    /**
+     * Forces a player to sacrifice a creature. If the player controls exactly one creature it
+     * is sacrificed automatically; if multiple creatures exist the player is prompted to choose.
+     * Does nothing if the player controls no creatures.
+     *
+     * @param gameData       the current game state
+     * @param targetPlayerId the player who must sacrifice a creature
+     */
     void performSacrificeCreatureForPlayer(GameData gameData, UUID targetPlayerId) {
         List<UUID> creatureIds = collectCreatureIds(gameData, targetPlayerId, p -> true);
 
@@ -444,6 +513,11 @@ public class DestructionResolutionService {
                 "Choose a creature to sacrifice.");
     }
 
+    /**
+     * Resolves a {@link SacrificeOtherCreatureOrDamageEffect}. The controller must sacrifice
+     * a creature other than the source. If no other creatures exist, the controller is dealt
+     * noncombat damage instead.
+     */
     @HandlesEffect(SacrificeOtherCreatureOrDamageEffect.class)
     void resolveSacrificeOtherCreatureOrDamage(GameData gameData, StackEntry entry, SacrificeOtherCreatureOrDamageEffect effect) {
         UUID controllerId = entry.getControllerId();
@@ -475,6 +549,10 @@ public class DestructionResolutionService {
                 "Choose a creature other than " + cardName + " to sacrifice.");
     }
 
+    /**
+     * Resolves a {@link DestroyCreatureBlockingThisEffect}, destroying the creature that is
+     * blocking the source permanent. Fizzles if the target is no longer a creature.
+     */
     @HandlesEffect(DestroyCreatureBlockingThisEffect.class)
     void resolveDestroyCreatureBlockingThis(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
@@ -491,6 +569,10 @@ public class DestructionResolutionService {
         tryDestroyAndLog(gameData, target, entry.getCard().getName());
     }
 
+    /**
+     * Resolves a {@link DestroyBlockedCreatureAndSelfEffect}, destroying both the blocked
+     * attacker (target) and the source blocker.
+     */
     @HandlesEffect(DestroyBlockedCreatureAndSelfEffect.class)
     void resolveDestroyBlockedCreatureAndSelf(GameData gameData, StackEntry entry) {
         Permanent attacker = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
@@ -504,6 +586,12 @@ public class DestructionResolutionService {
         }
     }
 
+    /**
+     * Resolves a {@link DestroyTargetPermanentAndBoostSelfByManaValueEffect}, destroying the
+     * targeted permanent and giving the source creature +X/+0 until end of turn, where X is
+     * the destroyed permanent's mana value. The boost is applied regardless of whether
+     * destruction succeeds (e.g. indestructible).
+     */
     @HandlesEffect(DestroyTargetPermanentAndBoostSelfByManaValueEffect.class)
     void resolveDestroyTargetArtifactAndBoostSelfByManaValue(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
@@ -527,6 +615,11 @@ public class DestructionResolutionService {
         }
     }
 
+    /**
+     * Resolves a {@link DestroyTargetPermanentAndGainLifeEqualToManaValueEffect}, destroying
+     * the targeted permanent and granting the controller life equal to its mana value.
+     * Life is gained regardless of whether destruction succeeds.
+     */
     @HandlesEffect(DestroyTargetPermanentAndGainLifeEqualToManaValueEffect.class)
     void resolveDestroyTargetPermanentAndGainLifeEqualToManaValue(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
@@ -546,6 +639,11 @@ public class DestructionResolutionService {
         }
     }
 
+    /**
+     * Resolves a {@link DestroyTargetCreatureAndGainLifeEqualToToughnessEffect}, destroying
+     * the targeted creature and granting the controller life equal to its toughness.
+     * Life is gained regardless of whether destruction succeeds.
+     */
     @HandlesEffect(DestroyTargetCreatureAndGainLifeEqualToToughnessEffect.class)
     void resolveDestroyTargetCreatureAndGainLifeEqualToToughness(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
