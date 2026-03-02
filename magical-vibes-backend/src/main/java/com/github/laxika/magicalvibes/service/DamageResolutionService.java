@@ -95,8 +95,7 @@ public class DamageResolutionService {
         for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
             Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
             if (target == null) continue;
-            if (gameQueryService.hasProtectionFrom(gameData, target, entry.getCard().getColor())) continue;
-            if (gameQueryService.hasProtectionFromSourceCardTypes(target, entry.getCard())) continue;
+            if (hasProtectionFromSource(gameData, target, entry)) continue;
 
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, assignment.getValue());
             if (dealCreatureDamage(gameData, entry, target, rawDamage)) {
@@ -258,8 +257,7 @@ public class DamageResolutionService {
             if (targetIsPlayer) {
                 dealDamageToPlayer(gameData, entry, targetId, damage);
             } else {
-                if (!gameQueryService.hasProtectionFrom(gameData, targetPermanent, entry.getCard().getColor())
-                        && !gameQueryService.hasProtectionFromSourceCardTypes(targetPermanent, entry.getCard())) {
+                if (!hasProtectionFromSource(gameData, targetPermanent, entry)) {
                     if (dealCreatureDamage(gameData, entry, targetPermanent, damage)) {
                         destroyed.add(targetPermanent);
                     }
@@ -417,13 +415,22 @@ public class DamageResolutionService {
 
     private boolean isDamagePreventedForCreature(GameData gameData, StackEntry entry, Permanent target) {
         if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())
-                || gameQueryService.hasProtectionFrom(gameData, target, entry.getCard().getColor())
-                || gameQueryService.hasProtectionFromSourceCardTypes(target, entry.getCard())) {
+                || hasProtectionFromSource(gameData, target, entry)) {
             gameBroadcastService.logAndBroadcast(gameData,
                     entry.getCard().getName() + "'s damage is prevented.");
             return true;
         }
         return false;
+    }
+
+    private boolean hasProtectionFromSource(GameData gameData, Permanent target, StackEntry entry) {
+        return gameQueryService.hasProtectionFrom(gameData, target, entry.getCard().getColor())
+                || gameQueryService.hasProtectionFromSourceCardTypes(target, entry.getCard());
+    }
+
+    private boolean isSourcePermanentPreventedFromDealingDamage(GameData gameData, StackEntry entry) {
+        return entry.getSourcePermanentId() != null
+                && gameData.permanentsPreventedFromDealingDamage.contains(entry.getSourcePermanentId());
     }
 
     private void resolveAnyTargetDamage(GameData gameData, StackEntry entry, UUID targetId, int rawDamage, boolean cantRegenerate) {
@@ -433,40 +440,42 @@ public class DamageResolutionService {
 
         if (!targetIsPlayer && targetPermanent == null) return;
 
-        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())
-                || (entry.getSourcePermanentId() != null && gameData.permanentsPreventedFromDealingDamage.contains(entry.getSourcePermanentId()))) {
-            gameBroadcastService.logAndBroadcast(gameData, cardName + "'s damage is prevented.");
-        } else if (targetIsPlayer) {
+        if (isDamageSourcePreventedWithLog(gameData, entry)) return;
+
+        if (targetIsPlayer) {
+            // dealDamageToPlayer handles per-permanent prevention (permanentsPreventedFromDealingDamage)
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         } else {
-            if (!gameQueryService.hasProtectionFrom(gameData, targetPermanent, entry.getCard().getColor())
-                    && !gameQueryService.hasProtectionFromSourceCardTypes(targetPermanent, entry.getCard())) {
-                if (cantRegenerate) {
-                    targetPermanent.setCantRegenerateThisTurn(true);
-                }
-                dealDamageAndDestroyIfLethal(gameData, entry, targetPermanent, rawDamage);
-            } else {
+            if (isSourcePermanentPreventedFromDealingDamage(gameData, entry)
+                    || hasProtectionFromSource(gameData, targetPermanent, entry)) {
                 gameBroadcastService.logAndBroadcast(gameData, cardName + "'s damage is prevented.");
+                return;
             }
+            if (cantRegenerate) {
+                targetPermanent.setCantRegenerateThisTurn(true);
+            }
+            dealDamageAndDestroyIfLethal(gameData, entry, targetPermanent, rawDamage);
         }
     }
 
     private void damageAllCreaturesOnBattlefield(GameData gameData, StackEntry entry, int damage, Predicate<Permanent> filter) {
         List<Permanent> destroyed = new ArrayList<>();
-
-        gameData.forEachBattlefield((playerId, battlefield) -> {
-            for (Permanent p : battlefield) {
-                if (!filter.test(p)) continue;
-                if (gameQueryService.hasProtectionFrom(gameData, p, entry.getCard().getColor())) continue;
-                if (gameQueryService.hasProtectionFromSourceCardTypes(p, entry.getCard())) continue;
-
-                if (dealCreatureDamage(gameData, entry, p, damage)) {
-                    destroyed.add(p);
-                }
-            }
-        });
-
+        gameData.forEachBattlefield((playerId, battlefield) ->
+                destroyed.addAll(damageFilteredCreatures(gameData, entry, damage, battlefield, filter))
+        );
         destroyAllLethal(gameData, destroyed);
+    }
+
+    private List<Permanent> damageFilteredCreatures(GameData gameData, StackEntry entry, int damage, Collection<Permanent> permanents, Predicate<Permanent> filter) {
+        List<Permanent> destroyed = new ArrayList<>();
+        for (Permanent p : permanents) {
+            if (!filter.test(p)) continue;
+            if (hasProtectionFromSource(gameData, p, entry)) continue;
+            if (dealCreatureDamage(gameData, entry, p, damage)) {
+                destroyed.add(p);
+            }
+        }
+        return destroyed;
     }
 
     private void dealDamageToPlayer(GameData gameData, StackEntry entry, UUID playerId, int rawDamage) {
@@ -581,18 +590,8 @@ public class DamageResolutionService {
             if (effect.damageTargetCreatures()) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
                 if (battlefield != null) {
-                    List<Permanent> destroyed = new ArrayList<>();
-                    for (Permanent p : battlefield) {
-                        if (!gameQueryService.isCreature(gameData, p)) continue;
-                        if (gameQueryService.hasProtectionFrom(gameData, p, entry.getCard().getColor())) continue;
-                        if (gameQueryService.hasProtectionFromSourceCardTypes(p, entry.getCard())) continue;
-
-                        if (dealCreatureDamage(gameData, entry, p, damage)) {
-                            destroyed.add(p);
-                        }
-                    }
-
-                    destroyAllLethal(gameData, destroyed);
+                    Predicate<Permanent> creatureFilter = p -> gameQueryService.isCreature(gameData, p);
+                    destroyAllLethal(gameData, damageFilteredCreatures(gameData, entry, damage, battlefield, creatureFilter));
                 }
             }
 
