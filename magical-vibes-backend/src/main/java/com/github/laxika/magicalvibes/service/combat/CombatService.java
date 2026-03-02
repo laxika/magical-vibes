@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockPerEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 
 import com.github.laxika.magicalvibes.model.effect.PutAwakeningCountersOnTargetLandsEffect;
@@ -757,6 +758,15 @@ public class CombatService {
                     } else {
                         // Global effect (e.g. High Ground): applies to all creatures
                         additionalBlocks += e.additionalBlocks();
+                    }
+                } else if (effect instanceof GrantAdditionalBlockPerEquipmentEffect
+                        && p.getId().equals(creature.getId())) {
+                    // Self-effect: count equipment attached to this creature
+                    for (Permanent eq : battlefield) {
+                        if (eq.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
+                                && creature.getId().equals(eq.getAttachedTo())) {
+                            additionalBlocks++;
+                        }
                     }
                 }
             }
