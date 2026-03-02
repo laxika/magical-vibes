@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.service;
+package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
@@ -13,8 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementConditionalEffect;
-import com.github.laxika.magicalvibes.service.effect.EffectHandler;
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameQueryService;
+import com.github.laxika.magicalvibes.service.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,7 @@ public class EffectResolutionService {
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
 
-    void resolveEffects(GameData gameData, StackEntry entry) {
+    public void resolveEffects(GameData gameData, StackEntry entry) {
         resolveEffectsFrom(gameData, entry, 0);
     }
 

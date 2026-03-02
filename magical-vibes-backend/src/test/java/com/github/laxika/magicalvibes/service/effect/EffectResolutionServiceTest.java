@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.service;
+package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.cards.c.ConcussiveBolt;
 import com.github.laxika.magicalvibes.cards.g.GalvanicBlast;
