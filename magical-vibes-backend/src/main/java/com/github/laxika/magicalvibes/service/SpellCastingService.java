@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
@@ -339,8 +340,31 @@ public class SpellCastingService {
                 );
             }
 
-            // Validate damage assignments for damage distribution spells
-            if (card.isNeedsDamageDistribution()) {
+            // Check for "any number of target cards from graveyard" spells (e.g. Frantic Salvage)
+            PutTargetCardsFromGraveyardOnTopOfLibraryEffect graveyardToTopEffect =
+                    (PutTargetCardsFromGraveyardOnTopOfLibraryEffect) card.getEffects(EffectSlot.SPELL).stream()
+                            .filter(e -> e instanceof PutTargetCardsFromGraveyardOnTopOfLibraryEffect)
+                            .findFirst().orElse(null);
+            boolean needsAnyNumberGraveyardTargeting = graveyardToTopEffect != null;
+
+            if (needsAnyNumberGraveyardTargeting) {
+                long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                        .filter(c -> gameQueryService.matchesCardPredicate(c, graveyardToTopEffect.filter(), card.getId()))
+                        .count();
+                if (matchingCount > 0) {
+                    gameHelper.handleAnyNumberGraveyardSpellTargeting(gameData, playerId, card,
+                            StackEntryType.INSTANT_SPELL, graveyardToTopEffect.filter());
+                    return; // finishSpellCast handled in handleMultipleGraveyardCardsChosen
+                } else {
+                    // No matching cards — put spell on stack with 0 targets (still draws, etc.)
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.INSTANT_SPELL, card, playerId, card.getName(),
+                            filteredSpellEffects, 0, null,
+                            null, Map.of(), null, List.of(), List.of()
+                    ));
+                }
+            } else if (card.isNeedsDamageDistribution()) {
+                // Validate damage assignments for damage distribution spells
                 if (damageAssignments == null || damageAssignments.isEmpty()) {
                     throw new IllegalStateException("Damage assignments required");
                 }

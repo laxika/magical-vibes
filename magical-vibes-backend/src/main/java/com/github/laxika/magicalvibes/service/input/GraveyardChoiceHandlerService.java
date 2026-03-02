@@ -143,9 +143,11 @@ public class GraveyardChoiceHandlerService {
         }
 
         // Spell targeting (e.g. Midnight Ritual) requires exactly X targets — "X target" is not "up to X target"
+        // Exception: "any number of target" spells (e.g. Frantic Salvage) allow 0 to max
         StackEntryType pendingEntryTypeCheck = gameData.graveyardTargetOperation.entryType;
         int pendingXValueCheck = gameData.graveyardTargetOperation.xValue;
-        if (pendingEntryTypeCheck != null && cardIds.size() != pendingXValueCheck) {
+        boolean isAnyNumber = gameData.graveyardTargetOperation.anyNumber;
+        if (pendingEntryTypeCheck != null && !isAnyNumber && cardIds.size() != pendingXValueCheck) {
             throw new IllegalStateException("Must choose exactly " + pendingXValueCheck + " targets, but chose " + cardIds.size());
         }
 
@@ -175,6 +177,7 @@ public class GraveyardChoiceHandlerService {
         gameData.graveyardTargetOperation.effects = null;
         gameData.graveyardTargetOperation.entryType = null;
         gameData.graveyardTargetOperation.xValue = 0;
+        gameData.graveyardTargetOperation.anyNumber = false;
 
         List<String> targetNames = new ArrayList<>();
         for (UUID cardId : cardIds) {

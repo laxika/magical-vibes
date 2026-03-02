@@ -256,6 +256,7 @@ Pass `null` as filter to allow any card.
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
+| `PutTargetCardsFromGraveyardOnTopOfLibraryEffect` | `(CardPredicate filter)` | put any number of target cards matching filter from controller's graveyard on top of library. Multi-target selection at cast time via SpellCastingService "any number" graveyard targeting. Used by Frantic Salvage |
 | `ReturnDyingCreatureToBattlefieldAndAttachSourceEffect` | `(UUID dyingCardId)` or `()` | return a dying nontoken creature to the battlefield and attach the source equipment to it. No-arg constructor (dyingCardId is null) used in card definition; dyingCardId populated at trigger time in GameHelper. Wrap in MayPayManaEffect for "you may pay {X}" triggers. Used by Nim Deathmantle |
 | `PutCardFromOpponentGraveyardOntoBattlefieldEffect` | `(boolean tapped)` | put target artifact/creature with MV=X from opponent's graveyard onto battlefield under your control (tapped if `tapped=true`), then mill that player X cards |
 | `PutImprintedCreatureOntoBattlefieldEffect` | `()` | when this creature dies, reveal imprinted card; if creature, put onto battlefield (Clone Shell dies trigger) |

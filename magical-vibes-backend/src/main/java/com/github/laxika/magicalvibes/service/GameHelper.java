@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
@@ -929,6 +930,32 @@ public class GameHelper {
         gameData.graveyardTargetOperation.xValue = xValue;
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, creatureCardIds, cardViews, xValue,
                 "Choose " + xValue + " target creature card" + (xValue != 1 ? "s" : "") + " from your graveyard to exile.");
+    }
+
+    void handleAnyNumberGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                                StackEntryType entryType, CardPredicate filter) {
+        List<UUID> matchingCardIds = new ArrayList<>();
+        List<CardView> cardViews = new ArrayList<>();
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        if (graveyard != null) {
+            for (Card graveyardCard : graveyard) {
+                if (gameQueryService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
+                    matchingCardIds.add(graveyardCard.getId());
+                    cardViews.add(cardViewFactory.create(graveyardCard));
+                }
+            }
+        }
+
+        int maxTargets = matchingCardIds.size();
+        gameData.graveyardTargetOperation.card = card;
+        gameData.graveyardTargetOperation.controllerId = controllerId;
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        gameData.graveyardTargetOperation.entryType = entryType;
+        gameData.graveyardTargetOperation.xValue = 0;
+        gameData.graveyardTargetOperation.anyNumber = true;
+        String filterLabel = GraveyardReturnResolutionService.describeFilter(filter);
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCardIds, cardViews, maxTargets,
+                "Choose any number of target " + filterLabel + "s from your graveyard.");
     }
 
     void checkAllyCreatureEntersTriggers(GameData gameData, UUID controllerId, Card enteringCreature) {

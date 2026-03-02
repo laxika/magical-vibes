@@ -12,4 +12,5 @@ public class GraveyardTargetOperationState {
     public List<CardEffect> effects;
     public StackEntryType entryType;
     public int xValue;
+    public boolean anyNumber;
 }
