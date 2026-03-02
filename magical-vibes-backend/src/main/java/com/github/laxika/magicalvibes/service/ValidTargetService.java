@@ -210,7 +210,8 @@ public class ValidTargetService {
         }
 
         // For multi-target spells that don't allow players, target must be a creature
-        if (isMultiTarget) {
+        // (unless the card has a targetFilter that handles type validation).
+        if (isMultiTarget && card.getTargetFilter() == null) {
             boolean multiTargetAllowsPlayers = card.getEffects(EffectSlot.SPELL).stream()
                     .anyMatch(e -> e instanceof DealOrderedDamageToAnyTargetsEffect);
             if (!multiTargetAllowsPlayers && !gameQueryService.isCreature(gameData, perm)) {

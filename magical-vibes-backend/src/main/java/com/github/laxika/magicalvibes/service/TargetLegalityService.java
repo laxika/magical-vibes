@@ -221,7 +221,14 @@ public class TargetLegalityService {
                 throw new IllegalStateException("This spell cannot target players");
             }
             if (!isPlayerTarget) {
-                if (!gameQueryService.isCreature(gameData, target)) {
+                // When the card has a targetFilter, let it handle type validation;
+                // otherwise fall back to requiring a creature target.
+                if (card.getTargetFilter() != null) {
+                    gameQueryService.validateTargetFilter(card.getTargetFilter(), target,
+                            FilterContext.of(gameData)
+                                    .withSourceCardId(card.getId())
+                                    .withSourceControllerId(controllerId));
+                } else if (!gameQueryService.isCreature(gameData, target)) {
                     throw new IllegalStateException(target.getCard().getName() + " is not a creature");
                 }
                 if (card.isNeedsTarget() && gameQueryService.hasProtectionFrom(gameData, target, card.getColor())) {

@@ -32,6 +32,26 @@ public class ExileResolutionService {
 
     @HandlesEffect(ExileTargetPermanentEffect.class)
     void resolveExileTargetPermanent(GameData gameData, StackEntry entry) {
+        // Multi-target (e.g. "Exile two target artifacts")
+        if (!entry.getTargetPermanentIds().isEmpty()) {
+            for (UUID targetId : entry.getTargetPermanentIds()) {
+                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                if (target == null) {
+                    continue;
+                }
+
+                permanentRemovalService.removePermanentToExile(gameData, target);
+                String logEntry = target.getCard().getName() + " is exiled.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} is exiled by {}",
+                        gameData.id, target.getCard().getName(), entry.getCard().getName());
+            }
+
+            permanentRemovalService.removeOrphanedAuras(gameData);
+            return;
+        }
+
+        // Single-target
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
             return;
