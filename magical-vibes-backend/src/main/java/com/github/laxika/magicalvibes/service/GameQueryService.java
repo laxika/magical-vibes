@@ -759,7 +759,7 @@ public class GameQueryService {
      * Returns the global damage multiplier based on DoubleDamageEffect permanents on the battlefield.
      * Each instance doubles the multiplier (e.g. two Furnaces = 4x damage).
      */
-    int getDamageMultiplier(GameData gameData) {
+    public int getDamageMultiplier(GameData gameData) {
         int[] multiplier = {1};
         gameData.forEachPermanent((playerId, p) -> {
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {

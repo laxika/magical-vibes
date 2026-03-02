@@ -639,7 +639,7 @@ Pass `null` as filter to allow any card.
 
 | Category | Resolution service |
 |----------|--------------------|
-| Damage | `DamageResolutionService` |
+| Damage | `combat.DamageResolutionService` |
 | Destruction/sacrifice | `DestructionResolutionService` |
 | Bounce | `battlefield.BounceResolutionService` |
 | Counter | `CounterResolutionService` |
