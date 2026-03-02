@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.FirstTargetDealsPowerDamageToSecondTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
@@ -184,17 +183,7 @@ public class DamageResolutionService {
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
 
         // Life gain is independent of damage prevention — always happens if the spell resolves
-        UUID controllerId = entry.getControllerId();
-        if (gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
-            int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
-            gameData.playerLifeTotals.put(controllerId, currentLife + xValue);
-            String controllerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, controllerName + " gains " + xValue + " life.");
-            log.info("Game {} - {} gains {} life", gameData.id, controllerName, xValue);
-        } else {
-            String controllerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, controllerName + "'s life total can't change.");
-        }
+        gainLifeForController(gameData, entry.getControllerId(), xValue);
 
         gameHelper.checkWinCondition(gameData);
     }
@@ -343,20 +332,22 @@ public class DamageResolutionService {
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
 
         // Life gain is independent of damage prevention — always happens if the spell resolves
-        int lifeGain = effect.lifeGain();
-        UUID controllerId = entry.getControllerId();
+        gainLifeForController(gameData, entry.getControllerId(), effect.lifeGain());
+
+        gameHelper.checkWinCondition(gameData);
+    }
+
+    private void gainLifeForController(GameData gameData, UUID controllerId, int amount) {
         if (gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
             int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
-            gameData.playerLifeTotals.put(controllerId, currentLife + lifeGain);
+            gameData.playerLifeTotals.put(controllerId, currentLife + amount);
             String controllerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, controllerName + " gains " + lifeGain + " life.");
-            log.info("Game {} - {} gains {} life", gameData.id, controllerName, lifeGain);
+            gameBroadcastService.logAndBroadcast(gameData, controllerName + " gains " + amount + " life.");
+            log.info("Game {} - {} gains {} life", gameData.id, controllerName, amount);
         } else {
             String controllerName = gameData.playerIdToName.get(controllerId);
             gameBroadcastService.logAndBroadcast(gameData, controllerName + "'s life total can't change.");
         }
-
-        gameHelper.checkWinCondition(gameData);
     }
 
     private void recordCreatureDamageFromPermanentSource(GameData gameData, StackEntry entry, Permanent targetCreature, int damage) {
@@ -379,7 +370,7 @@ public class DamageResolutionService {
         String cardName = entry.getCard().getName();
 
         // Check if source permanent has infect
-        boolean sourceHasInfect = hasInfectSource(gameData, entry);
+        boolean sourceHasInfect = hasKeywordOnSource(gameData, entry, Keyword.INFECT);
 
         if (sourceHasInfect) {
             if (damage > 0) {
@@ -396,7 +387,7 @@ public class DamageResolutionService {
                 cardName + " deals " + damage + " damage to " + target.getCard().getName() + ".");
         log.info("Game {} - {} deals {} damage to {}", gameData.id, cardName, damage, target.getCard().getName());
 
-        boolean sourceHasDeathtouch = hasDeathtouchSource(gameData, entry);
+        boolean sourceHasDeathtouch = hasKeywordOnSource(gameData, entry, Keyword.DEATHTOUCH);
         boolean isLethal = damage >= gameQueryService.getEffectiveToughness(gameData, target)
                 || (damage >= 1 && sourceHasDeathtouch);
         if (isLethal) {
@@ -410,21 +401,11 @@ public class DamageResolutionService {
         return false;
     }
 
-    private boolean hasInfectSource(GameData gameData, StackEntry entry) {
+    private boolean hasKeywordOnSource(GameData gameData, StackEntry entry, Keyword keyword) {
         if (entry.getSourcePermanentId() != null) {
             Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
             if (source != null) {
-                return gameQueryService.hasKeyword(gameData, source, Keyword.INFECT);
-            }
-        }
-        return false;
-    }
-
-    private boolean hasDeathtouchSource(GameData gameData, StackEntry entry) {
-        if (entry.getSourcePermanentId() != null) {
-            Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-            if (source != null) {
-                return gameQueryService.hasKeyword(gameData, source, Keyword.DEATHTOUCH);
+                return gameQueryService.hasKeyword(gameData, source, keyword);
             }
         }
         return false;
@@ -476,55 +457,26 @@ public class DamageResolutionService {
     }
 
     private void damageAllCreaturesOnBattlefield(GameData gameData, StackEntry entry, int damage, Predicate<Permanent> filter) {
-        String cardName = entry.getCard().getName();
-        boolean sourceHasInfect = hasInfectSource(gameData, entry);
-        boolean sourceHasDeathtouch = hasDeathtouchSource(gameData, entry);
+        List<Permanent> destroyed = new ArrayList<>();
 
         gameData.forEachBattlefield((playerId, battlefield) -> {
-            Set<Integer> deadIndices = new TreeSet<>(Collections.reverseOrder());
-            for (int i = 0; i < battlefield.size(); i++) {
-                Permanent p = battlefield.get(i);
+            for (Permanent p : battlefield) {
                 if (!filter.test(p)) continue;
                 if (gameQueryService.hasProtectionFrom(gameData, p, entry.getCard().getColor())) continue;
                 if (gameQueryService.hasProtectionFromSourceCardTypes(p, entry.getCard())) continue;
 
-                int effectiveDamage = gameHelper.applyCreaturePreventionShield(gameData, p, damage);
-                recordCreatureDamageFromPermanentSource(gameData, entry, p, effectiveDamage);
-
-                if (sourceHasInfect) {
-                    if (effectiveDamage > 0) {
-                        p.setMinusOneMinusOneCounters(p.getMinusOneMinusOneCounters() + effectiveDamage);
-                    }
-                    if (gameQueryService.getEffectiveToughness(gameData, p) <= 0) {
-                        deadIndices.add(i);
-                    }
-                } else {
-                    int toughness = gameQueryService.getEffectiveToughness(gameData, p);
-                    boolean isLethal = effectiveDamage >= toughness
-                            || (effectiveDamage >= 1 && sourceHasDeathtouch);
-                    if (isLethal
-                            && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)
-                            && !gameHelper.tryRegenerate(gameData, p)) {
-                        deadIndices.add(i);
-                    }
+                if (dealCreatureDamage(gameData, entry, p, damage)) {
+                    destroyed.add(p);
                 }
-            }
-
-            for (int idx : deadIndices) {
-                String playerName = gameData.playerIdToName.get(playerId);
-                Permanent dead = battlefield.get(idx);
-                gameBroadcastService.logAndBroadcast(gameData,
-                        playerName + "'s " + dead.getCard().getName() + " is destroyed by " + cardName + ".");
-                boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, dead.getOriginalCard(), Zone.BATTLEFIELD);
-                if (wentToGraveyard) {
-                    gameHelper.collectDeathTrigger(gameData, dead.getCard(), playerId, true);
-                    gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
-                }
-                battlefield.remove(idx);
             }
         });
 
-        permanentRemovalService.removeOrphanedAuras(gameData);
+        for (Permanent dead : destroyed) {
+            destroyPermanent(gameData, dead);
+        }
+        if (!destroyed.isEmpty()) {
+            permanentRemovalService.removeOrphanedAuras(gameData);
+        }
     }
 
     private void dealDamageToPlayer(GameData gameData, StackEntry entry, UUID playerId, int rawDamage) {
@@ -538,7 +490,7 @@ public class DamageResolutionService {
             int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
 
-            boolean sourceHasInfect = hasInfectSource(gameData, entry);
+            boolean sourceHasInfect = hasKeywordOnSource(gameData, entry, Keyword.INFECT);
 
             if (sourceHasInfect) {
                 if (effectiveDamage > 0) {
@@ -608,6 +560,24 @@ public class DamageResolutionService {
 
         int damage = gameHelper.applyCreaturePreventionShield(gameData, target, gameQueryService.applyDamageMultiplier(gameData, power));
         gameHelper.recordCreatureDamagedByPermanent(gameData, biter.getId(), target, damage);
+
+        boolean biterHasInfect = gameQueryService.hasKeyword(gameData, biter, Keyword.INFECT);
+
+        if (biterHasInfect) {
+            if (damage > 0) {
+                target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() + damage);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        biter.getCard().getName() + " puts " + damage + " -1/-1 counters on " + target.getCard().getName() + ".");
+                log.info("Game {} - {} puts {} -1/-1 counters on {}", gameData.id, biter.getCard().getName(), damage, target.getCard().getName());
+            }
+            // CR 704.5f: 0 toughness from -1/-1 counters — dies regardless of indestructible
+            if (gameQueryService.getEffectiveToughness(gameData, target) <= 0) {
+                destroyPermanent(gameData, target);
+                permanentRemovalService.removeOrphanedAuras(gameData);
+            }
+            return;
+        }
+
         String logEntry = biter.getCard().getName() + " deals " + damage + " damage to " + target.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} bites {} for {} damage", gameData.id, biter.getCard().getName(), target.getCard().getName(), damage);
@@ -661,13 +631,7 @@ public class DamageResolutionService {
                         if (gameQueryService.hasProtectionFrom(gameData, p, entry.getCard().getColor())) continue;
                         if (gameQueryService.hasProtectionFromSourceCardTypes(p, entry.getCard())) continue;
 
-                        int effectiveDamage = gameHelper.applyCreaturePreventionShield(gameData, p, damage);
-                        gameBroadcastService.logAndBroadcast(gameData,
-                                cardName + " deals " + effectiveDamage + " damage to " + p.getCard().getName() + ".");
-
-                        if (effectiveDamage >= gameQueryService.getEffectiveToughness(gameData, p)
-                                && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)
-                                && !gameHelper.tryRegenerate(gameData, p)) {
+                        if (dealCreatureDamage(gameData, entry, p, damage)) {
                             destroyed.add(p);
                         }
                     }
