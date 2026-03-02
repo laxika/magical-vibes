@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureXEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -535,6 +536,30 @@ public class CreatureModResolutionService {
             String logEntry = "Creatures controlled by " + playerName + " can't block this turn.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} creatures controlled by {} can't block this turn", gameData.id, count, playerName);
+        }
+    }
+
+    @HandlesEffect(CantBlockThisTurnEffect.class)
+    private void resolveCantBlockThisTurn(GameData gameData, StackEntry entry,
+                                          CantBlockThisTurnEffect effect) {
+        int count = 0;
+        for (UUID playerId : gameData.playerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (gameQueryService.isCreature(gameData, p)
+                        && (effect.filter() == null
+                            || gameQueryService.matchesPermanentPredicate(gameData, p, effect.filter()))) {
+                    p.setCantBlockThisTurn(true);
+                    count++;
+                }
+            }
+        }
+
+        if (count > 0) {
+            String logEntry = "Some creatures can't block this turn.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} creatures can't block this turn", gameData.id, count);
         }
     }
 
