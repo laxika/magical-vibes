@@ -63,30 +63,8 @@ public class DestructionResolutionService {
             }
         });
 
-        // Snapshot indestructible status before any removals (MTG rules: "destroy all" is simultaneous)
-        Set<Permanent> indestructible = new HashSet<>();
-        for (Permanent perm : toDestroy) {
-            if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
-                indestructible.add(perm);
-            }
-        }
-
-        for (Permanent perm : toDestroy) {
-            if (indestructible.contains(perm)) {
-                String logEntry = perm.getCard().getName() + " is indestructible.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                continue;
-            }
-            if (canAttemptRegeneration(effect.targetTypes())
-                    && !effect.cannotBeRegenerated()
-                    && gameHelper.tryRegenerate(gameData, perm)) {
-                continue;
-            }
-            permanentRemovalService.removePermanentToGraveyard(gameData, perm);
-            String logEntry = perm.getCard().getName() + " is destroyed.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} is destroyed", gameData.id, perm.getCard().getName());
-        }
+        boolean skipRegeneration = effect.cannotBeRegenerated() || !canAttemptRegeneration(effect.targetTypes());
+        destroyBatch(gameData, toDestroy, entry.getCard().getName(), skipRegeneration);
     }
 
     @HandlesEffect(DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect.class)
@@ -138,28 +116,7 @@ public class DestructionResolutionService {
             return;
         }
 
-        // Snapshot indestructible status before any removals (simultaneous destruction)
-        Set<Permanent> indestructible = new HashSet<>();
-        for (Permanent perm : toDestroy) {
-            if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
-                indestructible.add(perm);
-            }
-        }
-
-        for (Permanent perm : toDestroy) {
-            if (indestructible.contains(perm)) {
-                String logEntry = perm.getCard().getName() + " is indestructible.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                continue;
-            }
-            if (gameHelper.tryRegenerate(gameData, perm)) {
-                continue;
-            }
-            permanentRemovalService.removePermanentToGraveyard(gameData, perm);
-            String logEntry = perm.getCard().getName() + " is destroyed.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), cardName);
-        }
+        destroyBatch(gameData, toDestroy, cardName, false);
     }
 
     private boolean matchesDestroyAllTargetType(GameData gameData, Permanent permanent, Set<CardType> targetTypes) {
@@ -181,6 +138,69 @@ public class DestructionResolutionService {
         return targetTypes.contains(CardType.CREATURE) || targetTypes.contains(CardType.ARTIFACT);
     }
 
+    /**
+     * Simultaneously destroys a batch of permanents, respecting indestructible (snapshotted before
+     * any removals) and optional regeneration.
+     */
+    private void destroyBatch(GameData gameData, List<Permanent> toDestroy, String sourceName,
+                              boolean cannotBeRegenerated) {
+        Set<Permanent> indestructible = new HashSet<>();
+        for (Permanent perm : toDestroy) {
+            if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
+                indestructible.add(perm);
+            }
+        }
+
+        for (Permanent perm : toDestroy) {
+            if (indestructible.contains(perm)) {
+                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + " is indestructible.");
+                continue;
+            }
+            if (!cannotBeRegenerated && gameHelper.tryRegenerate(gameData, perm)) {
+                continue;
+            }
+            permanentRemovalService.removePermanentToGraveyard(gameData, perm);
+            gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + " is destroyed.");
+            log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), sourceName);
+        }
+    }
+
+    private boolean tryDestroyAndLog(GameData gameData, Permanent target, String sourceName) {
+        return tryDestroyAndLog(gameData, target, sourceName, false);
+    }
+
+    private boolean tryDestroyAndLog(GameData gameData, Permanent target, String sourceName, boolean cannotBeRegenerated) {
+        if (!permanentRemovalService.tryDestroyPermanent(gameData, target, cannotBeRegenerated)) {
+            return false;
+        }
+        String logEntry = target.getCard().getName() + " is destroyed.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} is destroyed by {}", gameData.id, target.getCard().getName(), sourceName);
+        return true;
+    }
+
+    private void sacrificeAndLog(GameData gameData, Permanent creature, UUID playerId) {
+        permanentRemovalService.removePermanentToGraveyard(gameData, creature);
+        String playerName = gameData.playerIdToName.get(playerId);
+        String logEntry = playerName + " sacrifices " + creature.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} sacrifices {}", gameData.id, playerName, creature.getCard().getName());
+    }
+
+    private void gainLifeForPlayer(GameData gameData, UUID playerId, int amount, String reason) {
+        if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    gameData.playerIdToName.get(playerId) + "'s life total can't change.");
+            return;
+        }
+        int currentLife = gameData.playerLifeTotals.get(playerId);
+        gameData.playerLifeTotals.put(playerId, currentLife + amount);
+        String playerName = gameData.playerIdToName.get(playerId);
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " gains " + amount + " life (" + reason + ").");
+        log.info("Game {} - {} gains {} life ({})", gameData.id, playerName, amount, reason);
+    }
+
     @HandlesEffect(DestroyTargetPermanentEffect.class)
     void resolveDestroyTargetPermanent(GameData gameData, StackEntry entry, DestroyTargetPermanentEffect destroy) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
@@ -188,13 +208,7 @@ public class DestructionResolutionService {
             return;
         }
 
-        if (!permanentRemovalService.tryDestroyPermanent(gameData, target, destroy.cannotBeRegenerated())) {
-            return;
-        }
-        String logEntry = target.getCard().getName() + " is destroyed.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} is destroyed by {}'s ability",
-                gameData.id, target.getCard().getName(), entry.getCard().getName());
+        tryDestroyAndLog(gameData, target, entry.getCard().getName(), destroy.cannotBeRegenerated());
     }
 
     @HandlesEffect(DestroyEquipmentAttachedToTargetCreatureEffect.class)
@@ -213,12 +227,7 @@ public class DestructionResolutionService {
         });
 
         for (Permanent equipment : equipmentToDestroy) {
-            if (permanentRemovalService.tryDestroyPermanent(gameData, equipment)) {
-                String logEntry = equipment.getCard().getName() + " is destroyed.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} is destroyed by {}", gameData.id,
-                        equipment.getCard().getName(), entry.getCard().getName());
-            }
+            tryDestroyAndLog(gameData, equipment, entry.getCard().getName());
         }
     }
 
@@ -237,10 +246,7 @@ public class DestructionResolutionService {
         }
 
         // Destroy the target creature
-        if (permanentRemovalService.tryDestroyPermanent(gameData, target)) {
-            String logEntry = target.getCard().getName() + " is destroyed.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        }
+        tryDestroyAndLog(gameData, target, entry.getCard().getName());
 
         // Count ALL creatures that died this turn (across all players, including tokens)
         int totalDeaths = 0;
@@ -281,25 +287,13 @@ public class DestructionResolutionService {
         }
 
         // Find the controller of the targeted land before destruction
-        UUID landControllerId = null;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield != null && battlefield.contains(target)) {
-                landControllerId = playerId;
-                break;
-            }
-        }
-
+        UUID landControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         if (landControllerId == null) {
             return;
         }
 
         // Attempt to destroy the land
-        if (permanentRemovalService.tryDestroyPermanent(gameData, target)) {
-            String logEntry = target.getCard().getName() + " is destroyed.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} is destroyed by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
-        }
+        tryDestroyAndLog(gameData, target, entry.getCard().getName());
 
         // Deal damage to the land's controller regardless of whether destruction succeeded
         String cardName = entry.getCard().getName();
@@ -383,11 +377,7 @@ public class DestructionResolutionService {
             for (UUID creatureId : attackingCreatureIds) {
                 Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
                 if (creature != null) {
-                    permanentRemovalService.removePermanentToGraveyard(gameData, creature);
-                    String playerName = gameData.playerIdToName.get(targetPlayerId);
-                    String logEntry = playerName + " sacrifices " + creature.getCard().getName() + ".";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - {} sacrifices {}", gameData.id, playerName, creature.getCard().getName());
+                    sacrificeAndLog(gameData, creature, targetPlayerId);
                 }
             }
             return;
@@ -432,11 +422,7 @@ public class DestructionResolutionService {
             // Only one creature — sacrifice it automatically
             Permanent creature = gameQueryService.findPermanentById(gameData, creatureIds.getFirst());
             if (creature != null) {
-                permanentRemovalService.removePermanentToGraveyard(gameData, creature);
-                String playerName = gameData.playerIdToName.get(targetPlayerId);
-                String logEntry = playerName + " sacrifices " + creature.getCard().getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} sacrifices {}", gameData.id, playerName, creature.getCard().getName());
+                sacrificeAndLog(gameData, creature, targetPlayerId);
             }
             return;
         }
@@ -496,10 +482,7 @@ public class DestructionResolutionService {
             // Only one other creature — sacrifice it automatically
             Permanent creature = gameQueryService.findPermanentById(gameData, otherCreatureIds.getFirst());
             if (creature != null) {
-                permanentRemovalService.removePermanentToGraveyard(gameData, creature);
-                String logEntry = playerName + " sacrifices " + creature.getCard().getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName, creature.getCard().getName(), cardName);
+                sacrificeAndLog(gameData, creature, controllerId);
             }
             return;
         }
@@ -523,29 +506,19 @@ public class DestructionResolutionService {
             return;
         }
 
-        if (!permanentRemovalService.tryDestroyPermanent(gameData, target)) {
-            return;
-        }
-        String logEntry = target.getCard().getName() + " is destroyed.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} is destroyed by {}'s ability",
-                gameData.id, target.getCard().getName(), entry.getCard().getName());
+        tryDestroyAndLog(gameData, target, entry.getCard().getName());
     }
 
     @HandlesEffect(DestroyBlockedCreatureAndSelfEffect.class)
     void resolveDestroyBlockedCreatureAndSelf(GameData gameData, StackEntry entry) {
         Permanent attacker = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
-        if (attacker != null && permanentRemovalService.tryDestroyPermanent(gameData, attacker)) {
-            String logEntry = attacker.getCard().getName() + " is destroyed by " + entry.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} destroyed by {}'s block trigger", gameData.id, attacker.getCard().getName(), entry.getCard().getName());
+        if (attacker != null) {
+            tryDestroyAndLog(gameData, attacker, entry.getCard().getName());
         }
 
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (self != null && permanentRemovalService.tryDestroyPermanent(gameData, self)) {
-            String logEntry = entry.getCard().getName() + " is destroyed.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} destroyed (self-destruct from block trigger)", gameData.id, entry.getCard().getName());
+        if (self != null) {
+            tryDestroyAndLog(gameData, self, entry.getCard().getName());
         }
     }
 
@@ -559,11 +532,7 @@ public class DestructionResolutionService {
         int manaValue = target.getCard().getManaValue();
 
         // Attempt to destroy the artifact
-        if (permanentRemovalService.tryDestroyPermanent(gameData, target)) {
-            String logEntry = target.getCard().getName() + " is destroyed by " + entry.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} destroyed by {}'s ability", gameData.id, target.getCard().getName(), entry.getCard().getName());
-        }
+        tryDestroyAndLog(gameData, target, entry.getCard().getName());
 
         // Boost self by mana value regardless of destruction result
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
@@ -586,27 +555,12 @@ public class DestructionResolutionService {
         int manaValue = target.getCard().getManaValue();
 
         // Attempt to destroy the target
-        if (permanentRemovalService.tryDestroyPermanent(gameData, target)) {
-            String logEntry = target.getCard().getName() + " is destroyed by " + entry.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} destroyed by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
-        }
+        tryDestroyAndLog(gameData, target, entry.getCard().getName());
 
         // Gain life equal to mana value regardless of destruction result
-        UUID controllerId = entry.getControllerId();
         if (manaValue > 0) {
-            if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        gameData.playerIdToName.get(controllerId) + "'s life total can't change.");
-            } else {
-                int currentLife = gameData.playerLifeTotals.get(controllerId);
-                gameData.playerLifeTotals.put(controllerId, currentLife + manaValue);
-
-                String playerName = gameData.playerIdToName.get(controllerId);
-                String lifeLog = playerName + " gains " + manaValue + " life (equal to " + target.getCard().getName() + "'s mana value).";
-                gameBroadcastService.logAndBroadcast(gameData, lifeLog);
-                log.info("Game {} - {} gains {} life from {}'s mana value", gameData.id, playerName, manaValue, target.getCard().getName());
-            }
+            gainLifeForPlayer(gameData, entry.getControllerId(), manaValue,
+                    "equal to " + target.getCard().getName() + "'s mana value");
         }
     }
 
@@ -620,27 +574,10 @@ public class DestructionResolutionService {
         int toughness = gameQueryService.getEffectiveToughness(gameData, target);
 
         // Attempt to destroy (life gain happens regardless)
-        if (permanentRemovalService.tryDestroyPermanent(gameData, target)) {
-            String logEntry = target.getCard().getName() + " is destroyed by " + entry.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} destroyed by {}'s ability", gameData.id, target.getCard().getName(), entry.getCard().getName());
-        }
+        tryDestroyAndLog(gameData, target, entry.getCard().getName());
 
         // Gain life equal to toughness regardless of destruction result
-        UUID controllerId = entry.getControllerId();
-        if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    gameData.playerIdToName.get(controllerId) + "'s life total can't change.");
-        } else {
-            int currentLife = gameData.playerLifeTotals.get(controllerId);
-            gameData.playerLifeTotals.put(controllerId, currentLife + toughness);
-
-            String playerName = gameData.playerIdToName.get(controllerId);
-            String lifeLog = playerName + " gains " + toughness + " life (equal to " + target.getCard().getName() + "'s toughness).";
-            gameBroadcastService.logAndBroadcast(gameData, lifeLog);
-            log.info("Game {} - {} gains {} life from {}'s toughness", gameData.id, playerName, toughness, target.getCard().getName());
-        }
+        gainLifeForPlayer(gameData, entry.getControllerId(), toughness,
+                "equal to " + target.getCard().getName() + "'s toughness");
     }
 }
-
-
