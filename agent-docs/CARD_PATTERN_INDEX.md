@@ -136,6 +136,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Battle cry (attack boost others) | `a/AccorderPaladin.java` | ON_ATTACK BoostAllOwnCreaturesEffect(1, 0, PermanentAllOfPredicate(PermanentIsAttackingPredicate, PermanentNotPredicate(PermanentIsSourceCardPredicate))) |
 | Damage-to-controller bounce | `d/DissipationField.java` | ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU ReturnDamageSourcePermanentToHandEffect — bounces any permanent that deals damage to controller |
 | Damage-to-controller steal | `c/ContestedWarZone.java` | ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU DamageSourceControllerGainsControlOfThisPermanentEffect(true, true) — combat creature damage causes opponent to gain control of this land |
+| Upkeep become-copy | `c/Cryptoplasm.java` | UPKEEP_TRIGGERED BecomeCopyOfTargetCreatureEffect — mandatory target at trigger time (CR 603.3d), may choice at resolution. Uses pendingUpkeepCopyTargets queue for target selection, then CopyResolutionService queues pendingMayAbility for the may choice |
 
 ## Static permanents
 

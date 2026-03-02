@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringUntapStepEff
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedCreatureDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -141,6 +143,26 @@ public class TurnProgressionService {
                             List.of(may.wrapped()),
                             perm.getCard().getName() + " — " + may.prompt()
                     ));
+                } else if (effect instanceof BecomeCopyOfTargetCreatureEffect) {
+                    // Targeted upkeep trigger: target is chosen at trigger time (CR 603.3d).
+                    // Collect valid creature targets excluding self ("another creature").
+                    boolean hasValidTargets = false;
+                    for (UUID pid : gameData.orderedPlayerIds) {
+                        List<Permanent> bf = gameData.playerBattlefields.get(pid);
+                        if (bf == null) continue;
+                        for (Permanent p : bf) {
+                            if (p.getId().equals(perm.getId())) continue;
+                            if (gameQueryService.isCreature(gameData, p)) {
+                                hasValidTargets = true;
+                                break;
+                            }
+                        }
+                        if (hasValidTargets) break;
+                    }
+                    if (hasValidTargets) {
+                        gameData.pendingUpkeepCopyTargets.add(new PermanentChoiceContext.UpkeepCopyTriggerTarget(
+                                perm.getCard(), activePlayerId, perm.getId()));
+                    }
                 } else if (effect instanceof WinGameIfCreaturesInGraveyardEffect winEffect) {
                     // Intervening-if: only trigger if condition is met
                     List<Card> graveyard = gameData.playerGraveyards.get(activePlayerId);
@@ -296,11 +318,52 @@ public class TurnProgressionService {
             }
         });
 
-        if (!gameData.stack.isEmpty()) {
-
+        // Process upkeep copy trigger target selection first (mandatory targeting at trigger time)
+        if (!gameData.pendingUpkeepCopyTargets.isEmpty()) {
+            processNextUpkeepCopyTarget(gameData);
+            return;
         }
 
         playerInputService.processNextMayAbility(gameData);
+    }
+
+    public void processNextUpkeepCopyTarget(GameData gameData) {
+        if (gameData.pendingUpkeepCopyTargets.isEmpty()) {
+            // All copy triggers targeted, continue with may abilities
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        PermanentChoiceContext.UpkeepCopyTriggerTarget trigger = gameData.pendingUpkeepCopyTargets.peekFirst();
+
+        // Collect valid creature targets (excluding source permanent)
+        List<UUID> validTargets = new ArrayList<>();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                if (p.getId().equals(trigger.sourcePermanentId())) continue;
+                if (gameQueryService.isCreature(gameData, p)) {
+                    validTargets.add(p.getId());
+                }
+            }
+        }
+
+        if (validTargets.isEmpty()) {
+            // No valid targets remaining — skip
+            gameData.pendingUpkeepCopyTargets.removeFirst();
+            processNextUpkeepCopyTarget(gameData);
+            return;
+        }
+
+        gameData.pendingUpkeepCopyTargets.removeFirst();
+        gameData.interaction.setPermanentChoiceContext(trigger);
+        playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validTargets,
+                trigger.sourceCard().getName() + " — Choose a creature to target.");
+
+        String logEntry = trigger.sourceCard().getName() + "'s upkeep ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} upkeep copy trigger awaiting target selection", gameData.id, trigger.sourceCard().getName());
     }
 
     void handleDrawStep(GameData gameData) {

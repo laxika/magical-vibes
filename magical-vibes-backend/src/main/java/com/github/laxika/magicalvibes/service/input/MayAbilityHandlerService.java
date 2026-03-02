@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
@@ -146,6 +148,13 @@ public class MayAbilityHandlerService {
         boolean isCopySpellRetarget = ability.effects().stream().anyMatch(e -> e instanceof CopySpellEffect);
         if (isCopySpellRetarget) {
             handleCopySpellRetargetChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // BecomeCopyOfTargetCreatureEffect — targets "another creature" (e.g. Cryptoplasm)
+        boolean isBecomeCopyEffect = ability.effects().stream().anyMatch(e -> e instanceof BecomeCopyOfTargetCreatureEffect);
+        if (isBecomeCopyEffect) {
+            handleBecomeCopyChoice(gameData, player, accepted, ability);
             return;
         }
 
@@ -755,6 +764,89 @@ public class MayAbilityHandlerService {
         }
 
         throw new IllegalStateException("Unsupported draw replacement kind: " + effect.kind());
+    }
+
+    private void handleBecomeCopyChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        Card sourceCard = ability.sourceCard();
+
+        if (!accepted) {
+            String logEntry = player.getUsername() + " declines " + sourceCard.getName() + "'s copy ability.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines become-copy ability from {}", gameData.id, player.getUsername(), sourceCard.getName());
+
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                gameData.priorityPassedBy.clear();
+                gameBroadcastService.broadcastGameState(gameData);
+                turnProgressionService.resolveAutoPass(gameData);
+            }
+            return;
+        }
+
+        // Find source permanent by card identity
+        Permanent sourcePermanent = null;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                if (p.getCard() == sourceCard) {
+                    sourcePermanent = p;
+                    break;
+                }
+            }
+            if (sourcePermanent != null) break;
+        }
+
+        if (sourcePermanent == null) {
+            String logEntry = sourceCard.getName() + " is no longer on the battlefield.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} become-copy source no longer on battlefield", gameData.id, sourceCard.getName());
+
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                gameData.priorityPassedBy.clear();
+                gameBroadcastService.broadcastGameState(gameData);
+                turnProgressionService.resolveAutoPass(gameData);
+            }
+            return;
+        }
+
+        // Find target permanent (stored in targetCardId during resolution queueing)
+        UUID targetPermId = ability.targetCardId();
+        Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetPermId);
+        if (targetPerm == null) {
+            String logEntry = sourceCard.getName() + "'s copy target is no longer on the battlefield.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} become-copy target no longer on battlefield", gameData.id, sourceCard.getName());
+
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                gameData.priorityPassedBy.clear();
+                gameBroadcastService.broadcastGameState(gameData);
+                turnProgressionService.resolveAutoPass(gameData);
+            }
+            return;
+        }
+
+        // Apply the copy
+        String originalName = sourcePermanent.getCard().getName();
+        gameHelper.applyCloneCopy(sourcePermanent, targetPerm, null, null);
+
+        // Retain the upkeep copy ability per "except it has this ability"
+        Card copiedCard = sourcePermanent.getCard();
+        copiedCard.addEffect(EffectSlot.UPKEEP_TRIGGERED, new BecomeCopyOfTargetCreatureEffect());
+
+        String targetName = targetPerm.getCard().getName();
+        String logEntry = originalName + " becomes a copy of " + targetName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} becomes a copy of {}", gameData.id, originalName, targetName);
+
+        playerInputService.processNextMayAbility(gameData);
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            gameData.priorityPassedBy.clear();
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+        }
     }
 
     private void handleMayNotUntapChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {

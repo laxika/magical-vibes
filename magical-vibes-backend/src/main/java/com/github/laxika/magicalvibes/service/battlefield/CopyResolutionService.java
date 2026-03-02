@@ -8,9 +8,12 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.ValidTargetService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +30,8 @@ public class CopyResolutionService {
 
     private final GameBroadcastService gameBroadcastService;
     private final ValidTargetService validTargetService;
+    private final GameHelper gameHelper;
+    private final GameQueryService gameQueryService;
 
     @HandlesEffect(CopySpellEffect.class)
     void resolveCopySpell(GameData gameData, StackEntry entry) {
@@ -104,6 +109,30 @@ public class CopyResolutionService {
         log.info("Game {} - {} triggers, creating {} copies of {} for each other {}",
                 gameData.id, entry.getCard().getName(), eligibleTargets.size(),
                 spellCard.getName(), subtype.getDisplayName());
+    }
+
+    @HandlesEffect(BecomeCopyOfTargetCreatureEffect.class)
+    void resolveBecomeCopyOfTargetCreature(GameData gameData, StackEntry entry) {
+        UUID targetId = entry.getTargetPermanentId();
+        if (targetId == null) return;
+
+        Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
+        if (targetPerm == null) {
+            log.info("Game {} - Become-copy target no longer exists", gameData.id);
+            return;
+        }
+
+        // CR 603.5: The "may" choice happens at resolution time.
+        // Queue a pending may ability so the controller can choose whether to become a copy.
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                entry.getCard(),
+                entry.getControllerId(),
+                List.of(new BecomeCopyOfTargetCreatureEffect()),
+                entry.getCard().getName() + " — You may have this creature become a copy of " + targetPerm.getCard().getName() + ".",
+                targetId
+        ));
+        log.info("Game {} - {} become-copy may choice queued for target {}",
+                gameData.id, entry.getCard().getName(), targetPerm.getCard().getName());
     }
 
     private StackEntry createCopyStackEntry(StackEntry source, Card copyCard, UUID controllerId, UUID targetPermanentId) {

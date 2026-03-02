@@ -653,7 +653,7 @@ public class GameHelper {
 
     // ===== Clone / Legend =====
 
-    void applyCloneCopy(Permanent clonePerm, Permanent targetPerm, Integer powerOverride, Integer toughnessOverride) {
+    public void applyCloneCopy(Permanent clonePerm, Permanent targetPerm, Integer powerOverride, Integer toughnessOverride) {
         Card target = targetPerm.getCard();
         Card copy = new Card();
         copy.setName(target.getName());

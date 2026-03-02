@@ -540,6 +540,7 @@ Pass `null` as filter to allow any card.
 | `CopyPermanentOnEnterEffect` | `(PermanentPredicate filter, String typeLabel)` or `(PermanentPredicate filter, String typeLabel, Integer powerOverride, Integer toughnessOverride)` | enter as copy of permanent matching filter (Clone-style). Optional P/T overrides for "copy except it's X/Y" (e.g. Quicksilver Gargantuan) |
 | `CopySpellEffect` | `()` | copy target spell |
 | `CopySpellForEachOtherSubtypePermanentEffect` | `(CardSubtype subtype)` | trigger descriptor: whenever a player casts an instant or sorcery spell that targets only a single permanent with the given subtype, copy the spell for each other permanent with that subtype the spell could target. Each copy targets a different one of those permanents. Place in `ON_ANY_PLAYER_CASTS_SPELL` slot. Resolution snapshot populated at trigger time by `checkSpellCastTriggers`. Used by Precursor Golem |
+| `BecomeCopyOfTargetCreatureEffect` | `()` | source permanent becomes a copy of target creature, retaining the triggered ability that granted this effect. Used by Cryptoplasm. Place in UPKEEP_TRIGGERED wrapped in MayEffect. canTargetPermanent=true |
 | `ChangeTargetOfTargetSpellWithSingleTargetEffect` | `()` | change target of target spell with single target |
 
 ## Turn / phase

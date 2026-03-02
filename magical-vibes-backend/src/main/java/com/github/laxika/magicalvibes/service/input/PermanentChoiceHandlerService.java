@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.EffectResolutionService;
@@ -456,6 +457,43 @@ public class PermanentChoiceHandlerService {
             }
 
             gameData.priorityPassedBy.clear();
+            turnProgressionService.resolveAutoPass(gameData);
+        } else if (context instanceof PermanentChoiceContext.UpkeepCopyTriggerTarget uct) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+            if (target != null) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        uct.sourceCard(),
+                        uct.controllerId(),
+                        uct.sourceCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(new BecomeCopyOfTargetCreatureEffect())),
+                        null,
+                        uct.sourcePermanentId()
+                );
+                entry.setTargetPermanentId(permanentId);
+                gameData.stack.add(entry);
+
+                String logEntry = uct.sourceCard().getName() + "'s ability targets " + target.getCard().getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} upkeep copy trigger targets {}", gameData.id, uct.sourceCard().getName(), target.getCard().getName());
+            } else {
+                String logEntry = uct.sourceCard().getName() + "'s ability has no valid target.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} upkeep copy trigger target no longer exists", gameData.id, uct.sourceCard().getName());
+            }
+
+            if (!gameData.pendingUpkeepCopyTargets.isEmpty()) {
+                turnProgressionService.processNextUpkeepCopyTarget(gameData);
+                return;
+            }
+
+            if (!gameData.pendingMayAbilities.isEmpty()) {
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+
+            gameData.priorityPassedBy.clear();
+            gameBroadcastService.broadcastGameState(gameData);
             turnProgressionService.resolveAutoPass(gameData);
         } else if (gameData.interaction.pendingAuraCard() != null) {
             Card auraCard = gameData.interaction.consumePendingAuraCard();

@@ -84,6 +84,7 @@ public class GameData {
     public final Deque<PermanentChoiceContext.AttackTriggerTarget> pendingAttackTriggerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.SpellTargetTriggerAnyTarget> pendingSpellTargetTriggers = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.EmblemTriggerTarget> pendingEmblemTriggerTargets = new ArrayDeque<>();
+    public final Deque<PermanentChoiceContext.UpkeepCopyTriggerTarget> pendingUpkeepCopyTargets = new ArrayDeque<>();
     public boolean discardCausedByOpponent;
     public PendingReturnToHandOnDiscardType pendingReturnToHandOnDiscardType;
     public final Deque<UUID> extraTurns = new ArrayDeque<>();
@@ -335,6 +336,7 @@ public class GameData {
         copy.pendingAttackTriggerTargets.addAll(this.pendingAttackTriggerTargets);
         copy.pendingSpellTargetTriggers.addAll(this.pendingSpellTargetTriggers);
         copy.pendingEmblemTriggerTargets.addAll(this.pendingEmblemTriggerTargets);
+        copy.pendingUpkeepCopyTargets.addAll(this.pendingUpkeepCopyTargets);
         copy.extraTurns.addAll(this.extraTurns);
         this.pendingLibraryBottomReorders.forEach(req ->
                 copy.pendingLibraryBottomReorders.add(new LibraryBottomReorderRequest(req.playerId(), new ArrayList<>(req.cards()))));
