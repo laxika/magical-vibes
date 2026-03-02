@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DistantMemoriesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
@@ -532,6 +533,58 @@ public class LibraryResolutionService {
         String logMsg = playerName + " searches their library.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} searching library for any card ({} cards in library)", gameData.id, playerName, allCards.size());
+    }
+
+    @HandlesEffect(DistantMemoriesEffect.class)
+    void resolveDistantMemories(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        if (!checkSearchRestriction(gameData, controllerId)) {
+            List<Card> deck = gameData.playerDecks.get(controllerId);
+            if (deck != null) Collections.shuffle(deck);
+            return;
+        }
+
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        if (deck == null || deck.isEmpty()) {
+            // Empty library: no card to exile, but the "if no player does" clause still triggers — draw 3
+            String logMsg = playerName + " searches their library but it is empty. " + playerName + " draws three cards.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            for (int i = 0; i < 3; i++) {
+                gameHelper.resolveDrawCard(gameData, controllerId);
+            }
+            return;
+        }
+
+        List<Card> allCards = new ArrayList<>(deck);
+
+        gameData.pendingOpponentExileChoice = new com.github.laxika.magicalvibes.model.PendingOpponentExileChoice(controllerId, 3);
+
+        gameData.interaction.beginLibrarySearch(
+                controllerId,
+                allCards,
+                false,
+                false,
+                null,
+                0,
+                null,
+                false,
+                true,
+                null,
+                LibrarySearchDestination.EXILE
+        );
+
+        List<CardView> cardViews = allCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
+                cardViews,
+                "Search your library for a card to exile.",
+                false
+        ));
+
+        String logMsg = playerName + " searches their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} searching library for Distant Memories ({} cards in library)", gameData.id, playerName, allCards.size());
     }
 
     @HandlesEffect(SearchLibraryForCreatureWithMVXOrLessToHandEffect.class)

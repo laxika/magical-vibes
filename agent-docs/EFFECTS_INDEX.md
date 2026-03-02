@@ -291,6 +291,7 @@ Pass `null` as filter to allow any card.
 | `SearchLibraryForCardTypesToBattlefieldEffect` | `(Set<CardType> cardTypes, boolean requiresBasicSupertype, boolean entersTapped)` | search library for card to battlefield |
 | `SearchLibraryForCardTypeToExileAndImprintEffect` | `(Set<CardType> cardTypes)` | search library for card of specific types, exile it, and imprint on source permanent |
 | `SearchLibraryForCreatureWithMVXOrLessToHandEffect` | `()` | search library for creature with MV X or less to hand |
+| `DistantMemoriesEffect` | `()` | search library for any card, exile it, shuffle; opponent may let you have it, otherwise draw 3 |
 | `PayManaAndSearchLibraryForCardNamedToBattlefieldEffect` | `(String manaCost, String cardName)` | pay mana, search for named card to battlefield |
 | `LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect` | `(int count, Set<CardType> cardTypes)` | look at top N, may reveal matching type to hand, rest on bottom |
 | `ImprintFromTopCardsEffect` | `(int count)` | look at top N cards, exile one face down (imprint on source), rest on bottom in any order |
@@ -620,6 +621,7 @@ Pass `null` as filter to allow any card.
 |--------|-------------|--------|
 | `PutCardToBattlefieldEffect` | `(CardType cardType)` | you may put a card of type from hand onto battlefield (wrap in MayEffect) |
 | `OpponentMayPlayCreatureEffect` | `()` | opponent may put a creature card from hand onto battlefield |
+| `OpponentMayReturnExiledCardOrDrawEffect` | `(int drawCount)` | opponent may let controller have an exiled card; if declined, controller draws N cards. Used as may-ability marker after library-search-to-exile |
 
 ## Card-specific / one-off
 

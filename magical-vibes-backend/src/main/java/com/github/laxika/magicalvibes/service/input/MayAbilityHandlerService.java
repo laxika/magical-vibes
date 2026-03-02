@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
@@ -116,6 +117,16 @@ public class MayAbilityHandlerService {
         boolean isLoseLifeUnlessDiscard = ability.effects().stream().anyMatch(e -> e instanceof LoseLifeUnlessDiscardEffect);
         if (isLoseLifeUnlessDiscard) {
             handleLoseLifeUnlessDiscardChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Opponent may return exiled card to hand, or controller draws N (e.g. Distant Memories)
+        OpponentMayReturnExiledCardOrDrawEffect opponentExileChoice = ability.effects().stream()
+                .filter(e -> e instanceof OpponentMayReturnExiledCardOrDrawEffect)
+                .map(e -> (OpponentMayReturnExiledCardOrDrawEffect) e)
+                .findFirst().orElse(null);
+        if (opponentExileChoice != null) {
+            handleOpponentExileChoice(gameData, player, accepted, ability, opponentExileChoice);
             return;
         }
 
@@ -548,6 +559,67 @@ public class MayAbilityHandlerService {
             String logEntry = player.getUsername() + " loses " + effect.lifeLoss() + " life. (" + ability.sourceCard().getName() + ")";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} loses {} life (declined discard, {})", gameData.id, player.getUsername(), effect.lifeLoss(), ability.sourceCard().getName());
+        }
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        playerInputService.processNextMayAbility(gameData);
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            gameData.priorityPassedBy.clear();
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+        }
+    }
+
+    private void handleOpponentExileChoice(GameData gameData, Player player, boolean accepted,
+                                             PendingMayAbility ability, OpponentMayReturnExiledCardOrDrawEffect effect) {
+        UUID opponentId = ability.controllerId(); // opponent is the decision maker
+        UUID exiledCardId = ability.targetCardId();
+
+        // Find the spell controller (the other player)
+        UUID controllerId = null;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (!pid.equals(opponentId)) {
+                controllerId = pid;
+                break;
+            }
+        }
+
+        if (controllerId == null) {
+            throw new IllegalStateException("Cannot find exiled card owner");
+        }
+
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String opponentName = gameData.playerIdToName.get(opponentId);
+
+        if (accepted) {
+            // Opponent lets the controller have the exiled card — move from exile to hand
+            Card exiledCard = null;
+            List<Card> exileZone = gameData.playerExiledCards.get(controllerId);
+            if (exileZone != null) {
+                for (int i = 0; i < exileZone.size(); i++) {
+                    if (exileZone.get(i).getId().equals(exiledCardId)) {
+                        exiledCard = exileZone.remove(i);
+                        break;
+                    }
+                }
+            }
+
+            if (exiledCard != null) {
+                gameData.playerHands.get(controllerId).add(exiledCard);
+                String logEntry = opponentName + " allows it. " + controllerName + " puts " + exiledCard.getName() + " into their hand.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} allows exile return, {} gets {}", gameData.id, opponentName, controllerName, exiledCard.getName());
+            }
+        } else {
+            // Opponent declines — controller draws cards
+            int drawCount = effect.drawCount();
+            for (int i = 0; i < drawCount; i++) {
+                gameHelper.resolveDrawCard(gameData, controllerId);
+            }
+
+            String logEntry = opponentName + " declines. " + controllerName + " draws " + drawCount + " cards.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines exile return, {} draws {}", gameData.id, opponentName, controllerName, drawCount);
         }
 
         stateBasedActionService.performStateBasedActions(gameData);

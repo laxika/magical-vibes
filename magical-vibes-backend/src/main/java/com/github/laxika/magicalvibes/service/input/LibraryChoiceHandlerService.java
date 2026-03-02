@@ -5,9 +5,12 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.PendingOpponentExileChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -303,6 +306,47 @@ public class LibraryChoiceHandlerService {
             throw new IllegalStateException("Chosen card not found in library");
         }
 
+        if (destination == LibrarySearchDestination.EXILE) {
+            gameData.playerExiledCards.get(playerId).add(chosenCard);
+            if (shuffleAfterSelection) {
+                Collections.shuffle(deck);
+            }
+
+            String logMsg = shuffleAfterSelection
+                    ? player.getUsername() + " exiles a card face down. Library is shuffled."
+                    : player.getUsername() + " exiles a card face down.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - {} exiles {} from library search", gameData.id, player.getUsername(), chosenCard.getName());
+
+            if (gameData.pendingOpponentExileChoice != null) {
+                PendingOpponentExileChoice pending = gameData.pendingOpponentExileChoice;
+                gameData.pendingOpponentExileChoice = null;
+
+                UUID opponentId = null;
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    if (!pid.equals(pending.controllerId())) {
+                        opponentId = pid;
+                        break;
+                    }
+                }
+
+                if (opponentId != null) {
+                    String controllerName = gameData.playerIdToName.get(pending.controllerId());
+                    String prompt = "Let " + controllerName + " put the exiled card into their hand? If you decline, they draw "
+                            + pending.drawCountOnDecline() + " cards.";
+                    gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                            chosenCard, opponentId,
+                            List.of(new OpponentMayReturnExiledCardOrDrawEffect(pending.drawCountOnDecline())),
+                            prompt, chosenCard.getId()
+                    ));
+                    playerInputService.processNextMayAbility(gameData);
+                }
+            } else {
+                turnProgressionService.resolveAutoPass(gameData);
+            }
+            return;
+        }
+
         if (destination == LibrarySearchDestination.HAND) {
             gameData.playerHands.get(handOwnerId).add(chosenCard);
         } else if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
@@ -364,6 +408,7 @@ public class LibraryChoiceHandlerService {
             case BATTLEFIELD_TAPPED -> "onto the battlefield tapped";
             case HAND -> "into their hand";
             case EXILE_IMPRINT -> "into exile (imprint)";
+            case EXILE -> "into exile";
         };
         String logEntry;
         if (targetPlayerId != null) {

@@ -65,6 +65,7 @@ public class GameData {
     public final GraveyardTargetOperationState graveyardTargetOperation = new GraveyardTargetOperationState();
     public final CloneOperationState cloneOperation = new CloneOperationState();
     public UUID imprintSourcePermanentId;
+    public PendingOpponentExileChoice pendingOpponentExileChoice;
     public UUID pendingCombatDamageBounceTargetPlayerId;
     public int pendingProliferateCount;
     public StackEntry pendingEffectResolutionEntry;
@@ -311,6 +312,9 @@ public class GameData {
 
         // --- Imprint ---
         copy.imprintSourcePermanentId = this.imprintSourcePermanentId;
+
+        // --- Post-exile search ---
+        copy.pendingOpponentExileChoice = this.pendingOpponentExileChoice; // record — immutable
 
         // --- CloneOperationState ---
         copy.cloneOperation.card = this.cloneOperation.card;

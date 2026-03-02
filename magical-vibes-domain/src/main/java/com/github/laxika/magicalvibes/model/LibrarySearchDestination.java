@@ -4,5 +4,6 @@ public enum LibrarySearchDestination {
     HAND,
     BATTLEFIELD,
     BATTLEFIELD_TAPPED,
-    EXILE_IMPRINT
+    EXILE_IMPRINT,
+    EXILE
 }
