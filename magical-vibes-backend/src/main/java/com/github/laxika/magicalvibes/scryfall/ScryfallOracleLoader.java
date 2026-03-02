@@ -67,7 +67,7 @@ public class ScryfallOracleLoader {
         KEYWORD_MAP.put("Hexproof", Keyword.HEXPROOF);
         KEYWORD_MAP.put("Infect", Keyword.INFECT);
         KEYWORD_MAP.put("Intimidate", Keyword.INTIMIDATE);
-        KEYWORD_MAP.put("Battle cry", Keyword.BATTLE_CRY);
+        KEYWORD_MAP.put("Battle Cry", Keyword.BATTLE_CRY);
         KEYWORD_MAP.put("Living weapon", Keyword.LIVING_WEAPON);
         KEYWORD_MAP.put("Deathtouch", Keyword.DEATHTOUCH);
     }

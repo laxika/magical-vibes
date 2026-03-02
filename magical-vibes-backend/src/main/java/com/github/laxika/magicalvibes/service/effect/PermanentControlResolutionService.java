@@ -89,6 +89,11 @@ public class PermanentControlResolutionService {
             Permanent tokenPermanent = new Permanent(tokenCard);
             gameHelper.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
 
+            if (token.tappedAndAttacking()) {
+                tokenPermanent.tap();
+                tokenPermanent.setAttacking(true);
+            }
+
             String colorDesc;
             if (token.colors() != null && !token.colors().isEmpty()) {
                 colorDesc = token.colors().stream()
@@ -98,7 +103,8 @@ public class PermanentControlResolutionService {
             } else {
                 colorDesc = "";
             }
-            String logEntry = "A " + token.power() + "/" + token.toughness() + " " + colorDesc + token.tokenName() + " creature token enters the battlefield.";
+            String tappedAttackingDesc = token.tappedAndAttacking() ? " tapped and attacking" : "";
+            String logEntry = "A " + token.power() + "/" + token.toughness() + " " + colorDesc + token.tokenName() + " creature token enters the battlefield" + tappedAttackingDesc + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
             gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
