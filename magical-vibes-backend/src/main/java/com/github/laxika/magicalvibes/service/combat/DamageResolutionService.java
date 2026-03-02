@@ -40,6 +40,14 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.function.Predicate;
 
+/**
+ * Resolves all damage-dealing effects dispatched from the stack.
+ *
+ * <p>Each {@code resolve*} method corresponds to a specific {@link com.github.laxika.magicalvibes.model.effect.CardEffect}
+ * subtype and is discovered at runtime via the {@link HandlesEffect} annotation. The service handles damage
+ * multipliers, prevention shields, protection checks, infect, deathtouch, indestructible, regeneration,
+ * and lethal-damage destruction for both creature and player targets.</p>
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -52,16 +60,26 @@ public class DamageResolutionService {
     private final TriggerCollectionService triggerCollectionService;
     private final LifeResolutionService lifeResolutionService;
 
+    /**
+     * Resolves {@link DealXDamageToTargetCreatureEffect} — deals X damage to the targeted creature.
+     */
     @HandlesEffect(DealXDamageToTargetCreatureEffect.class)
     void resolveDealXDamageToTargetCreature(GameData gameData, StackEntry entry) {
         resolveCreatureTargetDamage(gameData, entry, gameQueryService.applyDamageMultiplier(gameData, entry.getXValue()));
     }
 
+    /**
+     * Resolves {@link DealDamageToTargetCreatureEffect} — deals a fixed amount of damage to the targeted creature.
+     */
     @HandlesEffect(DealDamageToTargetCreatureEffect.class)
     void resolveDealDamageToTargetCreature(GameData gameData, StackEntry entry, DealDamageToTargetCreatureEffect effect) {
         resolveCreatureTargetDamage(gameData, entry, gameQueryService.applyDamageMultiplier(gameData, effect.damage()));
     }
 
+    /**
+     * Resolves {@link DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect} — deals damage to the
+     * targeted creature equal to the number of permanents the controller has of a specific subtype.
+     */
     @HandlesEffect(DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect.class)
     void resolveDealDamageToTargetCreatureEqualToControlledSubtypeCount(
             GameData gameData,
@@ -72,6 +90,10 @@ public class DamageResolutionService {
         resolveCreatureTargetDamage(gameData, entry, gameQueryService.applyDamageMultiplier(gameData, count));
     }
 
+    /**
+     * Resolves {@link DealXDamageDividedAmongTargetAttackingCreaturesEffect} — distributes X damage among
+     * targeted attacking creatures according to the player's damage assignments.
+     */
     @HandlesEffect(DealXDamageDividedAmongTargetAttackingCreaturesEffect.class)
     void resolveDealXDamageDividedAmongTargetAttackingCreatures(GameData gameData, StackEntry entry) {
         Map<UUID, Integer> assignments = entry.getDamageAssignments();
@@ -97,6 +119,10 @@ public class DamageResolutionService {
         destroyAllLethal(gameData, destroyed);
     }
 
+    /**
+     * Resolves {@link MassDamageEffect} — deals damage to all creatures on the battlefield (optionally
+     * filtered by a predicate) and, if the effect specifies it, to all players as well.
+     */
     @HandlesEffect(MassDamageEffect.class)
     void resolveMassDamage(GameData gameData, StackEntry entry, MassDamageEffect effect) {
         if (isDamageSourcePreventedWithLog(gameData, entry)) return;
@@ -119,6 +145,9 @@ public class DamageResolutionService {
         }
     }
 
+    /**
+     * Resolves {@link DealXDamageToAnyTargetEffect} — deals X damage to any target (creature or player).
+     */
     @HandlesEffect(DealXDamageToAnyTargetEffect.class)
     void resolveDealXDamageToAnyTarget(GameData gameData, StackEntry entry) {
         UUID targetId = entry.getTargetPermanentId();
@@ -129,6 +158,10 @@ public class DamageResolutionService {
         gameHelper.checkWinCondition(gameData);
     }
 
+    /**
+     * Resolves {@link DealXDamageToAnyTargetAndGainXLifeEffect} — deals X damage to any target and
+     * the controller gains X life. The life gain occurs regardless of damage prevention.
+     */
     @HandlesEffect(DealXDamageToAnyTargetAndGainXLifeEffect.class)
     void resolveDealXDamageToAnyTargetAndGainXLife(GameData gameData, StackEntry entry) {
         UUID targetId = entry.getTargetPermanentId();
@@ -144,6 +177,9 @@ public class DamageResolutionService {
         gameHelper.checkWinCondition(gameData);
     }
 
+    /**
+     * Resolves {@link DealDamageToTargetPlayerEffect} — deals a fixed amount of damage to the targeted player.
+     */
     @HandlesEffect(DealDamageToTargetPlayerEffect.class)
     void resolveDealDamageToTargetPlayer(GameData gameData, StackEntry entry, DealDamageToTargetPlayerEffect effect) {
         UUID targetId = entry.getTargetPermanentId();
@@ -157,6 +193,10 @@ public class DamageResolutionService {
         gameHelper.checkWinCondition(gameData);
     }
 
+    /**
+     * Resolves {@link DealDamageToTargetPlayerByHandSizeEffect} — deals damage to the targeted player
+     * equal to the number of cards in that player's hand.
+     */
     @HandlesEffect(DealDamageToTargetPlayerByHandSizeEffect.class)
     void resolveDealDamageToTargetPlayerByHandSize(GameData gameData, StackEntry entry) {
         UUID targetId = entry.getTargetPermanentId();
@@ -171,6 +211,10 @@ public class DamageResolutionService {
         gameHelper.checkWinCondition(gameData);
     }
 
+    /**
+     * Resolves {@link DealDamageIfFewCardsInHandEffect} — deals damage to the targeted player only if
+     * they have at most the specified number of cards in hand (intervening-if condition rechecked at resolution).
+     */
     @HandlesEffect(DealDamageIfFewCardsInHandEffect.class)
     void resolveDealDamageIfFewCardsInHand(GameData gameData, StackEntry entry, DealDamageIfFewCardsInHandEffect effect) {
         UUID targetId = entry.getTargetPermanentId();
@@ -196,6 +240,10 @@ public class DamageResolutionService {
         gameHelper.checkWinCondition(gameData);
     }
 
+    /**
+     * Resolves {@link DealDamageToAnyTargetEffect} — deals a fixed amount of damage to any target
+     * (creature or player), optionally preventing regeneration.
+     */
     @HandlesEffect(DealDamageToAnyTargetEffect.class)
     void resolveDealDamageToAnyTarget(GameData gameData, StackEntry entry, DealDamageToAnyTargetEffect effect) {
         UUID targetId = entry.getTargetPermanentId();
@@ -206,6 +254,11 @@ public class DamageResolutionService {
         gameHelper.checkWinCondition(gameData);
     }
 
+    /**
+     * Resolves {@link DealDamageEqualToSourcePowerToAnyTargetEffect} — deals damage equal to the source
+     * permanent's power to any target. Does nothing if the source is no longer on the battlefield or has
+     * zero or negative power.
+     */
     @HandlesEffect(DealDamageEqualToSourcePowerToAnyTargetEffect.class)
     void resolveDealDamageEqualToSourcePowerToAnyTarget(GameData gameData, StackEntry entry) {
         UUID targetId = entry.getTargetPermanentId();
@@ -225,6 +278,11 @@ public class DamageResolutionService {
         gameHelper.checkWinCondition(gameData);
     }
 
+    /**
+     * Resolves {@link DealOrderedDamageToAnyTargetsEffect} — deals different damage amounts to an ordered
+     * list of targets (each target may be a creature or player). For example, "deal 3 damage to target A
+     * and 2 damage to target B".
+     */
     @HandlesEffect(DealOrderedDamageToAnyTargetsEffect.class)
     void resolveDealOrderedDamageToAnyTargets(GameData gameData, StackEntry entry, DealOrderedDamageToAnyTargetsEffect effect) {
         List<UUID> targets = entry.getTargetPermanentIds();
@@ -264,6 +322,10 @@ public class DamageResolutionService {
         gameHelper.checkWinCondition(gameData);
     }
 
+    /**
+     * Resolves {@link DealDamageToAnyTargetAndGainLifeEffect} — deals a fixed amount of damage to any target
+     * and the controller gains a fixed amount of life. The life gain occurs regardless of damage prevention.
+     */
     @HandlesEffect(DealDamageToAnyTargetAndGainLifeEffect.class)
     void resolveDealDamageToAnyTargetAndGainLife(GameData gameData, StackEntry entry, DealDamageToAnyTargetAndGainLifeEffect effect) {
         UUID targetId = entry.getTargetPermanentId();
@@ -478,6 +540,11 @@ public class DamageResolutionService {
         }
     }
 
+    /**
+     * Resolves {@link FirstTargetDealsPowerDamageToSecondTargetEffect} — the first targeted creature deals
+     * damage equal to its power to the second targeted creature ("bite" mechanic). Protection is checked
+     * against the biting creature's color rather than the spell's color.
+     */
     @HandlesEffect(FirstTargetDealsPowerDamageToSecondTargetEffect.class)
     void resolveBite(GameData gameData, StackEntry entry) {
         List<UUID> targets = entry.getTargetPermanentIds();
@@ -518,6 +585,11 @@ public class DamageResolutionService {
         dealDamageAndDestroyIfLethal(gameData, entry, target, rawDamage, biter);
     }
 
+    /**
+     * Resolves {@link RevealTopCardDealManaValueDamageEffect} — reveals the top card of the target player's
+     * library and deals damage equal to its mana value. Optionally damages the player, their creatures, or
+     * returns the source to its owner's hand if the revealed card is a land.
+     */
     @HandlesEffect(RevealTopCardDealManaValueDamageEffect.class)
     void resolveRevealTopCardDealManaValueDamage(GameData gameData, StackEntry entry, RevealTopCardDealManaValueDamageEffect effect) {
         UUID targetPlayerId = entry.getTargetPermanentId();
@@ -562,6 +634,10 @@ public class DamageResolutionService {
         }
     }
 
+    /**
+     * Resolves {@link DealDamageToControllerEffect} — deals a fixed amount of damage to the spell or
+     * ability's controller (self-damage, e.g. pain lands or drawback costs).
+     */
     @HandlesEffect(DealDamageToControllerEffect.class)
     void resolveDealDamageToController(GameData gameData, StackEntry entry, DealDamageToControllerEffect effect) {
         if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
@@ -575,6 +651,10 @@ public class DamageResolutionService {
         gameHelper.checkWinCondition(gameData);
     }
 
+    /**
+     * Resolves {@link DealDamageToTargetControllerIfTargetHasKeywordEffect} — deals damage to the controller
+     * of the targeted permanent, but only if that permanent has the specified keyword.
+     */
     @HandlesEffect(DealDamageToTargetControllerIfTargetHasKeywordEffect.class)
     void resolveDealDamageToTargetControllerIfTargetHasKeyword(
             GameData gameData,
@@ -602,6 +682,11 @@ public class DamageResolutionService {
         gameHelper.checkWinCondition(gameData);
     }
 
+    /**
+     * Resolves {@link DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect} — deals damage to each
+     * opponent equal to the number of cards that opponent has drawn this turn. Opponents who drew no
+     * cards take no damage.
+     */
     @HandlesEffect(DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect.class)
     void resolveDealDamageToEachOpponentEqualToCardsDrawnThisTurn(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
