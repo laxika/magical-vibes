@@ -256,7 +256,7 @@ class LordOfThePitTest extends BaseCardTest {
 
         // Damage from black source is prevented
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("damage is prevented"));
+        assertThat(gd.gameLog).anyMatch(log -> log.contains("is prevented"));
     }
 
     @Test

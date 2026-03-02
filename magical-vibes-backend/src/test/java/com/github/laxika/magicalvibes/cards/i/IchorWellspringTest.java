@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -90,12 +91,15 @@ class IchorWellspringTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        // Use Shock (or any destroy effect) to destroy the Wellspring
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        // Use Shatter to destroy the Wellspring
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         var targetId = harness.getPermanentId(player1, "Ichor Wellspring");
         harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities(); // resolve Shock — destroys Wellspring
+        harness.passBothPriorities(); // resolve Shatter — destroys Wellspring
 
         // Death trigger should be on the stack
         assertThat(gd.stack).hasSize(1);
