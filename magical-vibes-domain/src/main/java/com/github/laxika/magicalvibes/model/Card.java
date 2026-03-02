@@ -33,6 +33,7 @@ public class Card {
     @Setter private CardType type;
     @Setter private String manaCost;
     @Setter private CardColor color;
+    @Setter private List<CardColor> colors = List.of();
 
     @Setter private Set<CardType> additionalTypes = Set.of();
     @Setter private Set<CardSupertype> supertypes = Set.of();
@@ -66,6 +67,7 @@ public class Card {
             this.additionalTypes = oracle.additionalTypes();
             this.manaCost = oracle.manaCost();
             this.color = oracle.color();
+            this.colors = oracle.colors();
             this.supertypes = oracle.supertypes();
             this.subtypes = oracle.subtypes();
             this.cardText = oracle.cardText();

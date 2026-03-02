@@ -36,6 +36,7 @@ public class CardViewFactory {
                 card.getSetCode(),
                 card.getCollectorNumber(),
                 card.getColor(),
+                card.getColors(),
                 card.isNeedsTarget(),
                 card.isNeedsSpellTarget(),
                 abilityViews,

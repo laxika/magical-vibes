@@ -120,6 +120,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | On damaged creature dies | `s/SengirVampire.java` | ON_DAMAGED_CREATURE_DIES PutPlusOnePlusOneCounterOnSourceEffect |
 | Other creature enters | `s/SoulWarden.java` | ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD GainLifeEffect |
 | Ally creature dies | `g/GravePact.java` | ON_ALLY_CREATURE_DIES EachOpponentSacrificesCreatureEffect |
+| Opponent creature dies | `g/GlissaTheTraitor.java` | ON_OPPONENT_CREATURE_DIES MayEffect(ReturnCardFromGraveyardEffect(HAND, CardTypePredicate(ARTIFACT))) — includes tokens |
 | Any artifact goes to graveyard from battlefield | `m/MolderBeast.java` | ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD BoostSelfEffect |
 | Artifact put into opponent's graveyard from battlefield | `v/ViridianRevel.java` | ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD MayEffect(DrawCardEffect) |
 | Opponent draws | `u/UnderworldDreams.java` | ON_OPPONENT_DRAWS DealDamageToTargetPlayerEffect |

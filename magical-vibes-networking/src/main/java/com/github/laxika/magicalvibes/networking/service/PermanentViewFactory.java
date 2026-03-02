@@ -79,7 +79,7 @@ public class PermanentViewFactory {
                 cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), mergedSubtypes,
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
-                cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
+                cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke()
         );
@@ -97,7 +97,7 @@ public class PermanentViewFactory {
                 cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), mergedSubtypes,
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
-                cardView.collectorNumber(), CardColor.GREEN, cardView.needsTarget(),
+                cardView.collectorNumber(), CardColor.GREEN, List.of(CardColor.GREEN), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke()
         );
@@ -113,7 +113,7 @@ public class PermanentViewFactory {
                 cardView.name(), cardView.type(), mergedTypes, cardView.supertypes(), cardView.subtypes(),
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
-                cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
+                cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke()
         );
@@ -133,7 +133,7 @@ public class PermanentViewFactory {
                 cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), cardView.subtypes(),
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), hasTapAbility, cardView.setCode(),
-                cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
+                cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), mergedAbilities, cardView.loyalty(),
                 cardView.hasConvoke()
         );
@@ -151,7 +151,7 @@ public class PermanentViewFactory {
                 cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), cardView.subtypes(),
                 modifiedText, cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
-                cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
+                cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke()
         );
@@ -193,7 +193,7 @@ public class PermanentViewFactory {
                 cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), mergedSubtypes,
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
-                cardView.collectorNumber(), cardView.color(), cardView.needsTarget(),
+                cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke()
         );
@@ -206,22 +206,25 @@ public class PermanentViewFactory {
             return cardView;
         }
         CardColor effectiveColor = cardView.color();
+        List<CardColor> effectiveColors = new ArrayList<>(cardView.colors());
         if (p.isColorOverridden() && !p.getGrantedColors().isEmpty()) {
             effectiveColor = p.getGrantedColors().iterator().next();
+            effectiveColors = new ArrayList<>(p.getGrantedColors());
         }
         if (!staticGrantedColors.isEmpty()) {
             // Static color grants take precedence for display if the card has no color
             // For multicolor, we display the first granted color as primary
             effectiveColor = staticGrantedColors.iterator().next();
+            effectiveColors = new ArrayList<>(staticGrantedColors);
         }
-        if (effectiveColor == cardView.color()) {
+        if (effectiveColor == cardView.color() && effectiveColors.equals(cardView.colors())) {
             return cardView;
         }
         return new CardView(
                 cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), cardView.subtypes(),
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
-                cardView.collectorNumber(), effectiveColor, cardView.needsTarget(),
+                cardView.collectorNumber(), effectiveColor, List.copyOf(effectiveColors), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke()
         );

@@ -156,6 +156,7 @@ export interface Card {
   setCode: string | null;
   collectorNumber: string | null;
   color: string | null;
+  colors: string[];
   needsTarget: boolean;
   needsSpellTarget: boolean;
   activatedAbilities: ActivatedAbilityView[];

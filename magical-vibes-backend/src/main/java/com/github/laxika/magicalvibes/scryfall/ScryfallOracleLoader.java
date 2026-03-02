@@ -223,6 +223,7 @@ public class ScryfallOracleLoader {
 
         // Color
         CardColor color = parseColor(card);
+        List<CardColor> colors = parseColors(card);
 
         // Oracle text (strip reminder text in parentheses)
         String cardText = null;
@@ -284,6 +285,7 @@ public class ScryfallOracleLoader {
                 parsed.additionalTypes(),
                 manaCost,
                 color,
+                colors,
                 parsed.supertypes(),
                 parsed.subtypes(),
                 cardText,
@@ -312,6 +314,32 @@ public class ScryfallOracleLoader {
         }
 
         return null;
+    }
+
+    private static List<CardColor> parseColors(JsonNode card) {
+        List<CardColor> colors = new ArrayList<>();
+        if (card.has("colors") && card.get("colors").isArray()) {
+            for (JsonNode colorNode : card.get("colors")) {
+                CardColor mapped = COLOR_MAP.get(colorNode.asText());
+                if (mapped != null) {
+                    colors.add(mapped);
+                }
+            }
+        }
+        if (colors.isEmpty()) {
+            // For lands, derive from color_identity (same logic as parseColor)
+            String typeLine = card.has("type_line") ? card.get("type_line").asText() : "";
+            if (typeLine.contains("Land")
+                    && card.has("color_identity") && card.get("color_identity").isArray()) {
+                for (JsonNode colorNode : card.get("color_identity")) {
+                    CardColor mapped = COLOR_MAP.get(colorNode.asText());
+                    if (mapped != null) {
+                        colors.add(mapped);
+                    }
+                }
+            }
+        }
+        return List.copyOf(colors);
     }
 }
 

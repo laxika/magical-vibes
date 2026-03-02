@@ -9,6 +9,7 @@ public record OracleData(
         Set<CardType> additionalTypes,
         String manaCost,
         CardColor color,
+        List<CardColor> colors,
         Set<CardSupertype> supertypes,
         List<CardSubtype> subtypes,
         String cardText,

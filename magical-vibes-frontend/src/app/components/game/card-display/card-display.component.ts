@@ -56,9 +56,42 @@ export class CardDisplayComponent implements OnInit, OnChanges {
     }
   }
 
+  private static readonly COLOR_CSS_MAP: Record<string, string> = {
+    'BLACK': '#1a1a20',
+    'GREEN': '#4a7c28',
+    'BLUE': '#2c5ea2',
+    'RED': '#a03030',
+    'WHITE': '#f0e6b2',
+  };
+
   @HostBinding('attr.data-card-color')
   get cardColor(): string | null {
-    return this.card.color;
+    const colors = this.card.colors;
+    if (colors && colors.length > 1) {
+      return 'MULTICOLOR';
+    }
+    return colors && colors.length === 1 ? colors[0] : this.card.color;
+  }
+
+  @HostBinding('style.background')
+  get multicolorBackground(): string | null {
+    const colors = this.card.colors;
+    if (!colors || colors.length <= 1) {
+      return null;
+    }
+    const cssColors = colors
+      .map(c => CardDisplayComponent.COLOR_CSS_MAP[c])
+      .filter((c): c is string => c != null);
+    if (cssColors.length < 2) {
+      return null;
+    }
+    if (cssColors.length === 2) {
+      return `linear-gradient(135deg, ${cssColors[0]} 0%, ${cssColors[1]} 100%)`;
+    }
+    const stops = cssColors.map((c, i) =>
+      `${c} ${Math.round((i / (cssColors.length - 1)) * 100)}%`
+    );
+    return `linear-gradient(135deg, ${stops.join(', ')})`;
   }
 
   @HostBinding('style.transform')

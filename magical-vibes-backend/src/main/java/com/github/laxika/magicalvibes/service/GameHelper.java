@@ -1226,6 +1226,40 @@ public class GameHelper {
         });
     }
 
+    public void checkOpponentCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId) {
+        gameData.forEachPermanent((playerId, perm) -> {
+            // Only fire when the dying creature was controlled by an opponent of this permanent's controller
+            if (playerId.equals(dyingCreatureControllerId)) return;
+
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES);
+            if (effects == null || effects.isEmpty()) return;
+
+            for (CardEffect effect : effects) {
+                if (effect instanceof MayEffect may) {
+                    gameData.pendingMayAbilities.add(new PendingMayAbility(
+                            perm.getCard(),
+                            playerId,
+                            List.of(may.wrapped()),
+                            perm.getCard().getName() + " — " + may.prompt()
+                    ));
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            playerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(effect)),
+                            null,
+                            perm.getId()
+                    ));
+                }
+                String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                log.info("Game {} - {} triggers (opponent creature died)", gameData.id, perm.getCard().getName());
+            }
+        });
+    }
+
     void checkAnyCreatureEntersTriggers(GameData gameData, UUID enteringCreatureControllerId, Card enteringCreature) {
         // Non-creature permanents (e.g. artifacts) should not trigger "creature enters" triggers
         if (enteringCreature.getToughness() == null) return;

@@ -55,6 +55,11 @@
   border-color: #2a2a30;
 }
 
+:host([data-card-color="MULTICOLOR"]) {
+  border-color: #c9a726;
+  color: #f5e6c8;
+}
+
 /* Title bar */
 .title-bar {
   display: flex;
@@ -202,6 +207,10 @@ img.card-art {
   background: rgba(0, 0, 0, 0.15);
 }
 
+:host([data-card-color="MULTICOLOR"]) .flavor-separator {
+  background: rgba(201, 167, 38, 0.4);
+}
+
 .text-box .card-flavor-text {
   font-style: italic;
   opacity: 0.7;
@@ -258,6 +267,11 @@ img.card-art {
 :host([data-card-color="BLACK"]) .card-pt {
   background: rgba(20, 20, 26, 0.75);
   border-color: rgba(58, 58, 68, 0.5);
+}
+
+:host([data-card-color="MULTICOLOR"]) .card-pt {
+  background: rgba(120, 100, 20, 0.75);
+  border-color: rgba(201, 167, 38, 0.5);
 }
 
 /* Buffed state */

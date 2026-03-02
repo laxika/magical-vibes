@@ -24,6 +24,7 @@ public record CardView(
         String setCode,
         String collectorNumber,
         CardColor color,
+        List<CardColor> colors,
         boolean needsTarget,
         boolean needsSpellTarget,
         List<ActivatedAbilityView> activatedAbilities,
