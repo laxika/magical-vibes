@@ -1056,7 +1056,7 @@ public class CombatService {
         // Process defender-side damage triggers (e.g. Dissipation Field)
         for (var dmgEntry : state.combatDamageDealtToPlayer.entrySet()) {
             if (dmgEntry.getValue() > 0) {
-                triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, defenderId, dmgEntry.getKey().getId());
+                triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, defenderId, dmgEntry.getKey().getId(), true);
             }
         }
 

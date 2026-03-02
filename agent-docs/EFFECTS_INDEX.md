@@ -161,6 +161,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `ReturnArtifactsTargetPlayerOwnsToHandEffect` | `()` | return all artifacts target player owns to hand |
 | `BounceCreatureOnUpkeepEffect` | `(Scope scope, Set<TargetFilter> filters, String prompt)` | at upkeep, return a creature matching filters. Scope: `SOURCE_CONTROLLER`, `TRIGGER_TARGET_PLAYER` |
 | `ReturnDamageSourcePermanentToHandEffect` | `()` | whenever a permanent deals damage to controller, return it to owner's hand (Dissipation Field-style). Use with `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` slot |
+| `DamageSourceControllerGainsControlOfThisPermanentEffect` | `(boolean combatOnly, boolean creatureOnly)` | whenever a permanent deals damage to controller, the damage source's controller gains control of this permanent (Contested War Zone-style). Use with `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` slot. `combatOnly=true` restricts to combat damage only; `creatureOnly=true` restricts to creature damage sources only |
 | `PutTargetOnBottomOfLibraryEffect` | `()` | put target permanent on bottom of owner's library |
 | `PutTargetOnTopOfLibraryEffect` | `()` | put target permanent on top of owner's library |
 
@@ -388,6 +389,7 @@ Pass `null` as filter to allow any card.
 | `BoostTargetCreatureEffect` | `(int powerBoost, int toughnessBoost)` | target creature gets +X/+Y until end of turn |
 | `BoostSelfEffect` | `(int powerBoost, int toughnessBoost)` | this creature gets +X/+Y until end of turn |
 | `BoostAllOwnCreaturesEffect` | `(int powerBoost, int toughnessBoost)` or `(int powerBoost, int toughnessBoost, PermanentPredicate filter)` | all your creatures get +X/+Y until end of turn (one-shot). Optional predicate filter |
+| `BoostAllCreaturesEffect` | `(int powerBoost, int toughnessBoost)` or `(int powerBoost, int toughnessBoost, PermanentPredicate filter)` | ALL creatures (all players) get +X/+Y until end of turn (one-shot). Optional predicate filter. Unlike `BoostAllOwnCreaturesEffect`, iterates over every player's battlefield |
 | `StaticBoostEffect` | `(int powerBoost, int toughnessBoost, Set<Keyword> grantedKeywords, GrantScope scope, PermanentPredicate filter)` | unified static boost: +X/+Y and keywords with predicate-based filtering. Scope: `OWN_CREATURES`, `ALL_CREATURES`. Filter: optional `PermanentPredicate` (color, subtype, not, etc). Convenience constructors: `(p, t, scope)`, `(p, t, scope, filter)`, `(p, t, keywords, scope)` |
 | `BoostTargetCreatureXEffect` | `(int powerMultiplier, int toughnessMultiplier)` | target creature gets +(multiplier*X)/+(multiplier*X) until end of turn, where X is mana paid |
 | `BoostAllCreaturesXEffect` | `(int powerMultiplier, int toughnessMultiplier)` or `(int powerMultiplier, int toughnessMultiplier, PermanentPredicate filter)` | all creatures get +X/+X where X is mana paid. Optional `PermanentPredicate filter` to restrict which creatures are affected |

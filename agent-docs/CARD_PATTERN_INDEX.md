@@ -135,6 +135,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Imprint ETB + dies | `c/CloneShell.java` | Artifact Creature — ON_ENTER_BATTLEFIELD ImprintFromTopCardsEffect + ON_DEATH PutImprintedCreatureOntoBattlefieldEffect |
 | Battle cry (attack boost others) | `a/AccorderPaladin.java` | ON_ATTACK BoostAllOwnCreaturesEffect(1, 0, PermanentAllOfPredicate(PermanentIsAttackingPredicate, PermanentNotPredicate(PermanentIsSourceCardPredicate))) |
 | Damage-to-controller bounce | `d/DissipationField.java` | ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU ReturnDamageSourcePermanentToHandEffect — bounces any permanent that deals damage to controller |
+| Damage-to-controller steal | `c/ContestedWarZone.java` | ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU DamageSourceControllerGainsControlOfThisPermanentEffect(true, true) — combat creature damage causes opponent to gain control of this land |
 
 ## Static permanents
 

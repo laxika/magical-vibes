@@ -506,7 +506,7 @@ public class DamageResolutionService {
             }
 
             if (effectiveDamage > 0) {
-                triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId());
+                triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId(), false);
             }
         }
     }

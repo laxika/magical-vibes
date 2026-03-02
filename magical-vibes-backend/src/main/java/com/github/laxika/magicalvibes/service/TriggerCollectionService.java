@@ -43,7 +43,9 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -63,6 +65,7 @@ public class TriggerCollectionService {
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
+    private final CreatureControlService creatureControlService;
 
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId) {
         gameData.forEachPermanent((playerId, perm) -> {
@@ -465,7 +468,7 @@ public class TriggerCollectionService {
         }
     }
 
-    public void checkDamageDealtToControllerTriggers(GameData gameData, UUID damagedPlayerId, UUID sourcePermanentId) {
+    public void checkDamageDealtToControllerTriggers(GameData gameData, UUID damagedPlayerId, UUID sourcePermanentId, boolean isCombatDamage) {
         if (sourcePermanentId == null) return;
 
         List<Permanent> damagedPlayerBattlefield = gameData.playerBattlefields.get(damagedPlayerId);
@@ -509,6 +512,23 @@ public class TriggerCollectionService {
                         }
                     }
                     return; // Source already bounced, no need to process more triggers
+                }
+
+                if (effect instanceof DamageSourceControllerGainsControlOfThisPermanentEffect controlEffect) {
+                    if (controlEffect.combatOnly() && !isCombatDamage) continue;
+                    if (controlEffect.creatureOnly() && !gameQueryService.isCreature(gameData, sourcePermanent)) continue;
+
+                    // Find who controls the damage source
+                    UUID sourceControllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
+                    if (sourceControllerId == null || sourceControllerId.equals(damagedPlayerId)) continue;
+
+                    // Transfer control of this permanent (perm) to the source's controller
+                    creatureControlService.stealPermanent(gameData, sourceControllerId, perm);
+                    gameData.permanentControlStolenCreatures.add(perm.getId());
+
+                    log.info("Game {} - {} triggers, {} gains control of {}",
+                            gameData.id, perm.getCard().getName(),
+                            gameData.playerIdToName.get(sourceControllerId), perm.getCard().getName());
                 }
             }
         }

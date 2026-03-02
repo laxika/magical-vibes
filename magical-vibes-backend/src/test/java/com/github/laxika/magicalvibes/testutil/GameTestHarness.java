@@ -145,7 +145,7 @@ public class GameTestHarness {
         PermanentRemovalService permanentRemovalService = new PermanentRemovalService(
                 gameHelper, auraAttachmentService, gameQueryService, gameBroadcastService);
         TriggerCollectionService triggerCollectionService = new TriggerCollectionService(
-                gameHelper, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService, triggeredAbilityQueueService);
+                gameHelper, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService, triggeredAbilityQueueService, creatureControlService);
         gameHelper.setTriggerCollectionService(triggerCollectionService);
         StateBasedActionService stateBasedActionService = new StateBasedActionService(
                 gameHelper, gameQueryService, gameBroadcastService, permanentRemovalService);
