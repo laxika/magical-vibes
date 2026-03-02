@@ -29,6 +29,17 @@ public class PermanentRemovalService {
     private final GameBroadcastService gameBroadcastService;
 
     public boolean removePermanentToGraveyard(GameData gameData, Permanent target) {
+        // Replacement effect: exile instead of going to graveyard (CR 614.6)
+        if (target.isExileIfLeavesBattlefield()) {
+            boolean exiled = removePermanentToExile(gameData, target);
+            if (exiled) {
+                String logEntry = target.getCard().getName() + " is exiled instead of going to the graveyard.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                removeOrphanedAuras(gameData);
+            }
+            return exiled;
+        }
+
         // Capture unattach-sacrifice info before removal
         UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
 
@@ -62,6 +73,17 @@ public class PermanentRemovalService {
     }
 
     public boolean removePermanentToHand(GameData gameData, Permanent target) {
+        // Replacement effect: exile instead of going to hand (CR 614.6)
+        if (target.isExileIfLeavesBattlefield()) {
+            boolean exiled = removePermanentToExile(gameData, target);
+            if (exiled) {
+                String logEntry = target.getCard().getName() + " is exiled instead of returning to hand.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                removeOrphanedAuras(gameData);
+            }
+            return exiled;
+        }
+
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {

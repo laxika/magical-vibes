@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameQueryService;
 import com.github.laxika.magicalvibes.service.GraveyardReturnResolutionService;
@@ -41,6 +42,25 @@ public class GraveyardTargetValidators {
             String label = GraveyardReturnResolutionService.describeFilter(effect.filter());
             throw new IllegalStateException("Target card must be a " + label);
         }
+    }
+
+    @ValidatesTarget(PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect.class)
+    public void validatePutCreatureFromOpponentGraveyardWithExile(TargetValidationContext ctx) {
+        if (ctx.targetZone() != Zone.GRAVEYARD) {
+            throw new IllegalStateException("Spell requires a graveyard target");
+        }
+        if (ctx.targetPermanentId() == null) {
+            throw new IllegalStateException("Spell requires a target card");
+        }
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetPermanentId());
+        if (graveyardCard == null) {
+            throw new IllegalStateException("Target card not found in any graveyard");
+        }
+        if (graveyardCard.getType() != CardType.CREATURE
+                && !graveyardCard.getAdditionalTypes().contains(CardType.CREATURE)) {
+            throw new IllegalStateException("Target must be a creature card");
+        }
+        // Opponent-graveyard check is enforced in SpellCastingService (which has playerId context)
     }
 
     @ValidatesTarget(PutCardFromOpponentGraveyardOntoBattlefieldEffect.class)

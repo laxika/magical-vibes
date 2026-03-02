@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -15,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.PutImprintedCreatureOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -450,6 +452,46 @@ public class GraveyardReturnResolutionService {
                 gameBroadcastService.logAndBroadcast(gameData,
                         opponentName + " mills " + cardsToMill + " cards (" + String.join(", ", milledNames) + ").");
             }
+        }
+    }
+
+    @HandlesEffect(PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect.class)
+    void resolvePutCreatureFromOpponentGraveyardWithExile(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetPermanentId());
+        if (targetCard == null) {
+            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target no longer in graveyard).");
+            return;
+        }
+
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
+        if (graveyardOwnerId == null || graveyardOwnerId.equals(controllerId)) {
+            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target not in opponent's graveyard).");
+            return;
+        }
+
+        permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+
+        Set<CardType> enterTappedTypes = gameHelper.snapshotEnterTappedTypes(gameData);
+        Permanent permanent = new Permanent(targetCard);
+        permanent.getGrantedKeywords().add(Keyword.HASTE);
+        permanent.setExileIfLeavesBattlefield(true);
+        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
+
+        gameData.stolenCreatures.put(permanent.getId(), graveyardOwnerId);
+        gameData.permanentControlStolenCreatures.add(permanent.getId());
+        gameData.pendingTokenExilesAtEndStep.add(permanent.getId());
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " puts " + targetCard.getName() + " onto the battlefield under their control with haste.");
+
+        if (gameQueryService.isCreature(gameData, permanent)) {
+            gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, targetCard, null, false);
+        }
+        if (!gameData.interaction.isAwaitingInput()) {
+            legendRuleService.checkLegendRule(gameData, controllerId);
         }
     }
 

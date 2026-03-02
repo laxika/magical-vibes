@@ -52,6 +52,8 @@ public class Permanent {
     private final Set<CardType> protectionFromCardTypes = EnumSet.noneOf(CardType.class);
     private final Set<UUID> cantBlockIds = new HashSet<>();
     private final Set<UUID> mustBlockIds = new HashSet<>();
+    /** If true, this permanent is exiled instead of going to any other zone when it leaves the battlefield (CR 614.6). */
+    @Setter private boolean exileIfLeavesBattlefield;
     /** Source permanent IDs that prevent this permanent from untapping during its controller's untap step.
      *  Each entry means: "this permanent doesn't untap for as long as that source permanent remains tapped." */
     private final Set<UUID> untapPreventedByPermanentIds = new HashSet<>();
@@ -108,6 +110,7 @@ public class Permanent {
         this.grantedCardTypes.addAll(source.grantedCardTypes);
         this.textReplacements.addAll(source.textReplacements);
         this.protectionFromCardTypes.addAll(source.protectionFromCardTypes);
+        this.exileIfLeavesBattlefield = source.exileIfLeavesBattlefield;
         this.cantBlockIds.addAll(source.cantBlockIds);
         this.mustBlockIds.addAll(source.mustBlockIds);
         this.untapPreventedByPermanentIds.addAll(source.untapPreventedByPermanentIds);

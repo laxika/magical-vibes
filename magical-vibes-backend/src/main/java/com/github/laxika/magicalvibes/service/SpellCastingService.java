@@ -154,6 +154,10 @@ public class SpellCastingService {
                 .findFirst().orElse(null);
         boolean needsSingleGraveyardTargeting = graveyardReturnEffect != null;
 
+        // Detect any effect that targets a graveyard card (e.g. PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect)
+        boolean needsGraveyardEffectTargeting = !needsSingleGraveyardTargeting
+                && card.getEffects(EffectSlot.SPELL).stream().anyMatch(e -> e.canTargetGraveyard());
+
         // Validate target if specified (can be a permanent or a player)
         if (targetPermanentId != null && !card.isNeedsSpellTarget()) {
             if (needsSingleGraveyardTargeting) {
@@ -168,12 +172,23 @@ public class SpellCastingService {
                     }
                 }
                 targetLegalityService.validateEffectTargetInZone(gameData, card, targetPermanentId, Zone.GRAVEYARD);
+            } else if (needsGraveyardEffectTargeting) {
+                boolean inControllersGraveyard = gameData.playerGraveyards
+                        .getOrDefault(playerId, List.of())
+                        .stream()
+                        .anyMatch(c -> c.getId().equals(targetPermanentId));
+                if (inControllersGraveyard) {
+                    throw new IllegalStateException("Target must be in an opponent's graveyard");
+                }
+                targetLegalityService.validateEffectTargetInZone(gameData, card, targetPermanentId, Zone.GRAVEYARD);
             } else {
                 targetLegalityService.validateSpellTargeting(gameData, card, targetPermanentId, null, playerId);
             }
         } else if (card.isNeedsTarget() && needsSingleGraveyardTargeting) {
             String filterLabel = GraveyardReturnResolutionService.describeFilter(graveyardReturnEffect.filter());
             throw new IllegalStateException("Must target a " + filterLabel + " in your graveyard");
+        } else if (card.isNeedsTarget() && needsGraveyardEffectTargeting) {
+            throw new IllegalStateException("Must target a creature card in an opponent's graveyard");
         }
 
         // Validate multi-target permanent targeting
@@ -311,7 +326,7 @@ public class SpellCastingService {
                         filteredSpellEffects, resolvedXValue, targetPermanentIds
                 ));
                 finishSpellCast(gameData, playerId, player, hand, card);
-            } else if (needsSingleGraveyardTargeting) {
+            } else if (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting) {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.SORCERY_SPELL, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, targetPermanentId, null,
