@@ -2,12 +2,10 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,21 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AccorderPaladinTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Accorder Paladin has battle cry ON_ATTACK effect")
-    void hasBattleCryEffect() {
-        AccorderPaladin card = new AccorderPaladin();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(BoostAllOwnCreaturesEffect.class);
-        BoostAllOwnCreaturesEffect effect = (BoostAllOwnCreaturesEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isEqualTo(0);
-        assertThat(effect.filter()).isNotNull();
-    }
 
     // ===== Attack trigger =====
 

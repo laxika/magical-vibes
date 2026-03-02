@@ -21,6 +21,11 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
@@ -451,6 +456,31 @@ public class CombatService {
 
             // Check for aura-based "when enchanted creature attacks" triggers
             checkAuraTriggersForCreature(gameData, attacker, EffectSlot.ON_ATTACK);
+        }
+
+        // Engine-level battle cry triggers (keyword-driven, no manual card wiring needed)
+        for (int idx : attackerIndices) {
+            Permanent attacker = battlefield.get(idx);
+            if (gameQueryService.hasKeyword(gameData, attacker, Keyword.BATTLE_CRY)) {
+                List<CardEffect> battleCryEffects = List.of(new BoostAllOwnCreaturesEffect(1, 0,
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsAttackingPredicate(),
+                                new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
+                        ))
+                ));
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        attacker.getCard(),
+                        playerId,
+                        attacker.getCard().getName() + "'s attack trigger",
+                        battleCryEffects,
+                        null,
+                        attacker.getId()
+                ));
+                String triggerLog = attacker.getCard().getName() + "'s battle cry triggers.";
+                gameData.gameLog.add(triggerLog);
+                log.info("Game {} - {} battle cry trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+            }
         }
 
         // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
