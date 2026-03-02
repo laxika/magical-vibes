@@ -93,8 +93,9 @@ public class CreatureModResolutionService {
         self.getGrantedSubtypes().clear();
         self.getGrantedSubtypes().addAll(effect.grantedSubtypes());
         self.getGrantedKeywords().addAll(effect.grantedKeywords());
+        self.getGrantedCardTypes().addAll(effect.grantedCardTypes());
 
-        String logEntry = self.getCard().getName() + " becomes a " + effect.power() + "/" + effect.toughness() + " creature with flying until end of turn.";
+        String logEntry = self.getCard().getName() + " becomes a " + effect.power() + "/" + effect.toughness() + " creature until end of turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} becomes a {}/{} creature", gameData.id, self.getCard().getName(), effect.power(), effect.toughness());
