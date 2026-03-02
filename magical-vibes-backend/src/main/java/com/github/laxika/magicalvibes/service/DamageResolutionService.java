@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTarget
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -45,25 +45,16 @@ public class DamageResolutionService {
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
+    private final LifeResolutionService lifeResolutionService;
 
     @HandlesEffect(DealXDamageToTargetCreatureEffect.class)
     void resolveDealXDamageToTargetCreature(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
-        if (target == null) return;
-        if (isDamagePreventedForCreature(gameData, entry, target)) return;
-
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, entry.getXValue());
-        dealDamageAndDestroyIfLethal(gameData, entry, target, rawDamage);
+        resolveCreatureTargetDamage(gameData, entry, gameQueryService.applyDamageMultiplier(gameData, entry.getXValue()));
     }
 
     @HandlesEffect(DealDamageToTargetCreatureEffect.class)
     void resolveDealDamageToTargetCreature(GameData gameData, StackEntry entry, DealDamageToTargetCreatureEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
-        if (target == null) return;
-        if (isDamagePreventedForCreature(gameData, entry, target)) return;
-
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
-        dealDamageAndDestroyIfLethal(gameData, entry, target, rawDamage);
+        resolveCreatureTargetDamage(gameData, entry, gameQueryService.applyDamageMultiplier(gameData, effect.damage()));
     }
 
     @HandlesEffect(DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect.class)
@@ -72,13 +63,8 @@ public class DamageResolutionService {
             StackEntry entry,
             DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect effect
     ) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
-        if (target == null) return;
-        if (isDamagePreventedForCreature(gameData, entry, target)) return;
-
-        int controlledSubtypeCount = gameQueryService.countControlledSubtypePermanents(gameData, entry.getControllerId(), effect.subtype());
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, controlledSubtypeCount);
-        dealDamageAndDestroyIfLethal(gameData, entry, target, rawDamage);
+        int count = gameQueryService.countControlledSubtypePermanents(gameData, entry.getControllerId(), effect.subtype());
+        resolveCreatureTargetDamage(gameData, entry, gameQueryService.applyDamageMultiplier(gameData, count));
     }
 
     @HandlesEffect(DealXDamageDividedAmongTargetAttackingCreaturesEffect.class)
@@ -148,7 +134,7 @@ public class DamageResolutionService {
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
 
         // Life gain is independent of damage prevention — always happens if the spell resolves
-        gainLifeForController(gameData, entry.getControllerId(), xValue);
+        lifeResolutionService.applyGainLife(gameData, entry.getControllerId(), xValue);
 
         gameHelper.checkWinCondition(gameData);
     }
@@ -282,29 +268,9 @@ public class DamageResolutionService {
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
 
         // Life gain is independent of damage prevention — always happens if the spell resolves
-        gainLifeForController(gameData, entry.getControllerId(), effect.lifeGain());
+        lifeResolutionService.applyGainLife(gameData, entry.getControllerId(), effect.lifeGain());
 
         gameHelper.checkWinCondition(gameData);
-    }
-
-    private void gainLifeForController(GameData gameData, UUID controllerId, int amount) {
-        if (gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
-            int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
-            gameData.playerLifeTotals.put(controllerId, currentLife + amount);
-            String controllerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, controllerName + " gains " + amount + " life.");
-            log.info("Game {} - {} gains {} life", gameData.id, controllerName, amount);
-        } else {
-            String controllerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, controllerName + "'s life total can't change.");
-        }
-    }
-
-    private void recordCreatureDamageFromPermanentSource(GameData gameData, StackEntry entry, Permanent targetCreature, int damage) {
-        if (entry.getSourcePermanentId() == null) {
-            return;
-        }
-        gameHelper.recordCreatureDamagedByPermanent(gameData, entry.getSourcePermanentId(), targetCreature, damage);
     }
 
     /**
@@ -328,15 +294,13 @@ public class DamageResolutionService {
 
         if (damageSource != null) {
             gameHelper.recordCreatureDamagedByPermanent(gameData, damageSource.getId(), target, damage);
-        } else {
-            recordCreatureDamageFromPermanentSource(gameData, entry, target, damage);
+        } else if (entry.getSourcePermanentId() != null) {
+            gameHelper.recordCreatureDamagedByPermanent(gameData, entry.getSourcePermanentId(), target, damage);
         }
 
         String sourceName = damageSource != null ? damageSource.getCard().getName() : entry.getCard().getName();
 
-        boolean sourceHasInfect = damageSource != null
-                ? gameQueryService.hasKeyword(gameData, damageSource, Keyword.INFECT)
-                : hasKeywordOnSource(gameData, entry, Keyword.INFECT);
+        boolean sourceHasInfect = sourceHasKeyword(gameData, entry, damageSource, Keyword.INFECT);
 
         if (sourceHasInfect) {
             if (damage > 0) {
@@ -353,9 +317,7 @@ public class DamageResolutionService {
                 sourceName + " deals " + damage + " damage to " + target.getCard().getName() + ".");
         log.info("Game {} - {} deals {} damage to {}", gameData.id, sourceName, damage, target.getCard().getName());
 
-        boolean sourceHasDeathtouch = damageSource != null
-                ? gameQueryService.hasKeyword(gameData, damageSource, Keyword.DEATHTOUCH)
-                : hasKeywordOnSource(gameData, entry, Keyword.DEATHTOUCH);
+        boolean sourceHasDeathtouch = sourceHasKeyword(gameData, entry, damageSource, Keyword.DEATHTOUCH);
         boolean isLethal = damage >= gameQueryService.getEffectiveToughness(gameData, target)
                 || (damage >= 1 && sourceHasDeathtouch);
         if (isLethal) {
@@ -377,6 +339,12 @@ public class DamageResolutionService {
             }
         }
         return false;
+    }
+
+    private boolean sourceHasKeyword(GameData gameData, StackEntry entry, Permanent damageSource, Keyword keyword) {
+        return damageSource != null
+                ? gameQueryService.hasKeyword(gameData, damageSource, keyword)
+                : hasKeywordOnSource(gameData, entry, keyword);
     }
 
     private void destroyPermanent(GameData gameData, Permanent target) {
@@ -411,6 +379,13 @@ public class DamageResolutionService {
             return true;
         }
         return false;
+    }
+
+    private void resolveCreatureTargetDamage(GameData gameData, StackEntry entry, int damage) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) return;
+        if (isDamagePreventedForCreature(gameData, entry, target)) return;
+        dealDamageAndDestroyIfLethal(gameData, entry, target, damage);
     }
 
     private boolean isDamagePreventedForCreature(GameData gameData, StackEntry entry, Permanent target) {
@@ -481,7 +456,7 @@ public class DamageResolutionService {
     private void dealDamageToPlayer(GameData gameData, StackEntry entry, UUID playerId, int rawDamage) {
         String cardName = entry.getCard().getName();
         if (gameHelper.isSourceDamagePreventedForPlayer(gameData, playerId, entry.getSourcePermanentId())
-                || (entry.getSourcePermanentId() != null && gameData.permanentsPreventedFromDealingDamage.contains(entry.getSourcePermanentId()))) {
+                || isSourcePermanentPreventedFromDealingDamage(gameData, entry)) {
             gameBroadcastService.logAndBroadcast(gameData, cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
             return;
         }

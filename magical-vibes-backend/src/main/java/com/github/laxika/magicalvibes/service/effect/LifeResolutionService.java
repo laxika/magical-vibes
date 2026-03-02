@@ -105,7 +105,7 @@ public class LifeResolutionService {
         playerInputService.beginXValueChoice(gameData, controllerId, maxX, prompt, entry.getCard().getName());
     }
 
-    private void applyGainLife(GameData gameData, UUID controllerId, int amount) {
+    public void applyGainLife(GameData gameData, UUID controllerId, int amount) {
         if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
             String playerName = gameData.playerIdToName.get(controllerId);
             gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");

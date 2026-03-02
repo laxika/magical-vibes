@@ -169,8 +169,9 @@ public class GameTestHarness {
         TargetLegalityService targetLegalityService = new TargetLegalityService(gameQueryService, targetValidationService);
         ValidTargetService validTargetService = new ValidTargetService(gameQueryService);
         EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
+        LifeResolutionService lifeResolutionService = new LifeResolutionService(gameQueryService, gameBroadcastService, playerInputService);
         List<Object> effectServices = List.of(
-                new DamageResolutionService(gameHelper, gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService),
+                new DamageResolutionService(gameHelper, gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService, lifeResolutionService),
                 new DestructionResolutionService(gameHelper, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService),
                 new LibraryResolutionService(gameHelper, gameBroadcastService, sessionManager, cardViewFactory),
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
@@ -180,7 +181,7 @@ public class GameTestHarness {
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
                 new GraveyardReturnResolutionService(gameHelper, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService),
                 new BounceResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService),
-                new LifeResolutionService(gameQueryService, gameBroadcastService, playerInputService),
+                lifeResolutionService,
                 new CreatureModResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService),
                 new PlayerInteractionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService, sessionManager, cardViewFactory, permanentRemovalService, triggerCollectionService),
                 new PermanentControlResolutionService(gameHelper, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService, creatureControlService),
