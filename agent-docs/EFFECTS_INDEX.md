@@ -292,6 +292,7 @@ Pass `null` as filter to allow any card.
 | `SearchLibraryForCardTypesToBattlefieldEffect` | `(Set<CardType> cardTypes, boolean requiresBasicSupertype, boolean entersTapped)` | search library for card to battlefield |
 | `SearchLibraryForCardTypeToExileAndImprintEffect` | `(Set<CardType> cardTypes)` | search library for card of specific types, exile it, and imprint on source permanent |
 | `SearchLibraryForCreatureWithMVXOrLessToHandEffect` | `()` | search library for creature with MV X or less to hand |
+| `SearchLibraryForCreatureWithColorAndMVXOrLessToBattlefieldEffect` | `(CardColor requiredColor)` | search library for creature of specified color with MV X or less to battlefield |
 | `CastTopOfLibraryWithoutPayingManaCostEffect` | `(Set<CardType> castableTypes)` | look at top card of controller's library; if it matches one of the castable types, may cast it without paying its mana cost |
 | `DistantMemoriesEffect` | `()` | search library for any card, exile it, shuffle; opponent may let you have it, otherwise draw 3 |
 | `PayManaAndSearchLibraryForCardNamedToBattlefieldEffect` | `(String manaCost, String cardName)` | pay mana, search for named card to battlefield |
