@@ -831,6 +831,7 @@ public class GameHelper {
                     if (!card.isNeedsTarget() || targetPermanentId != null) {
                         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                         UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
+
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 card,

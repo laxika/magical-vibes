@@ -101,6 +101,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB metalcraft conditional drain | `b/BleakCovenVampires.java` | MetalcraftConditionalEffect(TargetPlayerLosesLifeAndControllerGainsLifeEffect) — intervening-if 3+ artifacts |
 | ETB metalcraft conditional boost + haste | `b/BladeTribeBerserkers.java` | Two MetalcraftConditionalEffect wrappers: BoostSelfEffect(3,3) + GrantKeywordEffect(HASTE, SELF) — multiple wrapped effects on same slot |
 | ETB each player poison | `i/IchorRats.java` | ON_ENTER_BATTLEFIELD GiveEachPlayerPoisonCountersEffect(1) — infect creature, each player gets a poison counter |
+| ETB may-sacrifice-artifact-divided-damage | `k/KuldothaFlamefiend.java` | MayEffect(SacrificeArtifactThenDealDividedDamageEffect(4)) — may sacrifice artifact, deal N divided damage. Damage assignments via `pendingETBDamageAssignments`, artifact choice via PermanentChoiceContext.SacrificeArtifactForDividedDamage |
 
 ## Triggered creatures
 

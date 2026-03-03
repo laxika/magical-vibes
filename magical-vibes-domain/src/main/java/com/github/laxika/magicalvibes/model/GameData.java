@@ -129,6 +129,9 @@ public class GameData {
     /** Stores context for a pending Leonin Arbiter search tax MayAbility choice. */
     public PendingSearchContext pendingSearchContext;
 
+    /** Damage assignments provided at cast time for an ETB divided-damage effect (e.g. Kuldotha Flamefiend). */
+    public Map<UUID, Integer> pendingETBDamageAssignments = Map.of();
+
 
     // Combat damage assignment state
     public final Map<Integer, Map<UUID, Integer>> combatDamagePlayerAssignments = new HashMap<>();
@@ -367,6 +370,10 @@ public class GameData {
             s.addAll(v);
             copy.paidSearchTaxPermanentIds.put(k, s);
         });
+
+        // --- ETB / sacrifice damage assignments ---
+        copy.pendingETBDamageAssignments = this.pendingETBDamageAssignments.isEmpty()
+                ? Map.of() : new HashMap<>(this.pendingETBDamageAssignments);
 
         // --- Mindslaver turn control ---
         copy.pendingTurnControl.putAll(this.pendingTurnControl);

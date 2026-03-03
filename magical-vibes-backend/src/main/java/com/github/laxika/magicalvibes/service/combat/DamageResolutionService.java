@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.FirstTargetDealsPowerDamageToSecondTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
@@ -734,6 +735,69 @@ public class DamageResolutionService {
             }
         }
 
+        gameHelper.checkWinCondition(gameData);
+    }
+
+    /**
+     * Deals divided damage to any number of targets (creatures and/or players) according
+     * to the supplied assignments map. Called by {@code PermanentChoiceHandlerService}
+     * after the player sacrifices an artifact for a divided-damage effect.
+     */
+    public void dealDividedDamageToAnyTargets(GameData gameData, Card sourceCard, UUID controllerId,
+                                               Map<UUID, Integer> assignments) {
+        if (assignments == null || assignments.isEmpty()) return;
+
+        // Find source permanent on battlefield for damage tracking
+        UUID sourcePermanentId = null;
+        List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+        if (bf != null) {
+            for (Permanent p : bf) {
+                if (p.getCard() == sourceCard) {
+                    sourcePermanentId = p.getId();
+                    break;
+                }
+            }
+        }
+
+        // Create a temporary stack entry for the private damage helpers
+        StackEntry tempEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                controllerId,
+                sourceCard.getName() + "'s ability",
+                List.of(),
+                null,
+                sourcePermanentId
+        );
+
+        if (isDamageSourcePreventedWithLog(gameData, tempEntry)) return;
+
+        List<Permanent> destroyed = new ArrayList<>();
+
+        for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
+            UUID targetId = assignment.getKey();
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, assignment.getValue());
+
+            boolean targetIsPlayer = gameData.playerIds.contains(targetId);
+            Permanent targetPermanent = targetIsPlayer ? null : gameQueryService.findPermanentById(gameData, targetId);
+
+            if (!targetIsPlayer && targetPermanent == null) continue;
+
+            if (targetIsPlayer) {
+                dealDamageToPlayer(gameData, tempEntry, targetId, rawDamage);
+            } else {
+                if (!gameQueryService.hasProtectionFromSource(gameData, targetPermanent, sourceCard)) {
+                    if (dealCreatureDamage(gameData, tempEntry, targetPermanent, rawDamage)) {
+                        destroyed.add(targetPermanent);
+                    }
+                } else {
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            sourceCard.getName() + "'s damage to " + targetPermanent.getCard().getName() + " is prevented.");
+                }
+            }
+        }
+
+        destroyAllLethal(gameData, destroyed);
         gameHelper.checkWinCondition(gameData);
     }
 }

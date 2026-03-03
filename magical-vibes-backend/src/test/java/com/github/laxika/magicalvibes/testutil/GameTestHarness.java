@@ -170,8 +170,9 @@ public class GameTestHarness {
         ValidTargetService validTargetService = new ValidTargetService(gameQueryService);
         EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
         LifeResolutionService lifeResolutionService = new LifeResolutionService(gameQueryService, gameBroadcastService, playerInputService);
+        DamageResolutionService damageResolutionService = new DamageResolutionService(gameHelper, gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService, lifeResolutionService);
         List<Object> effectServices = List.of(
-                new DamageResolutionService(gameHelper, gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService, lifeResolutionService),
+                damageResolutionService,
                 new DestructionResolutionService(gameHelper, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService),
                 new LibraryResolutionService(gameHelper, gameBroadcastService, sessionManager, cardViewFactory),
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
@@ -214,7 +215,7 @@ public class GameTestHarness {
                 playerInputService, triggerCollectionService, turnProgressionService, abilityActivationService, effectResolutionService);
         PermanentChoiceHandlerService permanentChoiceHandlerService = new PermanentChoiceHandlerService(
                 gameQueryService, gameHelper, gameBroadcastService, abilityActivationService,
-                permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, creatureControlService, turnProgressionService, effectResolutionService);
+                permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, creatureControlService, turnProgressionService, effectResolutionService, damageResolutionService);
         GraveyardChoiceHandlerService graveyardChoiceHandlerService = new GraveyardChoiceHandlerService(
                 gameQueryService, gameHelper, legendRuleService, gameBroadcastService, turnProgressionService, permanentRemovalService, triggerCollectionService);
         MayAbilityHandlerService mayAbilityHandlerService = new MayAbilityHandlerService(

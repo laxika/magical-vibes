@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -50,5 +51,7 @@ public sealed interface PermanentChoiceContext {
     record UpkeepCopyTriggerTarget(Card sourceCard, UUID controllerId, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
     record LibraryCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) implements PermanentChoiceContext {}
+
+    record SacrificeArtifactForDividedDamage(UUID controllerId, Card sourceCard, Map<UUID, Integer> damageAssignments) implements PermanentChoiceContext {}
 
 }

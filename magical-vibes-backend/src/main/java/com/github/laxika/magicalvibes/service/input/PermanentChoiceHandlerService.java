@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.combat.DamageResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
@@ -51,6 +52,7 @@ public class PermanentChoiceHandlerService {
     private final CreatureControlService creatureControlService;
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
+    private final DamageResolutionService damageResolutionService;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)) {
@@ -385,6 +387,40 @@ public class PermanentChoiceHandlerService {
             if (!gameData.pendingMayAbilities.isEmpty()) {
                 playerInputService.processNextMayAbility(gameData);
                 return;
+            }
+
+            gameData.priorityPassedBy.clear();
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+        } else if (context instanceof PermanentChoiceContext.SacrificeArtifactForDividedDamage sadd) {
+            Permanent artifactToSacrifice = gameQueryService.findPermanentById(gameData, permanentId);
+            if (artifactToSacrifice == null) {
+                throw new IllegalStateException("Artifact permanent no longer exists");
+            }
+
+            permanentRemovalService.removePermanentToGraveyard(gameData, artifactToSacrifice);
+
+            String playerName = gameData.playerIdToName.get(sadd.controllerId());
+            String logEntry = playerName + " sacrifices " + artifactToSacrifice.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} sacrifices {} for divided damage", gameData.id, playerName, artifactToSacrifice.getCard().getName());
+
+            damageResolutionService.dealDividedDamageToAnyTargets(
+                    gameData, sadd.sourceCard(), sadd.controllerId(), sadd.damageAssignments());
+
+            gameData.pendingETBDamageAssignments = java.util.Map.of();
+
+            stateBasedActionService.performStateBasedActions(gameData);
+
+            if (!gameData.pendingMayAbilities.isEmpty()) {
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+
+            if (gameData.pendingEffectResolutionEntry != null) {
+                effectResolutionService.resolveEffectsFrom(gameData,
+                        gameData.pendingEffectResolutionEntry,
+                        gameData.pendingEffectResolutionIndex);
             }
 
             gameData.priorityPassedBy.clear();

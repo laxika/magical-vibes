@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
@@ -68,6 +69,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -231,6 +233,14 @@ public class MayAbilityHandlerService {
 
                 turnProgressionService.resolveAutoPass(gameData);
             }
+            return;
+        }
+
+        // Sacrifice-artifact for divided damage (e.g. Kuldotha Flamefiend)
+        boolean isSacrificeArtifact = ability.effects().stream()
+                .anyMatch(e -> e instanceof SacrificeArtifactThenDealDividedDamageEffect);
+        if (isSacrificeArtifact) {
+            handleMaySacrificeArtifactForDividedDamage(gameData, player, accepted, ability);
             return;
         }
 
@@ -1057,6 +1067,61 @@ public class MayAbilityHandlerService {
             // All may-not-untap choices resolved — complete the turn advance and resume auto-pass
             turnProgressionService.completeTurnAdvance(gameData);
             turnProgressionService.resolveAutoPass(gameData);
+        }
+    }
+
+    private void handleMaySacrificeArtifactForDividedDamage(GameData gameData, Player player,
+                                                             boolean accepted, PendingMayAbility ability) {
+        if (accepted) {
+            UUID controllerId = ability.controllerId();
+            List<UUID> validArtifactIds = new ArrayList<>();
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield != null) {
+                for (Permanent p : battlefield) {
+                    if (gameQueryService.isArtifact(p)) {
+                        validArtifactIds.add(p.getId());
+                    }
+                }
+            }
+
+            if (validArtifactIds.isEmpty()) {
+                String logEntry = player.getUsername() + " has no artifacts to sacrifice.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} has no artifacts to sacrifice for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
+
+                gameData.pendingETBDamageAssignments = Map.of();
+                playerInputService.processNextMayAbility(gameData);
+                if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                    gameData.priorityPassedBy.clear();
+                    gameBroadcastService.broadcastGameState(gameData);
+                    turnProgressionService.resolveAutoPass(gameData);
+                }
+                return;
+            }
+
+            Map<UUID, Integer> damageAssignments = gameData.pendingETBDamageAssignments;
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.SacrificeArtifactForDividedDamage(
+                            controllerId, ability.sourceCard(), damageAssignments));
+            playerInputService.beginPermanentChoice(gameData, controllerId, validArtifactIds,
+                    ability.sourceCard().getName() + " — Choose an artifact to sacrifice.");
+
+            String logEntry = player.getUsername() + " accepts — choosing an artifact to sacrifice.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} accepts sacrifice for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
+        } else {
+            gameData.pendingETBDamageAssignments = Map.of();
+
+            String logEntry = player.getUsername() + " declines to sacrifice an artifact for " + ability.sourceCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines sacrifice for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
+
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                gameData.priorityPassedBy.clear();
+                gameBroadcastService.broadcastGameState(gameData);
+                turnProgressionService.resolveAutoPass(gameData);
+            }
         }
     }
 }
