@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GlimmerpointStag;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IntoTheCore;
+import com.github.laxika.magicalvibes.cards.l.LeoninRelicWarder;
 import com.github.laxika.magicalvibes.cards.m.MimicVat;
 import com.github.laxika.magicalvibes.cards.r.RevokeExistence;
 import com.github.laxika.magicalvibes.cards.s.SemblanceAnvil;
@@ -311,6 +312,127 @@ class ExileResolutionServiceTest extends BaseCardTest {
             assertThat(gd.gameLog)
                     .anyMatch(log -> log.contains("Argent Sphinx") && log.contains("exiled")
                             && log.contains("return"));
+        }
+    }
+
+    // =========================================================================
+    // ExileTargetPermanentUntilSourceLeavesEffect (via Leonin Relic-Warder)
+    // =========================================================================
+
+    @Nested
+    @DisplayName("resolveExileTargetPermanentUntilSourceLeaves")
+    class ResolveExileTargetPermanentUntilSourceLeaves {
+
+        private void castWarderAndExile(UUID targetId) {
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.setHand(player1, List.of(new LeoninRelicWarder()));
+            harness.addMana(player1, ManaColor.WHITE, 2);
+
+            harness.castCreature(player1, 0);
+            harness.passBothPriorities(); // resolve creature -> may prompt
+            harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
+            harness.handlePermanentChosen(player1, targetId); // choose target -> ETB on stack
+            harness.passBothPriorities(); // resolve ETB
+        }
+
+        @Test
+        @DisplayName("Exiles target permanent and tracks return on source leave")
+        void exilesTargetAndTracksReturn() {
+            harness.addToBattlefield(player2, new Spellbook());
+            UUID targetId = harness.getPermanentId(player2, "Spellbook");
+            castWarderAndExile(targetId);
+
+            assertThat(gd.playerBattlefields.get(player2.getId()))
+                    .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
+            assertThat(gd.playerExiledCards.get(player2.getId()))
+                    .anyMatch(c -> c.getName().equals("Spellbook"));
+            assertThat(gd.exileReturnOnPermanentLeave).isNotEmpty();
+            assertThat(gd.exileReturnOnPermanentLeave.values())
+                    .anyMatch(per -> per.card().getName().equals("Spellbook")
+                            && per.controllerId().equals(player2.getId()));
+        }
+
+        @Test
+        @DisplayName("Does nothing when target permanent is removed before resolution")
+        void fizzlesWhenTargetRemoved() {
+            harness.addToBattlefield(player2, new Spellbook());
+            UUID targetId = harness.getPermanentId(player2, "Spellbook");
+
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.setHand(player1, List.of(new LeoninRelicWarder()));
+            harness.addMana(player1, ManaColor.WHITE, 2);
+
+            harness.castCreature(player1, 0);
+            harness.passBothPriorities(); // resolve creature -> may prompt
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handlePermanentChosen(player1, targetId); // ETB on stack
+
+            // Remove target before ETB resolves
+            gd.playerBattlefields.get(player2.getId()).clear();
+
+            harness.passBothPriorities();
+
+            assertThat(gd.playerExiledCards.get(player2.getId()))
+                    .noneMatch(c -> c.getName().equals("Spellbook"));
+            assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Still exiles target when source has left battlefield but without return tracking")
+        void exilesWithoutTrackingWhenSourceGone() {
+            harness.addToBattlefield(player2, new Spellbook());
+            UUID targetId = harness.getPermanentId(player2, "Spellbook");
+
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.setHand(player1, List.of(new LeoninRelicWarder()));
+            harness.addMana(player1, ManaColor.WHITE, 2);
+
+            harness.castCreature(player1, 0);
+            harness.passBothPriorities(); // resolve creature -> may prompt
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handlePermanentChosen(player1, targetId); // ETB on stack
+
+            // Remove the Warder before ETB resolves
+            gd.playerBattlefields.get(player1.getId())
+                    .removeIf(p -> p.getCard().getName().equals("Leonin Relic-Warder"));
+
+            harness.passBothPriorities();
+
+            // Target should still be exiled
+            assertThat(gd.playerExiledCards.get(player2.getId()))
+                    .anyMatch(c -> c.getName().equals("Spellbook"));
+            // But no return tracking since source is gone
+            assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Stolen permanent tracks original owner for return")
+        void stolenPermanentUsesOriginalOwner() {
+            // Place Spellbook on player1's battlefield but mark as stolen from player2
+            Permanent stolen = addPermanent(player1, new Spellbook());
+            gd.stolenCreatures.put(stolen.getId(), player2.getId());
+
+            castWarderAndExile(stolen.getId());
+
+            // The return tracking should use the original owner (player2)
+            assertThat(gd.exileReturnOnPermanentLeave.values())
+                    .anyMatch(per -> per.card().getName().equals("Spellbook")
+                            && per.controllerId().equals(player2.getId()));
+        }
+
+        @Test
+        @DisplayName("Logs exile message with source name")
+        void logsExile() {
+            harness.addToBattlefield(player2, new Spellbook());
+            UUID targetId = harness.getPermanentId(player2, "Spellbook");
+            castWarderAndExile(targetId);
+
+            assertThat(gd.gameLog)
+                    .anyMatch(log -> log.contains("Spellbook") && log.contains("exiled")
+                            && log.contains("Leonin Relic-Warder"));
         }
     }
 
