@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedBySpellColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -277,6 +278,14 @@ public class GameQueryService {
     public boolean hasGrantedEffect(GameData gameData, Permanent permanent, Class<? extends CardEffect> effectType) {
         return computeStaticBonus(gameData, permanent).grantedEffects().stream()
                 .anyMatch(effectType::isInstance);
+    }
+
+    public boolean cantHaveCounters(GameData gameData, Permanent permanent) {
+        if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantHaveCountersEffect.class::isInstance)) {
+            return true;
+        }
+        return hasGrantedEffect(gameData, permanent, CantHaveCountersEffect.class);
     }
 
     public boolean hasCantBeBlocked(GameData gameData, Permanent creature) {

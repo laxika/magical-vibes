@@ -389,6 +389,7 @@ Pass `null` as filter to allow any card.
 | `TargetPlayerLosesGameEffect` | `(UUID playerId)` | target player loses the game |
 | `LoseGameIfNotCastFromHandEffect` | `()` | lose the game if not cast from hand (ETB check) |
 | `WinGameIfCreaturesInGraveyardEffect` | `(int threshold)` | win if N+ creature cards in graveyard |
+| `CantHaveCountersEffect` | `()` | this permanent can't have counters put on it (static) |
 | `CantLoseGameEffect` | `()` | you can't lose and opponents can't win (static) |
 | `LifeTotalCantChangeEffect` | `()` | controller's life total can't change (static) |
 

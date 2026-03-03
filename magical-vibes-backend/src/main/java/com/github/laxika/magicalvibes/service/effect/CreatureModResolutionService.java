@@ -810,6 +810,7 @@ public class CreatureModResolutionService {
 
         gameData.forEachPermanent((playerId, p) -> {
             if (!gameQueryService.isCreature(gameData, p)) return;
+            if (gameQueryService.cantHaveCounters(gameData, p)) return;
 
             p.setMinusOneMinusOneCounters(p.getMinusOneMinusOneCounters() + xValue);
             count[0]++;
@@ -828,6 +829,7 @@ public class CreatureModResolutionService {
         gameData.forEachPermanent((playerId, p) -> {
             if (p.getId().equals(sourceId)) return;
             if (!gameQueryService.isCreature(gameData, p)) return;
+            if (gameQueryService.cantHaveCounters(gameData, p)) return;
 
             p.setMinusOneMinusOneCounters(p.getMinusOneMinusOneCounters() + 1);
             count[0]++;
@@ -847,6 +849,7 @@ public class CreatureModResolutionService {
         int count = 0;
         for (Permanent p : battlefield) {
             if (!gameQueryService.isCreature(gameData, p)) continue;
+            if (gameQueryService.cantHaveCounters(gameData, p)) continue;
 
             p.setMinusOneMinusOneCounters(p.getMinusOneMinusOneCounters() + 1);
             count++;
@@ -864,6 +867,7 @@ public class CreatureModResolutionService {
         gameData.forEachPermanent((playerId, p) -> {
             if (!p.isAttacking()) return;
             if (!gameQueryService.isCreature(gameData, p)) return;
+            if (gameQueryService.cantHaveCounters(gameData, p)) return;
 
             p.setMinusOneMinusOneCounters(p.getMinusOneMinusOneCounters() + 1);
             count[0]++;
@@ -885,6 +889,10 @@ public class CreatureModResolutionService {
             return;
         }
 
+        if (gameQueryService.cantHaveCounters(gameData, source)) {
+            return;
+        }
+
         String counterLabel = String.format("%+d/%+d", effect.powerModifier(), effect.toughnessModifier());
         if (effect.powerModifier() > 0) {
             source.setPlusOnePlusOneCounters(source.getPlusOnePlusOneCounters() + effect.amount());
@@ -903,6 +911,10 @@ public class CreatureModResolutionService {
             return;
         }
 
+        if (gameQueryService.cantHaveCounters(gameData, self)) {
+            return;
+        }
+
         self.setChargeCounters(self.getChargeCounters() + 1);
 
         String logEntry = self.getCard().getName() + " gets a charge counter (" + self.getChargeCounters() + " total).";
@@ -915,6 +927,10 @@ public class CreatureModResolutionService {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
             log.info("Game {} - Target creature no longer on battlefield, effect fizzles", gameData.id);
+            return;
+        }
+
+        if (gameQueryService.cantHaveCounters(gameData, target)) {
             return;
         }
 

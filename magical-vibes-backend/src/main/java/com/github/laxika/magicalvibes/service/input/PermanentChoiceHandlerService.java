@@ -822,17 +822,19 @@ public class PermanentChoiceHandlerService {
                 for (UUID permId : permanentIds) {
                     Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                     if (perm != null) {
-                        if (perm.getPlusOnePlusOneCounters() > 0) {
-                            perm.setPlusOnePlusOneCounters(perm.getPlusOnePlusOneCounters() + 1);
-                        }
-                        if (perm.getMinusOneMinusOneCounters() > 0) {
-                            perm.setMinusOneMinusOneCounters(perm.getMinusOneMinusOneCounters() + 1);
-                        }
-                        if (perm.getLoyaltyCounters() > 0) {
-                            perm.setLoyaltyCounters(perm.getLoyaltyCounters() + 1);
-                        }
-                        if (perm.getAwakeningCounters() > 0) {
-                            perm.setAwakeningCounters(perm.getAwakeningCounters() + 1);
+                        if (!gameQueryService.cantHaveCounters(gameData, perm)) {
+                            if (perm.getPlusOnePlusOneCounters() > 0) {
+                                perm.setPlusOnePlusOneCounters(perm.getPlusOnePlusOneCounters() + 1);
+                            }
+                            if (perm.getMinusOneMinusOneCounters() > 0) {
+                                perm.setMinusOneMinusOneCounters(perm.getMinusOneMinusOneCounters() + 1);
+                            }
+                            if (perm.getLoyaltyCounters() > 0) {
+                                perm.setLoyaltyCounters(perm.getLoyaltyCounters() + 1);
+                            }
+                            if (perm.getAwakeningCounters() > 0) {
+                                perm.setAwakeningCounters(perm.getAwakeningCounters() + 1);
+                            }
                         }
                         proliferatedNames.add(perm.getCard().getName());
                     }

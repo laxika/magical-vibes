@@ -390,7 +390,7 @@ public class DamageResolutionService {
         boolean sourceHasInfect = gameQueryService.sourceHasKeyword(gameData, entry, damageSource, Keyword.INFECT);
 
         if (sourceHasInfect) {
-            if (damage > 0) {
+            if (damage > 0 && !gameQueryService.cantHaveCounters(gameData, target)) {
                 target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() + damage);
                 gameBroadcastService.logAndBroadcast(gameData,
                         sourceName + " puts " + damage + " -1/-1 counters on " + target.getCard().getName() + ".");

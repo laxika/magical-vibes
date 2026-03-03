@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
@@ -197,10 +198,13 @@ public class StackResolutionService {
 
         Permanent perm = new Permanent(card);
 
+        boolean cantHaveCounters = card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof CantHaveCountersEffect);
+
         // "Enters with X charge counters" — replacement effect (MTG Rule 614.1c)
         boolean hasXChargeCounterEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof EnterWithXChargeCountersEffect);
-        if (hasXChargeCounterEffect) {
+        if (hasXChargeCounterEffect && !cantHaveCounters) {
             perm.setChargeCounters(entry.getXValue());
         }
 
@@ -209,7 +213,7 @@ public class StackResolutionService {
                 .filter(e -> e instanceof EnterWithFixedChargeCountersEffect)
                 .map(e -> ((EnterWithFixedChargeCountersEffect) e).count())
                 .findFirst().orElse(0);
-        if (fixedChargeCounters > 0) {
+        if (fixedChargeCounters > 0 && !cantHaveCounters) {
             perm.setChargeCounters(fixedChargeCounters);
         }
 

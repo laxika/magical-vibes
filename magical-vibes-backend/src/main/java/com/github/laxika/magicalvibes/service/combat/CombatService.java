@@ -1451,7 +1451,7 @@ public class CombatService {
         // Apply infect redirected damage to guard creature as -1/-1 counters
         if (redirectTarget != null && state.infectDamageRedirectedToGuard > 0) {
             state.infectDamageRedirectedToGuard = gameHelper.applyCreaturePreventionShield(gameData, redirectTarget, state.infectDamageRedirectedToGuard);
-            if (state.infectDamageRedirectedToGuard > 0) {
+            if (state.infectDamageRedirectedToGuard > 0 && !gameQueryService.cantHaveCounters(gameData, redirectTarget)) {
                 redirectTarget.setMinusOneMinusOneCounters(redirectTarget.getMinusOneMinusOneCounters() + state.infectDamageRedirectedToGuard);
                 String redirectLog = redirectTarget.getCard().getName() + " gets " + state.infectDamageRedirectedToGuard + " -1/-1 counters from redirected infect damage.";
                 gameBroadcastService.logAndBroadcast(gameData, redirectLog);
@@ -1654,7 +1654,7 @@ public class CombatService {
                                            Set<Integer> deathtouchDamagedSet) {
         if (gameQueryService.hasKeyword(gameData, source, Keyword.INFECT)) {
             int afterShield = gameHelper.applyCreaturePreventionShield(gameData, target, damage);
-            if (afterShield > 0) {
+            if (afterShield > 0 && !gameQueryService.cantHaveCounters(gameData, target)) {
                 target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() + afterShield);
             }
         } else {
