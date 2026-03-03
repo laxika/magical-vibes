@@ -332,6 +332,9 @@ Pass `null` as filter to allow any card.
 | `ExileFromHandToImprintEffect` | `(CardPredicate filter, String description)` | exiles a card matching the predicate from the controller's hand and imprints it on the source permanent. Description is used in the player prompt. Prototype Portal: `CardTypePredicate(ARTIFACT)`, Semblance Anvil: `CardNotPredicate(CardTypePredicate(LAND))` |
 | `ChooseCardNameAndExileFromZonesEffect` | `(List<CardType> excludedTypes)` | Two-step interaction: (1) choose a card name (excluding given types), (2) present all matching cards from target player's hand, graveyard, and library for "any number" selection — player chooses 0 to N to exile. Library is always shuffled. Targets player. Uses `MULTI_ZONE_EXILE_CHOICE` awaiting input. Used by Memoricide, Cranial Extraction |
 | `ExileTargetPlayerGraveyardEffect` | `()` | exile all cards from target player's graveyard. Targets player. Used by Nihil Spellbomb |
+| `EachPlayerExilesTopCardsToSourceEffect` | `(int count)` | each player exiles top N cards of their library, tracked as "exiled with" the source permanent via `GameData.permanentExiledCards`. Used by Knowledge Pool ETB |
+| `KnowledgePoolCastTriggerEffect` | `()` | Marker effect for `ON_ANY_PLAYER_CASTS_SPELL`. When a spell is cast from hand, creates a `KnowledgePoolExileAndCastEffect` triggered ability. Only fires for spells cast from hand (prevents infinite loops) |
+| `KnowledgePoolExileAndCastEffect` | `(UUID originalSpellCardId, UUID knowledgePoolPermanentId, UUID castingPlayerId)` | Resolution effect for Knowledge Pool's cast trigger. Exiles the original spell from the stack to the KP pool, then presents the casting player with a choice of nonland "other" cards from the pool to cast without paying mana cost. `castingPlayerId` tracks "that player" (the caster) since the trigger is controlled by the KP controller per CR 603.3a. Uses `KNOWLEDGE_POOL_CAST_CHOICE` awaiting input |
 
 ## Tokens
 

@@ -1256,6 +1256,18 @@ public class AiDecisionEngine {
     }
 
     private void handleMultiGraveyardChoice(GameData gameData) {
+        // Check if this is a Knowledge Pool cast choice
+        if (gameData.interaction.awaitingInputType() == com.github.laxika.magicalvibes.model.AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE) {
+            InteractionContext.KnowledgePoolCastChoice kpc = gameData.interaction.knowledgePoolCastChoiceContext();
+            if (kpc != null && aiPlayer.getId().equals(kpc.playerId())) {
+                // AI always casts the first eligible card from Knowledge Pool
+                List<UUID> chosen = kpc.validCardIds().stream().limit(1).toList();
+                log.info("AI: Choosing card from Knowledge Pool in game {}", gameId);
+                send(() -> messageHandler.handleMultipleGraveyardCardsChosen(selfConnection, new MultipleGraveyardCardsChosenRequest(chosen)));
+            }
+            return;
+        }
+
         // Check if this is a multi-zone exile choice (Memoricide, etc.)
         if (gameData.interaction.awaitingInputType() == com.github.laxika.magicalvibes.model.AwaitingInput.MULTI_ZONE_EXILE_CHOICE) {
             InteractionContext.MultiZoneExileChoice mzec = gameData.interaction.multiZoneExileChoiceContext();

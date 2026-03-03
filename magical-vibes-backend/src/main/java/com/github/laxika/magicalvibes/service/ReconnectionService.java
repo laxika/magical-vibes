@@ -173,6 +173,12 @@ public class ReconnectionService {
                     resendFromContext(gameData, playerId, xvc);
                 }
             }
+            case KNOWLEDGE_POOL_CAST_CHOICE -> {
+                InteractionContext.KnowledgePoolCastChoice kpc = gameData.interaction.knowledgePoolCastChoiceContext();
+                if (kpc != null) {
+                    resendFromContext(gameData, playerId, kpc);
+                }
+            }
         }
     }
 
@@ -397,6 +403,28 @@ public class ReconnectionService {
                     sessionManager.sendToPlayer(playerId, new XValueChoiceMessage(
                             xvc.prompt(), xvc.maxValue(), xvc.cardName()));
                 }
+            }
+            case InteractionContext.KnowledgePoolCastChoice kpc -> {
+                if (!playerId.equals(kpc.playerId())) {
+                    return;
+                }
+                List<UUID> validCardIds = new ArrayList<>(kpc.validCardIds());
+                List<CardView> cardViews = new ArrayList<>();
+                // Collect CardViews from the KP pool
+                UUID kpPermanentId = gameData.knowledgePoolSourcePermanentId;
+                if (kpPermanentId != null) {
+                    List<Card> pool = gameData.permanentExiledCards.get(kpPermanentId);
+                    if (pool != null) {
+                        for (Card card : pool) {
+                            if (kpc.validCardIds().contains(card.getId())) {
+                                cardViews.add(cardViewFactory.create(card));
+                            }
+                        }
+                    }
+                }
+                sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsFromGraveyardsMessage(
+                        validCardIds, cardViews, 1,
+                        "Knowledge Pool — you may cast a nonland card without paying its mana cost."));
             }
         }
     }

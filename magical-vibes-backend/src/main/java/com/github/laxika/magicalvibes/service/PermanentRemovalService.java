@@ -49,6 +49,7 @@ public class PermanentRemovalService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
+                gameData.permanentExiledCards.remove(target.getId());
                 UUID graveyardOwnerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
                 boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, graveyardOwnerId, target.getOriginalCard(), Zone.BATTLEFIELD);
                 gameData.stolenCreatures.remove(target.getId());
@@ -89,6 +90,7 @@ public class PermanentRemovalService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
+                gameData.permanentExiledCards.remove(target.getId());
                 UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
                 gameData.stolenCreatures.remove(target.getId());
                 List<Card> hand = gameData.playerHands.get(ownerId);
@@ -107,6 +109,7 @@ public class PermanentRemovalService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
+                gameData.permanentExiledCards.remove(target.getId());
                 UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
                 gameData.playerExiledCards.get(ownerId).add(target.getOriginalCard());
                 gameData.stolenCreatures.remove(target.getId());

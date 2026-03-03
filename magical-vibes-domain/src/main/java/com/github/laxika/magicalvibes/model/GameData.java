@@ -108,6 +108,11 @@ public class GameData {
     public UUID pendingTapSubtypeBoostSourcePermanentId;
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
 
+    /** Maps permanent ID → cards exiled with that permanent (e.g. Knowledge Pool). */
+    public final Map<UUID, List<Card>> permanentExiledCards = new ConcurrentHashMap<>();
+    /** Transient field: tracks which Knowledge Pool permanent is currently resolving a cast choice. */
+    public UUID knowledgePoolSourcePermanentId;
+
     /** Tracks how many cards each player has drawn this turn. */
     public final Map<UUID, Integer> cardsDrawnThisTurn = new ConcurrentHashMap<>();
 
@@ -364,6 +369,11 @@ public class GameData {
         // --- Emblems (records are immutable) ---
         copy.emblems.addAll(this.emblems);
 
+        // --- Per-permanent exile tracking (Knowledge Pool, etc.) ---
+        this.permanentExiledCards.forEach((k, v) ->
+                copy.permanentExiledCards.put(k, Collections.synchronizedList(new ArrayList<>(v))));
+        copy.knowledgePoolSourcePermanentId = this.knowledgePoolSourcePermanentId;
+
         // --- Search tax payments (Leonin Arbiter) ---
         this.paidSearchTaxPermanentIds.forEach((k, v) -> {
             Set<UUID> s = ConcurrentHashMap.newKeySet();
@@ -454,6 +464,9 @@ public class GameData {
                             cda.validTargets(), cda.isTrample(), cda.isDeathtouch());
             case InteractionContext.XValueChoice xvc ->
                     targetInteraction.beginXValueChoice(xvc.playerId(), xvc.maxValue(), xvc.prompt(), xvc.cardName());
+            case InteractionContext.KnowledgePoolCastChoice kpc ->
+                    targetInteraction.beginKnowledgePoolCastChoice(kpc.playerId(),
+                            kpc.validCardIds() != null ? new HashSet<>(kpc.validCardIds()) : null, kpc.maxCount());
         }
 
         // Copy discard remaining count (not part of context reconstruction)

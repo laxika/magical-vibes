@@ -171,13 +171,14 @@ public class GameTestHarness {
         EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
         LifeResolutionService lifeResolutionService = new LifeResolutionService(gameQueryService, gameBroadcastService, playerInputService);
         DamageResolutionService damageResolutionService = new DamageResolutionService(gameHelper, gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService, lifeResolutionService);
+        ExileResolutionService exileResolutionService = new ExileResolutionService(gameHelper, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, cardViewFactory, triggerCollectionService);
         List<Object> effectServices = List.of(
                 damageResolutionService,
                 new DestructionResolutionService(gameHelper, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService),
                 new LibraryResolutionService(gameHelper, gameBroadcastService, sessionManager, cardViewFactory),
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new CounterResolutionService(gameHelper, gameBroadcastService, gameQueryService),
-                new ExileResolutionService(gameHelper, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService),
+                exileResolutionService,
                 new CopyResolutionService(gameBroadcastService, validTargetService, gameHelper, gameQueryService),
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
                 new GraveyardReturnResolutionService(gameHelper, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService),
@@ -239,7 +240,8 @@ public class GameTestHarness {
                 permanentChoiceHandlerService, graveyardChoiceHandlerService,
                 mayAbilityHandlerService, xValueChoiceHandlerService, libraryChoiceHandlerService,
                 spellCastingService,
-                stackResolutionService, abilityActivationService, mulliganService, reconnectionService);
+                stackResolutionService, abilityActivationService, mulliganService, reconnectionService,
+                exileResolutionService);
         lobbyService = new LobbyService(gameRegistry, gameBroadcastService);
 
         // Create the MessageHandler (GameMessageHandler) for AI tests

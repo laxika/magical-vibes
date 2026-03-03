@@ -182,13 +182,14 @@ public class GameSimulator {
         EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
         LifeResolutionService lifeResolutionService = new LifeResolutionService(gameQueryService, gameBroadcastService, playerInputService);
         DamageResolutionService damageResolutionService = new DamageResolutionService(gameHelper, gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService, lifeResolutionService);
+        ExileResolutionService exileResolutionService = new ExileResolutionService(gameHelper, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, cardViewFactory, triggerCollectionService);
         List<Object> effectServices = List.of(
                 damageResolutionService,
                 new DestructionResolutionService(gameHelper, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService),
                 new LibraryResolutionService(gameHelper, gameBroadcastService, noOpSession, cardViewFactory),
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new CounterResolutionService(gameHelper, gameBroadcastService, gameQueryService),
-                new ExileResolutionService(gameHelper, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService),
+                exileResolutionService,
                 new CopyResolutionService(gameBroadcastService, validTargetService, gameHelper, gameQueryService),
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
                 new GraveyardReturnResolutionService(gameHelper, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService),
@@ -251,7 +252,8 @@ public class GameSimulator {
                 permanentChoiceHandlerService, graveyardChoiceHandlerService,
                 mayAbilityHandlerService, xValueChoiceHandlerService, libraryChoiceHandlerService,
                 spellCastingService,
-                stackResolutionService, abilityActivationService, mulliganService, reconnectionService);
+                stackResolutionService, abilityActivationService, mulliganService, reconnectionService,
+                exileResolutionService);
 
         this.boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
@@ -666,6 +668,7 @@ public class GameSimulator {
             case InteractionContext.MultiZoneExileChoice mzec -> mzec.playerId();
             case InteractionContext.CombatDamageAssignment cda -> cda.playerId();
             case InteractionContext.XValueChoice xvc -> xvc.playerId();
+            case InteractionContext.KnowledgePoolCastChoice kpc -> kpc.playerId();
         };
     }
 

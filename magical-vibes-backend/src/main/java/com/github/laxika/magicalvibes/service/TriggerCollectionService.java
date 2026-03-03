@@ -38,6 +38,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeOnOwnSpellCastWithCostEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeOnSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.KnowledgePoolCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -68,6 +70,10 @@ public class TriggerCollectionService {
     private final CreatureControlService creatureControlService;
 
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId) {
+        checkSpellCastTriggers(gameData, spellCard, castingPlayerId, true);
+    }
+
+    public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId, boolean castFromHand) {
         gameData.forEachPermanent((playerId, perm) -> {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)) {
                 CardEffect inner = effect instanceof MayEffect m ? m.wrapped() : effect;
@@ -116,6 +122,16 @@ public class TriggerCollectionService {
                                 perm.getId()
                         ));
                     }
+                } else if (inner instanceof KnowledgePoolCastTriggerEffect && castFromHand) {
+                    // Knowledge Pool: only triggers when a spell is cast from hand (prevents infinite loops)
+                    // Trigger is controlled by KP's controller (CR 603.3a); caster tracked in effect
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            playerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(new KnowledgePoolExileAndCastEffect(spellCard.getId(), perm.getId(), castingPlayerId)))
+                    ));
                 } else if (inner instanceof CopySpellForEachOtherSubtypePermanentEffect trigger
                         && trigger.spellSnapshot() == null) {
                     // Only triggers for instant or sorcery spells

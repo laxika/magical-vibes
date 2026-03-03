@@ -734,6 +734,27 @@ public class InteractionState {
         this.context = new InteractionContext.XValueChoice(playerId, maxValue, prompt, cardName);
     }
 
+    public void beginKnowledgePoolCastChoice(UUID playerId, Set<UUID> validCardIds, int maxCount) {
+        this.awaitingInput = AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE;
+        this.awaitingMultiGraveyardChoicePlayerId = playerId;
+        this.awaitingMultiGraveyardChoiceValidCardIds = new HashSet<>(validCardIds);
+        this.awaitingMultiGraveyardChoiceMaxCount = maxCount;
+        this.context = new InteractionContext.KnowledgePoolCastChoice(playerId, new HashSet<>(validCardIds), maxCount);
+    }
+
+    public void clearKnowledgePoolCastChoice() {
+        this.awaitingMultiGraveyardChoicePlayerId = null;
+        this.awaitingMultiGraveyardChoiceValidCardIds = null;
+        this.awaitingMultiGraveyardChoiceMaxCount = 0;
+    }
+
+    public InteractionContext.KnowledgePoolCastChoice knowledgePoolCastChoiceContext() {
+        if (context instanceof InteractionContext.KnowledgePoolCastChoice kpc) return kpc;
+        if (awaitingMultiGraveyardChoicePlayerId == null || awaitingMultiGraveyardChoiceValidCardIds == null) return null;
+        return new InteractionContext.KnowledgePoolCastChoice(awaitingMultiGraveyardChoicePlayerId,
+                awaitingMultiGraveyardChoiceValidCardIds, awaitingMultiGraveyardChoiceMaxCount);
+    }
+
     public InteractionContext.XValueChoice xValueChoiceContext() {
         if (context instanceof InteractionContext.XValueChoice xvc) return xvc;
         return null;

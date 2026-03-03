@@ -453,7 +453,7 @@ public class PermanentChoiceHandlerService {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} cast-from-library targets {}", gameData.id, lct.cardToCast().getName(), targetName);
 
-                triggerCollectionService.checkSpellCastTriggers(gameData, lct.cardToCast(), lct.controllerId());
+                triggerCollectionService.checkSpellCastTriggers(gameData, lct.cardToCast(), lct.controllerId(), false);
                 triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
             } else {
                 // Target no longer valid — put card into graveyard
@@ -466,6 +466,46 @@ public class PermanentChoiceHandlerService {
             if (!gameData.pendingMayAbilities.isEmpty()) {
                 playerInputService.processNextMayAbility(gameData);
                 return;
+            }
+
+            gameData.priorityPassedBy.clear();
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+        } else if (context instanceof PermanentChoiceContext.ExileCastSpellTarget ect) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+            boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
+
+            if (target != null || isPlayerTarget) {
+                StackEntry entry = new StackEntry(
+                        ect.spellType(),
+                        ect.cardToCast(),
+                        ect.controllerId(),
+                        ect.cardToCast().getName(),
+                        new ArrayList<>(ect.spellEffects()),
+                        0,
+                        permanentId,
+                        null
+                );
+                gameData.stack.add(entry);
+
+                gameData.spellsCastThisTurn.merge(ect.controllerId(), 1, Integer::sum);
+                gameData.priorityPassedBy.clear();
+
+                String targetName = isPlayerTarget
+                        ? gameData.playerIdToName.get(permanentId)
+                        : target.getCard().getName();
+                String logEntry = ect.cardToCast().getName() + " targets " + targetName + " (Knowledge Pool).";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} cast-from-exile targets {}", gameData.id, ect.cardToCast().getName(), targetName);
+
+                triggerCollectionService.checkSpellCastTriggers(gameData, ect.cardToCast(), ect.controllerId(), false);
+                triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+            } else {
+                // Target no longer valid — put card into graveyard
+                gameHelper.addCardToGraveyard(gameData, ect.controllerId(), ect.cardToCast());
+                String logEntry = ect.cardToCast().getName() + "'s target is no longer valid. It is put into the graveyard.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} cast-from-exile target no longer exists", gameData.id, ect.cardToCast().getName());
             }
 
             gameData.priorityPassedBy.clear();

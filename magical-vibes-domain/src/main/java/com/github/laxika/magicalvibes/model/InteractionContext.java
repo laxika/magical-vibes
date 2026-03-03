@@ -21,7 +21,8 @@ public sealed interface InteractionContext permits
         InteractionContext.RevealedHandChoice,
         InteractionContext.MultiZoneExileChoice,
         InteractionContext.CombatDamageAssignment,
-        InteractionContext.XValueChoice {
+        InteractionContext.XValueChoice,
+        InteractionContext.KnowledgePoolCastChoice {
 
     record AttackerDeclaration(UUID activePlayerId) implements InteractionContext {}
 
@@ -69,4 +70,6 @@ public sealed interface InteractionContext permits
                                    boolean isTrample, boolean isDeathtouch) implements InteractionContext {}
 
     record XValueChoice(UUID playerId, int maxValue, String prompt, String cardName) implements InteractionContext {}
+
+    record KnowledgePoolCastChoice(UUID playerId, Set<UUID> validCardIds, int maxCount) implements InteractionContext {}
 }

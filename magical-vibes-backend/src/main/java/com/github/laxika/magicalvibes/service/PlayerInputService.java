@@ -269,6 +269,15 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose X value (max {})", gameData.id, playerName, maxValue);
     }
 
+    public void sendKnowledgePoolCastChoice(GameData gameData, UUID playerId, List<UUID> validCardIds, List<CardView> cardViews) {
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId),
+                new ChooseMultipleCardsFromGraveyardsMessage(validCardIds, cardViews, 1,
+                        "Knowledge Pool — you may cast a nonland card without paying its mana cost."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a card from Knowledge Pool", gameData.id, playerName);
+    }
+
     public void processNextMayAbility(GameData gameData) {
         if (gameData.pendingMayAbilities.isEmpty()) {
             return;

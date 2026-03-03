@@ -55,6 +55,7 @@ public class GameService {
     private final AbilityActivationService abilityActivationService;
     private final MulliganService mulliganService;
     private final ReconnectionService reconnectionService;
+    private final ExileResolutionService exileResolutionService;
 
     /**
      * When Mindslaver control is active, remaps the controlling player to act as
@@ -105,6 +106,7 @@ public class GameService {
             case InteractionContext.CombatDamageAssignment cda -> controlledId.equals(cda.playerId());
             case InteractionContext.MultiZoneExileChoice mzec -> controlledId.equals(mzec.playerId());
             case InteractionContext.XValueChoice xvc -> controlledId.equals(xvc.playerId());
+            case InteractionContext.KnowledgePoolCastChoice kpc -> controlledId.equals(kpc.playerId());
         };
     }
 
@@ -363,6 +365,8 @@ public class GameService {
                 libraryChoiceHandlerService.handleLibraryRevealChoice(gameData, player, cardIds);
             } else if (gameData.interaction.awaitingInputType() == AwaitingInput.MULTI_ZONE_EXILE_CHOICE) {
                 colorChoiceHandlerService.handleMultiZoneExileCardsChosen(gameData, player, cardIds);
+            } else if (gameData.interaction.awaitingInputType() == AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE) {
+                exileResolutionService.handleKnowledgePoolCastChoice(gameData, player, cardIds);
             } else {
                 graveyardChoiceHandlerService.handleMultipleGraveyardCardsChosen(gameData, player, cardIds);
             }

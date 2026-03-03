@@ -1017,7 +1017,7 @@ public class MayAbilityHandlerService {
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} casts {} from library without paying mana", gameData.id, playerName, cardToCast.getName());
 
-                    triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, player.getId());
+                    triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, player.getId(), false);
                 }
             }
         } else {
