@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndGiveControllerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndBoostSelfByManaValueEffect;
@@ -470,6 +471,42 @@ public class DestructionResolutionService {
         // Deal damage to the land's controller regardless of whether destruction succeeded
         dealNoncombatDamageToPlayer(gameData, landControllerId, effect.damage(),
                 entry.getCard().getName(), entry.getCard().getColor());
+
+        gameHelper.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves a {@link DestroyTargetPermanentAndGiveControllerPoisonCountersEffect}, destroying
+     * the targeted permanent and giving its controller poison counters. The poison counters are
+     * given regardless of whether the destruction succeeds (e.g. indestructible).
+     */
+    @HandlesEffect(DestroyTargetPermanentAndGiveControllerPoisonCountersEffect.class)
+    void resolveDestroyTargetPermanentAndGiveControllerPoisonCounters(GameData gameData, StackEntry entry,
+                                                                      DestroyTargetPermanentAndGiveControllerPoisonCountersEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        // Find the controller of the targeted permanent before destruction
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (controllerId == null) {
+            return;
+        }
+
+        // Attempt to destroy the target
+        tryDestroyAndLog(gameData, target, entry.getCard().getName());
+
+        // Give poison counters to the target's controller regardless of whether destruction succeeded
+        int currentPoison = gameData.playerPoisonCounters.getOrDefault(controllerId, 0);
+        gameData.playerPoisonCounters.put(controllerId, currentPoison + effect.poisonCounters());
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String poisonLog = playerName + " gets " + effect.poisonCounters() + " poison counter"
+                + (effect.poisonCounters() > 1 ? "s" : "") + " (" + entry.getCard().getName() + ").";
+        gameBroadcastService.logAndBroadcast(gameData, poisonLog);
+        log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName,
+                effect.poisonCounters(), entry.getCard().getName());
 
         gameHelper.checkWinCondition(gameData);
     }
