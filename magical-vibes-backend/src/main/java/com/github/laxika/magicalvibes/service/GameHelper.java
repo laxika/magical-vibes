@@ -863,6 +863,7 @@ public class GameHelper {
 
         checkAllyCreatureEntersTriggers(gameData, controllerId, card);
         checkAllyArtifactEntersTriggers(gameData, controllerId, card);
+        checkAllyNontokenArtifactEntersTriggers(gameData, controllerId, card);
         checkAnyCreatureEntersTriggers(gameData, controllerId, card);
         if (card.getType() == CardType.LAND) {
             checkOpponentLandEntersTriggers(gameData, controllerId);
@@ -1011,6 +1012,77 @@ public class GameHelper {
                 gameBroadcastService.logAndBroadcast(gameData, triggerLog);
                 log.info("Game {} - {} triggers for {} entering (ally artifact entered)",
                         gameData.id, perm.getCard().getName(), enteringCard.getName());
+            }
+        }
+    }
+
+    void checkAllyNontokenArtifactEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
+        if (enteringCard.isToken()) return;
+
+        boolean isArtifact = enteringCard.getType() == CardType.ARTIFACT
+                || (enteringCard.getAdditionalTypes() != null && enteringCard.getAdditionalTypes().contains(CardType.ARTIFACT));
+        if (!isArtifact) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+
+        // Find the entering permanent's ID
+        UUID enteringPermanentId = null;
+        for (Permanent p : battlefield) {
+            if (p.getCard() == enteringCard) {
+                enteringPermanentId = p.getId();
+                break;
+            }
+        }
+
+        for (Permanent perm : battlefield) {
+            if (perm.getCard() == enteringCard) continue;
+
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD);
+            if (effects == null || effects.isEmpty()) continue;
+
+            for (CardEffect effect : effects) {
+                if (effect instanceof MayPayManaEffect mayPay) {
+                    gameData.pendingMayAbilities.add(new PendingMayAbility(
+                            perm.getCard(),
+                            controllerId,
+                            List.of(mayPay.wrapped()),
+                            perm.getCard().getName() + " — " + mayPay.prompt(),
+                            enteringPermanentId,
+                            mayPay.manaCost()
+                    ));
+                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                    log.info("Game {} - {} triggers for nontoken artifact {} entering",
+                            gameData.id, perm.getCard().getName(), enteringCard.getName());
+                } else if (effect instanceof MayEffect may) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            controllerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(effect)),
+                            null,
+                            perm.getId()
+                    ));
+                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                    log.info("Game {} - {} triggers for nontoken artifact {} entering",
+                            gameData.id, perm.getCard().getName(), enteringCard.getName());
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            controllerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(effect)),
+                            null,
+                            perm.getId()
+                    ));
+                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                    log.info("Game {} - {} triggers for nontoken artifact {} entering",
+                            gameData.id, perm.getCard().getName(), enteringCard.getName());
+                }
             }
         }
     }
