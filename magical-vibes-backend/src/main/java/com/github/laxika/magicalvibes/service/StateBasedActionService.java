@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import lombok.RequiredArgsConstructor;
@@ -60,6 +61,17 @@ public class StateBasedActionService {
         }
         if (anyDied) {
             permanentRemovalService.removeOrphanedAuras(gameData);
+        }
+
+        // CR 704.5c — player with ten or more poison counters loses the game
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            int poison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
+            if (poison >= 10) {
+                gameHelper.checkWinCondition(gameData);
+                if (gameData.status == GameStatus.FINISHED) {
+                    return;
+                }
+            }
         }
 
         // CR 704.5q — +1/+1 and -1/-1 counters cancel each other out

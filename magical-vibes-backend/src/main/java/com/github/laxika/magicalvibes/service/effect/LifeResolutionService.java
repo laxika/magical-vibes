@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifePerCreatur
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaGainXLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GiveControllerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveEachPlayerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveEnchantedPermanentControllerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
@@ -439,6 +440,20 @@ public class LifeResolutionService {
         gameData.playerPoisonCounters.put(playerId, currentPoison + effect.amount());
 
         String playerName = gameData.playerIdToName.get(playerId);
+        String logEntry = playerName + " gets " + effect.amount() + " poison counter" + (effect.amount() > 1 ? "s" : "")
+                + " (" + entry.getCard().getName() + ").";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName, effect.amount(), entry.getCard().getName());
+    }
+
+    @HandlesEffect(GiveControllerPoisonCountersEffect.class)
+    private void resolveGiveControllerPoisonCounters(GameData gameData, StackEntry entry, GiveControllerPoisonCountersEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        int currentPoison = gameData.playerPoisonCounters.getOrDefault(controllerId, 0);
+        gameData.playerPoisonCounters.put(controllerId, currentPoison + effect.amount());
+
+        String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = playerName + " gets " + effect.amount() + " poison counter" + (effect.amount() > 1 ? "s" : "")
                 + " (" + entry.getCard().getName() + ").";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
