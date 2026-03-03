@@ -54,6 +54,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Graveyard to top of library + draw | `f/FranticSalvage.java` | PutTargetCardsFromGraveyardOnTopOfLibraryEffect(CardTypePredicate(ARTIFACT)) + DrawCardEffect — any number of target artifact cards, multi-graveyard targeting at cast time |
 | Prevent combat damage | `h/HolyDay.java` | PreventAllCombatDamageEffect |
 | Steal creature (temp) | `t/Threaten.java` | GainControlOfTargetCreatureUntilEndOfTurn + haste + untap |
+| Steal artifact (temp) | `m/MetallicMastery.java` | GainControlOfTargetPermanentUntilEndOfTurn + untap + haste + PermanentIsArtifactPredicate filter |
 | Extra turn | `t/TimeStretch.java` | ExtraTurnEffect |
 | Extra combat | `r/RelentlessAssault.java` | AdditionalCombatMainPhaseEffect |
 | Mill | `t/Traumatize.java` | MillHalfLibraryEffect |

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetE
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEquipmentUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
@@ -402,6 +403,20 @@ public class PermanentControlResolutionService {
 
     @HandlesEffect(GainControlOfTargetCreatureUntilEndOfTurnEffect.class)
     private void resolveGainControlOfTargetCreatureUntilEndOfTurn(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) return;
+
+        UUID oldController = gameQueryService.findPermanentController(gameData, target.getId());
+        if (oldController == null || oldController.equals(entry.getControllerId())) {
+            return;
+        }
+
+        creatureControlService.stealPermanent(gameData, entry.getControllerId(), target);
+        gameData.untilEndOfTurnStolenCreatures.add(target.getId());
+    }
+
+    @HandlesEffect(GainControlOfTargetPermanentUntilEndOfTurnEffect.class)
+    private void resolveGainControlOfTargetPermanentUntilEndOfTurn(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) return;
 
