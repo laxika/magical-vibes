@@ -71,6 +71,7 @@ public enum CardSubtype {
     KOTH("Koth"),
     WRAITH("Wraith"),
     GNOME("Gnome"),
+    GARGOYLE("Gargoyle"),
     MERCENARY("Mercenary"),
     ZOMBIE("Zombie"),
     CROCODILE("Crocodile"),
