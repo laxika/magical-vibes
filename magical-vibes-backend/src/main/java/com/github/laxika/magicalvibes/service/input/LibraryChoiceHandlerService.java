@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
+import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingOpponentExileChoice;
@@ -230,6 +231,22 @@ public class LibraryChoiceHandlerService {
                         setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
                         gameData.imprintSourcePermanentId = null;
                     }
+                } else if (toBattlefield) {
+                    Permanent perm = new Permanent(chosenCard);
+                    gameHelper.putPermanentOntoBattlefield(gameData, playerId, perm);
+                    if (toBattlefieldTapped) {
+                        perm.tap();
+                    }
+                    if (chosenCard.getType() == CardType.CREATURE) {
+                        gameHelper.handleCreatureEnteredBattlefield(gameData, playerId, chosenCard, null, false);
+                    }
+                    if (chosenCard.getType() == CardType.PLANESWALKER && chosenCard.getLoyalty() != null) {
+                        perm.setLoyaltyCounters(chosenCard.getLoyalty());
+                        perm.setSummoningSick(false);
+                    }
+                    if (!gameData.interaction.isAwaitingInput()) {
+                        legendRuleService.checkLegendRule(gameData, playerId);
+                    }
                 } else {
                     gameData.playerHands.get(handOwnerId).add(chosenCard);
                 }
@@ -241,22 +258,16 @@ public class LibraryChoiceHandlerService {
                 }
             }
 
-            if (sourceCards.size() > 1) {
-                gameData.interaction.beginLibraryReorder(deckOwnerId, sourceCards, true);
-                List<CardView> cardViews = sourceCards.stream().map(cardViewFactory::create).toList();
-                sessionManager.sendToPlayer(deckOwnerId, new com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage(
-                        cardViews,
-                        "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."
-                ));
-            } else if (sourceCards.size() == 1) {
-                deck.add(sourceCards.getFirst());
-            }
-
+            // Log the result
             String logEntry;
             if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
                 logEntry = chosenCard == null
                         ? player.getUsername() + "'s imprint ability does nothing."
                         : player.getUsername() + " exiles a card face down.";
+            } else if (toBattlefield) {
+                logEntry = chosenCard == null
+                        ? player.getUsername() + " puts no card onto the battlefield."
+                        : chosenCard.getName() + " enters the battlefield under " + player.getUsername() + "'s control.";
             } else {
                 logEntry = chosenCard == null
                         ? player.getUsername() + " does not reveal a creature card."
@@ -264,8 +275,29 @@ public class LibraryChoiceHandlerService {
             }
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
-            if (sourceCards.size() > 1) {
+            // If ETB or legend rule caused awaiting input, defer remaining card reorder
+            if (gameData.interaction.isAwaitingInput()) {
+                if (!sourceCards.isEmpty()) {
+                    gameData.pendingLibraryBottomReorders.addLast(
+                            new LibraryBottomReorderRequest(deckOwnerId, new ArrayList<>(sourceCards)));
+                }
                 return;
+            }
+
+            if (sourceCards.size() > 1) {
+                gameData.interaction.beginLibraryReorder(deckOwnerId, sourceCards, true);
+                List<CardView> cardViews = sourceCards.stream().map(cardViewFactory::create).toList();
+                sessionManager.sendToPlayer(deckOwnerId, new ReorderLibraryCardsMessage(
+                        cardViews,
+                        "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."
+                ));
+                return;
+            } else if (sourceCards.size() == 1) {
+                deck.add(sourceCards.getFirst());
+            }
+
+            if (toBattlefield) {
+                stateBasedActionService.performStateBasedActions(gameData);
             }
 
             turnProgressionService.resolveAutoPass(gameData);
