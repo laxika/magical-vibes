@@ -61,6 +61,7 @@ public enum CardSubtype {
     RAT("Rat"),
     ILLUSION("Illusion"),
     DRAKE("Drake"),
+    DRONE("Drone"),
     WARRIOR("Warrior"),
     METATHRAN("Metathran"),
     VAMPIRE("Vampire"),
