@@ -37,7 +37,11 @@ public class StateBasedActionService {
                     boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, graveyardOwnerId, p.getOriginalCard(), Zone.BATTLEFIELD);
                     if (wentToGraveyard) {
                         gameHelper.collectDeathTrigger(gameData, p.getCard(), playerId, true);
+                        gameData.creatureDeathCountThisTurn.merge(playerId, 1, Integer::sum);
                         gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                        gameHelper.checkAnyNontokenCreatureDeathTriggers(gameData, p.getCard());
+                        gameHelper.checkOpponentCreatureDeathTriggers(gameData, playerId);
+                        gameHelper.checkEquippedCreatureDeathTriggers(gameData, p.getId(), playerId);
                     }
                     String logEntry = p.getCard().getName() + " is put into the graveyard (0 toughness).";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);

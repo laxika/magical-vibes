@@ -1249,7 +1249,7 @@ public class GameHelper {
                             playerId,
                             perm.getCard().getName() + "'s ability",
                             new ArrayList<>(List.of(effect)),
-                            null,
+                            dyingCreatureControllerId,
                             perm.getId()
                     ));
                 }
