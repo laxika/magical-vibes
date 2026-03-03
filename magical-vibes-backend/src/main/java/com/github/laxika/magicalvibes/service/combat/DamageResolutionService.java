@@ -534,7 +534,7 @@ public class DamageResolutionService {
             int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
 
-            boolean sourceHasInfect = gameQueryService.hasKeywordOnSource(gameData, entry, Keyword.INFECT);
+            boolean sourceHasInfect = gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.INFECT);
 
             if (sourceHasInfect) {
                 if (effectiveDamage > 0) {

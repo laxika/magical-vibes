@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService.StaticBonus;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 
@@ -128,6 +129,20 @@ public class StaticBonusAccumulator {
 
     public void setSubtypeOverriding(boolean subtypeOverriding) {
         this.subtypeOverriding = subtypeOverriding;
+    }
+
+    /**
+     * Builds a {@link StaticBonus} from this accumulator's state.
+     *
+     * @param finalPower     the computed power (accumulator power + any external adjustments)
+     * @param finalToughness the computed toughness (accumulator toughness + any external adjustments)
+     * @param animated       whether the target should be treated as an animated creature
+     */
+    public StaticBonus toStaticBonus(int finalPower, int finalToughness, boolean animated) {
+        return new StaticBonus(
+                finalPower, finalToughness, keywords, protectionColors,
+                animated, grantedActivatedAbilities, grantedEffects,
+                grantedColors, grantedSubtypes, colorOverriding, subtypeOverriding);
     }
 }
 

@@ -1198,45 +1198,6 @@ class GameQueryServiceTest extends BaseCardTest {
         }
     }
 
-    // ===== hasKeywordOnSource =====
-
-    @Nested
-    @DisplayName("hasKeywordOnSource")
-    class HasKeywordOnSource {
-
-        @Test
-        @DisplayName("returns true when source permanent has keyword")
-        void returnsTrueWhenSourceHasKeyword() {
-            Permanent source = addPermanent(player1.getId(), new MirranCrusader());
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, new MirranCrusader(), player1.getId(),
-                    "Test", List.of(), null, source.getId());
-
-            assertThat(gqs.hasKeywordOnSource(gd, entry, Keyword.DOUBLE_STRIKE)).isTrue();
-        }
-
-        @Test
-        @DisplayName("returns false when source permanent lacks keyword")
-        void returnsFalseWhenSourceLacksKeyword() {
-            Permanent source = addPermanent(player1.getId(), new GrizzlyBears());
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, new GrizzlyBears(), player1.getId(),
-                    "Test", List.of(), null, source.getId());
-
-            assertThat(gqs.hasKeywordOnSource(gd, entry, Keyword.FLYING)).isFalse();
-        }
-
-        @Test
-        @DisplayName("returns false when no source permanent")
-        void returnsFalseWhenNoSource() {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, new GrizzlyBears(), player1.getId(),
-                    "Test", List.of());
-
-            assertThat(gqs.hasKeywordOnSource(gd, entry, Keyword.FLYING)).isFalse();
-        }
-    }
-
     // ===== sourceHasKeyword =====
 
     @Nested
@@ -1263,6 +1224,27 @@ class GameQueryServiceTest extends BaseCardTest {
                     "Test", List.of(), null, source.getId());
 
             assertThat(gqs.sourceHasKeyword(gd, entry, null, Keyword.DOUBLE_STRIKE)).isTrue();
+        }
+
+        @Test
+        @DisplayName("returns false when entry source permanent lacks keyword")
+        void returnsFalseWhenEntrySourceLacksKeyword() {
+            Permanent source = addPermanent(player1.getId(), new GrizzlyBears());
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, new GrizzlyBears(), player1.getId(),
+                    "Test", List.of(), null, source.getId());
+
+            assertThat(gqs.sourceHasKeyword(gd, entry, null, Keyword.FLYING)).isFalse();
+        }
+
+        @Test
+        @DisplayName("returns false when no source permanent")
+        void returnsFalseWhenNoSource() {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, new GrizzlyBears(), player1.getId(),
+                    "Test", List.of());
+
+            assertThat(gqs.sourceHasKeyword(gd, entry, null, Keyword.FLYING)).isFalse();
         }
     }
 

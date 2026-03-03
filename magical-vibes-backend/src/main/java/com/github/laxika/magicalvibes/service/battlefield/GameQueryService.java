@@ -295,10 +295,8 @@ public class GameQueryService {
         if (creature.isCantBeBlocked()) return true;
         if (creature.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof CantBeBlockedEffect)) return true;
-        return gameData.anyPermanentMatches(source ->
-                source.getAttachedTo() != null && source.getAttachedTo().equals(creature.getId())
-                        && source.getCard().getEffects(EffectSlot.STATIC).stream()
-                                .anyMatch(e -> e instanceof CantBeBlockedEffect));
+        if (hasAuraWithEffect(gameData, creature, CantBeBlockedEffect.class)) return true;
+        return hasGrantedEffect(gameData, creature, CantBeBlockedEffect.class);
     }
 
     // --- Permanent predicate matching ---
@@ -431,9 +429,8 @@ public class GameQueryService {
      * cause a creature to assign damage equal to its toughness when toughness > power.
      */
     public int getEffectiveCombatDamage(GameData gameData, Permanent creature) {
-        StaticBonus bonus = computeStaticBonus(gameData, creature);
-        int power = creature.getEffectivePower() + bonus.power();
-        int toughness = creature.getEffectiveToughness() + bonus.toughness();
+        int power = getEffectivePower(gameData, creature);
+        int toughness = getEffectiveToughness(gameData, creature);
 
         if (toughness > power && hasAuraWithEffect(gameData, creature, AssignCombatDamageWithToughnessEffect.class)) {
             return toughness;
@@ -500,7 +497,7 @@ public class GameQueryService {
             toughness += manaValue;
         }
 
-        return new StaticBonus(power, toughness, accumulator.getKeywords(), accumulator.getProtectionColors(), accumulator.isAnimatedCreature() || isSelfAnimated, accumulator.getGrantedActivatedAbilities(), accumulator.getGrantedEffects(), accumulator.getGrantedColors(), accumulator.getGrantedSubtypes(), accumulator.isColorOverriding(), accumulator.isSubtypeOverriding());
+        return accumulator.toStaticBonus(power, toughness, accumulator.isAnimatedCreature() || isSelfAnimated);
     }
 
     // --- Protection & evasion ---
@@ -553,20 +550,12 @@ public class GameQueryService {
                 || hasProtectionFromSourceCardTypes(target, sourceCard);
     }
 
-    public boolean hasKeywordOnSource(GameData gameData, StackEntry entry, Keyword keyword) {
-        if (entry.getSourcePermanentId() != null) {
-            Permanent source = findPermanentById(gameData, entry.getSourcePermanentId());
-            if (source != null) {
-                return hasKeyword(gameData, source, keyword);
-            }
-        }
-        return false;
-    }
-
     public boolean sourceHasKeyword(GameData gameData, StackEntry entry, Permanent explicitSource, Keyword keyword) {
-        return explicitSource != null
-                ? hasKeyword(gameData, explicitSource, keyword)
-                : hasKeywordOnSource(gameData, entry, keyword);
+        Permanent source = explicitSource;
+        if (source == null && entry.getSourcePermanentId() != null) {
+            source = findPermanentById(gameData, entry.getSourcePermanentId());
+        }
+        return source != null && hasKeyword(gameData, source, keyword);
     }
 
     public boolean isLethalDamage(int damage, int effectiveToughness, boolean deathtouch) {
@@ -578,6 +567,12 @@ public class GameQueryService {
             return false;
         }
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantBeTargetedBySpellColorsEffect cantBeTargeted
+                    && cantBeTargeted.colors().contains(spellColor)) {
+                return true;
+            }
+        }
+        for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
             if (effect instanceof CantBeTargetedBySpellColorsEffect cantBeTargeted
                     && cantBeTargeted.colors().contains(spellColor)) {
                 return true;
