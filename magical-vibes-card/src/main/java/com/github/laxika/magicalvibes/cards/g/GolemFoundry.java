@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfOnArtifactCastEffect;
+import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +22,8 @@ public class GolemFoundry extends Card {
     public GolemFoundry() {
         // Whenever you cast an artifact spell, you may put a charge counter on Golem Foundry.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
-                new PutChargeCounterOnSelfOnArtifactCastEffect(),
+                new SpellCastTriggerEffect(new CardTypePredicate(CardType.ARTIFACT),
+                        List.of(new PutChargeCounterOnSelfEffect())),
                 "Put a charge counter on Golem Foundry?"
         ));
 

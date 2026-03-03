@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardOnOwnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -28,7 +28,7 @@ class RiddlesmithTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Riddlesmith has MayEffect wrapping DrawAndDiscardOnOwnSpellCastEffect with artifact filter")
+    @DisplayName("Riddlesmith has MayEffect wrapping SpellCastTriggerEffect with artifact filter")
     void hasCorrectStructure() {
         Riddlesmith card = new Riddlesmith();
 
@@ -36,8 +36,8 @@ class RiddlesmithTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
                 .isInstanceOf(MayEffect.class);
         MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(DrawAndDiscardOnOwnSpellCastEffect.class);
-        DrawAndDiscardOnOwnSpellCastEffect trigger = (DrawAndDiscardOnOwnSpellCastEffect) mayEffect.wrapped();
+        assertThat(mayEffect.wrapped()).isInstanceOf(SpellCastTriggerEffect.class);
+        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) mayEffect.wrapped();
         assertThat(trigger.spellFilter()).isInstanceOf(CardTypePredicate.class);
         assertThat(((CardTypePredicate) trigger.spellFilter()).cardType()).isEqualTo(CardType.ARTIFACT);
     }

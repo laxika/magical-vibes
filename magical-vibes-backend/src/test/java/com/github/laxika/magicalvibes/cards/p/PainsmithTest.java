@@ -8,8 +8,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostAndGrantKeywordOnOwnSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -26,7 +27,7 @@ class PainsmithTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Painsmith has MayEffect wrapping BoostAndGrantKeywordOnOwnSpellCastEffect")
+    @DisplayName("Painsmith has MayEffect wrapping SpellCastTriggerEffect with boost and deathtouch")
     void hasCorrectStructure() {
         Painsmith card = new Painsmith();
 
@@ -34,11 +35,10 @@ class PainsmithTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
                 .isInstanceOf(MayEffect.class);
         MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(BoostAndGrantKeywordOnOwnSpellCastEffect.class);
-        BoostAndGrantKeywordOnOwnSpellCastEffect trigger = (BoostAndGrantKeywordOnOwnSpellCastEffect) mayEffect.wrapped();
-        assertThat(trigger.powerBoost()).isEqualTo(2);
-        assertThat(trigger.toughnessBoost()).isEqualTo(0);
-        assertThat(trigger.keyword()).isEqualTo(Keyword.DEATHTOUCH);
+        assertThat(mayEffect.wrapped()).isInstanceOf(SpellCastTriggerEffect.class);
+        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) mayEffect.wrapped();
+        assertThat(trigger.resolvedEffects()).hasSize(2);
+        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(BoostTargetCreatureEffect.class);
     }
 
     // ===== Trigger fires on artifact cast =====

@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenOnOwnSpellCastWithCostEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -23,7 +24,7 @@ class MyrsmithTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Myrsmith has MayEffect wrapping CreateTokenOnOwnSpellCastWithCostEffect")
+    @DisplayName("Myrsmith has MayEffect wrapping SpellCastTriggerEffect with cost and token")
     void hasCorrectStructure() {
         Myrsmith card = new Myrsmith();
 
@@ -31,14 +32,16 @@ class MyrsmithTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
                 .isInstanceOf(MayEffect.class);
         MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(CreateTokenOnOwnSpellCastWithCostEffect.class);
-        CreateTokenOnOwnSpellCastWithCostEffect trigger =
-                (CreateTokenOnOwnSpellCastWithCostEffect) mayEffect.wrapped();
-        assertThat(trigger.manaCost()).isEqualTo(1);
-        assertThat(trigger.tokenEffect().tokenName()).isEqualTo("Myr");
-        assertThat(trigger.tokenEffect().power()).isEqualTo(1);
-        assertThat(trigger.tokenEffect().toughness()).isEqualTo(1);
-        assertThat(trigger.tokenEffect().additionalTypes()).contains(CardType.ARTIFACT);
+        assertThat(mayEffect.wrapped()).isInstanceOf(SpellCastTriggerEffect.class);
+        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) mayEffect.wrapped();
+        assertThat(trigger.manaCost()).isEqualTo("{1}");
+        assertThat(trigger.resolvedEffects()).hasSize(1);
+        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(CreateCreatureTokenEffect.class);
+        CreateCreatureTokenEffect tokenEffect = (CreateCreatureTokenEffect) trigger.resolvedEffects().getFirst();
+        assertThat(tokenEffect.tokenName()).isEqualTo("Myr");
+        assertThat(tokenEffect.power()).isEqualTo(1);
+        assertThat(tokenEffect.toughness()).isEqualTo(1);
+        assertThat(tokenEffect.additionalTypes()).contains(CardType.ARTIFACT);
     }
 
     // ===== Trigger fires on artifact cast =====

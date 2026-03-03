@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,35 +15,18 @@ import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffe
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardOnOwnSpellCastEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveEnchantedPermanentControllerPoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenOnOwnSpellCastWithCostEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAndGrantKeywordOnOwnSpellCastEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnArtifactCastEffect;
-import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfOnArtifactCastEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.GainLifeOnOwnSpellCastWithCostEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapTargetCreatureOnOwnSpellCastEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
@@ -81,26 +62,8 @@ public class TriggerCollectionService {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)) {
                 CardEffect inner = effect instanceof MayEffect m ? m.wrapped() : effect;
 
-                if (inner instanceof GainLifeOnSpellCastEffect trigger
-                        && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) {
-                    List<CardEffect> resolvedEffects = List.of(new GainLifeEffect(trigger.amount()));
-
-                    if (effect instanceof MayEffect may) {
-                        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                                perm.getCard(),
-                                playerId,
-                                resolvedEffects,
-                                perm.getCard().getName() + " — " + may.prompt()
-                        ));
-                    } else {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(resolvedEffects)
-                        ));
-                    }
+                if (inner instanceof SpellCastTriggerEffect trigger) {
+                    handleGenericSpellCastTrigger(gameData, spellCard, perm, playerId, effect, trigger);
                 } else if (inner instanceof PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger
                         && spellCard.getColor() != null
                         && trigger.triggerColors().contains(spellCard.getColor())
@@ -223,157 +186,8 @@ public class TriggerCollectionService {
                                 perm.getId()
                         ));
                     }
-                } else if (inner instanceof DealDamageToAnyTargetOnArtifactCastEffect trigger
-                        && spellCard.getType() == CardType.ARTIFACT) {
-                    List<CardEffect> resolvedEffects = List.of(new DealDamageToAnyTargetEffect(trigger.damage()));
-
-                    if (effect instanceof MayEffect may) {
-                        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                                perm.getCard(),
-                                playerId,
-                                resolvedEffects,
-                                perm.getCard().getName() + " — " + may.prompt(),
-                                null,
-                                "{" + trigger.manaCost() + "}"
-                        ));
-                    } else {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(resolvedEffects)
-                        ));
-                    }
-                } else if (inner instanceof BoostAndGrantKeywordOnOwnSpellCastEffect trigger
-                        && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) {
-                    List<CardEffect> resolvedEffects = List.of(
-                            new BoostTargetCreatureEffect(trigger.powerBoost(), trigger.toughnessBoost()),
-                            new GrantKeywordEffect(trigger.keyword(), GrantScope.TARGET)
-                    );
-
-                    if (effect instanceof MayEffect may) {
-                        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                                perm.getCard(),
-                                playerId,
-                                resolvedEffects,
-                                perm.getCard().getName() + " — " + may.prompt()
-                        ));
-                    } else {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(resolvedEffects)
-                        ));
-                    }
-                } else if (inner instanceof GainLifeOnOwnSpellCastWithCostEffect trigger
-                        && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) {
-                    List<CardEffect> resolvedEffects = List.of(new GainLifeEffect(trigger.amount()));
-
-                    if (effect instanceof MayEffect may) {
-                        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                                perm.getCard(),
-                                playerId,
-                                resolvedEffects,
-                                perm.getCard().getName() + " — " + may.prompt(),
-                                null,
-                                "{" + trigger.manaCost() + "}"
-                        ));
-                    } else {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(resolvedEffects)
-                        ));
-                    }
-                } else if (inner instanceof CreateTokenOnOwnSpellCastWithCostEffect trigger
-                        && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) {
-                    List<CardEffect> resolvedEffects = List.of(trigger.tokenEffect());
-
-                    if (effect instanceof MayEffect may) {
-                        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                                perm.getCard(),
-                                playerId,
-                                resolvedEffects,
-                                perm.getCard().getName() + " — " + may.prompt(),
-                                null,
-                                "{" + trigger.manaCost() + "}"
-                        ));
-                    } else {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(resolvedEffects)
-                        ));
-                    }
-                } else if (inner instanceof PutChargeCounterOnSelfOnArtifactCastEffect
-                        && spellCard.getType() == CardType.ARTIFACT) {
-                    List<CardEffect> resolvedEffects = List.of(new PutChargeCounterOnSelfEffect());
-
-                    if (effect instanceof MayEffect may) {
-                        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                                perm.getCard(),
-                                playerId,
-                                resolvedEffects,
-                                perm.getCard().getName() + " — " + may.prompt()
-                        ));
-                    } else {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(resolvedEffects),
-                                null,
-                                perm.getId()
-                        ));
-                    }
-                } else if (inner instanceof UntapTargetCreatureOnOwnSpellCastEffect trigger
-                        && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) {
-                    List<CardEffect> resolvedEffects = List.of(new UntapTargetPermanentEffect());
-
-                    if (effect instanceof MayEffect may) {
-                        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                                perm.getCard(),
-                                playerId,
-                                resolvedEffects,
-                                perm.getCard().getName() + " — " + may.prompt()
-                        ));
-                    } else {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(resolvedEffects)
-                        ));
-                    }
-                } else if (inner instanceof DrawAndDiscardOnOwnSpellCastEffect trigger
-                        && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) {
-                    List<CardEffect> resolvedEffects = List.of(new DrawCardEffect(), new DiscardCardEffect());
-
-                    if (effect instanceof MayEffect may) {
-                        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                                perm.getCard(),
-                                playerId,
-                                resolvedEffects,
-                                perm.getCard().getName() + " — " + may.prompt()
-                        ));
-                    } else {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(resolvedEffects)
-                        ));
-                    }
+                } else if (inner instanceof SpellCastTriggerEffect trigger) {
+                    handleGenericSpellCastTrigger(gameData, spellCard, perm, playerId, effect, trigger);
                 } else if (inner instanceof GiveTargetPlayerPoisonCountersEffect trigger
                         && trigger.spellFilter() != null
                         && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) {
@@ -393,15 +207,6 @@ public class TriggerCollectionService {
                         entry.setTargetPermanentId(opponentId);
                         gameData.stack.add(entry);
                     }
-                } else if (inner instanceof ProliferateEffect) {
-                    List<CardEffect> resolvedEffects = List.of(new ProliferateEffect());
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            playerId,
-                            perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(resolvedEffects)
-                    ));
                 }
             }
         });
@@ -449,6 +254,31 @@ public class TriggerCollectionService {
         }
 
         playerInputService.processNextMayAbility(gameData);
+    }
+
+    private void handleGenericSpellCastTrigger(GameData gameData, Card spellCard,
+            Permanent perm, UUID playerId, CardEffect effect, SpellCastTriggerEffect trigger) {
+        if (!gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) return;
+
+        List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
+        boolean selfTarget = resolved.stream().anyMatch(CardEffect::isSelfTargeting);
+
+        if (effect instanceof MayEffect may) {
+            gameData.pendingMayAbilities.add(new PendingMayAbility(
+                    perm.getCard(),
+                    playerId,
+                    resolved,
+                    perm.getCard().getName() + " — " + may.prompt(),
+                    null,
+                    trigger.manaCost()));
+        } else {
+            StackEntry entry = selfTarget
+                    ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(), playerId,
+                        perm.getCard().getName() + "'s ability", resolved, null, perm.getId())
+                    : new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(), playerId,
+                        perm.getCard().getName() + "'s ability", resolved);
+            gameData.stack.add(entry);
+        }
     }
 
     public void checkDiscardTriggers(GameData gameData, UUID discardingPlayerId, Card discardedCard) {

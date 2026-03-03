@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,7 +27,10 @@ class InexorableTideTest extends BaseCardTest {
         InexorableTide card = new InexorableTide();
 
         assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).singleElement()
-                .isInstanceOf(ProliferateEffect.class);
+                .isInstanceOf(SpellCastTriggerEffect.class);
+        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
+        assertThat(trigger.spellFilter()).isNull();
+        assertThat(trigger.resolvedEffects()).singleElement().isInstanceOf(ProliferateEffect.class);
     }
 
     // ===== Triggered ability: proliferate on own spell cast =====

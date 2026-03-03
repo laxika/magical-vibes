@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapTargetCreatureOnOwnSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -28,7 +28,7 @@ class MirranSpyTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Mirran Spy has MayEffect wrapping UntapTargetCreatureOnOwnSpellCastEffect with artifact filter")
+    @DisplayName("Mirran Spy has MayEffect wrapping SpellCastTriggerEffect with artifact filter")
     void hasCorrectStructure() {
         MirranSpy card = new MirranSpy();
 
@@ -36,8 +36,8 @@ class MirranSpyTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
                 .isInstanceOf(MayEffect.class);
         MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(UntapTargetCreatureOnOwnSpellCastEffect.class);
-        UntapTargetCreatureOnOwnSpellCastEffect trigger = (UntapTargetCreatureOnOwnSpellCastEffect) mayEffect.wrapped();
+        assertThat(mayEffect.wrapped()).isInstanceOf(SpellCastTriggerEffect.class);
+        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) mayEffect.wrapped();
         assertThat(trigger.spellFilter()).isInstanceOf(CardTypePredicate.class);
         assertThat(((CardTypePredicate) trigger.spellFilter()).cardType()).isEqualTo(CardType.ARTIFACT);
     }

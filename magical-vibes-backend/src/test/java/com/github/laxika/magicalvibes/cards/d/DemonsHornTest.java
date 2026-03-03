@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GainLifeOnSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -33,10 +34,11 @@ class DemonsHornTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).getFirst())
                 .isInstanceOf(MayEffect.class);
         MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(GainLifeOnSpellCastEffect.class);
-        GainLifeOnSpellCastEffect effect = (GainLifeOnSpellCastEffect) mayEffect.wrapped();
-        assertThat(effect.spellFilter()).isEqualTo(new CardColorPredicate(CardColor.BLACK));
-        assertThat(effect.amount()).isEqualTo(1);
+        assertThat(mayEffect.wrapped()).isInstanceOf(SpellCastTriggerEffect.class);
+        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) mayEffect.wrapped();
+        assertThat(trigger.spellFilter()).isEqualTo(new CardColorPredicate(CardColor.BLACK));
+        assertThat(trigger.resolvedEffects()).hasSize(1);
+        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(GainLifeEffect.class);
     }
 
     // ===== Casting and resolving =====

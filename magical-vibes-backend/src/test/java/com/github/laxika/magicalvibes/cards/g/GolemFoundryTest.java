@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfOnArtifactCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ class GolemFoundryTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
                 .isInstanceOf(MayEffect.class);
         MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(PutChargeCounterOnSelfOnArtifactCastEffect.class);
+        assertThat(may.wrapped()).isInstanceOf(SpellCastTriggerEffect.class);
     }
 
     @Test

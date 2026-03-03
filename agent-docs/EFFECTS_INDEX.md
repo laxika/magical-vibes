@@ -97,10 +97,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `DoubleDamageEffect` | `()` | double all damage dealt (static) |
 | `SacrificeArtifactThenDealDividedDamageEffect` | `(int totalDamage)` | Sacrifice an artifact, then deal N total damage divided among any number of targets (creatures/players). Wrap in `MayEffect` for optional sacrifice. Damage assignments provided before cast via `pendingETBDamageAssignments`. Does NOT use standard targeting |
 | `SacrificeOtherCreatureOrDamageEffect` | `(int damage)` | sacrifice another creature or take N damage (upkeep trigger) |
-| `BoostAndGrantKeywordOnOwnSpellCastEffect` | `(CardPredicate spellFilter, int powerBoost, int toughnessBoost, Keyword keyword)` | trigger descriptor: when you cast a spell matching the predicate, may have target creature get +X/+Y and gain keyword until end of turn. Only triggers for own spells. Place in `ON_CONTROLLER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into `BoostTargetCreatureEffect` + `GrantKeywordEffect(keyword, TARGET)` |
-| `DealDamageToAnyTargetOnArtifactCastEffect` | `(int manaCost, int damage)` | trigger descriptor: when you cast an artifact spell, may pay {N} to deal N damage to any target. Place in `ON_CONTROLLER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into `DealDamageToAnyTargetEffect` |
-| `GainLifeOnOwnSpellCastWithCostEffect` | `(CardPredicate spellFilter, int manaCost, int amount)` | trigger descriptor: when you cast a spell matching the predicate, may pay {N} to gain N life. Only triggers for own spells. Place in `ON_CONTROLLER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into `GainLifeEffect` |
-| `CreateTokenOnOwnSpellCastWithCostEffect` | `(CardPredicate spellFilter, int manaCost, CreateCreatureTokenEffect tokenEffect)` | trigger descriptor: when you cast a spell matching the predicate, may pay {N} to create a creature token. Only triggers for own spells. Place in `ON_CONTROLLER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into the embedded `CreateCreatureTokenEffect` |
+| `SpellCastTriggerEffect` | `(CardPredicate spellFilter, List<CardEffect> resolvedEffects)` or `(CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost)` | generic trigger descriptor: when a spell matching the predicate is cast, put the resolved effects on the stack. Works in both `ON_ANY_PLAYER_CASTS_SPELL` and `ON_CONTROLLER_CASTS_SPELL` slots. Wrap in `MayEffect` for optional triggers. Set `manaCost` (e.g. `"{1}"`) for "may pay" triggers. Use `spellFilter = null` for "whenever you cast a spell" (any spell). Replaces the old per-card descriptors (GainLifeOnSpellCastEffect, DealDamageToAnyTargetOnArtifactCastEffect, etc.) |
 
 ## Destruction / sacrifice
 
@@ -364,7 +361,6 @@ Pass `null` as filter to allow any card.
 | `GainLifeEqualToToughnessEffect` | `()` | gain life equal to own toughness (self, e.g. dies trigger) |
 | `GainLifeEqualToDamageDealtEffect` | `()` | gain life equal to damage dealt (lifelink-style, static) |
 | `GainLifeEqualToChargeCountersOnSourceEffect` | `()` | gain life equal to number of charge counters on source (activated ability sacrifice effect) |
-| `GainLifeOnSpellCastEffect` | `(CardPredicate spellFilter, int amount)` | gain N life when a spell matching the predicate is cast (trigger, wrap in MayEffect). Use `CardColorPredicate` for color, `CardTypePredicate` for type |
 | `TargetPlayerGainsLifeEffect` | `(int amount)` | target player gains N life |
 | `DoubleTargetPlayerLifeEffect` | `()` | double target player's life total |
 | `LoseLifeEffect` | `(int amount)` | lose N life |
@@ -438,9 +434,6 @@ Pass `null` as filter to allow any card.
 | `EnterWithFixedChargeCountersEffect` | `(int count)` | enters battlefield with N charge counters (replacement effect, fixed count) |
 | `PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect` | `()` | put a -1/-1 counter on each creature target player controls (targets player) |
 | `PutChargeCounterOnSelfEffect` | `()` | put a charge counter on this permanent (self-target, used as activated ability effect) |
-| `PutChargeCounterOnSelfOnArtifactCastEffect` | `()` | trigger descriptor: when you cast an artifact spell, put a charge counter on this permanent. Place in `ON_CONTROLLER_CASTS_SPELL` slot wrapped in `MayEffect`. Resolves into `PutChargeCounterOnSelfEffect` |
-| `DrawAndDiscardOnOwnSpellCastEffect` | `(CardPredicate spellFilter)` | trigger descriptor: when you cast a matching spell, draw a card then discard a card (loot). Place in `ON_CONTROLLER_CASTS_SPELL` slot, typically wrapped in `MayEffect`. Resolves into `DrawCardEffect` + `DiscardCardEffect` |
-| `UntapTargetCreatureOnOwnSpellCastEffect` | `(CardPredicate spellFilter)` | trigger descriptor: when you cast a matching spell, untap target creature. Place in `ON_CONTROLLER_CASTS_SPELL` slot, typically wrapped in `MayEffect`. Resolves into `UntapTargetPermanentEffect` |
 | `PutMinusOneMinusOneCounterOnTargetCreatureEffect` | `(int count)` / `()` / `(int count, boolean regenerateIfSurvives)` | put count -1/-1 counters on target creature (targets permanent). No-arg defaults to 1. With `regenerateIfSurvives=true`, regenerates the creature after placing counters if its toughness is 1 or greater (Gore Vassal) |
 | `PutXMinusOneMinusOneCountersOnEachCreatureEffect` | `()` | put X -1/-1 counters on each creature (all players' creatures), where X comes from the spell's X value |
 | `ProliferateEffect` | `()` | proliferate: choose any number of permanents with counters, add one of each counter type already there |

@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnArtifactCastEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
@@ -25,7 +26,7 @@ class EmbersmithTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Embersmith has MayEffect wrapping DealDamageToAnyTargetOnArtifactCastEffect")
+    @DisplayName("Embersmith has MayEffect wrapping SpellCastTriggerEffect with cost and damage")
     void hasCorrectStructure() {
         Embersmith card = new Embersmith();
 
@@ -33,10 +34,11 @@ class EmbersmithTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
                 .isInstanceOf(MayEffect.class);
         MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(DealDamageToAnyTargetOnArtifactCastEffect.class);
-        DealDamageToAnyTargetOnArtifactCastEffect trigger = (DealDamageToAnyTargetOnArtifactCastEffect) mayEffect.wrapped();
-        assertThat(trigger.manaCost()).isEqualTo(1);
-        assertThat(trigger.damage()).isEqualTo(1);
+        assertThat(mayEffect.wrapped()).isInstanceOf(SpellCastTriggerEffect.class);
+        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) mayEffect.wrapped();
+        assertThat(trigger.manaCost()).isEqualTo("{1}");
+        assertThat(trigger.resolvedEffects()).hasSize(1);
+        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(DealDamageToAnyTargetEffect.class);
     }
 
     // ===== Trigger fires on artifact cast =====
