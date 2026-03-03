@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.service;
+package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -190,7 +190,7 @@ public class GameQueryService {
         return ids.get(0).equals(playerId) ? ids.get(1) : ids.get(0);
     }
 
-    UUID getPriorityPlayerId(GameData data) {
+    public UUID getPriorityPlayerId(GameData data) {
         if (data.activePlayerId == null) {
             return null;
         }
@@ -589,7 +589,7 @@ public class GameQueryService {
         return false;
     }
 
-    boolean playerHasShroud(GameData gameData, UUID playerId) {
+    public boolean playerHasShroud(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent source : battlefield) {
@@ -621,7 +621,7 @@ public class GameQueryService {
         return false;
     }
 
-    boolean hasAnimateArtifactEffect(GameData gameData) {
+    public boolean hasAnimateArtifactEffect(GameData gameData) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
@@ -665,7 +665,7 @@ public class GameQueryService {
         return false;
     }
 
-    Permanent findEnchantedCreatureByAuraEffect(GameData gameData, UUID playerId, Class<? extends CardEffect> effectClass) {
+    public Permanent findEnchantedCreatureByAuraEffect(GameData gameData, UUID playerId, Class<? extends CardEffect> effectClass) {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return null;
         for (Permanent p : bf) {
