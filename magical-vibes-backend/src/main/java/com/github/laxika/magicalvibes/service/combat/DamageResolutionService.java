@@ -385,6 +385,11 @@ public class DamageResolutionService {
             gameHelper.recordCreatureDamagedByPermanent(gameData, entry.getSourcePermanentId(), target, damage);
         }
 
+        // Fire ON_DEALT_DAMAGE triggers (e.g. Nested Ghoul)
+        if (damage > 0) {
+            triggerCollectionService.checkDealtDamageToCreatureTriggers(gameData, target);
+        }
+
         String sourceName = damageSource != null ? damageSource.getCard().getName() : entry.getCard().getName();
 
         boolean sourceHasInfect = gameQueryService.sourceHasKeyword(gameData, entry, damageSource, Keyword.INFECT);

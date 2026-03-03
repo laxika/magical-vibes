@@ -1069,6 +1069,9 @@ public class CombatService {
         processLifelink(gameData, state.combatDamageDealt);
         processGainLifeEqualToDamageDealt(gameData, state.combatDamageDealt);
 
+        // Collect ON_DEALT_DAMAGE trigger data before dead creatures are removed from battlefield
+        List<DealtDamageTriggerData> dealtDamageTriggerData = collectDealtDamageTriggerData(gameData, state);
+
         List<String> deadCreatureNames = removeDeadCreatures(gameData, state, atkBf, defBf, activeId, defenderId);
 
         applyPlayerDamage(gameData, state, defenderId);
@@ -1088,6 +1091,9 @@ public class CombatService {
 
         int stackSizeBeforeDamageTriggers = gameData.stack.size();
         processCombatDamageToCreatureTriggers(gameData, state.combatDamageDealtToCreatures, state.combatDamageDealerControllers);
+
+        // Process ON_DEALT_DAMAGE triggers (e.g. Nested Ghoul) — data collected before dead creatures were removed
+        processDealtDamageTriggers(gameData, dealtDamageTriggerData);
 
         // Process combat damage to player triggers (e.g. Cephalid Constable) after all combat is resolved
         processCombatDamageToPlayerTriggers(gameData, state.combatDamageDealtToPlayer, activeId, defenderId);
@@ -1284,6 +1290,60 @@ public class CombatService {
                         gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Data captured before dead creatures are removed, so ON_DEALT_DAMAGE triggers can fire after removal.
+     */
+    private record DealtDamageTriggerData(Card card, UUID permanentId, UUID controllerId) {}
+
+    /**
+     * Collects ON_DEALT_DAMAGE trigger data (e.g. Nested Ghoul) by inverting the
+     * combatDamageDealtToCreatures map. Must be called BEFORE removeDeadCreatures().
+     * One trigger record per (source, damaged creature) pair.
+     */
+    private List<DealtDamageTriggerData> collectDealtDamageTriggerData(GameData gameData, CombatDamageState state) {
+        List<DealtDamageTriggerData> triggers = new ArrayList<>();
+
+        for (var entry : state.combatDamageDealtToCreatures.entrySet()) {
+            for (UUID targetId : entry.getValue()) {
+                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                if (target == null) continue;
+
+                List<CardEffect> effects = target.getCard().getEffects(EffectSlot.ON_DEALT_DAMAGE);
+                if (effects.isEmpty()) continue;
+
+                UUID controllerId = findControllerOf(gameData, target);
+                if (controllerId == null) continue;
+
+                triggers.add(new DealtDamageTriggerData(target.getCard(), target.getId(), controllerId));
+            }
+        }
+
+        return triggers;
+    }
+
+    /**
+     * Processes ON_DEALT_DAMAGE triggers from pre-collected data.
+     * Called after dead creatures are removed from the battlefield.
+     */
+    private void processDealtDamageTriggers(GameData gameData, List<DealtDamageTriggerData> triggerData) {
+        for (DealtDamageTriggerData data : triggerData) {
+            for (CardEffect effect : data.card().getEffects(EffectSlot.ON_DEALT_DAMAGE)) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        data.card(),
+                        data.controllerId(),
+                        data.card().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        data.permanentId()
+                ));
+                String logEntry = data.card().getName() + "'s ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger fires", gameData.id, data.card().getName());
             }
         }
     }

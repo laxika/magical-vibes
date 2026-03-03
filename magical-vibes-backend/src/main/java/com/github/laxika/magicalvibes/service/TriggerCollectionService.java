@@ -747,6 +747,29 @@ public class TriggerCollectionService {
         triggeredAbilityQueueService.processNextEmblemTriggerTarget(gameData);
     }
 
+    public void checkDealtDamageToCreatureTriggers(GameData gameData, Permanent damagedCreature) {
+        List<CardEffect> effects = damagedCreature.getCard().getEffects(EffectSlot.ON_DEALT_DAMAGE);
+        if (effects.isEmpty()) return;
+
+        UUID controllerId = gameQueryService.findPermanentController(gameData, damagedCreature.getId());
+        if (controllerId == null) return;
+
+        for (CardEffect effect : effects) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    damagedCreature.getCard(),
+                    controllerId,
+                    damagedCreature.getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    damagedCreature.getId()
+            ));
+            String logEntry = damagedCreature.getCard().getName() + "'s ability triggers.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} ON_DEALT_DAMAGE trigger fires", gameData.id, damagedCreature.getCard().getName());
+        }
+    }
+
     public void checkEnchantedPermanentTapTriggers(GameData gameData, Permanent tappedPermanent) {
         // Find the controller of the tapped permanent
         UUID tappedPermanentControllerId = null;

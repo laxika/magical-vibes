@@ -383,3 +383,4 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_EQUIPPED_CREATURE_DIES` | The creature this equipment is attached to dies. Only checked for equipment permanents. Used by Sylvok Lifestaff |
 | `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD` | A land enters the battlefield under an opponent's control. Fires for every land. Wrap with `PermanentEnteredThisTurnConditionalEffect` for intervening-if conditions (e.g. "second+ land this turn"). Target player is auto-set to the land's controller |
 | `ON_OPPONENT_CREATURE_DIES` | A creature an opponent controls dies (includes tokens). Only fires when the dying creature's controller is an opponent of this permanent's controller. Used by Glissa, the Traitor |
+| `ON_DEALT_DAMAGE` | Whenever a source deals damage to this creature. Fires once per source for both combat and non-combat damage. For combat, trigger data is collected before dead creatures are removed. Used by Nested Ghoul |
