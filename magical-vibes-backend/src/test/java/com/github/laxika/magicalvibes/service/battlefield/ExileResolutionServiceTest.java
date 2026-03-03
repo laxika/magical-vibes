@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.service;
+package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.cards.a.ArgentSphinx;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;

@@ -1,5 +1,10 @@
-package com.github.laxika.magicalvibes.service;
+package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.GameQueryService;
+import com.github.laxika.magicalvibes.service.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -20,6 +25,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+/**
+ * Resolves exile-related effects: permanent exile, temporary exile with scheduled return,
+ * exile-until-source-leaves, and imprint mechanics.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -31,6 +40,10 @@ public class ExileResolutionService {
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
 
+    /**
+     * Exiles one or more target permanents. Supports both single-target and multi-target modes.
+     * Fizzles gracefully for any individual target that has already left the battlefield.
+     */
     @HandlesEffect(ExileTargetPermanentEffect.class)
     void resolveExileTargetPermanent(GameData gameData, StackEntry entry) {
         List<UUID> targetIds = entry.getTargetPermanentIds().isEmpty()
@@ -53,6 +66,10 @@ public class ExileResolutionService {
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
+    /**
+     * Exiles a target permanent and schedules it to return to the battlefield under its owner's
+     * control at the beginning of the next end step. Respects stolen-creature ownership.
+     */
     @HandlesEffect(ExileTargetPermanentAndReturnAtEndStepEffect.class)
     void resolveExileTargetPermanentAndReturnAtEndStep(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
@@ -66,6 +83,10 @@ public class ExileResolutionService {
         exileAndScheduleReturn(gameData, entry, target, ownerId);
     }
 
+    /**
+     * Exiles the source permanent itself and schedules it to return to the battlefield under its
+     * controller's control at the beginning of the next end step.
+     */
     @HandlesEffect(ExileSelfAndReturnAtEndStepEffect.class)
     void resolveExileSelfAndReturnAtEndStep(GameData gameData, StackEntry entry) {
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
@@ -91,6 +112,11 @@ public class ExileResolutionService {
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
+    /**
+     * Exiles a target permanent until the source permanent leaves the battlefield. If the source
+     * has already left before resolution, the target is still exiled but no return is tracked.
+     * Respects stolen-creature ownership for the return.
+     */
     @HandlesEffect(ExileTargetPermanentUntilSourceLeavesEffect.class)
     void resolveExileTargetPermanentUntilSourceLeaves(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
@@ -135,6 +161,11 @@ public class ExileResolutionService {
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
+    /**
+     * Imprints a dying creature onto a source permanent (e.g. Mimic Vat). Moves the creature card
+     * from its owner's graveyard to exile and sets it as the imprinted card. If a card was
+     * previously imprinted, it is returned to its owner's graveyard first.
+     */
     @HandlesEffect(ImprintDyingCreatureEffect.class)
     void resolveImprintDyingCreature(GameData gameData, StackEntry entry, ImprintDyingCreatureEffect effect) {
         UUID dyingCardId = effect.dyingCardId();
@@ -202,6 +233,11 @@ public class ExileResolutionService {
         log.info("Game {} - {} imprinted on {}", gameData.id, dyingCard.getName(), sourcePermanent.getCard().getName());
     }
 
+    /**
+     * Prompts the controller to choose a card from their hand matching the effect's filter to exile
+     * and imprint onto the source permanent (e.g. Semblance Anvil). Skips if no matching cards
+     * are available.
+     */
     @HandlesEffect(ExileFromHandToImprintEffect.class)
     void resolveExileFromHandToImprint(GameData gameData, StackEntry entry, ExileFromHandToImprintEffect effect) {
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());

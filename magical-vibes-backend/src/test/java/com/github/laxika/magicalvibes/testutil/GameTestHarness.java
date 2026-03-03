@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService
 import com.github.laxika.magicalvibes.service.combat.DamageResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.DestructionResolutionService;
 import com.github.laxika.magicalvibes.service.DraftRegistry;
-import com.github.laxika.magicalvibes.service.ExileResolutionService;
+import com.github.laxika.magicalvibes.service.battlefield.ExileResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
