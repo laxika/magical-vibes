@@ -95,7 +95,7 @@ class MyrTurbineTest extends BaseCardTest {
         // Only 4 Myr — need 5
         setAllNotSummoningSick(player1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough untapped permanents to tap");
     }
@@ -114,7 +114,7 @@ class MyrTurbineTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).clear();
         gd.playerDecks.get(player1.getId()).add(new GoldMyr());
 
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
 
         // All 5 Myr should be tapped
         assertThat(findPermanent(player1, "Gold Myr").isTapped()).isTrue();
@@ -143,7 +143,7 @@ class MyrTurbineTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MyrSire());
         setAllNotSummoningSick(player1);
 
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
 
         // Should prompt for choice since 6 Myr > 5 required
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
@@ -171,7 +171,7 @@ class MyrTurbineTest extends BaseCardTest {
         UUID leadenMyrId = findPermanent(player1, "Leaden Myr").getId();
         UUID copperMyrId = findPermanent(player1, "Copper Myr").getId();
 
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
 
         // Choose 5 Myr one at a time
         harness.handlePermanentChosen(player1, goldMyrId);
@@ -211,7 +211,7 @@ class MyrTurbineTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).addAll(List.of(new MyrSire(), new LlanowarElves()));
 
         // Exactly 5 Myr -> auto-tap
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         // Should prompt for library search
@@ -243,7 +243,7 @@ class MyrTurbineTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).clear();
         gd.playerDecks.get(player1.getId()).add(new LlanowarElves());
 
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         // No matching cards — library should be shuffled and search should end
@@ -264,7 +264,7 @@ class MyrTurbineTest extends BaseCardTest {
         // Tap one Myr — only 4 untapped remain
         findPermanent(player1, "Gold Myr").tap();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough untapped permanents to tap");
     }

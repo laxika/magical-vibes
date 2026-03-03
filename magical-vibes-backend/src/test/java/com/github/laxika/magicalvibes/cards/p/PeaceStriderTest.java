@@ -32,12 +32,12 @@ class PeaceStriderTest extends BaseCardTest {
     // ===== Casting =====
 
     @Test
-    @DisplayName("Casting Peace Strider puts it on the stack as a creature spell")
+    @DisplayName("Casting Peace Strider puts it on the stack as an artifact spell")
     void castingPutsOnStack() {
         castPeaceStrider();
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Peace Strider");
     }
 
@@ -97,6 +97,6 @@ class PeaceStriderTest extends BaseCardTest {
     private void castPeaceStrider() {
         harness.setHand(player1, List.of(new PeaceStrider()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castArtifact(player1, 0);
     }
 }

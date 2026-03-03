@@ -764,7 +764,8 @@ public class LibraryResolutionService {
 
         List<Card> eligibleCreatures = new ArrayList<>();
         for (Card card : deck) {
-            if (card.getType() == CardType.CREATURE && card.getSubtypes().contains(requiredSubtype)) {
+            boolean isCreatureCard = card.getType() == CardType.CREATURE || card.getAdditionalTypes().contains(CardType.CREATURE);
+            if (isCreatureCard && card.getSubtypes().contains(requiredSubtype)) {
                 eligibleCreatures.add(card);
             }
         }
