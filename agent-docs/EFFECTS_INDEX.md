@@ -507,9 +507,8 @@ Pass `null` as filter to allow any card.
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `TargetPlayerGainsControlOfSourceCreatureEffect` | `()` | target opponent gains control of this creature (ETB) |
-| `GainControlOfTargetCreatureUntilEndOfTurnEffect` | `()` | gain control of target creature until end of turn (Threaten-style) |
-| `GainControlOfTargetPermanentUntilEndOfTurnEffect` | `()` | gain control of target permanent until end of turn — generic version, card's target filter handles type restriction (Metallic Mastery-style) |
-| `GainControlOfTargetEquipmentUntilEndOfTurnEffect` | `()` | gain control of target Equipment until end of turn, attach to source creature (Ogre Geargrabber) |
+| `GainControlOfTargetPermanentUntilEndOfTurnEffect` | `()` | gain control of target permanent until end of turn — card's target filter handles type restriction (Threaten, Metallic Mastery) |
+| `AttachTargetToSourcePermanentEffect` | `()` | attach the targeted permanent to the source permanent (e.g. steal Equipment and equip it — combine with GainControlOfTargetPermanentUntilEndOfTurnEffect) |
 | `GainControlOfEnchantedTargetEffect` | `()` | gain control of enchanted permanent (static, Control Magic-style) |
 | `GainControlOfTargetAuraEffect` | `()` | gain control of target aura |
 | `ControlEnchantedCreatureEffect` | `()` | control enchanted creature (static) |

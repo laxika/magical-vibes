@@ -18,8 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect
 import com.github.laxika.magicalvibes.model.effect.CreateTokenPerEquipmentOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEquipmentUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfEffect;
@@ -401,20 +400,6 @@ public class PermanentControlResolutionService {
         gameData.enchantmentDependentStolenCreatures.add(target.getId());
     }
 
-    @HandlesEffect(GainControlOfTargetCreatureUntilEndOfTurnEffect.class)
-    private void resolveGainControlOfTargetCreatureUntilEndOfTurn(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
-        if (target == null) return;
-
-        UUID oldController = gameQueryService.findPermanentController(gameData, target.getId());
-        if (oldController == null || oldController.equals(entry.getControllerId())) {
-            return;
-        }
-
-        creatureControlService.stealPermanent(gameData, entry.getControllerId(), target);
-        gameData.untilEndOfTurnStolenCreatures.add(target.getId());
-    }
-
     @HandlesEffect(GainControlOfTargetPermanentUntilEndOfTurnEffect.class)
     private void resolveGainControlOfTargetPermanentUntilEndOfTurn(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
@@ -429,29 +414,18 @@ public class PermanentControlResolutionService {
         gameData.untilEndOfTurnStolenCreatures.add(target.getId());
     }
 
-    @HandlesEffect(GainControlOfTargetEquipmentUntilEndOfTurnEffect.class)
-    private void resolveGainControlOfTargetEquipmentUntilEndOfTurn(GameData gameData, StackEntry entry) {
+    @HandlesEffect(AttachTargetToSourcePermanentEffect.class)
+    private void resolveAttachTargetToSourcePermanent(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) return;
 
-        UUID oldController = gameQueryService.findPermanentController(gameData, target.getId());
-        if (oldController == null || oldController.equals(entry.getControllerId())) {
-            return;
-        }
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) return;
 
-        // Gain control of the equipment until end of turn
-        creatureControlService.stealPermanent(gameData, entry.getControllerId(), target);
-        gameData.untilEndOfTurnStolenCreatures.add(target.getId());
-
-        // Attach it to the source creature
-        Permanent sourceCreature = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (sourceCreature != null) {
-            target.setAttachedTo(sourceCreature.getId());
-            String attachLog = target.getCard().getName() + " is attached to " + sourceCreature.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, attachLog);
-            log.info("Game {} - {} attached to {} via Ogre Geargrabber ability",
-                    gameData.id, target.getCard().getName(), sourceCreature.getCard().getName());
-        }
+        target.setAttachedTo(source.getId());
+        String attachLog = target.getCard().getName() + " is attached to " + source.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, attachLog);
+        log.info("Game {} - {} attached to {}", gameData.id, target.getCard().getName(), source.getCard().getName());
     }
 
     @HandlesEffect(TargetPlayerGainsControlOfSourceCreatureEffect.class)

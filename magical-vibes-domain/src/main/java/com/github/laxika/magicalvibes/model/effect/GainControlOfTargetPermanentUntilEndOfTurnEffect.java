@@ -2,10 +2,8 @@ package com.github.laxika.magicalvibes.model.effect;
 
 /**
  * Gains control of target permanent until end of turn.
- * Unlike {@link GainControlOfTargetCreatureUntilEndOfTurnEffect}, this effect
- * does not enforce creature-only targeting, allowing it to be used for any
- * permanent type (e.g. artifacts via Metallic Mastery). The card's own target
- * filter handles type restrictions.
+ * The card's own target filter handles type restrictions (e.g. creature-only
+ * for Threaten, artifact-only for Metallic Mastery).
  */
 public record GainControlOfTargetPermanentUntilEndOfTurnEffect() implements CardEffect {
 

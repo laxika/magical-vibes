@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEquipmentUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -24,6 +25,7 @@ public class OgreGeargrabber extends Card {
                 )),
                 "Target must be an Equipment an opponent controls"
         ));
-        addEffect(EffectSlot.ON_ATTACK, new GainControlOfTargetEquipmentUntilEndOfTurnEffect());
+        addEffect(EffectSlot.ON_ATTACK, new GainControlOfTargetPermanentUntilEndOfTurnEffect());
+        addEffect(EffectSlot.ON_ATTACK, new AttachTargetToSourcePermanentEffect());
     }
 }

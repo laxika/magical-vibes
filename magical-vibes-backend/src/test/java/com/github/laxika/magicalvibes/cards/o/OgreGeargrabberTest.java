@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEquipmentUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -29,9 +30,11 @@ class OgreGeargrabberTest extends BaseCardTest {
     void hasOnAttackEffect() {
         OgreGeargrabber card = new OgreGeargrabber();
 
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(GainControlOfTargetEquipmentUntilEndOfTurnEffect.class);
+        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(2);
+        assertThat(card.getEffects(EffectSlot.ON_ATTACK).get(0))
+                .isInstanceOf(GainControlOfTargetPermanentUntilEndOfTurnEffect.class);
+        assertThat(card.getEffects(EffectSlot.ON_ATTACK).get(1))
+                .isInstanceOf(AttachTargetToSourcePermanentEffect.class);
     }
 
     @Test
