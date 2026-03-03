@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesAndCreateTokenFromDestroyedCountEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEquipmentAttachedToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
@@ -35,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.EnumSet;
 import java.util.function.Predicate;
 
 /**
@@ -84,6 +87,79 @@ public class DestructionResolutionService {
 
         boolean skipRegeneration = effect.cannotBeRegenerated() || !canAttemptRegeneration(effect.targetTypes());
         destroyBatch(gameData, toDestroy, entry.getCard().getName(), skipRegeneration);
+    }
+
+    /**
+     * Resolves a {@link DestroyAllCreaturesAndCreateTokenFromDestroyedCountEffect}, destroying
+     * all creatures and then creating a single colorless creature token whose power and toughness
+     * equal the number of creatures actually destroyed (excluding indestructible and regenerated).
+     */
+    @HandlesEffect(DestroyAllCreaturesAndCreateTokenFromDestroyedCountEffect.class)
+    void resolveDestroyAllCreaturesAndCreateTokenFromDestroyedCount(
+            GameData gameData, StackEntry entry,
+            DestroyAllCreaturesAndCreateTokenFromDestroyedCountEffect effect) {
+        List<Permanent> toDestroy = new ArrayList<>();
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            for (Permanent perm : battlefield) {
+                if (gameQueryService.isCreature(gameData, perm)) {
+                    toDestroy.add(perm);
+                }
+            }
+        });
+
+        // Snapshot indestructible before any removals
+        Set<Permanent> indestructible = new HashSet<>();
+        for (Permanent perm : toDestroy) {
+            if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
+                indestructible.add(perm);
+            }
+        }
+
+        // Destroy and count
+        int destroyedCount = 0;
+        String sourceName = entry.getCard().getName();
+        for (Permanent perm : toDestroy) {
+            if (indestructible.contains(perm)) {
+                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + " is indestructible.");
+                continue;
+            }
+            if (gameHelper.tryRegenerate(gameData, perm)) {
+                continue;
+            }
+            permanentRemovalService.removePermanentToGraveyard(gameData, perm);
+            gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + " is destroyed.");
+            log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), sourceName);
+            destroyedCount++;
+        }
+
+        // Create token with P/T = destroyed count
+        UUID controllerId = entry.getControllerId();
+        Card tokenCard = new Card();
+        tokenCard.setName(effect.tokenName());
+        tokenCard.setType(CardType.CREATURE);
+        tokenCard.setManaCost("");
+        tokenCard.setToken(true);
+        tokenCard.setColor(null);
+        tokenCard.setPower(destroyedCount);
+        tokenCard.setToughness(destroyedCount);
+        tokenCard.setSubtypes(effect.tokenSubtypes());
+        if (effect.tokenAdditionalTypes() != null && !effect.tokenAdditionalTypes().isEmpty()) {
+            tokenCard.setAdditionalTypes(effect.tokenAdditionalTypes());
+        }
+
+        Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
+        enterTappedTypesSnapshot.addAll(gameHelper.snapshotEnterTappedTypes(gameData));
+
+        Permanent tokenPermanent = new Permanent(tokenCard);
+        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+
+        String logEntry = "A " + destroyedCount + "/" + destroyedCount + " " + effect.tokenName()
+                + " artifact creature token enters the battlefield.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} creates a {}/{} {} artifact creature token",
+                gameData.id, sourceName, destroyedCount, destroyedCount, effect.tokenName());
+
+        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
     }
 
     /**
