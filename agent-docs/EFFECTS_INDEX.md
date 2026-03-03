@@ -138,6 +138,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `RemoveCounterFromSourceCost` | `()` | remove a counter from this permanent as cost (prefers -1/-1, then +1/+1) |
 | `RemoveChargeCountersFromSourceCost` | `(int count)` | remove N charge counters from source as cost (e.g. "Remove three charge counters: ..."). Validated and paid in `AbilityActivationService` |
 | `TapCreatureCost` | `(PermanentPredicate predicate)` | tap an untapped creature matching predicate you control as cost. Auto-selects if only one valid target; presents permanent choice if multiple. The creature can be summoning sick (no tap symbol in cost). E.g. `new TapCreatureCost(new PermanentColorInPredicate(Set.of(CardColor.BLUE)))` for "tap an untapped blue creature" |
+| `TapMultiplePermanentsCost` | `(int count, PermanentPredicate filter)` | tap N untapped permanents matching filter as cost. Auto-selects if exactly N valid; presents permanent choice one at a time if more. E.g. `new TapMultiplePermanentsCost(5, new PermanentHasSubtypePredicate(CardSubtype.MYR))` for "tap five untapped Myr you control" |
 | `ExileCardFromGraveyardCost` | `(CardType requiredType)` | exile a card of specific type from your graveyard as cost (null = any). Two-phase async flow: prompts graveyard choice, then resumes activation. Validated and paid in `AbilityActivationService` |
 
 ## Counter spells
@@ -294,6 +295,7 @@ Pass `null` as filter to allow any card.
 | `SearchLibraryForCardTypeToExileAndImprintEffect` | `(Set<CardType> cardTypes)` | search library for card of specific types, exile it, and imprint on source permanent |
 | `SearchLibraryForCreatureWithMVXOrLessToHandEffect` | `()` | search library for creature with MV X or less to hand |
 | `SearchLibraryForCreatureWithColorAndMVXOrLessToBattlefieldEffect` | `(CardColor requiredColor)` | search library for creature of specified color with MV X or less to battlefield |
+| `SearchLibraryForCreatureWithSubtypeToBattlefieldEffect` | `(CardSubtype requiredSubtype)` | search library for creature card with specified subtype and put it onto the battlefield |
 | `CastTopOfLibraryWithoutPayingManaCostEffect` | `(Set<CardType> castableTypes)` | look at top card of controller's library; if it matches one of the castable types, may cast it without paying its mana cost |
 | `DistantMemoriesEffect` | `()` | search library for any card, exile it, shuffle; opponent may let you have it, otherwise draw 3 |
 | `PayManaAndSearchLibraryForCardNamedToBattlefieldEffect` | `(String manaCost, String cardName)` | pay mana, search for named card to battlefield |

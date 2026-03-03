@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -35,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypeToExi
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithColorAndMVXOrLessToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithSubtypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithMVXOrLessToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
@@ -737,6 +739,70 @@ public class LibraryResolutionService {
         String logMsg = playerName + " searches their library.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} searching library for {} creature with MV <= {} ({} found)", gameData.id, playerName, colorName, maxMV, eligibleCreatures.size());
+    }
+
+    @HandlesEffect(SearchLibraryForCreatureWithSubtypeToBattlefieldEffect.class)
+    void resolveSearchLibraryForCreatureWithSubtypeToBattlefield(GameData gameData, StackEntry entry,
+                                                                  SearchLibraryForCreatureWithSubtypeToBattlefieldEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        if (!checkSearchRestriction(gameData, controllerId)) {
+            List<Card> deck = gameData.playerDecks.get(controllerId);
+            if (deck != null) Collections.shuffle(deck);
+            return;
+        }
+
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+        CardSubtype requiredSubtype = effect.requiredSubtype();
+        String subtypeName = requiredSubtype.name().substring(0, 1) + requiredSubtype.name().substring(1).toLowerCase();
+
+        if (deck == null || deck.isEmpty()) {
+            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> eligibleCreatures = new ArrayList<>();
+        for (Card card : deck) {
+            if (card.getType() == CardType.CREATURE && card.getSubtypes().contains(requiredSubtype)) {
+                eligibleCreatures.add(card);
+            }
+        }
+
+        if (eligibleCreatures.isEmpty()) {
+            Collections.shuffle(deck);
+            String logMsg = playerName + " searches their library but finds no " + subtypeName + " creature card. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - {} searches library, no {} creatures found", gameData.id, playerName, subtypeName);
+            return;
+        }
+
+        String prompt = "Search your library for a " + subtypeName + " creature card and put it onto the battlefield.";
+
+        gameData.interaction.beginLibrarySearch(
+                controllerId,
+                eligibleCreatures,
+                false,
+                true,
+                null,
+                0,
+                null,
+                false,
+                true,
+                prompt,
+                LibrarySearchDestination.BATTLEFIELD
+        );
+
+        List<CardView> cardViews = eligibleCreatures.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
+                cardViews,
+                prompt,
+                true
+        ));
+
+        String logMsg = playerName + " searches their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} searching library for {} creature ({} found)", gameData.id, playerName, subtypeName, eligibleCreatures.size());
     }
 
     @HandlesEffect(PayManaAndSearchLibraryForCardNamedToBattlefieldEffect.class)
