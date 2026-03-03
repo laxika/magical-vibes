@@ -23,6 +23,19 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Resolves the effects of spells and abilities as they come off the stack.
+ *
+ * <p>Iterates through each {@link CardEffect} on a {@link StackEntry}, delegating to the
+ * appropriate {@link EffectHandler} via the {@link EffectHandlerRegistry}. Handles conditional
+ * effects (e.g. metalcraft, equipped) by re-evaluating their conditions at resolution time
+ * per the intervening-if-clause rule, and replacement conditional effects by selecting the
+ * base or upgraded effect based on the current game state.</p>
+ *
+ * <p>Supports asynchronous resolution: when an effect requires player input (e.g. proliferate
+ * choices, X value selection), resolution pauses and stores resumption state on the
+ * {@link GameData} so that {@link #resolveEffectsFrom} can continue from where it left off.</p>
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -33,14 +46,27 @@ public class EffectResolutionService {
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
 
+    /**
+     * Resolves all effects on the given stack entry from the beginning.
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry whose effects should be resolved
+     */
     public void resolveEffects(GameData gameData, StackEntry entry) {
         resolveEffectsFrom(gameData, entry, 0);
     }
 
     /**
-     * Resume resolving effects on the given stack entry starting from the specified index.
-     * Called after an async input (e.g. proliferate choice) completes to continue
-     * resolving remaining effects of the same spell/ability.
+     * Resumes resolving effects on the given stack entry starting from the specified index.
+     *
+     * <p>Called after an asynchronous player input (e.g. proliferate choice, X value selection)
+     * completes, to continue resolving the remaining effects of the same spell or ability.
+     * If another effect requires input, resolution pauses again and stores the new resumption
+     * index on {@link GameData}.</p>
+     *
+     * @param gameData   the current game state
+     * @param entry      the stack entry whose effects are being resolved
+     * @param startIndex the zero-based index of the first effect to resolve
      */
     public void resolveEffectsFrom(GameData gameData, StackEntry entry, int startIndex) {
         List<CardEffect> effects = entry.getEffectsToResolve();
