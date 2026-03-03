@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MillByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
@@ -1051,6 +1052,83 @@ public class LibraryResolutionService {
         sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
                 cardViews,
                 "You may reveal a creature card from among them and put it into your hand.",
+                true
+        ));
+    }
+
+    @HandlesEffect(LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect.class)
+    void resolveLookAtTopCardsPutMatchingPermanentNameOnBattlefield(
+            GameData gameData,
+            StackEntry entry,
+            LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect effect
+    ) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        int count = Math.min(effect.count(), deck.size());
+        if (count == 0) {
+            String logMsg = entry.getCard().getName() + ": " + playerName + "'s library is empty.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> topCards = new ArrayList<>(deck.subList(0, count));
+        deck.subList(0, count).clear();
+
+        // Collect all permanent names from all battlefields
+        Set<String> permanentNames = new HashSet<>();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf != null) {
+                for (Permanent perm : bf) {
+                    permanentNames.add(perm.getCard().getName());
+                }
+            }
+        }
+
+        // Filter top cards to those matching a permanent name
+        List<Card> matchingCards = topCards.stream()
+                .filter(card -> permanentNames.contains(card.getName()))
+                .toList();
+
+        String logMsg = playerName + " looks at the top " + count + " cards of their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+
+        if (matchingCards.isEmpty()) {
+            // No matching cards — reorder all to bottom
+            if (topCards.size() == 1) {
+                deck.add(topCards.getFirst());
+                return;
+            }
+
+            gameData.interaction.beginLibraryReorder(controllerId, topCards, true);
+            List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
+            sessionManager.sendToPlayer(controllerId, new ReorderLibraryCardsMessage(
+                    cardViews,
+                    "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."
+            ));
+            return;
+        }
+
+        gameData.interaction.beginLibrarySearch(
+                controllerId,
+                matchingCards,
+                false,
+                true,
+                null,
+                0,
+                topCards,
+                true,
+                false,
+                "You may put one of these cards onto the battlefield.",
+                LibrarySearchDestination.BATTLEFIELD
+        );
+
+        List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
+                cardViews,
+                "You may put one of these cards onto the battlefield if it has the same name as a permanent.",
                 true
         ));
     }

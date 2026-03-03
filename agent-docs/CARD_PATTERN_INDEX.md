@@ -44,6 +44,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Pure draw | `c/CounselOfTheSoratami.java` | DrawCardEffect |
 | Draw + discard | `s/Sift.java` | DrawCardEffect + DiscardCardEffect |
 | Library selection | `t/TellingTime.java` | LookAtTopCardsHandTopBottomEffect |
+| Library match-permanent-to-battlefield | `m/MitoticManipulation.java` | LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect |
 | Targeted discard | `d/Distress.java` | ChooseCardFromTargetHandToDiscardEffect |
 | Exile by name (multi-zone) | `m/Memoricide.java` | ChooseCardNameAndExileFromZonesEffect(excludedTypes) — choose nonland name, exile from hand+graveyard+library, shuffle |
 | Tutor to hand | `d/DiabolicTutor.java` | SearchLibraryForCardToHandEffect |

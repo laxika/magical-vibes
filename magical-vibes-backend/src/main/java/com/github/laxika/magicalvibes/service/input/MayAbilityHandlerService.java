@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
@@ -323,6 +324,13 @@ public class MayAbilityHandlerService {
                         }
                     }
                 }
+            }
+
+            // Effects that copy an entering permanent need the target permanent ID from the trigger
+            boolean needsEnteringTarget = ability.effects().stream()
+                    .anyMatch(e -> e instanceof CreateTokenCopyOfTargetPermanentEffect);
+            if (needsEnteringTarget && ability.targetCardId() != null) {
+                entry.setTargetPermanentId(ability.targetCardId());
             }
 
             gameData.stack.add(entry);
