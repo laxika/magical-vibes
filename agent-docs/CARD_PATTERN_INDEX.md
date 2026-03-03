@@ -96,6 +96,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB copy with P/T override | `q/QuicksilverGargantuan.java` | CopyPermanentOnEnterEffect(filter, typeLabel, 7, 7) — "copy except it's 7/7" |
 | ETB choose color | `v/VoiceOfAll.java` | ProtectionFromChosenColorEffect |
 | ETB choose name | `p/PithingNeedle.java` | ChooseCardNameOnEnterEffect + static lock |
+| ETB choose nonland name | `p/PhyrexianRevoker.java` | ChooseCardNameOnEnterEffect(List.of(LAND)) + static lock — artifact creature variant |
 | ETB control handoff | `s/SleeperAgent.java` | TargetPlayerGainsControlOfSourceCreatureEffect |
 | ETB drawback (discard) | `h/HiddenHorror.java` | SacrificeUnlessDiscardCardTypeEffect |
 | ETB drawback (bounce artifact) | `g/GlintHawk.java` | SacrificeUnlessReturnOwnPermanentTypeToHandEffect(ARTIFACT) — sacrifice unless return own artifact to hand |

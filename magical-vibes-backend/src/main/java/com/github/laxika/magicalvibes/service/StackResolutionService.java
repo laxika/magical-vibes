@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
@@ -188,12 +189,14 @@ public class StackResolutionService {
             return;
         }
 
-        // "As enters" card name choice (e.g. Pithing Needle) — name must be chosen
+        // "As enters" card name choice (e.g. Pithing Needle, Phyrexian Revoker) — name must be chosen
         // BEFORE the permanent enters the battlefield (MTG Rule 614.1c)
-        boolean needsCardNameChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof ChooseCardNameEffect);
-        if (needsCardNameChoice) {
-            playerInputService.beginCardNameChoice(gameData, controllerId, card);
+        var chooseNameEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(e -> e instanceof ChooseCardNameOnEnterEffect)
+                .map(e -> (ChooseCardNameOnEnterEffect) e)
+                .findFirst().orElse(null);
+        if (chooseNameEffect != null) {
+            playerInputService.beginCardNameChoice(gameData, controllerId, card, chooseNameEffect.excludedTypes());
             return;
         }
 

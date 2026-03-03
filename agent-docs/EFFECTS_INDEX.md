@@ -620,8 +620,8 @@ Pass `null` as filter to allow any card.
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
-| `ChooseCardNameOnEnterEffect` | `()` | choose a card name as ETB (implements `ChooseCardNameEffect` marker) |
-| `ActivatedAbilitiesOfChosenNameCantBeActivatedEffect` | `()` | activated abilities of chosen name can't be activated (static) |
+| `ChooseCardNameOnEnterEffect` | `()` or `(List<CardType> excludedTypes)` | choose a card name as ETB (implements `ChooseCardNameEffect` marker). No-arg allows any name (Pithing Needle); with excludedTypes filters the name list (e.g. `List.of(LAND)` for Phyrexian Revoker) |
+| `ActivatedAbilitiesOfChosenNameCantBeActivatedEffect` | `()` or `(boolean blocksManaAbilities)` | activated abilities of chosen name can't be activated (static). No-arg (false) excludes mana abilities (Pithing Needle); `true` also blocks mana abilities (Phyrexian Revoker) |
 | `ChooseColorOnEnterEffect` | `()` | choose a color as ETB (implements `ChooseColorEffect` marker) |
 
 ## Draw replacement / library interaction

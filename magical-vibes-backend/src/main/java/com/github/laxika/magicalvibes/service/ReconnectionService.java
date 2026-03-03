@@ -255,9 +255,16 @@ public class ReconnectionService {
                         && drc.kind() == DrawReplacementKind.ABUNDANCE) {
                     options = List.of("LAND", "NONLAND");
                     prompt = "Choose land or nonland for Abundance.";
-                } else if (cc.context() instanceof ColorChoiceContext.CardNameChoice) {
-                    options = collectAllCardNamesInGame(gameData);
-                    prompt = "Choose a card name.";
+                } else if (cc.context() instanceof ColorChoiceContext.CardNameChoice cnc) {
+                    if (cnc.excludedTypes().isEmpty()) {
+                        options = collectAllCardNamesInGame(gameData);
+                        prompt = "Choose a card name.";
+                    } else {
+                        options = collectCardNamesInGameExcluding(gameData, cnc.excludedTypes());
+                        String excludedLabel = cnc.excludedTypes().stream()
+                                .map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
+                        prompt = "Choose a non" + excludedLabel + " card name.";
+                    }
                 } else if (cc.context() instanceof ColorChoiceContext.ExileByNameChoice ebn) {
                     options = collectCardNamesInGameExcluding(gameData, ebn.excludedTypes());
                     String excludedLabel = ebn.excludedTypes().stream()

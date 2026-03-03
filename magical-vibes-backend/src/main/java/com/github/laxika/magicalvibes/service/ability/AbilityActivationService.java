@@ -175,10 +175,8 @@ public class AbilityActivationService {
             throw new IllegalStateException("Permanent has no sacrifice abilities");
         }
 
-        // Pithing Needle check: sacrifice abilities are activated abilities
-        if (isPithingNeedleBlockingCard(gameData, permanent.getCard().getName())) {
-            throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Pithing Needle)");
-        }
+        // Pithing Needle / Phyrexian Revoker check: sacrifice abilities are activated abilities (never mana abilities)
+        validateNotBlockedByNameLock(gameData, permanent.getCard().getName(), false);
         if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
             throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
         }
@@ -958,25 +956,23 @@ public class AbilityActivationService {
     }
 
     private void validateNotBlockedByPithingNeedle(GameData gameData, Permanent permanent, ActivatedAbility ability) {
-        if (isManaAbility(ability)) {
-            return;
-        }
-        if (isPithingNeedleBlockingCard(gameData, permanent.getCard().getName())) {
-            throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Pithing Needle)");
-        }
+        validateNotBlockedByNameLock(gameData, permanent.getCard().getName(), isManaAbility(ability));
     }
 
-    private boolean isPithingNeedleBlockingCard(GameData gameData, String cardName) {
+    private void validateNotBlockedByNameLock(GameData gameData, String cardName, boolean manaAbility) {
         for (UUID pid : gameData.playerIds) {
             for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
-                boolean hasNeedleEffect = p.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> e instanceof ActivatedAbilitiesOfChosenNameCantBeActivatedEffect);
-                if (hasNeedleEffect && cardName.equals(p.getChosenName())) {
-                    return true;
-                }
+                if (!cardName.equals(p.getChosenName())) continue;
+                var lockEffect = p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(e -> e instanceof ActivatedAbilitiesOfChosenNameCantBeActivatedEffect)
+                        .map(e -> (ActivatedAbilitiesOfChosenNameCantBeActivatedEffect) e)
+                        .findFirst().orElse(null);
+                if (lockEffect == null) continue;
+                if (manaAbility && !lockEffect.blocksManaAbilities()) continue;
+                throw new IllegalStateException("Activated abilities of " + cardName
+                        + " can't be activated (" + p.getCard().getName() + ")");
             }
         }
-        return false;
     }
 
     private boolean isManaAbility(ActivatedAbility ability) {

@@ -127,12 +127,21 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a keyword", gameData.id, playerName);
     }
 
-    public void beginCardNameChoice(GameData gameData, UUID playerId, Card card) {
-        ColorChoiceContext.CardNameChoice choiceContext = new ColorChoiceContext.CardNameChoice(card, playerId);
+    public void beginCardNameChoice(GameData gameData, UUID playerId, Card card, List<CardType> excludedTypes) {
+        ColorChoiceContext.CardNameChoice choiceContext = new ColorChoiceContext.CardNameChoice(card, playerId, excludedTypes);
         gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
 
-        List<String> cardNames = collectAllCardNamesInGame(gameData);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseColorMessage(cardNames, "Choose a card name."));
+        List<String> cardNames;
+        String prompt;
+        if (excludedTypes.isEmpty()) {
+            cardNames = collectAllCardNamesInGame(gameData);
+            prompt = "Choose a card name.";
+        } else {
+            cardNames = collectCardNamesInGameExcluding(gameData, excludedTypes);
+            String excludedLabel = excludedTypes.stream().map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
+            prompt = "Choose a non" + excludedLabel + " card name.";
+        }
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseColorMessage(cardNames, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a card name", gameData.id, playerName);
