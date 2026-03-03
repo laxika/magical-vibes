@@ -236,6 +236,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Simple boost equip | `l/LeoninScimitar.java` | STATIC BoostAttachedCreatureEffect + EquipEffect ability |
 | Boost + keywords equip | `l/LoxodonWarhammer.java` | Boost + GrantKeywordEffect(EQUIPPED_CREATURE) + equip |
 | Boost + can't block equip | `c/CopperCarapace.java` | STATIC BoostAttachedCreatureEffect + CantBlockEffect + equip |
+| ETB attach + sacrifice equip | `p/PistonSledge.java` | ON_ENTER_BATTLEFIELD AttachSourceEquipmentToTargetCreatureEffect + STATIC BoostAttachedCreatureEffect + equip with SacrificeArtifactCost (no mana). Uses ControlledPermanentPredicateTargetFilter on card for ETB targeting |
 | Living weapon equip | `s/Strandwalker.java` | ON_ENTER_BATTLEFIELD LivingWeaponEffect + STATIC BoostAttachedCreatureEffect + GrantKeywordEffect(EQUIPPED_CREATURE) + equip |
 | Boost + color/subtype + death trigger equip | `n/NimDeathmantle.java` | STATIC BoostAttachedCreatureEffect + GrantKeywordEffect(EQUIPPED_CREATURE) + GrantColorEffect(BLACK, EQUIPPED_CREATURE) + GrantSubtypeEffect(ZOMBIE, EQUIPPED_CREATURE) + ON_ANY_NONTOKEN_CREATURE_DIES MayPayManaEffect("{4}", ReturnDyingCreatureToBattlefieldAndAttachSourceEffect) + equip |
 | Imprint + land-name boost equip | `s/StrataScythe.java` | ON_ENTER_BATTLEFIELD SearchLibraryForCardTypeToExileAndImprintEffect(LAND) + STATIC BoostAttachedCreaturePerMatchingLandNameEffect(1,1) + equip — imprint land from library on ETB, equipped creature gets +1/+1 per matching land on all battlefields |

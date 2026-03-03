@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
@@ -79,6 +80,31 @@ public class EquipResolutionService {
                 permanentRemovalService.removeOrphanedAuras(gameData);
             }
         }
+    }
+
+    @HandlesEffect(AttachSourceEquipmentToTargetCreatureEffect.class)
+    private void resolveAttachSourceEquipmentToTargetCreature(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            String logEntry = entry.getCard().getName() + "'s attach ability fizzles (target creature no longer exists).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - Attach source equipment fizzles, target creature left battlefield", gameData.id);
+            return;
+        }
+
+        Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (equipment == null) {
+            String logEntry = entry.getCard().getName() + "'s attach ability fizzles (equipment no longer on the battlefield).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - Attach source equipment fizzles, equipment left battlefield", gameData.id);
+            return;
+        }
+
+        equipment.setAttachedTo(target.getId());
+
+        String logEntry = entry.getCard().getName() + " is now attached to " + target.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} attached to {} via ETB", gameData.id, entry.getCard().getName(), target.getCard().getName());
     }
 
     @HandlesEffect(AttachTargetEquipmentToTargetCreatureEffect.class)

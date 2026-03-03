@@ -598,6 +598,7 @@ Pass `null` as filter to allow any card.
 | `BoostAttachedCreaturePerCardsInAllGraveyardsEffect` | `(CardPredicate filter)` | equipped creature gets +X/+X where X = cards in all graveyards matching filter (static) |
 | `BoostAttachedCreaturePerMatchingLandNameEffect` | `(int powerPerMatch, int toughnessPerMatch)` | equipped creature gets +X/+Y per land matching imprinted card name (static) |
 | `SacrificeOnUnattachEffect` | `()` | whenever this equipment becomes unattached, sacrifice the previously-equipped creature (static marker) |
+| `AttachSourceEquipmentToTargetCreatureEffect` | `()` | attach source equipment to target creature on ETB. Reads sourcePermanentId as equipment, targetPermanentId as creature. Used by equipment with "When this Equipment enters, attach it to target creature you control." |
 | `AttachTargetEquipmentToTargetCreatureEffect` | `()` | attach target Equipment to target creature (multi-target; reads targetPermanentIds[0] as equipment, [1] as creature) |
 
 ## Static restrictions / taxes
