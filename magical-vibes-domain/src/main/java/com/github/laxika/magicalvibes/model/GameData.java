@@ -13,6 +13,7 @@ import java.util.UUID;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class GameData {
@@ -180,6 +181,21 @@ public class GameData {
                 action.accept(playerId, perm);
             }
         }
+    }
+
+    /**
+     * Returns {@code true} if any permanent on any battlefield matches the given predicate.
+     * Short-circuits on the first match.
+     */
+    public boolean anyPermanentMatches(Predicate<Permanent> predicate) {
+        for (UUID playerId : orderedPlayerIds) {
+            List<Permanent> battlefield = playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent perm : battlefield) {
+                if (predicate.test(perm)) return true;
+            }
+        }
+        return false;
     }
 
     /**

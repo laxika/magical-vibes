@@ -72,6 +72,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.function.BiFunction;
 
 @Component
 @RequiredArgsConstructor
@@ -96,67 +97,81 @@ public class GameQueryService {
         static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), false, false);
     }
 
-    public Permanent findPermanentById(GameData gameData, UUID permanentId) {
-        if (permanentId == null) return null;
+    // --- Lookup helpers ---
+
+    private <T> T findInBattlefields(GameData gameData, UUID id, BiFunction<UUID, Permanent, T> mapper) {
+        if (id == null) return null;
         for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-            for (Permanent p : battlefield) {
-                if (p.getId().equals(permanentId)) {
-                    return p;
-                }
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                if (p.getId().equals(id)) return mapper.apply(playerId, p);
             }
         }
         return null;
+    }
+
+    private <T> T findInGraveyards(GameData gameData, UUID id, BiFunction<UUID, Card, T> mapper) {
+        if (id == null) return null;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> gy = gameData.playerGraveyards.get(playerId);
+            if (gy == null) continue;
+            for (Card c : gy) {
+                if (c.getId().equals(id)) return mapper.apply(playerId, c);
+            }
+        }
+        return null;
+    }
+
+    private boolean hasCardType(Card card, CardType type) {
+        return card.getType() == type || card.getAdditionalTypes().contains(type);
+    }
+
+    private boolean hasCardType(Permanent permanent, CardType type) {
+        return hasCardType(permanent.getCard(), type);
+    }
+
+    private boolean playerBattlefieldHasStaticEffect(GameData gameData, UUID playerId, Class<? extends CardEffect> effectType) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return false;
+        for (Permanent perm : bf) {
+            if (perm.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectType::isInstance)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean anyBattlefieldHasStaticEffect(GameData gameData, Class<? extends CardEffect> effectType) {
+        return gameData.anyPermanentMatches(p ->
+                p.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectType::isInstance));
+    }
+
+    // --- Permanent / Card lookups ---
+
+    public Permanent findPermanentById(GameData gameData, UUID permanentId) {
+        return findInBattlefields(gameData, permanentId, (playerId, p) -> p);
     }
 
     public UUID findPermanentController(GameData gameData, UUID permanentId) {
-        if (permanentId == null) return null;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-            for (Permanent p : battlefield) {
-                if (p.getId().equals(permanentId)) {
-                    return playerId;
-                }
-            }
-        }
-        return null;
+        return findInBattlefields(gameData, permanentId, (playerId, p) -> playerId);
     }
 
     public Card findCardInGraveyardById(GameData gameData, UUID cardId) {
-        if (cardId == null) return null;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard == null) continue;
-            for (Card c : graveyard) {
-                if (c.getId().equals(cardId)) {
-                    return c;
-                }
-            }
-        }
-        return null;
+        return findInGraveyards(gameData, cardId, (playerId, c) -> c);
     }
 
     public UUID findGraveyardOwnerById(GameData gameData, UUID cardId) {
-        if (cardId == null) return null;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard == null) continue;
-            for (Card c : graveyard) {
-                if (c.getId().equals(cardId)) {
-                    return playerId;
-                }
-            }
-        }
-        return null;
+        return findInGraveyards(gameData, cardId, (playerId, c) -> playerId);
     }
+
+    // --- Card predicate matching ---
 
     public boolean matchesCardPredicate(Card card, CardPredicate predicate, UUID sourceCardId) {
         if (predicate == null) return true;
 
         if (predicate instanceof CardTypePredicate p) {
-            return card.getType() == p.cardType() || card.getAdditionalTypes().contains(p.cardType());
+            return hasCardType(card, p.cardType());
         }
         if (predicate instanceof CardSubtypePredicate p) {
             return card.getSubtypes().contains(p.subtype());
@@ -185,6 +200,8 @@ public class GameQueryService {
         return false;
     }
 
+    // --- Player queries ---
+
     public UUID getOpponentId(GameData gameData, UUID playerId) {
         List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);
         return ids.get(0).equals(playerId) ? ids.get(1) : ids.get(0);
@@ -206,32 +223,17 @@ public class GameQueryService {
     }
 
     public boolean canPlayerLifeChange(GameData gameData, UUID playerId) {
-        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null) return true;
-        for (Permanent perm : bf) {
-            if (perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(LifeTotalCantChangeEffect.class::isInstance)) {
-                return false;
-            }
-        }
-        return true;
+        return !playerBattlefieldHasStaticEffect(gameData, playerId, LifeTotalCantChangeEffect.class);
     }
 
     public boolean canPlayerLoseGame(GameData gameData, UUID playerId) {
-        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null) return true;
-        for (Permanent perm : bf) {
-            if (perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(CantLoseGameEffect.class::isInstance)) {
-                return false;
-            }
-        }
-        return true;
+        return !playerBattlefieldHasStaticEffect(gameData, playerId, CantLoseGameEffect.class);
     }
 
+    // --- Creature / type classification ---
+
     public boolean isCreature(GameData gameData, Permanent permanent) {
-        if (permanent.getCard().getType() == CardType.CREATURE) return true;
-        if (permanent.getCard().getAdditionalTypes().contains(CardType.CREATURE)) return true;
+        if (hasCardType(permanent, CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
         if (permanent.getAwakeningCounters() > 0) return true;
         if (isArtifact(permanent) && hasAnimateArtifactEffect(gameData)) return true;
@@ -266,10 +268,11 @@ public class GameQueryService {
     }
 
     public boolean isArtifact(Permanent permanent) {
-        return permanent.getCard().getType() == CardType.ARTIFACT
-                || permanent.getCard().getAdditionalTypes().contains(CardType.ARTIFACT)
+        return hasCardType(permanent, CardType.ARTIFACT)
                 || permanent.getGrantedCardTypes().contains(CardType.ARTIFACT);
     }
+
+    // --- Keyword & effect checking ---
 
     public boolean hasKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
         return permanent.hasKeyword(keyword) || computeStaticBonus(gameData, permanent).keywords().contains(keyword);
@@ -292,19 +295,13 @@ public class GameQueryService {
         if (creature.isCantBeBlocked()) return true;
         if (creature.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof CantBeBlockedEffect)) return true;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-            for (Permanent source : battlefield) {
-                if (source.getAttachedTo() != null && source.getAttachedTo().equals(creature.getId())
+        return gameData.anyPermanentMatches(source ->
+                source.getAttachedTo() != null && source.getAttachedTo().equals(creature.getId())
                         && source.getCard().getEffects(EffectSlot.STATIC).stream()
-                                .anyMatch(e -> e instanceof CantBeBlockedEffect)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+                                .anyMatch(e -> e instanceof CantBeBlockedEffect));
     }
+
+    // --- Permanent predicate matching ---
 
     public boolean matchesPermanentPredicate(GameData gameData, Permanent permanent, PermanentPredicate predicate) {
         return matchesPermanentPredicate(permanent, predicate, FilterContext.of(gameData));
@@ -339,27 +336,23 @@ public class GameQueryService {
         }
         if (predicate instanceof PermanentIsCreaturePredicate) {
             if (gameData == null) {
-                return permanent.getCard().getType() == CardType.CREATURE
-                        || permanent.getCard().getAdditionalTypes().contains(CardType.CREATURE)
+                return hasCardType(permanent, CardType.CREATURE)
                         || permanent.isAnimatedUntilEndOfTurn()
                         || permanent.getAwakeningCounters() > 0;
             }
             return isCreature(gameData, permanent);
         }
         if (predicate instanceof PermanentIsLandPredicate) {
-            return permanent.getCard().getType() == CardType.LAND
-                    || permanent.getCard().getAdditionalTypes().contains(CardType.LAND);
+            return hasCardType(permanent, CardType.LAND);
         }
         if (predicate instanceof PermanentIsArtifactPredicate) {
             return isArtifact(permanent);
         }
         if (predicate instanceof PermanentIsEnchantmentPredicate) {
-            return permanent.getCard().getType() == CardType.ENCHANTMENT
-                    || permanent.getCard().getAdditionalTypes().contains(CardType.ENCHANTMENT);
+            return hasCardType(permanent, CardType.ENCHANTMENT);
         }
         if (predicate instanceof PermanentIsPlaneswalkerPredicate) {
-            return permanent.getCard().getType() == CardType.PLANESWALKER
-                    || permanent.getCard().getAdditionalTypes().contains(CardType.PLANESWALKER);
+            return hasCardType(permanent, CardType.PLANESWALKER);
         }
         if (predicate instanceof PermanentIsTappedPredicate) {
             return permanent.isTapped();
@@ -422,6 +415,8 @@ public class GameQueryService {
         return false;
     }
 
+    // --- Stats calculation ---
+
     public int getEffectivePower(GameData gameData, Permanent permanent) {
         return permanent.getEffectivePower() + computeStaticBonus(gameData, permanent).power();
     }
@@ -436,8 +431,9 @@ public class GameQueryService {
      * cause a creature to assign damage equal to its toughness when toughness > power.
      */
     public int getEffectiveCombatDamage(GameData gameData, Permanent creature) {
-        int power = getEffectivePower(gameData, creature);
-        int toughness = getEffectiveToughness(gameData, creature);
+        StaticBonus bonus = computeStaticBonus(gameData, creature);
+        int power = creature.getEffectivePower() + bonus.power();
+        int toughness = creature.getEffectiveToughness() + bonus.toughness();
 
         if (toughness > power && hasAuraWithEffect(gameData, creature, AssignCombatDamageWithToughnessEffect.class)) {
             return toughness;
@@ -447,8 +443,7 @@ public class GameQueryService {
     }
 
     public StaticBonus computeStaticBonus(GameData gameData, Permanent target) {
-        boolean isNaturalCreature = target.getCard().getType() == CardType.CREATURE
-                || target.getCard().getAdditionalTypes().contains(CardType.CREATURE);
+        boolean isNaturalCreature = hasCardType(target, CardType.CREATURE);
         StaticBonusAccumulator accumulator = new StaticBonusAccumulator();
         gameData.forEachBattlefield((playerId, bf) -> {
             boolean targetOnSameBattlefield = bf.contains(target);
@@ -507,6 +502,8 @@ public class GameQueryService {
 
         return new StaticBonus(power, toughness, accumulator.getKeywords(), accumulator.getProtectionColors(), accumulator.isAnimatedCreature() || isSelfAnimated, accumulator.getGrantedActivatedAbilities(), accumulator.getGrantedEffects(), accumulator.getGrantedColors(), accumulator.getGrantedSubtypes(), accumulator.isColorOverriding(), accumulator.isSubtypeOverriding());
     }
+
+    // --- Protection & evasion ---
 
     public boolean hasProtectionFrom(GameData gameData, Permanent target, CardColor sourceColor) {
         if (sourceColor == null) return false;
@@ -590,79 +587,32 @@ public class GameQueryService {
     }
 
     public boolean playerHasShroud(GameData gameData, UUID playerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
-        for (Permanent source : battlefield) {
-            boolean grantsControllerShroud = source.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(e -> e instanceof GrantControllerShroudEffect);
-            if (grantsControllerShroud) {
-                return true;
-            }
-        }
-        return false;
+        return playerBattlefieldHasStaticEffect(gameData, playerId, GrantControllerShroudEffect.class);
     }
 
     public boolean isUncounterable(GameData gameData, Card card) {
-        if (card.getType() != CardType.CREATURE && !card.getAdditionalTypes().contains(CardType.CREATURE)) {
+        if (!hasCardType(card, CardType.CREATURE)) {
             return false;
         }
-
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-            for (Permanent source : battlefield) {
-                boolean grantsUncounterable = source.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> e instanceof CreatureSpellsCantBeCounteredEffect);
-                if (grantsUncounterable) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return anyBattlefieldHasStaticEffect(gameData, CreatureSpellsCantBeCounteredEffect.class);
     }
 
+    // --- Aura & enchantment ---
+
     public boolean hasAnimateArtifactEffect(GameData gameData) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent source : bf) {
-                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof AnimateNoncreatureArtifactsEffect) return true;
-                }
-            }
-        }
-        return false;
+        return anyBattlefieldHasStaticEffect(gameData, AnimateNoncreatureArtifactsEffect.class);
     }
 
     public boolean hasAuraWithEffect(GameData gameData, Permanent creature, Class<? extends CardEffect> effectClass) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent p : bf) {
-                if (p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())) {
-                    for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                        if (effectClass.isInstance(effect)) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
+        return gameData.anyPermanentMatches(p ->
+                p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())
+                        && p.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectClass::isInstance));
     }
 
     public boolean isEnchanted(GameData gameData, Permanent creature) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent p : bf) {
-                if (p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())
-                        && p.getCard().isAura()) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return gameData.anyPermanentMatches(p ->
+                p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())
+                        && p.getCard().isAura());
     }
 
     public Permanent findEnchantedCreatureByAuraEffect(GameData gameData, UUID playerId, Class<? extends CardEffect> effectClass) {
@@ -680,6 +630,8 @@ public class GameQueryService {
         return null;
     }
 
+    // --- Target filtering & validation ---
+
     public boolean matchesFilters(GameData gameData, Permanent permanent, Set<TargetFilter> filters) {
         return matchesFilters(permanent, filters, FilterContext.of(gameData));
     }
@@ -687,28 +639,8 @@ public class GameQueryService {
     public boolean matchesFilters(Permanent permanent,
                                   Set<TargetFilter> filters,
                                   FilterContext filterContext) {
-        GameData gameData = filterContext != null ? filterContext.gameData() : null;
-        UUID sourceControllerId = filterContext != null ? filterContext.sourceControllerId() : null;
-
         for (TargetFilter filter : filters) {
-            if (filter instanceof ControlledPermanentPredicateTargetFilter controlledFilter) {
-                if (sourceControllerId == null || gameData == null) {
-                    return false;
-                }
-                List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
-                if (controllerBattlefield == null || !controllerBattlefield.contains(permanent)) {
-                    return false;
-                }
-                if (!matchesPermanentPredicate(permanent, controlledFilter.predicate(), filterContext)) {
-                    return false;
-                }
-                continue;
-            }
-            if (filter instanceof PermanentPredicateTargetFilter f) {
-                if (!matchesPermanentPredicate(permanent, f.predicate(), filterContext)) {
-                    return false;
-                }
-            }
+            if (!matchesSingleFilter(filter, permanent, filterContext)) return false;
         }
         return true;
     }
@@ -724,26 +656,23 @@ public class GameQueryService {
     public void validateTargetFilter(TargetFilter filter,
                                      Permanent target,
                                      FilterContext filterContext) {
+        if (!matchesSingleFilter(filter, target, filterContext)) {
+            throw new IllegalStateException(getFilterErrorMessage(filter));
+        }
+    }
+
+    private boolean matchesSingleFilter(TargetFilter filter, Permanent target, FilterContext filterContext) {
         GameData gameData = filterContext != null ? filterContext.gameData() : null;
         UUID sourceControllerId = filterContext != null ? filterContext.sourceControllerId() : null;
 
         if (filter instanceof ControlledPermanentPredicateTargetFilter controlledFilter) {
-            if (gameData == null || sourceControllerId == null) {
-                throw new IllegalStateException(controlledFilter.errorMessage());
-            }
+            if (sourceControllerId == null || gameData == null) return false;
             List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
-            if (controllerBattlefield == null || !controllerBattlefield.contains(target)) {
-                throw new IllegalStateException(controlledFilter.errorMessage());
-            }
-            if (!matchesPermanentPredicate(target, controlledFilter.predicate(), filterContext)) {
-                throw new IllegalStateException(controlledFilter.errorMessage());
-            }
-            return;
+            if (controllerBattlefield == null || !controllerBattlefield.contains(target)) return false;
+            return matchesPermanentPredicate(target, controlledFilter.predicate(), filterContext);
         }
         if (filter instanceof OwnedPermanentPredicateTargetFilter ownedFilter) {
-            if (gameData == null || sourceControllerId == null) {
-                throw new IllegalStateException(ownedFilter.errorMessage());
-            }
+            if (gameData == null || sourceControllerId == null) return false;
             boolean ownedByController = false;
             for (UUID playerId : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -753,20 +682,23 @@ public class GameQueryService {
                     break;
                 }
             }
-            if (!ownedByController) {
-                throw new IllegalStateException(ownedFilter.errorMessage());
-            }
-            if (!matchesPermanentPredicate(target, ownedFilter.predicate(), filterContext)) {
-                throw new IllegalStateException(ownedFilter.errorMessage());
-            }
-            return;
+            if (!ownedByController) return false;
+            return matchesPermanentPredicate(target, ownedFilter.predicate(), filterContext);
         }
         if (filter instanceof PermanentPredicateTargetFilter f) {
-            if (!matchesPermanentPredicate(target, f.predicate(), filterContext)) {
-                throw new IllegalStateException(f.errorMessage());
-            }
+            return matchesPermanentPredicate(target, f.predicate(), filterContext);
         }
+        return true;
     }
+
+    private String getFilterErrorMessage(TargetFilter filter) {
+        if (filter instanceof ControlledPermanentPredicateTargetFilter f) return f.errorMessage();
+        if (filter instanceof OwnedPermanentPredicateTargetFilter f) return f.errorMessage();
+        if (filter instanceof PermanentPredicateTargetFilter f) return f.errorMessage();
+        return "Target does not match filter";
+    }
+
+    // --- Other ---
 
     private boolean isCreatureSubtype(CardSubtype subtype) {
         return !NON_CREATURE_SUBTYPES.contains(subtype);
@@ -816,4 +748,3 @@ public class GameQueryService {
         return count;
     }
 }
-
