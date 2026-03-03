@@ -33,36 +33,22 @@ public class ExileResolutionService {
 
     @HandlesEffect(ExileTargetPermanentEffect.class)
     void resolveExileTargetPermanent(GameData gameData, StackEntry entry) {
-        // Multi-target (e.g. "Exile two target artifacts")
-        if (!entry.getTargetPermanentIds().isEmpty()) {
-            for (UUID targetId : entry.getTargetPermanentIds()) {
-                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-                if (target == null) {
-                    continue;
-                }
+        List<UUID> targetIds = entry.getTargetPermanentIds().isEmpty()
+                ? List.of(entry.getTargetPermanentId())
+                : entry.getTargetPermanentIds();
 
-                permanentRemovalService.removePermanentToExile(gameData, target);
-                String logEntry = target.getCard().getName() + " is exiled.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} is exiled by {}",
-                        gameData.id, target.getCard().getName(), entry.getCard().getName());
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                continue;
             }
 
-            permanentRemovalService.removeOrphanedAuras(gameData);
-            return;
+            permanentRemovalService.removePermanentToExile(gameData, target);
+            String logEntry = target.getCard().getName() + " is exiled.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} is exiled by {}",
+                    gameData.id, target.getCard().getName(), entry.getCard().getName());
         }
-
-        // Single-target
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
-        if (target == null) {
-            return;
-        }
-
-        permanentRemovalService.removePermanentToExile(gameData, target);
-        String logEntry = target.getCard().getName() + " is exiled.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} is exiled by {}'s ability",
-                gameData.id, target.getCard().getName(), entry.getCard().getName());
 
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
@@ -74,20 +60,10 @@ public class ExileResolutionService {
             return;
         }
 
-        Card card = target.getOriginalCard();
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
 
-        permanentRemovalService.removePermanentToExile(gameData, target);
-
-        String logEntry = card.getName() + " is exiled. It will return at the beginning of the next end step.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} exiles {}; will return at next end step",
-                gameData.id, entry.getCard().getName(), card.getName());
-
-        gameData.pendingExileReturns.add(new PendingExileReturn(card, ownerId));
-
-        permanentRemovalService.removeOrphanedAuras(gameData);
+        exileAndScheduleReturn(gameData, entry, target, ownerId);
     }
 
     @HandlesEffect(ExileSelfAndReturnAtEndStepEffect.class)
@@ -97,15 +73,20 @@ public class ExileResolutionService {
             return;
         }
 
-        Card card = source.getOriginalCard();
-        permanentRemovalService.removePermanentToExile(gameData, source);
+        exileAndScheduleReturn(gameData, entry, source, entry.getControllerId());
+    }
+
+    private void exileAndScheduleReturn(GameData gameData, StackEntry entry,
+                                        Permanent permanent, UUID ownerId) {
+        Card card = permanent.getOriginalCard();
+        permanentRemovalService.removePermanentToExile(gameData, permanent);
 
         String logEntry = card.getName() + " is exiled. It will return at the beginning of the next end step.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} is exiled and will return at next end step",
-                gameData.id, card.getName());
+        log.info("Game {} - {} exiles {}; will return at next end step",
+                gameData.id, entry.getCard().getName(), card.getName());
 
-        gameData.pendingExileReturns.add(new PendingExileReturn(card, entry.getControllerId()));
+        gameData.pendingExileReturns.add(new PendingExileReturn(card, ownerId));
 
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
