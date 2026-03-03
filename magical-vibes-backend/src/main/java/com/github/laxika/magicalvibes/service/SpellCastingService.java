@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -309,7 +310,32 @@ public class SpellCastingService {
                         gameData, player, card
                 );
             }
-            if (needsGraveyardCreatureTargeting && resolvedXValue > 0) {
+            // Check for "up to N target cards from graveyard" spells (e.g. Morbid Plunder)
+            ReturnTargetCardsFromGraveyardToHandEffect graveyardToHandEffect =
+                    (ReturnTargetCardsFromGraveyardToHandEffect) card.getEffects(EffectSlot.SPELL).stream()
+                            .filter(e -> e instanceof ReturnTargetCardsFromGraveyardToHandEffect)
+                            .findFirst().orElse(null);
+            boolean needsUpToNGraveyardTargeting = graveyardToHandEffect != null;
+
+            if (needsUpToNGraveyardTargeting) {
+                long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                        .filter(c -> gameQueryService.matchesCardPredicate(c, graveyardToHandEffect.filter(), card.getId()))
+                        .count();
+                if (matchingCount > 0) {
+                    gameHelper.handleUpToNGraveyardSpellTargeting(gameData, playerId, card,
+                            StackEntryType.SORCERY_SPELL, graveyardToHandEffect.filter(),
+                            graveyardToHandEffect.maxTargets());
+                    return; // finishSpellCast handled in handleMultipleGraveyardCardsChosen
+                } else {
+                    // No matching cards — put spell on stack with 0 targets (fizzles on resolution)
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.SORCERY_SPELL, card, playerId, card.getName(),
+                            filteredSpellEffects, 0, null,
+                            null, Map.of(), null, List.of(), List.of()
+                    ));
+                    finishSpellCast(gameData, playerId, player, hand, card);
+                }
+            } else if (needsGraveyardCreatureTargeting && resolvedXValue > 0) {
                 // Prompt player to choose graveyard targets before putting spell on stack
                 gameHelper.handleGraveyardSpellTargeting(gameData, playerId, card,
                         StackEntryType.SORCERY_SPELL, resolvedXValue);

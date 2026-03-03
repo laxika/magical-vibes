@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.PutImprintedCreatureOntoBattl
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -298,6 +299,38 @@ public class GraveyardReturnResolutionService {
                     + " on top of their library from graveyard.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} puts {} card(s) from graveyard on top of library",
+                    gameData.id, playerName, movedNames.size());
+        }
+    }
+
+    @HandlesEffect(ReturnTargetCardsFromGraveyardToHandEffect.class)
+    void resolveReturnTargetCardsFromGraveyardToHand(GameData gameData, StackEntry entry,
+                                                     ReturnTargetCardsFromGraveyardToHandEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<UUID> targetCardIds = entry.getTargetCardIds();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        if (targetCardIds == null || targetCardIds.isEmpty()) {
+            return;
+        }
+
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        List<String> movedNames = new ArrayList<>();
+
+        for (UUID cardId : targetCardIds) {
+            Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+            if (card != null && graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
+                hand.add(card);
+                movedNames.add(card.getName());
+            }
+        }
+
+        if (!movedNames.isEmpty()) {
+            String logEntry = playerName + " returns " + String.join(", ", movedNames)
+                    + " from graveyard to hand.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} returns {} card(s) from graveyard to hand",
                     gameData.id, playerName, movedNames.size());
         }
     }

@@ -957,6 +957,32 @@ public class GameHelper {
                 "Choose any number of target " + filterLabel + "s from your graveyard.");
     }
 
+    void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                            StackEntryType entryType, CardPredicate filter, int maxTargetsCap) {
+        List<UUID> matchingCardIds = new ArrayList<>();
+        List<CardView> cardViews = new ArrayList<>();
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        if (graveyard != null) {
+            for (Card graveyardCard : graveyard) {
+                if (gameQueryService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
+                    matchingCardIds.add(graveyardCard.getId());
+                    cardViews.add(cardViewFactory.create(graveyardCard));
+                }
+            }
+        }
+
+        int maxTargets = Math.min(maxTargetsCap, matchingCardIds.size());
+        gameData.graveyardTargetOperation.card = card;
+        gameData.graveyardTargetOperation.controllerId = controllerId;
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        gameData.graveyardTargetOperation.entryType = entryType;
+        gameData.graveyardTargetOperation.xValue = 0;
+        gameData.graveyardTargetOperation.anyNumber = true;
+        String filterLabel = GraveyardReturnResolutionService.describeFilter(filter);
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCardIds, cardViews, maxTargets,
+                "Choose up to " + maxTargetsCap + " target " + filterLabel + "s from your graveyard.");
+    }
+
     void checkAllyCreatureEntersTriggers(GameData gameData, UUID controllerId, Card enteringCreature) {
         if (enteringCreature.getToughness() == null) return;
 
