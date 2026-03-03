@@ -96,6 +96,10 @@ public class GameData {
     public final WarpWorldOperationState warpWorldOperation = new WarpWorldOperationState();
     public boolean cleanupDiscardPending;
     public final List<PendingExileReturn> pendingExileReturns = Collections.synchronizedList(new ArrayList<>());
+    /** Tracks exile-until-source-leaves connections (O-ring style).
+     *  Maps source permanent UUID to the exiled card + owner info.
+     *  When the source permanent leaves the battlefield, the exiled card returns. */
+    public final Map<UUID, PendingExileReturn> exileReturnOnPermanentLeave = new ConcurrentHashMap<>();
     public final Set<UUID> pendingTokenExilesAtEndStep = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionIds = new ConcurrentHashMap<>();
     public final Set<UUID> permanentsPreventedFromDealingDamage = ConcurrentHashMap.newKeySet();
@@ -292,6 +296,9 @@ public class GameData {
 
         // --- PendingExileReturn list (records with shared Card refs) ---
         copy.pendingExileReturns.addAll(this.pendingExileReturns);
+
+        // --- Exile-until-source-leaves map (O-ring style) ---
+        copy.exileReturnOnPermanentLeave.putAll(this.exileReturnOnPermanentLeave);
 
         // --- Pending token exiles at end step (Mimic Vat) ---
         copy.pendingTokenExilesAtEndStep.addAll(this.pendingTokenExilesAtEndStep);

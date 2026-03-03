@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 
 import java.util.ArrayList;
@@ -105,6 +106,50 @@ public class ExileResolutionService {
                 gameData.id, card.getName());
 
         gameData.pendingExileReturns.add(new PendingExileReturn(card, entry.getControllerId()));
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    @HandlesEffect(ExileTargetPermanentUntilSourceLeavesEffect.class)
+    void resolveExileTargetPermanentUntilSourceLeaves(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        // Find the source permanent on the battlefield by card reference
+        UUID sourcePermanentId = null;
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (p.getCard() == entry.getCard()) {
+                    sourcePermanentId = p.getId();
+                    break;
+                }
+            }
+        }
+
+        if (sourcePermanentId == null) {
+            // Source already left the battlefield — exile still happens but no return tracking
+            log.info("Game {} - Source permanent for {} no longer on battlefield, exile without return tracking",
+                    gameData.id, entry.getCard().getName());
+        }
+
+        Card card = target.getOriginalCard();
+        UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), targetControllerId);
+
+        permanentRemovalService.removePermanentToExile(gameData, target);
+
+        String logEntry = card.getName() + " is exiled by " + entry.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} exiles {} until it leaves the battlefield",
+                gameData.id, entry.getCard().getName(), card.getName());
+
+        if (sourcePermanentId != null) {
+            gameData.exileReturnOnPermanentLeave.put(sourcePermanentId, new PendingExileReturn(card, ownerId));
+        }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
     }

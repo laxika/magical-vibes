@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
@@ -66,6 +67,7 @@ public class PermanentRemovalService {
                     }
                 }
                 handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
+                handleExileReturnOnLeave(gameData, target);
                 return true;
             }
         }
@@ -91,6 +93,7 @@ public class PermanentRemovalService {
                 gameData.stolenCreatures.remove(target.getId());
                 List<Card> hand = gameData.playerHands.get(ownerId);
                 hand.add(target.getOriginalCard());
+                handleExileReturnOnLeave(gameData, target);
                 return true;
             }
         }
@@ -108,6 +111,7 @@ public class PermanentRemovalService {
                 gameData.playerExiledCards.get(ownerId).add(target.getOriginalCard());
                 gameData.stolenCreatures.remove(target.getId());
                 handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
+                handleExileReturnOnLeave(gameData, target);
                 return true;
             }
         }
@@ -204,5 +208,32 @@ public class PermanentRemovalService {
         log.info("Game {} - {} sacrificed due to {} leaving battlefield", gameData.id, creature.getCard().getName(), removedEquipment.getCard().getName());
         removePermanentToGraveyard(gameData, creature);
         removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Checks if the removed permanent had an exile-until-source-leaves tracking entry.
+     * If so, returns the exiled card to the battlefield under its owner's control.
+     */
+    private void handleExileReturnOnLeave(GameData gameData, Permanent removedPermanent) {
+        PendingExileReturn pending = gameData.exileReturnOnPermanentLeave.remove(removedPermanent.getId());
+        if (pending == null) return;
+
+        Card exiledCard = pending.card();
+        UUID ownerId = pending.controllerId();
+
+        // Remove card from exile zone
+        List<Card> exiledCards = gameData.playerExiledCards.get(ownerId);
+        if (exiledCards != null && exiledCards.remove(exiledCard)) {
+            // Return as a new permanent
+            Permanent perm = new Permanent(exiledCard);
+            gameHelper.putPermanentOntoBattlefield(gameData, ownerId, perm);
+            String playerName = gameData.playerIdToName.get(ownerId);
+            String logEntry = exiledCard.getName() + " returns to the battlefield under " + playerName + "'s control.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} returns from exile (source left battlefield)", gameData.id, exiledCard.getName());
+            gameHelper.handleCreatureEnteredBattlefield(gameData, ownerId, exiledCard, null, false);
+        } else {
+            log.info("Game {} - Exiled card {} no longer in exile zone, return skipped", gameData.id, exiledCard.getName());
+        }
     }
 }
