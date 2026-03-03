@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
@@ -571,6 +572,46 @@ public class GraveyardReturnResolutionService {
                 log.info("Game {} - {} gains {} life", gameData.id, playerName, effect.lifeGain());
             }
         }
+    }
+
+    @HandlesEffect(ExileTargetCardFromGraveyardAndImprintOnSourceEffect.class)
+    void resolveExileTargetCardAndImprintOnSource(GameData gameData, StackEntry entry,
+                                                   ExileTargetCardFromGraveyardAndImprintOnSourceEffect effect) {
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetPermanentId());
+        if (targetCard == null) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    entry.getDescription() + " fizzles (target no longer in a graveyard).");
+            return;
+        }
+
+        if (effect.requiredType() != null && targetCard.getType() != effect.requiredType()
+                && !targetCard.getAdditionalTypes().contains(effect.requiredType())) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    entry.getDescription() + " fizzles (target is no longer a valid "
+                            + effect.requiredType().name().toLowerCase() + " card).");
+            return;
+        }
+
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
+
+        permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+
+        // Add to graveyard owner's exiled cards
+        if (graveyardOwnerId != null) {
+            gameData.playerExiledCards.computeIfAbsent(graveyardOwnerId, k -> new ArrayList<>()).add(targetCard);
+        }
+
+        // Track as imprinted on source permanent
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId != null) {
+            gameData.permanentExiledCards
+                    .computeIfAbsent(sourcePermanentId, k -> Collections.synchronizedList(new ArrayList<>()))
+                    .add(targetCard);
+        }
+
+        String playerName = gameData.playerIdToName.get(entry.getControllerId());
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " exiles " + targetCard.getName() + " from a graveyard.");
     }
 
     @HandlesEffect(ExileCreaturesFromGraveyardAndCreateTokensEffect.class)

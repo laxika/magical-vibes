@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.validate;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -61,6 +62,24 @@ public class GraveyardTargetValidators {
             throw new IllegalStateException("Target must be a creature card");
         }
         // Opponent-graveyard check is enforced in SpellCastingService (which has playerId context)
+    }
+
+    @ValidatesTarget(ExileTargetCardFromGraveyardAndImprintOnSourceEffect.class)
+    public void validateExileTargetCardFromGraveyardAndImprint(TargetValidationContext ctx, ExileTargetCardFromGraveyardAndImprintOnSourceEffect effect) {
+        if (ctx.targetZone() != Zone.GRAVEYARD) {
+            throw new IllegalStateException("Ability requires a graveyard target");
+        }
+        if (ctx.targetPermanentId() == null) {
+            throw new IllegalStateException("Ability requires a target card");
+        }
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetPermanentId());
+        if (graveyardCard == null) {
+            throw new IllegalStateException("Target card not found in any graveyard");
+        }
+        if (effect.requiredType() != null && graveyardCard.getType() != effect.requiredType()
+                && !graveyardCard.getAdditionalTypes().contains(effect.requiredType())) {
+            throw new IllegalStateException("Target must be a " + effect.requiredType().name().toLowerCase() + " card");
+        }
     }
 
     @ValidatesTarget(PutCardFromOpponentGraveyardOntoBattlefieldEffect.class)

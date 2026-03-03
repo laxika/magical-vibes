@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControll
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledLandCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledSubtypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -368,6 +369,17 @@ public class StaticEffectResolutionService {
                         accumulator.addActivatedAbility(ability);
                     }
                 }
+            }
+        }
+    }
+
+    @HandlesStaticEffect(value = GainActivatedAbilitiesOfExiledCardsEffect.class, selfOnly = true)
+    private void resolveGainActivatedAbilitiesOfExiledCards(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        List<Card> exiledCards = context.gameData().permanentExiledCards.get(context.source().getId());
+        if (exiledCards == null) return;
+        for (Card card : exiledCards) {
+            for (var ability : card.getActivatedAbilities()) {
+                accumulator.addActivatedAbility(ability);
             }
         }
     }
