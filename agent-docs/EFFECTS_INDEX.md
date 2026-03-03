@@ -83,6 +83,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `DealDamageToControllerEffect` | `(int damage)` | deal N damage to the card's controller (pain lands, self-damage) |
 | `DealDamageToTargetControllerIfTargetHasKeywordEffect` | `(int damage, Keyword keyword)` | deal N damage to targeted creature's controller if that creature has the specified keyword |
 | `DealDamageToDiscardingPlayerEffect` | `(int damage)` | deal N damage to any player who discards (trigger) |
+| `DealDamageToTriggeringPermanentControllerEffect` | `(int damage)` | deal N damage to the controller of the permanent that caused the trigger (target pre-set at trigger-collection time) |
 | `DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect` | `(CardSubtype subtype)` | deal damage to target creature equal to number of controlled permanents of subtype |
 | `DealDamageIfFewCardsInHandEffect` | `(int maxCards, int damage)` | deal N damage to target player if they have maxCards or fewer in hand |
 | `DealDamageOnLandTapEffect` | `(int damage)` | deal N damage to a player whenever they tap a land (Manabarbs-style) |

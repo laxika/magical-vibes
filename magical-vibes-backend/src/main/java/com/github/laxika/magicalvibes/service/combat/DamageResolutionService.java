@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEff
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSourcePowerToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetControllerIfTargetHasKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect;
@@ -182,6 +183,24 @@ public class DamageResolutionService {
      */
     @HandlesEffect(DealDamageToTargetPlayerEffect.class)
     void resolveDealDamageToTargetPlayer(GameData gameData, StackEntry entry, DealDamageToTargetPlayerEffect effect) {
+        UUID targetId = entry.getTargetPermanentId();
+        if (!gameData.playerIds.contains(targetId)) return;
+
+        if (!isDamageSourcePreventedWithLog(gameData, entry)) {
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+            dealDamageToPlayer(gameData, entry, targetId, rawDamage);
+        }
+
+        gameHelper.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link DealDamageToTriggeringPermanentControllerEffect} — deals a fixed amount of damage to the
+     * controller of an artifact that was put into a graveyard from the battlefield. The target player
+     * UUID is pre-set on the stack entry at trigger-collection time.
+     */
+    @HandlesEffect(DealDamageToTriggeringPermanentControllerEffect.class)
+    void resolveDealDamageToArtifactController(GameData gameData, StackEntry entry, DealDamageToTriggeringPermanentControllerEffect effect) {
         UUID targetId = entry.getTargetPermanentId();
         if (!gameData.playerIds.contains(targetId)) return;
 

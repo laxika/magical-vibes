@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
@@ -1118,7 +1119,7 @@ public class GameHelper {
         }
     }
 
-    public void checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID graveyardOwnerId) {
+    public void checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID graveyardOwnerId, UUID artifactControllerId) {
         gameData.forEachPermanent((playerId, perm) -> {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD);
             if (effects != null && !effects.isEmpty()) {
@@ -1131,13 +1132,15 @@ public class GameHelper {
                                 perm.getCard().getName() + " — " + may.prompt()
                         ));
                     } else {
+                        // For effects that damage the artifact's controller, pre-set the target
+                        UUID targetId = (effect instanceof DealDamageToTriggeringPermanentControllerEffect) ? artifactControllerId : null;
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 playerId,
                                 perm.getCard().getName() + "'s ability",
                                 new ArrayList<>(List.of(effect)),
-                                null,
+                                targetId,
                                 perm.getId()
                         ));
                     }
