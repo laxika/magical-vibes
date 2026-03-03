@@ -48,7 +48,14 @@ public sealed interface InteractionContext permits
                          boolean reorderRemainingToBottom, boolean shuffleAfterSelection,
                          String prompt, LibrarySearchDestination destination) implements InteractionContext {}
 
-    record LibraryRevealChoice(UUID playerId, List<Card> allCards, Set<UUID> validCardIds, boolean remainingToGraveyard) implements InteractionContext {}
+    record LibraryRevealChoice(UUID playerId, List<Card> allCards, Set<UUID> validCardIds,
+                               boolean remainingToGraveyard, boolean selectedToHand,
+                               boolean reorderRemainingToBottom) implements InteractionContext {
+
+        public LibraryRevealChoice(UUID playerId, List<Card> allCards, Set<UUID> validCardIds, boolean remainingToGraveyard) {
+            this(playerId, allCards, validCardIds, remainingToGraveyard, false, false);
+        }
+    }
 
     record HandTopBottomChoice(UUID playerId, List<Card> cards) implements InteractionContext {}
 

@@ -297,7 +297,7 @@ Pass `null` as filter to allow any card.
 | `CastTopOfLibraryWithoutPayingManaCostEffect` | `(Set<CardType> castableTypes)` | look at top card of controller's library; if it matches one of the castable types, may cast it without paying its mana cost |
 | `DistantMemoriesEffect` | `()` | search library for any card, exile it, shuffle; opponent may let you have it, otherwise draw 3 |
 | `PayManaAndSearchLibraryForCardNamedToBattlefieldEffect` | `(String manaCost, String cardName)` | pay mana, search for named card to battlefield |
-| `LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect` | `(int count, Set<CardType> cardTypes)` | look at top N, may reveal matching type to hand, rest on bottom |
+| `LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect` | `(int count, Set<CardType> cardTypes)` or `(int count, Set<CardType> cardTypes, boolean anyNumber)` | look at top N, may reveal matching type to hand, rest on bottom; anyNumber=true allows multi-select |
 | `ImprintFromTopCardsEffect` | `(int count)` | look at top N cards, exile one face down (imprint on source), rest on bottom in any order |
 | `LookAtTopCardsHandTopBottomEffect` | `(int count)` | look at top N cards, choose hand/top/bottom for each |
 | `ReorderTopCardsOfLibraryEffect` | `(int count)` | reorder top N cards of library |

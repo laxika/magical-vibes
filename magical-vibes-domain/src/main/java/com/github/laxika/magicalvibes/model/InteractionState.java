@@ -463,6 +463,17 @@ public class InteractionState {
         this.context = new InteractionContext.LibraryRevealChoice(playerId, allCards, validCardIds, remainingToGraveyard);
     }
 
+    public void beginLibraryRevealChoice(UUID playerId, List<Card> allCards, Set<UUID> validCardIds,
+                                          boolean remainingToGraveyard, boolean selectedToHand,
+                                          boolean reorderRemainingToBottom) {
+        this.awaitingInput = AwaitingInput.LIBRARY_REVEAL_CHOICE;
+        this.awaitingLibraryRevealPlayerId = playerId;
+        this.awaitingLibraryRevealAllCards = allCards;
+        this.awaitingLibraryRevealValidCardIds = validCardIds;
+        this.context = new InteractionContext.LibraryRevealChoice(playerId, allCards, validCardIds,
+                remainingToGraveyard, selectedToHand, reorderRemainingToBottom);
+    }
+
     public void clearLibraryRevealChoice() {
         this.awaitingLibraryRevealPlayerId = null;
         this.awaitingLibraryRevealAllCards = null;

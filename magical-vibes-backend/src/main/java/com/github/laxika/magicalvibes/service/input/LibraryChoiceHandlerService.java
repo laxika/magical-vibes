@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
+import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -477,6 +478,12 @@ public class LibraryChoiceHandlerService {
             }
         }
 
+        if (libraryRevealChoice.selectedToHand()) {
+            resolveRevealChoiceToHand(gameData, controllerId, playerName, selectedCards, remainingCards,
+                    libraryRevealChoice.reorderRemainingToBottom());
+            return;
+        }
+
         // Put selected cards onto the battlefield
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(gameHelper.snapshotEnterTappedTypes(gameData));
@@ -531,6 +538,46 @@ public class LibraryChoiceHandlerService {
         log.info("Game {} - {} resolves library reveal choice, {} cards to battlefield", gameData.id, playerName, selectedCards.size());
 
         stateBasedActionService.performStateBasedActions(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void resolveRevealChoiceToHand(GameData gameData, UUID controllerId, String playerName,
+                                              List<Card> selectedCards, List<Card> remainingCards,
+                                              boolean reorderRemainingToBottom) {
+        // Put selected cards into hand
+        for (Card card : selectedCards) {
+            gameData.playerHands.get(controllerId).add(card);
+        }
+
+        // Log the result
+        if (selectedCards.isEmpty()) {
+            String logEntry = playerName + " does not reveal any creature cards.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else {
+            String names = selectedCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
+            String logEntry = playerName + " reveals " + names + " and puts them into their hand.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        }
+
+        // Handle remaining cards
+        if (reorderRemainingToBottom && remainingCards.size() > 1) {
+            gameData.interaction.beginLibraryReorder(controllerId, remainingCards, true);
+            List<CardView> cardViews = remainingCards.stream().map(cardViewFactory::create).toList();
+            sessionManager.sendToPlayer(controllerId, new ReorderLibraryCardsMessage(
+                    cardViews,
+                    "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."
+            ));
+            log.info("Game {} - {} reveals {} creature cards to hand, reordering {} remaining",
+                    gameData.id, playerName, selectedCards.size(), remainingCards.size());
+            return;
+        }
+
+        if (!remainingCards.isEmpty()) {
+            List<Card> deck = gameData.playerDecks.get(controllerId);
+            deck.addAll(remainingCards);
+        }
+
+        log.info("Game {} - {} reveals {} creature cards to hand", gameData.id, playerName, selectedCards.size());
         turnProgressionService.resolveAutoPass(gameData);
     }
 

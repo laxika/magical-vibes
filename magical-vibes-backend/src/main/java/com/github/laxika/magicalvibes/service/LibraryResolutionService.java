@@ -1016,6 +1016,24 @@ public class LibraryResolutionService {
             return;
         }
 
+        if (effect.anyNumber()) {
+            Set<UUID> validCardIds = ConcurrentHashMap.newKeySet();
+            for (Card card : creatureCards) {
+                validCardIds.add(card.getId());
+            }
+
+            gameData.interaction.beginLibraryRevealChoice(controllerId, topCards, validCardIds,
+                    false, true, true);
+
+            List<CardView> cardViews = creatureCards.stream().map(cardViewFactory::create).toList();
+            List<UUID> cardIds = creatureCards.stream().map(Card::getId).toList();
+            sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsFromGraveyardsMessage(
+                    cardIds, cardViews, creatureCards.size(),
+                    "You may reveal any number of creature cards and put them into your hand."
+            ));
+            return;
+        }
+
         gameData.interaction.beginLibrarySearch(
                 controllerId,
                 creatureCards,
