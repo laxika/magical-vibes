@@ -481,6 +481,7 @@ Pass `null` as filter to allow any card.
 | `CanBlockOnlyIfAttackerMatchesPredicateEffect` | `(PermanentPredicate attackerPredicate, String allowedAttackersDescription)` | this creature can only block attackers matching predicate (static) |
 | `CantAttackUnlessDefenderControlsMatchingPermanentEffect` | `(PermanentPredicate defenderPermanentPredicate, String requirementDescription)` | can't attack unless defender controls matching permanent (static) |
 | `CantBeBlockedIfDefenderControlsMatchingPermanentEffect` | `(PermanentPredicate defenderPermanentPredicate)` | can't be blocked as long as defender controls matching permanent (static) |
+| `CanAttackAsThoughNoDefenderEffect` | `()` | this creature can attack as though it didn't have defender (static, typically wrapped in MetalcraftConditionalEffect) |
 | `MustAttackEffect` | `()` | this creature must attack each turn if able (static) |
 | `MustBeBlockedByAllCreaturesEffect` | `()` | all creatures able to block this must do so (static, Lure-style) |
 | `MustBlockSourceEffect` | `(UUID sourcePermanentId)` | target creature must block source permanent this turn if able |

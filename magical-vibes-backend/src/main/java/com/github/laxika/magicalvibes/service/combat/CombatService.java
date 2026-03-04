@@ -131,7 +131,8 @@ public class CombatService {
         if (!gameQueryService.isCreature(gameData, creature)) return false;
         if (creature.isTapped()) return false;
         if (creature.isSummoningSick() && !gameQueryService.hasKeyword(gameData, creature, Keyword.HASTE)) return false;
-        if (gameQueryService.hasKeyword(gameData, creature, Keyword.DEFENDER)) return false;
+        if (gameQueryService.hasKeyword(gameData, creature, Keyword.DEFENDER)
+                && !gameQueryService.canAttackDespiteDefender(gameData, creature)) return false;
         if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackOrBlockEffect.class)) return false;
         if (isCantAttackDueToLandRestriction(gameData, creature, defenderBattlefield)) return false;
         return true;

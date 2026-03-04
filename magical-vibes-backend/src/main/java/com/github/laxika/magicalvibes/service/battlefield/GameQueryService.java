@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
+import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
@@ -347,6 +348,26 @@ public class GameQueryService {
                 .filter(p -> isArtifact(gameData, p))
                 .count();
         return artifactCount >= 3;
+    }
+
+    /**
+     * Returns {@code true} if the given creature can attack despite having defender.
+     * Checks for {@link CanAttackAsThoughNoDefenderEffect} in static effects, including
+     * those wrapped in {@link MetalcraftConditionalEffect}.
+     */
+    public boolean canAttackDespiteDefender(GameData gameData, Permanent creature) {
+        UUID controllerId = findPermanentController(gameData, creature.getId());
+        if (controllerId == null) return false;
+        for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CanAttackAsThoughNoDefenderEffect) {
+                return true;
+            }
+            if (effect instanceof MetalcraftConditionalEffect metalcraft
+                    && metalcraft.wrapped() instanceof CanAttackAsThoughNoDefenderEffect) {
+                if (isMetalcraftMet(gameData, controllerId)) return true;
+            }
+        }
+        return false;
     }
 
     /**
