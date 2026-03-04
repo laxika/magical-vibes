@@ -41,6 +41,14 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
+/**
+ * Resolves all graveyard-related effects during stack resolution. Handles returning cards from
+ * graveyards to hand or battlefield, exiling cards from graveyards, stealing creatures from
+ * opponent graveyards, imprint mechanics, and creating tokens from exiled graveyard creatures.
+ *
+ * <p>Each handler method is registered via {@link HandlesEffect} and dispatched automatically
+ * by the effect resolution framework.</p>
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -53,6 +61,21 @@ public class GraveyardReturnResolutionService {
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
 
+    /**
+     * Resolves a {@link ReturnCardFromGraveyardEffect} by returning one or more cards from a graveyard
+     * to the controller's hand or battlefield. Handles three resolution paths:
+     * <ol>
+     *   <li>Pre-targeted: the card was already targeted during casting (includes aura attachment).</li>
+     *   <li>Return all: returns every matching card without player choice.</li>
+     *   <li>Search and choose: prompts the controller to pick a card from their own or all graveyards.</li>
+     * </ol>
+     * Fizzles if targeted cards are no longer valid. May also grant life equal to the returned card's
+     * mana value when the effect specifies it.
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry being resolved
+     * @param effect   the graveyard return effect configuration
+     */
     @HandlesEffect(ReturnCardFromGraveyardEffect.class)
     void resolveReturnCardFromGraveyard(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect) {
         UUID controllerId = entry.getControllerId();
@@ -270,6 +293,15 @@ public class GraveyardReturnResolutionService {
         playerInputService.beginGraveyardChoice(gameData, controllerId, indices, prompt);
     }
 
+    /**
+     * Resolves a {@link PutTargetCardsFromGraveyardOnTopOfLibraryEffect} by moving each pre-targeted
+     * card from the controller's graveyard to the top of their library. Cards are placed in target
+     * order, so the last processed card ends up on top.
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry being resolved
+     * @param effect   the top-of-library effect configuration
+     */
     @HandlesEffect(PutTargetCardsFromGraveyardOnTopOfLibraryEffect.class)
     void resolvePutTargetCardsFromGraveyardOnTopOfLibrary(GameData gameData, StackEntry entry,
                                                           PutTargetCardsFromGraveyardOnTopOfLibraryEffect effect) {
@@ -279,6 +311,15 @@ public class GraveyardReturnResolutionService {
                 movedNames -> " puts " + String.join(", ", movedNames) + " on top of their library from graveyard.");
     }
 
+    /**
+     * Resolves a {@link ReturnTargetCardsFromGraveyardToHandEffect} by returning each pre-targeted
+     * card from the controller's graveyard to their hand. Silently skips cards that are no longer
+     * in the graveyard at resolution time.
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry being resolved
+     * @param effect   the return-to-hand effect configuration
+     */
     @HandlesEffect(ReturnTargetCardsFromGraveyardToHandEffect.class)
     void resolveReturnTargetCardsFromGraveyardToHand(GameData gameData, StackEntry entry,
                                                      ReturnTargetCardsFromGraveyardToHandEffect effect) {
@@ -405,6 +446,16 @@ public class GraveyardReturnResolutionService {
         return new StolenCreatureResult(permanent, targetCard, graveyardOwnerId);
     }
 
+    /**
+     * Resolves a {@link PutCardFromOpponentGraveyardOntoBattlefieldEffect} by stealing a targeted
+     * creature from an opponent's graveyard and putting it onto the battlefield under the controller's
+     * control. Optionally enters tapped. If the stack entry has a positive X value, the opponent
+     * also mills that many cards. Fizzles if the target is no longer in an opponent's graveyard.
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry being resolved (X value determines mill count)
+     * @param effect   the steal-from-opponent effect configuration
+     */
     @HandlesEffect(PutCardFromOpponentGraveyardOntoBattlefieldEffect.class)
     void resolvePutFromOpponentGraveyardAndMill(GameData gameData, StackEntry entry,
             PutCardFromOpponentGraveyardOntoBattlefieldEffect effect) {
@@ -447,6 +498,15 @@ public class GraveyardReturnResolutionService {
         }
     }
 
+    /**
+     * Resolves a {@link PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect} by stealing
+     * a targeted creature from an opponent's graveyard and putting it onto the battlefield with haste.
+     * The creature is exiled at the next end step. Fizzles if the target is no longer in an
+     * opponent's graveyard.
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry being resolved
+     */
     @HandlesEffect(PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect.class)
     void resolvePutCreatureFromOpponentGraveyardWithExile(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
@@ -469,6 +529,15 @@ public class GraveyardReturnResolutionService {
         handleCreatureEtbAndLegendRule(gameData, controllerId, result.permanent(), result.card());
     }
 
+    /**
+     * Resolves an {@link ExileCardsFromGraveyardEffect} by exiling each pre-targeted card that is
+     * still in a graveyard. After exiling, the controller gains life if the effect specifies a
+     * positive life gain amount.
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry being resolved
+     * @param effect   the exile effect configuration (includes life gain amount)
+     */
     @HandlesEffect(ExileCardsFromGraveyardEffect.class)
     void resolveExileCardsFromGraveyard(GameData gameData, StackEntry entry, ExileCardsFromGraveyardEffect effect) {
         UUID controllerId = entry.getControllerId();
@@ -498,6 +567,16 @@ public class GraveyardReturnResolutionService {
         }
     }
 
+    /**
+     * Resolves an {@link ExileTargetCardFromGraveyardAndImprintOnSourceEffect} by exiling a targeted
+     * card from a graveyard and tracking it as imprinted on the source permanent. Validates the card
+     * still matches the required type (if any). Fizzles if the target is no longer in a graveyard or
+     * no longer matches the type requirement.
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry being resolved (source permanent receives the imprint)
+     * @param effect   the imprint effect configuration (includes optional type requirement)
+     */
     @HandlesEffect(ExileTargetCardFromGraveyardAndImprintOnSourceEffect.class)
     void resolveExileTargetCardAndImprintOnSource(GameData gameData, StackEntry entry,
                                                    ExileTargetCardFromGraveyardAndImprintOnSourceEffect effect) {
@@ -538,6 +617,14 @@ public class GraveyardReturnResolutionService {
                 playerName + " exiles " + targetCard.getName() + " from a graveyard.");
     }
 
+    /**
+     * Resolves an {@link ExileCreaturesFromGraveyardAndCreateTokensEffect} by exiling each pre-targeted
+     * creature card from graveyards and creating a 2/2 black Zombie creature token for each card
+     * successfully exiled.
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry being resolved
+     */
     @HandlesEffect(ExileCreaturesFromGraveyardAndCreateTokensEffect.class)
     void resolveExileCreaturesAndCreateTokens(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
@@ -580,6 +667,13 @@ public class GraveyardReturnResolutionService {
         }
     }
 
+    /**
+     * Resolves an {@link ExileTargetPlayerGraveyardEffect} by exiling all cards in the target
+     * player's graveyard. Does nothing beyond logging if the graveyard is already empty.
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry being resolved (target player ID is in targetPermanentId)
+     */
     @HandlesEffect(ExileTargetPlayerGraveyardEffect.class)
     void resolveExileTargetPlayerGraveyard(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
@@ -603,6 +697,14 @@ public class GraveyardReturnResolutionService {
         log.info("Game {} - {}'s graveyard ({} cards) exiled", gameData.id, playerName, count);
     }
 
+    /**
+     * Resolves a {@link PutImprintedCreatureOntoBattlefieldEffect} by revealing the card imprinted
+     * on the source and, if it is a creature card, putting it onto the battlefield under the
+     * controller's control. Non-creature cards remain in exile.
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry being resolved (card must have an imprinted card)
+     */
     @HandlesEffect(PutImprintedCreatureOntoBattlefieldEffect.class)
     void resolvePutImprintedCreatureOntoBattlefield(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
@@ -646,6 +748,16 @@ public class GraveyardReturnResolutionService {
                 gameData.id, playerName, imprintedCard.getName());
     }
 
+    /**
+     * Resolves a {@link ReturnDyingCreatureToBattlefieldAndAttachSourceEffect} by returning a
+     * creature that just died back to the battlefield and attaching the source equipment to it.
+     * Used by equipment with triggered abilities like Nim Deathmantle. Fizzles if the dying
+     * card is no longer in a graveyard.
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry being resolved (targetPermanentId is the source equipment)
+     * @param effect   the return-and-attach effect (dyingCardId identifies the creature to return)
+     */
     @HandlesEffect(ReturnDyingCreatureToBattlefieldAndAttachSourceEffect.class)
     void resolveReturnDyingCreatureAndAttachSource(GameData gameData, StackEntry entry,
                                                     ReturnDyingCreatureToBattlefieldAndAttachSourceEffect effect) {
