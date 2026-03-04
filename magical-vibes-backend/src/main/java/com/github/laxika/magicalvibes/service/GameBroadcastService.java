@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSharedCardTypeWithImprintEffect;
@@ -251,7 +252,8 @@ public class GameBroadcastService {
                         || card.getAdditionalTypes().stream().anyMatch(restrictedSpellTypes::contains)) continue;
 
                 boolean isInstantSpeed = card.getType() == CardType.INSTANT
-                        || card.getKeywords().contains(Keyword.FLASH);
+                        || card.getKeywords().contains(Keyword.FLASH)
+                        || hasFlashGrantForCard(gameData, playerId, card);
                 boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
 
                 if (canCastTiming) {
@@ -315,6 +317,22 @@ public class GameBroadcastService {
         }
 
         return playable;
+    }
+
+    private boolean hasFlashGrantForCard(GameData gameData, UUID playerId, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent perm : battlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof GrantFlashToCardTypeEffect grant) {
+                    if (card.getType() == grant.cardType()
+                            || card.getAdditionalTypes().contains(grant.cardType())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     private boolean canPlayLandsFromGraveyard(GameData gameData, UUID playerId) {
