@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.service;
+package com.github.laxika.magicalvibes.service.graveyard;
 
 import com.github.laxika.magicalvibes.cards.b.BeaconOfUnrest;
 import com.github.laxika.magicalvibes.cards.f.FranticSalvage;

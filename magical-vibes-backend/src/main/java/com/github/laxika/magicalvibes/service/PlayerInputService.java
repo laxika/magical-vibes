@@ -81,7 +81,7 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose any target", gameData.id, playerName);
     }
 
-    void beginGraveyardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
+    public void beginGraveyardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         boolean allGraveyards = gameData.interaction.graveyardChoiceCardPool() != null;
         gameData.interaction.beginGraveyardChoice(playerId, new HashSet<>(validIndices),
                 gameData.interaction.graveyardChoiceDestination(), gameData.interaction.graveyardChoiceCardPool());
