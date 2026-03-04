@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenPerEquipmentOnSourceEffect;
@@ -65,6 +66,27 @@ public class PermanentControlResolutionService {
     @HandlesEffect(CreateCreatureTokenEffect.class)
     private void resolveCreateCreatureToken(GameData gameData, StackEntry entry, CreateCreatureTokenEffect effect) {
         applyCreateCreatureToken(gameData, entry.getControllerId(), effect);
+    }
+
+    @HandlesEffect(ReturnSelfToHandAndCreateTokensEffect.class)
+    private void resolveReturnSelfToHandAndCreateTokens(GameData gameData, StackEntry entry,
+                                                         ReturnSelfToHandAndCreateTokensEffect effect) {
+        // Try to return source to hand; if it already left the battlefield, skip the bounce
+        // but still create tokens — the token creation is not contingent on the return.
+        Permanent toReturn = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (toReturn != null) {
+            permanentRemovalService.removePermanentToHand(gameData, toReturn);
+            permanentRemovalService.removeOrphanedAuras(gameData);
+
+            String logEntry = entry.getCard().getName() + " is returned to its owner's hand.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} returned to hand", gameData.id, entry.getCard().getName());
+        } else {
+            String logEntry = entry.getCard().getName() + " is no longer on the battlefield.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        }
+
+        applyCreateCreatureToken(gameData, entry.getControllerId(), effect.tokenEffect());
     }
 
     private void applyCreateCreatureToken(GameData gameData, UUID controllerId, CreateCreatureTokenEffect token) {

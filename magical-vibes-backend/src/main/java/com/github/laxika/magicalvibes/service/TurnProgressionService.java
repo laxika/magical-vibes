@@ -29,8 +29,10 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -158,6 +160,28 @@ public class TurnProgressionService {
                     if (hasValidTargets) {
                         gameData.pendingUpkeepCopyTargets.add(new PermanentChoiceContext.UpkeepCopyTriggerTarget(
                                 perm.getCard(), activePlayerId, perm.getId()));
+                    }
+                } else if (effect instanceof NoOtherSubtypeConditionalEffect noOtherSubtype) {
+                    // Intervening-if: only trigger if controller has no other permanents with the subtype
+                    boolean hasOtherWithSubtype = battlefield.stream()
+                            .anyMatch(p -> !p.getId().equals(perm.getId())
+                                    && gameQueryService.matchesPermanentPredicate(gameData, p,
+                                    new PermanentHasSubtypePredicate(noOtherSubtype.subtype())));
+                    if (!hasOtherWithSubtype) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                activePlayerId,
+                                perm.getCard().getName() + "'s upkeep ability",
+                                new ArrayList<>(List.of(effect)),
+                                (UUID) null,
+                                perm.getId()
+                        ));
+
+                        String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: no other {}s)",
+                                gameData.id, perm.getCard().getName(), noOtherSubtype.subtype().getDisplayName());
                     }
                 } else if (effect instanceof WinGameIfCreaturesInGraveyardEffect winEffect) {
                     // Intervening-if: only trigger if condition is met

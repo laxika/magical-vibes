@@ -12,8 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.DefendingPlayerPoisonedCondit
 import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.PermanentRemovalService;
@@ -125,6 +127,8 @@ public class EffectResolutionService {
                     isPermanentEnteredThisTurnConditionMet(gameData, entry.getControllerId(), petc);
             case DefendingPlayerPoisonedConditionalEffect ignored ->
                     isDefendingPlayerPoisoned(gameData, entry.getControllerId());
+            case NoOtherSubtypeConditionalEffect noOther ->
+                    isNoOtherSubtypeConditionMet(gameData, entry, noOther);
             default -> {
                 log.warn("Unknown conditional effect type: {}", conditional.getClass().getSimpleName());
                 yield false;
@@ -165,6 +169,18 @@ public class EffectResolutionService {
     private boolean isDefendingPlayerPoisoned(GameData gameData, UUID attackingPlayerId) {
         UUID defendingPlayerId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
         return gameData.playerPoisonCounters.getOrDefault(defendingPlayerId, 0) > 0;
+    }
+
+    private boolean isNoOtherSubtypeConditionMet(GameData gameData, StackEntry entry,
+                                                    NoOtherSubtypeConditionalEffect noOther) {
+        UUID controllerId = entry.getControllerId();
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return true;
+        PermanentHasSubtypePredicate predicate = new PermanentHasSubtypePredicate(noOther.subtype());
+        return battlefield.stream()
+                .noneMatch(p -> !p.getId().equals(sourcePermanentId)
+                        && gameQueryService.matchesPermanentPredicate(gameData, p, predicate));
     }
 
     private boolean isPermanentEnteredThisTurnConditionMet(GameData gameData, UUID controllerId,
