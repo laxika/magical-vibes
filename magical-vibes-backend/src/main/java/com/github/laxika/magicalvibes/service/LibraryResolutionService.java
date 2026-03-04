@@ -341,17 +341,27 @@ public class LibraryResolutionService {
             return;
         }
 
+        int minMV = effect.minManaValue();
         int maxMV = effect.maxManaValue();
         List<Card> matchingCards = new ArrayList<>();
         for (Card card : deck) {
             boolean matchesType = requestedTypes.contains(card.getType())
                     || card.getAdditionalTypes().stream().anyMatch(requestedTypes::contains);
-            if (matchesType && card.getManaValue() <= maxMV) {
+            if (matchesType && card.getManaValue() >= minMV && card.getManaValue() <= maxMV) {
                 matchingCards.add(card);
             }
         }
 
-        String mvSuffix = maxMV < Integer.MAX_VALUE ? " with mana value " + maxMV + " or less" : "";
+        String mvSuffix;
+        if (minMV > 0 && maxMV < Integer.MAX_VALUE) {
+            mvSuffix = " with mana value between " + minMV + " and " + maxMV;
+        } else if (minMV > 0) {
+            mvSuffix = " with mana value " + minMV + " or greater";
+        } else if (maxMV < Integer.MAX_VALUE) {
+            mvSuffix = " with mana value " + maxMV + " or less";
+        } else {
+            mvSuffix = "";
+        }
 
         if (matchingCards.isEmpty()) {
             Collections.shuffle(deck);

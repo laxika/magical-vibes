@@ -94,6 +94,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB may exile until leaves (O-ring) | `l/LeoninRelicWarder.java` | MayEffect(ExileTargetPermanentUntilSourceLeavesEffect) + PermanentPredicateTargetFilter(AnyOf(artifact, enchantment)). Exiled card returns when source leaves battlefield |
 | ETB discard | `r/RavenousRats.java` | TargetPlayerDiscardsEffect |
 | ETB search | `c/CivicWayfinder.java` | MayEffect(SearchLibraryForBasicLandToHandEffect) |
+| ETB search (type + min MV) | `t/TreasureMage.java` | MayEffect(SearchLibraryForCardTypesToHandEffect(ARTIFACT, 6, MAX_VALUE)) — artifact with MV 6+ |
 | ETB may return from GY | `g/Gravedigger.java` | MayEffect(ReturnCardFromGraveyardEffect(HAND, CardTypePredicate(CREATURE))) |
 | ETB tokens + ability | `s/SiegeGangCommander.java` | CreateCreatureTokenEffect + activated sac ability |
 | ETB copy | `c/Clone.java` | CopyPermanentOnEnterEffect |
