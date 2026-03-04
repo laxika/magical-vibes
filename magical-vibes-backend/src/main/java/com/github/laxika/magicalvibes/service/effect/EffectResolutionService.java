@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DefendingPlayerPoisonedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftReplacementEffect;
@@ -122,6 +123,8 @@ public class EffectResolutionService {
                     isSourceEquipped(gameData, entry);
             case PermanentEnteredThisTurnConditionalEffect petc ->
                     isPermanentEnteredThisTurnConditionMet(gameData, entry.getControllerId(), petc);
+            case DefendingPlayerPoisonedConditionalEffect ignored ->
+                    isDefendingPlayerPoisoned(gameData, entry.getControllerId());
             default -> {
                 log.warn("Unknown conditional effect type: {}", conditional.getClass().getSimpleName());
                 yield false;
@@ -157,6 +160,11 @@ public class EffectResolutionService {
             }
         }
         return false;
+    }
+
+    private boolean isDefendingPlayerPoisoned(GameData gameData, UUID attackingPlayerId) {
+        UUID defendingPlayerId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
+        return gameData.playerPoisonCounters.getOrDefault(defendingPlayerId, 0) > 0;
     }
 
     private boolean isPermanentEnteredThisTurnConditionMet(GameData gameData, UUID controllerId,
