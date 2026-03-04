@@ -126,8 +126,9 @@ public class GameHelper {
     public void resolveMillPlayer(GameData gameData, UUID targetPlayerId, int count) {
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         int cardsToMill = Math.min(count, deck.size());
-        for (int i = 0; i < cardsToMill; i++) {
-            Card card = deck.removeFirst();
+        List<Card> milledCards = new ArrayList<>(deck.subList(0, cardsToMill));
+        deck.subList(0, cardsToMill).clear();
+        for (Card card : milledCards) {
             addCardToGraveyard(gameData, targetPlayerId, card);
         }
         String playerName = gameData.playerIdToName.get(targetPlayerId);
