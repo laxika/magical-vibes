@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -17,7 +17,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class LegendRuleService {
 
-    private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
 
     public boolean checkLegendRule(GameData gameData, UUID controllerId) {
@@ -26,7 +25,7 @@ public class LegendRuleService {
 
         Map<String, List<UUID>> legendaryByName = new HashMap<>();
         for (Permanent perm : battlefield) {
-            if (perm.getCard().getSupertypes().contains(com.github.laxika.magicalvibes.model.CardSupertype.LEGENDARY)) {
+            if (perm.getCard().getSupertypes().contains(CardSupertype.LEGENDARY)) {
                 legendaryByName.computeIfAbsent(perm.getCard().getName(), k -> new ArrayList<>()).add(perm.getId());
             }
         }
