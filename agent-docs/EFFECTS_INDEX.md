@@ -483,6 +483,7 @@ Pass `null` as filter to allow any card.
 | `CanBeBlockedOnlyByFilterEffect` | `(PermanentPredicate blockerPredicate, String allowedBlockersDescription)` | can only be blocked by matching creatures (static) |
 | `CanBeBlockedByAtMostNCreaturesEffect` | `(int maxBlockers)` | can be blocked by at most N creatures (static) |
 | `CanBlockOnlyIfAttackerMatchesPredicateEffect` | `(PermanentPredicate attackerPredicate, String allowedAttackersDescription)` | this creature can only block attackers matching predicate (static) |
+| `CantAttackOrBlockUnlessEquippedEffect` | `()` | this creature can't attack or block unless it's equipped (static) |
 | `CantAttackUnlessDefenderControlsMatchingPermanentEffect` | `(PermanentPredicate defenderPermanentPredicate, String requirementDescription)` | can't attack unless defender controls matching permanent (static) |
 | `CantBeBlockedIfDefenderControlsMatchingPermanentEffect` | `(PermanentPredicate defenderPermanentPredicate)` | can't be blocked as long as defender controls matching permanent (static) |
 | `CanAttackAsThoughNoDefenderEffect` | `()` | this creature can attack as though it didn't have defender (static, typically wrapped in MetalcraftConditionalEffect) |

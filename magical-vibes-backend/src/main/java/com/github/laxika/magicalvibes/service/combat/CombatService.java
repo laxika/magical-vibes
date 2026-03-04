@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
@@ -134,8 +135,15 @@ public class CombatService {
         if (gameQueryService.hasKeyword(gameData, creature, Keyword.DEFENDER)
                 && !gameQueryService.canAttackDespiteDefender(gameData, creature)) return false;
         if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackOrBlockEffect.class)) return false;
+        if (isCantAttackOrBlockUnlessEquipped(gameData, creature)) return false;
         if (isCantAttackDueToLandRestriction(gameData, creature, defenderBattlefield)) return false;
         return true;
+    }
+
+    private boolean isCantAttackOrBlockUnlessEquipped(GameData gameData, Permanent creature) {
+        return creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantAttackOrBlockUnlessEquippedEffect.class::isInstance)
+                && !gameQueryService.isEquipped(gameData, creature);
     }
 
     private boolean isCantAttackDueToLandRestriction(GameData gameData, Permanent attacker, List<Permanent> defenderBattlefield) {
@@ -268,7 +276,8 @@ public class CombatService {
                     && !p.isCantBlockThisTurn()
                     && p.getCard().getEffects(EffectSlot.STATIC).stream().noneMatch(CantBlockEffect.class::isInstance)
                     && !gameQueryService.hasAuraWithEffect(gameData, p, EnchantedCreatureCantAttackOrBlockEffect.class)
-                    && !gameQueryService.hasAuraWithEffect(gameData, p, CantBlockEffect.class)) {
+                    && !gameQueryService.hasAuraWithEffect(gameData, p, CantBlockEffect.class)
+                    && !isCantAttackOrBlockUnlessEquipped(gameData, p)) {
                 indices.add(i);
             }
         }

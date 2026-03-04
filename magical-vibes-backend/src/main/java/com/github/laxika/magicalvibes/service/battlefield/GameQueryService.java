@@ -837,6 +837,15 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if the given permanent has at least one Equipment attached to it.
+     */
+    public boolean isEquipped(GameData gameData, Permanent creature) {
+        return gameData.anyPermanentMatches(p ->
+                p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
+                        && p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId()));
+    }
+
+    /**
      * Returns {@code true} if the given permanent has at least one aura attached to it.
      */
     public boolean isEnchanted(GameData gameData, Permanent creature) {
