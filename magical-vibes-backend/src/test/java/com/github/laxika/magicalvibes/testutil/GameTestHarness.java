@@ -30,7 +30,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardReturnResolutionService;
-import com.github.laxika.magicalvibes.service.LegendRuleService;
+import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.LibraryResolutionService;
 import com.github.laxika.magicalvibes.service.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
