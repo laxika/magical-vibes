@@ -308,6 +308,7 @@ Pass `null` as filter to allow any card.
 | `ReorderTopCardsOfLibraryEffect` | `(int count)` | reorder top N cards of library |
 | `RevealTopCardDealManaValueDamageEffect` | `(boolean damageTargetPlayer, boolean damageTargetCreatures, boolean returnToHandIfLand)` | reveal top card of target's library, deal mana value damage to player/creatures, optionally return to hand if land |
 | `RevealTopCardOfLibraryEffect` | `()` | reveal top card of library (static/continuous) |
+| `ExileSpellEffect` | `()` | exile this spell instead of putting it into the graveyard after resolution (marker, like ShuffleIntoLibraryEffect) |
 | `ShuffleIntoLibraryEffect` | `()` | shuffle this permanent into owner's library |
 | `ShuffleGraveyardIntoLibraryEffect` | `()` | shuffle graveyard into library |
 
@@ -616,7 +617,8 @@ Pass `null` as filter to allow any card.
 | `ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect` | `(int minimumCreatureDifference, int amount)` | reduce cast cost by N if opponent has M+ more creatures |
 | `ReduceOwnCastCostForSharedCardTypeWithImprintEffect` | `(int amount)` | reduce cast cost of controller's spells by N if they share a card type with the imprinted card (static, Semblance Anvil) |
 | `ReduceOwnCastCostIfMetalcraftEffect` | `(int amount)` | reduce this spell's cast cost by N if controller has metalcraft (3+ artifacts) (static, Stoic Rebuttal) |
-| `NoMaximumHandSizeEffect` | `()` | you have no maximum hand size (static) |
+| `NoMaximumHandSizeEffect` | `()` | you have no maximum hand size (static, requires permanent on battlefield) |
+| `GrantPermanentNoMaxHandSizeEffect` | `()` | you have no maximum hand size for the rest of the game (one-shot spell effect, persists via GameData.playersWithNoMaximumHandSize) |
 | `EnterPermanentsOfTypesTappedEffect` | `(Set<CardType> cardTypes)` | permanents of specified types enter tapped (static) |
 | `EntersTappedUnlessFewLandsEffect` | `(int maxOtherLands)` | enters tapped unless you control N or fewer other lands (fast lands, static) |
 

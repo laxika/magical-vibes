@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -312,6 +313,11 @@ public class StackResolutionService {
                     // Spell disposition deferred — will be resolved after the async discard
                     // completes (e.g. Psychic Miasma: goes to hand if a land is discarded,
                     // otherwise to graveyard).
+                } else if (entry.getEffectsToResolve().stream()
+                        .anyMatch(e -> e instanceof ExileSpellEffect)) {
+                    gameData.playerExiledCards.get(entry.getControllerId()).add(entry.getCard());
+                    String exileLog = entry.getCard().getName() + " is exiled.";
+                    gameBroadcastService.logAndBroadcast(gameData, exileLog);
                 } else if (entry.getEffectsToResolve().stream()
                         .anyMatch(e -> e instanceof ShuffleIntoLibraryEffect)) {
                     // Ensure the card is shuffled into library even when an earlier effect

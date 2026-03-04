@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffe
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawXCardsForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantPermanentNoMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAwakeningCountersOnTargetLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardEffect;
@@ -744,5 +745,15 @@ public class PlayerInteractionResolutionService {
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 sourceCard, controllerId, List.of(effect), prompt
         ));
+    }
+
+    @HandlesEffect(GrantPermanentNoMaxHandSizeEffect.class)
+    private void resolveGrantPermanentNoMaxHandSize(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        gameData.playersWithNoMaximumHandSize.add(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " has no maximum hand size for the rest of the game.");
+        log.info("Game {} - {} granted permanent no maximum hand size", gameData.id, playerName);
     }
 }

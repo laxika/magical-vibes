@@ -575,6 +575,9 @@ public class GameHelper {
     }
 
     boolean hasNoMaximumHandSize(GameData gameData, UUID playerId) {
+        if (gameData.playersWithNoMaximumHandSize.contains(playerId)) {
+            return true;
+        }
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return false;
         for (Permanent perm : bf) {

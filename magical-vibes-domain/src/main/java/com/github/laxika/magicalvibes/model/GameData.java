@@ -108,6 +108,8 @@ public class GameData {
     public boolean pendingAwakeningCounterPlacement;
     public UUID pendingTapSubtypeBoostSourcePermanentId;
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
+    /** Players who have been granted "no maximum hand size" for the rest of the game. */
+    public final Set<UUID> playersWithNoMaximumHandSize = ConcurrentHashMap.newKeySet();
 
     /** Maps permanent ID → cards exiled with that permanent (e.g. Knowledge Pool). */
     public final Map<UUID, List<Card>> permanentExiledCards = new ConcurrentHashMap<>();
@@ -384,6 +386,9 @@ public class GameData {
 
         // --- Emblems (records are immutable) ---
         copy.emblems.addAll(this.emblems);
+
+        // --- Permanent no-max-hand-size grants ---
+        copy.playersWithNoMaximumHandSize.addAll(this.playersWithNoMaximumHandSize);
 
         // --- Per-permanent exile tracking (Knowledge Pool, etc.) ---
         this.permanentExiledCards.forEach((k, v) ->
