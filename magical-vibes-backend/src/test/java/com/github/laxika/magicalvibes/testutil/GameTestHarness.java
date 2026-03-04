@@ -114,6 +114,7 @@ public class GameTestHarness {
     private final Player player2;
     private final FakeConnection conn1;
     private final FakeConnection conn2;
+    private final LegendRuleService legendRuleService;
 
     public GameTestHarness() {
         if (!oracleLoaded) {
@@ -134,7 +135,7 @@ public class GameTestHarness {
         GameBroadcastService gameBroadcastService = new GameBroadcastService(
                 sessionManager, cardViewFactory, permanentViewFactory, stackEntryViewFactory, gameQueryService);
         DraftRegistry draftRegistry = new DraftRegistry();
-        LegendRuleService legendRuleService = new LegendRuleService(gameQueryService, playerInputService);
+        legendRuleService = new LegendRuleService(gameQueryService, playerInputService);
         TriggeredAbilityQueueService triggeredAbilityQueueService = new TriggeredAbilityQueueService(
                 gameQueryService, gameBroadcastService, playerInputService);
         CreatureControlService creatureControlService = new CreatureControlService(gameBroadcastService, gameQueryService);
@@ -585,6 +586,10 @@ public class GameTestHarness {
 
     public GameQueryService getGameQueryService() {
         return gameQueryService;
+    }
+
+    public LegendRuleService getLegendRuleService() {
+        return legendRuleService;
     }
 
     public MessageHandler getMessageHandler() {
