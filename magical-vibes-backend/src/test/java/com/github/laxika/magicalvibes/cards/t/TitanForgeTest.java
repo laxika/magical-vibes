@@ -114,7 +114,7 @@ class TitanForgeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Untap for second activation
-        forge.setTapped(false);
+        forge.untap();
         harness.activateAbility(player1, forgeIndex, 0, null, null);
         harness.passBothPriorities();
 
@@ -206,7 +206,7 @@ class TitanForgeTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Titan Forge"))
                 .findFirst().orElseThrow();
         forge.setChargeCounters(3);
-        forge.setTapped(true);
+        forge.tap();
         int forgeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forge);
 
         // First ability cannot be activated when tapped
