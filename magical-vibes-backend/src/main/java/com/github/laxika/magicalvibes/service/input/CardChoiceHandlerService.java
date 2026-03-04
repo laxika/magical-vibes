@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.effect.PlayerInteractionResolutionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -38,6 +39,7 @@ public class CardChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final AbilityActivationService abilityActivationService;
     private final EffectResolutionService effectResolutionService;
+    private final PlayerInteractionResolutionService playerInteractionResolutionService;
 
     public void handleCardChosen(GameData gameData, Player player, int cardIndex) {
         AwaitingInput awaitingInput = gameData.interaction.awaitingInputType();
@@ -138,6 +140,12 @@ public class CardChoiceHandlerService {
             if (gameData.cleanupDiscardPending) {
                 gameData.cleanupDiscardPending = false;
                 turnProgressionService.applyCleanupResets(gameData);
+            }
+
+            // Continue "each player discards" queue (e.g. Serum Raker's death trigger)
+            if (!gameData.pendingEachPlayerDiscardQueue.isEmpty()) {
+                playerInteractionResolutionService.startNextEachPlayerDiscard(gameData);
+                return;
             }
 
             // Process any pending self-discard triggers (e.g. Guerrilla Tactics)

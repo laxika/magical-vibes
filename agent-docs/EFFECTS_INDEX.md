@@ -276,6 +276,7 @@ Pass `null` as filter to allow any card.
 | `DrawCardsEqualToChargeCountersOnSourceEffect` | `()` | draw cards equal to charge counters on source (reads snapshotted count from xValue) |
 | `DrawAndLoseLifePerSubtypeEffect` | `(CardSubtype subtype)` | draw cards and lose life for each permanent of subtype you control |
 | `DiscardCardEffect` | `(int amount)` | discard N cards |
+| `EachPlayerDiscardsEffect` | `(int amount)` | each player discards N cards in APNAP order (active player first). Uses queued sequential discard interaction. Controller's discard has `discardCausedByOpponent=false`; others have `true`. |
 | `TargetPlayerDiscardsEffect` | `(int amount)` | target player discards N cards |
 | `TargetPlayerDiscardsReturnSelfIfCardTypeEffect` | `(int amount, CardType returnIfType)` | target player discards N cards; if a discarded card matches the type, return the source spell from graveyard to owner's hand (e.g. Psychic Miasma) |
 | `TargetPlayerRandomDiscardEffect` | `(int amount, boolean causedByOpponent)` | target player discards N cards at random. Convenience ctors: `()` → amount=1, causedByOpponent=true (e.g. Hypnotic Specter); `(int amount)` → causedByOpponent=false (e.g. Goblin Lore self-discard). When `causedByOpponent=true`, uses `entry.getTargetPermanentId()` for who discards and sets `discardCausedByOpponent = true`; when `false`, uses `entry.getControllerId()`. |

@@ -92,6 +92,10 @@ public class GameData {
     public final Deque<PermanentChoiceContext.UpkeepCopyTriggerTarget> pendingUpkeepCopyTargets = new ArrayDeque<>();
     public boolean discardCausedByOpponent;
     public PendingReturnToHandOnDiscardType pendingReturnToHandOnDiscardType;
+    /** Queue of player IDs still needing to discard for an "each player discards" effect (APNAP order). */
+    public final Deque<UUID> pendingEachPlayerDiscardQueue = new ArrayDeque<>();
+    public UUID pendingEachPlayerDiscardControllerId;
+    public int pendingEachPlayerDiscardAmount;
     public final Deque<UUID> extraTurns = new ArrayDeque<>();
     public int additionalCombatMainPhasePairs;
     public int lastBroadcastedLogSize = 0;
@@ -404,6 +408,9 @@ public class GameData {
         copy.pendingEmblemTriggerTargets.addAll(this.pendingEmblemTriggerTargets);
         copy.pendingUpkeepCopyTargets.addAll(this.pendingUpkeepCopyTargets);
         copy.extraTurns.addAll(this.extraTurns);
+        copy.pendingEachPlayerDiscardQueue.addAll(this.pendingEachPlayerDiscardQueue);
+        copy.pendingEachPlayerDiscardControllerId = this.pendingEachPlayerDiscardControllerId;
+        copy.pendingEachPlayerDiscardAmount = this.pendingEachPlayerDiscardAmount;
         this.pendingLibraryBottomReorders.forEach(req ->
                 copy.pendingLibraryBottomReorders.add(new LibraryBottomReorderRequest(req.playerId(), new ArrayList<>(req.cards()))));
 

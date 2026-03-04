@@ -183,6 +183,7 @@ public class GameSimulator {
         LifeResolutionService lifeResolutionService = new LifeResolutionService(gameQueryService, gameBroadcastService, playerInputService);
         DamageResolutionService damageResolutionService = new DamageResolutionService(gameHelper, gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService, lifeResolutionService);
         ExileResolutionService exileResolutionService = new ExileResolutionService(gameHelper, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, cardViewFactory, triggerCollectionService);
+        PlayerInteractionResolutionService playerInteractionResolutionService = new PlayerInteractionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService, noOpSession, cardViewFactory, permanentRemovalService, triggerCollectionService);
         List<Object> effectServices = List.of(
                 damageResolutionService,
                 new DestructionResolutionService(gameHelper, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService),
@@ -196,7 +197,7 @@ public class GameSimulator {
                 new BounceResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService),
                 lifeResolutionService,
                 new CreatureModResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService),
-                new PlayerInteractionResolutionService(gameHelper, gameQueryService, gameBroadcastService, playerInputService, noOpSession, cardViewFactory, permanentRemovalService, triggerCollectionService),
+                playerInteractionResolutionService,
                 new PermanentControlResolutionService(gameHelper, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService, creatureControlService),
                 new TurnResolutionService(gameHelper, combatService, gameBroadcastService, auraAttachmentService),
                 new EquipResolutionService(gameQueryService, gameBroadcastService, permanentRemovalService),
@@ -225,7 +226,7 @@ public class GameSimulator {
                 playerInputService, turnProgressionService, legendRuleService);
         CardChoiceHandlerService cardChoiceHandlerService = new CardChoiceHandlerService(
                 gameQueryService, gameHelper, gameBroadcastService,
-                playerInputService, triggerCollectionService, turnProgressionService, abilityActivationService, effectResolutionService);
+                playerInputService, triggerCollectionService, turnProgressionService, abilityActivationService, effectResolutionService, playerInteractionResolutionService);
         PermanentChoiceHandlerService permanentChoiceHandlerService = new PermanentChoiceHandlerService(
                 gameQueryService, gameHelper, gameBroadcastService, abilityActivationService,
                 permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, creatureControlService, turnProgressionService, effectResolutionService, damageResolutionService);

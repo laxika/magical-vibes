@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDis
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAndExileFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
@@ -169,6 +170,44 @@ public class PlayerInteractionResolutionService {
     private void resolveDiscardCard(GameData gameData, StackEntry entry, DiscardCardEffect effect) {
         gameData.discardCausedByOpponent = false;
         resolveDiscardCards(gameData, entry.getControllerId(), effect.amount());
+    }
+
+    @HandlesEffect(EachPlayerDiscardsEffect.class)
+    private void resolveEachPlayerDiscards(GameData gameData, StackEntry entry, EachPlayerDiscardsEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        // Build APNAP-ordered queue: active player first, then others in turn order
+        gameData.pendingEachPlayerDiscardQueue.clear();
+        gameData.pendingEachPlayerDiscardControllerId = controllerId;
+        UUID activePlayerId = gameData.activePlayerId;
+        gameData.pendingEachPlayerDiscardQueue.add(activePlayerId);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(activePlayerId)) {
+                gameData.pendingEachPlayerDiscardQueue.add(playerId);
+            }
+        }
+        // Store the amount for later queue processing
+        gameData.pendingEachPlayerDiscardAmount = effect.amount();
+        // Start the first player's discard
+        startNextEachPlayerDiscard(gameData);
+    }
+
+    public void startNextEachPlayerDiscard(GameData gameData) {
+        int amount = gameData.pendingEachPlayerDiscardAmount;
+        while (!gameData.pendingEachPlayerDiscardQueue.isEmpty()) {
+            UUID nextPlayerId = gameData.pendingEachPlayerDiscardQueue.removeFirst();
+            gameData.discardCausedByOpponent = !nextPlayerId.equals(gameData.pendingEachPlayerDiscardControllerId);
+            List<Card> hand = gameData.playerHands.get(nextPlayerId);
+            if (hand == null || hand.isEmpty()) {
+                String logEntry = gameData.playerIdToName.get(nextPlayerId) + " has no cards to discard.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                continue;
+            }
+            gameData.interaction.setDiscardRemainingCount(amount);
+            playerInputService.beginDiscardChoice(gameData, nextPlayerId);
+            return;
+        }
+        // All players done — clear controller tracking
+        gameData.pendingEachPlayerDiscardControllerId = null;
     }
 
     @HandlesEffect(TargetPlayerDiscardsEffect.class)
