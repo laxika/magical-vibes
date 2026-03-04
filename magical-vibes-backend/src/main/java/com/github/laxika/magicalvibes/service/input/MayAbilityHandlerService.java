@@ -291,6 +291,41 @@ public class MayAbilityHandlerService {
         boolean isTargetedPermanentEffect = ability.effects().stream()
                 .anyMatch(CardEffect::canTargetPermanent);
 
+        // Pre-targeted may ability — target was already chosen (e.g. "You may tap or untap that creature")
+        if (accepted && isTargetedPermanentEffect && ability.targetCardId() != null) {
+            Permanent target = gameQueryService.findPermanentById(gameData, ability.targetCardId());
+            if (target != null) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        ability.sourceCard(),
+                        ability.controllerId(),
+                        ability.sourceCard().getName() + "'s ability",
+                        new ArrayList<>(ability.effects()),
+                        0
+                );
+                entry.setTargetPermanentId(ability.targetCardId());
+                gameData.stack.add(entry);
+
+                String logEntry = player.getUsername() + " accepts — " + ability.sourceCard().getName()
+                        + "'s ability targets " + target.getCard().getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} accepts pre-targeted may ability from {}", gameData.id,
+                        player.getUsername(), ability.sourceCard().getName());
+            } else {
+                String logEntry = ability.sourceCard().getName() + "'s ability fizzles — target no longer exists.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} pre-targeted may ability target gone", gameData.id, ability.sourceCard().getName());
+            }
+
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                gameData.priorityPassedBy.clear();
+                gameBroadcastService.broadcastGameState(gameData);
+                turnProgressionService.resolveAutoPass(gameData);
+            }
+            return;
+        }
+
         if (accepted && isTargetedPermanentEffect) {
             handleTargetedMayAbilityAccepted(gameData, player, ability);
             return;
