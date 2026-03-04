@@ -53,6 +53,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 @Slf4j
 @Service
@@ -79,26 +80,15 @@ public class LibraryResolutionService {
         UUID targetPlayerId = entry.getTargetPermanentId();
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         int handSize = hand != null ? hand.size() : 0;
-        String playerName = gameData.playerIdToName.get(targetPlayerId);
 
         if (handSize == 0) {
+            String playerName = gameData.playerIdToName.get(targetPlayerId);
             String logEntry = playerName + " has no cards in hand — mills nothing.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
         }
 
-        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
-
-        int cardsToMill = Math.min(handSize, deck.size());
-        for (int i = 0; i < cardsToMill; i++) {
-            Card card = deck.removeFirst();
-            gameHelper.addCardToGraveyard(gameData, targetPlayerId, card);
-        }
-
-        String logEntry = playerName + " mills " + cardsToMill + " card" + (cardsToMill != 1 ? "s" : "") + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-
-        log.info("Game {} - {} mills {} cards (hand size)", gameData.id, playerName, cardsToMill);
+        gameHelper.resolveMillPlayer(gameData, targetPlayerId, handSize);
     }
 
     @HandlesEffect(MillTargetPlayerEffect.class)
@@ -115,27 +105,17 @@ public class LibraryResolutionService {
     @HandlesEffect(MillTargetPlayerByChargeCountersEffect.class)
     void resolveMillTargetPlayerByChargeCounters(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
-        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
-        String playerName = gameData.playerIdToName.get(targetPlayerId);
         int chargeCounters = entry.getXValue();
 
         if (chargeCounters <= 0) {
+            String playerName = gameData.playerIdToName.get(targetPlayerId);
             String logEntry = playerName + " mills 0 cards (no charge counters).";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} mills 0 cards (no charge counters)", gameData.id, playerName);
             return;
         }
 
-        int cardsToMill = Math.min(chargeCounters, deck.size());
-        for (int i = 0; i < cardsToMill; i++) {
-            Card card = deck.removeFirst();
-            gameHelper.addCardToGraveyard(gameData, targetPlayerId, card);
-        }
-
-        String logEntry = playerName + " mills " + cardsToMill + " card" + (cardsToMill != 1 ? "s" : "") + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-
-        log.info("Game {} - {} mills {} cards (charge counters)", gameData.id, playerName, cardsToMill);
+        gameHelper.resolveMillPlayer(gameData, targetPlayerId, chargeCounters);
     }
 
     @HandlesEffect(MillHalfLibraryEffect.class)
@@ -276,81 +256,24 @@ public class LibraryResolutionService {
 
     @HandlesEffect(SearchLibraryForBasicLandToHandEffect.class)
     void resolveSearchLibraryForBasicLandToHand(GameData gameData, StackEntry entry, SearchLibraryForBasicLandToHandEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        if (!checkSearchRestriction(gameData, controllerId)) {
-            List<Card> deck = gameData.playerDecks.get(controllerId);
-            if (deck != null) Collections.shuffle(deck);
-            return;
-        }
-
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        String playerName = gameData.playerIdToName.get(controllerId);
-
-        if (deck == null || deck.isEmpty()) {
-            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            return;
-        }
-
-        List<Card> basicLands = new ArrayList<>();
-        for (Card card : deck) {
-            if (card.getType() == CardType.LAND && card.getSupertypes().contains(CardSupertype.BASIC)) {
-                basicLands.add(card);
-            }
-        }
-
-        if (basicLands.isEmpty()) {
-            Collections.shuffle(deck);
-            String logMsg = playerName + " searches their library but finds no basic land cards. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            log.info("Game {} - {} searches library, no basic lands found", gameData.id, playerName);
-            return;
-        }
-
-        gameData.interaction.beginLibrarySearch(controllerId, basicLands, true, true, null, 0);
-
-        List<CardView> cardViews = basicLands.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
-                cardViews,
+        performLibrarySearch(
+                gameData,
+                entry.getControllerId(),
+                card -> card.getType() == CardType.LAND && card.getSupertypes().contains(CardSupertype.BASIC),
+                "basic land cards",
                 "Search your library for a basic land card to put into your hand.",
-                true
-        ));
-
-        String logMsg = playerName + " searches their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
-        log.info("Game {} - {} searching library for a basic land ({} found)", gameData.id, playerName, basicLands.size());
+                true,
+                true,
+                LibrarySearchDestination.HAND
+        );
     }
 
     @HandlesEffect(SearchLibraryForCardTypesToHandEffect.class)
     void resolveSearchLibraryForCardTypesToHand(GameData gameData, StackEntry entry, SearchLibraryForCardTypesToHandEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        if (!checkSearchRestriction(gameData, controllerId)) {
-            List<Card> deck = gameData.playerDecks.get(controllerId);
-            if (deck != null) Collections.shuffle(deck);
-            return;
-        }
-
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        String playerName = gameData.playerIdToName.get(controllerId);
         Set<CardType> requestedTypes = effect.cardTypes();
         String requestedTypeText = formatCardTypeSetForPrompt(requestedTypes);
-
-        if (deck == null || deck.isEmpty()) {
-            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            return;
-        }
-
         int minMV = effect.minManaValue();
         int maxMV = effect.maxManaValue();
-        List<Card> matchingCards = new ArrayList<>();
-        for (Card card : deck) {
-            boolean matchesType = requestedTypes.contains(card.getType())
-                    || card.getAdditionalTypes().stream().anyMatch(requestedTypes::contains);
-            if (matchesType && card.getManaValue() >= minMV && card.getManaValue() <= maxMV) {
-                matchingCards.add(card);
-            }
-        }
 
         String mvSuffix;
         if (minMV > 0 && maxMV < Integer.MAX_VALUE) {
@@ -363,26 +286,20 @@ public class LibraryResolutionService {
             mvSuffix = "";
         }
 
-        if (matchingCards.isEmpty()) {
-            Collections.shuffle(deck);
-            String logMsg = playerName + " searches their library but finds no " + requestedTypeText + " cards" + mvSuffix + ". Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            log.info("Game {} - {} searches library, no {} cards{} found", gameData.id, playerName, requestedTypeText, mvSuffix);
-            return;
-        }
-
-        gameData.interaction.beginLibrarySearch(controllerId, matchingCards, true, true, null, 0);
-
-        List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
-                cardViews,
+        performLibrarySearch(
+                gameData,
+                entry.getControllerId(),
+                card -> {
+                    boolean matchesType = requestedTypes.contains(card.getType())
+                            || card.getAdditionalTypes().stream().anyMatch(requestedTypes::contains);
+                    return matchesType && card.getManaValue() >= minMV && card.getManaValue() <= maxMV;
+                },
+                requestedTypeText + " cards" + mvSuffix,
                 "Search your library for a " + requestedTypeText + " card" + mvSuffix + " to reveal and put into your hand.",
-                true
-        ));
-
-        String logMsg = playerName + " searches their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
-        log.info("Game {} - {} searching library for {} cards ({} found)", gameData.id, playerName, requestedTypeText, matchingCards.size());
+                true,
+                true,
+                LibrarySearchDestination.HAND
+        );
     }
 
     private String formatCardTypeSetForPrompt(Set<CardType> cardTypes) {
@@ -402,149 +319,49 @@ public class LibraryResolutionService {
     @HandlesEffect(SearchLibraryForCardTypesToBattlefieldEffect.class)
     void resolveSearchLibraryForCardTypesToBattlefield(GameData gameData, StackEntry entry,
                                                        SearchLibraryForCardTypesToBattlefieldEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        if (!checkSearchRestriction(gameData, controllerId)) {
-            List<Card> deck = gameData.playerDecks.get(controllerId);
-            if (deck != null) Collections.shuffle(deck);
-            return;
-        }
-
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        String playerName = gameData.playerIdToName.get(controllerId);
-
-        if (deck == null || deck.isEmpty()) {
-            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            return;
-        }
-
-        List<Card> matchingCards = new ArrayList<>();
-        for (Card card : deck) {
-            boolean matchesType = effect.cardTypes().contains(card.getType())
-                    || card.getAdditionalTypes().stream().anyMatch(effect.cardTypes()::contains);
-            if (!matchesType) {
-                continue;
-            }
-            if (effect.requiresBasicSupertype() && !card.getSupertypes().contains(CardSupertype.BASIC)) {
-                continue;
-            }
-            matchingCards.add(card);
-        }
-
         boolean basicLandOnly = isBasicLandOnlyFilter(effect);
-        if (matchingCards.isEmpty()) {
-            Collections.shuffle(deck);
-            String logMsg = basicLandOnly
-                    ? playerName + " searches their library but finds no basic land cards. Library is shuffled."
-                    : playerName + " searches their library but finds no matching cards. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            log.info("Game {} - {} searches library, no matching cards found", gameData.id, playerName);
-            return;
-        }
-
+        String filterText = basicLandOnly ? "basic land card" : "matching card";
+        String noMatchDesc = basicLandOnly ? "basic land cards" : "matching cards";
         LibrarySearchDestination destination = effect.entersTapped()
                 ? LibrarySearchDestination.BATTLEFIELD_TAPPED
                 : LibrarySearchDestination.BATTLEFIELD;
-
-        String filterText = basicLandOnly
-                ? "basic land card"
-                : "matching card";
         String prompt = effect.entersTapped()
                 ? "Search your library for a " + filterText + " and put it onto the battlefield tapped."
                 : "Search your library for a " + filterText + " and put it onto the battlefield.";
 
-        gameData.interaction.beginLibrarySearch(
-                controllerId,
-                matchingCards,
-                false,
-                true,
-                null,
-                0,
-                null,
-                false,
-                true,
+        performLibrarySearch(
+                gameData,
+                entry.getControllerId(),
+                card -> {
+                    boolean matchesType = effect.cardTypes().contains(card.getType())
+                            || card.getAdditionalTypes().stream().anyMatch(effect.cardTypes()::contains);
+                    if (!matchesType) return false;
+                    return !effect.requiresBasicSupertype() || card.getSupertypes().contains(CardSupertype.BASIC);
+                },
+                noMatchDesc,
                 prompt,
+                false,
+                true,
                 destination
         );
-
-        List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
-                cardViews,
-                prompt,
-                true
-        ));
-
-        String logMsg = playerName + " searches their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
-        log.info("Game {} - {} searching library for matching card to put onto battlefield ({} found, tapped={})",
-                gameData.id, playerName, matchingCards.size(), effect.entersTapped());
     }
 
     @HandlesEffect(SearchLibraryForCardTypeToExileAndImprintEffect.class)
     void resolveSearchLibraryForCardTypeToExileAndImprint(GameData gameData, StackEntry entry,
                                                           SearchLibraryForCardTypeToExileAndImprintEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        if (!checkSearchRestriction(gameData, controllerId)) {
-            List<Card> deck = gameData.playerDecks.get(controllerId);
-            if (deck != null) Collections.shuffle(deck);
-            return;
-        }
-
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        String playerName = gameData.playerIdToName.get(controllerId);
-
-        if (deck == null || deck.isEmpty()) {
-            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            return;
-        }
-
-        List<Card> matchingCards = new ArrayList<>();
-        for (Card card : deck) {
-            boolean matchesType = effect.cardTypes().contains(card.getType())
-                    || card.getAdditionalTypes().stream().anyMatch(effect.cardTypes()::contains);
-            if (matchesType) {
-                matchingCards.add(card);
-            }
-        }
-
-        if (matchingCards.isEmpty()) {
-            Collections.shuffle(deck);
-            String logMsg = playerName + " searches their library but finds no matching cards. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            log.info("Game {} - {} searches library, no matching cards found for imprint", gameData.id, playerName);
-            return;
-        }
-
         gameData.imprintSourcePermanentId = entry.getSourcePermanentId();
 
-        String prompt = "Search your library for a land card to exile (imprint).";
-
-        gameData.interaction.beginLibrarySearch(
-                controllerId,
-                matchingCards,
+        performLibrarySearch(
+                gameData,
+                entry.getControllerId(),
+                card -> effect.cardTypes().contains(card.getType())
+                        || card.getAdditionalTypes().stream().anyMatch(effect.cardTypes()::contains),
+                "matching cards",
+                "Search your library for a land card to exile (imprint).",
                 false,
                 true,
-                null,
-                0,
-                null,
-                false,
-                true,
-                prompt,
                 LibrarySearchDestination.EXILE_IMPRINT
         );
-
-        List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
-                cardViews,
-                prompt,
-                true
-        ));
-
-        String logMsg = playerName + " searches their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
-        log.info("Game {} - {} searching library for card to exile and imprint ({} found)",
-                gameData.id, playerName, matchingCards.size());
     }
 
     private boolean isBasicLandOnlyFilter(SearchLibraryForCardTypesToBattlefieldEffect effect) {
@@ -555,36 +372,16 @@ public class LibraryResolutionService {
 
     @HandlesEffect(SearchLibraryForCardToHandEffect.class)
     void resolveSearchLibraryForCardToHand(GameData gameData, StackEntry entry, SearchLibraryForCardToHandEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        if (!checkSearchRestriction(gameData, controllerId)) {
-            List<Card> deck = gameData.playerDecks.get(controllerId);
-            if (deck != null) Collections.shuffle(deck);
-            return;
-        }
-
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        String playerName = gameData.playerIdToName.get(controllerId);
-
-        if (deck == null || deck.isEmpty()) {
-            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            return;
-        }
-
-        List<Card> allCards = new ArrayList<>(deck);
-
-        gameData.interaction.beginLibrarySearch(controllerId, allCards, false, false, null, 0);
-
-        List<CardView> cardViews = allCards.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
-                cardViews,
+        performLibrarySearch(
+                gameData,
+                entry.getControllerId(),
+                card -> true,
+                "cards",
                 "Search your library for a card to put into your hand.",
-                false
-        ));
-
-        String logMsg = playerName + " searches their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
-        log.info("Game {} - {} searching library for any card ({} cards in library)", gameData.id, playerName, allCards.size());
+                false,
+                false,
+                LibrarySearchDestination.HAND
+        );
     }
 
     @HandlesEffect(DistantMemoriesEffect.class)
@@ -641,179 +438,60 @@ public class LibraryResolutionService {
 
     @HandlesEffect(SearchLibraryForCreatureWithMVXOrLessToHandEffect.class)
     void resolveSearchLibraryForCreatureWithMVXOrLessToHand(GameData gameData, StackEntry entry, SearchLibraryForCreatureWithMVXOrLessToHandEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        if (!checkSearchRestriction(gameData, controllerId)) {
-            List<Card> deck = gameData.playerDecks.get(controllerId);
-            if (deck != null) Collections.shuffle(deck);
-            return;
-        }
-
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        String playerName = gameData.playerIdToName.get(controllerId);
         int maxMV = entry.getXValue();
 
-        if (deck == null || deck.isEmpty()) {
-            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            return;
-        }
-
-        List<Card> eligibleCreatures = new ArrayList<>();
-        for (Card card : deck) {
-            if (card.getType() == CardType.CREATURE && card.getManaValue() <= maxMV) {
-                eligibleCreatures.add(card);
-            }
-        }
-
-        if (eligibleCreatures.isEmpty()) {
-            Collections.shuffle(deck);
-            String logMsg = playerName + " searches their library but finds no creature card with mana value " + maxMV + " or less. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            log.info("Game {} - {} searches library, no eligible creatures found (MV <= {})", gameData.id, playerName, maxMV);
-            return;
-        }
-
-        gameData.interaction.beginLibrarySearch(controllerId, eligibleCreatures, true, true, null, 0);
-
-        List<CardView> cardViews = eligibleCreatures.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
-                cardViews,
+        performLibrarySearch(
+                gameData,
+                entry.getControllerId(),
+                card -> card.getType() == CardType.CREATURE && card.getManaValue() <= maxMV,
+                "creature card with mana value " + maxMV + " or less",
                 "Search your library for a creature card with mana value " + maxMV + " or less to reveal and put into your hand.",
-                true
-        ));
-
-        String logMsg = playerName + " searches their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
-        log.info("Game {} - {} searching library for creature with MV <= {} ({} found)", gameData.id, playerName, maxMV, eligibleCreatures.size());
+                true,
+                true,
+                LibrarySearchDestination.HAND
+        );
     }
 
     @HandlesEffect(SearchLibraryForCreatureWithColorAndMVXOrLessToBattlefieldEffect.class)
     void resolveSearchLibraryForCreatureWithColorAndMVXOrLessToBattlefield(GameData gameData, StackEntry entry,
                                                                             SearchLibraryForCreatureWithColorAndMVXOrLessToBattlefieldEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        if (!checkSearchRestriction(gameData, controllerId)) {
-            List<Card> deck = gameData.playerDecks.get(controllerId);
-            if (deck != null) Collections.shuffle(deck);
-            return;
-        }
-
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        String playerName = gameData.playerIdToName.get(controllerId);
         int maxMV = entry.getXValue();
         String colorName = effect.requiredColor().name().toLowerCase();
 
-        if (deck == null || deck.isEmpty()) {
-            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            return;
-        }
-
-        List<Card> eligibleCreatures = new ArrayList<>();
-        for (Card card : deck) {
-            if (card.getType() == CardType.CREATURE && card.getColors().contains(effect.requiredColor()) && card.getManaValue() <= maxMV) {
-                eligibleCreatures.add(card);
-            }
-        }
-
-        if (eligibleCreatures.isEmpty()) {
-            Collections.shuffle(deck);
-            String logMsg = playerName + " searches their library but finds no " + colorName + " creature card with mana value " + maxMV + " or less. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            log.info("Game {} - {} searches library, no eligible {} creatures found (MV <= {})", gameData.id, playerName, colorName, maxMV);
-            return;
-        }
-
-        String prompt = "Search your library for a " + colorName + " creature card with mana value " + maxMV + " or less and put it onto the battlefield.";
-
-        gameData.interaction.beginLibrarySearch(
-                controllerId,
-                eligibleCreatures,
+        performLibrarySearch(
+                gameData,
+                entry.getControllerId(),
+                card -> card.getType() == CardType.CREATURE
+                        && card.getColors().contains(effect.requiredColor())
+                        && card.getManaValue() <= maxMV,
+                colorName + " creature card with mana value " + maxMV + " or less",
+                "Search your library for a " + colorName + " creature card with mana value " + maxMV + " or less and put it onto the battlefield.",
                 false,
                 true,
-                null,
-                0,
-                null,
-                false,
-                true,
-                prompt,
                 LibrarySearchDestination.BATTLEFIELD
         );
-
-        List<CardView> cardViews = eligibleCreatures.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
-                cardViews,
-                prompt,
-                true
-        ));
-
-        String logMsg = playerName + " searches their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
-        log.info("Game {} - {} searching library for {} creature with MV <= {} ({} found)", gameData.id, playerName, colorName, maxMV, eligibleCreatures.size());
     }
 
     @HandlesEffect(SearchLibraryForCreatureWithSubtypeToBattlefieldEffect.class)
     void resolveSearchLibraryForCreatureWithSubtypeToBattlefield(GameData gameData, StackEntry entry,
                                                                   SearchLibraryForCreatureWithSubtypeToBattlefieldEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        if (!checkSearchRestriction(gameData, controllerId)) {
-            List<Card> deck = gameData.playerDecks.get(controllerId);
-            if (deck != null) Collections.shuffle(deck);
-            return;
-        }
-
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        String playerName = gameData.playerIdToName.get(controllerId);
         CardSubtype requiredSubtype = effect.requiredSubtype();
         String subtypeName = requiredSubtype.name().substring(0, 1) + requiredSubtype.name().substring(1).toLowerCase();
 
-        if (deck == null || deck.isEmpty()) {
-            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            return;
-        }
-
-        List<Card> eligibleCreatures = new ArrayList<>();
-        for (Card card : deck) {
-            boolean isCreatureCard = card.getType() == CardType.CREATURE || card.getAdditionalTypes().contains(CardType.CREATURE);
-            if (isCreatureCard && card.getSubtypes().contains(requiredSubtype)) {
-                eligibleCreatures.add(card);
-            }
-        }
-
-        if (eligibleCreatures.isEmpty()) {
-            Collections.shuffle(deck);
-            String logMsg = playerName + " searches their library but finds no " + subtypeName + " creature card. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            log.info("Game {} - {} searches library, no {} creatures found", gameData.id, playerName, subtypeName);
-            return;
-        }
-
-        String prompt = "Search your library for a " + subtypeName + " creature card and put it onto the battlefield.";
-
-        gameData.interaction.beginLibrarySearch(
-                controllerId,
-                eligibleCreatures,
+        performLibrarySearch(
+                gameData,
+                entry.getControllerId(),
+                card -> {
+                    boolean isCreatureCard = card.getType() == CardType.CREATURE
+                            || card.getAdditionalTypes().contains(CardType.CREATURE);
+                    return isCreatureCard && card.getSubtypes().contains(requiredSubtype);
+                },
+                subtypeName + " creature card",
+                "Search your library for a " + subtypeName + " creature card and put it onto the battlefield.",
                 false,
                 true,
-                null,
-                0,
-                null,
-                false,
-                true,
-                prompt,
                 LibrarySearchDestination.BATTLEFIELD
         );
-
-        List<CardView> cardViews = eligibleCreatures.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
-                cardViews,
-                prompt,
-                true
-        ));
-
-        String logMsg = playerName + " searches their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
-        log.info("Game {} - {} searching library for {} creature ({} found)", gameData.id, playerName, subtypeName, eligibleCreatures.size());
     }
 
     @HandlesEffect(PayManaAndSearchLibraryForCardNamedToBattlefieldEffect.class)
@@ -1265,6 +943,76 @@ public class LibraryResolutionService {
                 "Exile one card face down (imprint). The rest go to the bottom of your library.",
                 false
         ));
+    }
+
+    /**
+     * Unified library search skeleton: check restriction → get deck → filter → handle no matches →
+     * begin interaction → send message → log. Returns true if the search was initiated, false otherwise.
+     */
+    private boolean performLibrarySearch(
+            GameData gameData,
+            UUID controllerId,
+            Predicate<Card> filter,
+            String noMatchDescription,
+            String prompt,
+            boolean reveals,
+            boolean canFailToFind,
+            LibrarySearchDestination destination) {
+        if (!checkSearchRestriction(gameData, controllerId)) {
+            List<Card> deck = gameData.playerDecks.get(controllerId);
+            if (deck != null) Collections.shuffle(deck);
+            return false;
+        }
+
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        if (deck == null || deck.isEmpty()) {
+            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return false;
+        }
+
+        List<Card> matchingCards = new ArrayList<>();
+        for (Card card : deck) {
+            if (filter.test(card)) {
+                matchingCards.add(card);
+            }
+        }
+
+        if (matchingCards.isEmpty()) {
+            Collections.shuffle(deck);
+            String logMsg = playerName + " searches their library but finds no " + noMatchDescription + ". Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - {} searches library, no {} found", gameData.id, playerName, noMatchDescription);
+            return false;
+        }
+
+        gameData.interaction.beginLibrarySearch(
+                controllerId,
+                matchingCards,
+                reveals,
+                canFailToFind,
+                null,
+                0,
+                null,
+                false,
+                true,
+                prompt,
+                destination
+        );
+
+        List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
+                cardViews,
+                prompt,
+                canFailToFind
+        ));
+
+        String logMsg = playerName + " searches their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} searches their library ({} matches)", gameData.id, playerName, matchingCards.size());
+        return true;
     }
 
     /**
