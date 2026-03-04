@@ -47,6 +47,7 @@ public class PermanentViewFactory {
         cardView = applyStaticGrantedSubtypes(cardView, staticGrantedSubtypes, subtypeOverriding);
         cardView = applyAwakeningCounterSubtype(cardView, p);
         cardView = applyGrantedCardTypes(cardView, p);
+        cardView = applyPermanentAnimation(cardView, p);
         cardView = applyStaticGrantedCardTypes(cardView, staticGrantedCardTypes);
         cardView = applyGrantedActivatedAbilities(cardView, grantedActivatedAbilities);
         cardView = applyStaticGrantedColors(cardView, p, staticGrantedColors, colorOverriding);
@@ -64,7 +65,7 @@ public class PermanentViewFactory {
                 p.getChosenName(),
                 p.getRegenerationShield(),
                 p.isCantBeBlocked(),
-                animatedCreature,
+                animatedCreature || p.isPermanentlyAnimated(),
                 p.getLoyaltyCounters(),
                 p.getChargeCounters()
         );
@@ -103,6 +104,22 @@ public class PermanentViewFactory {
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
                 cardView.collectorNumber(), CardColor.GREEN, List.of(CardColor.GREEN), cardView.needsTarget(),
+                cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
+                cardView.hasConvoke()
+        );
+    }
+
+    private CardView applyPermanentAnimation(CardView cardView, Permanent p) {
+        if (!p.isPermanentlyAnimated()) {
+            return cardView;
+        }
+        Set<CardType> mergedTypes = new HashSet<>(cardView.additionalTypes());
+        mergedTypes.add(CardType.CREATURE);
+        return new CardView(
+                cardView.name(), cardView.type(), mergedTypes, cardView.supertypes(), cardView.subtypes(),
+                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
+                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
+                cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke()
         );

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimateTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesXEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -179,6 +180,31 @@ public class CreatureModResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} becomes an {} until end of turn", gameData.id, target.getCard().getName(), typeName);
+    }
+
+    @HandlesEffect(AnimateTargetPermanentEffect.class)
+    private void resolveAnimateTargetPermanent(GameData gameData, StackEntry entry, AnimateTargetPermanentEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        target.setPermanentlyAnimated(true);
+        target.setPermanentAnimatedPower(effect.power());
+        target.setPermanentAnimatedToughness(effect.toughness());
+
+        // Per MTG rules: if an Equipment becomes a creature, it becomes unattached (CR 301.5c)
+        if (target.getAttachedTo() != null && target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+            target.setAttachedTo(null);
+            String unattachLog = target.getCard().getName() + " becomes unattached.";
+            gameBroadcastService.logAndBroadcast(gameData, unattachLog);
+            log.info("Game {} - {} unattached (equipment became creature)", gameData.id, target.getCard().getName());
+        }
+
+        String logEntry = target.getCard().getName() + " becomes a " + effect.power() + "/" + effect.toughness() + " artifact creature.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} becomes a {}/{} artifact creature permanently", gameData.id, target.getCard().getName(), effect.power(), effect.toughness());
     }
 
     @HandlesEffect(BoostSelfEffect.class)

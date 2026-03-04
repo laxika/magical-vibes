@@ -314,6 +314,7 @@ public class GameQueryService {
     public boolean isCreature(GameData gameData, Permanent permanent) {
         if (hasCardType(permanent, CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
+        if (permanent.isPermanentlyAnimated()) return true;
         if (permanent.getAwakeningCounters() > 0) return true;
         if (isArtifact(permanent) && hasAnimateArtifactEffect(gameData)) return true;
         return hasSelfBecomeCreatureEffect(gameData, permanent);
@@ -486,6 +487,7 @@ public class GameQueryService {
             if (gameData == null) {
                 return hasCardType(permanent, CardType.CREATURE)
                         || permanent.isAnimatedUntilEndOfTurn()
+                        || permanent.isPermanentlyAnimated()
                         || permanent.getAwakeningCounters() > 0;
             }
             return isCreature(gameData, permanent);

@@ -39,6 +39,9 @@ public class Permanent {
     @Setter private int animatedPower;
     @Setter private int animatedToughness;
     @Setter private CardColor animatedColor;
+    @Setter private boolean permanentlyAnimated;
+    @Setter private int permanentAnimatedPower;
+    @Setter private int permanentAnimatedToughness;
     @Setter private int loyaltyCounters;
     @Setter private int plusOnePlusOneCounters;
     @Setter private int minusOneMinusOneCounters;
@@ -100,6 +103,9 @@ public class Permanent {
         this.animatedPower = source.animatedPower;
         this.animatedToughness = source.animatedToughness;
         this.animatedColor = source.animatedColor;
+        this.permanentlyAnimated = source.permanentlyAnimated;
+        this.permanentAnimatedPower = source.permanentAnimatedPower;
+        this.permanentAnimatedToughness = source.permanentAnimatedToughness;
         this.loyaltyCounters = source.loyaltyCounters;
         this.plusOnePlusOneCounters = source.plusOnePlusOneCounters;
         this.minusOneMinusOneCounters = source.minusOneMinusOneCounters;
@@ -182,6 +188,9 @@ public class Permanent {
         if (animatedUntilEndOfTurn) {
             return animatedPower + powerModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
         }
+        if (permanentlyAnimated) {
+            return permanentAnimatedPower + powerModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
+        }
         if (awakeningCounters > 0 && card.getType() != CardType.CREATURE) {
             return 8 + powerModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
         }
@@ -191,6 +200,9 @@ public class Permanent {
     private int getRawToughness() {
         if (animatedUntilEndOfTurn) {
             return animatedToughness + toughnessModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
+        }
+        if (permanentlyAnimated) {
+            return permanentAnimatedToughness + toughnessModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
         }
         if (awakeningCounters > 0 && card.getType() != CardType.CREATURE) {
             return 8 + toughnessModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;

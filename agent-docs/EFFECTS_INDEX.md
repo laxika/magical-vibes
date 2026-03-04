@@ -380,6 +380,7 @@ Pass `null` as filter to allow any card.
 | `EachOpponentLosesXLifeAndControllerGainsLifeLostEffect` | `()` | each opponent loses X life, controller gains total life lost |
 | `TargetPlayerLosesLifeEffect` | `(int amount)` | target player loses N life |
 | `TargetPlayerLosesLifeAndControllerGainsLifeEffect` | `(int lifeLoss, int lifeGain)` | drain: target loses N, you gain M |
+| `DrainLifePerControlledPermanentEffect` | `(PermanentPredicate filter, int multiplier)` | target player loses X life, controller gains X life, where X = multiplier × matching permanents controlled (e.g. Tezzeret -4: twice artifacts) |
 | `EnchantedCreatureControllerLosesLifeEffect` | `(int amount, UUID affectedPlayerId)` | enchanted creature's controller loses N life (trigger) |
 | `EachPlayerLosesLifeEffect` | `(int amount)` | each player (including controller) loses N life |
 | `EachPlayerLosesLifePerCreatureControlledEffect` | `(int lifePerCreature)` | each player loses N life per creature they control |
@@ -594,6 +595,7 @@ Pass `null` as filter to allow any card.
 | `AnimateSelfEffect` | `(List<CardSubtype> grantedSubtypes)` | this permanent becomes a creature (e.g. Mutavault-style) |
 | `AnimateSelfWithStatsEffect` | `(int power, int toughness, List<CardSubtype> grantedSubtypes, Set<Keyword> grantedKeywords)` | this permanent becomes a creature with fixed P/T and keywords until end of turn (e.g. Glint Hawk Idol) |
 | `AnimateSelfByChargeCountersEffect` | `(List<CardSubtype> grantedSubtypes)` | becomes creature with P/T equal to charge counters until end of turn |
+| `AnimateTargetPermanentEffect` | `(int power, int toughness)` | target permanent becomes a creature with base P/T permanently (not until end of turn); retains other types (e.g. Tezzeret, Agent of Bolas -1) |
 | `AnimateNoncreatureArtifactsEffect` | `()` | animate all noncreature artifacts into creatures (March of the Machines-style) |
 | `AddCardTypeToTargetPermanentEffect` | `(CardType cardType)` | target permanent becomes the given card type in addition to its other types until end of turn (e.g. Liquimetal Coating makes target an artifact) |
 

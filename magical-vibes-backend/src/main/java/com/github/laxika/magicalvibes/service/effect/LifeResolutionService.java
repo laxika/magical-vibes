@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DrainLifePerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesXLifeAndControllerGainsLifeLostEffect;
@@ -402,6 +403,40 @@ public class LifeResolutionService {
         if (effect.lifeGain() > 0) {
             applyGainLife(gameData, controllerId, effect.lifeGain());
         }
+    }
+
+    @HandlesEffect(DrainLifePerControlledPermanentEffect.class)
+    private void resolveDrainLifePerControlledPermanent(GameData gameData, StackEntry entry, DrainLifePerControlledPermanentEffect effect) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID controllerId = entry.getControllerId();
+
+        // Count matching permanents the controller controls
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        long count = battlefield == null ? 0 : battlefield.stream()
+                .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, effect.filter()))
+                .count();
+        int drainAmount = (int) count * effect.multiplier();
+
+        if (drainAmount <= 0) {
+            gameBroadcastService.logAndBroadcast(gameData, entry.getCard().getName() + " drains 0 life (no matching permanents).");
+            return;
+        }
+
+        // Target loses life
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
+            gameBroadcastService.logAndBroadcast(gameData, targetName + "'s life total can't change.");
+        } else {
+            int targetCurrentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
+            gameData.playerLifeTotals.put(targetPlayerId, targetCurrentLife - drainAmount);
+
+            String lossLog = targetName + " loses " + drainAmount + " life (" + entry.getCard().getName() + ").";
+            gameBroadcastService.logAndBroadcast(gameData, lossLog);
+            log.info("Game {} - {} loses {} life from {}", gameData.id, targetName, drainAmount, entry.getCard().getName());
+        }
+
+        // Controller gains life
+        applyGainLife(gameData, controllerId, drainAmount);
     }
 
     @HandlesEffect(TargetPlayerLosesLifeEffect.class)
