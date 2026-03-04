@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -50,49 +51,49 @@ class GraveyardReturnResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("null predicate returns 'card'")
         void nullPredicateReturnsCard() {
-            assertThat(GraveyardReturnResolutionService.describeFilter(null)).isEqualTo("card");
+            assertThat(CardPredicateUtils.describeFilter(null)).isEqualTo("card");
         }
 
         @Test
         @DisplayName("CardTypePredicate(CREATURE) returns 'creature card'")
         void cardTypePredicateCreature() {
             CardPredicate predicate = new CardTypePredicate(CardType.CREATURE);
-            assertThat(GraveyardReturnResolutionService.describeFilter(predicate)).isEqualTo("creature card");
+            assertThat(CardPredicateUtils.describeFilter(predicate)).isEqualTo("creature card");
         }
 
         @Test
         @DisplayName("CardTypePredicate(ARTIFACT) returns 'artifact card'")
         void cardTypePredicateArtifact() {
             CardPredicate predicate = new CardTypePredicate(CardType.ARTIFACT);
-            assertThat(GraveyardReturnResolutionService.describeFilter(predicate)).isEqualTo("artifact card");
+            assertThat(CardPredicateUtils.describeFilter(predicate)).isEqualTo("artifact card");
         }
 
         @Test
         @DisplayName("CardSubtypePredicate returns subtype display name + 'card'")
         void cardSubtypePredicate() {
             CardPredicate predicate = new CardSubtypePredicate(CardSubtype.ZOMBIE);
-            assertThat(GraveyardReturnResolutionService.describeFilter(predicate)).isEqualTo("Zombie card");
+            assertThat(CardPredicateUtils.describeFilter(predicate)).isEqualTo("Zombie card");
         }
 
         @Test
         @DisplayName("CardKeywordPredicate returns 'card with <keyword>'")
         void cardKeywordPredicate() {
             CardPredicate predicate = new CardKeywordPredicate(Keyword.INFECT);
-            assertThat(GraveyardReturnResolutionService.describeFilter(predicate)).isEqualTo("card with infect");
+            assertThat(CardPredicateUtils.describeFilter(predicate)).isEqualTo("card with infect");
         }
 
         @Test
         @DisplayName("CardKeywordPredicate with multi-word keyword uses spaces")
         void cardKeywordPredicateMultiWord() {
             CardPredicate predicate = new CardKeywordPredicate(Keyword.FIRST_STRIKE);
-            assertThat(GraveyardReturnResolutionService.describeFilter(predicate)).isEqualTo("card with first strike");
+            assertThat(CardPredicateUtils.describeFilter(predicate)).isEqualTo("card with first strike");
         }
 
         @Test
         @DisplayName("CardIsAuraPredicate returns 'Aura card'")
         void cardIsAuraPredicate() {
             CardPredicate predicate = new CardIsAuraPredicate();
-            assertThat(GraveyardReturnResolutionService.describeFilter(predicate)).isEqualTo("Aura card");
+            assertThat(CardPredicateUtils.describeFilter(predicate)).isEqualTo("Aura card");
         }
 
         @Test
@@ -102,7 +103,7 @@ class GraveyardReturnResolutionServiceTest extends BaseCardTest {
                     new CardTypePredicate(CardType.CREATURE),
                     new CardKeywordPredicate(Keyword.INFECT)
             ));
-            assertThat(GraveyardReturnResolutionService.describeFilter(predicate))
+            assertThat(CardPredicateUtils.describeFilter(predicate))
                     .isEqualTo("creature card with infect");
         }
 
@@ -113,7 +114,7 @@ class GraveyardReturnResolutionServiceTest extends BaseCardTest {
                     new CardTypePredicate(CardType.ARTIFACT),
                     new CardTypePredicate(CardType.CREATURE)
             ));
-            assertThat(GraveyardReturnResolutionService.describeFilter(predicate))
+            assertThat(CardPredicateUtils.describeFilter(predicate))
                     .isEqualTo("artifact or creature card");
         }
 
@@ -124,7 +125,7 @@ class GraveyardReturnResolutionServiceTest extends BaseCardTest {
                     new CardTypePredicate(CardType.CREATURE),
                     new CardIsAuraPredicate()
             ));
-            assertThat(GraveyardReturnResolutionService.describeFilter(predicate))
+            assertThat(CardPredicateUtils.describeFilter(predicate))
                     .isEqualTo("creature or Aura card");
         }
     }

@@ -25,19 +25,14 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Service
@@ -79,7 +74,7 @@ public class GraveyardReturnResolutionService {
     private void resolvePreTargeted(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
                                     UUID controllerId, UUID sourceCardId) {
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetPermanentId());
-        String filterLabel = describeFilter(effect.filter());
+        String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
 
         if (targetCard == null || (effect.filter() != null && !gameQueryService.matchesCardPredicate(targetCard, effect.filter(), sourceCardId))) {
             String fizzleLog = entry.getDescription() + " fizzles (target " + filterLabel + " is no longer in a graveyard).";
@@ -124,7 +119,7 @@ public class GraveyardReturnResolutionService {
     private void resolveReturnAll(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
                                   UUID controllerId, UUID sourceCardId) {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-        String filterLabel = describeFilter(effect.filter());
+        String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
 
         if (effect.thisTurnOnly()) {
             Set<UUID> trackedIds = gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn
@@ -207,7 +202,7 @@ public class GraveyardReturnResolutionService {
     private void resolveFromControllersGraveyard(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
                                                  UUID controllerId, UUID sourceCardId) {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-        String filterLabel = describeFilter(effect.filter());
+        String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
 
         if (graveyard == null || graveyard.isEmpty()) {
             String logEntry = entry.getDescription() + " — no " + filterLabel + "s in graveyard.";
@@ -250,7 +245,7 @@ public class GraveyardReturnResolutionService {
             }
         }
 
-        String filterLabel = describeFilter(effect.filter());
+        String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
 
         if (cardPool.isEmpty()) {
             String logEntry = entry.getDescription() + " — no " + filterLabel + "s in any graveyard.";
@@ -259,10 +254,7 @@ public class GraveyardReturnResolutionService {
             return;
         }
 
-        List<Integer> indices = new ArrayList<>();
-        for (int i = 0; i < cardPool.size(); i++) {
-            indices.add(i);
-        }
+        List<Integer> indices = IntStream.range(0, cardPool.size()).boxed().toList();
 
         String destText = effect.destination() == GraveyardChoiceDestination.HAND ? "your hand" : "the battlefield under your control";
         String prompt = "Choose a " + filterLabel + " from a graveyard to put onto " + destText + ".";
@@ -357,62 +349,27 @@ public class GraveyardReturnResolutionService {
         String logEntry = playerName + " puts " + card.getName() + " onto the battlefield from a graveyard.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
+        handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
+    }
+
+    private boolean exileCardFromAnyGraveyard(GameData gameData, UUID cardId, Card card) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(pid);
+            if (graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
+                gameData.playerExiledCards.get(pid).add(card);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void handleCreatureEtbAndLegendRule(GameData gameData, UUID controllerId, Permanent permanent, Card card) {
         if (gameQueryService.isCreature(gameData, permanent)) {
             gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
         }
         if (!gameData.interaction.isAwaitingInput()) {
             legendRuleService.checkLegendRule(gameData, controllerId);
         }
-    }
-
-    public static String describeFilter(CardPredicate predicate) {
-        if (predicate == null) return "card";
-        if (predicate instanceof CardTypePredicate p) {
-            return p.cardType().name().toLowerCase() + " card";
-        }
-        if (predicate instanceof CardSubtypePredicate p) {
-            return p.subtype().getDisplayName() + " card";
-        }
-        if (predicate instanceof CardKeywordPredicate p) {
-            return "card with " + p.keyword().name().toLowerCase().replace('_', ' ');
-        }
-        if (predicate instanceof CardIsAuraPredicate) {
-            return "Aura card";
-        }
-        if (predicate instanceof CardAllOfPredicate p) {
-            List<String> parts = new ArrayList<>();
-            for (CardPredicate sub : p.predicates()) {
-                parts.add(describeFilter(sub));
-            }
-            // "creature card" + "card with infect" → "creature card with infect"
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < parts.size(); i++) {
-                String part = parts.get(i);
-                if (i > 0 && part.startsWith("card with ")) {
-                    sb.append(" with ").append(part.substring("card with ".length()));
-                } else if (i > 0) {
-                    sb.append(" ").append(part);
-                } else {
-                    sb.append(part);
-                }
-            }
-            return sb.toString();
-        }
-        if (predicate instanceof CardAnyOfPredicate p) {
-            List<String> parts = new ArrayList<>();
-            for (CardPredicate sub : p.predicates()) {
-                parts.add(describeFilter(sub));
-            }
-            // "artifact card or creature card" → "artifact or creature card"
-            if (parts.size() >= 2 && parts.stream().allMatch(part -> part.endsWith(" card"))) {
-                List<String> stripped = parts.stream()
-                        .map(part -> part.substring(0, part.length() - " card".length()))
-                        .toList();
-                return String.join(" or ", stripped) + " card";
-            }
-            return String.join(" or ", parts);
-        }
-        return "card";
     }
 
     private void applyLifeGainEqualToManaValue(GameData gameData, UUID controllerId, Card card) {
@@ -430,51 +387,54 @@ public class GraveyardReturnResolutionService {
         log.info("Game {} - {} gains {} life (equal to {}'s mana value)", gameData.id, playerName, manaValue, card.getName());
     }
 
+    private record StolenCreatureResult(Permanent permanent, Card card, UUID originalOwnerId) {}
+
+    private StolenCreatureResult stealFromOpponentGraveyard(GameData gameData, StackEntry entry, UUID controllerId) {
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetPermanentId());
+        if (targetCard == null) {
+            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target no longer in graveyard).");
+            return null;
+        }
+
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
+        if (graveyardOwnerId == null || graveyardOwnerId.equals(controllerId)) {
+            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target not in opponent's graveyard).");
+            return null;
+        }
+
+        permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+        Permanent permanent = new Permanent(targetCard);
+        return new StolenCreatureResult(permanent, targetCard, graveyardOwnerId);
+    }
+
     @HandlesEffect(PutCardFromOpponentGraveyardOntoBattlefieldEffect.class)
     void resolvePutFromOpponentGraveyardAndMill(GameData gameData, StackEntry entry,
             PutCardFromOpponentGraveyardOntoBattlefieldEffect effect) {
         UUID controllerId = entry.getControllerId();
         int xValue = entry.getXValue();
 
-        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetPermanentId());
-        if (targetCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target no longer in graveyard).");
-            return;
-        }
-
-        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
-        if (graveyardOwnerId == null || graveyardOwnerId.equals(controllerId)) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target not in opponent's graveyard).");
-            return;
-        }
-
-        permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+        StolenCreatureResult result = stealFromOpponentGraveyard(gameData, entry, controllerId);
+        if (result == null) return;
 
         Set<CardType> enterTappedTypes = gameHelper.snapshotEnterTappedTypes(gameData);
-        Permanent permanent = new Permanent(targetCard);
         if (effect.tapped()) {
-            permanent.tap();
+            result.permanent().tap();
         }
-        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
+        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, result.permanent(), enterTappedTypes);
 
-        gameData.stolenCreatures.put(permanent.getId(), graveyardOwnerId);
-        gameData.permanentControlStolenCreatures.add(permanent.getId());
+        gameData.stolenCreatures.put(result.permanent().getId(), result.originalOwnerId());
+        gameData.permanentControlStolenCreatures.add(result.permanent().getId());
 
         String tappedText = effect.tapped() ? " tapped" : "";
         String playerName = gameData.playerIdToName.get(controllerId);
         gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " puts " + targetCard.getName() + " onto the battlefield" + tappedText + " under their control.");
+                playerName + " puts " + result.card().getName() + " onto the battlefield" + tappedText + " under their control.");
 
-        if (gameQueryService.isCreature(gameData, permanent)) {
-            gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, targetCard, null, false);
-        }
-        if (!gameData.interaction.isAwaitingInput()) {
-            legendRuleService.checkLegendRule(gameData, controllerId);
-        }
+        handleCreatureEtbAndLegendRule(gameData, controllerId, result.permanent(), result.card());
 
         if (xValue > 0) {
-            List<Card> opponentDeck = gameData.playerDecks.get(graveyardOwnerId);
-            List<Card> opponentGraveyard = gameData.playerGraveyards.get(graveyardOwnerId);
+            List<Card> opponentDeck = gameData.playerDecks.get(result.originalOwnerId());
+            List<Card> opponentGraveyard = gameData.playerGraveyards.get(result.originalOwnerId());
             int cardsToMill = Math.min(xValue, opponentDeck.size());
             List<String> milledNames = new ArrayList<>();
             for (int i = 0; i < cardsToMill; i++) {
@@ -483,7 +443,7 @@ public class GraveyardReturnResolutionService {
                 milledNames.add(milled.getName());
             }
             if (cardsToMill > 0) {
-                String opponentName = gameData.playerIdToName.get(graveyardOwnerId);
+                String opponentName = gameData.playerIdToName.get(result.originalOwnerId());
                 gameBroadcastService.logAndBroadcast(gameData,
                         opponentName + " mills " + cardsToMill + " cards (" + String.join(", ", milledNames) + ").");
             }
@@ -494,40 +454,23 @@ public class GraveyardReturnResolutionService {
     void resolvePutCreatureFromOpponentGraveyardWithExile(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
 
-        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetPermanentId());
-        if (targetCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target no longer in graveyard).");
-            return;
-        }
-
-        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
-        if (graveyardOwnerId == null || graveyardOwnerId.equals(controllerId)) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target not in opponent's graveyard).");
-            return;
-        }
-
-        permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+        StolenCreatureResult result = stealFromOpponentGraveyard(gameData, entry, controllerId);
+        if (result == null) return;
 
         Set<CardType> enterTappedTypes = gameHelper.snapshotEnterTappedTypes(gameData);
-        Permanent permanent = new Permanent(targetCard);
-        permanent.getGrantedKeywords().add(Keyword.HASTE);
-        permanent.setExileIfLeavesBattlefield(true);
-        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
+        result.permanent().getGrantedKeywords().add(Keyword.HASTE);
+        result.permanent().setExileIfLeavesBattlefield(true);
+        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, result.permanent(), enterTappedTypes);
 
-        gameData.stolenCreatures.put(permanent.getId(), graveyardOwnerId);
-        gameData.permanentControlStolenCreatures.add(permanent.getId());
-        gameData.pendingTokenExilesAtEndStep.add(permanent.getId());
+        gameData.stolenCreatures.put(result.permanent().getId(), result.originalOwnerId());
+        gameData.permanentControlStolenCreatures.add(result.permanent().getId());
+        gameData.pendingTokenExilesAtEndStep.add(result.permanent().getId());
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " puts " + targetCard.getName() + " onto the battlefield under their control with haste.");
+                playerName + " puts " + result.card().getName() + " onto the battlefield under their control with haste.");
 
-        if (gameQueryService.isCreature(gameData, permanent)) {
-            gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, targetCard, null, false);
-        }
-        if (!gameData.interaction.isAwaitingInput()) {
-            legendRuleService.checkLegendRule(gameData, controllerId);
-        }
+        handleCreatureEtbAndLegendRule(gameData, controllerId, result.permanent(), result.card());
     }
 
     @HandlesEffect(ExileCardsFromGraveyardEffect.class)
@@ -543,13 +486,7 @@ public class GraveyardReturnResolutionService {
                 Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
                 if (card != null) {
                     exiledNames.add(card.getName());
-                    for (UUID pid : gameData.orderedPlayerIds) {
-                        List<Card> graveyard = gameData.playerGraveyards.get(pid);
-                        if (graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
-                            gameData.playerExiledCards.get(pid).add(card);
-                            break;
-                        }
-                    }
+                    exileCardFromAnyGraveyard(gameData, cardId, card);
                 }
             }
             if (!exiledNames.isEmpty()) {
@@ -626,13 +563,7 @@ public class GraveyardReturnResolutionService {
         for (UUID cardId : targetCardIds) {
             Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
             if (card != null) {
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    List<Card> graveyard = gameData.playerGraveyards.get(pid);
-                    if (graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
-                        gameData.playerExiledCards.get(pid).add(card);
-                        break;
-                    }
-                }
+                exileCardFromAnyGraveyard(gameData, cardId, card);
                 String exileLog = playerName + " exiles " + card.getName() + " from graveyard.";
                 gameBroadcastService.logAndBroadcast(gameData, exileLog);
                 tokensToCreate++;
@@ -656,10 +587,7 @@ public class GraveyardReturnResolutionService {
             String tokenLog = "A 2/2 Zombie creature token enters the battlefield.";
             gameBroadcastService.logAndBroadcast(gameData, tokenLog);
 
-            gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
-            if (!gameData.interaction.isAwaitingInput()) {
-                legendRuleService.checkLegendRule(gameData, controllerId);
-            }
+            handleCreatureEtbAndLegendRule(gameData, controllerId, tokenPermanent, tokenCard);
 
             log.info("Game {} - Zombie token created for player {}", gameData.id, controllerId);
         }
@@ -725,7 +653,7 @@ public class GraveyardReturnResolutionService {
         String enterLog = imprintedCard.getName() + " enters the battlefield under " + playerName + "'s control.";
         gameBroadcastService.logAndBroadcast(gameData, enterLog);
 
-        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, imprintedCard, null, false);
+        handleCreatureEtbAndLegendRule(gameData, controllerId, perm, imprintedCard);
 
         log.info("Game {} - {} puts imprinted creature {} onto battlefield",
                 gameData.id, playerName, imprintedCard.getName());

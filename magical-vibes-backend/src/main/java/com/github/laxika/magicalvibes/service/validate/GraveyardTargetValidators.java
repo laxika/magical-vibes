@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardO
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.GraveyardReturnResolutionService;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
@@ -40,7 +40,7 @@ public class GraveyardTargetValidators {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
         if (effect.filter() != null && !gameQueryService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
-            String label = GraveyardReturnResolutionService.describeFilter(effect.filter());
+            String label = CardPredicateUtils.describeFilter(effect.filter());
             throw new IllegalStateException("Target card must be a " + label);
         }
     }

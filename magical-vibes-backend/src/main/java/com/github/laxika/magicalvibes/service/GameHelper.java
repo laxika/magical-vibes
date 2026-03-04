@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
@@ -964,7 +965,7 @@ public class GameHelper {
         gameData.graveyardTargetOperation.entryType = entryType;
         gameData.graveyardTargetOperation.xValue = 0;
         gameData.graveyardTargetOperation.anyNumber = true;
-        String filterLabel = GraveyardReturnResolutionService.describeFilter(filter);
+        String filterLabel = CardPredicateUtils.describeFilter(filter);
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCardIds, cardViews, maxTargets,
                 "Choose any number of target " + filterLabel + "s from your graveyard.");
     }
@@ -990,7 +991,7 @@ public class GameHelper {
         gameData.graveyardTargetOperation.entryType = entryType;
         gameData.graveyardTargetOperation.xValue = 0;
         gameData.graveyardTargetOperation.anyNumber = true;
-        String filterLabel = GraveyardReturnResolutionService.describeFilter(filter);
+        String filterLabel = CardPredicateUtils.describeFilter(filter);
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCardIds, cardViews, maxTargets,
                 "Choose up to " + maxTargetsCap + " target " + filterLabel + "s from your graveyard.");
     }

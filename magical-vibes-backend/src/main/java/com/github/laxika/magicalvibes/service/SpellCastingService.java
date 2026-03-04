@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouContr
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -163,7 +164,7 @@ public class SpellCastingService {
         // Validate target if specified (can be a permanent or a player)
         if (targetPermanentId != null && !card.isNeedsSpellTarget()) {
             if (needsSingleGraveyardTargeting) {
-                String filterLabel = GraveyardReturnResolutionService.describeFilter(graveyardReturnEffect.filter());
+                String filterLabel = CardPredicateUtils.describeFilter(graveyardReturnEffect.filter());
                 if (graveyardReturnEffect.source() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD) {
                     boolean inControllersGraveyard = gameData.playerGraveyards
                             .getOrDefault(playerId, List.of())
@@ -187,7 +188,7 @@ public class SpellCastingService {
                 targetLegalityService.validateSpellTargeting(gameData, card, targetPermanentId, null, playerId);
             }
         } else if (card.isNeedsTarget() && needsSingleGraveyardTargeting) {
-            String filterLabel = GraveyardReturnResolutionService.describeFilter(graveyardReturnEffect.filter());
+            String filterLabel = CardPredicateUtils.describeFilter(graveyardReturnEffect.filter());
             throw new IllegalStateException("Must target a " + filterLabel + " in your graveyard");
         } else if (card.isNeedsTarget() && needsGraveyardEffectTargeting) {
             throw new IllegalStateException("Must target a creature card in an opponent's graveyard");
