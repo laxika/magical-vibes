@@ -16,6 +16,9 @@ import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+
 public class GameData {
 
     public final UUID id;
@@ -198,6 +201,32 @@ public class GameData {
             }
         }
         return false;
+    }
+
+    /**
+     * Queues a standard "may" triggered ability for player choice.
+     * Covers the common pattern: source card name + em-dash + prompt.
+     */
+    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may) {
+        pendingMayAbilities.add(new PendingMayAbility(
+                sourceCard, controllerId,
+                List.of(may.wrapped()),
+                sourceCard.getName() + " — " + may.prompt()
+        ));
+    }
+
+    /**
+     * Queues a standard "may pay mana" triggered ability for player choice.
+     * Covers the common pattern: source card name + em-dash + prompt, with mana cost gate.
+     */
+    public void queueMayAbility(Card sourceCard, UUID controllerId, MayPayManaEffect mayPay, UUID targetCardId) {
+        pendingMayAbilities.add(new PendingMayAbility(
+                sourceCard, controllerId,
+                List.of(mayPay.wrapped()),
+                sourceCard.getName() + " — " + mayPay.prompt(),
+                targetCardId,
+                mayPay.manaCost()
+        ));
     }
 
     /**

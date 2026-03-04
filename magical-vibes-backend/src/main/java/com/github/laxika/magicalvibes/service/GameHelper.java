@@ -339,21 +339,9 @@ public class GameHelper {
 
         for (CardEffect effect : deathEffects) {
             if (effect instanceof MayPayManaEffect mayPay) {
-                gameData.pendingMayAbilities.add(new PendingMayAbility(
-                        dyingCard,
-                        controllerId,
-                        List.of(mayPay.wrapped()),
-                        dyingCard.getName() + " — " + mayPay.prompt(),
-                        null,
-                        mayPay.manaCost()
-                ));
+                gameData.queueMayAbility(dyingCard, controllerId, mayPay, null);
             } else if (effect instanceof MayEffect may) {
-                gameData.pendingMayAbilities.add(new PendingMayAbility(
-                        dyingCard,
-                        controllerId,
-                        List.of(may.wrapped()),
-                        dyingCard.getName() + " — " + may.prompt()
-                ));
+                gameData.queueMayAbility(dyingCard, controllerId, may);
             } else if (effect.canTargetPermanent() || effect.canTargetPlayer()) {
                 // Targeted death trigger — queue for target selection after current action completes
                 gameData.pendingDeathTriggerTargets.add(new PermanentChoiceContext.DeathTriggerTarget(
@@ -824,12 +812,7 @@ public class GameHelper {
 
             for (CardEffect effect : mayEffects) {
                 MayEffect may = (MayEffect) effect;
-                gameData.pendingMayAbilities.add(new PendingMayAbility(
-                        card,
-                        controllerId,
-                        List.of(may.wrapped()),
-                        card.getName() + " — " + may.prompt()
-                ));
+                gameData.queueMayAbility(card, controllerId, may);
             }
 
             if (!mandatoryEffects.isEmpty()) {
@@ -1080,14 +1063,7 @@ public class GameHelper {
 
             for (CardEffect effect : effects) {
                 if (effect instanceof MayPayManaEffect mayPay) {
-                    gameData.pendingMayAbilities.add(new PendingMayAbility(
-                            perm.getCard(),
-                            controllerId,
-                            List.of(mayPay.wrapped()),
-                            perm.getCard().getName() + " — " + mayPay.prompt(),
-                            enteringPermanentId,
-                            mayPay.manaCost()
-                    ));
+                    gameData.queueMayAbility(perm.getCard(), controllerId, mayPay, enteringPermanentId);
                     String triggerLog = perm.getCard().getName() + "'s ability triggers.";
                     gameBroadcastService.logAndBroadcast(gameData, triggerLog);
                     log.info("Game {} - {} triggers for nontoken artifact {} entering",
@@ -1174,21 +1150,9 @@ public class GameHelper {
 
             for (CardEffect effect : effects) {
                 if (effect instanceof MayPayManaEffect mayPay) {
-                    gameData.pendingMayAbilities.add(new PendingMayAbility(
-                            perm.getCard(),
-                            dyingCreatureControllerId,
-                            List.of(mayPay.wrapped()),
-                            perm.getCard().getName() + " — " + mayPay.prompt(),
-                            null,
-                            mayPay.manaCost()
-                    ));
+                    gameData.queueMayAbility(perm.getCard(), dyingCreatureControllerId, mayPay, null);
                 } else if (effect instanceof MayEffect may) {
-                    gameData.pendingMayAbilities.add(new PendingMayAbility(
-                            perm.getCard(),
-                            dyingCreatureControllerId,
-                            List.of(may.wrapped()),
-                            perm.getCard().getName() + " — " + may.prompt()
-                    ));
+                    gameData.queueMayAbility(perm.getCard(), dyingCreatureControllerId, may);
                 } else {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -1237,12 +1201,7 @@ public class GameHelper {
             if (effects != null && !effects.isEmpty()) {
                 for (CardEffect effect : effects) {
                     if (effect instanceof MayEffect may) {
-                        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                                perm.getCard(),
-                                playerId,
-                                List.of(may.wrapped()),
-                                perm.getCard().getName() + " — " + may.prompt()
-                        ));
+                        gameData.queueMayAbility(perm.getCard(), playerId, may);
                     } else {
                         // For effects that damage the artifact's controller, pre-set the target
                         UUID targetId = (effect instanceof DealDamageToTriggeringPermanentControllerEffect) ? artifactControllerId : null;
@@ -1268,12 +1227,7 @@ public class GameHelper {
                 if (opponentEffects != null && !opponentEffects.isEmpty()) {
                     for (CardEffect effect : opponentEffects) {
                         if (effect instanceof MayEffect may) {
-                            gameData.pendingMayAbilities.add(new PendingMayAbility(
-                                    perm.getCard(),
-                                    playerId,
-                                    List.of(may.wrapped()),
-                                    perm.getCard().getName() + " — " + may.prompt()
-                            ));
+                            gameData.queueMayAbility(perm.getCard(), playerId, may);
                         } else {
                             gameData.stack.add(new StackEntry(
                                     StackEntryType.TRIGGERED_ABILITY,
@@ -1347,12 +1301,7 @@ public class GameHelper {
 
             for (CardEffect effect : effects) {
                 if (effect instanceof MayEffect may) {
-                    gameData.pendingMayAbilities.add(new PendingMayAbility(
-                            perm.getCard(),
-                            playerId,
-                            List.of(may.wrapped()),
-                            perm.getCard().getName() + " — " + may.prompt()
-                    ));
+                    gameData.queueMayAbility(perm.getCard(), playerId, may);
                 } else {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -1410,12 +1359,7 @@ public class GameHelper {
 
                 for (CardEffect effect : drawEffects) {
                     if (effect instanceof MayEffect may) {
-                        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                                perm.getCard(),
-                                playerId,
-                                List.of(may.wrapped()),
-                                perm.getCard().getName() + " — " + may.prompt()
-                        ));
+                        gameData.queueMayAbility(perm.getCard(), playerId, may);
                     } else {
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
@@ -1546,12 +1490,7 @@ public class GameHelper {
 
             for (CardEffect effect : drawEffects) {
                 if (effect instanceof MayEffect may) {
-                    gameData.pendingMayAbilities.add(new PendingMayAbility(
-                            perm.getCard(),
-                            drawingPlayerId,
-                            List.of(may.wrapped()),
-                            perm.getCard().getName() + " — " + may.prompt()
-                    ));
+                    gameData.queueMayAbility(perm.getCard(), drawingPlayerId, may);
                 } else {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,

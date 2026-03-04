@@ -138,12 +138,7 @@ public class TurnProgressionService {
 
             for (CardEffect effect : upkeepEffects) {
                 if (effect instanceof MayEffect may) {
-                    gameData.pendingMayAbilities.add(new PendingMayAbility(
-                            perm.getCard(),
-                            activePlayerId,
-                            List.of(may.wrapped()),
-                            perm.getCard().getName() + " — " + may.prompt()
-                    ));
+                    gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
                 } else if (effect instanceof BecomeCopyOfTargetCreatureEffect) {
                     // Targeted upkeep trigger: target is chosen at trigger time (CR 603.3d).
                     // Collect valid creature targets excluding self ("another creature").
@@ -226,21 +221,9 @@ public class TurnProgressionService {
                     }
 
                     if (innerEffect instanceof MayPayManaEffect mayPay) {
-                        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                                card,
-                                activePlayerId,
-                                List.of(mayPay.wrapped()),
-                                card.getName() + " — " + mayPay.prompt(),
-                                null,
-                                mayPay.manaCost()
-                        ));
+                        gameData.queueMayAbility(card, activePlayerId, mayPay, null);
                     } else if (innerEffect instanceof MayEffect may) {
-                        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                                card,
-                                activePlayerId,
-                                List.of(may.wrapped()),
-                                card.getName() + " - " + may.prompt()
-                        ));
+                        gameData.queueMayAbility(card, activePlayerId, may);
                     } else {
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
@@ -397,12 +380,7 @@ public class TurnProgressionService {
 
                 for (CardEffect effect : drawEffects) {
                     if (effect instanceof MayEffect may) {
-                        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                                perm.getCard(),
-                                activePlayerId,
-                                List.of(may.wrapped()),
-                                perm.getCard().getName() + " — " + may.prompt()
-                        ));
+                        gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
                     } else {
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
@@ -510,12 +488,7 @@ public class TurnProgressionService {
 
                 for (CardEffect effect : endStepEffects) {
                     if (effect instanceof MayEffect may) {
-                        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                                perm.getCard(),
-                                playerId,
-                                List.of(may.wrapped()),
-                                perm.getCard().getName() + " - " + may.prompt()
-                        ));
+                        gameData.queueMayAbility(perm.getCard(), playerId, may);
                     } else {
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,

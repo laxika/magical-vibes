@@ -289,7 +289,13 @@ public class TriggerCollectionService {
 
             for (Permanent perm : battlefield) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_OPPONENT_DISCARDS)) {
-                    if (effect instanceof DealDamageToDiscardingPlayerEffect trigger) {
+                    if (effect instanceof MayEffect may) {
+                        gameData.queueMayAbility(perm.getCard(), playerId, may);
+                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                        log.info("Game {} - {} triggers on discard (may ability)", gameData.id, perm.getCard().getName());
+                        anyTriggered[0] = true;
+                    } else if (effect instanceof DealDamageToDiscardingPlayerEffect trigger) {
                         String cardName = perm.getCard().getName();
                         int damage = trigger.damage();
 
@@ -321,6 +327,11 @@ public class TriggerCollectionService {
 
         if (anyTriggered[0]) {
             gameHelper.checkWinCondition(gameData);
+        }
+
+        // Process any pending may abilities added by discard triggers (e.g. Sangromancer)
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
         }
 
         // Check the discarded card itself for self-discard triggers (e.g. Guerrilla Tactics)
@@ -466,21 +477,9 @@ public class TriggerCollectionService {
 
             for (CardEffect effect : effects) {
                 if (effect instanceof MayPayManaEffect mayPay) {
-                    gameData.pendingMayAbilities.add(new PendingMayAbility(
-                            perm.getCard(),
-                            sacrificingPlayerId,
-                            List.of(mayPay.wrapped()),
-                            perm.getCard().getName() + " — " + mayPay.prompt(),
-                            null,
-                            mayPay.manaCost()
-                    ));
+                    gameData.queueMayAbility(perm.getCard(), sacrificingPlayerId, mayPay, null);
                 } else if (effect instanceof MayEffect may) {
-                    gameData.pendingMayAbilities.add(new PendingMayAbility(
-                            perm.getCard(),
-                            sacrificingPlayerId,
-                            List.of(may.wrapped()),
-                            perm.getCard().getName() + " — " + may.prompt()
-                    ));
+                    gameData.queueMayAbility(perm.getCard(), sacrificingPlayerId, may);
                 } else {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
