@@ -50,6 +50,7 @@ public class Card {
     @Setter private String setCode;
     @Setter private String collectorNumber;
     @Setter private boolean shufflesIntoLibraryFromGraveyard;
+    @Setter private boolean cantBeCountered;
     @Setter private boolean token;
     @Setter private boolean entersTapped;
     @Setter private List<TargetFilter> multiTargetFilters = List.of();

@@ -801,10 +801,14 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if the given card is a creature spell that cannot be countered,
-     * due to a {@link CreatureSpellsCantBeCounteredEffect} on the battlefield.
+     * Returns {@code true} if the given card cannot be countered, either because it has
+     * its own "can't be countered" ability ({@link Card#isCantBeCountered()}), or because
+     * a {@link CreatureSpellsCantBeCounteredEffect} on the battlefield protects creature spells.
      */
     public boolean isUncounterable(GameData gameData, Card card) {
+        if (card.isCantBeCountered()) {
+            return true;
+        }
         if (!hasCardType(card, CardType.CREATURE)) {
             return false;
         }

@@ -80,6 +80,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Infect + damage replacement | `p/PhyrexianHydra.java` | Infect from Scryfall + STATIC PreventDamageAndAddMinusCountersEffect. Prevents all damage to self and puts -1/-1 counters instead. |
 | Intimidate creature + activated ability | `g/GethLordOfTheVault.java` | Intimidate from Scryfall + X-cost graveyard-targeting activated ability. PutCardFromOpponentGraveyardOntoBattlefieldEffect(tapped=true) |
 | Keyword creature + shuffle-into-library replacement | `b/BlightsteelColossus.java` | Keywords (infect, trample, indestructible) auto-loaded from Scryfall + `setShufflesIntoLibraryFromGraveyard(true)`. Replacement effect: when put into graveyard from anywhere, shuffled into owner's library instead. Also used by `l/LegacyWeapon.java`. |
+| Can't be countered + keyword + ability | `t/ThrunTheLastTroll.java` | `setCantBeCountered(true)` + hexproof from Scryfall + `{1}{G}` RegenerateEffect activated ability. Intrinsic uncounterable checked by `GameQueryService.isUncounterable()` via `Card.isCantBeCountered()`. |
 
 ## ETB creatures
 
