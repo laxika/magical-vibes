@@ -510,6 +510,7 @@ Pass `null` as filter to allow any card.
 | `PreventTargetUntapWhileSourceTappedEffect` | `()` | target permanent doesn't untap during its controller's untap step for as long as the source permanent remains tapped; piggybacks on companion targeting effect (e.g. `TapTargetPermanentEffect`) |
 | `AttachedCreatureDoesntUntapEffect` | `()` | attached creature (aura or equipment) doesn't untap during untap step (static) |
 | `UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect` | `(TurnStep step)` | untap all your permanents during each other player's step |
+| `UntapAllControlledPermanentsEffect` | `(PermanentPredicate filter)` | untap all permanents you control matching filter (e.g. `PermanentIsLandPredicate` for "untap all lands you control") |
 | `UntapEachOtherCreatureYouControlEffect` | `(PermanentPredicate filter)` | untap each other creature you control matching filter; `()` no-arg overload untaps all (ON_ATTACK trigger or activated ability) |
 | `UnattachEquipmentFromTargetPermanentsEffect` | `()` | unattach all equipment from target permanents (multi-target) |
 

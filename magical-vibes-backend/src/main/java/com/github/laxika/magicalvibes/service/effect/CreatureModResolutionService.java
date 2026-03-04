@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentFromTargetPe
 import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAttackedCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapAllControlledPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapEachOtherCreatureYouControlEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -825,6 +826,27 @@ public class CreatureModResolutionService {
         String logEntry = entry.getCard().getName() + " untaps " + count + " other creature(s) you control.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} untaps {} other creature(s)", gameData.id, entry.getCard().getName(), count);
+    }
+
+    @HandlesEffect(UntapAllControlledPermanentsEffect.class)
+    private void resolveUntapAllControlledPermanents(GameData gameData, StackEntry entry, UntapAllControlledPermanentsEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return;
+
+        int count = 0;
+        for (Permanent p : battlefield) {
+            if (effect.filter() != null
+                    && !gameQueryService.matchesPermanentPredicate(gameData, p, effect.filter())) continue;
+            if (!p.isTapped()) continue;
+
+            p.untap();
+            count++;
+        }
+
+        String logEntry = entry.getCard().getName() + " untaps " + count + " permanent(s) you control.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} untaps {} controlled permanent(s)", gameData.id, entry.getCard().getName(), count);
     }
 
     @HandlesEffect(PutXMinusOneMinusOneCountersOnEachCreatureEffect.class)
