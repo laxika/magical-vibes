@@ -124,6 +124,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Upkeep token | `v/VerdantForce.java` | EACH_UPKEEP_TRIGGERED CreateCreatureTokenEffect |
 | Upkeep conditional self-bounce + tokens | `t/ThopterAssembly.java` | UPKEEP_TRIGGERED NoOtherSubtypeConditionalEffect(THOPTER, ReturnSelfToHandAndCreateTokensEffect) — intervening-if "no other Thopters", returns self + creates 5 tokens |
 | Upkeep token per equipment | `k/KembaKhaRegent.java` | UPKEEP_TRIGGERED CreateTokenPerEquipmentOnSourceEffect — tokens equal to attached Equipment |
+| Upkeep may target artifact charge | `v/VedalkenInfuser.java` | UPKEEP_TRIGGERED MayEffect(PutChargeCounterOnTargetPermanentEffect) + PermanentPredicateTargetFilter(PermanentIsArtifactPredicate) — may put charge counter on target artifact |
 | Graveyard upkeep | `s/SqueeGoblinNabob.java` | GRAVEYARD_UPKEEP_TRIGGERED ReturnCardFromGraveyardEffect(HAND, CardIsSelfPredicate, returnAll=true) |
 | Graveyard metalcraft pay-to-return | `k/KuldothaPhoenix.java` | GRAVEYARD_UPKEEP_TRIGGERED MetalcraftConditionalEffect(MayPayManaEffect("{4}", ReturnCardFromGraveyardEffect(BATTLEFIELD, CardIsSelfPredicate))) — metalcraft checked at trigger time, mana paid at resolution |
 | Combat damage to player | `t/ThievingMagpie.java` | ON_COMBAT_DAMAGE_TO_PLAYER DrawCardEffect |

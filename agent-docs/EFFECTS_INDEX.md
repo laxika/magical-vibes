@@ -448,6 +448,7 @@ Pass `null` as filter to allow any card.
 | `EnterWithFixedChargeCountersEffect` | `(int count)` | enters battlefield with N charge counters (replacement effect, fixed count) |
 | `PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect` | `()` | put a -1/-1 counter on each creature target player controls (targets player) |
 | `PutChargeCounterOnSelfEffect` | `()` | put a charge counter on this permanent (self-target, used as activated ability effect) |
+| `PutChargeCounterOnTargetPermanentEffect` | `()` | put a charge counter on target permanent (targets permanent, use with PermanentPredicateTargetFilter to restrict to artifacts etc.) |
 | `PutMinusOneMinusOneCounterOnTargetCreatureEffect` | `(int count)` / `()` / `(int count, boolean regenerateIfSurvives)` | put count -1/-1 counters on target creature (targets permanent). No-arg defaults to 1. With `regenerateIfSurvives=true`, regenerates the creature after placing counters if its toughness is 1 or greater (Gore Vassal) |
 | `PutXMinusOneMinusOneCountersOnEachCreatureEffect` | `()` | put X -1/-1 counters on each creature (all players' creatures), where X comes from the spell's X value |
 | `ProliferateEffect` | `()` | proliferate: choose any number of permanents with counters, add one of each counter type already there |

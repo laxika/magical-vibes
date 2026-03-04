@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeAllCreaturesUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachAttackingCreatureEffect;
@@ -966,6 +967,24 @@ public class CreatureModResolutionService {
         String logEntry = self.getCard().getName() + " gets a charge counter (" + self.getChargeCounters() + " total).";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gets a charge counter ({} total)", gameData.id, self.getCard().getName(), self.getChargeCounters());
+    }
+
+    @HandlesEffect(PutChargeCounterOnTargetPermanentEffect.class)
+    private void resolvePutChargeCounterOnTargetPermanent(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        if (gameQueryService.cantHaveCounters(gameData, target)) {
+            return;
+        }
+
+        target.setChargeCounters(target.getChargeCounters() + 1);
+
+        String logEntry = target.getCard().getName() + " gets a charge counter (" + target.getChargeCounters() + " total).";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} gets a charge counter ({} total)", gameData.id, target.getCard().getName(), target.getChargeCounters());
     }
 
     @HandlesEffect(PutMinusOneMinusOneCounterOnTargetCreatureEffect.class)
