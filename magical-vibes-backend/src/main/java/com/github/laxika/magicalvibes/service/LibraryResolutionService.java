@@ -290,9 +290,7 @@ public class LibraryResolutionService {
                 gameData,
                 entry.getControllerId(),
                 card -> {
-                    boolean matchesType = requestedTypes.contains(card.getType())
-                            || card.getAdditionalTypes().stream().anyMatch(requestedTypes::contains);
-                    return matchesType && card.getManaValue() >= minMV && card.getManaValue() <= maxMV;
+                    return matchesCardTypes(card, requestedTypes) && card.getManaValue() >= minMV && card.getManaValue() <= maxMV;
                 },
                 requestedTypeText + " cards" + mvSuffix,
                 "Search your library for a " + requestedTypeText + " card" + mvSuffix + " to reveal and put into your hand.",
@@ -333,9 +331,7 @@ public class LibraryResolutionService {
                 gameData,
                 entry.getControllerId(),
                 card -> {
-                    boolean matchesType = effect.cardTypes().contains(card.getType())
-                            || card.getAdditionalTypes().stream().anyMatch(effect.cardTypes()::contains);
-                    if (!matchesType) return false;
+                    if (!matchesCardTypes(card, effect.cardTypes())) return false;
                     return !effect.requiresBasicSupertype() || card.getSupertypes().contains(CardSupertype.BASIC);
                 },
                 noMatchDesc,
@@ -354,8 +350,7 @@ public class LibraryResolutionService {
         performLibrarySearch(
                 gameData,
                 entry.getControllerId(),
-                card -> effect.cardTypes().contains(card.getType())
-                        || card.getAdditionalTypes().stream().anyMatch(effect.cardTypes()::contains),
+                card -> matchesCardTypes(card, effect.cardTypes()),
                 "matching cards",
                 "Search your library for a land card to exile (imprint).",
                 false,
@@ -387,11 +382,7 @@ public class LibraryResolutionService {
     @HandlesEffect(DistantMemoriesEffect.class)
     void resolveDistantMemories(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
-        if (!checkSearchRestriction(gameData, controllerId)) {
-            List<Card> deck = gameData.playerDecks.get(controllerId);
-            if (deck != null) Collections.shuffle(deck);
-            return;
-        }
+        if (isSearchPrevented(gameData, controllerId)) return;
 
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -498,11 +489,7 @@ public class LibraryResolutionService {
     void resolvePayManaAndSearchLibraryForCardNamedToBattlefield(GameData gameData, StackEntry entry,
                                                                   PayManaAndSearchLibraryForCardNamedToBattlefieldEffect effect) {
         UUID controllerId = entry.getControllerId();
-        if (!checkSearchRestriction(gameData, controllerId)) {
-            List<Card> deck = gameData.playerDecks.get(controllerId);
-            if (deck != null) Collections.shuffle(deck);
-            return;
-        }
+        if (isSearchPrevented(gameData, controllerId)) return;
 
         String playerName = gameData.playerIdToName.get(controllerId);
         ManaCost cost = new ManaCost(effect.manaCost());
@@ -645,8 +632,7 @@ public class LibraryResolutionService {
         }
 
         // Take top X cards from library
-        List<Card> revealedCards = new ArrayList<>(deck.subList(0, count));
-        deck.subList(0, count).clear();
+        List<Card> revealedCards = takeTopCards(deck, count);
 
         // Filter to nonland permanent cards with MV ≤ 3
         List<Card> eligibleCards = new ArrayList<>();
@@ -692,29 +678,20 @@ public class LibraryResolutionService {
 
     @HandlesEffect(LookAtTopCardsHandTopBottomEffect.class)
     void resolveLookAtTopCardsHandTopBottom(GameData gameData, StackEntry entry, LookAtTopCardsHandTopBottomEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        String playerName = gameData.playerIdToName.get(controllerId);
-
-        int count = Math.min(effect.count(), deck.size());
-        if (count == 0) {
-            String logMsg = entry.getCard().getName() + ": " + playerName + "'s library is empty, nothing to look at.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            return;
-        }
+        TopCardsResult result = takeTopCardsFromLibrary(gameData, entry, effect.count());
+        if (result == null) return;
+        UUID controllerId = result.controllerId();
+        List<Card> topCards = result.topCards();
+        String playerName = result.playerName();
+        int count = topCards.size();
 
         if (count == 1) {
             // Only 1 card: it goes to hand
-            Card card = deck.remove(0);
-            gameData.playerHands.get(controllerId).add(card);
+            gameData.playerHands.get(controllerId).add(topCards.getFirst());
             String logMsg = playerName + " looks at the top card of their library and puts it into their hand.";
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
             return;
         }
-
-        List<Card> topCards = new ArrayList<>(deck.subList(0, count));
-        // Remove the top cards from the deck temporarily
-        deck.subList(0, count).clear();
 
         gameData.interaction.beginHandTopBottomChoice(controllerId, topCards);
 
@@ -735,40 +712,22 @@ public class LibraryResolutionService {
             StackEntry entry,
             LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect effect
     ) {
-        UUID controllerId = entry.getControllerId();
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        String playerName = gameData.playerIdToName.get(controllerId);
-
-        int count = Math.min(effect.count(), deck.size());
-        if (count == 0) {
-            String logMsg = entry.getCard().getName() + ": " + playerName + "'s library is empty.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            return;
-        }
-
-        List<Card> topCards = new ArrayList<>(deck.subList(0, count));
-        deck.subList(0, count).clear();
+        TopCardsResult result = takeTopCardsFromLibrary(gameData, entry, effect.count());
+        if (result == null) return;
+        UUID controllerId = result.controllerId();
+        List<Card> topCards = result.topCards();
+        String playerName = result.playerName();
+        int count = topCards.size();
 
         List<Card> creatureCards = topCards.stream()
-                .filter(card -> effect.cardTypes().contains(card.getType())
-                        || card.getAdditionalTypes().stream().anyMatch(effect.cardTypes()::contains))
+                .filter(card -> matchesCardTypes(card, effect.cardTypes()))
                 .toList();
 
         String logMsg = playerName + " looks at the top " + count + " cards of their library.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
 
         if (creatureCards.isEmpty()) {
-            if (topCards.size() == 1) {
-                deck.add(topCards.getFirst());
-                return;
-            }
-
-            gameData.interaction.beginLibraryReorder(controllerId, topCards, true);
-            List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
-            sessionManager.sendToPlayer(controllerId, new ReorderLibraryCardsMessage(
-                    cardViews,
-                    "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."
-            ));
+            reorderRemainingToBottom(gameData, controllerId, topCards);
             return;
         }
 
@@ -817,19 +776,12 @@ public class LibraryResolutionService {
             StackEntry entry,
             LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect effect
     ) {
-        UUID controllerId = entry.getControllerId();
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        String playerName = gameData.playerIdToName.get(controllerId);
-
-        int count = Math.min(effect.count(), deck.size());
-        if (count == 0) {
-            String logMsg = entry.getCard().getName() + ": " + playerName + "'s library is empty.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            return;
-        }
-
-        List<Card> topCards = new ArrayList<>(deck.subList(0, count));
-        deck.subList(0, count).clear();
+        TopCardsResult result = takeTopCardsFromLibrary(gameData, entry, effect.count());
+        if (result == null) return;
+        UUID controllerId = result.controllerId();
+        List<Card> topCards = result.topCards();
+        String playerName = result.playerName();
+        int count = topCards.size();
 
         // Collect all permanent names from all battlefields
         Set<String> permanentNames = new HashSet<>();
@@ -851,18 +803,7 @@ public class LibraryResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
 
         if (matchingCards.isEmpty()) {
-            // No matching cards — reorder all to bottom
-            if (topCards.size() == 1) {
-                deck.add(topCards.getFirst());
-                return;
-            }
-
-            gameData.interaction.beginLibraryReorder(controllerId, topCards, true);
-            List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
-            sessionManager.sendToPlayer(controllerId, new ReorderLibraryCardsMessage(
-                    cardViews,
-                    "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."
-            ));
+            reorderRemainingToBottom(gameData, controllerId, topCards);
             return;
         }
 
@@ -890,19 +831,12 @@ public class LibraryResolutionService {
 
     @HandlesEffect(ImprintFromTopCardsEffect.class)
     void resolveImprintFromTopCards(GameData gameData, StackEntry entry, ImprintFromTopCardsEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        String playerName = gameData.playerIdToName.get(controllerId);
-
-        int count = Math.min(effect.count(), deck.size());
-        if (count == 0) {
-            String logMsg = entry.getCard().getName() + ": " + playerName + "'s library is empty.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            return;
-        }
-
-        List<Card> topCards = new ArrayList<>(deck.subList(0, count));
-        deck.subList(0, count).clear();
+        TopCardsResult result = takeTopCardsFromLibrary(gameData, entry, effect.count());
+        if (result == null) return;
+        UUID controllerId = result.controllerId();
+        List<Card> topCards = result.topCards();
+        String playerName = result.playerName();
+        int count = topCards.size();
 
         String logMsg = playerName + " looks at the top " + count + " cards of their library.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
@@ -958,11 +892,7 @@ public class LibraryResolutionService {
             boolean reveals,
             boolean canFailToFind,
             LibrarySearchDestination destination) {
-        if (!checkSearchRestriction(gameData, controllerId)) {
-            List<Card> deck = gameData.playerDecks.get(controllerId);
-            if (deck != null) Collections.shuffle(deck);
-            return false;
-        }
+        if (isSearchPrevented(gameData, controllerId)) return false;
 
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -1046,6 +976,55 @@ public class LibraryResolutionService {
         log.info("Game {} - {} has unpaid Leonin Arbiter search tax, search prevented",
                 gameData.id, playerName);
         return false;
+    }
+
+    private static boolean matchesCardTypes(Card card, Set<CardType> cardTypes) {
+        return cardTypes.contains(card.getType())
+                || card.getAdditionalTypes().stream().anyMatch(cardTypes::contains);
+    }
+
+    private static List<Card> takeTopCards(List<Card> deck, int count) {
+        List<Card> topCards = new ArrayList<>(deck.subList(0, count));
+        deck.subList(0, count).clear();
+        return topCards;
+    }
+
+    private void reorderRemainingToBottom(GameData gameData, UUID controllerId, List<Card> topCards) {
+        if (topCards.size() == 1) {
+            gameData.playerDecks.get(controllerId).add(topCards.getFirst());
+            return;
+        }
+        gameData.interaction.beginLibraryReorder(controllerId, topCards, true);
+        List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ReorderLibraryCardsMessage(
+                cardViews,
+                "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."
+        ));
+    }
+
+    private record TopCardsResult(UUID controllerId, List<Card> topCards, String playerName) {}
+
+    private TopCardsResult takeTopCardsFromLibrary(GameData gameData, StackEntry entry, int count) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        int actual = Math.min(count, deck.size());
+        if (actual == 0) {
+            String logMsg = entry.getCard().getName() + ": " + playerName + "'s library is empty.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return null;
+        }
+
+        List<Card> topCards = takeTopCards(deck, actual);
+        return new TopCardsResult(controllerId, topCards, playerName);
+    }
+
+    private boolean isSearchPrevented(GameData gameData, UUID searchingPlayerId) {
+        if (checkSearchRestriction(gameData, searchingPlayerId)) return false;
+        List<Card> deck = gameData.playerDecks.get(searchingPlayerId);
+        if (deck != null) Collections.shuffle(deck);
+        return true;
     }
 
     private void setImprintedCardOnPermanent(GameData gameData, UUID permanentId, Card card) {
