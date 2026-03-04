@@ -28,6 +28,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Pump target | `g/GiantGrowth.java` | BoostTargetCreatureEffect |
 | X pump target | `u/UntamedMight.java` | BoostTargetCreatureXEffect |
 | Pump all + keyword | `o/Overrun.java` | BoostAllOwnCreaturesEffect + GrantKeywordEffect |
+| Pump attacking + keyword | `r/RallyTheForces.java` | BoostAllCreaturesEffect(filter) + GrantKeywordEffect(ALL_CREATURES, filter) with PermanentIsAttackingPredicate |
 | Targeted destroy | `t/Terror.java` | DestroyTargetPermanentEffect + target filter |
 | Multi-effect removal | `c/Condemn.java` | PutTargetOnBottomOfLibrary + GainLifeEqualToTargetToughness |
 | Put on top of library | `b/BanishmentDecree.java` | PutTargetOnTopOfLibraryEffect + PermanentAnyOfPredicate filter (artifact/creature/enchantment) |
