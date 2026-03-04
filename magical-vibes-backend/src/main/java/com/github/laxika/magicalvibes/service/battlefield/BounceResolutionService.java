@@ -67,27 +67,33 @@ public class BounceResolutionService {
     }
 
     /**
-     * Returns the targeted permanent to its owner's hand. Uses {@code targetPermanentId} from
-     * the stack entry to locate the target. If the target is no longer on the battlefield
-     * (e.g. destroyed or already bounced), the effect fizzles silently.
+     * Returns one or more targeted permanents to their owners' hands. Supports both single-target
+     * and multi-target modes. If a target is no longer on the battlefield (e.g. destroyed or
+     * already bounced), it is skipped silently.
      *
      * @param gameData the current game state
-     * @param entry    the stack entry containing the target permanent ID
+     * @param entry    the stack entry containing the target permanent ID(s)
      */
     @HandlesEffect(ReturnTargetPermanentToHandEffect.class)
     void resolveReturnTargetPermanentToHand(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
-        if (target == null) {
-            return;
+        List<UUID> targetIds = entry.getTargetPermanentIds().isEmpty()
+                ? List.of(entry.getTargetPermanentId())
+                : entry.getTargetPermanentIds();
+
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                continue;
+            }
+
+            if (permanentRemovalService.removePermanentToHand(gameData, target)) {
+                String logEntry = target.getCard().getName() + " is returned to its owner's hand.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} returned to owner's hand by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
+            }
         }
 
-        if (permanentRemovalService.removePermanentToHand(gameData, target)) {
-            permanentRemovalService.removeOrphanedAuras(gameData);
-
-            String logEntry = target.getCard().getName() + " is returned to its owner's hand.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} returned to owner's hand by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
-        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     /**

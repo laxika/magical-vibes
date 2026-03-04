@@ -155,7 +155,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
-| `ReturnTargetPermanentToHandEffect` | `()` | return target permanent to owner's hand |
+| `ReturnTargetPermanentToHandEffect` | `()` | return target permanent(s) to owner's hand; supports single-target via `targetPermanentId` and multi-target via `targetPermanentIds` |
 | `ReturnCreaturesToOwnersHandEffect` | `(Set<TargetFilter> filters)` | return all creatures matching filters to owners' hands |
 | `ReturnSelfToHandEffect` | `()` | return this permanent to owner's hand |
 | `ReturnSelfToHandOnCoinFlipLossEffect` | `()` | return self to hand if coin flip is lost |
