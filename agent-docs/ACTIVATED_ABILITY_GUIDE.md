@@ -350,9 +350,10 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `EACH_UPKEEP_TRIGGERED` | Each player's upkeep |
 | `OPPONENT_UPKEEP_TRIGGERED` | Each opponent's upkeep |
 | `GRAVEYARD_UPKEEP_TRIGGERED` | Upkeep trigger from graveyard |
-| `DRAW_TRIGGERED` | Controller draws a card |
-| `EACH_DRAW_TRIGGERED` | Any player draws a card |
-| `ON_OPPONENT_DRAWS` | An opponent draws a card |
+| `DRAW_TRIGGERED` | At the beginning of controller's draw step (draw step only, not spell draws) |
+| `EACH_DRAW_TRIGGERED` | At the beginning of any player's draw step (draw step only) |
+| `ON_CONTROLLER_DRAWS` | Whenever controller draws a card (all draws: draw step, spells, abilities) |
+| `ON_OPPONENT_DRAWS` | Whenever an opponent draws a card (all draws: draw step, spells, abilities) |
 | `ON_OPPONENT_DISCARDS` | An opponent discards a card |
 | `ON_SELF_DISCARDED_BY_OPPONENT` | This card is discarded by an opponent |
 | `END_STEP_TRIGGERED` | End step |

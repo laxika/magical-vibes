@@ -1528,7 +1528,44 @@ public class GameHelper {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} draws a card from effect", gameData.id, gameData.playerIdToName.get(playerId));
 
+        checkControllerDrawTriggers(gameData, playerId);
         checkOpponentDrawTriggers(gameData, playerId);
+    }
+
+    public void checkControllerDrawTriggers(GameData gameData, UUID drawingPlayerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(drawingPlayerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : battlefield) {
+            List<CardEffect> drawEffects = perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_DRAWS);
+            if (drawEffects == null || drawEffects.isEmpty()) continue;
+
+            for (CardEffect effect : drawEffects) {
+                if (effect instanceof MayEffect may) {
+                    gameData.pendingMayAbilities.add(new PendingMayAbility(
+                            perm.getCard(),
+                            drawingPlayerId,
+                            List.of(may.wrapped()),
+                            perm.getCard().getName() + " — " + may.prompt()
+                    ));
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            drawingPlayerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(effect)),
+                            drawingPlayerId,
+                            perm.getId()
+                    ));
+
+                    String triggerLog = perm.getCard().getName() + " triggers — each opponent loses life.";
+                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                    log.info("Game {} - {} controller-draw trigger pushed onto stack",
+                            gameData.id, perm.getCard().getName());
+                }
+            }
+        }
     }
 
     // ===== Regeneration =====

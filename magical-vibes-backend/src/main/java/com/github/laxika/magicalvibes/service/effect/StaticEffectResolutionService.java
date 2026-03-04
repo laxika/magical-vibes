@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledCreatureCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledPermanentCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledLandCountEffect;
@@ -494,6 +495,16 @@ public class StaticEffectResolutionService {
     private void resolvePowerToughnessEqualToControlledCreatureCount(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
         int count = countControlledPermanents(context, p -> isEffectivelyCreature(p, hasAnimateArtifacts));
+        accumulator.addPower(count);
+        accumulator.addToughness(count);
+    }
+
+    @HandlesStaticEffect(value = PowerToughnessEqualToCardsInHandEffect.class, selfOnly = true)
+    private void resolvePowerToughnessEqualToCardsInHand(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        UUID controllerId = findControllerId(context.gameData(), context.source());
+        if (controllerId == null) return;
+        List<Card> hand = context.gameData().playerHands.get(controllerId);
+        int count = hand != null ? hand.size() : 0;
         accumulator.addPower(count);
         accumulator.addToughness(count);
     }
