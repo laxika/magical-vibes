@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateXCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
@@ -66,6 +67,17 @@ public class PermanentControlResolutionService {
     @HandlesEffect(CreateCreatureTokenEffect.class)
     private void resolveCreateCreatureToken(GameData gameData, StackEntry entry, CreateCreatureTokenEffect effect) {
         applyCreateCreatureToken(gameData, entry.getControllerId(), effect);
+    }
+
+    @HandlesEffect(CreateXCreatureTokenEffect.class)
+    private void resolveCreateXCreatureToken(GameData gameData, StackEntry entry, CreateXCreatureTokenEffect effect) {
+        int amount = entry.getXValue();
+        if (amount <= 0) return;
+        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+                amount, effect.tokenName(), effect.power(), effect.toughness(),
+                effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
+        );
+        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect);
     }
 
     @HandlesEffect(ReturnSelfToHandAndCreateTokensEffect.class)
