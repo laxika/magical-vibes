@@ -74,13 +74,13 @@ class ShriekhornTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         shriekhorn.setChargeCounters(3);
 
-        int initialLibrarySize = gd.playerLibraries.get(player2.getId()).size();
+        int initialLibrarySize = gd.playerDecks.get(player2.getId()).size();
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
         assertThat(shriekhorn.getChargeCounters()).isEqualTo(2);
-        assertThat(gd.playerLibraries.get(player2.getId()).size()).isEqualTo(initialLibrarySize - 2);
+        assertThat(gd.playerDecks.get(player2.getId()).size()).isEqualTo(initialLibrarySize - 2);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
     }
 
@@ -94,7 +94,7 @@ class ShriekhornTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         shriekhorn.setChargeCounters(3);
 
-        int initialLibrarySize = gd.playerLibraries.get(player2.getId()).size();
+        int initialLibrarySize = gd.playerDecks.get(player2.getId()).size();
 
         // First activation
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -111,7 +111,7 @@ class ShriekhornTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(shriekhorn.getChargeCounters()).isEqualTo(0);
-        assertThat(gd.playerLibraries.get(player2.getId()).size()).isEqualTo(initialLibrarySize - 6);
+        assertThat(gd.playerDecks.get(player2.getId()).size()).isEqualTo(initialLibrarySize - 6);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(6);
     }
 
@@ -139,13 +139,13 @@ class ShriekhornTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         shriekhorn.setChargeCounters(1);
 
-        int initialLibrarySize = gd.playerLibraries.get(player1.getId()).size();
+        int initialLibrarySize = gd.playerDecks.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
 
         assertThat(shriekhorn.getChargeCounters()).isEqualTo(0);
-        assertThat(gd.playerLibraries.get(player1.getId()).size()).isEqualTo(initialLibrarySize - 2);
+        assertThat(gd.playerDecks.get(player1.getId()).size()).isEqualTo(initialLibrarySize - 2);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
 
