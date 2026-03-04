@@ -89,7 +89,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `DealDamageOnLandTapEffect` | `(int damage)` | deal N damage to a player whenever they tap a land (Manabarbs-style) |
 | `DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect` | `()` | deal damage to each opponent equal to the number of cards that player has drawn this turn |
 | `DealOrderedDamageToAnyTargetsEffect` | `(List<Integer> damageAmounts)` | deal different amounts to multiple targets (e.g. 3 then 1) |
-| `DealXDamageToAnyTargetEffect` | `()` | deal X damage to any target (X spell) |
+| `DealXDamageToAnyTargetEffect` | `()` or `(boolean exileInsteadOfDie)` | deal X damage to any target (X spell). When `exileInsteadOfDie=true`, if target creature would die this turn, exile it instead (sets `exileInsteadOfDieThisTurn` flag, cleared at end of turn) |
 | `DealXDamageToAnyTargetAndGainXLifeEffect` | `()` | deal X damage and gain X life (X spell) |
 | `DealXDamageToTargetCreatureEffect` | `()` | deal X damage to target creature (X spell) |
 | `DealXDamageDividedAmongTargetAttackingCreaturesEffect` | `()` | deal X damage divided among attacking creatures |

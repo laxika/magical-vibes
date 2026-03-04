@@ -535,7 +535,7 @@ public class GameHelper {
             if (p.getPowerModifier() != 0 || p.getToughnessModifier() != 0 || !p.getGrantedKeywords().isEmpty()
                     || p.getDamagePreventionShield() != 0 || p.getRegenerationShield() != 0 || p.isCantBeBlocked()
                     || p.isAnimatedUntilEndOfTurn() || p.isCantRegenerateThisTurn()
-                    || !p.getGrantedCardTypes().isEmpty()) {
+                    || p.isExileInsteadOfDieThisTurn() || !p.getGrantedCardTypes().isEmpty()) {
                 p.resetModifiers();
                 p.setDamagePreventionShield(0);
                 p.setRegenerationShield(0);

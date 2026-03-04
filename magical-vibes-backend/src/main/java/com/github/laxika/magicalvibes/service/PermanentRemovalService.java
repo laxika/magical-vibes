@@ -32,7 +32,7 @@ public class PermanentRemovalService {
 
     public boolean removePermanentToGraveyard(GameData gameData, Permanent target) {
         // Replacement effect: exile instead of going to graveyard (CR 614.6)
-        if (target.isExileIfLeavesBattlefield()) {
+        if (target.isExileIfLeavesBattlefield() || target.isExileInsteadOfDieThisTurn()) {
             boolean exiled = removePermanentToExile(gameData, target);
             if (exiled) {
                 String logEntry = target.getCard().getName() + " is exiled instead of going to the graveyard.";

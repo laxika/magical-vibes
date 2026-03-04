@@ -149,11 +149,24 @@ public class DamageResolutionService {
 
     /**
      * Resolves {@link DealXDamageToAnyTargetEffect} — deals X damage to any target (creature or player).
+     * When {@code exileInsteadOfDie} is true, marks the target creature for exile-instead-of-die this turn.
      */
     @HandlesEffect(DealXDamageToAnyTargetEffect.class)
-    void resolveDealXDamageToAnyTarget(GameData gameData, StackEntry entry) {
+    void resolveDealXDamageToAnyTarget(GameData gameData, StackEntry entry, DealXDamageToAnyTargetEffect effect) {
         UUID targetId = entry.getTargetPermanentId();
         if (targetId == null) return;
+
+        // Mark the target creature for exile-instead-of-die before dealing damage,
+        // so that if lethal damage destroys it immediately, the replacement applies.
+        if (effect.exileInsteadOfDie()) {
+            boolean targetIsPlayer = gameData.playerIds.contains(targetId);
+            if (!targetIsPlayer) {
+                Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
+                if (targetPermanent != null && gameQueryService.isCreature(gameData, targetPermanent)) {
+                    targetPermanent.setExileInsteadOfDieThisTurn(true);
+                }
+            }
+        }
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, entry.getXValue());
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);

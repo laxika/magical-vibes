@@ -32,6 +32,8 @@ public class Permanent {
     @Setter private boolean cantBeBlocked;
     @Setter private boolean cantBlockThisTurn;
     @Setter private boolean cantRegenerateThisTurn;
+    /** If true, this creature is exiled instead of dying this turn (e.g. Red Sun's Zenith). Cleared at end of turn. */
+    @Setter private boolean exileInsteadOfDieThisTurn;
     @Setter private boolean powerToughnessSwitched;
     @Setter private boolean animatedUntilEndOfTurn;
     @Setter private int animatedPower;
@@ -92,6 +94,7 @@ public class Permanent {
         this.cantBeBlocked = source.cantBeBlocked;
         this.cantBlockThisTurn = source.cantBlockThisTurn;
         this.cantRegenerateThisTurn = source.cantRegenerateThisTurn;
+        this.exileInsteadOfDieThisTurn = source.exileInsteadOfDieThisTurn;
         this.powerToughnessSwitched = source.powerToughnessSwitched;
         this.animatedUntilEndOfTurn = source.animatedUntilEndOfTurn;
         this.animatedPower = source.animatedPower;
@@ -219,6 +222,7 @@ public class Permanent {
         this.cantBeBlocked = false;
         this.cantBlockThisTurn = false;
         this.cantRegenerateThisTurn = false;
+        this.exileInsteadOfDieThisTurn = false;
         this.animatedUntilEndOfTurn = false;
         this.animatedPower = 0;
         this.animatedToughness = 0;
