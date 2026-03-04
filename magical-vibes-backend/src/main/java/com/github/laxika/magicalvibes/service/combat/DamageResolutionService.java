@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermane
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetControllerIfTargetHasKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEachPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
@@ -145,6 +146,20 @@ public class DamageResolutionService {
             }
             gameHelper.checkWinCondition(gameData);
         }
+    }
+
+    /**
+     * Resolves {@link DealDamageToEachPlayerEffect} — deals a fixed amount of damage to each player (not creatures).
+     */
+    @HandlesEffect(DealDamageToEachPlayerEffect.class)
+    void resolveDealDamageToEachPlayer(GameData gameData, StackEntry entry, DealDamageToEachPlayerEffect effect) {
+        if (isDamageSourcePreventedWithLog(gameData, entry)) return;
+
+        int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            dealDamageToPlayer(gameData, entry, playerId, damage);
+        }
+        gameHelper.checkWinCondition(gameData);
     }
 
     /**

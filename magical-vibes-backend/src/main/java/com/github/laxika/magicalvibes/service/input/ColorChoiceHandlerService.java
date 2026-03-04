@@ -89,7 +89,6 @@ public class ColorChoiceHandlerService {
             handleExileByNameChoice(gameData, player, colorName, ctx);
             return;
         }
-
         CardColor color = CardColor.valueOf(colorName);
         UUID permanentId = colorChoice.permanentId();
         UUID etbTargetId = colorChoice.etbTargetPermanentId();

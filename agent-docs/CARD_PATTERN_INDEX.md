@@ -24,6 +24,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | X drain all opponents | `e/Exsanguinate.java` | EachOpponentLosesXLifeAndControllerGainsLifeLostEffect — no target, X life loss + gain |
 | Multi-target damage | `c/ConeOfFlame.java` | DealOrderedDamageToAnyTargetsEffect |
 | Damage all creatures | `p/Pyroclasm.java` | MassDamageEffect |
+| Modal spell (choose one) | `s/Slagstorm.java` | ChooseOneEffect wrapping multiple CardEffects (e.g. MassDamageEffect + DealDamageToEachPlayerEffect). Mode chosen at cast time via `xValue` parameter (0-based index). Test with `castSorcery(player, idx, modeIndex)` |
 | Damage filtered creatures + players | `h/Hurricane.java` | MassDamageEffect (X, filter, damagesPlayers) |
 | Pump target | `g/GiantGrowth.java` | BoostTargetCreatureEffect |
 | X pump target | `u/UntamedMight.java` | BoostTargetCreatureXEffect |

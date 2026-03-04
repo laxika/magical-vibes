@@ -67,6 +67,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `PermanentEnteredThisTurnConditionalEffect` | `(CardEffect wrapped, CardPredicate predicate, int minCount)` | Wraps any effect with "if at least N permanents matching predicate entered the battlefield under that player's control this turn" condition. Checked at trigger time via `permanentsEnteredBattlefieldThisTurn`. Used by Tunnel Ignus with `CardTypePredicate(LAND), 2` |
 | `DefendingPlayerPoisonedConditionalEffect` | `(CardEffect wrapped)` | Wraps any effect with "if defending player is poisoned" condition. Used for ON_ATTACK triggers that only fire when opponent has 1+ poison counters. Used by Septic Rats |
 | `MetalcraftReplacementEffect` | `(CardEffect baseEffect, CardEffect metalcraftEffect)` | Picks between base and upgraded effect at resolution based on metalcraft. Resolves `metalcraftEffect` if 3+ artifacts, otherwise `baseEffect`. Targeting delegates to both inner effects (union). No new handler needed — unwrapped in `EffectResolutionService` |
+| `ChooseOneEffect` | `(List<ChooseOneOption> options)` | Modal spell: defines the available modes for "Choose one" spells. Each `ChooseOneOption(String label, CardEffect effect)` pairs a display label with its effect. **Mode is chosen at cast time** (per CR 700.2a): `SpellCastingService` unwraps the `ChooseOneEffect` using the `xValue` parameter as the mode index (0-based) and places only the chosen inner effect on the stack. Used by Slagstorm |
 
 ---
 
@@ -80,6 +81,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `DealDamageToTargetPlayerEffect` | `(int damage)` | deal N damage to target player |
 | `DealDamageToTargetPlayerByHandSizeEffect` | `()` | deal damage equal to hand size to target player |
 | `MassDamageEffect` | `(int damage)` or `(int damage, boolean damagesPlayers)` or `(int damage, boolean usesXValue, boolean damagesPlayers, PermanentPredicate filter)` | deal N damage to all creatures (optionally filtered by predicate), optionally to all players too. Use `usesXValue=true` to use X value instead of fixed damage |
+| `DealDamageToEachPlayerEffect` | `(int damage)` | deal N damage to each player (not creatures). Used by modal spells like Slagstorm's second mode |
 | `DealDamageToAnyTargetAndGainLifeEffect` | `(int damage, int lifeGain)` | deal N damage and gain M life |
 | `DealDamageToControllerEffect` | `(int damage)` | deal N damage to the card's controller (pain lands, self-damage) |
 | `DealDamageToTargetControllerIfTargetHasKeywordEffect` | `(int damage, Keyword keyword)` | deal N damage to targeted creature's controller if that creature has the specified keyword |

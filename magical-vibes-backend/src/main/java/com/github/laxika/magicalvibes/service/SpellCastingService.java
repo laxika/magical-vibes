@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOn
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -119,6 +120,19 @@ public class SpellCastingService {
                 .anyMatch(e -> e instanceof SacrificeArtifactCost);
         if (usesSacrificeArtifactCost) {
             filteredSpellEffects.removeIf(SacrificeArtifactCost.class::isInstance);
+        }
+
+        // Handle modal spells (Choose one): unwrap at cast time per MTG CR 700.2a
+        for (int i = 0; i < filteredSpellEffects.size(); i++) {
+            if (filteredSpellEffects.get(i) instanceof ChooseOneEffect coe) {
+                if (effectiveXValue < 0 || effectiveXValue >= coe.options().size()) {
+                    throw new IllegalStateException("Invalid mode index: " + effectiveXValue);
+                }
+                ChooseOneEffect.ChooseOneOption chosen = coe.options().get(effectiveXValue);
+                filteredSpellEffects.set(i, chosen.effect());
+                effectiveXValue = 0;
+                break;
+            }
         }
 
         // For X-cost spells, validate that player can pay colored + generic + xValue + any cost increases
