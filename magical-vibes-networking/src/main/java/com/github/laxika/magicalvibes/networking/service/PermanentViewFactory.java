@@ -35,6 +35,10 @@ public class PermanentViewFactory {
     }
 
     public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, boolean colorOverriding, boolean subtypeOverriding) {
+        return create(p, bonusPower, bonusToughness, bonusKeywords, animatedCreature, grantedActivatedAbilities, staticGrantedColors, staticGrantedSubtypes, Set.of(), colorOverriding, subtypeOverriding);
+    }
+
+    public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding) {
         Set<Keyword> allKeywords = new HashSet<>(p.getGrantedKeywords());
         allKeywords.addAll(bonusKeywords);
         CardView cardView = cardViewFactory.create(p.getCard());
@@ -43,6 +47,7 @@ public class PermanentViewFactory {
         cardView = applyStaticGrantedSubtypes(cardView, staticGrantedSubtypes, subtypeOverriding);
         cardView = applyAwakeningCounterSubtype(cardView, p);
         cardView = applyGrantedCardTypes(cardView, p);
+        cardView = applyStaticGrantedCardTypes(cardView, staticGrantedCardTypes);
         cardView = applyGrantedActivatedAbilities(cardView, grantedActivatedAbilities);
         cardView = applyStaticGrantedColors(cardView, p, staticGrantedColors, colorOverriding);
         return new PermanentView(
@@ -109,6 +114,22 @@ public class PermanentViewFactory {
         }
         Set<CardType> mergedTypes = new HashSet<>(cardView.additionalTypes());
         mergedTypes.addAll(p.getGrantedCardTypes());
+        return new CardView(
+                cardView.name(), cardView.type(), mergedTypes, cardView.supertypes(), cardView.subtypes(),
+                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
+                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
+                cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
+                cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
+                cardView.hasConvoke()
+        );
+    }
+
+    private CardView applyStaticGrantedCardTypes(CardView cardView, Set<CardType> staticGrantedCardTypes) {
+        if (staticGrantedCardTypes.isEmpty()) {
+            return cardView;
+        }
+        Set<CardType> mergedTypes = new HashSet<>(cardView.additionalTypes());
+        mergedTypes.addAll(staticGrantedCardTypes);
         return new CardView(
                 cardView.name(), cardView.type(), mergedTypes, cardView.supertypes(), cardView.subtypes(),
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),

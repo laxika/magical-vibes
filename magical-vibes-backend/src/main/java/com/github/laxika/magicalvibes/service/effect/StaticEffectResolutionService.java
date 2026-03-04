@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
@@ -192,6 +193,14 @@ public class StaticEffectResolutionService {
             if (grant.overriding()) {
                 accumulator.setSubtypeOverriding(true);
             }
+        }
+    }
+
+    @HandlesStaticEffect(GrantCardTypeEffect.class)
+    private void resolveGrantCardType(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var grant = (GrantCardTypeEffect) effect;
+        if (matchesCreatureScope(context, grant.scope(), null)) {
+            accumulator.addGrantedCardType(grant.cardType());
         }
     }
 

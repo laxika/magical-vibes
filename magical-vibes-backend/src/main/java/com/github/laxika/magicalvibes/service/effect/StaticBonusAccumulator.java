@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService.StaticBonus;
@@ -26,6 +27,7 @@ public class StaticBonusAccumulator {
     private final List<CardEffect> grantedEffects = new ArrayList<>();
     private final Set<CardColor> grantedColors = EnumSet.noneOf(CardColor.class);
     private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
+    private final Set<CardType> grantedCardTypes = EnumSet.noneOf(CardType.class);
     private boolean colorOverriding;
     private boolean subtypeOverriding;
 
@@ -115,6 +117,14 @@ public class StaticBonusAccumulator {
         return grantedSubtypes;
     }
 
+    public void addGrantedCardType(CardType cardType) {
+        grantedCardTypes.add(cardType);
+    }
+
+    public Set<CardType> getGrantedCardTypes() {
+        return grantedCardTypes;
+    }
+
     public boolean isColorOverriding() {
         return colorOverriding;
     }
@@ -142,7 +152,7 @@ public class StaticBonusAccumulator {
         return new StaticBonus(
                 finalPower, finalToughness, keywords, protectionColors,
                 animated, grantedActivatedAbilities, grantedEffects,
-                grantedColors, grantedSubtypes, colorOverriding, subtypeOverriding);
+                grantedColors, grantedSubtypes, grantedCardTypes, colorOverriding, subtypeOverriding);
     }
 }
 

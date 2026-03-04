@@ -116,11 +116,12 @@ public class GameQueryService {
      * @param grantedEffects            card effects granted by static effects
      * @param grantedColors             colors granted by static effects
      * @param grantedSubtypes           subtypes granted by static effects
+     * @param grantedCardTypes          card types granted by static effects
      * @param colorOverriding           whether granted colors replace the permanent's natural color
      * @param subtypeOverriding         whether granted subtypes replace the permanent's natural subtypes
      */
-    public record StaticBonus(int power, int toughness, Set<Keyword> keywords, Set<CardColor> protectionColors, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects, Set<CardColor> grantedColors, List<CardSubtype> grantedSubtypes, boolean colorOverriding, boolean subtypeOverriding) {
-        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), false, false);
+    public record StaticBonus(int power, int toughness, Set<Keyword> keywords, Set<CardColor> protectionColors, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects, Set<CardColor> grantedColors, List<CardSubtype> grantedSubtypes, Set<CardType> grantedCardTypes, boolean colorOverriding, boolean subtypeOverriding) {
+        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), false, false);
     }
 
     // --- Lookup helpers ---
@@ -343,18 +344,27 @@ public class GameQueryService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return false;
         long artifactCount = battlefield.stream()
-                .filter(this::isArtifact)
+                .filter(p -> isArtifact(gameData, p))
                 .count();
         return artifactCount >= 3;
     }
 
     /**
      * Returns {@code true} if the permanent is an artifact, either by its natural card type
-     * or by a granted card type.
+     * or by a granted card type (temporary, from activated/triggered abilities).
      */
     public boolean isArtifact(Permanent permanent) {
         return hasCardType(permanent, CardType.ARTIFACT)
                 || permanent.getGrantedCardTypes().contains(CardType.ARTIFACT);
+    }
+
+    /**
+     * Returns {@code true} if the permanent is an artifact, checking natural card type,
+     * temporary granted card types, and static card type grants (e.g. from equipment).
+     */
+    public boolean isArtifact(GameData gameData, Permanent permanent) {
+        return isArtifact(permanent)
+                || computeStaticBonus(gameData, permanent).grantedCardTypes().contains(CardType.ARTIFACT);
     }
 
     // --- Keyword & effect checking ---
@@ -463,7 +473,10 @@ public class GameQueryService {
             return hasCardType(permanent, CardType.LAND);
         }
         if (predicate instanceof PermanentIsArtifactPredicate) {
-            return isArtifact(permanent);
+            if (gameData == null) {
+                return isArtifact(permanent);
+            }
+            return isArtifact(gameData, permanent);
         }
         if (predicate instanceof PermanentIsEnchantmentPredicate) {
             return hasCardType(permanent, CardType.ENCHANTMENT);

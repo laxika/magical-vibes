@@ -248,6 +248,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Grant ability + doesn't untap equip | `h/HeavyArbalest.java` | STATIC EquippedCreatureDoesntUntapEffect + GrantActivatedAbilityEffect(EQUIPPED_CREATURE) + equip |
 | Per-blocker trigger equip | `i/InfiltrationLens.java` | ON_BECOMES_BLOCKED MayEffect(DrawCardEffect(2)) + `TriggerMode.PER_BLOCKER` + equip. Use `addEffect(slot, effect, TriggerMode.PER_BLOCKER)` for "becomes blocked by a creature" triggers that fire once per blocker |
 | Becomes-target trigger equip | `l/LivewireLash.java` | ON_BECOMES_TARGET_OF_SPELL DealDamageToAnyTargetEffect(2) + STATIC BoostAttachedCreatureEffect(2, 0) + equip. Grants triggered ability to equipped creature: when it becomes the target of a spell, deal 2 damage to any target |
+| Boost + grant card type equip | `s/SilverskinArmor.java` | STATIC BoostAttachedCreatureEffect(1, 1) + GrantCardTypeEffect(ARTIFACT, EQUIPPED_CREATURE) + equip. Makes equipped creature an artifact in addition to its other types (counts for metalcraft, artifact targeting, etc.) |
 
 ## Activated abilities
 
