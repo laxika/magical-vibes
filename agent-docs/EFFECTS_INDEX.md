@@ -157,6 +157,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `CounterSpellEffect` | `()` | counter target spell |
 | `CounterUnlessPaysEffect` | `(int amount)` | counter unless controller pays N generic mana |
 | `RegisterDelayedCounterTriggerEffect` | `(int genericManaAmount)` | registers a delayed trigger (opening hand reveal) that counters each opponent's first spell unless they pay N generic mana. Handled by MayAbilityHandlerService, not GameService |
+| `RegisterDelayedManaTriggerEffect` | `(ManaColor color, int amount)` | registers a delayed trigger (opening hand reveal) that adds N mana of the given color at the beginning of the revealing player's first precombat main phase. Handled by MayAbilityHandlerService, not GameService |
 | `CreatureSpellsCantBeCounteredEffect` | `()` | creature spells can't be countered (static) |
 
 ## Bounce / return to hand
@@ -575,7 +576,7 @@ Pass `null` as filter to allow any card.
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
-| `AwardManaEffect` | `(ManaColor color, int amount)` or `(ManaColor color)` (defaults amount to 1) | add N mana of specified color |
+| `AwardManaEffect` | `(ManaColor color, int amount)` or `(ManaColor color)` (defaults amount to 1) | add N mana of specified color. Also stack-resolvable via `@HandlesEffect` in LifeResolutionService |
 | `AwardAnyColorManaEffect` | `()` | add one mana of any color |
 | `AddManaOnEnchantedLandTapEffect` | `(ManaColor color, int amount)` | when enchanted land is tapped, add N mana of color |
 | `AddExtraManaOfChosenColorOnLandTapEffect` | `()` | ON_ANY_PLAYER_TAPS_LAND trigger: when a land you control taps for mana of the source permanent's chosen color, add one additional mana of that color. Checks ON_TAP effects of the tapped land. Used by Caged Sun |

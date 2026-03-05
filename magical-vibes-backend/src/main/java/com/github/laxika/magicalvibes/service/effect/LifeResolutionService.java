@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrainLifePerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeAndControllerGainsLifeLostEffect;
@@ -562,6 +563,18 @@ public class LifeResolutionService {
 
         log.info("Game {} - Delayed trigger registered: if {} dies this turn, its controller gets {} poison counter(s)",
                 gameData.id, target.getCard().getName(), effect.amount());
+    }
+
+    @HandlesEffect(AwardManaEffect.class)
+    private void resolveAwardMana(GameData gameData, StackEntry entry, AwardManaEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        ManaPool pool = gameData.playerManaPools.get(controllerId);
+        pool.add(effect.color(), effect.amount());
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String logEntry = playerName + " adds " + effect.amount() + " " + effect.color().getCode() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} adds {} {}", gameData.id, playerName, effect.amount(), effect.color());
     }
 
     @HandlesEffect(AddManaPerControlledSubtypeEffect.class)

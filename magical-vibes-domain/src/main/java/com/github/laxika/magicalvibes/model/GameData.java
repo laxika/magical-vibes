@@ -125,6 +125,10 @@ public class GameData {
      *  Fires once per opponent when they cast their first spell of the game. */
     public final List<OpeningHandRevealTrigger> openingHandRevealTriggers = Collections.synchronizedList(new ArrayList<>());
 
+    /** Delayed mana triggers from Chancellor-style opening hand reveals.
+     *  Fires at the beginning of the revealing player's first precombat main phase. */
+    public final List<OpeningHandRevealTrigger> openingHandManaTriggers = Collections.synchronizedList(new ArrayList<>());
+
     /** Tracks which players have cast their first spell of the game (for opening hand triggers). */
     public final Set<UUID> playersWhoCastFirstSpellInGame = ConcurrentHashMap.newKeySet();
 
@@ -476,6 +480,7 @@ public class GameData {
 
         // --- Opening hand reveal triggers (Chancellor cycle) ---
         copy.openingHandRevealTriggers.addAll(this.openingHandRevealTriggers);
+        copy.openingHandManaTriggers.addAll(this.openingHandManaTriggers);
         copy.playersWhoCastFirstSpellInGame.addAll(this.playersWhoCastFirstSpellInGame);
 
         // --- Game log (share reference for simulation — not read during MCTS) ---

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -97,6 +98,8 @@ public class TurnProgressionService {
 
             if (next == TurnStep.UPKEEP) {
                 handleUpkeepTriggers(gameData);
+            } else if (next == TurnStep.PRECOMBAT_MAIN) {
+                handlePrecombatMainTriggers(gameData);
             } else if (next == TurnStep.DRAW) {
                 handleDrawStep(gameData);
             } else if (next == TurnStep.DECLARE_ATTACKERS) {
@@ -404,6 +407,35 @@ public class TurnProgressionService {
                         log.info("Game {} - {} reveals {} from opening hand, trigger pushed onto stack",
                                 gameData.id, playerName, card.getName());
                     }
+                }
+            }
+        }
+    }
+
+    private void handlePrecombatMainTriggers(GameData gameData) {
+        // Chancellor-style delayed mana triggers: fire at the beginning of the revealing player's first main phase
+        if (!gameData.openingHandManaTriggers.isEmpty()) {
+            UUID activePlayerId = gameData.activePlayerId;
+            List<OpeningHandRevealTrigger> toFire = gameData.openingHandManaTriggers.stream()
+                    .filter(t -> t.revealingPlayerId().equals(activePlayerId))
+                    .toList();
+
+            if (!toFire.isEmpty()) {
+                gameData.openingHandManaTriggers.removeAll(toFire);
+                for (OpeningHandRevealTrigger trigger : toFire) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            trigger.sourceCard(),
+                            trigger.revealingPlayerId(),
+                            trigger.sourceCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(trigger.effect()))
+                    ));
+
+                    String logEntry = trigger.sourceCard().getName() + "'s delayed trigger fires — adds mana.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {}'s opening hand mana trigger fires for {}",
+                            gameData.id, trigger.sourceCard().getName(),
+                            gameData.playerIdToName.get(activePlayerId));
                 }
             }
         }
