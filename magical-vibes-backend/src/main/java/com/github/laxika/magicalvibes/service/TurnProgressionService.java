@@ -130,6 +130,12 @@ public class TurnProgressionService {
     }
 
     void handleUpkeepTriggers(GameData gameData) {
+        // Chancellor cycle: at the beginning of the first upkeep, check all players' hands
+        // for cards with OPENING_HAND_TRIGGERED effects (revealed from opening hand)
+        if (gameData.turnNumber == 1) {
+            handleOpeningHandTriggers(gameData);
+        }
+
         UUID activePlayerId = gameData.activePlayerId;
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield == null) return;
@@ -368,6 +374,38 @@ public class TurnProgressionService {
         String logEntry = trigger.sourceCard().getName() + "'s upkeep ability triggers.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} upkeep copy trigger awaiting target selection", gameData.id, trigger.sourceCard().getName());
+    }
+
+    private void handleOpeningHandTriggers(GameData gameData) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> hand = gameData.playerHands.get(playerId);
+            if (hand == null) continue;
+
+            for (Card card : hand) {
+                List<CardEffect> openingHandEffects = card.getEffects(EffectSlot.OPENING_HAND_TRIGGERED);
+                if (openingHandEffects == null || openingHandEffects.isEmpty()) continue;
+
+                for (CardEffect effect : openingHandEffects) {
+                    if (effect instanceof MayEffect may) {
+                        gameData.queueMayAbility(card, playerId, may);
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                card,
+                                playerId,
+                                card.getName() + "'s opening hand ability",
+                                new ArrayList<>(List.of(effect))
+                        ));
+
+                        String playerName = gameData.playerIdToName.get(playerId);
+                        String logEntry = playerName + " reveals " + card.getName() + " from their opening hand.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} reveals {} from opening hand, trigger pushed onto stack",
+                                gameData.id, playerName, card.getName());
+                    }
+                }
+            }
+        }
     }
 
     void handleDrawStep(GameData gameData) {

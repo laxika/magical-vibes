@@ -386,6 +386,7 @@ Pass `null` as filter to allow any card.
 | `DoubleTargetPlayerLifeEffect` | `()` | double target player's life total |
 | `LoseLifeEffect` | `(int amount)` | lose N life |
 | `EachOpponentLosesLifeEffect` | `(int amount)` | each opponent loses N life |
+| `EachOpponentLosesLifeAndControllerGainsLifeLostEffect` | `(int amount)` | each opponent loses N life, controller gains total life lost |
 | `EachOpponentLosesXLifeAndControllerGainsLifeLostEffect` | `()` | each opponent loses X life, controller gains total life lost |
 | `TargetPlayerLosesLifeEffect` | `(int amount)` | target player loses N life |
 | `TargetPlayerLosesLifeAndControllerGainsLifeEffect` | `(int lifeLoss, int lifeGain)` | drain: target loses N, you gain M |
