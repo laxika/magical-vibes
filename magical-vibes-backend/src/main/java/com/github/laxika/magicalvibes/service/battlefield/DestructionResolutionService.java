@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndGiveControllerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainLifeEqualToToughnessEffect;
@@ -358,7 +359,9 @@ public class DestructionResolutionService {
 
     /**
      * Resolves a {@link DestroyTargetPermanentEffect}, destroying the targeted permanent.
-     * Respects the effect's {@code cannotBeRegenerated} flag.
+     * Respects the effect's {@code cannotBeRegenerated} flag. If {@code tokenForController}
+     * is non-null, creates a creature token for the target's controller regardless of
+     * whether the destruction succeeds (e.g. Beast Within).
      */
     @HandlesEffect(DestroyTargetPermanentEffect.class)
     void resolveDestroyTargetPermanent(GameData gameData, StackEntry entry, DestroyTargetPermanentEffect destroy) {
@@ -367,7 +370,15 @@ public class DestructionResolutionService {
             return;
         }
 
+        // Capture the controller before destruction (needed for token creation)
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+
         tryDestroyAndLog(gameData, target, entry.getCard().getName(), destroy.cannotBeRegenerated());
+
+        // Create token for the target's controller if specified
+        if (destroy.tokenForController() != null && controllerId != null) {
+            createTokenForPlayer(gameData, controllerId, destroy.tokenForController(), entry.getCard().getName());
+        }
     }
 
     /**
@@ -765,5 +776,40 @@ public class DestructionResolutionService {
         // Gain life equal to toughness regardless of destruction result
         gainLifeForPlayer(gameData, entry.getControllerId(), toughness,
                 "equal to " + target.getCard().getName() + "'s toughness");
+    }
+
+    private void createTokenForPlayer(GameData gameData, UUID controllerId,
+                                      CreateCreatureTokenEffect token, String sourceName) {
+        Card tokenCard = new Card();
+        tokenCard.setName(token.tokenName());
+        tokenCard.setType(CardType.CREATURE);
+        tokenCard.setManaCost("");
+        tokenCard.setToken(true);
+        tokenCard.setColor(token.color());
+        tokenCard.setPower(token.power());
+        tokenCard.setToughness(token.toughness());
+        tokenCard.setSubtypes(token.subtypes());
+        if (token.keywords() != null && !token.keywords().isEmpty()) {
+            tokenCard.setKeywords(token.keywords());
+        }
+        if (token.additionalTypes() != null && !token.additionalTypes().isEmpty()) {
+            tokenCard.setAdditionalTypes(token.additionalTypes());
+        }
+
+        Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
+        enterTappedTypesSnapshot.addAll(gameHelper.snapshotEnterTappedTypes(gameData));
+
+        Permanent tokenPermanent = new Permanent(tokenCard);
+        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String colorName = token.color() != null ? token.color().name().toLowerCase() + " " : "";
+        String logEntry = playerName + " creates a " + token.power() + "/" + token.toughness()
+                + " " + colorName + token.tokenName() + " creature token.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} creates a {}/{} {} token for {}", gameData.id, sourceName,
+                token.power(), token.toughness(), token.tokenName(), playerName);
+
+        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
     }
 }

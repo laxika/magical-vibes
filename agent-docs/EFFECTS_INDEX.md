@@ -107,7 +107,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
-| `DestroyTargetPermanentEffect` | `(boolean cannotBeRegenerated)` | destroy target permanent |
+| `DestroyTargetPermanentEffect` | `(boolean cannotBeRegenerated)` or `(boolean cannotBeRegenerated, CreateCreatureTokenEffect tokenForController)` | destroy target permanent. When `tokenForController` is non-null, creates that token for the target's controller regardless of whether destruction succeeds (e.g. Beast Within, Pongify) |
 | `DestroyAllPermanentsEffect` | `(Set<CardType> targetTypes)` or `(Set<CardType> targetTypes, boolean cannotBeRegenerated)` or `(Set<CardType> targetTypes, boolean onlyOpponents, boolean cannotBeRegenerated)` or `(Set<CardType> targetTypes, boolean onlyOpponents, boolean cannotBeRegenerated, PermanentPredicate filter)` | destroy all permanents of given types. Optional predicate filter for additional conditions |
 | `DestroyAllCreaturesAndCreateTokenFromDestroyedCountEffect` | `(String tokenName, List<CardSubtype> tokenSubtypes, Set<CardType> tokenAdditionalTypes)` | destroy all creatures, then create a colorless X/X creature token where X = number actually destroyed (skips indestructible/regenerated) |
 | `DestroyTargetLandAndDamageControllerEffect` | `(int damage)` | destroy target land and deal N to its controller |
