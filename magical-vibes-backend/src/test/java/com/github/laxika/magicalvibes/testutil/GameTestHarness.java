@@ -302,6 +302,14 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }
 
+    public void castCreature(Player player, int cardIndex, int mode) {
+        gameService.playCard(gameData, player, cardIndex, mode, null, null);
+    }
+
+    public void castCreature(Player player, int cardIndex, int mode, UUID targetPermanentId) {
+        gameService.playCard(gameData, player, cardIndex, mode, targetPermanentId, null);
+    }
+
     public void castEnchantment(Player player, int cardIndex) {
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }

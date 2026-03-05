@@ -311,6 +311,7 @@ Pass `null` as filter to allow any card.
 | `SearchLibraryForCreatureWithSubtypeToBattlefieldEffect` | `(CardSubtype requiredSubtype)` | search library for creature card with specified subtype and put it onto the battlefield |
 | `CastTopOfLibraryWithoutPayingManaCostEffect` | `(Set<CardType> castableTypes)` | look at top card of controller's library; if it matches one of the castable types, may cast it without paying its mana cost |
 | `DistantMemoriesEffect` | `()` | search library for any card, exile it, shuffle; opponent may let you have it, otherwise draw 3 |
+| `SearchLibraryForCreatureToTopOfLibraryEffect` | `()` | search library for a creature card, reveal it, then shuffle and put that card on top of library |
 | `PayManaAndSearchLibraryForCardNamedToBattlefieldEffect` | `(String manaCost, String cardName)` | pay mana, search for named card to battlefield |
 | `LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect` | `(int count, Set<CardType> cardTypes)` or `(int count, Set<CardType> cardTypes, boolean anyNumber)` | look at top N, may reveal matching type to hand, rest on bottom; anyNumber=true allows multi-select |
 | `LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect` | `(int count)` | look at top N cards, may put one onto battlefield if it shares a name with any permanent, rest on bottom in any order |

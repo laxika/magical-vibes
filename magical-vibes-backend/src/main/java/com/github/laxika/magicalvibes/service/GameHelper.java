@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
@@ -799,6 +800,10 @@ public class GameHelper {
     // ===== ETB pipeline =====
 
     public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId, boolean wasCastFromHand) {
+        handleCreatureEnteredBattlefield(gameData, controllerId, card, targetPermanentId, wasCastFromHand, 0);
+    }
+
+    public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId, boolean wasCastFromHand, int etbMode) {
         boolean needsColorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof ChooseColorEffect);
         if (needsColorChoice) {
@@ -808,10 +813,14 @@ public class GameHelper {
             return;
         }
 
-        processCreatureETBEffects(gameData, controllerId, card, targetPermanentId, wasCastFromHand);
+        processCreatureETBEffects(gameData, controllerId, card, targetPermanentId, wasCastFromHand, etbMode);
     }
 
     public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId, boolean wasCastFromHand) {
+        processCreatureETBEffects(gameData, controllerId, card, targetPermanentId, wasCastFromHand, 0);
+    }
+
+    public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId, boolean wasCastFromHand, int etbMode) {
         List<CardEffect> triggeredEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> !(e instanceof ChooseColorEffect))
                 .filter(e -> !(e instanceof CopyPermanentOnEnterEffect))
@@ -825,6 +834,13 @@ public class GameHelper {
                     .map(e -> {
                         if (e instanceof LoseGameIfNotCastFromHandEffect) {
                             return wasCastFromHand ? null : new TargetPlayerLosesGameEffect(controllerId);
+                        }
+                        // Unwrap modal ETB choice (choose one) using the mode index from cast time
+                        if (e instanceof ChooseOneEffect coe) {
+                            if (etbMode >= 0 && etbMode < coe.options().size()) {
+                                return coe.options().get(etbMode).effect();
+                            }
+                            return coe.options().getFirst().effect();
                         }
                         return e;
                     })

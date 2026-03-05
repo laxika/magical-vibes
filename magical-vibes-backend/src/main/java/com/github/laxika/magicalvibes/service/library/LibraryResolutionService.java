@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBa
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithColorAndMVXOrLessToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithSubtypeToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithMVXOrLessToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
@@ -493,6 +494,25 @@ public class LibraryResolutionService {
                 true,
                 true,
                 LibrarySearchDestination.HAND
+        );
+    }
+
+    /**
+     * Searches the controller's library for a creature card, reveals it,
+     * then shuffles and puts that card on top of their library.
+     * Used by cards like Brutalizer Exarch.
+     */
+    @HandlesEffect(SearchLibraryForCreatureToTopOfLibraryEffect.class)
+    void resolveSearchLibraryForCreatureToTopOfLibrary(GameData gameData, StackEntry entry, SearchLibraryForCreatureToTopOfLibraryEffect effect) {
+        performLibrarySearch(
+                gameData,
+                entry.getControllerId(),
+                card -> card.getType() == CardType.CREATURE,
+                "creature cards",
+                "Search your library for a creature card, reveal it, then shuffle and put that card on top.",
+                true,
+                true,
+                LibrarySearchDestination.TOP_OF_LIBRARY
         );
     }
 

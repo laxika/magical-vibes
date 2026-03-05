@@ -114,7 +114,7 @@ public class StackResolutionService {
 
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
 
-        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId(), true);
+        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId(), true, entry.getXValue());
         if (!gameData.interaction.isAwaitingInput()) {
             legendRuleService.checkLegendRule(gameData, controllerId);
         }
@@ -240,7 +240,7 @@ public class StackResolutionService {
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
 
         // Process ETB effects for all artifacts (creature and non-creature)
-        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId(), true);
+        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId(), true, entry.getXValue());
 
         if (!gameData.interaction.isAwaitingInput()) {
             legendRuleService.checkLegendRule(gameData, controllerId);

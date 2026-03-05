@@ -53,11 +53,7 @@ public class PermanentControlTargetValidators {
 
     @ValidatesTarget(PutTargetOnBottomOfLibraryEffect.class)
     public void validatePutTargetOnBottomOfLibrary(TargetValidationContext ctx) {
-        tvs.requireTarget(ctx);
-        Permanent target = gameQueryService.findPermanentById(ctx.gameData(), ctx.targetPermanentId());
-        if (target == null || !gameQueryService.isCreature(ctx.gameData(), target)) {
-            throw new IllegalStateException("Target must be a creature");
-        }
+        tvs.requireBattlefieldTarget(ctx);
     }
 
     @ValidatesTarget(PutTargetOnTopOfLibraryEffect.class)

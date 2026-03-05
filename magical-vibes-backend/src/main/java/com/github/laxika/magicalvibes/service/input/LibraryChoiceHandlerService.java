@@ -381,7 +381,20 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
-        if (destination == LibrarySearchDestination.HAND) {
+        if (destination == LibrarySearchDestination.TOP_OF_LIBRARY) {
+            // Shuffle library first, then put the card on top (MTG rule: "shuffle and put on top")
+            if (shuffleAfterSelection) {
+                Collections.shuffle(deck);
+            }
+            deck.addFirst(chosenCard);
+            String topLog = player.getUsername() + " reveals " + chosenCard.getName()
+                    + " and puts it on top of their library. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, topLog);
+            log.info("Game {} - {} searches library and puts {} on top",
+                    gameData.id, player.getUsername(), chosenCard.getName());
+            turnProgressionService.resolveAutoPass(gameData);
+            return;
+        } else if (destination == LibrarySearchDestination.HAND) {
             gameData.playerHands.get(handOwnerId).add(chosenCard);
         } else if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
             gameData.playerExiledCards.get(playerId).add(chosenCard);
@@ -446,6 +459,7 @@ public class LibraryChoiceHandlerService {
             case HAND -> "into their hand";
             case EXILE_IMPRINT -> "into exile (imprint)";
             case EXILE -> "into exile";
+            case TOP_OF_LIBRARY -> "on top of their library";
         };
         String logEntry;
         if (targetPlayerId != null) {
