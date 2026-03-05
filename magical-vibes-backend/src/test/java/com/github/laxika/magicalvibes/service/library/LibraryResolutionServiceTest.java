@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.service;
+package com.github.laxika.magicalvibes.service.library;
 
 import com.github.laxika.magicalvibes.cards.a.AvenWindreader;
 import com.github.laxika.magicalvibes.cards.c.CloneShell;

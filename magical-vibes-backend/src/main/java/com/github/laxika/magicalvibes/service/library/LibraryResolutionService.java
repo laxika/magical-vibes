@@ -1,5 +1,7 @@
-package com.github.laxika.magicalvibes.service;
+package com.github.laxika.magicalvibes.service.library;
 
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;

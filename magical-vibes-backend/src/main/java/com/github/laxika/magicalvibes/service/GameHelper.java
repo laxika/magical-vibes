@@ -1554,7 +1554,7 @@ public class GameHelper {
 
     // ===== Exile (used by CombatService) =====
 
-    void resolveExileTopCardsRepeatOnDuplicate(GameData gameData, Card sourceCard, UUID targetPlayerId, ExileTopCardsRepeatOnDuplicateEffect effect) {
+    public void resolveExileTopCardsRepeatOnDuplicate(GameData gameData, Card sourceCard, UUID targetPlayerId, ExileTopCardsRepeatOnDuplicateEffect effect) {
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         List<Card> exiled = gameData.playerExiledCards.get(targetPlayerId);
         String playerName = gameData.playerIdToName.get(targetPlayerId);
