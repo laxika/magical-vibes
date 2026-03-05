@@ -511,6 +511,51 @@ public class PermanentChoiceHandlerService {
             gameData.priorityPassedBy.clear();
             gameBroadcastService.broadcastGameState(gameData);
             turnProgressionService.resolveAutoPass(gameData);
+        } else if (context instanceof PermanentChoiceContext.GraveyardCastSpellTarget gct) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+            boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
+
+            if (target != null || isPlayerTarget) {
+                StackEntry entry = new StackEntry(
+                        gct.spellType(),
+                        gct.cardToCast(),
+                        gct.controllerId(),
+                        gct.cardToCast().getName(),
+                        new ArrayList<>(gct.spellEffects()),
+                        0,
+                        permanentId,
+                        null
+                );
+                gameData.stack.add(entry);
+
+                gameData.spellsCastThisTurn.merge(gct.controllerId(), 1, Integer::sum);
+                gameData.priorityPassedBy.clear();
+
+                String targetName = isPlayerTarget
+                        ? gameData.playerIdToName.get(permanentId)
+                        : target.getCard().getName();
+                String logEntry = gct.cardToCast().getName() + " targets " + targetName + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} cast-from-graveyard targets {}", gameData.id, gct.cardToCast().getName(), targetName);
+
+                triggerCollectionService.checkSpellCastTriggers(gameData, gct.cardToCast(), gct.controllerId(), false);
+                triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+            } else {
+                // Target no longer valid — put card into graveyard
+                gameHelper.addCardToGraveyard(gameData, gct.controllerId(), gct.cardToCast());
+                String logEntry = gct.cardToCast().getName() + "'s target is no longer valid. It is put into the graveyard.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} cast-from-graveyard target no longer exists", gameData.id, gct.cardToCast().getName());
+            }
+
+            if (!gameData.pendingMayAbilities.isEmpty()) {
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+
+            gameData.priorityPassedBy.clear();
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.AttackTriggerTarget att) {
             Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
             if (target != null) {

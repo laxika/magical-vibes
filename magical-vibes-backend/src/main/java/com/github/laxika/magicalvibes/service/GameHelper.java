@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -40,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -887,8 +889,12 @@ public class GameHelper {
                 // Separate graveyard exile effects (need multi-target selection at trigger time)
                 List<CardEffect> graveyardExileEffects = mandatoryEffects.stream()
                         .filter(e -> e instanceof ExileCardsFromGraveyardEffect).toList();
+                // Separate graveyard cast effects (need single-target selection at trigger time)
+                List<CardEffect> graveyardCastEffects = mandatoryEffects.stream()
+                        .filter(e -> e instanceof CastTargetInstantOrSorceryFromGraveyardEffect).toList();
                 List<CardEffect> otherEffects = mandatoryEffects.stream()
-                        .filter(e -> !(e instanceof ExileCardsFromGraveyardEffect)).toList();
+                        .filter(e -> !(e instanceof ExileCardsFromGraveyardEffect))
+                        .filter(e -> !(e instanceof CastTargetInstantOrSorceryFromGraveyardEffect)).toList();
 
                 // Put non-graveyard-exile effects on the stack as before
                 if (!otherEffects.isEmpty()) {
@@ -920,6 +926,11 @@ public class GameHelper {
                 for (CardEffect effect : graveyardExileEffects) {
                     ExileCardsFromGraveyardEffect exile = (ExileCardsFromGraveyardEffect) effect;
                     handleGraveyardExileETBTargeting(gameData, controllerId, card, mandatoryEffects, exile);
+                }
+
+                // Handle graveyard cast effects: target instant/sorcery in opponent's graveyard
+                for (CardEffect effect : graveyardCastEffects) {
+                    handleGraveyardCastETBTargeting(gameData, controllerId, card, List.of(effect));
                 }
             }
         }
@@ -968,6 +979,49 @@ public class GameHelper {
             gameData.graveyardTargetOperation.effects = new ArrayList<>(allEffects);
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, allCardIds, allCardViews, maxTargets,
                     "Choose up to " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "") + " from graveyards to exile.");
+        }
+    }
+
+    private void handleGraveyardCastETBTargeting(GameData gameData, UUID controllerId, Card card,
+                                                  List<CardEffect> effects) {
+        CastTargetInstantOrSorceryFromGraveyardEffect castEffect = effects.stream()
+                .filter(e -> e instanceof CastTargetInstantOrSorceryFromGraveyardEffect)
+                .map(e -> (CastTargetInstantOrSorceryFromGraveyardEffect) e)
+                .findFirst().orElseThrow();
+        GraveyardSearchScope scope = castEffect.scope();
+
+        // Collect instant and sorcery cards from graveyards matching the scope
+        List<UUID> eligibleCardIds = new ArrayList<>();
+        List<CardView> cardViews = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            boolean include = switch (scope) {
+                case OPPONENT_GRAVEYARD -> !playerId.equals(controllerId);
+                case CONTROLLERS_GRAVEYARD -> playerId.equals(controllerId);
+                case ALL_GRAVEYARDS -> true;
+            };
+            if (!include) continue;
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card graveyardCard : graveyard) {
+                if (graveyardCard.getType() == CardType.INSTANT || graveyardCard.getType() == CardType.SORCERY) {
+                    eligibleCardIds.add(graveyardCard.getId());
+                    cardViews.add(cardViewFactory.create(graveyardCard));
+                }
+            }
+        }
+
+        if (eligibleCardIds.isEmpty()) {
+            // No valid targets — trigger doesn't go on the stack
+            String etbLog = card.getName() + "'s enter-the-battlefield ability has no valid targets.";
+            gameBroadcastService.logAndBroadcast(gameData, etbLog);
+            log.info("Game {} - {} ETB graveyard cast has no valid targets", gameData.id, card.getName());
+        } else {
+            // Prompt player to choose a target before putting ability on the stack
+            gameData.graveyardTargetOperation.card = card;
+            gameData.graveyardTargetOperation.controllerId = controllerId;
+            gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
+            playerInputService.beginMultiGraveyardChoice(gameData, controllerId, eligibleCardIds, cardViews, 1,
+                    "Choose target instant or sorcery card from a graveyard to cast.");
         }
     }
 

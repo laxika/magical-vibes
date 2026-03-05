@@ -314,6 +314,7 @@ Pass `null` as filter to allow any card.
 | `SearchLibraryForCreatureWithSubtypeToBattlefieldEffect` | `(CardSubtype requiredSubtype)` | search library for creature card with specified subtype and put it onto the battlefield |
 | `SearchLibraryForCreatureWithExactMVToBattlefieldEffect` | `(int mvOffset)` | search library for creature with MV exactly equal to xValue + mvOffset, put onto battlefield. Used with `SacrificeCreatureCost(true)` which stores sacrificed creature's MV in xValue (e.g. Birthing Pod with mvOffset=1) |
 | `CastTopOfLibraryWithoutPayingManaCostEffect` | `(Set<CardType> castableTypes)` | look at top card of controller's library; if it matches one of the castable types, may cast it without paying its mana cost |
+| `CastTargetInstantOrSorceryFromGraveyardEffect` | `(GraveyardSearchScope scope, boolean withoutPayingManaCost)` | ETB: target instant or sorcery from a graveyard matching scope, you may cast it (without paying mana cost if flag is true). Has `canTargetGraveyard()=true`. Graveyard targeting handled by GameHelper ETB flow |
 | `DistantMemoriesEffect` | `()` | search library for any card, exile it, shuffle; opponent may let you have it, otherwise draw 3 |
 | `SearchLibraryForCreatureToTopOfLibraryEffect` | `()` | search library for a creature card, reveal it, then shuffle and put that card on top of library |
 | `PayManaAndSearchLibraryForCardNamedToBattlefieldEffect` | `(String manaCost, String cardName)` | pay mana, search for named card to battlefield |
@@ -336,6 +337,7 @@ Pass `null` as filter to allow any card.
 | `MillHalfLibraryEffect` | `()` | target player mills half their library |
 | `MillByHandSizeEffect` | `()` | target player mills cards equal to hand size |
 | `MillTargetPlayerByChargeCountersEffect` | `()` | target player mills X cards where X is charge counters on source (reads snapshotted count from xValue) |
+| `EachOpponentMillsEffect` | `(int count)` | each opponent mills N cards |
 
 ## Exile
 

@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
@@ -850,5 +852,62 @@ public class GraveyardReturnResolutionService {
         }
 
         handleCreatureEtbAndLegendRule(gameData, controllerId, creature, dyingCard);
+    }
+
+    /**
+     * Resolves a {@link CastTargetInstantOrSorceryFromGraveyardEffect} by
+     * validating the targeted instant or sorcery card is still in a graveyard matching the scope,
+     * then queuing a may-cast choice for the controller.
+     */
+    @HandlesEffect(CastTargetInstantOrSorceryFromGraveyardEffect.class)
+    void resolveCastFromGraveyard(GameData gameData, StackEntry entry,
+                                  CastTargetInstantOrSorceryFromGraveyardEffect effect) {
+        UUID controllerId = entry.getControllerId();
+
+        // Get the targeted card ID from targetCardIds (set at ETB trigger time)
+        if (entry.getTargetCardIds().isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " — no target selected.");
+            return;
+        }
+
+        UUID targetCardId = entry.getTargetCardIds().getFirst();
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
+        if (targetCard == null) {
+            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target no longer in graveyard).");
+            return;
+        }
+
+        // Verify target is still in a graveyard matching the scope
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
+        if (graveyardOwnerId == null) {
+            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target not in any graveyard).");
+            return;
+        }
+        boolean validScope = switch (effect.scope()) {
+            case OPPONENT_GRAVEYARD -> !graveyardOwnerId.equals(controllerId);
+            case CONTROLLERS_GRAVEYARD -> graveyardOwnerId.equals(controllerId);
+            case ALL_GRAVEYARDS -> true;
+        };
+        if (!validScope) {
+            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target not in a valid graveyard).");
+            return;
+        }
+
+        // Verify target is still an instant or sorcery
+        if (targetCard.getType() != CardType.INSTANT && targetCard.getType() != CardType.SORCERY) {
+            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target is not an instant or sorcery).");
+            return;
+        }
+
+        // Queue may-cast choice
+        String prompt = effect.withoutPayingManaCost()
+                ? entry.getCard().getName() + " — Cast " + targetCard.getName() + " without paying its mana cost?"
+                : entry.getCard().getName() + " — Cast " + targetCard.getName() + "?";
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                targetCard,
+                controllerId,
+                List.of(effect),
+                prompt
+        ));
     }
 }

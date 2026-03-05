@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.DistantMemoriesEffect;
+import com.github.laxika.magicalvibes.model.effect.EachOpponentMillsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
@@ -119,6 +120,18 @@ public class LibraryResolutionService {
     @HandlesEffect(MillTargetPlayerEffect.class)
     void resolveMillTargetPlayer(GameData gameData, StackEntry entry, MillTargetPlayerEffect mill) {
         gameHelper.resolveMillPlayer(gameData, entry.getTargetPermanentId(), mill.count());
+    }
+
+    /**
+     * Mills each opponent for a fixed number of cards.
+     */
+    @HandlesEffect(EachOpponentMillsEffect.class)
+    void resolveEachOpponentMills(GameData gameData, StackEntry entry, EachOpponentMillsEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) continue;
+            gameHelper.resolveMillPlayer(gameData, playerId, effect.count());
+        }
     }
 
     /**

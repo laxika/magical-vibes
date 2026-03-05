@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -22,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
@@ -147,6 +149,16 @@ public class MayAbilityHandlerService {
                 .findFirst().orElse(null);
         if (castFromLibEffect != null && castFromLibEffect.castableTypes().contains(ability.sourceCard().getType())) {
             handleCastFromLibraryChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Cast-from-graveyard — e.g. Chancellor of the Spires
+        CastTargetInstantOrSorceryFromGraveyardEffect castFromGraveyardEffect = ability.effects().stream()
+                .filter(e -> e instanceof CastTargetInstantOrSorceryFromGraveyardEffect)
+                .map(e -> (CastTargetInstantOrSorceryFromGraveyardEffect) e)
+                .findFirst().orElse(null);
+        if (castFromGraveyardEffect != null) {
+            handleCastFromGraveyardChoice(gameData, player, accepted, ability, castFromGraveyardEffect);
             return;
         }
 
@@ -1186,6 +1198,109 @@ public class MayAbilityHandlerService {
             String logEntry = playerName + " declines to cast " + cardToCast.getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} declines to cast {} from library", gameData.id, playerName, cardToCast.getName());
+        }
+
+        playerInputService.processNextMayAbility(gameData);
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            gameData.priorityPassedBy.clear();
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+        }
+    }
+
+    private void handleCastFromGraveyardChoice(GameData gameData, Player player, boolean accepted,
+                                               PendingMayAbility ability,
+                                               CastTargetInstantOrSorceryFromGraveyardEffect castEffect) {
+        Card cardToCast = ability.sourceCard();
+        String playerName = player.getUsername();
+        GraveyardSearchScope scope = castEffect.scope();
+        String castLabel = castEffect.withoutPayingManaCost() ? " without paying its mana cost" : "";
+
+        if (accepted) {
+            // Verify the card is still in a graveyard matching the scope
+            Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, cardToCast.getId());
+            if (graveyardCard == null) {
+                String logEntry = cardToCast.getName() + " is no longer in the graveyard.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} no longer in graveyard for cast-from-graveyard", gameData.id, cardToCast.getName());
+            } else {
+                UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardToCast.getId());
+                boolean validScope = graveyardOwnerId != null && switch (scope) {
+                    case OPPONENT_GRAVEYARD -> !graveyardOwnerId.equals(player.getId());
+                    case CONTROLLERS_GRAVEYARD -> graveyardOwnerId.equals(player.getId());
+                    case ALL_GRAVEYARDS -> true;
+                };
+                if (!validScope) {
+                    String logEntry = cardToCast.getName() + " is no longer in a valid graveyard.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} not in valid graveyard (scope={})", gameData.id, cardToCast.getName(), scope);
+                } else {
+                    permanentRemovalService.removeCardFromGraveyardById(gameData, cardToCast.getId());
+
+                    List<CardEffect> spellEffects = new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
+                    StackEntryType spellType = cardToCast.getType() == CardType.INSTANT
+                            ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
+
+                    if (cardToCast.isNeedsTarget()) {
+                        // Targeted spell — need to choose target before putting on stack
+                        List<UUID> validTargets = new ArrayList<>();
+                        for (UUID pid : gameData.orderedPlayerIds) {
+                            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                            if (battlefield == null) continue;
+                            for (Permanent p : battlefield) {
+                                if (cardToCast.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
+                                    if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+                                        validTargets.add(p.getId());
+                                    }
+                                } else if (gameQueryService.isCreature(gameData, p)) {
+                                    validTargets.add(p.getId());
+                                }
+                            }
+                        }
+                        boolean canTargetPlayer = spellEffects.stream().anyMatch(CardEffect::canTargetPlayer);
+                        if (canTargetPlayer) {
+                            validTargets.addAll(gameData.orderedPlayerIds);
+                        }
+
+                        if (validTargets.isEmpty()) {
+                            // No valid targets — card goes to owner's graveyard
+                            gameHelper.addCardToGraveyard(gameData, graveyardOwnerId, cardToCast);
+                            String logEntry = cardToCast.getName() + " has no valid targets.";
+                            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                            log.info("Game {} - {} cast-from-graveyard has no valid targets", gameData.id, cardToCast.getName());
+                        } else {
+                            gameData.interaction.setPermanentChoiceContext(
+                                    new PermanentChoiceContext.GraveyardCastSpellTarget(cardToCast, player.getId(), spellEffects, spellType));
+                            playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
+                                    "Choose a target for " + cardToCast.getName() + ".");
+
+                            String logEntry = playerName + " casts " + cardToCast.getName() + castLabel + " — choosing target.";
+                            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                            log.info("Game {} - {} casts {} from graveyard, choosing target", gameData.id, playerName, cardToCast.getName());
+                            return; // Wait for target choice
+                        }
+                    } else {
+                        // Non-targeted spell — put directly on stack
+                        gameData.stack.add(new StackEntry(
+                                spellType, cardToCast, player.getId(), cardToCast.getName(),
+                                spellEffects, 0, (UUID) null, null
+                        ));
+
+                        gameData.spellsCastThisTurn.merge(player.getId(), 1, Integer::sum);
+                        gameData.priorityPassedBy.clear();
+
+                        String logEntry = playerName + " casts " + cardToCast.getName() + castLabel + ".";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} casts {} from graveyard", gameData.id, playerName, cardToCast.getName());
+
+                        triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, player.getId(), false);
+                    }
+                }
+            }
+        } else {
+            String logEntry = playerName + " declines to cast " + cardToCast.getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines to cast {} from graveyard", gameData.id, playerName, cardToCast.getName());
         }
 
         playerInputService.processNextMayAbility(gameData);
