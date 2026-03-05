@@ -10,9 +10,11 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.PermanentRemovalService;
@@ -41,6 +43,7 @@ public class GraveyardChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
+    private final PlayerInputService playerInputService;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.GRAVEYARD_CHOICE)) {
@@ -58,6 +61,7 @@ public class GraveyardChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
         GraveyardChoiceDestination destination = graveyardChoice.destination();
         boolean gainLifeEqualToManaValue = gameData.interaction.graveyardChoiceGainLifeEqualToManaValue();
+        UUID attachToSourcePermanentId = gameData.interaction.graveyardChoiceAttachToSourcePermanentId();
         gameData.interaction.clearGraveyardChoice();
 
         if (cardIndex == -1) {
@@ -108,6 +112,19 @@ public class GraveyardChoiceHandlerService {
                     String logEntry = player.getUsername() + " puts " + card.getName() + " from a graveyard onto the battlefield.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} puts {} from graveyard onto battlefield", gameData.id, player.getUsername(), card.getName());
+
+                    if (attachToSourcePermanentId != null) {
+                        Permanent sourcePerm = gameQueryService.findPermanentById(gameData, attachToSourcePermanentId);
+                        if (sourcePerm != null) {
+                            gameData.interaction.setPendingEquipmentAttach(perm.getId(), sourcePerm.getId());
+                            gameData.pendingMayAbilities.add(new PendingMayAbility(
+                                    sourcePerm.getCard(), playerId, List.of(),
+                                    sourcePerm.getCard().getName() + " — Attach " + card.getName()
+                                            + " to " + sourcePerm.getCard().getName() + "?"
+                            ));
+                            playerInputService.processNextMayAbility(gameData);
+                        }
+                    }
 
                     if (card.getType() == CardType.CREATURE) {
                         gameHelper.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);

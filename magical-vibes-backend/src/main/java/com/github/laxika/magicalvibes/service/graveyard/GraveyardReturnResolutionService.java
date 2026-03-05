@@ -258,6 +258,19 @@ public class GraveyardReturnResolutionService {
 
         gameData.interaction.prepareGraveyardChoice(effect.destination(), null);
         gameData.interaction.setGraveyardChoiceGainLifeEqualToManaValue(effect.gainLifeEqualToManaValue());
+
+        if (effect.attachToSource()) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            if (bf != null) {
+                for (Permanent p : bf) {
+                    if (p.getCard().getId().equals(sourceCardId)) {
+                        gameData.interaction.setGraveyardChoiceAttachToSourcePermanentId(p.getId());
+                        break;
+                    }
+                }
+            }
+        }
+
         playerInputService.beginGraveyardChoice(gameData, controllerId, matchingIndices, prompt);
     }
 

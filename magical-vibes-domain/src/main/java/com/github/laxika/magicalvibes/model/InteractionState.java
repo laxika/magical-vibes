@@ -22,6 +22,9 @@ public class InteractionState {
     private GraveyardChoiceDestination graveyardChoiceDestination;
     private List<Card> graveyardChoiceCardPool;
     private boolean graveyardChoiceGainLifeEqualToManaValue;
+    private UUID graveyardChoiceAttachToSourcePermanentId;
+    private UUID pendingEquipmentAttachEquipmentId;
+    private UUID pendingEquipmentAttachTargetId;
     private UUID awaitingColorChoicePlayerId;
     private UUID awaitingColorChoicePermanentId;
     private UUID pendingColorChoiceETBTargetId;
@@ -82,6 +85,9 @@ public class InteractionState {
         copy.graveyardChoiceDestination = this.graveyardChoiceDestination;
         copy.graveyardChoiceCardPool = this.graveyardChoiceCardPool != null ? new ArrayList<>(this.graveyardChoiceCardPool) : null;
         copy.graveyardChoiceGainLifeEqualToManaValue = this.graveyardChoiceGainLifeEqualToManaValue;
+        copy.graveyardChoiceAttachToSourcePermanentId = this.graveyardChoiceAttachToSourcePermanentId;
+        copy.pendingEquipmentAttachEquipmentId = this.pendingEquipmentAttachEquipmentId;
+        copy.pendingEquipmentAttachTargetId = this.pendingEquipmentAttachTargetId;
         copy.awaitingColorChoicePlayerId = this.awaitingColorChoicePlayerId;
         copy.awaitingColorChoicePermanentId = this.awaitingColorChoicePermanentId;
         copy.pendingColorChoiceETBTargetId = this.pendingColorChoiceETBTargetId;
@@ -233,6 +239,7 @@ public class InteractionState {
         this.graveyardChoiceDestination = null;
         this.graveyardChoiceCardPool = null;
         this.graveyardChoiceGainLifeEqualToManaValue = false;
+        this.graveyardChoiceAttachToSourcePermanentId = null;
     }
 
     public void prepareGraveyardChoice(GraveyardChoiceDestination destination, List<Card> cardPool) {
@@ -254,6 +261,32 @@ public class InteractionState {
 
     public boolean graveyardChoiceGainLifeEqualToManaValue() {
         return this.graveyardChoiceGainLifeEqualToManaValue;
+    }
+
+    public void setGraveyardChoiceAttachToSourcePermanentId(UUID permanentId) {
+        this.graveyardChoiceAttachToSourcePermanentId = permanentId;
+    }
+
+    public UUID graveyardChoiceAttachToSourcePermanentId() {
+        return this.graveyardChoiceAttachToSourcePermanentId;
+    }
+
+    public void setPendingEquipmentAttach(UUID equipmentPermanentId, UUID targetPermanentId) {
+        this.pendingEquipmentAttachEquipmentId = equipmentPermanentId;
+        this.pendingEquipmentAttachTargetId = targetPermanentId;
+    }
+
+    public UUID pendingEquipmentAttachEquipmentId() {
+        return this.pendingEquipmentAttachEquipmentId;
+    }
+
+    public UUID pendingEquipmentAttachTargetId() {
+        return this.pendingEquipmentAttachTargetId;
+    }
+
+    public void clearPendingEquipmentAttach() {
+        this.pendingEquipmentAttachEquipmentId = null;
+        this.pendingEquipmentAttachTargetId = null;
     }
 
     public void beginColorChoice(UUID playerId, UUID permanentId, UUID etbTargetPermanentId, ColorChoiceContext choiceContext) {

@@ -220,7 +220,7 @@ public class GameTestHarness {
                 gameQueryService, gameHelper, gameBroadcastService, abilityActivationService,
                 permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, creatureControlService, turnProgressionService, effectResolutionService, damageResolutionService);
         GraveyardChoiceHandlerService graveyardChoiceHandlerService = new GraveyardChoiceHandlerService(
-                gameQueryService, gameHelper, legendRuleService, gameBroadcastService, turnProgressionService, permanentRemovalService, triggerCollectionService);
+                gameQueryService, gameHelper, legendRuleService, gameBroadcastService, turnProgressionService, permanentRemovalService, triggerCollectionService, playerInputService);
         MayAbilityHandlerService mayAbilityHandlerService = new MayAbilityHandlerService(
                 gameQueryService, gameHelper, stateBasedActionService, gameBroadcastService,
                 playerInputService, turnProgressionService, targetLegalityService, sessionManager, permanentRemovalService, triggerCollectionService);

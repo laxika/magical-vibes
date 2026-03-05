@@ -103,6 +103,35 @@ public class MayAbilityHandlerService {
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearMayAbilityChoice();
 
+        // Pending equipment attach — e.g. Auriok Survivors "you may attach it to this creature"
+        UUID pendingEquipId = gameData.interaction.pendingEquipmentAttachEquipmentId();
+        UUID pendingTargetId = gameData.interaction.pendingEquipmentAttachTargetId();
+        if (pendingEquipId != null && pendingTargetId != null) {
+            gameData.interaction.clearPendingEquipmentAttach();
+            if (accepted) {
+                Permanent equipPerm = gameQueryService.findPermanentById(gameData, pendingEquipId);
+                Permanent targetPerm = gameQueryService.findPermanentById(gameData, pendingTargetId);
+                if (equipPerm != null && targetPerm != null) {
+                    equipPerm.setAttachedTo(targetPerm.getId());
+                    String attachLog = equipPerm.getCard().getName() + " is attached to " + targetPerm.getCard().getName() + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, attachLog);
+                    log.info("Game {} - {} attached to {}", gameData.id, equipPerm.getCard().getName(), targetPerm.getCard().getName());
+                }
+            } else {
+                String declineLog = player.getUsername() + " declines to attach the Equipment.";
+                gameBroadcastService.logAndBroadcast(gameData, declineLog);
+                log.info("Game {} - {} declines equipment attachment", gameData.id, player.getUsername());
+            }
+
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                gameData.priorityPassedBy.clear();
+                gameBroadcastService.broadcastGameState(gameData);
+                turnProgressionService.resolveAutoPass(gameData);
+            }
+            return;
+        }
+
         // Cast-from-library-without-paying — e.g. Galvanoth (second phase: cast prompt)
         // The first may (look at top card) has the source creature as sourceCard,
         // the second may (cast the spell) has the instant/sorcery as sourceCard.
