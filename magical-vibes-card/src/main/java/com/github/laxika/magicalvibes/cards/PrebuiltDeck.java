@@ -73,6 +73,34 @@ public enum PrebuiltDeck {
             new DeckEntry("337", 1)    // Phyrexian Vault
     )),
 
+    DEADSPREAD("deadspread", "Deadspread (Scars of Mirrodin Intro Pack)", CardSet.SCARS_OF_MIRRODIN, List.of(
+            new DeckEntry("234", 13),  // Island
+            new DeckEntry("238", 13),  // Swamp
+            new DeckEntry("57", 1),    // Carnifex Demon
+            new DeckEntry("30", 1),    // Darkslick Drake
+            new DeckEntry("63", 2),    // Fume Spitter
+            // new DeckEntry("???", 1),    // Harbor Serpent (not in SOM)
+            new DeckEntry("170", 2),   // Leaden Myr
+            // new DeckEntry("???", 2),    // Maritime Guard (not in SOM)
+            new DeckEntry("70", 2),    // Moriok Reaver
+            new DeckEntry("202", 2),   // Silver Myr
+            new DeckEntry("78", 1),    // Skinrender
+            new DeckEntry("44", 2),    // Sky-Eel School
+            new DeckEntry("47", 2),    // Thrummingbird
+            new DeckEntry("144", 2),   // Contagion Clasp
+            new DeckEntry("145", 1),   // Contagion Engine
+            new DeckEntry("148", 1),   // Culling Dais
+            new DeckEntry("184", 2),   // Necrogen Censer
+            // new DeckEntry("???", 1),    // Sorcerer's Strongbox (not in SOM)
+            new DeckEntry("211", 1),   // Throne of Geth
+            new DeckEntry("213", 1),   // Trigon of Corruption
+            new DeckEntry("217", 1),   // Trigon of Thought
+            // new DeckEntry("???", 1),    // Doom Blade (not in SOM)
+            new DeckEntry("68", 2),    // Instill Infection
+            new DeckEntry("45", 2),    // Steady Progress
+            new DeckEntry("50", 1)     // Twisted Image
+    )),
+
     EVINCARS_TYRANNY("evincars-tyranny", "Evincar's Tyranny (Tenth Edition Theme Deck)", CardSet.TENTH_EDITION, List.of(
             new DeckEntry("372", 17),  // Swamp
             new DeckEntry("186", 2),   // Vampire Bats
