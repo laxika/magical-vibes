@@ -132,7 +132,7 @@ public class TurnProgressionService {
 
     void handleUpkeepTriggers(GameData gameData) {
         // Chancellor cycle: at the beginning of the first upkeep, check all players' hands
-        // for cards with OPENING_HAND_TRIGGERED effects (revealed from opening hand)
+        // for cards with ON_OPENING_HAND_REVEAL effects (revealed from opening hand)
         if (gameData.turnNumber == 1) {
             handleOpeningHandTriggers(gameData);
         }
@@ -383,7 +383,7 @@ public class TurnProgressionService {
             if (hand == null) continue;
 
             for (Card card : hand) {
-                List<CardEffect> openingHandEffects = card.getEffects(EffectSlot.OPENING_HAND_TRIGGERED);
+                List<CardEffect> openingHandEffects = card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL);
                 if (openingHandEffects == null || openingHandEffects.isEmpty()) continue;
 
                 for (CardEffect effect : openingHandEffects) {

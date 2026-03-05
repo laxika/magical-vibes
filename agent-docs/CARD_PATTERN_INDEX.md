@@ -154,6 +154,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | May pay to create token on artifact cast | `m/Myrsmith.java` | MayEffect(CreateTokenOnOwnSpellCastWithCostEffect) — pay mana + create token trigger |
 | May loot on spell cast | `r/Riddlesmith.java` | MayEffect(DrawAndDiscardOnOwnSpellCastEffect(CardTypePredicate)) — may draw+discard on matching spell cast |
 | Opponent spell punisher (discard or life) | `p/PainfulQuandary.java` | ON_OPPONENT_CASTS_SPELL LoseLifeUnlessDiscardEffect(5) — opponent chooses discard or lose life |
+| Opponent spell tax (counter unless pays) | `c/ChancellorOfTheAnnex.java` | ON_OPPONENT_CASTS_SPELL CounterUnlessPaysEffect(1) — auto-targets the triggering spell. Also has ON_OPENING_HAND_REVEAL MayEffect(RegisterDelayedCounterTriggerEffect(1)) for Chancellor-style delayed counter trigger on first opponent spell |
 | Opponent land enters (punisher) | `t/TunnelIgnus.java` | ON_OPPONENT_LAND_ENTERS_BATTLEFIELD PermanentEnteredThisTurnConditionalEffect(DealDamageToTargetPlayerEffect(3), CardTypePredicate(LAND), 2) — conditional wrapper checks 2+ lands entered this turn |
 | Land tap trigger | `m/Manabarbs.java` | ON_ANY_PLAYER_TAPS_LAND DealDamageOnLandTapEffect |
 | End step self-destruct | `s/SparkElemental.java` | END_STEP_TRIGGERED SacrificeSelfEffect |

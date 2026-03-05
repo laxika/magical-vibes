@@ -156,6 +156,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 |--------|-------------|--------|
 | `CounterSpellEffect` | `()` | counter target spell |
 | `CounterUnlessPaysEffect` | `(int amount)` | counter unless controller pays N generic mana |
+| `RegisterDelayedCounterTriggerEffect` | `(int genericManaAmount)` | registers a delayed trigger (opening hand reveal) that counters each opponent's first spell unless they pay N generic mana. Handled by MayAbilityHandlerService, not GameService |
 | `CreatureSpellsCantBeCounteredEffect` | `()` | creature spells can't be countered (static) |
 
 ## Bounce / return to hand

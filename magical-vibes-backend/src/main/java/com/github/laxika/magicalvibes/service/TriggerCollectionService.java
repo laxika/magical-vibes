@@ -8,11 +8,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
@@ -28,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellC
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -63,6 +66,27 @@ public class TriggerCollectionService {
     }
 
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId, boolean castFromHand) {
+        // Check opening hand reveal delayed triggers (Chancellor cycle) — fires on opponent's first spell of the game
+        if (!gameData.openingHandRevealTriggers.isEmpty()
+                && !gameData.playersWhoCastFirstSpellInGame.contains(castingPlayerId)) {
+            gameData.playersWhoCastFirstSpellInGame.add(castingPlayerId);
+            for (OpeningHandRevealTrigger trigger : gameData.openingHandRevealTriggers) {
+                if (!trigger.revealingPlayerId().equals(castingPlayerId)
+                        && trigger.effect() instanceof CounterUnlessPaysEffect counterEffect) {
+                    StackEntry entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            trigger.sourceCard(),
+                            trigger.revealingPlayerId(),
+                            trigger.sourceCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(counterEffect)),
+                            spellCard.getId(),
+                            Zone.STACK
+                    );
+                    gameData.stack.add(entry);
+                }
+            }
+        }
+
         gameData.forEachPermanent((playerId, perm) -> {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)) {
                 CardEffect inner = effect instanceof MayEffect m ? m.wrapped() : effect;
@@ -231,6 +255,18 @@ public class TriggerCollectionService {
                             new ArrayList<>(resolvedEffects)
                     );
                     entry.setTargetPermanentId(castingPlayerId);
+                    gameData.stack.add(entry);
+                } else if (effect instanceof CounterUnlessPaysEffect trigger) {
+                    List<CardEffect> resolvedEffects = List.of(trigger);
+                    StackEntry entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            playerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(resolvedEffects),
+                            spellCard.getId(),
+                            Zone.STACK
+                    );
                     gameData.stack.add(entry);
                 }
             }

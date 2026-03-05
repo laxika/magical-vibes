@@ -121,6 +121,13 @@ public class GameData {
     /** Players who have been granted "no maximum hand size" for the rest of the game. */
     public final Set<UUID> playersWithNoMaximumHandSize = ConcurrentHashMap.newKeySet();
 
+    /** Delayed triggers from Chancellor-style opening hand reveals.
+     *  Fires once per opponent when they cast their first spell of the game. */
+    public final List<OpeningHandRevealTrigger> openingHandRevealTriggers = Collections.synchronizedList(new ArrayList<>());
+
+    /** Tracks which players have cast their first spell of the game (for opening hand triggers). */
+    public final Set<UUID> playersWhoCastFirstSpellInGame = ConcurrentHashMap.newKeySet();
+
     /** Maps permanent ID → cards exiled with that permanent (e.g. Knowledge Pool). */
     public final Map<UUID, List<Card>> permanentExiledCards = new ConcurrentHashMap<>();
     /** Transient field: tracks which Knowledge Pool permanent is currently resolving a cast choice. */
@@ -466,6 +473,10 @@ public class GameData {
         copy.pendingTurnControl.putAll(this.pendingTurnControl);
         copy.mindControlledPlayerId = this.mindControlledPlayerId;
         copy.mindControllerPlayerId = this.mindControllerPlayerId;
+
+        // --- Opening hand reveal triggers (Chancellor cycle) ---
+        copy.openingHandRevealTriggers.addAll(this.openingHandRevealTriggers);
+        copy.playersWhoCastFirstSpellInGame.addAll(this.playersWhoCastFirstSpellInGame);
 
         // --- Game log (share reference for simulation — not read during MCTS) ---
         copy.gameLog.addAll(this.gameLog);

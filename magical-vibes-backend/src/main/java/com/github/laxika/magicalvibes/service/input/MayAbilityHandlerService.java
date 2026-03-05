@@ -32,6 +32,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDivi
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
@@ -150,6 +152,16 @@ public class MayAbilityHandlerService {
         boolean isMayNotUntap = ability.effects().stream().anyMatch(e -> e instanceof MayNotUntapDuringUntapStepEffect);
         if (isMayNotUntap) {
             handleMayNotUntapChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Opening hand delayed counter trigger (e.g. Chancellor of the Annex)
+        RegisterDelayedCounterTriggerEffect delayedCounterTrigger = ability.effects().stream()
+                .filter(e -> e instanceof RegisterDelayedCounterTriggerEffect)
+                .map(e -> (RegisterDelayedCounterTriggerEffect) e)
+                .findFirst().orElse(null);
+        if (delayedCounterTrigger != null) {
+            handleOpeningHandDelayedCounterTrigger(gameData, player, accepted, ability, delayedCounterTrigger);
             return;
         }
 
@@ -486,6 +498,32 @@ public class MayAbilityHandlerService {
         String logEntry = player.getUsername() + " accepts — choosing a target for " + ability.sourceCard().getName() + "'s ability.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} accepts targeted may ability from {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
+    }
+
+    private void handleOpeningHandDelayedCounterTrigger(GameData gameData, Player player, boolean accepted,
+                                                         PendingMayAbility ability, RegisterDelayedCounterTriggerEffect effect) {
+        if (accepted) {
+            gameData.openingHandRevealTriggers.add(new OpeningHandRevealTrigger(
+                    ability.controllerId(), ability.sourceCard(),
+                    new CounterUnlessPaysEffect(effect.genericManaAmount())
+            ));
+
+            String logEntry = player.getUsername() + " reveals " + ability.sourceCard().getName() + " from their opening hand.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} reveals {} from opening hand (delayed counter trigger registered)",
+                    gameData.id, player.getUsername(), ability.sourceCard().getName());
+        } else {
+            String logEntry = player.getUsername() + " declines to reveal " + ability.sourceCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines to reveal {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
+        }
+
+        playerInputService.processNextMayAbility(gameData);
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            gameData.priorityPassedBy.clear();
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+        }
     }
 
     private void handleCounterUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {

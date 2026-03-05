@@ -41,14 +41,14 @@ class ChancellorOfTheDrossTest {
     // ===== Card properties =====
 
     @Test
-    @DisplayName("Chancellor of the Dross has OPENING_HAND_TRIGGERED MayEffect wrapping the drain effect")
+    @DisplayName("Chancellor of the Dross has ON_OPENING_HAND_REVEAL MayEffect wrapping the drain effect")
     void hasOpeningHandTriggeredEffect() {
         ChancellorOfTheDross card = new ChancellorOfTheDross();
 
-        assertThat(card.getEffects(EffectSlot.OPENING_HAND_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.OPENING_HAND_TRIGGERED).getFirst())
+        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst())
                 .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.OPENING_HAND_TRIGGERED).getFirst();
+        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst();
         assertThat(may.wrapped()).isInstanceOf(EachOpponentLosesLifeAndControllerGainsLifeLostEffect.class);
         EachOpponentLosesLifeAndControllerGainsLifeLostEffect effect =
                 (EachOpponentLosesLifeAndControllerGainsLifeLostEffect) may.wrapped();

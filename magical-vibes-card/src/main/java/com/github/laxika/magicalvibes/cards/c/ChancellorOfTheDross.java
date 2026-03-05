@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 public class ChancellorOfTheDross extends Card {
 
     public ChancellorOfTheDross() {
-        addEffect(EffectSlot.OPENING_HAND_TRIGGERED, new MayEffect(
+        addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
                 new EachOpponentLosesLifeAndControllerGainsLifeLostEffect(3),
                 "Reveal this card from your opening hand?"
         ));
