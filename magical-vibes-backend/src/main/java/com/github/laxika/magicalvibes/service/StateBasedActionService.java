@@ -44,6 +44,7 @@ public class StateBasedActionService {
                         gameHelper.checkAnyNontokenCreatureDeathTriggers(gameData, p.getCard());
                         gameHelper.checkOpponentCreatureDeathTriggers(gameData, playerId);
                         gameHelper.checkEquippedCreatureDeathTriggers(gameData, p.getId(), playerId);
+                        gameHelper.triggerDelayedPoisonOnDeath(gameData, p.getCard().getId(), playerId);
                     }
                     String logEntry = p.getCard().getName() + " is put into the graveyard (0 toughness).";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
