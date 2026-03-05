@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -57,6 +58,15 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
+/**
+ * Resolves all library-related card effects during stack resolution.
+ *
+ * <p>Handles milling, shuffling, searching, revealing, reordering, and imprinting
+ * from player libraries. Each public/package-private method is dispatched via
+ * {@link HandlesEffect} annotations from the effect resolution framework.
+ *
+ * <p>Library searches respect the Leonin Arbiter search tax via {@link #checkSearchRestriction}.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -67,6 +77,10 @@ public class LibraryResolutionService {
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
 
+    /**
+     * Shuffles the spell's card into its owner's library instead of going to the graveyard.
+     * Used by cards like Red Sun's Zenith.
+     */
     @HandlesEffect(ShuffleIntoLibraryEffect.class)
     void resolveShuffleIntoLibrary(GameData gameData, StackEntry entry) {
         List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
@@ -77,6 +91,10 @@ public class LibraryResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
     }
 
+    /**
+     * Mills the target player for a number of cards equal to their hand size.
+     * Used by cards like Dreamborn Muse.
+     */
     @HandlesEffect(MillByHandSizeEffect.class)
     void resolveMillByHandSize(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
@@ -93,17 +111,28 @@ public class LibraryResolutionService {
         gameHelper.resolveMillPlayer(gameData, targetPlayerId, handSize);
     }
 
+    /**
+     * Mills the target player for a fixed number of cards specified by the effect.
+     */
     @HandlesEffect(MillTargetPlayerEffect.class)
     void resolveMillTargetPlayer(GameData gameData, StackEntry entry, MillTargetPlayerEffect mill) {
         gameHelper.resolveMillPlayer(gameData, entry.getTargetPermanentId(), mill.count());
     }
 
+    /**
+     * Exiles cards from the top of the target player's library one at a time,
+     * repeating until a card with a duplicate name is exiled.
+     */
     @HandlesEffect(ExileTopCardsRepeatOnDuplicateEffect.class)
     void resolveExileTopCardsRepeatOnDuplicate(GameData gameData, StackEntry entry, ExileTopCardsRepeatOnDuplicateEffect effect) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         gameHelper.resolveExileTopCardsRepeatOnDuplicate(gameData, entry.getCard(), targetPlayerId, effect);
     }
 
+    /**
+     * Mills the target player for a number of cards equal to the source permanent's charge counters.
+     * Used by cards like Grindclock.
+     */
     @HandlesEffect(MillTargetPlayerByChargeCountersEffect.class)
     void resolveMillTargetPlayerByChargeCounters(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
@@ -120,6 +149,10 @@ public class LibraryResolutionService {
         gameHelper.resolveMillPlayer(gameData, targetPlayerId, chargeCounters);
     }
 
+    /**
+     * Mills half the target player's library, rounded down.
+     * Used by cards like Traumatize.
+     */
     @HandlesEffect(MillHalfLibraryEffect.class)
     void resolveMillHalfLibrary(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
@@ -136,6 +169,10 @@ public class LibraryResolutionService {
         gameHelper.resolveMillPlayer(gameData, targetPlayerId, cardsToMill);
     }
 
+    /**
+     * Shuffles the target player's entire graveyard into their library.
+     * Used by cards like Reminisce.
+     */
     @HandlesEffect(ShuffleGraveyardIntoLibraryEffect.class)
     void resolveShuffleGraveyardIntoLibrary(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
@@ -161,6 +198,10 @@ public class LibraryResolutionService {
         log.info("Game {} - {} shuffles graveyard ({} cards) into library", gameData.id, playerName, count);
     }
 
+    /**
+     * Reveals the top card of the target player's library to all players without removing it.
+     * Used by cards like Aven Windreader.
+     */
     @HandlesEffect(RevealTopCardOfLibraryEffect.class)
     void resolveRevealTopCardOfLibrary(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
@@ -179,6 +220,10 @@ public class LibraryResolutionService {
         log.info("Game {} - {} reveals top card of library", gameData.id, playerName);
     }
 
+    /**
+     * Looks at the top card of the controller's library and, if it matches the castable types,
+     * queues a "may" ability to cast it without paying its mana cost.
+     */
     @HandlesEffect(CastTopOfLibraryWithoutPayingManaCostEffect.class)
     void resolveCastTopOfLibraryWithoutPaying(GameData gameData, StackEntry entry, CastTopOfLibraryWithoutPayingManaCostEffect effect) {
         UUID controllerId = entry.getControllerId();
@@ -215,6 +260,10 @@ public class LibraryResolutionService {
         ));
     }
 
+    /**
+     * Lets the controller look at the top N cards of their library and reorder them.
+     * If only one card remains, the player simply looks at it. Used by cards like Sage Owl.
+     */
     @HandlesEffect(ReorderTopCardsOfLibraryEffect.class)
     void resolveReorderTopCardsOfLibrary(GameData gameData, StackEntry entry, ReorderTopCardsOfLibraryEffect reorder) {
         UUID controllerId = entry.getControllerId();
@@ -248,6 +297,10 @@ public class LibraryResolutionService {
         log.info("Game {} - {} reordering top {} cards of library", gameData.id, gameData.playerIdToName.get(controllerId), count);
     }
 
+    /**
+     * Searches the controller's library for a basic land card and puts it into their hand.
+     * The chosen card is revealed. Library is shuffled afterward.
+     */
     @HandlesEffect(SearchLibraryForBasicLandToHandEffect.class)
     void resolveSearchLibraryForBasicLandToHand(GameData gameData, StackEntry entry, SearchLibraryForBasicLandToHandEffect effect) {
         performLibrarySearch(
@@ -262,6 +315,10 @@ public class LibraryResolutionService {
         );
     }
 
+    /**
+     * Searches the controller's library for a card matching the specified types and optional
+     * mana value range, then reveals it and puts it into their hand. Used by cards like Sylvan Scrying.
+     */
     @HandlesEffect(SearchLibraryForCardTypesToHandEffect.class)
     void resolveSearchLibraryForCardTypesToHand(GameData gameData, StackEntry entry, SearchLibraryForCardTypesToHandEffect effect) {
         Set<CardType> requestedTypes = effect.cardTypes();
@@ -308,6 +365,10 @@ public class LibraryResolutionService {
         return String.join(" or ", names);
     }
 
+    /**
+     * Searches the controller's library for a card matching the specified types and puts it
+     * onto the battlefield (optionally tapped). Used by cards like Rampant Growth and Cultivate.
+     */
     @HandlesEffect(SearchLibraryForCardTypesToBattlefieldEffect.class)
     void resolveSearchLibraryForCardTypesToBattlefield(GameData gameData, StackEntry entry,
                                                        SearchLibraryForCardTypesToBattlefieldEffect effect) {
@@ -336,6 +397,10 @@ public class LibraryResolutionService {
         );
     }
 
+    /**
+     * Searches the controller's library for a card matching the specified types, exiles it,
+     * and imprints it on the source permanent.
+     */
     @HandlesEffect(SearchLibraryForCardTypeToExileAndImprintEffect.class)
     void resolveSearchLibraryForCardTypeToExileAndImprint(GameData gameData, StackEntry entry,
                                                           SearchLibraryForCardTypeToExileAndImprintEffect effect) {
@@ -359,6 +424,10 @@ public class LibraryResolutionService {
                 && effect.cardTypes().contains(CardType.LAND);
     }
 
+    /**
+     * Performs an unrestricted library search — the controller may choose any card and put it
+     * into their hand. Used by cards like Diabolic Tutor.
+     */
     @HandlesEffect(SearchLibraryForCardToHandEffect.class)
     void resolveSearchLibraryForCardToHand(GameData gameData, StackEntry entry, SearchLibraryForCardToHandEffect effect) {
         performLibrarySearch(
@@ -373,6 +442,11 @@ public class LibraryResolutionService {
         );
     }
 
+    /**
+     * Resolves Distant Memories: the controller searches their library for a card and exiles it.
+     * Each opponent may then choose to let the controller draw three cards or not.
+     * If the library is empty, the controller draws three cards immediately.
+     */
     @HandlesEffect(DistantMemoriesEffect.class)
     void resolveDistantMemories(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
@@ -395,32 +469,17 @@ public class LibraryResolutionService {
 
         gameData.pendingOpponentExileChoice = new com.github.laxika.magicalvibes.model.PendingOpponentExileChoice(controllerId, 3);
 
-        gameData.interaction.beginLibrarySearch(
-                controllerId,
-                allCards,
-                false,
-                false,
-                null,
-                0,
-                null,
-                false,
-                true,
-                null,
-                LibrarySearchDestination.EXILE
-        );
+        sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, allCards)
+                .destination(LibrarySearchDestination.EXILE)
+                .build(), "Search your library for a card to exile.", false);
 
-        List<CardView> cardViews = allCards.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
-                cardViews,
-                "Search your library for a card to exile.",
-                false
-        ));
-
-        String logMsg = playerName + " searches their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} searching library for Distant Memories ({} cards in library)", gameData.id, playerName, allCards.size());
     }
 
+    /**
+     * Searches the controller's library for a creature card with mana value X or less,
+     * reveals it, and puts it into their hand. X is determined by the stack entry's X value.
+     */
     @HandlesEffect(SearchLibraryForCreatureWithMVXOrLessToHandEffect.class)
     void resolveSearchLibraryForCreatureWithMVXOrLessToHand(GameData gameData, StackEntry entry, SearchLibraryForCreatureWithMVXOrLessToHandEffect effect) {
         int maxMV = entry.getXValue();
@@ -437,6 +496,10 @@ public class LibraryResolutionService {
         );
     }
 
+    /**
+     * Searches the controller's library for a creature card of the required color with mana value
+     * X or less and puts it onto the battlefield. X is determined by the stack entry's X value.
+     */
     @HandlesEffect(SearchLibraryForCreatureWithColorAndMVXOrLessToBattlefieldEffect.class)
     void resolveSearchLibraryForCreatureWithColorAndMVXOrLessToBattlefield(GameData gameData, StackEntry entry,
                                                                             SearchLibraryForCreatureWithColorAndMVXOrLessToBattlefieldEffect effect) {
@@ -457,6 +520,10 @@ public class LibraryResolutionService {
         );
     }
 
+    /**
+     * Searches the controller's library for a creature card with the required subtype
+     * and puts it onto the battlefield.
+     */
     @HandlesEffect(SearchLibraryForCreatureWithSubtypeToBattlefieldEffect.class)
     void resolveSearchLibraryForCreatureWithSubtypeToBattlefield(GameData gameData, StackEntry entry,
                                                                   SearchLibraryForCreatureWithSubtypeToBattlefieldEffect effect) {
@@ -479,6 +546,10 @@ public class LibraryResolutionService {
         );
     }
 
+    /**
+     * Pays a mana cost and then searches the controller's library for a card with the specified
+     * name, putting it onto the battlefield. If the mana cannot be paid, the effect does nothing.
+     */
     @HandlesEffect(PayManaAndSearchLibraryForCardNamedToBattlefieldEffect.class)
     void resolvePayManaAndSearchLibraryForCardNamedToBattlefield(GameData gameData, StackEntry entry,
                                                                   PayManaAndSearchLibraryForCardNamedToBattlefieldEffect effect) {
@@ -507,6 +578,11 @@ public class LibraryResolutionService {
         );
     }
 
+    /**
+     * Resolves Head Games: the target opponent puts their hand on top of their library,
+     * then the caster searches that library and chooses cards equal to the former hand size
+     * to become the target's new hand. Library is shuffled afterward.
+     */
     @HandlesEffect(HeadGamesEffect.class)
     void resolveHeadGames(GameData gameData, StackEntry entry, HeadGamesEffect effect) {
         UUID casterId = entry.getControllerId();
@@ -542,21 +618,20 @@ public class LibraryResolutionService {
         // Step 2: Caster searches target's library for that many cards
         List<Card> allCards = new ArrayList<>(targetDeck);
 
-        gameData.interaction.beginLibrarySearch(casterId, allCards, false, false, targetPlayerId, handSize);
-
-        List<CardView> cardViews = allCards.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(casterId, new ChooseCardFromLibraryMessage(
-                cardViews,
-                "Search " + targetName + "'s library for a card to put into their hand (" + handSize + " remaining).",
-                false
-        ));
-
-        String searchLog = casterName + " searches " + targetName + "'s library.";
-        gameBroadcastService.logAndBroadcast(gameData, searchLog);
+        String prompt = "Search " + targetName + "'s library for a card to put into their hand (" + handSize + " remaining).";
+        sendLibrarySearchToPlayer(gameData, casterId, LibrarySearchParams.builder(casterId, allCards)
+                .targetPlayerId(targetPlayerId)
+                .remainingCount(handSize)
+                .build(), prompt, false, casterName + " searches " + targetName + "'s library.");
         log.info("Game {} - {} resolving Head Games, searching {}'s library for {} cards",
                 gameData.id, casterName, targetName, handSize);
     }
 
+    /**
+     * Resolves Ajani Goldmane's ultimate: look at the top cards of your library equal to your
+     * life total, then put any number of nonland permanent cards with mana value 3 or less
+     * onto the battlefield. The rest are shuffled back.
+     */
     @HandlesEffect(AjaniUltimateEffect.class)
     void resolveAjaniUltimate(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
@@ -617,6 +692,11 @@ public class LibraryResolutionService {
         log.info("Game {} - {} resolving Ajani ultimate with {} revealed, {} eligible", gameData.id, playerName, count, eligibleCards.size());
     }
 
+    /**
+     * Looks at the top N cards of the controller's library, then the player chooses one to put
+     * into their hand and puts the rest on the bottom. If only one card remains, it goes
+     * directly to hand. Used by cards like Telling Time.
+     */
     @HandlesEffect(LookAtTopCardsHandTopBottomEffect.class)
     void resolveLookAtTopCardsHandTopBottom(GameData gameData, StackEntry entry, LookAtTopCardsHandTopBottomEffect effect) {
         TopCardsResult result = takeTopCardsFromLibrary(gameData, entry, effect.count());
@@ -642,30 +722,31 @@ public class LibraryResolutionService {
                 "Look at the top " + count + " cards of your library. Choose one to put into your hand."
         ));
 
-        String logMsg = playerName + " looks at the top " + count + " cards of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " looks at the top " + pluralCards(count) + " of their library.");
         log.info("Game {} - {} resolving {} with {} cards", gameData.id, playerName, entry.getCard().getName(), count);
     }
 
+    /**
+     * Looks at the top N cards of the controller's library, then the player may reveal one
+     * (or any number, if the effect allows) matching creature card(s) and put them into their
+     * hand. Remaining cards go to the bottom of the library in any order.
+     */
     @HandlesEffect(LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect.class)
     void resolveLookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottom(
             GameData gameData,
             StackEntry entry,
             LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect effect
     ) {
-        TopCardsResult result = takeTopCardsFromLibrary(gameData, entry, effect.count());
+        TopCardsResult result = takeTopCardsFromLibrary(gameData, entry, effect.count(), true);
         if (result == null) return;
         UUID controllerId = result.controllerId();
         List<Card> topCards = result.topCards();
-        String playerName = result.playerName();
         int count = topCards.size();
 
         List<Card> creatureCards = topCards.stream()
                 .filter(card -> matchesCardTypes(card, effect.cardTypes()))
                 .toList();
-
-        String logMsg = playerName + " looks at the top " + count + " cards of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
 
         if (creatureCards.isEmpty()) {
             reorderRemainingToBottom(gameData, controllerId, topCards);
@@ -690,18 +771,14 @@ public class LibraryResolutionService {
             return;
         }
 
-        gameData.interaction.beginLibrarySearch(
-                controllerId,
-                creatureCards,
-                true,
-                true,
-                null,
-                0,
-                topCards,
-                true,
-                false,
-                "You may reveal a creature card from among them and put it into your hand."
-        );
+        gameData.interaction.beginLibrarySearch(LibrarySearchParams.builder(controllerId, creatureCards)
+                .reveals(true)
+                .canFailToFind(true)
+                .sourceCards(topCards)
+                .reorderRemainingToBottom(true)
+                .shuffleAfterSelection(false)
+                .prompt("You may reveal a creature card from among them and put it into your hand.")
+                .build());
 
         List<CardView> cardViews = creatureCards.stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
@@ -711,18 +788,21 @@ public class LibraryResolutionService {
         ));
     }
 
+    /**
+     * Looks at the top N cards of the controller's library. The player may put one onto the
+     * battlefield if it shares a name with a permanent already on any battlefield. Remaining
+     * cards go to the bottom of the library in any order.
+     */
     @HandlesEffect(LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect.class)
     void resolveLookAtTopCardsPutMatchingPermanentNameOnBattlefield(
             GameData gameData,
             StackEntry entry,
             LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect effect
     ) {
-        TopCardsResult result = takeTopCardsFromLibrary(gameData, entry, effect.count());
+        TopCardsResult result = takeTopCardsFromLibrary(gameData, entry, effect.count(), true);
         if (result == null) return;
         UUID controllerId = result.controllerId();
         List<Card> topCards = result.topCards();
-        String playerName = result.playerName();
-        int count = topCards.size();
 
         // Collect all permanent names from all battlefields
         Set<String> permanentNames = new HashSet<>();
@@ -740,27 +820,19 @@ public class LibraryResolutionService {
                 .filter(card -> permanentNames.contains(card.getName()))
                 .toList();
 
-        String logMsg = playerName + " looks at the top " + count + " cards of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
-
         if (matchingCards.isEmpty()) {
             reorderRemainingToBottom(gameData, controllerId, topCards);
             return;
         }
 
-        gameData.interaction.beginLibrarySearch(
-                controllerId,
-                matchingCards,
-                false,
-                true,
-                null,
-                0,
-                topCards,
-                true,
-                false,
-                "You may put one of these cards onto the battlefield.",
-                LibrarySearchDestination.BATTLEFIELD
-        );
+        gameData.interaction.beginLibrarySearch(LibrarySearchParams.builder(controllerId, matchingCards)
+                .canFailToFind(true)
+                .sourceCards(topCards)
+                .reorderRemainingToBottom(true)
+                .shuffleAfterSelection(false)
+                .prompt("You may put one of these cards onto the battlefield.")
+                .destination(LibrarySearchDestination.BATTLEFIELD)
+                .build());
 
         List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
@@ -770,24 +842,25 @@ public class LibraryResolutionService {
         ));
     }
 
+    /**
+     * Looks at the top N cards of the controller's library and exiles one face down (imprint).
+     * If only one card is available, it is exiled automatically. Otherwise the player chooses,
+     * and remaining cards go to the bottom. Used by cards like Clone Shell.
+     */
     @HandlesEffect(ImprintFromTopCardsEffect.class)
     void resolveImprintFromTopCards(GameData gameData, StackEntry entry, ImprintFromTopCardsEffect effect) {
-        TopCardsResult result = takeTopCardsFromLibrary(gameData, entry, effect.count());
+        TopCardsResult result = takeTopCardsFromLibrary(gameData, entry, effect.count(), true);
         if (result == null) return;
         UUID controllerId = result.controllerId();
         List<Card> topCards = result.topCards();
         String playerName = result.playerName();
-        int count = topCards.size();
-
-        String logMsg = playerName + " looks at the top " + count + " cards of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
 
         if (topCards.size() == 1) {
             // Only one card — must exile it, nothing to reorder
             gameData.playerExiledCards.get(controllerId).add(topCards.getFirst());
             UUID sourcePermanentId = entry.getSourcePermanentId();
             if (sourcePermanentId != null) {
-                setImprintedCardOnPermanent(gameData, sourcePermanentId, topCards.getFirst());
+                gameHelper.setImprintedCardOnPermanent(gameData, sourcePermanentId, topCards.getFirst());
             }
             String exileLog = playerName + " exiles a card face down with " + entry.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, exileLog);
@@ -798,19 +871,13 @@ public class LibraryResolutionService {
 
         List<Card> sourceCards = new ArrayList<>(topCards);
 
-        gameData.interaction.beginLibrarySearch(
-                controllerId,
-                topCards,
-                false,
-                false,
-                null,
-                0,
-                sourceCards,
-                true,
-                false,
-                "Exile one card face down (imprint). The rest go to the bottom of your library.",
-                LibrarySearchDestination.EXILE_IMPRINT
-        );
+        gameData.interaction.beginLibrarySearch(LibrarySearchParams.builder(controllerId, topCards)
+                .sourceCards(sourceCards)
+                .reorderRemainingToBottom(true)
+                .shuffleAfterSelection(false)
+                .prompt("Exile one card face down (imprint). The rest go to the bottom of your library.")
+                .destination(LibrarySearchDestination.EXILE_IMPRINT)
+                .build());
 
         List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
@@ -844,12 +911,7 @@ public class LibraryResolutionService {
             return false;
         }
 
-        List<Card> matchingCards = new ArrayList<>();
-        for (Card card : deck) {
-            if (filter.test(card)) {
-                matchingCards.add(card);
-            }
-        }
+        List<Card> matchingCards = deck.stream().filter(filter).toList();
 
         if (matchingCards.isEmpty()) {
             Collections.shuffle(deck);
@@ -859,29 +921,13 @@ public class LibraryResolutionService {
             return false;
         }
 
-        gameData.interaction.beginLibrarySearch(
-                controllerId,
-                matchingCards,
-                reveals,
-                canFailToFind,
-                null,
-                0,
-                null,
-                false,
-                true,
-                prompt,
-                destination
-        );
+        sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, matchingCards)
+                .reveals(reveals)
+                .canFailToFind(canFailToFind)
+                .prompt(prompt)
+                .destination(destination)
+                .build(), prompt, canFailToFind);
 
-        List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
-                cardViews,
-                prompt,
-                canFailToFind
-        ));
-
-        String logMsg = playerName + " searches their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} searches their library ({} matches)", gameData.id, playerName, matchingCards.size());
         return true;
     }
@@ -892,8 +938,6 @@ public class LibraryResolutionService {
      * Payment is handled as a special action during priority (before the spell resolves).
      */
     boolean checkSearchRestriction(GameData gameData, UUID searchingPlayerId) {
-        boolean hasUnpaid = false;
-
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
@@ -902,21 +946,19 @@ public class LibraryResolutionService {
                     if (effect instanceof CantSearchLibrariesEffect) {
                         Set<UUID> paidSet = gameData.paidSearchTaxPermanentIds.get(searchingPlayerId);
                         if (paidSet == null || !paidSet.contains(perm.getId())) {
-                            hasUnpaid = true;
+                            String playerName = gameData.playerIdToName.get(searchingPlayerId);
+                            String logMsg = playerName + "'s library search is prevented by Leonin Arbiter.";
+                            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                            log.info("Game {} - {} has unpaid Leonin Arbiter search tax, search prevented",
+                                    gameData.id, playerName);
+                            return false;
                         }
                     }
                 }
             }
         }
 
-        if (!hasUnpaid) return true;
-
-        String playerName = gameData.playerIdToName.get(searchingPlayerId);
-        String logMsg = playerName + "'s library search is prevented by Leonin Arbiter.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
-        log.info("Game {} - {} has unpaid Leonin Arbiter search tax, search prevented",
-                gameData.id, playerName);
-        return false;
+        return true;
     }
 
     private static String pluralCards(int count) {
@@ -950,6 +992,10 @@ public class LibraryResolutionService {
     private record TopCardsResult(UUID controllerId, List<Card> topCards, String playerName) {}
 
     private TopCardsResult takeTopCardsFromLibrary(GameData gameData, StackEntry entry, int count) {
+        return takeTopCardsFromLibrary(gameData, entry, count, false);
+    }
+
+    private TopCardsResult takeTopCardsFromLibrary(GameData gameData, StackEntry entry, int count, boolean broadcastLook) {
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -962,7 +1008,30 @@ public class LibraryResolutionService {
         }
 
         List<Card> topCards = takeTopCards(deck, actual);
+
+        if (broadcastLook) {
+            String logMsg = playerName + " looks at the top " + pluralCards(actual) + " of their library.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        }
+
         return new TopCardsResult(controllerId, topCards, playerName);
+    }
+
+    private void sendLibrarySearchToPlayer(GameData gameData, UUID playerId, LibrarySearchParams params,
+                                            String prompt, boolean canFailToFind) {
+        String playerName = gameData.playerIdToName.get(playerId);
+        sendLibrarySearchToPlayer(gameData, playerId, params, prompt, canFailToFind,
+                playerName + " searches their library.");
+    }
+
+    private void sendLibrarySearchToPlayer(GameData gameData, UUID playerId, LibrarySearchParams params,
+                                            String prompt, boolean canFailToFind, String logMessage) {
+        gameData.interaction.beginLibrarySearch(params);
+
+        List<CardView> cardViews = params.cards().stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(cardViews, prompt, canFailToFind));
+
+        gameBroadcastService.logAndBroadcast(gameData, logMessage);
     }
 
     private boolean isSearchPrevented(GameData gameData, UUID searchingPlayerId) {
@@ -984,18 +1053,6 @@ public class LibraryResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
     }
 
-    private void setImprintedCardOnPermanent(GameData gameData, UUID permanentId, Card card) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                if (perm.getId().equals(permanentId)) {
-                    perm.getCard().setImprintedCard(card);
-                    return;
-                }
-            }
-        }
-    }
 }
 
 

@@ -121,6 +121,15 @@ public class GameHelper {
         this.triggerCollectionService = triggerCollectionService;
     }
 
+    // ===== General utility =====
+
+    public void setImprintedCardOnPermanent(GameData gameData, UUID sourcePermanentId, Card card) {
+        Permanent perm = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (perm != null) {
+            perm.getCard().setImprintedCard(card);
+        }
+    }
+
     // ===== Lifecycle methods =====
 
     public void resolveMillPlayer(GameData gameData, UUID targetPlayerId, int count) {

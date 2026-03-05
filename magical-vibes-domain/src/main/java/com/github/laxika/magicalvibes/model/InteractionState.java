@@ -409,37 +409,22 @@ public class InteractionState {
         return this.awaitingLibraryReorderToBottom;
     }
 
-    public void beginLibrarySearch(UUID playerId, List<Card> cards, boolean reveals, boolean canFailToFind,
-                                   UUID targetPlayerId, int remainingCount) {
-        beginLibrarySearch(playerId, cards, reveals, canFailToFind, targetPlayerId, remainingCount,
-                null, false, true, null, LibrarySearchDestination.HAND);
-    }
-
-    public void beginLibrarySearch(UUID playerId, List<Card> cards, boolean reveals, boolean canFailToFind,
-                                   UUID targetPlayerId, int remainingCount, List<Card> sourceCards,
-                                   boolean reorderRemainingToBottom, boolean shuffleAfterSelection, String prompt) {
-        beginLibrarySearch(playerId, cards, reveals, canFailToFind, targetPlayerId, remainingCount, sourceCards,
-                reorderRemainingToBottom, shuffleAfterSelection, prompt, LibrarySearchDestination.HAND);
-    }
-
-    public void beginLibrarySearch(UUID playerId, List<Card> cards, boolean reveals, boolean canFailToFind,
-                                   UUID targetPlayerId, int remainingCount, List<Card> sourceCards,
-                                   boolean reorderRemainingToBottom, boolean shuffleAfterSelection, String prompt,
-                                   LibrarySearchDestination destination) {
+    public void beginLibrarySearch(LibrarySearchParams params) {
         this.awaitingInput = AwaitingInput.LIBRARY_SEARCH;
-        this.awaitingLibrarySearchPlayerId = playerId;
-        this.awaitingLibrarySearchCards = cards;
-        this.awaitingLibrarySearchReveals = reveals;
-        this.awaitingLibrarySearchCanFailToFind = canFailToFind;
-        this.awaitingLibrarySearchTargetPlayerId = targetPlayerId;
-        this.awaitingLibrarySearchRemainingCount = remainingCount;
-        this.awaitingLibrarySearchSourceCards = sourceCards;
-        this.awaitingLibrarySearchReorderRemainingToBottom = reorderRemainingToBottom;
-        this.awaitingLibrarySearchShuffleAfterSelection = shuffleAfterSelection;
-        this.awaitingLibrarySearchPrompt = prompt;
-        this.awaitingLibrarySearchDestination = destination;
-        this.context = new InteractionContext.LibrarySearch(playerId, cards, reveals, canFailToFind,
-                targetPlayerId, remainingCount, sourceCards, reorderRemainingToBottom, shuffleAfterSelection, prompt, destination);
+        this.awaitingLibrarySearchPlayerId = params.playerId();
+        this.awaitingLibrarySearchCards = params.cards();
+        this.awaitingLibrarySearchReveals = params.reveals();
+        this.awaitingLibrarySearchCanFailToFind = params.canFailToFind();
+        this.awaitingLibrarySearchTargetPlayerId = params.targetPlayerId();
+        this.awaitingLibrarySearchRemainingCount = params.remainingCount();
+        this.awaitingLibrarySearchSourceCards = params.sourceCards();
+        this.awaitingLibrarySearchReorderRemainingToBottom = params.reorderRemainingToBottom();
+        this.awaitingLibrarySearchShuffleAfterSelection = params.shuffleAfterSelection();
+        this.awaitingLibrarySearchPrompt = params.prompt();
+        this.awaitingLibrarySearchDestination = params.destination();
+        this.context = new InteractionContext.LibrarySearch(params.playerId(), params.cards(), params.reveals(),
+                params.canFailToFind(), params.targetPlayerId(), params.remainingCount(), params.sourceCards(),
+                params.reorderRemainingToBottom(), params.shuffleAfterSelection(), params.prompt(), params.destination());
     }
 
     public void clearLibrarySearch() {

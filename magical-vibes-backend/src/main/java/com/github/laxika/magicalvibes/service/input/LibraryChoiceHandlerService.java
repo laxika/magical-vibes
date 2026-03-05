@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingOpponentExileChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -228,7 +229,7 @@ public class LibraryChoiceHandlerService {
                     gameData.playerExiledCards.get(playerId).add(chosenCard);
                     UUID sourcePermanentId = gameData.imprintSourcePermanentId;
                     if (sourcePermanentId != null) {
-                        setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
+                        gameHelper.setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
                         gameData.imprintSourcePermanentId = null;
                     }
                 } else if (toBattlefield) {
@@ -386,7 +387,7 @@ public class LibraryChoiceHandlerService {
             gameData.playerExiledCards.get(playerId).add(chosenCard);
             UUID sourcePermanentId = gameData.imprintSourcePermanentId;
             if (sourcePermanentId != null) {
-                setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
+                gameHelper.setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
                 gameData.imprintSourcePermanentId = null;
             }
         } else {
@@ -418,7 +419,10 @@ public class LibraryChoiceHandlerService {
             int newRemaining = remainingCount - 1;
             List<Card> newSearchCards = new ArrayList<>(deck);
 
-            gameData.interaction.beginLibrarySearch(playerId, newSearchCards, false, false, targetPlayerId, newRemaining);
+            gameData.interaction.beginLibrarySearch(LibrarySearchParams.builder(playerId, newSearchCards)
+                    .targetPlayerId(targetPlayerId)
+                    .remainingCount(newRemaining)
+                    .build());
 
             String targetName = gameData.playerIdToName.get(targetPlayerId);
             List<CardView> cardViews = newSearchCards.stream().map(cardViewFactory::create).toList();
@@ -613,18 +617,6 @@ public class LibraryChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
-    private void setImprintedCardOnPermanent(GameData gameData, UUID sourcePermanentId, Card card) {
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                if (perm.getId().equals(sourcePermanentId)) {
-                    perm.getCard().setImprintedCard(card);
-                    return;
-                }
-            }
-        }
-    }
 }
 
 

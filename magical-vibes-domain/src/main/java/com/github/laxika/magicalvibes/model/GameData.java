@@ -499,10 +499,18 @@ public class GameData {
             case InteractionContext.LibraryReorder lr ->
                     targetInteraction.beginLibraryReorder(lr.playerId(), lr.cards() != null ? new ArrayList<>(lr.cards()) : null, lr.toBottom());
             case InteractionContext.LibrarySearch ls ->
-                    targetInteraction.beginLibrarySearch(ls.playerId(), ls.cards() != null ? new ArrayList<>(ls.cards()) : null,
-                            ls.reveals(), ls.canFailToFind(), ls.targetPlayerId(), ls.remainingCount(),
-                            ls.sourceCards() != null ? new ArrayList<>(ls.sourceCards()) : null,
-                            ls.reorderRemainingToBottom(), ls.shuffleAfterSelection(), ls.prompt(), ls.destination());
+                    targetInteraction.beginLibrarySearch(LibrarySearchParams.builder(ls.playerId(),
+                                    ls.cards() != null ? new ArrayList<>(ls.cards()) : null)
+                            .reveals(ls.reveals())
+                            .canFailToFind(ls.canFailToFind())
+                            .targetPlayerId(ls.targetPlayerId())
+                            .remainingCount(ls.remainingCount())
+                            .sourceCards(ls.sourceCards() != null ? new ArrayList<>(ls.sourceCards()) : null)
+                            .reorderRemainingToBottom(ls.reorderRemainingToBottom())
+                            .shuffleAfterSelection(ls.shuffleAfterSelection())
+                            .prompt(ls.prompt())
+                            .destination(ls.destination())
+                            .build());
             case InteractionContext.LibraryRevealChoice lrc ->
                     targetInteraction.beginLibraryRevealChoice(lrc.playerId(),
                             lrc.allCards() != null ? new ArrayList<>(lrc.allCards()) : null,
