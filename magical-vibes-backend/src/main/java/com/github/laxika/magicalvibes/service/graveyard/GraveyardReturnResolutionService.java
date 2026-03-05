@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
@@ -623,6 +624,48 @@ public class GraveyardReturnResolutionService {
             gameData.permanentExiledCards
                     .computeIfAbsent(sourcePermanentId, k -> Collections.synchronizedList(new ArrayList<>()))
                     .add(targetCard);
+        }
+
+        String playerName = gameData.playerIdToName.get(entry.getControllerId());
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " exiles " + targetCard.getName() + " from a graveyard.");
+    }
+
+    /**
+     * Resolves an {@link ExileTargetCardFromGraveyardEffect} by exiling a targeted card from a
+     * graveyard. Unlike the imprint variant, this does NOT track the exiled card on the source
+     * permanent. Validates the card still matches the required type (if any). Fizzles if the target
+     * is no longer in a graveyard or no longer matches the type requirement.
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry being resolved
+     * @param effect   the exile effect configuration (includes optional type requirement)
+     */
+    @HandlesEffect(ExileTargetCardFromGraveyardEffect.class)
+    void resolveExileTargetCardFromGraveyard(GameData gameData, StackEntry entry,
+                                              ExileTargetCardFromGraveyardEffect effect) {
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetPermanentId());
+        if (targetCard == null) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    entry.getDescription() + " fizzles (target no longer in a graveyard).");
+            return;
+        }
+
+        if (effect.requiredType() != null && targetCard.getType() != effect.requiredType()
+                && !targetCard.getAdditionalTypes().contains(effect.requiredType())) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    entry.getDescription() + " fizzles (target is no longer a valid "
+                            + effect.requiredType().name().toLowerCase() + " card).");
+            return;
+        }
+
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
+
+        permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+
+        // Add to graveyard owner's exiled cards
+        if (graveyardOwnerId != null) {
+            gameData.playerExiledCards.computeIfAbsent(graveyardOwnerId, k -> new ArrayList<>()).add(targetCard);
         }
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());

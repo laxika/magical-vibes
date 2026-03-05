@@ -981,7 +981,10 @@ public class CreatureModResolutionService {
 
     @HandlesEffect(PutChargeCounterOnSelfEffect.class)
     private void resolvePutChargeCounterOnSelf(GameData gameData, StackEntry entry) {
-        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        // Use sourcePermanentId (not targetPermanentId) because "self" always refers to the source
+        // permanent — targetPermanentId may point to a different target (e.g. a graveyard card).
+        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetPermanentId();
+        Permanent self = gameQueryService.findPermanentById(gameData, selfId);
         if (self == null) {
             return;
         }
