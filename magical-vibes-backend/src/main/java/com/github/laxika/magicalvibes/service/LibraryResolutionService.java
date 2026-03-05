@@ -126,20 +126,12 @@ public class LibraryResolutionService {
 
         int cardsToMill = deck.size() / 2;
         if (cardsToMill == 0) {
-            String logEntry = playerName + "'s library has " + deck.size() + " card" + (deck.size() != 1 ? "s" : "") + " — mills nothing.";
+            String logEntry = playerName + "'s library has " + pluralCards(deck.size()) + " — mills nothing.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
         }
 
-        for (int i = 0; i < cardsToMill; i++) {
-            Card card = deck.removeFirst();
-            gameHelper.addCardToGraveyard(gameData, targetPlayerId, card);
-        }
-
-        String logEntry = playerName + " mills half their library (" + cardsToMill + " card" + (cardsToMill != 1 ? "s" : "") + ").";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-
-        log.info("Game {} - {} mills half library ({} cards)", gameData.id, playerName, cardsToMill);
+        gameHelper.resolveMillPlayer(gameData, targetPlayerId, cardsToMill);
     }
 
     @HandlesEffect(ShuffleGraveyardIntoLibraryEffect.class)
@@ -161,7 +153,7 @@ public class LibraryResolutionService {
         graveyard.clear();
         Collections.shuffle(deck);
 
-        String logEntry = playerName + " shuffles their graveyard (" + count + " card" + (count != 1 ? "s" : "") + ") into their library.";
+        String logEntry = playerName + " shuffles their graveyard (" + pluralCards(count) + ") into their library.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} shuffles graveyard ({} cards) into library", gameData.id, playerName, count);
@@ -500,53 +492,17 @@ public class LibraryResolutionService {
         }
 
         cost.pay(gameData.playerManaPools.get(controllerId));
-        List<Card> deck = gameData.playerDecks.get(controllerId);
 
-        if (deck == null || deck.isEmpty()) {
-            String logMsg = playerName + " pays " + effect.manaCost()
-                    + " but their library is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            return;
-        }
-
-        List<Card> matchingCards = new ArrayList<>();
-        for (Card card : deck) {
-            if (effect.cardName().equals(card.getName())) {
-                matchingCards.add(card);
-            }
-        }
-
-        if (matchingCards.isEmpty()) {
-            Collections.shuffle(deck);
-            String logMsg = playerName + " pays " + effect.manaCost() + " and searches their library but finds no "
-                    + effect.cardName() + ". Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            return;
-        }
-
-        gameData.interaction.beginLibrarySearch(
+        performLibrarySearch(
+                gameData,
                 controllerId,
-                matchingCards,
-                false,
-                true,
-                null,
-                0,
-                null,
-                false,
-                true,
+                card -> effect.cardName().equals(card.getName()),
+                effect.cardName(),
                 "Search your library for a card named " + effect.cardName() + " and put it onto the battlefield.",
+                false,
+                true,
                 LibrarySearchDestination.BATTLEFIELD
         );
-
-        List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
-                cardViews,
-                "Search your library for a card named " + effect.cardName() + " and put it onto the battlefield.",
-                true
-        ));
-
-        String logMsg = playerName + " pays " + effect.manaCost() + " and searches their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
     }
 
     @HandlesEffect(HeadGamesEffect.class)
@@ -562,16 +518,7 @@ public class LibraryResolutionService {
         if (!checkSearchRestriction(gameData, casterId)) {
             // Search prevented — still execute remaining spell steps per rules:
             // target puts hand on top of library, then library is shuffled.
-            int handSize = targetHand.size();
-            if (handSize > 0) {
-                for (int i = targetHand.size() - 1; i >= 0; i--) {
-                    targetDeck.addFirst(targetHand.get(i));
-                }
-                targetHand.clear();
-                String logMsg = targetName + " puts " + handSize + " card" + (handSize != 1 ? "s" : "")
-                        + " from their hand on top of their library.";
-                gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            }
+            putHandOnTopOfLibrary(gameData, targetHand, targetDeck, targetName);
             Collections.shuffle(targetDeck);
             String shuffleLog = targetName + "'s library is shuffled.";
             gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
@@ -588,15 +535,7 @@ public class LibraryResolutionService {
             return;
         }
 
-        // Put hand cards on top of library (in order)
-        for (int i = targetHand.size() - 1; i >= 0; i--) {
-            targetDeck.addFirst(targetHand.get(i));
-        }
-        targetHand.clear();
-
-        String logMsg = targetName + " puts " + handSize + " card" + (handSize != 1 ? "s" : "")
-                + " from their hand on top of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        putHandOnTopOfLibrary(gameData, targetHand, targetDeck, targetName);
 
         // Step 2: Caster searches target's library for that many cards
         List<Card> allCards = new ArrayList<>(targetDeck);
@@ -978,6 +917,10 @@ public class LibraryResolutionService {
         return false;
     }
 
+    private static String pluralCards(int count) {
+        return count + " card" + (count != 1 ? "s" : "");
+    }
+
     private static boolean matchesCardTypes(Card card, Set<CardType> cardTypes) {
         return cardTypes.contains(card.getType())
                 || card.getAdditionalTypes().stream().anyMatch(cardTypes::contains);
@@ -1025,6 +968,18 @@ public class LibraryResolutionService {
         List<Card> deck = gameData.playerDecks.get(searchingPlayerId);
         if (deck != null) Collections.shuffle(deck);
         return true;
+    }
+
+    private void putHandOnTopOfLibrary(GameData gameData, List<Card> hand, List<Card> deck, String playerName) {
+        int handSize = hand.size();
+        if (handSize == 0) return;
+        for (int i = handSize - 1; i >= 0; i--) {
+            deck.addFirst(hand.get(i));
+        }
+        hand.clear();
+        String logMsg = playerName + " puts " + pluralCards(handSize)
+                + " from their hand on top of their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
     }
 
     private void setImprintedCardOnPermanent(GameData gameData, UUID permanentId, Card card) {
