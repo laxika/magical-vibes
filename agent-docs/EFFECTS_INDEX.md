@@ -138,6 +138,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `SacrificeCreatureCost` | `()` | sacrifice a creature as cost |
 | `SacrificeSubtypeCreatureCost` | `(CardSubtype subtype)` | sacrifice a creature of specific subtype as cost |
 | `SacrificeArtifactCost` | `()` | sacrifice an artifact as cost (works for both activated abilities and spell costs) |
+| `SacrificePermanentCost` | `(PermanentPredicate filter, String description)` | sacrifice a permanent matching filter as cost. Uses `GameQueryService.matchesPermanentPredicate()` for validation. E.g. `new SacrificePermanentCost(new PermanentAnyOfPredicate(List.of(new PermanentIsArtifactPredicate(), new PermanentIsCreaturePredicate())), "Sacrifice an artifact or creature")` |
 | `SacrificeMultiplePermanentsCost` | `(int count, PermanentPredicate filter)` | sacrifice N permanents matching filter as cost (e.g. "Sacrifice three artifacts: ..." with `PermanentIsArtifactPredicate`). Multi-step UI: if exactly N match, auto-sacrifices all; otherwise prompts one-at-a-time. Validated and paid in `AbilityActivationService` |
 | `SacrificeAllCreaturesYouControlCost` | `()` | sacrifice all creatures you control as cost |
 | `DiscardCardTypeCost` | `(CardType requiredType)` | discard a card of specific type as cost |

@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouContr
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import lombok.RequiredArgsConstructor;
@@ -120,6 +121,12 @@ public class SpellCastingService {
                 .anyMatch(e -> e instanceof SacrificeArtifactCost);
         if (usesSacrificeArtifactCost) {
             filteredSpellEffects.removeIf(SacrificeArtifactCost.class::isInstance);
+        }
+        SacrificePermanentCost sacrificePermanentCost = (SacrificePermanentCost) filteredSpellEffects.stream()
+                .filter(e -> e instanceof SacrificePermanentCost)
+                .findFirst().orElse(null);
+        if (sacrificePermanentCost != null) {
+            filteredSpellEffects.removeIf(SacrificePermanentCost.class::isInstance);
         }
 
         // Handle modal spells (Choose one): unwrap at cast time per MTG CR 700.2a
@@ -320,6 +327,9 @@ public class SpellCastingService {
             if (usesSacrificeArtifactCost) {
                 paySacrificeArtifactCost(gameData, player, card, sacrificePermanentId);
             }
+            if (sacrificePermanentCost != null) {
+                paySacrificePermanentCost(gameData, player, card, sacrificePermanentId, sacrificePermanentCost);
+            }
             if (usesSacrificeAllCreaturesCost) {
                 resolvedXValue = paySacrificeAllCreaturesYouControlCost(
                         gameData, player, card
@@ -390,6 +400,9 @@ public class SpellCastingService {
             }
             if (usesSacrificeArtifactCost) {
                 paySacrificeArtifactCost(gameData, player, card, sacrificePermanentId);
+            }
+            if (sacrificePermanentCost != null) {
+                paySacrificePermanentCost(gameData, player, card, sacrificePermanentId, sacrificePermanentCost);
             }
             if (usesSacrificeAllCreaturesCost) {
                 resolvedXValue = paySacrificeAllCreaturesYouControlCost(
@@ -526,6 +539,28 @@ public class SpellCastingService {
         }
         if (!gameQueryService.isArtifact(toSacrifice)) {
             throw new IllegalStateException("Sacrifice target must be an artifact");
+        }
+        if (permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice)) {
+            String logEntry = player.getUsername() + " sacrifices " + toSacrifice.getCard().getName()
+                    + " for " + sourceCard.getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        }
+    }
+
+    private void paySacrificePermanentCost(GameData gameData, Player player, Card sourceCard, UUID sacrificePermanentId, SacrificePermanentCost cost) {
+        if (sacrificePermanentId == null) {
+            throw new IllegalStateException("Must sacrifice a permanent to cast " + sourceCard.getName() + ": " + cost.description());
+        }
+        Permanent toSacrifice = gameQueryService.findPermanentById(gameData, sacrificePermanentId);
+        if (toSacrifice == null) {
+            throw new IllegalStateException("Sacrifice target not found on battlefield");
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, sacrificePermanentId);
+        if (!player.getId().equals(controllerId)) {
+            throw new IllegalStateException("Can only sacrifice permanents you control");
+        }
+        if (!gameQueryService.matchesPermanentPredicate(gameData, toSacrifice, cost.filter())) {
+            throw new IllegalStateException("Sacrifice target does not match requirement: " + cost.description());
         }
         if (permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice)) {
             String logEntry = player.getUsername() + " sacrifices " + toSacrifice.getCard().getName()
