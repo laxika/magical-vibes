@@ -23,7 +23,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEquipByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreaturePerCardsInAllGraveyardsEffect;
@@ -38,10 +41,12 @@ import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffe
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -74,6 +79,44 @@ public class StaticEffectResolutionService {
     private void resolveAnimateNoncreatureArtifacts(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         if (gameQueryService.isArtifact(context.target())) {
             accumulator.setAnimatedCreature(true);
+        }
+    }
+
+    @HandlesStaticEffect(GrantEquipByManaValueEffect.class)
+    private void resolveGrantEquipByManaValue(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var grant = (GrantEquipByManaValueEffect) effect;
+        Permanent target = context.target();
+        GameData gameData = context.gameData();
+        boolean hasAnimateArtifacts = hasAnimateArtifactEffect(gameData);
+
+        // Grant equip ability to matching permanents
+        if (matchesStaticFilter(target, grant.filter())) {
+            int manaValue = target.getCard().getManaValue();
+            String cost = "{" + manaValue + "}";
+            accumulator.addActivatedAbility(new ActivatedAbility(
+                    false,
+                    cost,
+                    List.of(new EquipEffect()),
+                    "Equip " + cost,
+                    new ControlledPermanentPredicateTargetFilter(
+                            new PermanentIsCreaturePredicate(),
+                            "Target must be a creature you control"
+                    ),
+                    null,
+                    null,
+                    ActivationTimingRestriction.SORCERY_SPEED
+            ));
+        }
+
+        // Boost creatures with matching permanents attached
+        if (isEffectivelyCreature(gameData, target, hasAnimateArtifacts)) {
+            gameData.forEachPermanent((playerId, permanent) -> {
+                if (permanent.getAttachedTo() != null
+                        && permanent.getAttachedTo().equals(target.getId())
+                        && matchesStaticFilter(permanent, grant.filter())) {
+                    accumulator.addPower(permanent.getCard().getManaValue());
+                }
+            });
         }
     }
 
@@ -188,7 +231,10 @@ public class StaticEffectResolutionService {
     @HandlesStaticEffect(GrantSubtypeEffect.class)
     private void resolveGrantSubtype(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantSubtypeEffect) effect;
-        if (matchesCreatureScope(context, grant.scope(), null)) {
+        boolean matches = grant.scope() == GrantScope.ALL_PERMANENTS
+                ? matchesStaticFilter(context.target(), grant.filter())
+                : matchesCreatureScope(context, grant.scope(), null);
+        if (matches) {
             accumulator.addGrantedSubtype(grant.subtype());
             if (grant.overriding()) {
                 accumulator.setSubtypeOverriding(true);

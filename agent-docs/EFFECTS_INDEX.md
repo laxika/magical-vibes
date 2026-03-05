@@ -607,6 +607,7 @@ Pass `null` as filter to allow any card.
 | `AnimateTargetPermanentEffect` | `(int power, int toughness)` | target permanent becomes a creature with base P/T permanently (not until end of turn); retains other types (e.g. Tezzeret, Agent of Bolas -1) |
 | `AnimateNoncreatureArtifactsEffect` | `()` | animate all noncreature artifacts into creatures (March of the Machines-style) |
 | `AddCardTypeToTargetPermanentEffect` | `(CardType cardType)` | target permanent becomes the given card type in addition to its other types until end of turn (e.g. Liquimetal Coating makes target an artifact) |
+| `GrantEquipByManaValueEffect` | `(PermanentPredicate filter)` | grants matching permanents an equip ability with cost {X} and boosts equipped creatures +X/+0, where X = permanent's mana value (static) |
 
 ## Enchantment-specific
 
