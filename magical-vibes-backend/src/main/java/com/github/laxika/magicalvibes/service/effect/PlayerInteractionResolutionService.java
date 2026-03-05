@@ -249,7 +249,7 @@ public class PlayerInteractionResolutionService {
     }
 
     @HandlesEffect(ReturnPermanentsOnCombatDamageToPlayerEffect.class)
-    private void resolveReturnPermanentsOnCombatDamage(GameData gameData, StackEntry entry) {
+    private void resolveReturnPermanentsOnCombatDamage(GameData gameData, StackEntry entry, ReturnPermanentsOnCombatDamageToPlayerEffect effect) {
         UUID defenderId = entry.getTargetPermanentId();
         int damageDealt = entry.getXValue();
         UUID attackerId = entry.getControllerId();
@@ -259,23 +259,28 @@ public class PlayerInteractionResolutionService {
         List<UUID> validIds = new ArrayList<>();
         if (defenderBattlefield != null) {
             for (Permanent perm : defenderBattlefield) {
-                validIds.add(perm.getId());
+                if (effect.filter() == null || gameQueryService.matchesPermanentPredicate(gameData, perm, effect.filter())) {
+                    validIds.add(perm.getId());
+                }
             }
         }
 
+        String targetLabel = effect.filter() != null ? "creature" : "permanent";
+        String targetsLabel = effect.filter() != null ? "creatures" : "permanents";
+
         if (validIds.isEmpty()) {
-            String logEntry = creatureName + "'s ability triggers, but " + gameData.playerIdToName.get(defenderId) + " has no permanents.";
+            String logEntry = creatureName + "'s ability triggers, but " + gameData.playerIdToName.get(defenderId) + " has no " + targetsLabel + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
         }
 
-        String logEntry = creatureName + "'s ability triggers — " + gameData.playerIdToName.get(attackerId) + " may return up to " + damageDealt + " permanent" + (damageDealt > 1 ? "s" : "") + ".";
+        String logEntry = creatureName + "'s ability triggers — " + gameData.playerIdToName.get(attackerId) + " may return up to " + damageDealt + " " + (damageDealt > 1 ? targetsLabel : targetLabel) + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} combat damage trigger: {} damage, {} valid targets", gameData.id, creatureName, damageDealt, validIds.size());
 
         gameData.pendingCombatDamageBounceTargetPlayerId = defenderId;
         int maxCount = Math.min(damageDealt, validIds.size());
-        playerInputService.beginMultiPermanentChoice(gameData, attackerId, validIds, maxCount, "Return up to " + damageDealt + " permanent" + (damageDealt > 1 ? "s" : "") + " to their owner's hand.");
+        playerInputService.beginMultiPermanentChoice(gameData, attackerId, validIds, maxCount, "Return up to " + damageDealt + " " + (damageDealt > 1 ? targetsLabel : targetLabel) + " to their owner's hand.");
     }
 
     @HandlesEffect(PutAwakeningCountersOnTargetLandsEffect.class)

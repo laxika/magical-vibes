@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnb
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
@@ -1237,6 +1238,16 @@ public class CombatService {
                 se.setNonTargeting(true);
                 gameData.stack.add(se);
                 gameBroadcastService.logAndBroadcast(gameData, creature.getCard().getName() + "'s combat damage trigger goes on the stack.");
+            }
+
+            // Check for granted damage-to-opponent creature bounce (e.g. Arm with Aether)
+            if (creature.isHasDamageToOpponentCreatureBounce()) {
+                String desc = creature.getCard().getName() + "'s triggered ability";
+                StackEntry bounceSe = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
+                        desc, List.of(new ReturnPermanentsOnCombatDamageToPlayerEffect(new PermanentIsCreaturePredicate())), 1, defenderId, null);
+                bounceSe.setNonTargeting(true);
+                gameData.stack.add(bounceSe);
+                gameBroadcastService.logAndBroadcast(gameData, creature.getCard().getName() + "'s damage-to-opponent bounce trigger goes on the stack.");
             }
 
             // Check attached equipment/auras for combat damage to player triggers

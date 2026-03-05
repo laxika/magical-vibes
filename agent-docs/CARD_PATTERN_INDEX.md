@@ -29,6 +29,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Pump target | `g/GiantGrowth.java` | BoostTargetCreatureEffect |
 | X pump target | `u/UntamedMight.java` | BoostTargetCreatureXEffect |
 | Pump all + keyword | `o/Overrun.java` | BoostAllOwnCreaturesEffect + GrantKeywordEffect |
+| Grant triggered bounce | `a/ArmWithAether.java` | GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffect — grants "damage to opponent, may bounce creature" to all controlled creatures until end of turn |
 | Pump attacking + keyword | `r/RallyTheForces.java` | BoostAllCreaturesEffect(filter) + GrantKeywordEffect(ALL_CREATURES, filter) with PermanentIsAttackingPredicate |
 | Targeted destroy | `t/Terror.java` | DestroyTargetPermanentEffect + target filter |
 | Multi-effect removal | `c/Condemn.java` | PutTargetOnBottomOfLibrary + GainLifeEqualToTargetToughness |

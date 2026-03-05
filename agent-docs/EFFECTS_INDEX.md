@@ -164,7 +164,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `ReturnCreaturesToOwnersHandEffect` | `(Set<TargetFilter> filters)` | return all creatures matching filters to owners' hands |
 | `ReturnSelfToHandEffect` | `()` | return this permanent to owner's hand |
 | `ReturnSelfToHandOnCoinFlipLossEffect` | `()` | return self to hand if coin flip is lost |
-| `ReturnPermanentsOnCombatDamageToPlayerEffect` | `()` | return permanents when combat damage dealt to player (Ninja-style) |
+| `ReturnPermanentsOnCombatDamageToPlayerEffect` | `()` or `(PermanentPredicate filter)` | return permanents when combat damage dealt to player (Ninja-style). Optional filter restricts which permanents can be chosen (e.g. `PermanentIsCreaturePredicate` for creatures only) |
 | `ReturnArtifactsTargetPlayerOwnsToHandEffect` | `()` | return all artifacts target player owns to hand |
 | `BounceCreatureOnUpkeepEffect` | `(Scope scope, Set<TargetFilter> filters, String prompt)` | at upkeep, return a creature matching filters. Scope: `SOURCE_CONTROLLER`, `TRIGGER_TARGET_PLAYER` |
 | `ReturnSelfToHandAndCreateTokensEffect` | `(CreateCreatureTokenEffect tokenEffect)` | return source to hand then create tokens (compound upkeep effect, e.g. Thopter Assembly) |
@@ -477,6 +477,7 @@ Pass `null` as filter to allow any card.
 | `GrantSubtypeEffect` | `(CardSubtype subtype, GrantScope scope)` or `(CardSubtype subtype, GrantScope scope, boolean overriding)` | grant a creature subtype to permanents matching scope. When `overriding=true`, replaces all existing creature subtypes (non-creature subtypes like Equipment/Aura are preserved). Scope: `EQUIPPED_CREATURE`, `ENCHANTED_CREATURE`, etc. Used by Nim Deathmantle |
 | `GrantColorUntilEndOfTurnEffect` | `(CardColor color)` | target permanent becomes the specified color until end of turn. Per CR 105.3, replaces all previous colors (sets `colorOverridden` flag, clears existing `grantedColors`). Cleared on `resetModifiers()`. Checked by `PermanentColorInPredicate` for static effects, targeting, and costs |
 | `GrantProtectionFromCardTypeUntilEndOfTurnEffect` | `(CardType cardType)` | target creature gains protection from the specified card type until end of turn. Adds to `Permanent.protectionFromCardTypes`. Cleared on `resetModifiers()`. Protection prevents blocking by, damage from, and targeting by sources of that card type. Checked via `GameQueryService.hasProtectionFromSourceCardTypes()` in combat, damage, and targeting services |
+| `GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffect` | `()` | until end of turn, creatures you control gain "Whenever this creature deals damage to an opponent, you may return target creature that player controls to its owner's hand." Sets `hasDamageToOpponentCreatureBounce` flag on controlled creatures; CombatService creates `ReturnPermanentsOnCombatDamageToPlayerEffect(PermanentIsCreaturePredicate)` trigger with xValue=1. Cleared on `resetModifiers()`. Used by Arm with Aether |
 
 ## Combat restrictions / evasion
 

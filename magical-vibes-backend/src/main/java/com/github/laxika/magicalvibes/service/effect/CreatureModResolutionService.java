@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromCardTypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -1188,6 +1189,24 @@ public class CreatureModResolutionService {
         gameData.pendingProliferateCount = (int) totalProliferates;
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligiblePermanentIds,
                 eligiblePermanentIds.size(), "Proliferate: Choose permanents to add counters to.");
+    }
+
+    @HandlesEffect(GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffect.class)
+    private void resolveGrantDamageToOpponentCreatureBounce(GameData gameData, StackEntry entry) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+        int count = 0;
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                if (gameQueryService.isCreature(gameData, permanent)) {
+                    permanent.setHasDamageToOpponentCreatureBounce(true);
+                    count++;
+                }
+            }
+        }
+
+        String logEntry = entry.getCard().getName() + " grants damage-to-opponent creature bounce to " + count + " creature(s) until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} grants damage bounce to {} creature(s)", gameData.id, entry.getCard().getName(), count);
     }
 }
 
