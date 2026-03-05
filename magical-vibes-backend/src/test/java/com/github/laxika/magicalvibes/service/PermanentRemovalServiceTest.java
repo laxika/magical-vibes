@@ -568,7 +568,7 @@ class PermanentRemovalServiceTest extends BaseCardTest {
             assertThat(result).isEqualTo(0);
             harness.assertOnBattlefield(player1, "Indestructible Golem");
             assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("indestructible") && log.contains("survives"));
+                    .anyMatch(log -> log.contains("indestructible"));
         }
     }
 }

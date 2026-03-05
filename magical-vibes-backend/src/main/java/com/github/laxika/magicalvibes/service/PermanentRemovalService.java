@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -32,14 +33,8 @@ public class PermanentRemovalService {
 
     public boolean removePermanentToGraveyard(GameData gameData, Permanent target) {
         // Replacement effect: exile instead of going to graveyard (CR 614.6)
-        if (target.isExileIfLeavesBattlefield() || target.isExileInsteadOfDieThisTurn()) {
-            boolean exiled = removePermanentToExile(gameData, target);
-            if (exiled) {
-                String logEntry = target.getCard().getName() + " is exiled instead of going to the graveyard.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                removeOrphanedAuras(gameData);
-            }
-            return exiled;
+        if (tryApplyExileReplacementEffect(gameData, target, true, "going to the graveyard")) {
+            return true;
         }
 
         // Capture unattach-sacrifice info before removal
@@ -47,80 +42,63 @@ public class PermanentRemovalService {
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
         boolean wasArtifact = gameQueryService.isArtifact(target);
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield != null && battlefield.remove(target)) {
-                gameData.permanentExiledCards.remove(target.getId());
-                UUID graveyardOwnerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
-                boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, graveyardOwnerId, target.getOriginalCard(), Zone.BATTLEFIELD);
-                gameData.stolenCreatures.remove(target.getId());
-                // Skip "dies" and graveyard triggers if a replacement effect redirected the card (CR 614.6)
-                if (wentToGraveyard) {
-                    gameHelper.collectDeathTrigger(gameData, target.getCard(), playerId, wasCreature, target);
-                    if (wasCreature) {
-                        gameData.creatureDeathCountThisTurn.merge(playerId, 1, Integer::sum);
-                        gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
-                        gameHelper.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());
-                        gameHelper.checkOpponentCreatureDeathTriggers(gameData, playerId);
-                        gameHelper.checkEquippedCreatureDeathTriggers(gameData, target.getId(), playerId);
-                        gameHelper.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), playerId);
-                    }
-                    if (wasArtifact) {
-                        gameHelper.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData, graveyardOwnerId, playerId);
-                    }
-                }
-                handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
-                handleExileReturnOnLeave(gameData, target);
-                return true;
+        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
+        if (removed.isEmpty()) {
+            return false;
+        }
+        UUID controllerId = removed.get().controllerId();
+        UUID ownerId = removed.get().ownerId();
+
+        boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, ownerId, target.getOriginalCard(), Zone.BATTLEFIELD);
+        // Skip "dies" and graveyard triggers if a replacement effect redirected the card (CR 614.6)
+        if (wentToGraveyard) {
+            gameHelper.collectDeathTrigger(gameData, target.getCard(), controllerId, wasCreature, target);
+            if (wasCreature) {
+                gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
+                gameHelper.checkAllyCreatureDeathTriggers(gameData, controllerId);
+                gameHelper.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());
+                gameHelper.checkOpponentCreatureDeathTriggers(gameData, controllerId);
+                gameHelper.checkEquippedCreatureDeathTriggers(gameData, target.getId(), controllerId);
+                gameHelper.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
+            }
+            if (wasArtifact) {
+                gameHelper.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, controllerId);
             }
         }
-        return false;
+        handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
+        handleExileReturnOnLeave(gameData, target);
+        return true;
     }
 
     public boolean removePermanentToHand(GameData gameData, Permanent target) {
         // Replacement effect: exile instead of going to hand (CR 614.6)
-        if (target.isExileIfLeavesBattlefield()) {
-            boolean exiled = removePermanentToExile(gameData, target);
-            if (exiled) {
-                String logEntry = target.getCard().getName() + " is exiled instead of returning to hand.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                removeOrphanedAuras(gameData);
-            }
-            return exiled;
+        if (tryApplyExileReplacementEffect(gameData, target, false, "returning to hand")) {
+            return true;
         }
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield != null && battlefield.remove(target)) {
-                gameData.permanentExiledCards.remove(target.getId());
-                UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
-                gameData.stolenCreatures.remove(target.getId());
-                List<Card> hand = gameData.playerHands.get(ownerId);
-                hand.add(target.getOriginalCard());
-                handleExileReturnOnLeave(gameData, target);
-                return true;
-            }
+        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
+        if (removed.isEmpty()) {
+            return false;
         }
-        return false;
+        UUID ownerId = removed.get().ownerId();
+        gameData.playerHands.get(ownerId).add(target.getOriginalCard());
+        handleExileReturnOnLeave(gameData, target);
+        return true;
     }
 
     public boolean removePermanentToExile(GameData gameData, Permanent target) {
         // Capture unattach-sacrifice info before removal
         UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield != null && battlefield.remove(target)) {
-                gameData.permanentExiledCards.remove(target.getId());
-                UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
-                gameData.playerExiledCards.get(ownerId).add(target.getOriginalCard());
-                gameData.stolenCreatures.remove(target.getId());
-                handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
-                handleExileReturnOnLeave(gameData, target);
-                return true;
-            }
+        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
+        if (removed.isEmpty()) {
+            return false;
         }
-        return false;
+        UUID ownerId = removed.get().ownerId();
+        gameData.playerExiledCards.get(ownerId).add(target.getOriginalCard());
+        handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
+        handleExileReturnOnLeave(gameData, target);
+        return true;
     }
 
     public void removeOrphanedAuras(GameData gameData) {
@@ -174,18 +152,53 @@ public class PermanentRemovalService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         if (effectiveDamage >= gameQueryService.getEffectiveToughness(gameData, target)) {
-            if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
-                String indestructibleLog = target.getCard().getName() + " is indestructible and survives.";
-                gameBroadcastService.logAndBroadcast(gameData, indestructibleLog);
-            } else {
-                removePermanentToGraveyard(gameData, target);
+            if (tryDestroyPermanent(gameData, target)) {
                 String deathLog = target.getCard().getName() + " is destroyed by redirected " + sourceName + " damage.";
                 gameBroadcastService.logAndBroadcast(gameData, deathLog);
-                removeOrphanedAuras(gameData);
             }
         }
 
         return 0;
+    }
+
+    /**
+     * Checks if the target has an exile replacement effect and applies it if so.
+     * Returns true if a replacement was applied (caller should return early), false otherwise.
+     *
+     * @param checkExileInsteadOfDie whether to also check isExileInsteadOfDieThisTurn (for graveyard destinations)
+     * @param destinationDescription human-readable description of the original destination (e.g. "going to the graveyard")
+     */
+    private boolean tryApplyExileReplacementEffect(GameData gameData, Permanent target,
+                                                   boolean checkExileInsteadOfDie, String destinationDescription) {
+        if (!target.isExileIfLeavesBattlefield() && !(checkExileInsteadOfDie && target.isExileInsteadOfDieThisTurn())) {
+            return false;
+        }
+        boolean exiled = removePermanentToExile(gameData, target);
+        if (exiled) {
+            String logEntry = target.getCard().getName() + " is exiled instead of " + destinationDescription + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            removeOrphanedAuras(gameData);
+        }
+        return exiled;
+    }
+
+    private record RemovedPermanentInfo(UUID controllerId, UUID ownerId) {}
+
+    /**
+     * Finds and removes the given permanent from whatever battlefield it's on, cleans up
+     * stolen-creature and permanent-exiled-cards tracking, and returns controller/owner info.
+     */
+    private Optional<RemovedPermanentInfo> removeFromBattlefield(GameData gameData, Permanent target) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null && battlefield.remove(target)) {
+                gameData.permanentExiledCards.remove(target.getId());
+                UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
+                gameData.stolenCreatures.remove(target.getId());
+                return Optional.of(new RemovedPermanentInfo(playerId, ownerId));
+            }
+        }
+        return Optional.empty();
     }
 
     /**
