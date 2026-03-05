@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.model.effect.GrantEquipByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreaturePerCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreaturePerMatchingLandNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreaturePerControlledSubtypeEffect;
@@ -255,6 +256,27 @@ public class StaticEffectResolutionService {
         var grant = (GrantEffectEffect) effect;
         if (matchesCreatureScope(context, grant.scope(), grant.filter())) {
             accumulator.addGrantedEffect(grant.effect());
+        }
+    }
+
+    @HandlesStaticEffect(BoostCreaturesOfChosenColorEffect.class)
+    private void resolveBoostCreaturesOfChosenColor(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostCreaturesOfChosenColorEffect) effect;
+        CardColor chosenColor = context.source().getChosenColor();
+        if (chosenColor == null) return;
+        if (!context.targetOnSameBattlefield()) return;
+        Permanent target = context.target();
+        boolean colorMatch = false;
+        if (target.isColorOverridden()) {
+            colorMatch = target.getGrantedColors().contains(chosenColor);
+        } else {
+            CardColor effectiveColor = target.getEffectiveColor();
+            colorMatch = (effectiveColor != null && effectiveColor == chosenColor)
+                    || target.getGrantedColors().contains(chosenColor);
+        }
+        if (colorMatch) {
+            accumulator.addPower(boost.powerBoost());
+            accumulator.addToughness(boost.toughnessBoost());
         }
     }
 

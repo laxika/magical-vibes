@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -11,7 +13,9 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Emblem;
+import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
@@ -456,6 +460,36 @@ public class TriggerCollectionService {
 
                     String logEntry = perm.getCard().getName() + " triggers - " + gameData.playerIdToName.get(tappingPlayerId)
                             + " adds " + trigger.amount() + " " + trigger.color().name().toLowerCase() + " mana.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    anyTriggered[0] = true;
+                } else if (effect instanceof AddExtraManaOfChosenColorOnLandTapEffect) {
+                    // Only triggers for the controller's own lands
+                    if (!playerId.equals(tappingPlayerId)) {
+                        continue;
+                    }
+
+                    CardColor chosenColor = perm.getChosenColor();
+                    if (chosenColor == null) {
+                        continue;
+                    }
+
+                    // Check if the tapped land produced mana of the chosen color
+                    Permanent tappedLand = gameQueryService.findPermanentById(gameData, tappedLandId);
+                    if (tappedLand == null) {
+                        continue;
+                    }
+                    ManaColor chosenManaColor = ManaColor.valueOf(chosenColor.name());
+                    boolean producesChosenColor = tappedLand.getCard().getEffects(EffectSlot.ON_TAP).stream()
+                            .anyMatch(e -> e instanceof AwardManaEffect award && award.color() == chosenManaColor);
+                    if (!producesChosenColor) {
+                        continue;
+                    }
+
+                    ManaPool pool = gameData.playerManaPools.get(tappingPlayerId);
+                    pool.add(chosenManaColor);
+
+                    String logEntry = perm.getCard().getName() + " triggers — " + gameData.playerIdToName.get(tappingPlayerId)
+                            + " adds 1 additional " + chosenColor.name().toLowerCase() + " mana.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     anyTriggered[0] = true;
                 }

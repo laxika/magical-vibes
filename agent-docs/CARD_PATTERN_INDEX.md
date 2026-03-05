@@ -244,6 +244,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Hand-imprint + cost reduction | `s/SemblanceAnvil.java` | ON_ENTER_BATTLEFIELD MayEffect(ExileFromHandToImprintEffect(CardNotPredicate(CardTypePredicate(LAND)))) + STATIC ReduceOwnCastCostForSharedCardTypeWithImprintEffect(2) — imprint nonland card from hand on ETB, spells sharing card type with imprinted card cost {2} less |
 | Static + upkeep trigger | `v/VensersJournal.java` | STATIC NoMaximumHandSizeEffect + UPKEEP_TRIGGERED GainLifePerCardsInHandEffect — no max hand size + gain life equal to hand size each upkeep |
 | Sacrifice creature + search by MV | `b/BirthingPod.java` | Tap+mana(Phyrexian)+SacrificeCreatureCost(true)+SearchLibraryForCreatureWithExactMVToBattlefieldEffect(1) — sorcery speed, sacrifice creature to tutor creature with MV+1 to battlefield. `trackSacrificedManaValue=true` stores sacrificed MV in xValue |
+| Choose color + static boost + mana bonus | `c/CagedSun.java` | ON_ENTER_BATTLEFIELD ChooseColorOnEnterEffect + STATIC BoostCreaturesOfChosenColorEffect(1,1) + ON_ANY_PLAYER_TAPS_LAND AddExtraManaOfChosenColorOnLandTapEffect — choose color on enter, creatures of chosen color get +1/+1, lands tapped for chosen color add extra mana |
 
 ## Equipment
 

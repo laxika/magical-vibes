@@ -426,6 +426,7 @@ Pass `null` as filter to allow any card.
 | `BoostAllOwnCreaturesEffect` | `(int powerBoost, int toughnessBoost)` or `(int powerBoost, int toughnessBoost, PermanentPredicate filter)` | all your creatures get +X/+Y until end of turn (one-shot). Optional predicate filter |
 | `BoostAllCreaturesEffect` | `(int powerBoost, int toughnessBoost)` or `(int powerBoost, int toughnessBoost, PermanentPredicate filter)` | ALL creatures (all players) get +X/+Y until end of turn (one-shot). Optional predicate filter. Unlike `BoostAllOwnCreaturesEffect`, iterates over every player's battlefield |
 | `StaticBoostEffect` | `(int powerBoost, int toughnessBoost, Set<Keyword> grantedKeywords, GrantScope scope, PermanentPredicate filter)` | unified static boost: +X/+Y and keywords with predicate-based filtering. Scope: `OWN_CREATURES`, `ALL_CREATURES`. Filter: optional `PermanentPredicate` (color, subtype, not, etc). Convenience constructors: `(p, t, scope)`, `(p, t, scope, filter)`, `(p, t, keywords, scope)` |
+| `BoostCreaturesOfChosenColorEffect` | `(int powerBoost, int toughnessBoost)` | static: creatures you control of the source permanent's chosen color get +X/+Y. The chosen color is stored on the permanent at runtime via `Permanent.getChosenColor()`. Used by Caged Sun |
 | `BoostTargetCreatureXEffect` | `(int powerMultiplier, int toughnessMultiplier)` | target creature gets +(multiplier*X)/+(multiplier*X) until end of turn, where X is mana paid |
 | `BoostAllCreaturesXEffect` | `(int powerMultiplier, int toughnessMultiplier)` or `(int powerMultiplier, int toughnessMultiplier, PermanentPredicate filter)` | all creatures get +X/+X where X is mana paid. Optional `PermanentPredicate filter` to restrict which creatures are affected |
 | `BoostAttachedCreatureEffect` | `(int powerBoost, int toughnessBoost)` | enchanted/equipped creature gets +X/+Y (static, works for both auras and equipment) |
@@ -574,6 +575,7 @@ Pass `null` as filter to allow any card.
 | `AwardManaEffect` | `(ManaColor color, int amount)` or `(ManaColor color)` (defaults amount to 1) | add N mana of specified color |
 | `AwardAnyColorManaEffect` | `()` | add one mana of any color |
 | `AddManaOnEnchantedLandTapEffect` | `(ManaColor color, int amount)` | when enchanted land is tapped, add N mana of color |
+| `AddExtraManaOfChosenColorOnLandTapEffect` | `()` | ON_ANY_PLAYER_TAPS_LAND trigger: when a land you control taps for mana of the source permanent's chosen color, add one additional mana of that color. Checks ON_TAP effects of the tapped land. Used by Caged Sun |
 | `DoubleManaPoolEffect` | `()` | double your mana pool |
 | `AddManaPerControlledSubtypeEffect` | `(ManaColor color, CardSubtype subtype)` | add one mana of color for each permanent with subtype you control |
 | `AwardArtifactOnlyColorlessManaEffect` | `(int amount)` | add N colorless mana that can only be spent to cast artifact spells or activate abilities of artifacts. Stored in `ManaPool.artifactOnlyColorless`; `ManaCost.canPay/pay` accept `artifactContext=true` to include this mana |
