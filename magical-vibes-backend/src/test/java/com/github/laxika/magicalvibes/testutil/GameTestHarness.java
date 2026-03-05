@@ -115,6 +115,7 @@ public class GameTestHarness {
     private final FakeConnection conn1;
     private final FakeConnection conn2;
     private final LegendRuleService legendRuleService;
+    private final PermanentRemovalService permanentRemovalService;
 
     public GameTestHarness() {
         if (!oracleLoaded) {
@@ -143,7 +144,7 @@ public class GameTestHarness {
                 sessionManager, gameRegistry, cardViewFactory, gameQueryService, gameBroadcastService, playerInputService,
                 legendRuleService, triggeredAbilityQueueService, draftRegistry, null, creatureControlService, null);
         AuraAttachmentService auraAttachmentService = new AuraAttachmentService(gameQueryService, gameBroadcastService, gameHelper);
-        PermanentRemovalService permanentRemovalService = new PermanentRemovalService(
+        permanentRemovalService = new PermanentRemovalService(
                 gameHelper, auraAttachmentService, gameQueryService, gameBroadcastService);
         TriggerCollectionService triggerCollectionService = new TriggerCollectionService(
                 gameHelper, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService, triggeredAbilityQueueService, creatureControlService);
@@ -610,6 +611,10 @@ public class GameTestHarness {
 
     public WebSocketSessionManager getSessionManager() {
         return sessionManager;
+    }
+
+    public PermanentRemovalService getPermanentRemovalService() {
+        return permanentRemovalService;
     }
 
     public void clearMessages() {
