@@ -56,7 +56,7 @@ public class PermanentRemovalService {
                 gameData.stolenCreatures.remove(target.getId());
                 // Skip "dies" and graveyard triggers if a replacement effect redirected the card (CR 614.6)
                 if (wentToGraveyard) {
-                    gameHelper.collectDeathTrigger(gameData, target.getCard(), playerId, wasCreature);
+                    gameHelper.collectDeathTrigger(gameData, target.getCard(), playerId, wasCreature, target);
                     if (wasCreature) {
                         gameData.creatureDeathCountThisTurn.merge(playerId, 1, Integer::sum);
                         gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);

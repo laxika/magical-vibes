@@ -134,7 +134,7 @@ public class PermanentChoiceHandlerService {
                 battlefield.remove(perm);
                 boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, perm.getOriginalCard(), Zone.BATTLEFIELD);
                 if (wentToGraveyard) {
-                    gameHelper.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature);
+                    gameHelper.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature, perm);
                     if (wasCreature) {
                         gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
                     }

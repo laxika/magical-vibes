@@ -79,6 +79,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `DealDamageToAnyTargetEffect` | `(int damage, boolean cantRegenerate)` | deal N damage to any target |
 | `DealDamageEqualToSourcePowerToAnyTargetEffect` | `()` | deal damage equal to source permanent's power to any target (uses effective power at resolution) |
 | `DealDamageToTargetCreatureEffect` | `(int damage)` | deal N damage to target creature |
+| `DealDamageToBlockedAttackersOnDeathEffect` | `(int damage)` | ON_DEATH marker: when this creature dies during combat, deal N damage to each creature it blocked this combat (e.g. Cathedral Membrane). Target permanent IDs baked in at trigger time from blockingTargetPermanentIds |
 | `DealDamageToTargetPlayerEffect` | `(int damage)` | deal N damage to target player |
 | `DealDamageToTargetPlayerByHandSizeEffect` | `()` | deal damage equal to hand size to target player |
 | `MassDamageEffect` | `(int damage)` or `(int damage, boolean damagesPlayers)` or `(int damage, boolean usesXValue, boolean damagesPlayers, PermanentPredicate filter)` | deal N damage to all creatures (optionally filtered by predicate), optionally to all players too. Use `usesXValue=true` to use X value instead of fixed damage |

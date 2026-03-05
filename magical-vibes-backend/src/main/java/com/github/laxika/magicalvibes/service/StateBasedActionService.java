@@ -38,7 +38,7 @@ public class StateBasedActionService {
                     gameData.stolenCreatures.remove(p.getId());
                     boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, graveyardOwnerId, p.getOriginalCard(), Zone.BATTLEFIELD);
                     if (wentToGraveyard) {
-                        gameHelper.collectDeathTrigger(gameData, p.getCard(), playerId, true);
+                        gameHelper.collectDeathTrigger(gameData, p.getCard(), playerId, true, p);
                         gameData.creatureDeathCountThisTurn.merge(playerId, 1, Integer::sum);
                         gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
                         gameHelper.checkAnyNontokenCreatureDeathTriggers(gameData, p.getCard());

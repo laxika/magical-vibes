@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHan
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardDealManaValueDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
@@ -77,6 +78,23 @@ public class DamageResolutionService {
     @HandlesEffect(DealDamageToTargetCreatureEffect.class)
     void resolveDealDamageToTargetCreature(GameData gameData, StackEntry entry, DealDamageToTargetCreatureEffect effect) {
         resolveCreatureTargetDamage(gameData, entry, gameQueryService.applyDamageMultiplier(gameData, effect.damage()));
+    }
+
+    /**
+     * Resolves {@link DealDamageToBlockedAttackersOnDeathEffect} — deals a fixed amount of damage to each
+     * creature that was blocked by the dying creature. Target permanent IDs are baked in at trigger time.
+     */
+    @HandlesEffect(DealDamageToBlockedAttackersOnDeathEffect.class)
+    void resolveDealDamageToBlockedAttackers(GameData gameData, StackEntry entry, DealDamageToBlockedAttackersOnDeathEffect effect) {
+        int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+        if (isDamageSourcePreventedWithLog(gameData, entry)) return;
+        for (UUID targetId : entry.getTargetPermanentIds()) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) continue;
+            if (!isDamagePreventedForCreature(gameData, entry, target)) {
+                dealDamageAndDestroyIfLethal(gameData, entry, target, damage);
+            }
+        }
     }
 
     /**

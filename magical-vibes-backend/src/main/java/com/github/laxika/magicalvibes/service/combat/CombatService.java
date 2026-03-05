@@ -637,8 +637,10 @@ public class CombatService {
         // Mark creatures as blocking
         for (BlockerAssignment assignment : blockerAssignments) {
             Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
+            Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
             blocker.setBlocking(true);
             blocker.addBlockingTarget(assignment.attackerIndex());
+            blocker.addBlockingTargetPermanentId(attacker.getId());
         }
 
         if (!blockerAssignments.isEmpty()) {
@@ -1616,7 +1618,7 @@ public class CombatService {
         gameData.stolenCreatures.remove(dead.getId());
         boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, graveyardOwner, dead.getOriginalCard(), Zone.BATTLEFIELD);
         if (wentToGraveyard) {
-            gameHelper.collectDeathTrigger(gameData, dead.getCard(), controllerId, true);
+            gameHelper.collectDeathTrigger(gameData, dead.getCard(), controllerId, true, dead);
             gameHelper.checkAllyCreatureDeathTriggers(gameData, controllerId);
         }
         battlefield.remove(idx);
@@ -2171,7 +2173,7 @@ public class CombatService {
                 battlefield.remove(perm);
                 boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, perm.getOriginalCard(), Zone.BATTLEFIELD);
                 if (wentToGraveyard) {
-                    gameHelper.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature);
+                    gameHelper.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature, perm);
                     if (wasCreature) {
                         gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
                     }

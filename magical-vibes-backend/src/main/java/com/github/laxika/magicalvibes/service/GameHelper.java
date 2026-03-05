@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -48,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -363,11 +365,33 @@ public class GameHelper {
     }
 
     public void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature) {
+        collectDeathTrigger(gameData, dyingCard, controllerId, wasCreature, null);
+    }
+
+    public void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature, Permanent dyingPermanent) {
         List<CardEffect> deathEffects = dyingCard.getEffects(EffectSlot.ON_DEATH);
         if (deathEffects.isEmpty()) return;
 
         for (CardEffect effect : deathEffects) {
-            if (effect instanceof MayPayManaEffect mayPay) {
+            if (effect instanceof DealDamageToBlockedAttackersOnDeathEffect deathDmg) {
+                // Only triggers during combat and if the creature was blocking
+                TurnStep step = gameData.currentStep;
+                if (dyingPermanent != null && step != null
+                        && step.ordinal() >= TurnStep.BEGINNING_OF_COMBAT.ordinal()
+                        && step.ordinal() <= TurnStep.END_OF_COMBAT.ordinal()
+                        && !dyingPermanent.getBlockingTargetPermanentIds().isEmpty()) {
+                    List<UUID> targetIds = new ArrayList<>(dyingPermanent.getBlockingTargetPermanentIds());
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            dyingCard,
+                            controllerId,
+                            dyingCard.getName() + "'s ability",
+                            new ArrayList<>(List.of(deathDmg)),
+                            0,
+                            targetIds
+                    ));
+                }
+            } else if (effect instanceof MayPayManaEffect mayPay) {
                 gameData.queueMayAbility(dyingCard, controllerId, mayPay, null);
             } else if (effect instanceof MayEffect may) {
                 gameData.queueMayAbility(dyingCard, controllerId, may);

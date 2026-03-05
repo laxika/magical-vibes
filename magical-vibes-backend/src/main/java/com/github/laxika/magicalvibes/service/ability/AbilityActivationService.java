@@ -208,7 +208,7 @@ public class AbilityActivationService {
         battlefield.remove(permanentIndex);
         boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, permanent.getOriginalCard(), Zone.BATTLEFIELD);
         if (wentToGraveyard) {
-            gameHelper.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature);
+            gameHelper.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature, permanent);
             if (wasCreature) {
                 gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
             }
@@ -724,7 +724,7 @@ public class AbilityActivationService {
         playerBf.remove(sacTarget);
         boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, sacTarget.getCard(), Zone.BATTLEFIELD);
         if (wentToGraveyard && gameQueryService.isCreature(gameData, sacTarget)) {
-            gameHelper.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true);
+            gameHelper.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true, sacTarget);
             gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
         }
         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId);

@@ -159,7 +159,7 @@ public class ActivatedAbilityExecutionService {
             battlefield.remove(permanent);
             boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, permanent.getCard(), Zone.BATTLEFIELD);
             if (wentToGraveyard) {
-                gameHelper.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature);
+                gameHelper.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature, permanent);
                 if (wasCreature) {
                     gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
                 }
