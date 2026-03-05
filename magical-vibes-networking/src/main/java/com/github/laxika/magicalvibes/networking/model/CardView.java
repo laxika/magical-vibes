@@ -29,6 +29,8 @@ public record CardView(
         boolean needsSpellTarget,
         List<ActivatedAbilityView> activatedAbilities,
         Integer loyalty,
-        boolean hasConvoke
+        boolean hasConvoke,
+        boolean hasPhyrexianMana,
+        int phyrexianManaCount
 ) {
 }

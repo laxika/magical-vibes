@@ -142,6 +142,25 @@
     @if (searchTaxCost > 0 && hasPriority) {
       <button class="btn-pass btn-pass-orange" (click)="paySearchTax.emit()">Pay {{ '{' + searchTaxCost + '}' }} — Leonin Arbiter</button>
     }
+    @if (choice.targeting.choosingPhyrexianPayment) {
+      <div class="phyrexian-banner">
+        <span class="phyrexian-prompt">Phyrexian Mana for {{ choice.targeting.phyrexianCardName }}</span>
+        <div class="phyrexian-controls">
+          <button class="phyrexian-arrow phyrexian-down" (click)="choice.targeting.phyrexianLifePayCount = choice.targeting.phyrexianLifePayCount - 1" [disabled]="choice.targeting.phyrexianLifePayCount <= 0">
+            <svg viewBox="0 0 12 8" fill="currentColor"><path d="M1 1l5 5 5-5"/></svg>
+          </button>
+          <span class="phyrexian-display">{{ choice.targeting.phyrexianLifePayCount }}</span>
+          <button class="phyrexian-arrow phyrexian-up" (click)="choice.targeting.phyrexianLifePayCount = choice.targeting.phyrexianLifePayCount + 1" [disabled]="choice.targeting.phyrexianLifePayCount >= choice.targeting.phyrexianSymbolCount">
+            <svg viewBox="0 0 12 8" fill="currentColor"><path d="M1 7l5-5 5 5"/></svg>
+          </button>
+        </div>
+        <span class="phyrexian-life-cost">Pay {{ choice.targeting.phyrexianLifePayCount }} with life ({{ choice.targeting.phyrexianLifePayCount * 2 }} life)</span>
+        <div class="phyrexian-buttons">
+          <button class="btn-phyrexian" (click)="choice.targeting.confirmPhyrexianPayment()">Confirm</button>
+          <button class="btn-phyrexian" (click)="choice.targeting.cancelPhyrexianPayment()">Cancel</button>
+        </div>
+      </div>
+    }
     @if (choice.targeting.choosingXValue) {
       <div class="x-value-banner">
         <span class="x-value-prompt">Choose X for {{ choice.targeting.xValueCardName }}</span>

@@ -792,6 +792,14 @@ public class AbilityActivationService {
         ManaCost cost = new ManaCost(abilityCost);
         ManaPool pool = gameData.playerManaPools.get(playerId);
         boolean hasRestricted = artifactContext || myrContext;
+
+        // Pay Phyrexian mana first so colored mana is reserved for Phyrexian symbols
+        // before generic costs consume it
+        int phyrexianLifeCost = 0;
+        if (cost.hasPhyrexianMana()) {
+            phyrexianLifeCost = cost.payPhyrexianMana(pool);
+        }
+
         if (cost.hasX()) {
             if (effectiveXValue < 0) {
                 throw new IllegalStateException("X value cannot be negative");
@@ -819,6 +827,14 @@ public class AbilityActivationService {
                 }
                 cost.pay(pool);
             }
+        }
+
+        if (phyrexianLifeCost > 0) {
+            int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+            gameData.playerLifeTotals.put(playerId, currentLife - phyrexianLifeCost);
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " pays " + phyrexianLifeCost + " life for Phyrexian mana.");
         }
     }
 

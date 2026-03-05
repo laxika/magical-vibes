@@ -69,6 +69,14 @@ export class TargetingChoiceService {
   multiTargetMaxCount = 0;
   multiTargetSelectedIds = signal<string[]>([]);
 
+  // --- Phyrexian mana payment state ---
+  choosingPhyrexianPayment = false;
+  phyrexianCardIndex = -1;
+  phyrexianCardName = '';
+  phyrexianSymbolCount = 0;
+  phyrexianLifePayCount = 0;
+  private pendingPhyrexianLifeCount: number | null = null;
+
   // --- Convoke state ---
   convoking = false;
   convokeCardIndex = -1;
@@ -118,50 +126,106 @@ export class TargetingChoiceService {
     const g = this.gameSignal();
     if (g && isCardPlayable(index)) {
       const card = g.hand[index];
-      const hasXCost = card.manaCost?.includes('{X}') ?? false;
 
-      if (hasXCost) {
-        const baseCost = (card.manaCost ?? '').replace('{X}', '');
-        let base = 0;
-        const matches = baseCost.match(/\{([^}]+)\}/g) || [];
-        for (const m of matches) {
-          const inner = m.slice(1, -1);
-          const num = parseInt(inner);
-          base += isNaN(num) ? 1 : num;
-        }
-        this.choosingXValue = true;
-        this.xValueCardIndex = index;
-        this.xValueCardName = card.name;
-        this.xValueInput = 0;
-        this.xValueMaximum = this.totalManaFn() - base;
+      // Check for Phyrexian mana — show chooser before anything else
+      if (card.hasPhyrexianMana && card.phyrexianManaCount > 0) {
+        this.choosingPhyrexianPayment = true;
+        this.phyrexianCardIndex = index;
+        this.phyrexianCardName = card.name;
+        this.phyrexianSymbolCount = card.phyrexianManaCount;
+        this.phyrexianLifePayCount = 0;
         return;
       }
-      if (card.needsSpellTarget) {
-        this.targetingSpell = true;
-        this.targetingSpellCardIndex = index;
-        this.targetingSpellCardName = card.name;
-        return;
-      }
-      if (card.needsTarget) {
-        // Ask backend for valid targets
-        this.targetingCardIndex = index;
-        this.targetingCardName = card.name;
-        this.targetingForAbility = false;
-        this.targetingAbilityIndex = -1;
-        this.pendingAbilityXValue = null;
-        this.pendingConvokeCard = card.hasConvoke ? card : null;
-        this.sendValidTargetsRequest(index, null, null);
-        return;
-      }
-      // No targets needed — check for convoke
-      if (card.hasConvoke) {
-        this.pendingConvokeCard = card;
-        this.pendingMultiTargetIds = [];
-        this.enterConvokeMode(index, card);
-        return;
-      }
-      this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetPermanentId: null });
+
+      this.continuePlayCard(index);
     }
+  }
+
+  private continuePlayCard(index: number): void {
+    const g = this.gameSignal();
+    if (!g) return;
+    const card = g.hand[index];
+    if (!card) return;
+
+    const hasXCost = card.manaCost?.includes('{X}') ?? false;
+
+    if (hasXCost) {
+      const baseCost = (card.manaCost ?? '').replace('{X}', '');
+      let base = 0;
+      const matches = baseCost.match(/\{([^}]+)\}/g) || [];
+      for (const m of matches) {
+        const inner = m.slice(1, -1);
+        const num = parseInt(inner);
+        base += isNaN(num) ? 1 : num;
+      }
+      this.choosingXValue = true;
+      this.xValueCardIndex = index;
+      this.xValueCardName = card.name;
+      this.xValueInput = 0;
+      this.xValueMaximum = this.totalManaFn() - base;
+      return;
+    }
+    if (card.needsSpellTarget) {
+      this.targetingSpell = true;
+      this.targetingSpellCardIndex = index;
+      this.targetingSpellCardName = card.name;
+      return;
+    }
+    if (card.needsTarget) {
+      // Ask backend for valid targets
+      this.targetingCardIndex = index;
+      this.targetingCardName = card.name;
+      this.targetingForAbility = false;
+      this.targetingAbilityIndex = -1;
+      this.pendingAbilityXValue = null;
+      this.pendingConvokeCard = card.hasConvoke ? card : null;
+      this.sendValidTargetsRequest(index, null, null);
+      return;
+    }
+    // No targets needed — check for convoke
+    if (card.hasConvoke) {
+      this.pendingConvokeCard = card;
+      this.pendingMultiTargetIds = [];
+      this.enterConvokeMode(index, card);
+      return;
+    }
+    this.sendPlayCardMessage(index, null);
+  }
+
+  confirmPhyrexianPayment(): void {
+    this.pendingPhyrexianLifeCount = this.phyrexianLifePayCount > 0 ? this.phyrexianLifePayCount : 0;
+    const savedIndex = this.phyrexianCardIndex;
+    this.choosingPhyrexianPayment = false;
+    this.phyrexianCardIndex = -1;
+    this.phyrexianCardName = '';
+    this.phyrexianSymbolCount = 0;
+    this.phyrexianLifePayCount = 0;
+    this.continuePlayCard(savedIndex);
+  }
+
+  cancelPhyrexianPayment(): void {
+    this.choosingPhyrexianPayment = false;
+    this.phyrexianCardIndex = -1;
+    this.phyrexianCardName = '';
+    this.phyrexianSymbolCount = 0;
+    this.phyrexianLifePayCount = 0;
+    this.pendingPhyrexianLifeCount = null;
+  }
+
+  private sendPlayCardMessage(cardIndex: number, targetPermanentId: string | null, extra?: Record<string, any>): void {
+    const msg: any = {
+      type: MessageType.PLAY_CARD,
+      cardIndex,
+      targetPermanentId
+    };
+    if (this.pendingPhyrexianLifeCount != null) {
+      msg.phyrexianLifeCount = this.pendingPhyrexianLifeCount;
+    }
+    if (extra) {
+      Object.assign(msg, extra);
+    }
+    this.websocketService.send(msg);
+    this.pendingPhyrexianLifeCount = null;
   }
 
   confirmXValue(): void {
@@ -206,12 +270,7 @@ export class TargetingChoiceService {
         this.sendValidTargetsRequest(savedCardIndex, null, null);
         return;
       }
-      this.websocketService.send({
-        type: MessageType.PLAY_CARD,
-        cardIndex: this.xValueCardIndex,
-        xValue: this.xValueInput,
-        targetPermanentId: null
-      });
+      this.sendPlayCardMessage(this.xValueCardIndex, null, { xValue: this.xValueInput });
     }
     this.choosingXValue = false;
     this.xValueCardIndex = -1;
@@ -227,6 +286,7 @@ export class TargetingChoiceService {
     this.xValueInput = 0;
     this.targetingForAbility = false;
     this.targetingAbilityIndex = -1;
+    this.pendingPhyrexianLifeCount = null;
   }
 
   selectTarget(permanentId: string): void {
@@ -252,15 +312,11 @@ export class TargetingChoiceService {
       this.enterConvokeMode(cardIndex, card);
       return;
     } else {
-      const msg: any = {
-        type: MessageType.PLAY_CARD,
-        cardIndex: this.targetingCardIndex,
-        targetPermanentId: permanentId
-      };
+      const extra: Record<string, any> = {};
       if (this.pendingAbilityXValue != null) {
-        msg.xValue = this.pendingAbilityXValue;
+        extra['xValue'] = this.pendingAbilityXValue;
       }
-      this.websocketService.send(msg);
+      this.sendPlayCardMessage(this.targetingCardIndex, permanentId, extra);
     }
     this.resetTargetingState();
   }
@@ -279,15 +335,11 @@ export class TargetingChoiceService {
         targetPermanentId: playerId
       });
     } else {
-      const msg: any = {
-        type: MessageType.PLAY_CARD,
-        cardIndex: this.targetingCardIndex,
-        targetPermanentId: playerId
-      };
+      const extra: Record<string, any> = {};
       if (this.pendingAbilityXValue != null) {
-        msg.xValue = this.pendingAbilityXValue;
+        extra['xValue'] = this.pendingAbilityXValue;
       }
-      this.websocketService.send(msg);
+      this.sendPlayCardMessage(this.targetingCardIndex, playerId, extra);
     }
     this.resetTargetingState();
   }
@@ -303,10 +355,12 @@ export class TargetingChoiceService {
     this.targetingPrompt = '';
     this.pendingAbilityXValue = null;
     this.pendingConvokeCard = null;
+    // Note: don't reset pendingPhyrexianLifeCount here — it carries through to the final send
   }
 
   cancelTargeting(): void {
     this.resetTargetingState();
+    this.pendingPhyrexianLifeCount = null;
   }
 
   selectSpellTarget(entry: StackEntry): void {
@@ -319,11 +373,7 @@ export class TargetingChoiceService {
         targetPermanentId: entry.cardId
       });
     } else {
-      this.websocketService.send({
-        type: MessageType.PLAY_CARD,
-        cardIndex: this.targetingSpellCardIndex,
-        targetPermanentId: entry.cardId
-      });
+      this.sendPlayCardMessage(this.targetingSpellCardIndex, entry.cardId);
     }
     this.targetingSpell = false;
     this.targetingSpellCardIndex = -1;
@@ -338,6 +388,7 @@ export class TargetingChoiceService {
     this.targetingSpellCardName = '';
     this.targetingForAbility = false;
     this.targetingAbilityIndex = -1;
+    this.pendingPhyrexianLifeCount = null;
   }
 
   isValidTarget(perm: Permanent): boolean {
@@ -421,11 +472,7 @@ export class TargetingChoiceService {
     }
 
     // Send directly
-    this.websocketService.send({
-      type: MessageType.PLAY_CARD,
-      cardIndex: this.multiTargetCardIndex,
-      targetPermanentIds: this.pendingMultiTargetIds
-    });
+    this.sendPlayCardMessage(this.multiTargetCardIndex, null, { targetPermanentIds: this.pendingMultiTargetIds });
     this.resetMultiTargetState();
   }
 
@@ -439,6 +486,7 @@ export class TargetingChoiceService {
     this.pendingConvokeCard = null;
     this.targetingForAbility = false;
     this.targetingAbilityIndex = -1;
+    this.pendingPhyrexianLifeCount = null;
   }
 
   isMultiTargetSelected(permanentId: string): boolean {
@@ -485,6 +533,7 @@ export class TargetingChoiceService {
       convokeCreatureIds: this.convokeSelectedCreatureIds()
     };
     this.addPendingTargetsToMsg(msg);
+    this.addPendingPhyrexianToMsg(msg);
     this.websocketService.send(msg);
     this.cancelConvoke();
     this.resetMultiTargetState();
@@ -497,6 +546,7 @@ export class TargetingChoiceService {
       cardIndex: this.convokeCardIndex
     };
     this.addPendingTargetsToMsg(msg);
+    this.addPendingPhyrexianToMsg(msg);
     this.websocketService.send(msg);
     this.cancelConvoke();
     this.resetMultiTargetState();
@@ -513,11 +563,19 @@ export class TargetingChoiceService {
     }
   }
 
+  private addPendingPhyrexianToMsg(msg: any): void {
+    if (this.pendingPhyrexianLifeCount != null) {
+      msg.phyrexianLifeCount = this.pendingPhyrexianLifeCount;
+      this.pendingPhyrexianLifeCount = null;
+    }
+  }
+
   cancelConvoke(): void {
     this.convoking = false;
     this.convokeCardIndex = -1;
     this.convokeCardName = '';
     this.convokeSelectedCreatureIds.set([]);
+    this.pendingPhyrexianLifeCount = null;
   }
 
   // ========== Tap / ability activation ==========
@@ -592,6 +650,8 @@ export class TargetingChoiceService {
     for (const sym of symbols) {
       const inner = sym.slice(1, -1);
       if (inner === 'X' || inner === 'T') continue;
+      // Phyrexian mana (e.g. R/P) is always payable with 2 life — skip it
+      if (inner.endsWith('/P')) continue;
       if (coloredSymbols.includes(inner)) {
         coloredNeeded[inner] = (coloredNeeded[inner] ?? 0) + 1;
       } else {

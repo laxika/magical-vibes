@@ -162,6 +162,8 @@ export interface Card {
   activatedAbilities: ActivatedAbilityView[];
   loyalty: number | null;
   hasConvoke: boolean;
+  hasPhyrexianMana: boolean;
+  phyrexianManaCount: number;
 }
 
 export interface Permanent {

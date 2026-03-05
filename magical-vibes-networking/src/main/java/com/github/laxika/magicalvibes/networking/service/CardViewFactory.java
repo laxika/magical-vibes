@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,14 @@ public class CardViewFactory {
         List<ActivatedAbilityView> abilityViews = card.getActivatedAbilities().stream()
                 .map(this::createAbilityView)
                 .toList();
+
+        boolean hasPhyrexianMana = false;
+        int phyrexianManaCount = 0;
+        if (card.getManaCost() != null) {
+            ManaCost cost = new ManaCost(card.getManaCost());
+            hasPhyrexianMana = cost.hasPhyrexianMana();
+            phyrexianManaCount = cost.getPhyrexianManaCount();
+        }
 
         return new CardView(
                 card.getName(),
@@ -41,7 +50,9 @@ public class CardViewFactory {
                 card.isNeedsSpellTarget(),
                 abilityViews,
                 card.getLoyalty(),
-                card.getKeywords().contains(Keyword.CONVOKE));
+                card.getKeywords().contains(Keyword.CONVOKE),
+                hasPhyrexianMana,
+                phyrexianManaCount);
     }
 
     public ActivatedAbilityView createAbilityView(ActivatedAbility ability) {

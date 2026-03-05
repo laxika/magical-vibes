@@ -52,6 +52,11 @@ public class SpellCastingService {
 
     void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments,
                   List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId) {
+        playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, null);
+    }
+
+    void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments,
+                  List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId, Integer phyrexianLifeCount) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (targetPermanentIds == null) targetPermanentIds = List.of();
         if (convokeCreatureIds == null) convokeCreatureIds = List.of();
@@ -291,28 +296,28 @@ public class SpellCastingService {
 
             turnProgressionService.resolveAutoPass(gameData);
         } else if (card.getType() == CardType.CREATURE) {
-            paySpellManaCost(gameData, playerId, card, 0, convokeContributions);
+            paySpellManaCost(gameData, playerId, card, 0, convokeContributions, phyrexianLifeCount);
             gameData.stack.add(new StackEntry(
                     StackEntryType.CREATURE_SPELL, card, playerId, card.getName(),
                     List.of(), 0, targetPermanentId, null
             ));
             finishSpellCast(gameData, playerId, player, hand, card);
         } else if (card.getType() == CardType.ENCHANTMENT) {
-            paySpellManaCost(gameData, playerId, card, 0, convokeContributions);
+            paySpellManaCost(gameData, playerId, card, 0, convokeContributions, phyrexianLifeCount);
             gameData.stack.add(new StackEntry(
                     StackEntryType.ENCHANTMENT_SPELL, card, playerId, card.getName(),
                     List.of(), 0, targetPermanentId, null
             ));
             finishSpellCast(gameData, playerId, player, hand, card);
         } else if (card.getType() == CardType.ARTIFACT) {
-            paySpellManaCost(gameData, playerId, card, effectiveXValue, convokeContributions);
+            paySpellManaCost(gameData, playerId, card, effectiveXValue, convokeContributions, phyrexianLifeCount);
             gameData.stack.add(new StackEntry(
                     StackEntryType.ARTIFACT_SPELL, card, playerId, card.getName(),
                     List.of(), effectiveXValue, targetPermanentId, null
             ));
             finishSpellCast(gameData, playerId, player, hand, card);
         } else if (card.getType() == CardType.PLANESWALKER) {
-            paySpellManaCost(gameData, playerId, card, 0, convokeContributions);
+            paySpellManaCost(gameData, playerId, card, 0, convokeContributions, phyrexianLifeCount);
             gameData.stack.add(new StackEntry(
                     StackEntryType.PLANESWALKER_SPELL, card, playerId, card.getName(),
                     List.of(), 0, null, null
@@ -320,7 +325,7 @@ public class SpellCastingService {
             finishSpellCast(gameData, playerId, player, hand, card);
         } else if (card.getType() == CardType.SORCERY) {
             int resolvedXValue = effectiveXValue;
-            paySpellManaCost(gameData, playerId, card, resolvedXValue, convokeContributions);
+            paySpellManaCost(gameData, playerId, card, resolvedXValue, convokeContributions, phyrexianLifeCount);
             if (usesSacrificeCreatureCost) {
                 paySacrificeCreatureCost(gameData, player, card, sacrificePermanentId);
             }
@@ -394,7 +399,7 @@ public class SpellCastingService {
             }
         } else if (card.getType() == CardType.INSTANT) {
             int resolvedXValue = effectiveXValue;
-            paySpellManaCost(gameData, playerId, card, resolvedXValue, convokeContributions);
+            paySpellManaCost(gameData, playerId, card, resolvedXValue, convokeContributions, phyrexianLifeCount);
             if (usesSacrificeCreatureCost) {
                 paySacrificeCreatureCost(gameData, player, card, sacrificePermanentId);
             }
@@ -570,6 +575,10 @@ public class SpellCastingService {
     }
 
     void paySpellManaCost(GameData gameData, UUID playerId, Card card, int effectiveXValue, List<ManaColor> convokeContributions) {
+        paySpellManaCost(gameData, playerId, card, effectiveXValue, convokeContributions, null);
+    }
+
+    void paySpellManaCost(GameData gameData, UUID playerId, Card card, int effectiveXValue, List<ManaColor> convokeContributions, Integer phyrexianLifeCount) {
         if (card.getManaCost() == null) return;
         ManaCost cost = new ManaCost(card.getManaCost());
         ManaPool pool = gameData.playerManaPools.get(playerId);
@@ -578,6 +587,14 @@ public class SpellCastingService {
                 || card.getAdditionalTypes().contains(CardType.ARTIFACT);
         boolean isMyr = card.getSubtypes().contains(CardSubtype.MYR);
         boolean hasRestricted = isArtifact || isMyr;
+
+        // Pay Phyrexian mana first so colored mana is reserved for Phyrexian symbols
+        // before generic costs consume it
+        int phyrexianLifeCost = 0;
+        if (cost.hasPhyrexianMana()) {
+            phyrexianLifeCost = cost.payPhyrexianMana(pool, phyrexianLifeCount);
+        }
+
         if (!convokeContributions.isEmpty()) {
             cost.payWithConvoke(pool, additionalCost, convokeContributions);
         } else if (cost.hasX() && card.getXColorRestriction() != null) {
@@ -594,6 +611,14 @@ public class SpellCastingService {
             } else {
                 cost.pay(pool, additionalCost);
             }
+        }
+
+        if (phyrexianLifeCost > 0) {
+            int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+            gameData.playerLifeTotals.put(playerId, currentLife - phyrexianLifeCost);
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " pays " + phyrexianLifeCost + " life for Phyrexian mana.");
         }
     }
 

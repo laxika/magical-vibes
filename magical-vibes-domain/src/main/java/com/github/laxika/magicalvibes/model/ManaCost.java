@@ -12,18 +12,24 @@ public class ManaCost {
 
     private final int genericCost;
     private final Map<ManaColor, Integer> coloredCosts;
+    private final Map<ManaColor, Integer> phyrexianCosts;
     private final boolean hasX;
 
     public ManaCost(String manaCostString) {
         int generic = 0;
         boolean foundX = false;
         Map<ManaColor, Integer> colored = new EnumMap<>(ManaColor.class);
+        Map<ManaColor, Integer> phyrexian = new EnumMap<>(ManaColor.class);
 
         Matcher matcher = MANA_SYMBOL.matcher(manaCostString);
         while (matcher.find()) {
             String symbol = matcher.group(1);
             if (symbol.equals("X")) {
                 foundX = true;
+            } else if (symbol.endsWith("/P")) {
+                // Phyrexian mana (e.g. R/P) — can be paid with its color or 2 life
+                ManaColor color = ManaColor.fromCode(symbol.substring(0, symbol.length() - 2));
+                phyrexian.merge(color, 1, Integer::sum);
             } else {
                 try {
                     ManaColor color = ManaColor.fromCode(symbol);
@@ -36,6 +42,7 @@ public class ManaCost {
 
         this.genericCost = generic;
         this.coloredCosts = colored;
+        this.phyrexianCosts = phyrexian;
         this.hasX = foundX;
     }
 
@@ -48,7 +55,68 @@ public class ManaCost {
         for (int count : coloredCosts.values()) {
             total += count;
         }
+        for (int count : phyrexianCosts.values()) {
+            total += count;
+        }
         return total;
+    }
+
+    public boolean hasPhyrexianMana() {
+        return !phyrexianCosts.isEmpty();
+    }
+
+    /**
+     * Pays Phyrexian mana costs. For each Phyrexian symbol, uses colored mana from the pool
+     * if available; otherwise the cost must be paid with 2 life per symbol.
+     *
+     * @return the total life that must be paid for Phyrexian symbols not covered by mana
+     */
+    public int payPhyrexianMana(ManaPool pool) {
+        return payPhyrexianMana(pool, null);
+    }
+
+    /**
+     * Pays Phyrexian mana costs with player choice.
+     * If requestedLifeCount is null, auto-pays (prefers mana, falls back to life).
+     * If requestedLifeCount is specified, pays exactly that many symbols with life (2 each)
+     * and the rest with colored mana.
+     *
+     * @return the total life that must be paid
+     */
+    public int payPhyrexianMana(ManaPool pool, Integer requestedLifeCount) {
+        int totalPhyrexian = phyrexianCosts.values().stream().mapToInt(Integer::intValue).sum();
+        int lifeSymbols = requestedLifeCount != null
+                ? Math.max(0, Math.min(requestedLifeCount, totalPhyrexian))
+                : 0;
+        boolean autoMode = requestedLifeCount == null;
+
+        int lifeCost = 0;
+        int lifeSymbolsRemaining = lifeSymbols;
+        for (Map.Entry<ManaColor, Integer> entry : phyrexianCosts.entrySet()) {
+            for (int i = 0; i < entry.getValue(); i++) {
+                if (autoMode) {
+                    // Auto: prefer mana, fall back to life
+                    if (pool.get(entry.getKey()) > 0) {
+                        pool.remove(entry.getKey());
+                    } else {
+                        lifeCost += 2;
+                    }
+                } else {
+                    // Player chose: pay life symbols first, then mana
+                    if (lifeSymbolsRemaining > 0) {
+                        lifeCost += 2;
+                        lifeSymbolsRemaining--;
+                    } else {
+                        pool.remove(entry.getKey());
+                    }
+                }
+            }
+        }
+        return lifeCost;
+    }
+
+    public int getPhyrexianManaCount() {
+        return phyrexianCosts.values().stream().mapToInt(Integer::intValue).sum();
     }
 
     public boolean canPay(ManaPool pool) {
