@@ -243,6 +243,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Hand-imprint + X-cost token | `p/PrototypePortal.java` | ON_ENTER_BATTLEFIELD MayEffect(ExileFromHandToImprintEffect(CardTypePredicate(ARTIFACT))) + activated {X}+tap CreateTokenCopyOfImprintedCardEffect(false, false) — imprint artifact from hand on ETB, pay X (imprinted card's mana cost) to create permanent token copy |
 | Hand-imprint + cost reduction | `s/SemblanceAnvil.java` | ON_ENTER_BATTLEFIELD MayEffect(ExileFromHandToImprintEffect(CardNotPredicate(CardTypePredicate(LAND)))) + STATIC ReduceOwnCastCostForSharedCardTypeWithImprintEffect(2) — imprint nonland card from hand on ETB, spells sharing card type with imprinted card cost {2} less |
 | Static + upkeep trigger | `v/VensersJournal.java` | STATIC NoMaximumHandSizeEffect + UPKEEP_TRIGGERED GainLifePerCardsInHandEffect — no max hand size + gain life equal to hand size each upkeep |
+| Sacrifice creature + search by MV | `b/BirthingPod.java` | Tap+mana(Phyrexian)+SacrificeCreatureCost(true)+SearchLibraryForCreatureWithExactMVToBattlefieldEffect(1) — sorcery speed, sacrifice creature to tutor creature with MV+1 to battlefield. `trackSacrificedManaValue=true` stores sacrificed MV in xValue |
 
 ## Equipment
 

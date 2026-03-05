@@ -562,6 +562,15 @@ public class AbilityActivationService {
                 throw new IllegalStateException("Must sacrifice a creature you control");
             }
 
+            // Capture sacrificed creature's mana value before sacrifice if needed (e.g. Birthing Pod)
+            SacrificeCreatureCost sacCost = abilityEffects.stream()
+                    .filter(SacrificeCreatureCost.class::isInstance)
+                    .map(SacrificeCreatureCost.class::cast)
+                    .findFirst().orElseThrow();
+            if (sacCost.trackSacrificedManaValue()) {
+                effectiveXValue = sacTarget.getCard().getManaValue();
+            }
+
             sacrificePermanentAsCost(gameData, player, sacTarget);
 
             // Clear targetPermanentId so it's not used for effect targeting

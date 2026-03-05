@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypeToExi
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithColorAndMVXOrLessToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithExactMVToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithSubtypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithMVXOrLessToHandEffect;
@@ -560,6 +561,24 @@ public class LibraryResolutionService {
                 },
                 subtypeName + " creature card",
                 "Search your library for a " + subtypeName + " creature card and put it onto the battlefield.",
+                false,
+                true,
+                LibrarySearchDestination.BATTLEFIELD
+        );
+    }
+
+    @HandlesEffect(SearchLibraryForCreatureWithExactMVToBattlefieldEffect.class)
+    void resolveSearchLibraryForCreatureWithExactMVToBattlefield(GameData gameData, StackEntry entry,
+                                                                 SearchLibraryForCreatureWithExactMVToBattlefieldEffect effect) {
+        int targetMV = entry.getXValue() + effect.mvOffset();
+
+        performLibrarySearch(
+                gameData,
+                entry.getControllerId(),
+                card -> (card.getType() == CardType.CREATURE || card.getAdditionalTypes().contains(CardType.CREATURE))
+                        && card.getManaValue() == targetMV,
+                "creature card with mana value " + targetMV,
+                "Search your library for a creature card with mana value " + targetMV + " and put it onto the battlefield.",
                 false,
                 true,
                 LibrarySearchDestination.BATTLEFIELD
