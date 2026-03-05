@@ -49,7 +49,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardReturnResolutio
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.library.LibraryResolutionService;
 import com.github.laxika.magicalvibes.service.MulliganService;
-import com.github.laxika.magicalvibes.service.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.PreventionResolutionService;
 import com.github.laxika.magicalvibes.service.ReconnectionService;

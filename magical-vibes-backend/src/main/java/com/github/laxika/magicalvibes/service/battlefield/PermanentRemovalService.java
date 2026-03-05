@@ -1,8 +1,9 @@
-package com.github.laxika.magicalvibes.service;
+package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -21,6 +22,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Handles removing permanents from the battlefield and moving them to their destination zones
+ * (graveyard, hand, or exile). Applies replacement effects (CR 614.6), processes death triggers,
+ * handles stolen-creature ownership, and manages related cleanup such as orphaned auras,
+ * sacrifice-on-unattach, and exile-return-on-leave.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -31,6 +38,16 @@ public class PermanentRemovalService {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
 
+    /**
+     * Removes a permanent from the battlefield and puts its card into the owner's graveyard.
+     * Applies exile replacement effects (CR 614.6), fires death and graveyard triggers for
+     * creatures and artifacts, and handles sacrifice-on-unattach and exile-return-on-leave.
+     *
+     * @param gameData the current game state
+     * @param target   the permanent to remove
+     * @return {@code true} if the permanent was found on a battlefield and removed,
+     *         {@code false} if it was not on any battlefield
+     */
     public boolean removePermanentToGraveyard(GameData gameData, Permanent target) {
         // Replacement effect: exile instead of going to graveyard (CR 614.6)
         if (tryApplyExileReplacementEffect(gameData, target, true, "going to the graveyard")) {
@@ -70,6 +87,15 @@ public class PermanentRemovalService {
         return true;
     }
 
+    /**
+     * Removes a permanent from the battlefield and returns its card to the owner's hand (bounce).
+     * Applies exile replacement effects (CR 614.6) and handles exile-return-on-leave.
+     *
+     * @param gameData the current game state
+     * @param target   the permanent to bounce
+     * @return {@code true} if the permanent was found on a battlefield and removed,
+     *         {@code false} if it was not on any battlefield
+     */
     public boolean removePermanentToHand(GameData gameData, Permanent target) {
         // Replacement effect: exile instead of going to hand (CR 614.6)
         if (tryApplyExileReplacementEffect(gameData, target, false, "returning to hand")) {
@@ -86,6 +112,15 @@ public class PermanentRemovalService {
         return true;
     }
 
+    /**
+     * Removes a permanent from the battlefield and puts its card into the owner's exile zone.
+     * Handles sacrifice-on-unattach and exile-return-on-leave.
+     *
+     * @param gameData the current game state
+     * @param target   the permanent to exile
+     * @return {@code true} if the permanent was found on a battlefield and removed,
+     *         {@code false} if it was not on any battlefield
+     */
     public boolean removePermanentToExile(GameData gameData, Permanent target) {
         // Capture unattach-sacrifice info before removal
         UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
@@ -101,18 +136,38 @@ public class PermanentRemovalService {
         return true;
     }
 
+    /**
+     * Removes all auras whose enchanted permanent is no longer on the battlefield.
+     *
+     * @param gameData the current game state
+     */
     public void removeOrphanedAuras(GameData gameData) {
         auraAttachmentService.removeOrphanedAuras(gameData);
     }
 
     /**
-     * Attempts to destroy a permanent, handling indestructible and regeneration checks.
-     * If destroyed, also removes orphaned auras. Returns true if the permanent was destroyed.
+     * Attempts to destroy a permanent, respecting indestructible and regeneration.
+     * If destroyed, the permanent is sent to the graveyard and orphaned auras are cleaned up.
+     *
+     * @param gameData the current game state
+     * @param target   the permanent to destroy
+     * @return {@code true} if the permanent was destroyed, {@code false} if it survived
+     *         (indestructible or regenerated)
      */
     public boolean tryDestroyPermanent(GameData gameData, Permanent target) {
         return tryDestroyPermanent(gameData, target, false);
     }
 
+    /**
+     * Attempts to destroy a permanent, respecting indestructible and optionally bypassing
+     * regeneration (e.g. "destroy target creature. It can't be regenerated.").
+     * If destroyed, the permanent is sent to the graveyard and orphaned auras are cleaned up.
+     *
+     * @param gameData            the current game state
+     * @param target              the permanent to destroy
+     * @param cannotBeRegenerated if {@code true}, regeneration shields are ignored
+     * @return {@code true} if the permanent was destroyed, {@code false} if it survived
+     */
     public boolean tryDestroyPermanent(GameData gameData, Permanent target, boolean cannotBeRegenerated) {
         if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
             String logEntry = target.getCard().getName() + " is indestructible.";
@@ -128,6 +183,13 @@ public class PermanentRemovalService {
         return true;
     }
 
+    /**
+     * Removes a card from any player's graveyard by its ID and cleans up the
+     * creature-death tracking set for the current turn.
+     *
+     * @param gameData the current game state
+     * @param cardId   the ID of the card to remove
+     */
     public void removeCardFromGraveyardById(GameData gameData, UUID cardId) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
@@ -142,6 +204,17 @@ public class PermanentRemovalService {
         }
     }
 
+    /**
+     * Checks if the player has an aura with {@link RedirectPlayerDamageToEnchantedCreatureEffect}
+     * (e.g. Pariah) and redirects incoming damage to the enchanted creature. Destroys the creature
+     * if the redirected damage meets or exceeds its toughness.
+     *
+     * @param gameData   the current game state
+     * @param playerId   the player who would receive the damage
+     * @param damage     the amount of damage to potentially redirect
+     * @param sourceName the name of the damage source (for logging)
+     * @return {@code 0} if damage was redirected, or the original damage amount if no redirect applies
+     */
     public int redirectPlayerDamageToEnchantedCreature(GameData gameData, UUID playerId, int damage, String sourceName) {
         if (damage <= 0) return damage;
         Permanent target = gameQueryService.findEnchantedCreatureByAuraEffect(gameData, playerId, RedirectPlayerDamageToEnchantedCreatureEffect.class);

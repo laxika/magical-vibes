@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;

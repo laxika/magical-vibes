@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.service;
+package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.cards.g.GraftedExoskeleton;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
