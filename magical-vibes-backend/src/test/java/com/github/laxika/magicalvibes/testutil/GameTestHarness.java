@@ -116,6 +116,7 @@ public class GameTestHarness {
     private final FakeConnection conn2;
     private final LegendRuleService legendRuleService;
     private final PermanentRemovalService permanentRemovalService;
+    private final StackResolutionService stackResolutionService;
 
     public GameTestHarness() {
         if (!oracleLoaded) {
@@ -199,7 +200,7 @@ public class GameTestHarness {
             scanEffectHandlers(service, effectHandlerRegistry);
         }
         EffectResolutionService effectResolutionService = new EffectResolutionService(gameQueryService, effectHandlerRegistry, gameBroadcastService, permanentRemovalService);
-        StackResolutionService stackResolutionService = new StackResolutionService(
+        stackResolutionService = new StackResolutionService(
                 gameHelper, legendRuleService, stateBasedActionService, gameQueryService, targetLegalityService,
                 gameBroadcastService, effectResolutionService, playerInputService, triggerCollectionService, creatureControlService);
         TurnProgressionService turnProgressionService = new TurnProgressionService(
@@ -615,6 +616,10 @@ public class GameTestHarness {
 
     public PermanentRemovalService getPermanentRemovalService() {
         return permanentRemovalService;
+    }
+
+    public StackResolutionService getStackResolutionService() {
+        return stackResolutionService;
     }
 
     public void clearMessages() {
