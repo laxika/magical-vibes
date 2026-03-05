@@ -1,21 +1,16 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
+import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllControlledPermanentsEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
-import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MBS", collectorNumber = "138")
@@ -36,18 +31,6 @@ public class SwordOfFeastAndFamine extends Card {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new UntapAllControlledPermanentsEffect(new PermanentIsLandPredicate()));
 
         // Equip {2}
-        addActivatedAbility(new ActivatedAbility(
-                false,
-                "{2}",
-                List.of(new EquipEffect()),
-                "Equip {2}",
-                new ControlledPermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature you control"
-                ),
-                null,
-                null,
-                ActivationTimingRestriction.SORCERY_SPEED
-        ));
+        addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

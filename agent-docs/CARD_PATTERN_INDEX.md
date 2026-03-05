@@ -247,7 +247,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
-| Simple boost equip | `l/LeoninScimitar.java` | STATIC BoostAttachedCreatureEffect + EquipEffect ability |
+| Simple boost equip | `l/LeoninScimitar.java` | STATIC BoostAttachedCreatureEffect + EquipActivatedAbility |
 | Boost + keywords equip | `l/LoxodonWarhammer.java` | Boost + GrantKeywordEffect(EQUIPPED_CREATURE) + equip |
 | Boost + can't block equip | `c/CopperCarapace.java` | STATIC BoostAttachedCreatureEffect + CantBlockEffect + equip |
 | ETB attach + sacrifice equip | `p/PistonSledge.java` | ON_ENTER_BATTLEFIELD AttachSourceEquipmentToTargetCreatureEffect + STATIC BoostAttachedCreatureEffect + equip with SacrificeArtifactCost (no mana). Uses ControlledPermanentPredicateTargetFilter on card for ETB targeting |

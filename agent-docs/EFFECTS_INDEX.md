@@ -619,7 +619,7 @@ Pass `null` as filter to allow any card.
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
-| `EquipEffect` | `()` | equip to target creature |
+| `EquipEffect` | `()` | equip to target creature. Prefer using `EquipActivatedAbility(manaCost)` which wraps this effect with sorcery-speed timing and "creature you control" filter |
 | `BoostAttachedCreatureEffect` | `(int powerBoost, int toughnessBoost)` | equipped creature gets +X/+Y (static) |
 | `BoostAttachedCreaturePerCardsInAllGraveyardsEffect` | `(CardPredicate filter)` | equipped creature gets +X/+X where X = cards in all graveyards matching filter (static) |
 | `BoostAttachedCreaturePerMatchingLandNameEffect` | `(int powerPerMatch, int toughnessPerMatch)` | equipped creature gets +X/+Y per land matching imprinted card name (static) |

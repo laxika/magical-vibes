@@ -185,18 +185,10 @@ Cards: `AjaniOutlandChaperone`
 ### 7. Equipment ability (equip with sorcery speed + controlled creature filter)
 
 ```java
-new ActivatedAbility(false, manaCost, List.of(new EquipEffect()),
-    "Equip " + manaCost,
-    new ControlledPermanentPredicateTargetFilter(
-        new PermanentIsCreaturePredicate(),
-        "Target must be a creature you control"
-    ),
-    null,
-    null,
-    ActivationTimingRestriction.SORCERY_SPEED)
+new EquipActivatedAbility(manaCost)
 ```
 
-**Use when:** Any equipment card with equip cost. This is the standard equip pattern — always the same structure, only the mana cost varies. Uses the canonical 8-param constructor.
+**Use when:** Any equipment card with a mana-cost-only equip ability. `EquipActivatedAbility` extends `ActivatedAbility` and wires up `EquipEffect`, sorcery-speed timing, and the "target creature you control" filter automatically — only the mana cost varies.
 
 Cards: `LoxodonWarhammer` ({3}), `LeoninScimitar` ({1}), `BarkOfDoran` ({1}), `WhispersilkCloak` ({2})
 
