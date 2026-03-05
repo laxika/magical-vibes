@@ -116,6 +116,21 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a color", gameData.id, playerName);
     }
 
+    public void beginProtectionColorChoice(GameData gameData, UUID playerId, UUID targetPermanentId, boolean includeArtifacts) {
+        ColorChoiceContext.ProtectionColorChoice ctx = new ColorChoiceContext.ProtectionColorChoice(targetPermanentId, includeArtifacts);
+        gameData.interaction.beginColorChoice(playerId, null, null, ctx);
+
+        List<String> options = new java.util.ArrayList<>(List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN"));
+        if (includeArtifacts) {
+            options.addFirst("ARTIFACT");
+        }
+        String prompt = includeArtifacts ? "Choose a color or artifacts." : "Choose a color.";
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseColorMessage(options, prompt));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose protection", gameData.id, playerName);
+    }
+
     public void beginKeywordChoice(GameData gameData, UUID playerId, UUID targetPermanentId, List<Keyword> options) {
         ColorChoiceContext.KeywordGrantChoice choiceContext = new ColorChoiceContext.KeywordGrantChoice(targetPermanentId, options);
         gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);

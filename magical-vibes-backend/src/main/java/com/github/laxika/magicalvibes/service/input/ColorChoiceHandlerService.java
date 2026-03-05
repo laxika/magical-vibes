@@ -89,6 +89,10 @@ public class ColorChoiceHandlerService {
             handleExileByNameChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ColorChoiceContext.ProtectionColorChoice ctx) {
+            handleProtectionColorChoice(gameData, player, colorName, ctx);
+            return;
+        }
         CardColor color = CardColor.valueOf(colorName);
         UUID permanentId = colorChoice.permanentId();
         UUID etbTargetId = colorChoice.etbTargetPermanentId();
@@ -350,6 +354,32 @@ public class ColorChoiceHandlerService {
         if (!gameData.interaction.isAwaitingInput()) {
             turnProgressionService.resolveAutoPass(gameData);
         }
+    }
+
+    private void handleProtectionColorChoice(GameData gameData, Player player, String chosenValue, ColorChoiceContext.ProtectionColorChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+        gameData.interaction.clearColorChoice();
+
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
+        if (target != null) {
+            if ("ARTIFACT".equals(chosenValue)) {
+                target.getProtectionFromCardTypes().add(CardType.ARTIFACT);
+                String logEntry = target.getCard().getName() + " gains protection from artifacts until end of turn.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} gains protection from artifacts until end of turn", gameData.id, target.getCard().getName());
+            } else {
+                CardColor color = CardColor.valueOf(chosenValue);
+                target.getProtectionFromColorsUntilEndOfTurn().add(color);
+                String colorName = color.name().charAt(0) + color.name().substring(1).toLowerCase();
+                String logEntry = target.getCard().getName() + " gains protection from " + colorName.toLowerCase() + " until end of turn.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} gains protection from {} until end of turn", gameData.id, target.getCard().getName(), colorName.toLowerCase());
+            }
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
     }
 
     private void handleExileByNameChoice(GameData gameData, Player player, String cardName, ColorChoiceContext.ExileByNameChoice ctx) {

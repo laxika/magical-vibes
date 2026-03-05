@@ -692,6 +692,9 @@ public class GameQueryService {
         if (target.getChosenColor() != null && target.getChosenColor() == sourceColor) {
             return true;
         }
+        if (target.getProtectionFromColorsUntilEndOfTurn().contains(sourceColor)) {
+            return true;
+        }
         return false;
     }
 
