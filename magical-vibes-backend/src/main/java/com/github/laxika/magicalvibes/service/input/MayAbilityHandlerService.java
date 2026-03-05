@@ -361,14 +361,28 @@ public class MayAbilityHandlerService {
         }
 
         if (accepted) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ability.sourceCard(),
-                    ability.controllerId(),
-                    ability.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(ability.effects()),
-                    xValuePaid
-            );
+            StackEntry entry;
+            if (ability.sourcePermanentId() != null) {
+                // Combat damage trigger with source permanent and target context
+                entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        ability.sourceCard(),
+                        ability.controllerId(),
+                        ability.sourceCard().getName() + "'s ability",
+                        new ArrayList<>(ability.effects()),
+                        ability.targetCardId(),
+                        ability.sourcePermanentId()
+                );
+            } else {
+                entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        ability.sourceCard(),
+                        ability.controllerId(),
+                        ability.sourceCard().getName() + "'s ability",
+                        new ArrayList<>(ability.effects()),
+                        xValuePaid
+                );
+            }
 
             // Self-targeting effects need the source permanent's ID to resolve
             boolean needsSelfTarget = ability.effects().stream().anyMatch(e ->

@@ -52,7 +52,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockPerEquipm
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 
 import com.github.laxika.magicalvibes.model.effect.PutAwakeningCountersOnTargetLandsEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardEffect;
@@ -1218,6 +1220,25 @@ public class CombatService {
                             List.of(new TargetPlayerLosesGameEffect(defenderId)), null, creature.getId()));
                     gameBroadcastService.logAndBroadcast(gameData,
                             creature.getCard().getName() + "'s ability triggers \u2014 " + gameData.playerIdToName.get(defenderId) + " loses the game.");
+                    continue;
+                }
+
+                // MayEffect: queue as pending may ability with combat context
+                if (effect instanceof MayEffect may) {
+                    // Check for valid targets before queuing — in MTG, if there are no legal targets
+                    // the triggered ability doesn't go on the stack at all
+                    if (may.wrapped() instanceof SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect) {
+                        List<Permanent> defenderBf = gameData.playerBattlefields.get(defenderId);
+                        boolean hasCreatureTargets = defenderBf != null && defenderBf.stream()
+                                .anyMatch(p -> gameQueryService.isCreature(gameData, p));
+                        if (!hasCreatureTargets) {
+                            gameBroadcastService.logAndBroadcast(gameData, creature.getCard().getName()
+                                    + "'s ability does not trigger — " + gameData.playerIdToName.get(defenderId) + " has no creatures.");
+                            continue;
+                        }
+                    }
+                    gameData.queueMayAbility(creature.getCard(), attackerId, may, defenderId, creature.getId());
+                    gameBroadcastService.logAndBroadcast(gameData, creature.getCard().getName() + "'s combat damage trigger fires.");
                     continue;
                 }
 

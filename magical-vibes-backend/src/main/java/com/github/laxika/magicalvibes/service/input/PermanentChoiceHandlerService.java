@@ -703,7 +703,52 @@ public class PermanentChoiceHandlerService {
             }
         }
 
-        if (gameData.pendingSacrificeAttackingCreature) {
+        if (gameData.pendingSacrificeSelfToDestroySourceId != null) {
+            UUID sourcePermId = gameData.pendingSacrificeSelfToDestroySourceId;
+            gameData.pendingSacrificeSelfToDestroySourceId = null;
+
+            if (permanentIds.isEmpty()) {
+                String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to sacrifice.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            } else {
+                // Sacrifice source creature
+                Permanent source = gameQueryService.findPermanentById(gameData, sourcePermId);
+                if (source != null) {
+                    if (permanentRemovalService.removePermanentToGraveyard(gameData, source)) {
+                        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId);
+                        String logEntry = source.getCard().getName() + " is sacrificed.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} sacrificed for combat damage trigger", gameData.id, source.getCard().getName());
+
+                        // Destroy target creature
+                        UUID chosenPermId = permanentIds.getFirst();
+                        Permanent target = gameQueryService.findPermanentById(gameData, chosenPermId);
+                        if (target != null) {
+                            if (permanentRemovalService.tryDestroyPermanent(gameData, target)) {
+                                logEntry = target.getCard().getName() + " is destroyed.";
+                                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                                log.info("Game {} - {} destroyed by sacrifice trigger", gameData.id, target.getCard().getName());
+                            }
+                        }
+                    }
+
+                    permanentRemovalService.removeOrphanedAuras(gameData);
+                } else {
+                    String logEntry = "Source creature no longer exists — sacrifice trigger fizzles.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                }
+            }
+
+            stateBasedActionService.performStateBasedActions(gameData);
+
+            if (!gameData.pendingMayAbilities.isEmpty()) {
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+        } else if (gameData.pendingSacrificeAttackingCreature) {
             gameData.pendingSacrificeAttackingCreature = false;
 
             for (UUID permId : permanentIds) {

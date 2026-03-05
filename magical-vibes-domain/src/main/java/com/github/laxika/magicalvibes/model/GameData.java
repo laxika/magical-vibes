@@ -73,6 +73,7 @@ public class GameData {
     public UUID imprintSourcePermanentId;
     public PendingOpponentExileChoice pendingOpponentExileChoice;
     public UUID pendingCombatDamageBounceTargetPlayerId;
+    public UUID pendingSacrificeSelfToDestroySourceId;
     public int pendingProliferateCount;
     public StackEntry pendingEffectResolutionEntry;
     public int pendingEffectResolutionIndex;
@@ -222,6 +223,21 @@ public class GameData {
     }
 
     /**
+     * Queues a "may" triggered ability with source permanent and target context.
+     * Used for combat damage triggers that need to pass both the source creature and the damaged player.
+     */
+    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId, UUID sourcePermanentId) {
+        pendingMayAbilities.add(new PendingMayAbility(
+                sourceCard, controllerId,
+                List.of(may.wrapped()),
+                sourceCard.getName() + " — " + may.prompt(),
+                targetCardId,
+                null,
+                sourcePermanentId
+        ));
+    }
+
+    /**
      * Queues a standard "may pay mana" triggered ability for player choice.
      * Covers the common pattern: source card name + em-dash + prompt, with mana cost gate.
      */
@@ -257,6 +273,7 @@ public class GameData {
         copy.preventAllCombatDamage = this.preventAllCombatDamage;
         copy.combatDamageRedirectTarget = this.combatDamageRedirectTarget;
         copy.pendingCombatDamageBounceTargetPlayerId = this.pendingCombatDamageBounceTargetPlayerId;
+        copy.pendingSacrificeSelfToDestroySourceId = this.pendingSacrificeSelfToDestroySourceId;
         copy.pendingProliferateCount = this.pendingProliferateCount;
         copy.pendingEffectResolutionEntry = this.pendingEffectResolutionEntry != null
                 ? new StackEntry(this.pendingEffectResolutionEntry) : null;

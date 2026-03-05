@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndBoos
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndGainLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamageEffect;
@@ -811,5 +812,48 @@ public class DestructionResolutionService {
                 token.power(), token.toughness(), token.tokenName(), playerName);
 
         gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+    }
+
+    @HandlesEffect(SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect.class)
+    void resolveSacrificeSelfToDestroyCreature(GameData gameData, StackEntry entry) {
+        UUID defenderId = entry.getTargetPermanentId();
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        UUID controllerId = entry.getControllerId();
+
+        if (defenderId == null || sourcePermanentId == null) {
+            return;
+        }
+
+        // Check source creature is still on the battlefield
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (source == null) {
+            String logEntry = entry.getCard().getName() + "'s ability fizzles — source no longer on the battlefield.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        // Collect valid creature targets from damaged player's battlefield
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        List<UUID> validCreatureIds = new ArrayList<>();
+        if (defenderBattlefield != null) {
+            for (Permanent perm : defenderBattlefield) {
+                if (gameQueryService.isCreature(gameData, perm)) {
+                    validCreatureIds.add(perm.getId());
+                }
+            }
+        }
+
+        if (validCreatureIds.isEmpty()) {
+            String logEntry = entry.getCard().getName() + "'s ability resolves, but "
+                    + gameData.playerIdToName.get(defenderId) + " has no creatures.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        // Present multi-permanent choice with max 1 to select destruction target
+        gameData.pendingSacrificeSelfToDestroySourceId = sourcePermanentId;
+        playerInputService.beginMultiPermanentChoice(gameData, controllerId, validCreatureIds, 1,
+                entry.getCard().getName() + "'s ability — Choose a creature "
+                        + gameData.playerIdToName.get(defenderId) + " controls to destroy.");
     }
 }
