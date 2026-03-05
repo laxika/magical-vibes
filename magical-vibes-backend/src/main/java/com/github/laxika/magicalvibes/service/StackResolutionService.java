@@ -5,27 +5,23 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardNameEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -52,19 +48,13 @@ public class StackResolutionService {
         StackEntry entry = gameData.stack.removeLast();
         gameData.priorityPassedBy.clear();
 
-        if (entry.getEntryType() == StackEntryType.CREATURE_SPELL) {
-            resolveCreatureSpell(gameData, entry);
-        } else if (entry.getEntryType() == StackEntryType.ENCHANTMENT_SPELL) {
-            resolveEnchantmentSpell(gameData, entry);
-        } else if (entry.getEntryType() == StackEntryType.ARTIFACT_SPELL) {
-            resolveArtifactSpell(gameData, entry);
-        } else if (entry.getEntryType() == StackEntryType.PLANESWALKER_SPELL) {
-            resolvePlaneswalkerSpell(gameData, entry);
-        } else if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                || entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
-                || entry.getEntryType() == StackEntryType.SORCERY_SPELL
-                || entry.getEntryType() == StackEntryType.INSTANT_SPELL) {
-            resolveSpellOrAbility(gameData, entry);
+        switch (entry.getEntryType()) {
+            case CREATURE_SPELL -> resolveCreatureSpell(gameData, entry);
+            case ENCHANTMENT_SPELL -> resolveEnchantmentSpell(gameData, entry);
+            case ARTIFACT_SPELL -> resolveArtifactSpell(gameData, entry);
+            case PLANESWALKER_SPELL -> resolvePlaneswalkerSpell(gameData, entry);
+            case TRIGGERED_ABILITY, ACTIVATED_ABILITY, SORCERY_SPELL, INSTANT_SPELL ->
+                    resolveSpellOrAbility(gameData, entry);
         }
 
         // If the ETB handler already set up a user interaction (e.g. Clone copy choice),
@@ -107,17 +97,10 @@ public class StackResolutionService {
         }
 
         gameHelper.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(card));
-
-        String playerName = gameData.playerIdToName.get(controllerId);
-        String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-
-        log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
+        logEnterBattlefield(gameData, card, controllerId);
 
         gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId(), true, entry.getXValue());
-        if (!gameData.interaction.isAwaitingInput()) {
-            legendRuleService.checkLegendRule(gameData, controllerId);
-        }
+        checkLegendRuleIfIdle(gameData, controllerId);
     }
 
     private void resolveEnchantmentSpell(GameData gameData, StackEntry entry) {
@@ -157,11 +140,7 @@ public class StackResolutionService {
             }
         } else {
             gameHelper.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(card));
-
-            String playerName = gameData.playerIdToName.get(controllerId);
-            String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
+            logEnterBattlefield(gameData, card, controllerId);
 
             // Check if enchantment has "as enters" color choice
             boolean needsColorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
@@ -177,9 +156,7 @@ public class StackResolutionService {
                 gameHelper.processCreatureETBEffects(gameData, controllerId, card, null, true);
             }
 
-            if (!gameData.interaction.isAwaitingInput()) {
-                legendRuleService.checkLegendRule(gameData, controllerId);
-            }
+            checkLegendRuleIfIdle(gameData, controllerId);
         }
     }
 
@@ -242,9 +219,7 @@ public class StackResolutionService {
         // Process ETB effects for all artifacts (creature and non-creature)
         gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId(), true, entry.getXValue());
 
-        if (!gameData.interaction.isAwaitingInput()) {
-            legendRuleService.checkLegendRule(gameData, controllerId);
-        }
+        checkLegendRuleIfIdle(gameData, controllerId);
     }
 
     private void resolvePlaneswalkerSpell(GameData gameData, StackEntry entry) {
@@ -261,9 +236,7 @@ public class StackResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
-        if (!gameData.interaction.isAwaitingInput()) {
-            legendRuleService.checkLegendRule(gameData, controllerId);
-        }
+        checkLegendRuleIfIdle(gameData, controllerId);
     }
 
     private void resolveSpellOrAbility(GameData gameData, StackEntry entry) {
@@ -277,9 +250,7 @@ public class StackResolutionService {
                     gameData.id, entry.getDescription(), entry.getTargetPermanentId());
 
             // Fizzled spells still go to graveyard (copies cease to exist per rule 707.10a)
-            if ((entry.getEntryType() == StackEntryType.SORCERY_SPELL
-                    || entry.getEntryType() == StackEntryType.INSTANT_SPELL)
-                    && !entry.isCopy()) {
+            if (isNonCopySpell(entry)) {
                 gameHelper.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
             }
         } else {
@@ -292,50 +263,74 @@ public class StackResolutionService {
             // Rule 723.1b: "End the turn" exiles the resolving spell itself (copies cease to exist per rule 707.10a)
             if (gameData.endTurnRequested) {
                 gameData.endTurnRequested = false;
-                if ((entry.getEntryType() == StackEntryType.SORCERY_SPELL
-                        || entry.getEntryType() == StackEntryType.INSTANT_SPELL)
-                        && !entry.isCopy()) {
+                if (isNonCopySpell(entry)) {
                     gameData.playerExiledCards.get(entry.getControllerId()).add(entry.getCard());
                 }
                 gameBroadcastService.broadcastGameState(gameData);
                 return;
             }
 
-            // Copies cease to exist per rule 707.10a — skip graveyard/shuffle
-            if ((entry.getEntryType() == StackEntryType.SORCERY_SPELL
-                    || entry.getEntryType() == StackEntryType.INSTANT_SPELL)
-                    && !entry.isCopy()) {
-                if (entry.isReturnToHandAfterResolving()) {
-                    List<Card> hand = gameData.playerHands.get(entry.getControllerId());
-                    hand.add(entry.getCard());
-                    String returnLog = entry.getCard().getName() + " is returned to its owner's hand.";
-                    gameBroadcastService.logAndBroadcast(gameData, returnLog);
-                } else if (gameData.pendingReturnToHandOnDiscardType != null) {
-                    // Spell disposition deferred — will be resolved after the async discard
-                    // completes (e.g. Psychic Miasma: goes to hand if a land is discarded,
-                    // otherwise to graveyard).
-                } else if (entry.getEffectsToResolve().stream()
-                        .anyMatch(e -> e instanceof ExileSpellEffect)) {
-                    gameData.playerExiledCards.get(entry.getControllerId()).add(entry.getCard());
-                    String exileLog = entry.getCard().getName() + " is exiled.";
-                    gameBroadcastService.logAndBroadcast(gameData, exileLog);
-                } else if (entry.getEffectsToResolve().stream()
-                        .anyMatch(e -> e instanceof ShuffleIntoLibraryEffect)) {
-                    // Ensure the card is shuffled into library even when an earlier effect
-                    // required user input and broke the effect resolution loop before
-                    // the ShuffleIntoLibraryEffect handler could run.
-                    List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
-                    if (!deck.contains(entry.getCard())) {
-                        deck.add(entry.getCard());
-                        Collections.shuffle(deck);
-                        String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
-                        gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
-                    }
-                } else {
-                    gameHelper.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
-                }
-            }
+            handleSpellDisposition(gameData, entry);
         }
+    }
+
+    /**
+     * Determines where a resolved spell card ends up: hand, exile, library, or graveyard.
+     * Copies cease to exist per rule 707.10a and abilities have no card to dispose of.
+     */
+    private void handleSpellDisposition(GameData gameData, StackEntry entry) {
+        if (!isNonCopySpell(entry)) {
+            return;
+        }
+
+        if (entry.isReturnToHandAfterResolving()) {
+            List<Card> hand = gameData.playerHands.get(entry.getControllerId());
+            hand.add(entry.getCard());
+            String returnLog = entry.getCard().getName() + " is returned to its owner's hand.";
+            gameBroadcastService.logAndBroadcast(gameData, returnLog);
+        } else if (gameData.pendingReturnToHandOnDiscardType != null) {
+            // Spell disposition deferred — will be resolved after the async discard
+            // completes (e.g. Psychic Miasma: goes to hand if a land is discarded,
+            // otherwise to graveyard).
+        } else if (entry.getEffectsToResolve().stream()
+                .anyMatch(e -> e instanceof ExileSpellEffect)) {
+            gameData.playerExiledCards.get(entry.getControllerId()).add(entry.getCard());
+            String exileLog = entry.getCard().getName() + " is exiled.";
+            gameBroadcastService.logAndBroadcast(gameData, exileLog);
+        } else if (entry.getEffectsToResolve().stream()
+                .anyMatch(e -> e instanceof ShuffleIntoLibraryEffect)) {
+            // Ensure the card is shuffled into library even when an earlier effect
+            // required user input and broke the effect resolution loop before
+            // the ShuffleIntoLibraryEffect handler could run.
+            List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
+            if (!deck.contains(entry.getCard())) {
+                deck.add(entry.getCard());
+                Collections.shuffle(deck);
+                String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
+                gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
+            }
+        } else {
+            gameHelper.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
+        }
+    }
+
+    private void logEnterBattlefield(GameData gameData, Card card, UUID controllerId) {
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
+    }
+
+    private void checkLegendRuleIfIdle(GameData gameData, UUID controllerId) {
+        if (!gameData.interaction.isAwaitingInput()) {
+            legendRuleService.checkLegendRule(gameData, controllerId);
+        }
+    }
+
+    private static boolean isNonCopySpell(StackEntry entry) {
+        return (entry.getEntryType() == StackEntryType.SORCERY_SPELL
+                || entry.getEntryType() == StackEntryType.INSTANT_SPELL)
+                && !entry.isCopy();
     }
 
 }
