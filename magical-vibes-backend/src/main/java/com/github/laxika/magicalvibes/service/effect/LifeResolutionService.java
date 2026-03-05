@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaGainXLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveControllerPoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GiveControllerPoisonCountersOnTargetDeathThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveEachPlayerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveEnchantedPermanentControllerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
@@ -527,6 +528,21 @@ public class LifeResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName, effect.amount(), entry.getCard().getName());
+    }
+
+    @HandlesEffect(GiveControllerPoisonCountersOnTargetDeathThisTurnEffect.class)
+    private void resolveGiveControllerPoisonCountersOnTargetDeathThisTurn(GameData gameData, StackEntry entry, GiveControllerPoisonCountersOnTargetDeathThisTurnEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            log.info("Game {} - Target creature no longer on battlefield, delayed poison trigger not registered", gameData.id);
+            return;
+        }
+
+        gameData.creatureGivingControllerPoisonOnDeathThisTurn.merge(
+                target.getCard().getId(), effect.amount(), Integer::sum);
+
+        log.info("Game {} - Delayed trigger registered: if {} dies this turn, its controller gets {} poison counter(s)",
+                gameData.id, target.getCard().getName(), effect.amount());
     }
 
     @HandlesEffect(AddManaPerControlledSubtypeEffect.class)

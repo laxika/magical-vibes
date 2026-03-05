@@ -63,6 +63,7 @@ public class PermanentRemovalService {
                         gameHelper.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());
                         gameHelper.checkOpponentCreatureDeathTriggers(gameData, playerId);
                         gameHelper.checkEquippedCreatureDeathTriggers(gameData, target.getId(), playerId);
+                        gameHelper.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), playerId);
                     }
                     if (wasArtifact) {
                         gameHelper.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData, graveyardOwnerId, playerId);

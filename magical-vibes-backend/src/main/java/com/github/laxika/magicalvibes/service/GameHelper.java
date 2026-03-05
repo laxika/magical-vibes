@@ -320,6 +320,23 @@ public class GameHelper {
         }
     }
 
+    public void triggerDelayedPoisonOnDeath(GameData gameData, UUID dyingCreatureCardId, UUID controllerId) {
+        Integer poisonAmount = gameData.creatureGivingControllerPoisonOnDeathThisTurn.remove(dyingCreatureCardId);
+        if (poisonAmount == null || poisonAmount <= 0) {
+            return;
+        }
+
+        int currentPoison = gameData.playerPoisonCounters.getOrDefault(controllerId, 0);
+        gameData.playerPoisonCounters.put(controllerId, currentPoison + poisonAmount);
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String logEntry = playerName + " gets " + poisonAmount + " poison counter"
+                + (poisonAmount > 1 ? "s" : "") + " (delayed trigger: creature died this turn).";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} gets {} poison counter(s) (delayed trigger: creature died this turn)",
+                gameData.id, playerName, poisonAmount);
+    }
+
     private UUID findPermanentController(GameData gameData, UUID permanentId) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);

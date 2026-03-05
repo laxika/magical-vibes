@@ -58,6 +58,8 @@ public class GameData {
     /** Counts all creature deaths (including tokens) from battlefield this turn, per controller. */
     public final Map<UUID, Integer> creatureDeathCountThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> creatureCardsDamagedThisTurnBySourcePermanent = new ConcurrentHashMap<>();
+    /** Delayed trigger: creature card ID → poison counters to give its controller when it dies this turn. */
+    public final Map<UUID, Integer> creatureGivingControllerPoisonOnDeathThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, List<Card>> playerExiledCards = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
     public int globalDamagePreventionShield;
@@ -345,6 +347,7 @@ public class GameData {
             s.addAll(v);
             copy.creatureCardsDamagedThisTurnBySourcePermanent.put(k, s);
         });
+        copy.creatureGivingControllerPoisonOnDeathThisTurn.putAll(this.creatureGivingControllerPoisonOnDeathThisTurn);
 
         // --- Map<UUID, Map<CardColor, Integer>> ---
         this.playerColorDamagePreventionCount.forEach((k, v) ->

@@ -575,6 +575,7 @@ public class TurnProgressionService {
         gameData.cardsDrawnThisTurn.clear();
         gameData.combatDamageToPlayersThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
+        gameData.creatureGivingControllerPoisonOnDeathThisTurn.clear();
         gameData.additionalCombatMainPhasePairs = 0;
         gameData.cleanupDiscardPending = false;
         gameData.paidSearchTaxPermanentIds.clear();
