@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffec
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderPoisonedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -124,14 +125,14 @@ public class CombatService {
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent p = battlefield.get(i);
-            if (canCreatureAttack(gameData, p, defenderBattlefield)) {
+            if (canCreatureAttack(gameData, p, defenderId, defenderBattlefield)) {
                 indices.add(i);
             }
         }
         return indices;
     }
 
-    private boolean canCreatureAttack(GameData gameData, Permanent creature, List<Permanent> defenderBattlefield) {
+    private boolean canCreatureAttack(GameData gameData, Permanent creature, UUID defenderId, List<Permanent> defenderBattlefield) {
         if (!gameQueryService.isCreature(gameData, creature)) return false;
         if (creature.isTapped()) return false;
         if (creature.isSummoningSick() && !gameQueryService.hasKeyword(gameData, creature, Keyword.HASTE)) return false;
@@ -140,6 +141,7 @@ public class CombatService {
         if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackOrBlockEffect.class)) return false;
         if (isCantAttackOrBlockUnlessEquipped(gameData, creature)) return false;
         if (isCantAttackDueToLandRestriction(gameData, creature, defenderBattlefield)) return false;
+        if (isCantAttackUnlessDefenderPoisoned(gameData, creature, defenderId)) return false;
         return true;
     }
 
@@ -147,6 +149,14 @@ public class CombatService {
         return creature.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CantAttackOrBlockUnlessEquippedEffect.class::isInstance)
                 && !gameQueryService.isEquipped(gameData, creature);
+    }
+
+    private boolean isCantAttackUnlessDefenderPoisoned(GameData gameData, Permanent creature, UUID defenderId) {
+        boolean hasRestriction = creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantAttackUnlessDefenderPoisonedEffect.class::isInstance);
+        if (!hasRestriction) return false;
+        int poison = gameData.playerPoisonCounters.getOrDefault(defenderId, 0);
+        return poison <= 0;
     }
 
     private boolean isCantAttackDueToLandRestriction(GameData gameData, Permanent attacker, List<Permanent> defenderBattlefield) {
