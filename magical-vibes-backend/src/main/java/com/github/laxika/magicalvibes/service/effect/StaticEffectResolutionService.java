@@ -285,6 +285,7 @@ public class StaticEffectResolutionService {
         var boost = (StaticBoostEffect) effect;
         boolean scopeMatch = switch (boost.scope()) {
             case OWN_CREATURES -> context.targetOnSameBattlefield();
+            case OPPONENT_CREATURES -> !context.targetOnSameBattlefield();
             case ALL_CREATURES -> true;
             default -> false;
         };
@@ -404,8 +405,10 @@ public class StaticEffectResolutionService {
         if (scope == GrantScope.OWN_TAPPED_CREATURES) {
             return context.targetOnSameBattlefield() && context.target().isTapped();
         }
-        if (scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_CREATURES) {
-            boolean ownCheck = scope != GrantScope.OWN_CREATURES || context.targetOnSameBattlefield();
+        if (scope == GrantScope.OWN_CREATURES || scope == GrantScope.OPPONENT_CREATURES || scope == GrantScope.ALL_CREATURES) {
+            boolean ownCheck = scope == GrantScope.ALL_CREATURES
+                    || (scope == GrantScope.OWN_CREATURES && context.targetOnSameBattlefield())
+                    || (scope == GrantScope.OPPONENT_CREATURES && !context.targetOnSameBattlefield());
             if (!ownCheck) return false;
             boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
             return isEffectivelyCreature(context.gameData(), context.target(), hasAnimateArtifacts)
