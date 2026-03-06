@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderPoisonedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -258,6 +259,7 @@ public class CombatAttackService {
         if (gameQueryService.hasKeyword(gameData, creature, Keyword.DEFENDER)
                 && !gameQueryService.canAttackDespiteDefender(gameData, creature)) return false;
         if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackOrBlockEffect.class)) return false;
+        if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackEffect.class)) return false;
         if (CombatHelper.isCantAttackOrBlockUnlessEquipped(gameQueryService, gameData, creature)) return false;
         if (isCantAttackDueToLandRestriction(gameData, creature, defenderBattlefield)) return false;
         if (isCantAttackUnlessDefenderPoisoned(gameData, creature, defenderId)) return false;
