@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndImprintEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ class ExclusionRitualTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0, targetId);
         harness.passBothPriorities(); // resolve enchantment spell -> ETB on stack
-        harness.passBothPriorities(); // resolve ETB -> exile
+        harness.passBothPriorities(); // resolve ETB -> exile + imprint
     }
 
     private void resetForFollowUpSpell() {
@@ -39,13 +39,13 @@ class ExclusionRitualTest extends BaseCardTest {
     // ===== Card properties =====
 
     @Test
-    @DisplayName("Card has ExileTargetPermanentUntilSourceLeavesEffect on ETB and static casting restriction")
+    @DisplayName("Card has ExileTargetPermanentAndImprintEffect on ETB and static casting restriction")
     void hasCorrectEffects() {
         ExclusionRitual card = new ExclusionRitual();
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ExileTargetPermanentUntilSourceLeavesEffect.class);
+                .isInstanceOf(ExileTargetPermanentAndImprintEffect.class);
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
@@ -55,7 +55,7 @@ class ExclusionRitualTest extends BaseCardTest {
     // ===== ETB exile =====
 
     @Test
-    @DisplayName("ETB exiles target nonland permanent")
+    @DisplayName("ETB exiles target nonland permanent permanently")
     void etbExilesTargetNonlandPermanent() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
@@ -65,6 +65,30 @@ class ExclusionRitualTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
         assertThat(gd.playerExiledCards.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Exiled card stays exiled when Exclusion Ritual is destroyed (not O-ring style)")
+    void exiledCardStaysExiledWhenSourceDestroyed() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        castAndResolveExclusionRitual(bearsId);
+
+        resetForFollowUpSpell();
+
+        // Destroy Exclusion Ritual
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        UUID ritualId = harness.getPermanentId(player1, "Exclusion Ritual");
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, ritualId);
+        harness.passBothPriorities();
+
+        // Grizzly Bears should remain exiled — exile is permanent
+        assertThat(gd.playerExiledCards.get(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
     }
 
     // ===== Static casting restriction =====
@@ -123,32 +147,7 @@ class ExclusionRitualTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
-    // ===== LTB return =====
-
-    @Test
-    @DisplayName("Exiled card returns when Exclusion Ritual is destroyed")
-    void exiledCardReturnsWhenSourceDestroyed() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        castAndResolveExclusionRitual(bearsId);
-
-        assertThat(gd.playerExiledCards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-
-        resetForFollowUpSpell();
-
-        harness.setHand(player2, List.of(new Naturalize()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-        UUID ritualId = harness.getPermanentId(player1, "Exclusion Ritual");
-        harness.passPriority(player1);
-        harness.castInstant(player2, 0, ritualId);
-        harness.passBothPriorities();
-
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-    }
+    // ===== Restriction lifts when source leaves =====
 
     @Test
     @DisplayName("Casting restriction lifts when Exclusion Ritual is destroyed")
@@ -167,7 +166,7 @@ class ExclusionRitualTest extends BaseCardTest {
         harness.castInstant(player2, 0, ritualId);
         harness.passBothPriorities();
 
-        // Now casting Grizzly Bears should be allowed again
+        // Casting restriction should be gone since Exclusion Ritual left the battlefield
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -182,23 +181,13 @@ class ExclusionRitualTest extends BaseCardTest {
     // ===== Edge cases =====
 
     @Test
-    @DisplayName("Exile tracking is cleaned up after source leaves")
-    void exileTrackingCleanedUpAfterSourceLeaves() {
+    @DisplayName("No exile-return tracking is created (exile is permanent)")
+    void noExileReturnTracking() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         castAndResolveExclusionRitual(bearsId);
 
-        assertThat(gd.exileReturnOnPermanentLeave).isNotEmpty();
-
-        resetForFollowUpSpell();
-
-        harness.setHand(player2, List.of(new Naturalize()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-        UUID ritualId = harness.getPermanentId(player1, "Exclusion Ritual");
-        harness.passPriority(player1);
-        harness.castInstant(player2, 0, ritualId);
-        harness.passBothPriorities();
-
+        // No O-ring style tracking should exist
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
     }
 }

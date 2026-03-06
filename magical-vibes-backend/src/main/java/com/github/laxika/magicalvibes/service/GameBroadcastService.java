@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
-import com.github.laxika.magicalvibes.model.PendingExileReturn;
+
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
@@ -389,9 +389,9 @@ public class GameBroadcastService {
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof CantCastSpellsWithSameNameAsExiledCardEffect) {
-                        PendingExileReturn exiled = gameData.exileReturnOnPermanentLeave.get(perm.getId());
-                        if (exiled != null) {
-                            forbidden.add(exiled.card().getName());
+                        Card imprinted = perm.getCard().getImprintedCard();
+                        if (imprinted != null) {
+                            forbidden.add(imprinted.getName());
                         }
                     }
                 }

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerExilesTopCardsToSou
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
@@ -75,6 +76,41 @@ public class ExileResolutionService {
             log.info("Game {} - {} is exiled by {}",
                     gameData.id, target.getCard().getName(), entry.getCard().getName());
         }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Exiles a target permanent and imprints the exiled card onto the source permanent.
+     * The exile is permanent (the card does NOT return when the source leaves).
+     * Used by Exclusion Ritual.
+     */
+    @HandlesEffect(ExileTargetPermanentAndImprintEffect.class)
+    void resolveExileTargetPermanentAndImprint(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        Card exiledCard = target.getOriginalCard();
+        permanentRemovalService.removePermanentToExile(gameData, target);
+
+        // Find the source permanent on the controller's battlefield and imprint
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (p.getCard() == entry.getCard()) {
+                    p.getCard().setImprintedCard(exiledCard);
+                    break;
+                }
+            }
+        }
+
+        String logEntry = exiledCard.getName() + " is exiled by " + entry.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} exiles and imprints {}",
+                gameData.id, entry.getCard().getName(), exiledCard.getName());
 
         permanentRemovalService.removeOrphanedAuras(gameData);
     }

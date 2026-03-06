@@ -349,6 +349,7 @@ Pass `null` as filter to allow any card.
 | `ExileCreaturesFromGraveyardAndCreateTokensEffect` | `()` | exile creature cards from graveyard, create tokens for each |
 | `ExileTopCardsRepeatOnDuplicateEffect` | `(int count)` | exile top N cards, repeat if duplicate names found |
 | `ExileSelfAndReturnAtEndStepEffect` | `()` | exile this permanent, return it at beginning of next end step (Argent Sphinx-style) |
+| `ExileTargetPermanentAndImprintEffect` | `()` | exile target permanent permanently and imprint the exiled card onto the source permanent; the card does NOT return when the source leaves (Exclusion Ritual-style) |
 | `ExileTargetPermanentAndReturnAtEndStepEffect` | `()` | exile target permanent, return it at beginning of next end step under owner's control (Glimmerpoint Stag-style) |
 | `ExileTargetPermanentUntilSourceLeavesEffect` | `()` | exile target permanent until source leaves the battlefield, then return it under owner's control (O-ring style). Tracked via `GameData.exileReturnOnPermanentLeave` map. Often wrapped in `MayEffect` for "you may" triggers |
 | `ImprintDyingCreatureEffect` | `(UUID dyingCardId)` or `()` | exile a dying nontoken creature and imprint it on the source permanent; previously imprinted card is returned to its owner's graveyard. No-arg constructor (dyingCardId is null) used in card definition; dyingCardId populated at trigger time |
