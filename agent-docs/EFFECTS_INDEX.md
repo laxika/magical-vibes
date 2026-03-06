@@ -609,6 +609,7 @@ Pass `null` as filter to allow any card.
 | `AdditionalCombatMainPhaseEffect` | `(int count)` | get N additional combat + main phases |
 | `EndTurnEffect` | `()` | end the turn |
 | `ControlTargetPlayerNextTurnEffect` | `()` | control target player during their next turn (Mindslaver) |
+| `PermanentsEnterTappedThisTurnEffect` | `()` | all permanents enter tapped this turn (Due Respect) |
 
 ## Animate / transform
 

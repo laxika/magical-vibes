@@ -929,6 +929,7 @@ public class TurnProgressionService {
         gameData.playerDamagePreventionShields.clear();
         gameData.globalDamagePreventionShield = 0;
         gameData.preventAllCombatDamage = false;
+        gameData.allPermanentsEnterTappedThisTurn = false;
         gameData.preventDamageFromColors.clear();
         gameData.combatDamageRedirectTarget = null;
         gameData.playerColorDamagePreventionCount.clear();

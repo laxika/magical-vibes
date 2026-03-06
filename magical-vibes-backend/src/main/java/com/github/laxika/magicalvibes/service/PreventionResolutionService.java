@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.PermanentsEnterTappedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageByTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageFromChosenSourceEffect;
@@ -112,6 +113,14 @@ public class PreventionResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} prevented from dealing damage this turn", gameData.id, target.getCard().getName());
         }
+    }
+
+    @HandlesEffect(PermanentsEnterTappedThisTurnEffect.class)
+    void resolvePermanentsEnterTappedThisTurn(GameData gameData, StackEntry entry) {
+        gameData.allPermanentsEnterTappedThisTurn = true;
+
+        String logEntry = "Permanents enter tapped this turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
     }
 
     @HandlesEffect(PreventAllDamageFromChosenSourceEffect.class)

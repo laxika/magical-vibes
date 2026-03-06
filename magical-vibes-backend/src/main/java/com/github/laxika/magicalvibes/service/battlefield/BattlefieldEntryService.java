@@ -63,6 +63,7 @@ public class BattlefieldEntryService {
         applyEnterTappedEffects(permanent, enterTappedTypes);
         applySelfEnterTapped(permanent);
         applyConditionalEnterTapped(gameData, controllerId, permanent);
+        applyAllPermanentsEnterTapped(gameData, permanent);
         gameData.playerBattlefields.get(controllerId).add(permanent);
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())
@@ -73,6 +74,7 @@ public class BattlefieldEntryService {
         applyEnterTappedEffects(permanent, enterTappedTypes);
         applySelfEnterTapped(permanent);
         applyConditionalEnterTapped(gameData, controllerId, permanent);
+        applyAllPermanentsEnterTapped(gameData, permanent);
         gameData.playerBattlefields.get(controllerId).add(permanent);
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())
@@ -98,6 +100,12 @@ public class BattlefieldEntryService {
             return;
         }
         if (matchesAnyType(enteringPermanent.getCard(), enterTappedTypes)) {
+            enteringPermanent.tap();
+        }
+    }
+
+    private void applyAllPermanentsEnterTapped(GameData gameData, Permanent enteringPermanent) {
+        if (gameData.allPermanentsEnterTappedThisTurn) {
             enteringPermanent.tap();
         }
     }
