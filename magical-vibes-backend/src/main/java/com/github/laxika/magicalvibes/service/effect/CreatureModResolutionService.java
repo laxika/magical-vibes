@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeAllCreaturesUnblockableEf
 import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachAttackingCreatureEffect;
@@ -1016,6 +1017,22 @@ public class CreatureModResolutionService {
         String logEntry = target.getCard().getName() + " gets a charge counter (" + target.getChargeCounters() + " total).";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gets a charge counter ({} total)", gameData.id, target.getCard().getName(), target.getChargeCounters());
+    }
+
+    @HandlesEffect(RemoveChargeCountersFromTargetPermanentEffect.class)
+    private void resolveRemoveChargeCountersFromTargetPermanent(GameData gameData, StackEntry entry, RemoveChargeCountersFromTargetPermanentEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        int toRemove = Math.min(effect.maxCount(), target.getChargeCounters());
+        if (toRemove > 0) {
+            target.setChargeCounters(target.getChargeCounters() - toRemove);
+            String logEntry = toRemove + " charge counter(s) removed from " + target.getCard().getName() + " (" + target.getChargeCounters() + " remaining).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} charge counter(s) removed from {} ({} remaining)", gameData.id, toRemove, target.getCard().getName(), target.getChargeCounters());
+        }
     }
 
     @HandlesEffect(PutMinusOneMinusOneCounterOnTargetCreatureEffect.class)
