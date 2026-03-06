@@ -506,10 +506,18 @@ public class PlayerInteractionResolutionService {
         String logEntry = targetName + " reveals their hand: " + cardNames + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
-        // Build valid indices (exclude cards matching excluded types)
+        // Build valid indices based on included or excluded types
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
-            if (!effect.excludedTypes().contains(hand.get(i).getType())) {
+            Card handCard = hand.get(i);
+            if (!effect.includedTypes().isEmpty()) {
+                // Included mode: card must match at least one included type (primary or additional)
+                boolean matches = effect.includedTypes().contains(handCard.getType())
+                        || handCard.getAdditionalTypes().stream().anyMatch(effect.includedTypes()::contains);
+                if (matches) {
+                    validIndices.add(i);
+                }
+            } else if (!effect.excludedTypes().contains(handCard.getType())) {
                 validIndices.add(i);
             }
         }
@@ -526,8 +534,18 @@ public class PlayerInteractionResolutionService {
         gameData.interaction.beginRevealedHandChoice(casterId, targetPlayerId, Set.copyOf(validIndices),
                 cardsToChoose, true, List.of());
 
+        String choicePrompt;
+        if (!effect.includedTypes().isEmpty()) {
+            String typeNames = effect.includedTypes().stream()
+                    .map(CardType::getDisplayName)
+                    .reduce((a, b) -> a + " or " + b)
+                    .orElse("card");
+            choicePrompt = "Choose a " + typeNames.toLowerCase() + " card to discard.";
+        } else {
+            choicePrompt = "Choose a nonland card to discard.";
+        }
         playerInputService.beginRevealedHandChoice(gameData, casterId, targetPlayerId, validIndices,
-                "Choose a nonland card to discard.");
+                choicePrompt);
 
         log.info("Game {} - {} choosing {} card(s) from {}'s hand to discard",
                 gameData.id, casterName, cardsToChoose, targetName);
