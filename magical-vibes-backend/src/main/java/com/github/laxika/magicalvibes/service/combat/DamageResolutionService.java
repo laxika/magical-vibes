@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardDealManaValueDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndDealDamageToDamagedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -893,6 +894,42 @@ public class DamageResolutionService {
         }
 
         destroyAllLethal(gameData, destroyed);
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link SacrificeSelfAndDealDamageToDamagedPlayerEffect} — sacrifices the source creature
+     * and deals fixed damage to the player that was dealt combat damage. Used by Furnace Scamp.
+     */
+    @HandlesEffect(SacrificeSelfAndDealDamageToDamagedPlayerEffect.class)
+    void resolveSacrificeSelfAndDealDamageToDamagedPlayer(GameData gameData, StackEntry entry,
+                                                          SacrificeSelfAndDealDamageToDamagedPlayerEffect effect) {
+        UUID defenderId = entry.getTargetPermanentId();
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+
+        if (defenderId == null || sourcePermanentId == null) {
+            return;
+        }
+
+        // Check source creature is still on the battlefield
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (source == null) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    entry.getCard().getName() + "'s ability fizzles — source no longer on the battlefield.");
+            return;
+        }
+
+        // Sacrifice the source creature
+        permanentRemovalService.removePermanentToGraveyard(gameData, source);
+        gameBroadcastService.logAndBroadcast(gameData,
+                entry.getCard().getName() + " is sacrificed.");
+
+        // Deal damage to the damaged player
+        if (!gameData.playerIds.contains(defenderId)) {
+            return;
+        }
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+        dealDamageToPlayer(gameData, entry, defenderId, rawDamage);
         gameOutcomeService.checkWinCondition(gameData);
     }
 }
