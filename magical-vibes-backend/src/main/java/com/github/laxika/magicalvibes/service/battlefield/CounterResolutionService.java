@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellIfControllerPoisonedEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +52,31 @@ public class CounterResolutionService {
         if (targetEntry == null) return;
 
         counterSpell(gameData, entry, targetEntry);
+    }
+
+    /**
+     * Resolves a conditional counter that only counters if the target spell's controller
+     * is poisoned (has at least one poison counter). Used by Corrupted Resolve.
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry of the counter spell being resolved
+     */
+    @HandlesEffect(CounterSpellIfControllerPoisonedEffect.class)
+    void resolveCounterSpellIfControllerPoisoned(GameData gameData, StackEntry entry) {
+        UUID targetCardId = entry.getTargetPermanentId();
+        if (targetCardId == null) return;
+
+        StackEntry targetEntry = findCounterTarget(gameData, targetCardId);
+        if (targetEntry == null) return;
+
+        UUID targetControllerId = targetEntry.getControllerId();
+        int poisonCounters = gameData.playerPoisonCounters.getOrDefault(targetControllerId, 0);
+        if (poisonCounters > 0) {
+            counterSpell(gameData, entry, targetEntry);
+        } else {
+            log.info("Game {} - {} controller is not poisoned, spell not countered",
+                    gameData.id, targetEntry.getCard().getName());
+        }
     }
 
     /**

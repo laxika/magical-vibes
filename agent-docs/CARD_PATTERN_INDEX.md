@@ -43,6 +43,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Counter (filtered) | `r/RemoveSoul.java` | StackEntryPredicateTargetFilter + StackEntryTypeInPredicate |
 | Counter + bonus | `d/Discombobulate.java` | Counter + ReorderTopCardsOfLibraryEffect |
 | Counter + metalcraft cost reduction | `s/StoicRebuttal.java` | CounterSpellEffect + ReduceOwnCastCostIfMetalcraftEffect(1) — costs {1} less with 3+ artifacts |
+| Counter (conditional, poisoned) | `c/CorruptedResolve.java` | CounterSpellIfControllerPoisonedEffect — counters only if target spell's controller is poisoned |
 | Bounce target | `u/Unsummon.java` | ReturnTargetPermanentToHandEffect |
 | Bounce mass | `e/Evacuation.java` | ReturnCreaturesToOwnersHandEffect |
 | Pure draw | `c/CounselOfTheSoratami.java` | DrawCardEffect |
