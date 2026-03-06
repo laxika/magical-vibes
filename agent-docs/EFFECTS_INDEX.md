@@ -552,6 +552,7 @@ Pass `null` as filter to allow any card.
 | `GainControlOfEnchantedTargetEffect` | `()` | gain control of enchanted permanent (static, Control Magic-style) |
 | `GainControlOfTargetAuraEffect` | `()` | gain control of target aura |
 | `ControlEnchantedCreatureEffect` | `()` | control enchanted creature (static) |
+| `EnchantedCreatureDealsDamageToItsOwnerEffect` | `(int damage)` | enchanted creature deals N damage to its owner (the original owner, not current controller). Use on `UPKEEP_TRIGGERED` slot for auras that steal + ping owner |
 
 ## Prevention / protection / redirection
 

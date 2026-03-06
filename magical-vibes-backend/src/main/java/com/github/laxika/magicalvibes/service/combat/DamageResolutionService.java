@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSourcePowerT
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToItsOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetControllerIfTargetHasKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachPlayerEffect;
@@ -723,6 +724,45 @@ public class DamageResolutionService {
             dealDamageToPlayer(gameData, entry, entry.getControllerId(), rawDamage);
         }
 
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link EnchantedCreatureDealsDamageToItsOwnerEffect} — the enchanted creature deals
+     * damage to its owner (the player who originally owned it, not the current controller).
+     * The damage source is the enchanted creature, not the aura.
+     */
+    @HandlesEffect(EnchantedCreatureDealsDamageToItsOwnerEffect.class)
+    void resolveEnchantedCreatureDealsDamageToItsOwner(GameData gameData, StackEntry entry,
+                                                        EnchantedCreatureDealsDamageToItsOwnerEffect effect) {
+        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (aura == null || aura.getAttachedTo() == null) return;
+
+        Permanent creature = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        if (creature == null) return;
+
+        UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        if (controllerId == null) return;
+
+        UUID ownerId = gameData.stolenCreatures.getOrDefault(creature.getId(), controllerId);
+
+        String creatureName = creature.getCard().getName();
+        String ownerName = gameData.playerIdToName.get(ownerId);
+
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+
+        // Create a temporary stack entry with the creature as source for correct damage attribution
+        StackEntry creatureEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                creature.getCard(),
+                controllerId,
+                creatureName + " deals damage to its owner",
+                List.of(),
+                ownerId,
+                creature.getId()
+        );
+
+        dealDamageToPlayer(gameData, creatureEntry, ownerId, rawDamage);
         gameOutcomeService.checkWinCondition(gameData);
     }
 
