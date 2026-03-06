@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.ai.AiConnection;
-import com.github.laxika.magicalvibes.ai.AiDecisionEngine;
+import com.github.laxika.magicalvibes.ai.EasyAiDecisionEngine;
 import com.github.laxika.magicalvibes.ai.AiDraftEngine;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
@@ -535,7 +535,7 @@ public class DraftService {
 
         log.info("Draft {} - Tournament game {} created: {} vs {}", draftData.id, gameData.id, p1Name, p2Name);
 
-        // For AI players, register AiConnection + AiDecisionEngine
+        // For AI players, register AiConnection + EasyAiDecisionEngine
         boolean p1IsAi = draftData.aiPlayerIds.contains(player1Id);
         boolean p2IsAi = draftData.aiPlayerIds.contains(player2Id);
 
@@ -562,7 +562,7 @@ public class DraftService {
     private void registerAiForTournamentGame(GameData gameData, UUID aiPlayerId, String aiName) {
         Player aiPlayer = new Player(aiPlayerId, aiName);
         MessageHandler handler = messageHandlerProvider.getObject();
-        AiDecisionEngine engine = new AiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService);
+        EasyAiDecisionEngine engine = new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService);
         String connectionId = "ai-draft-" + gameData.id + "-" + aiPlayerId;
         AiConnection aiConnection = new AiConnection(connectionId, engine, objectMapper);
         engine.setSelfConnection(aiConnection);

@@ -30,7 +30,7 @@ class AiDecisionEngineTest {
     private Player human;
     private Player aiPlayer;
     private GameData gd;
-    private AiDecisionEngine ai;
+    private EasyAiDecisionEngine ai;
 
     @BeforeEach
     void setUp() {
@@ -43,7 +43,7 @@ class AiDecisionEngineTest {
 
         FakeConnection aiConn = new FakeConnection("ai-test");
         harness.getSessionManager().registerPlayer(aiConn, aiPlayer.getId(), "Bob");
-        ai = new AiDecisionEngine(gd.id, aiPlayer, harness.getGameRegistry(),
+        ai = new EasyAiDecisionEngine(gd.id, aiPlayer, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService());
         ai.setSelfConnection(aiConn);
     }

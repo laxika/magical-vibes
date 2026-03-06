@@ -55,7 +55,7 @@ public class AiPlayerService {
                 ? new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService)
                 : isMedium
                 ? new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService)
-                : new AiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService);
+                : new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService);
         String connectionId = "ai-" + gameData.id;
         long delay = isHard ? 1500L : isMedium ? 1200L : 800L;
         AiConnection aiConnection = new AiConnection(connectionId, engine, objectMapper, delay);

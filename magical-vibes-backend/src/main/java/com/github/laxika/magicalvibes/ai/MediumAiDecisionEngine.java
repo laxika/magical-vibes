@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -26,6 +25,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.IntConsumer;
 
 /**
  * Medium difficulty AI that uses board evaluation, spell evaluation, and exhaustive
@@ -48,22 +48,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
 
     @Override
     protected void handleGameState(GameData gameData) {
-        if (gameData.status != GameStatus.RUNNING) {
-            return;
-        }
-
-        boolean awaitingInput;
-        UUID priorityHolder;
-        synchronized (gameData) {
-            awaitingInput = gameData.interaction.isAwaitingInput();
-            priorityHolder = getPriorityPlayerId(gameData);
-        }
-
-        if (priorityHolder == null || !priorityHolder.equals(aiPlayer.getId())) {
-            return;
-        }
-
-        if (awaitingInput) {
+        if (!hasPriority(gameData)) {
             return;
         }
 
@@ -85,14 +70,13 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         send(() -> messageHandler.handlePassPriority(selfConnection, new PassPriorityRequest()));
     }
 
-    @Override
     protected boolean tryCastSpell(GameData gameData) {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
         if (hand == null) {
             return false;
         }
 
-        ManaPool virtualPool = buildVirtualManaPool(gameData);
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
 
         // Evaluate all castable spells using SpellEvaluator
         record CastCandidate(int index, double value) {}
@@ -129,7 +113,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         // Determine target if needed
         UUID targetId = null;
         if (card.isNeedsTarget() || card.isAura()) {
-            targetId = chooseTarget(gameData, card);
+            targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) {
                 return false;
             }
@@ -138,15 +122,16 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         // Calculate X value and tap lands
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = null;
+        IntConsumer tapAction = tapPermanentAction();
         if (castCost.hasX()) {
-            int smartX = calculateSmartX(gameData, card, targetId, virtualPool);
+            int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool);
             if (smartX <= 0) {
                 return false;
             }
             xValue = smartX;
-            tapLandsForXSpell(gameData, card, smartX);
+            manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, smartX, tapAction);
         } else {
-            tapLandsForCost(gameData, card.getManaCost());
+            manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), tapAction);
         }
 
         log.info("AI (Medium): Casting {}{} (value={}) in game {}", card.getName(),
@@ -158,11 +143,6 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         send(() -> messageHandler.handlePlayCard(selfConnection,
                 new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null, null, null)));
         return true;
-    }
-
-    @Override
-    protected int scoreCard(GameData gameData, Card card) {
-        return (int) spellEvaluator.estimateSpellValue(gameData, card, aiPlayer.getId());
     }
 
     @Override
@@ -196,7 +176,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
     @Override
     protected void handleBlockers(GameData gameData) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
-        UUID opponentId = getOpponentId(gameData);
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
         List<Permanent> opponentBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
 
         if (battlefield == null) {
