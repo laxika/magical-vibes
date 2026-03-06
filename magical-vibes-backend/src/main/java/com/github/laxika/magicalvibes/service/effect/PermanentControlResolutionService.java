@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
@@ -57,6 +58,7 @@ import java.util.UUID;
 public class PermanentControlResolutionService {
 
     private final GameHelper gameHelper;
+    private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
@@ -125,7 +127,7 @@ public class PermanentControlResolutionService {
 
     private void applyCreateCreatureToken(GameData gameData, UUID controllerId, CreateCreatureTokenEffect token) {
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
-        enterTappedTypesSnapshot.addAll(gameHelper.snapshotEnterTappedTypes(gameData));
+        enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         for (int i = 0; i < token.amount(); i++) {
             Card tokenCard = new Card();
             tokenCard.setName(token.tokenName());
@@ -144,7 +146,7 @@ public class PermanentControlResolutionService {
             }
 
             Permanent tokenPermanent = new Permanent(tokenCard);
-            gameHelper.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
 
             if (token.tappedAndAttacking()) {
                 tokenPermanent.tap();
@@ -164,7 +166,7 @@ public class PermanentControlResolutionService {
             String logEntry = "A " + token.power() + "/" + token.toughness() + " " + colorDesc + token.tokenName() + " creature token enters the battlefield" + tappedAttackingDesc + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
-            gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
             if (!gameData.interaction.isAwaitingInput()) {
                 legendRuleService.checkLegendRule(gameData, controllerId);
             }
@@ -230,8 +232,8 @@ public class PermanentControlResolutionService {
 
         Permanent tokenPermanent = new Permanent(tokenCard);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
-        enterTappedTypesSnapshot.addAll(gameHelper.snapshotEnterTappedTypes(gameData));
-        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+        enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
 
         String logEntry = "A 0/0 black Phyrexian Germ creature token enters the battlefield.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -245,7 +247,7 @@ public class PermanentControlResolutionService {
             log.info("Game {} - {} attached to Phyrexian Germ token via living weapon", gameData.id, entry.getCard().getName());
         }
 
-        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
         if (!gameData.interaction.isAwaitingInput()) {
             legendRuleService.checkLegendRule(gameData, controllerId);
         }
@@ -567,7 +569,7 @@ public class PermanentControlResolutionService {
         }
 
         Permanent tokenPermanent = new Permanent(tokenCard);
-        gameHelper.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
 
         // Conditionally schedule for exile at beginning of next end step
         if (effect.exileAtEndStep()) {
@@ -580,7 +582,7 @@ public class PermanentControlResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - Token copy of {} created via {}", gameData.id, imprintedCard.getName(), sourcePermanent.getCard().getName());
 
-        gameHelper.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, tokenPermanent.getId(), false);
+        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, tokenPermanent.getId(), false);
     }
 
     @HandlesEffect(CreateTokenCopyOfSourceEffect.class)
@@ -623,13 +625,13 @@ public class PermanentControlResolutionService {
         }
 
         Permanent tokenPermanent = new Permanent(tokenCard);
-        gameHelper.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
 
         String logMsg = "A token copy of " + sourceCard.getName() + " is created.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - Token copy of {} created via {}", gameData.id, sourceCard.getName(), sourceCard.getName());
 
-        gameHelper.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, tokenPermanent.getId(), false);
+        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, tokenPermanent.getId(), false);
     }
 
     @HandlesEffect(CreateTokenCopyOfTargetPermanentEffect.class)
@@ -672,13 +674,13 @@ public class PermanentControlResolutionService {
         }
 
         Permanent tokenPermanent = new Permanent(tokenCard);
-        gameHelper.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
 
         String logMsg = "A token copy of " + sourceCard.getName() + " is created.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - Token copy of {} created via Mirrorworks-like ability", gameData.id, sourceCard.getName());
 
-        gameHelper.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, tokenPermanent.getId(), false);
+        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, tokenPermanent.getId(), false);
     }
 
 }

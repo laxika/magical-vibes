@@ -61,9 +61,11 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndContr
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.StateBasedActionService;
@@ -85,8 +87,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MayAbilityHandlerService {
 
+    private final DrawService drawService;
     private final GameQueryService gameQueryService;
     private final GameHelper gameHelper;
+    private final CloneService cloneService;
     private final StateBasedActionService stateBasedActionService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
@@ -282,7 +286,7 @@ public class MayAbilityHandlerService {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} declines copy {}", gameData.id, player.getUsername(), typeLabel);
 
-                gameHelper.completeCloneEntry(gameData, null);
+                cloneService.completeCloneEntry(gameData, null);
                 stateBasedActionService.performStateBasedActions(gameData);
 
                 if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
@@ -813,7 +817,7 @@ public class MayAbilityHandlerService {
             // Opponent declines — controller draws cards
             int drawCount = effect.drawCount();
             for (int i = 0; i < drawCount; i++) {
-                gameHelper.resolveDrawCard(gameData, controllerId);
+                drawService.resolveDrawCard(gameData, controllerId);
             }
 
             String logEntry = opponentName + " declines. " + controllerName + " draws " + drawCount + " cards.";
@@ -1006,7 +1010,7 @@ public class MayAbilityHandlerService {
         String playerName = gameData.playerIdToName.get(drawingPlayerId);
 
         if (!accepted) {
-            gameHelper.resolveDrawCardWithoutStaticReplacementCheck(gameData, drawingPlayerId);
+            drawService.resolveDrawCardWithoutStaticReplacementCheck(gameData, drawingPlayerId);
             String logEntry = player.getUsername() + " declines to use " + ability.sourceCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
@@ -1101,7 +1105,7 @@ public class MayAbilityHandlerService {
 
         // Apply the copy
         String originalName = sourcePermanent.getCard().getName();
-        gameHelper.applyCloneCopy(sourcePermanent, targetPerm, null, null);
+        cloneService.applyCloneCopy(sourcePermanent, targetPerm, null, null);
 
         // Retain the upkeep copy ability per "except it has this ability"
         Card copiedCard = sourcePermanent.getCard();

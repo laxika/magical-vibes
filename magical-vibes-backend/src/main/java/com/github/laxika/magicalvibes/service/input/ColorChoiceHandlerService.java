@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.WarpWorldService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
@@ -41,6 +43,8 @@ public class ColorChoiceHandlerService {
     private final SessionManager sessionManager;
     private final GameQueryService gameQueryService;
     private final GameHelper gameHelper;
+    private final WarpWorldService warpWorldService;
+    private final BattlefieldEntryService battlefieldEntryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
@@ -109,7 +113,7 @@ public class ColorChoiceHandlerService {
             log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), color, perm.getCard().getName());
 
             if (gameQueryService.isCreature(gameData, perm)) {
-                gameHelper.processCreatureETBEffects(gameData, player.getId(), perm.getCard(), etbTargetId, false);
+                battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), perm.getCard(), etbTargetId, false);
             }
         }
 
@@ -230,7 +234,7 @@ public class ColorChoiceHandlerService {
 
         Permanent perm = new Permanent(card);
         perm.setChosenName(cardName);
-        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, perm);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
@@ -336,7 +340,7 @@ public class ColorChoiceHandlerService {
         } else if (toBottom.size() > 1) {
             gameData.pendingLibraryBottomReorders.addLast(new LibraryBottomReorderRequest(playerId, toBottom));
             if (!gameData.interaction.isAwaitingInput()) {
-                gameHelper.beginNextPendingLibraryBottomReorder(gameData);
+                warpWorldService.beginNextPendingLibraryBottomReorder(gameData);
             }
         }
 

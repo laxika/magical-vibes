@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.graveyard;
 
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
@@ -58,6 +59,7 @@ import java.util.stream.IntStream;
 public class GraveyardReturnResolutionService {
 
     private final GameHelper gameHelper;
+    private final BattlefieldEntryService battlefieldEntryService;
     private final PermanentRemovalService permanentRemovalService;
     private final LegendRuleService legendRuleService;
     private final GameQueryService gameQueryService;
@@ -386,9 +388,9 @@ public class GraveyardReturnResolutionService {
     }
 
     private void putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card) {
-        Set<CardType> enterTappedTypes = gameHelper.snapshotEnterTappedTypes(gameData);
+        Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
-        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = playerName + " puts " + card.getName() + " onto the battlefield from a graveyard.";
@@ -410,7 +412,7 @@ public class GraveyardReturnResolutionService {
 
     private void handleCreatureEtbAndLegendRule(GameData gameData, UUID controllerId, Permanent permanent, Card card) {
         if (gameQueryService.isCreature(gameData, permanent)) {
-            gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
         }
         if (!gameData.interaction.isAwaitingInput()) {
             legendRuleService.checkLegendRule(gameData, controllerId);
@@ -481,11 +483,11 @@ public class GraveyardReturnResolutionService {
         StolenCreatureResult result = stealFromOpponentGraveyard(gameData, entry, controllerId);
         if (result == null) return;
 
-        Set<CardType> enterTappedTypes = gameHelper.snapshotEnterTappedTypes(gameData);
+        Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         if (effect.tapped()) {
             result.permanent().tap();
         }
-        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, result.permanent(), enterTappedTypes);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, result.permanent(), enterTappedTypes);
 
         trackStolenCreature(gameData, result.permanent().getId(), result.originalOwnerId());
 
@@ -530,10 +532,10 @@ public class GraveyardReturnResolutionService {
         StolenCreatureResult result = stealFromOpponentGraveyard(gameData, entry, controllerId);
         if (result == null) return;
 
-        Set<CardType> enterTappedTypes = gameHelper.snapshotEnterTappedTypes(gameData);
+        Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         result.permanent().getGrantedKeywords().add(Keyword.HASTE);
         result.permanent().setExileIfLeavesBattlefield(true);
-        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, result.permanent(), enterTappedTypes);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, result.permanent(), enterTappedTypes);
 
         trackStolenCreature(gameData, result.permanent().getId(), result.originalOwnerId());
         gameData.pendingTokenExilesAtEndStep.add(result.permanent().getId());
@@ -689,7 +691,7 @@ public class GraveyardReturnResolutionService {
         List<UUID> targetCardIds = entry.getTargetCardIds();
         String playerName = gameData.playerIdToName.get(controllerId);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
-        enterTappedTypesSnapshot.addAll(gameHelper.snapshotEnterTappedTypes(gameData));
+        enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
 
         int tokensToCreate = 0;
         for (UUID cardId : targetCardIds) {
@@ -714,7 +716,7 @@ public class GraveyardReturnResolutionService {
             tokenCard.setSubtypes(List.of(CardSubtype.ZOMBIE));
 
             Permanent tokenPermanent = new Permanent(tokenCard);
-            gameHelper.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
 
             String tokenLog = "A 2/2 Zombie creature token enters the battlefield.";
             gameBroadcastService.logAndBroadcast(gameData, tokenLog);
@@ -795,7 +797,7 @@ public class GraveyardReturnResolutionService {
 
         // Put onto the battlefield
         Permanent perm = new Permanent(imprintedCard);
-        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, perm);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
         String enterLog = imprintedCard.getName() + " enters the battlefield under " + playerName + "'s control.";
         gameBroadcastService.logAndBroadcast(gameData, enterLog);
@@ -836,7 +838,7 @@ public class GraveyardReturnResolutionService {
 
         // Put onto the battlefield
         Permanent creature = new Permanent(dyingCard);
-        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, creature);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, creature);
 
         String enterLog = dyingCard.getName() + " returns to the battlefield under " + playerName + "'s control.";
         gameBroadcastService.logAndBroadcast(gameData, enterLog);

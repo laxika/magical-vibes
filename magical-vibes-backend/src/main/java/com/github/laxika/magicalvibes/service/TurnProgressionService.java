@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
@@ -50,7 +51,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TurnProgressionService {
 
+    private final BattlefieldEntryService battlefieldEntryService;
     private final CombatService combatService;
+    private final DrawService drawService;
     private final GameHelper gameHelper;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
@@ -453,7 +456,7 @@ public class TurnProgressionService {
         }
 
         // Normal draw (turn-based action, rule 504.1)
-        gameHelper.resolveDrawCard(gameData, activePlayerId);
+        drawService.resolveDrawCard(gameData, activePlayerId);
 
         // Check for draw step triggered abilities (e.g. Howling Mine)
         handleDrawStepTriggers(gameData);
@@ -555,12 +558,12 @@ public class TurnProgressionService {
                 }
                 // Return as a new permanent
                 Permanent perm = new Permanent(card);
-                gameHelper.putPermanentOntoBattlefield(gameData, controllerId, perm);
+                battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
                 String playerName = gameData.playerIdToName.get(controllerId);
                 String logEntry = card.getName() + " returns to the battlefield under " + playerName + "'s control.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} returns from exile for {}", gameData.id, card.getName(), playerName);
-                gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
             }
         }
 

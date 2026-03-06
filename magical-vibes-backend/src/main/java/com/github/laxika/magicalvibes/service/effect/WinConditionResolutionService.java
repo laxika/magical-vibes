@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import java.util.UUID;
 public class WinConditionResolutionService {
 
     private final GameHelper gameHelper;
+    private final GameOutcomeService gameOutcomeService;
     private final GameBroadcastService gameBroadcastService;
     private final GameQueryService gameQueryService;
 
@@ -56,7 +58,7 @@ public class WinConditionResolutionService {
             log.info("Game {} - {} wins via {} ({} creatures in graveyard)",
                     gameData.id, playerName, entry.getCard().getName(), creatureCount);
 
-            gameHelper.declareWinner(gameData, controllerId);
+            gameOutcomeService.declareWinner(gameData, controllerId);
         } else {
             String logEntry = entry.getCard().getName() + "'s ability resolves but condition is no longer met (" + creatureCount + " creature cards in graveyard).";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -89,7 +91,7 @@ public class WinConditionResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} loses the game from {}", gameData.id, loserName, entry.getCard().getName());
 
-        gameHelper.declareWinner(gameData, winnerId);
+        gameOutcomeService.declareWinner(gameData, winnerId);
         log.info("Game {} - {} wins as {}", gameData.id, winnerName, loserName);
     }
 }

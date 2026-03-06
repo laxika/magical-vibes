@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.DeathTriggerService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -34,6 +37,9 @@ import java.util.UUID;
 public class PermanentRemovalService {
 
     private final GameHelper gameHelper;
+    private final BattlefieldEntryService battlefieldEntryService;
+    private final DeathTriggerService deathTriggerService;
+    private final DamagePreventionService damagePreventionService;
     private final AuraAttachmentService auraAttachmentService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
@@ -69,17 +75,17 @@ public class PermanentRemovalService {
         boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, ownerId, target.getOriginalCard(), Zone.BATTLEFIELD);
         // Skip "dies" and graveyard triggers if a replacement effect redirected the card (CR 614.6)
         if (wentToGraveyard) {
-            gameHelper.collectDeathTrigger(gameData, target.getCard(), controllerId, wasCreature, target);
+            deathTriggerService.collectDeathTrigger(gameData, target.getCard(), controllerId, wasCreature, target);
             if (wasCreature) {
                 gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
-                gameHelper.checkAllyCreatureDeathTriggers(gameData, controllerId);
-                gameHelper.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());
-                gameHelper.checkOpponentCreatureDeathTriggers(gameData, controllerId);
-                gameHelper.checkEquippedCreatureDeathTriggers(gameData, target.getId(), controllerId);
-                gameHelper.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
+                deathTriggerService.checkAllyCreatureDeathTriggers(gameData, controllerId);
+                deathTriggerService.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());
+                deathTriggerService.checkOpponentCreatureDeathTriggers(gameData, controllerId);
+                deathTriggerService.checkEquippedCreatureDeathTriggers(gameData, target.getId(), controllerId);
+                deathTriggerService.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
             }
             if (wasArtifact) {
-                gameHelper.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, controllerId);
+                deathTriggerService.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, controllerId);
             }
         }
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
@@ -220,7 +226,7 @@ public class PermanentRemovalService {
         Permanent target = gameQueryService.findEnchantedCreatureByAuraEffect(gameData, playerId, RedirectPlayerDamageToEnchantedCreatureEffect.class);
         if (target == null) return damage;
 
-        int effectiveDamage = gameHelper.applyCreaturePreventionShield(gameData, target, damage);
+        int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, target, damage);
         String logEntry = target.getCard().getName() + " absorbs " + effectiveDamage + " redirected " + sourceName + " damage.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
@@ -317,12 +323,12 @@ public class PermanentRemovalService {
         if (exiledCards != null && exiledCards.remove(exiledCard)) {
             // Return as a new permanent
             Permanent perm = new Permanent(exiledCard);
-            gameHelper.putPermanentOntoBattlefield(gameData, ownerId, perm);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm);
             String playerName = gameData.playerIdToName.get(ownerId);
             String logEntry = exiledCard.getName() + " returns to the battlefield under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} returns from exile (source left battlefield)", gameData.id, exiledCard.getName());
-            gameHelper.handleCreatureEnteredBattlefield(gameData, ownerId, exiledCard, null, false);
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, exiledCard, null, false);
         } else {
             log.info("Game {} - Exiled card {} no longer in exile zone, return skipped", gameData.id, exiledCard.getName());
         }

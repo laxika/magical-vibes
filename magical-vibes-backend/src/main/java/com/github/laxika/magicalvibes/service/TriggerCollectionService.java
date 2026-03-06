@@ -53,7 +53,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TriggerCollectionService {
 
-    private final GameHelper gameHelper;
+    private final DamagePreventionService damagePreventionService;
+    private final GameOutcomeService gameOutcomeService;
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
@@ -346,10 +347,10 @@ public class TriggerCollectionService {
                                 gameData.id, cardName, damage, gameData.playerIdToName.get(discardingPlayerId));
 
                         if (!gameQueryService.isDamageFromSourcePrevented(gameData, perm.getEffectiveColor())
-                                && !gameHelper.isSourceDamagePreventedForPlayer(gameData, discardingPlayerId, perm.getId())
+                                && !damagePreventionService.isSourceDamagePreventedForPlayer(gameData, discardingPlayerId, perm.getId())
                                 && !gameData.permanentsPreventedFromDealingDamage.contains(perm.getId())
-                                && !gameHelper.applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, perm.getEffectiveColor())) {
-                            int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, discardingPlayerId, damage);
+                                && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, perm.getEffectiveColor())) {
+                            int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, discardingPlayerId, damage);
                             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, discardingPlayerId, effectiveDamage, cardName);
                             if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
                                 gameBroadcastService.logAndBroadcast(gameData,
@@ -367,7 +368,7 @@ public class TriggerCollectionService {
         });
 
         if (anyTriggered[0]) {
-            gameHelper.checkWinCondition(gameData);
+            gameOutcomeService.checkWinCondition(gameData);
         }
 
         // Process any pending may abilities added by discard triggers (e.g. Sangromancer)
@@ -470,10 +471,10 @@ public class TriggerCollectionService {
                             gameData.id, cardName, damage, gameData.playerIdToName.get(tappingPlayerId));
 
                     if (!gameQueryService.isDamageFromSourcePrevented(gameData, perm.getEffectiveColor())
-                            && !gameHelper.isSourceDamagePreventedForPlayer(gameData, tappingPlayerId, perm.getId())
+                            && !damagePreventionService.isSourceDamagePreventedForPlayer(gameData, tappingPlayerId, perm.getId())
                             && !gameData.permanentsPreventedFromDealingDamage.contains(perm.getId())
-                            && !gameHelper.applyColorDamagePreventionForPlayer(gameData, tappingPlayerId, perm.getEffectiveColor())) {
-                        int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, tappingPlayerId, damage);
+                            && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, tappingPlayerId, perm.getEffectiveColor())) {
+                        int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, tappingPlayerId, damage);
                         effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, tappingPlayerId, effectiveDamage, cardName);
                         if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, tappingPlayerId)) {
                             gameBroadcastService.logAndBroadcast(gameData,
@@ -534,7 +535,7 @@ public class TriggerCollectionService {
         });
 
         if (anyTriggered[0]) {
-            gameHelper.checkWinCondition(gameData);
+            gameOutcomeService.checkWinCondition(gameData);
         }
     }
 

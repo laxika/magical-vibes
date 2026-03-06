@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -43,6 +44,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SpellCastingService {
 
+    private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
     private final GameHelper gameHelper;
     private final GameBroadcastService gameBroadcastService;
@@ -79,7 +81,7 @@ public class SpellCastingService {
                 throw new IllegalStateException("Only lands can be played from graveyard");
             }
             graveyard.remove(cardIndex);
-            gameHelper.putPermanentOntoBattlefield(gameData, playerId, new Permanent(graveyardCard));
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(graveyardCard));
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
 
             String logEntry = player.getUsername() + " plays " + graveyardCard.getName() + " from graveyard.";
@@ -88,7 +90,7 @@ public class SpellCastingService {
             log.info("Game {} - {} plays {} from graveyard", gameData.id, player.getUsername(), graveyardCard.getName());
 
             // Process ETB effects for lands (e.g. Glimmerpost)
-            gameHelper.processCreatureETBEffects(gameData, playerId, graveyardCard, null, false);
+            battlefieldEntryService.processCreatureETBEffects(gameData, playerId, graveyardCard, null, false);
 
             turnProgressionService.resolveAutoPass(gameData);
             return;
@@ -284,7 +286,7 @@ public class SpellCastingService {
 
         if (card.getType() == CardType.LAND) {
             // Lands bypass the stack — go directly onto battlefield
-            gameHelper.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
 
             String logEntry = player.getUsername() + " plays " + card.getName() + ".";
@@ -293,7 +295,7 @@ public class SpellCastingService {
             log.info("Game {} - {} plays {}", gameData.id, player.getUsername(), card.getName());
 
             // Process ETB effects for lands (e.g. Glimmerpost)
-            gameHelper.processCreatureETBEffects(gameData, playerId, card, null, false);
+            battlefieldEntryService.processCreatureETBEffects(gameData, playerId, card, null, false);
 
             turnProgressionService.resolveAutoPass(gameData);
         } else if (card.getType() == CardType.CREATURE) {
@@ -353,7 +355,7 @@ public class SpellCastingService {
                         .filter(c -> gameQueryService.matchesCardPredicate(c, graveyardToHandEffect.filter(), card.getId()))
                         .count();
                 if (matchingCount > 0) {
-                    gameHelper.handleUpToNGraveyardSpellTargeting(gameData, playerId, card,
+                    battlefieldEntryService.handleUpToNGraveyardSpellTargeting(gameData, playerId, card,
                             StackEntryType.SORCERY_SPELL, graveyardToHandEffect.filter(),
                             graveyardToHandEffect.maxTargets());
                     return; // finishSpellCast handled in handleMultipleGraveyardCardsChosen
@@ -368,7 +370,7 @@ public class SpellCastingService {
                 }
             } else if (needsGraveyardCreatureTargeting && resolvedXValue > 0) {
                 // Prompt player to choose graveyard targets before putting spell on stack
-                gameHelper.handleGraveyardSpellTargeting(gameData, playerId, card,
+                battlefieldEntryService.handleGraveyardSpellTargeting(gameData, playerId, card,
                         StackEntryType.SORCERY_SPELL, resolvedXValue);
             } else if (needsGraveyardCreatureTargeting) {
                 // X=0: no targets needed, put spell on stack directly (resolves doing nothing)
@@ -428,7 +430,7 @@ public class SpellCastingService {
                         .filter(c -> gameQueryService.matchesCardPredicate(c, graveyardToTopEffect.filter(), card.getId()))
                         .count();
                 if (matchingCount > 0) {
-                    gameHelper.handleAnyNumberGraveyardSpellTargeting(gameData, playerId, card,
+                    battlefieldEntryService.handleAnyNumberGraveyardSpellTargeting(gameData, playerId, card,
                             StackEntryType.INSTANT_SPELL, graveyardToTopEffect.filter());
                     return; // finishSpellCast handled in handleMultipleGraveyardCardsChosen
                 } else {

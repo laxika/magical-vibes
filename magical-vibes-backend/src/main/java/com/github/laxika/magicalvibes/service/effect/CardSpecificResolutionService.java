@@ -28,6 +28,8 @@ import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.WarpWorldService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -53,6 +55,8 @@ import java.util.stream.Collectors;
 public class CardSpecificResolutionService {
 
     private final GameHelper gameHelper;
+    private final WarpWorldService warpWorldService;
+    private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final SessionManager sessionManager;
@@ -127,7 +131,7 @@ public class CardSpecificResolutionService {
 
         // Snapshot replacement effects from permanents that existed before this Warp World event.
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
-        enterTappedTypesSnapshot.addAll(gameHelper.snapshotEnterTappedTypes(gameData));
+        enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
 
         // First, put artifact/creature/land cards onto the battlefield.
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -138,7 +142,7 @@ public class CardSpecificResolutionService {
                 CardType type = card.getType();
                 if (type == CardType.ARTIFACT || type == CardType.CREATURE || type == CardType.LAND) {
                     Permanent permanent = new Permanent(card);
-                    gameHelper.putPermanentOntoBattlefield(gameData, playerId, permanent, enterTappedTypesSnapshot);
+                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent, enterTappedTypesSnapshot);
                     putOntoBattlefieldByPlayer.get(playerId).add(card);
                 }
             }
@@ -219,16 +223,16 @@ public class CardSpecificResolutionService {
         gameData.warpWorldOperation.sourceName = entry.getCard().getName();
 
         if (!gameData.warpWorldOperation.pendingAuraChoices.isEmpty()) {
-            gameHelper.beginNextPendingWarpWorldAuraChoice(gameData);
+            warpWorldService.beginNextPendingWarpWorldAuraChoice(gameData);
             return;
         }
-        gameHelper.placePendingWarpWorldEnchantments(gameData);
+        warpWorldService.placePendingWarpWorldEnchantments(gameData);
         if (!gameData.pendingLibraryBottomReorders.isEmpty()) {
-            gameHelper.beginNextPendingLibraryBottomReorder(gameData);
+            warpWorldService.beginNextPendingLibraryBottomReorder(gameData);
             return;
         }
 
-        gameHelper.finalizePendingWarpWorld(gameData);
+        warpWorldService.finalizePendingWarpWorld(gameData);
     }
 
     @HandlesEffect(GenesisWaveEffect.class)
@@ -384,7 +388,7 @@ public class CardSpecificResolutionService {
 
         // Put the found card onto the battlefield under the controller's control
         Permanent perm = new Permanent(foundCard);
-        gameHelper.putPermanentOntoBattlefield(gameData, targetControllerId, perm);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetControllerId, perm);
 
         String enterLog = foundCard.getName() + " enters the battlefield under " + targetControllerName + "'s control.";
         gameBroadcastService.logAndBroadcast(gameData, enterLog);
@@ -393,7 +397,7 @@ public class CardSpecificResolutionService {
         boolean isCreature = foundCard.getType() == CardType.CREATURE
                 || foundCard.getAdditionalTypes().contains(CardType.CREATURE);
         if (isCreature) {
-            gameHelper.handleCreatureEnteredBattlefield(gameData, targetControllerId, foundCard, null, false);
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, targetControllerId, foundCard, null, false);
         }
 
         // Handle planeswalkers

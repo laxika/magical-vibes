@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.WarpWorldService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
@@ -45,6 +47,8 @@ public class LibraryChoiceHandlerService {
     private final SessionManager sessionManager;
     private final GameQueryService gameQueryService;
     private final GameHelper gameHelper;
+    private final WarpWorldService warpWorldService;
+    private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
     private final StateBasedActionService stateBasedActionService;
     private final GameBroadcastService gameBroadcastService;
@@ -105,11 +109,11 @@ public class LibraryChoiceHandlerService {
                 reorderedToBottom ? "bottom" : "top");
 
         if (reorderedToBottom && !gameData.pendingLibraryBottomReorders.isEmpty()) {
-            gameHelper.beginNextPendingLibraryBottomReorder(gameData);
+            warpWorldService.beginNextPendingLibraryBottomReorder(gameData);
             return;
         }
         if (reorderedToBottom && gameData.warpWorldOperation.sourceName != null) {
-            gameHelper.finalizePendingWarpWorld(gameData);
+            warpWorldService.finalizePendingWarpWorld(gameData);
         }
 
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
@@ -234,12 +238,12 @@ public class LibraryChoiceHandlerService {
                     }
                 } else if (toBattlefield) {
                     Permanent perm = new Permanent(chosenCard);
-                    gameHelper.putPermanentOntoBattlefield(gameData, playerId, perm);
+                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
                     if (toBattlefieldTapped) {
                         perm.tap();
                     }
                     if (chosenCard.getType() == CardType.CREATURE) {
-                        gameHelper.handleCreatureEnteredBattlefield(gameData, playerId, chosenCard, null, false);
+                        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, chosenCard, null, false);
                     }
                     if (chosenCard.getType() == CardType.PLANESWALKER && chosenCard.getLoyalty() != null) {
                         perm.setLoyaltyCounters(chosenCard.getLoyalty());
@@ -405,7 +409,7 @@ public class LibraryChoiceHandlerService {
             }
         } else {
             Permanent perm = new Permanent(chosenCard);
-            gameHelper.putPermanentOntoBattlefield(gameData, handOwnerId, perm);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, handOwnerId, perm);
             if (toBattlefieldTapped) {
                 perm.tap();
             }
@@ -417,7 +421,7 @@ public class LibraryChoiceHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, entersLog);
 
             if (chosenCard.getType() == CardType.CREATURE) {
-                gameHelper.handleCreatureEnteredBattlefield(gameData, handOwnerId, chosenCard, null, false);
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, handOwnerId, chosenCard, null, false);
             }
             if (chosenCard.getType() == CardType.PLANESWALKER && chosenCard.getLoyalty() != null) {
                 perm.setLoyaltyCounters(chosenCard.getLoyalty());
@@ -536,16 +540,16 @@ public class LibraryChoiceHandlerService {
 
         // Put selected cards onto the battlefield
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
-        enterTappedTypesSnapshot.addAll(gameHelper.snapshotEnterTappedTypes(gameData));
+        enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         for (Card card : selectedCards) {
             Permanent perm = new Permanent(card);
-            gameHelper.putPermanentOntoBattlefield(gameData, controllerId, perm, enterTappedTypesSnapshot);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm, enterTappedTypesSnapshot);
 
             String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
             if (card.getType() == CardType.CREATURE) {
-                gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
             }
             if (card.getType() == CardType.PLANESWALKER && card.getLoyalty() != null) {
                 perm.setLoyaltyCounters(card.getLoyalty());

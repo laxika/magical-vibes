@@ -18,7 +18,9 @@ import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService
 import com.github.laxika.magicalvibes.service.combat.DamageResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.DeathTriggerService;
 import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -26,6 +28,8 @@ import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.battlefield.CloneService;
+import com.github.laxika.magicalvibes.service.WarpWorldService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -43,6 +47,10 @@ public class PermanentChoiceHandlerService {
 
     private final GameQueryService gameQueryService;
     private final GameHelper gameHelper;
+    private final BattlefieldEntryService battlefieldEntryService;
+    private final DeathTriggerService deathTriggerService;
+    private final CloneService cloneService;
+    private final WarpWorldService warpWorldService;
     private final GameBroadcastService gameBroadcastService;
     private final AbilityActivationService abilityActivationService;
     private final PermanentRemovalService permanentRemovalService;
@@ -82,7 +90,7 @@ public class PermanentChoiceHandlerService {
                 throw new IllegalStateException("Target creature no longer exists");
             }
 
-            gameHelper.completeCloneEntry(gameData, permanentId);
+            cloneService.completeCloneEntry(gameData, permanentId);
 
             // If no legend rule or other awaiting input pending, do SBA + auto-pass
             if (!gameData.interaction.isAwaitingInput()) {
@@ -134,9 +142,9 @@ public class PermanentChoiceHandlerService {
                 battlefield.remove(perm);
                 boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, perm.getOriginalCard(), Zone.BATTLEFIELD);
                 if (wentToGraveyard) {
-                    gameHelper.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature, perm);
+                    deathTriggerService.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature, perm);
                     if (wasCreature) {
-                        gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                        deathTriggerService.checkAllyCreatureDeathTriggers(gameData, playerId);
                     }
                 }
                 String logEntry = perm.getCard().getName() + " is put into the graveyard (legend rule).";
@@ -675,15 +683,15 @@ public class PermanentChoiceHandlerService {
                 );
 
                 if (!gameData.warpWorldOperation.pendingAuraChoices.isEmpty()) {
-                    gameHelper.beginNextPendingWarpWorldAuraChoice(gameData);
+                    warpWorldService.beginNextPendingWarpWorldAuraChoice(gameData);
                     return;
                 }
-                gameHelper.placePendingWarpWorldEnchantments(gameData);
+                warpWorldService.placePendingWarpWorldEnchantments(gameData);
                 if (!gameData.pendingLibraryBottomReorders.isEmpty()) {
-                    gameHelper.beginNextPendingLibraryBottomReorder(gameData);
+                    warpWorldService.beginNextPendingLibraryBottomReorder(gameData);
                     return;
                 }
-                gameHelper.finalizePendingWarpWorld(gameData);
+                warpWorldService.finalizePendingWarpWorld(gameData);
                 if (gameData.interaction.isAwaitingInput()) {
                     return;
                 }
@@ -691,7 +699,7 @@ public class PermanentChoiceHandlerService {
                 // Create Aura permanent attached to the chosen permanent, under controller's control
                 Permanent auraPerm = new Permanent(auraCard);
                 auraPerm.setAttachedTo(enchantTarget.getId());
-                gameHelper.putPermanentOntoBattlefield(gameData, playerId, auraPerm);
+                battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, auraPerm);
 
                 boolean hasControlEffect = auraCard.getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);

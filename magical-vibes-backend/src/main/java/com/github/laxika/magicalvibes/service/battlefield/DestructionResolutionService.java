@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -55,7 +58,10 @@ import java.util.function.Predicate;
 @RequiredArgsConstructor
 public class DestructionResolutionService {
 
+    private final BattlefieldEntryService battlefieldEntryService;
     private final GameHelper gameHelper;
+    private final DamagePreventionService damagePreventionService;
+    private final GameOutcomeService gameOutcomeService;
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
@@ -150,10 +156,10 @@ public class DestructionResolutionService {
         }
 
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
-        enterTappedTypesSnapshot.addAll(gameHelper.snapshotEnterTappedTypes(gameData));
+        enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
 
         Permanent tokenPermanent = new Permanent(tokenCard);
-        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
 
         String logEntry = "A " + destroyedCount + "/" + destroyedCount + " " + effect.tokenName()
                 + " artifact creature token enters the battlefield.";
@@ -161,7 +167,7 @@ public class DestructionResolutionService {
         log.info("Game {} - {} creates a {}/{} {} artifact creature token",
                 gameData.id, sourceName, destroyedCount, destroyedCount, effect.tokenName());
 
-        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
     }
 
     /**
@@ -318,13 +324,13 @@ public class DestructionResolutionService {
         int damage = gameQueryService.applyDamageMultiplier(gameData, baseDamage);
 
         if (gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
-                || gameHelper.applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor)) {
+                || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor)) {
             gameBroadcastService.logAndBroadcast(gameData,
                     cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
             return;
         }
 
-        int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, playerId, damage);
+        int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
         effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
 
         if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
@@ -448,7 +454,7 @@ public class DestructionResolutionService {
             }
         }
 
-        gameHelper.checkWinCondition(gameData);
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /**
@@ -483,7 +489,7 @@ public class DestructionResolutionService {
         dealNoncombatDamageToPlayer(gameData, landControllerId, effect.damage(),
                 entry.getCard().getName(), entry.getCard().getColor());
 
-        gameHelper.checkWinCondition(gameData);
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /**
@@ -519,7 +525,7 @@ public class DestructionResolutionService {
         log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName,
                 effect.poisonCounters(), entry.getCard().getName());
 
-        gameHelper.checkWinCondition(gameData);
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /**
@@ -647,7 +653,7 @@ public class DestructionResolutionService {
         if (otherCreatureIds.isEmpty()) {
             // Can't sacrifice — deal damage to controller
             dealNoncombatDamageToPlayer(gameData, controllerId, effect.damage(), cardName, entry.getCard().getColor());
-            gameHelper.checkWinCondition(gameData);
+            gameOutcomeService.checkWinCondition(gameData);
             return;
         }
 
@@ -797,10 +803,10 @@ public class DestructionResolutionService {
         }
 
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
-        enterTappedTypesSnapshot.addAll(gameHelper.snapshotEnterTappedTypes(gameData));
+        enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
 
         Permanent tokenPermanent = new Permanent(tokenCard);
-        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String colorName = token.color() != null ? token.color().name().toLowerCase() + " " : "";
@@ -810,7 +816,7 @@ public class DestructionResolutionService {
         log.info("Game {} - {} creates a {}/{} {} token for {}", gameData.id, sourceName,
                 token.power(), token.toughness(), token.tokenName(), playerName);
 
-        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
     }
 
     @HandlesEffect(SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect.class)

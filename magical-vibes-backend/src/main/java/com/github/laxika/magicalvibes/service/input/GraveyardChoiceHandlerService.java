@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -38,6 +39,7 @@ public class GraveyardChoiceHandlerService {
 
     private final GameQueryService gameQueryService;
     private final GameHelper gameHelper;
+    private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
     private final GameBroadcastService gameBroadcastService;
     private final TurnProgressionService turnProgressionService;
@@ -107,7 +109,7 @@ public class GraveyardChoiceHandlerService {
                 }
                 case BATTLEFIELD -> {
                     Permanent perm = new Permanent(card);
-                    gameHelper.putPermanentOntoBattlefield(gameData, playerId, perm);
+                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
 
                     String logEntry = player.getUsername() + " puts " + card.getName() + " from a graveyard onto the battlefield.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -127,7 +129,7 @@ public class GraveyardChoiceHandlerService {
                     }
 
                     if (card.getType() == CardType.CREATURE) {
-                        gameHelper.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
+                        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
                     }
                     if (!gameData.interaction.isAwaitingInput()) {
                         legendRuleService.checkLegendRule(gameData, playerId);

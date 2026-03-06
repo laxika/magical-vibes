@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.combat;
 
+import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -58,6 +60,8 @@ import java.util.function.Predicate;
 public class DamageResolutionService {
 
     private final GameHelper gameHelper;
+    private final DamagePreventionService damagePreventionService;
+    private final GameOutcomeService gameOutcomeService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
@@ -162,7 +166,7 @@ public class DamageResolutionService {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 dealDamageToPlayer(gameData, entry, playerId, damage);
             }
-            gameHelper.checkWinCondition(gameData);
+            gameOutcomeService.checkWinCondition(gameData);
         }
     }
 
@@ -177,7 +181,7 @@ public class DamageResolutionService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             dealDamageToPlayer(gameData, entry, playerId, damage);
         }
-        gameHelper.checkWinCondition(gameData);
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /**
@@ -203,7 +207,7 @@ public class DamageResolutionService {
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, entry.getXValue());
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
-        gameHelper.checkWinCondition(gameData);
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /**
@@ -222,7 +226,7 @@ public class DamageResolutionService {
         // Life gain is independent of damage prevention — always happens if the spell resolves
         lifeResolutionService.applyGainLife(gameData, entry.getControllerId(), xValue);
 
-        gameHelper.checkWinCondition(gameData);
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /**
@@ -238,7 +242,7 @@ public class DamageResolutionService {
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         }
 
-        gameHelper.checkWinCondition(gameData);
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /**
@@ -256,7 +260,7 @@ public class DamageResolutionService {
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         }
 
-        gameHelper.checkWinCondition(gameData);
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /**
@@ -274,7 +278,7 @@ public class DamageResolutionService {
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         }
 
-        gameHelper.checkWinCondition(gameData);
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /**
@@ -303,7 +307,7 @@ public class DamageResolutionService {
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         }
 
-        gameHelper.checkWinCondition(gameData);
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /**
@@ -317,7 +321,7 @@ public class DamageResolutionService {
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, effect.cantRegenerate());
-        gameHelper.checkWinCondition(gameData);
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /**
@@ -341,7 +345,7 @@ public class DamageResolutionService {
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power);
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
-        gameHelper.checkWinCondition(gameData);
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /**
@@ -385,7 +389,7 @@ public class DamageResolutionService {
 
         destroyAllLethal(gameData, destroyed);
 
-        gameHelper.checkWinCondition(gameData);
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /**
@@ -403,7 +407,7 @@ public class DamageResolutionService {
         // Life gain is independent of damage prevention — always happens if the spell resolves
         lifeResolutionService.applyGainLife(gameData, entry.getControllerId(), effect.lifeGain());
 
-        gameHelper.checkWinCondition(gameData);
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /**
@@ -423,7 +427,7 @@ public class DamageResolutionService {
      * and keywords are checked directly on it. When null, falls back to entry-based lookup.
      */
     private boolean dealCreatureDamage(GameData gameData, StackEntry entry, Permanent target, int rawDamage, Permanent damageSource) {
-        int damage = gameHelper.applyCreaturePreventionShield(gameData, target, rawDamage);
+        int damage = damagePreventionService.applyCreaturePreventionShield(gameData, target, rawDamage);
 
         if (damageSource != null) {
             gameHelper.recordCreatureDamagedByPermanent(gameData, damageSource.getId(), target, damage);
@@ -571,13 +575,13 @@ public class DamageResolutionService {
 
     private void dealDamageToPlayer(GameData gameData, StackEntry entry, UUID playerId, int rawDamage) {
         String cardName = entry.getCard().getName();
-        if (gameHelper.isSourceDamagePreventedForPlayer(gameData, playerId, entry.getSourcePermanentId())
+        if (damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, entry.getSourcePermanentId())
                 || isSourcePermanentPreventedFromDealingDamage(gameData, entry)) {
             gameBroadcastService.logAndBroadcast(gameData, cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
             return;
         }
-        if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, playerId, entry.getCard().getColor())) {
-            int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, playerId, rawDamage);
+        if (!damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, entry.getCard().getColor())) {
+            int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
 
             boolean sourceHasInfect = gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.INFECT);
@@ -695,7 +699,7 @@ public class DamageResolutionService {
                 }
             }
 
-            gameHelper.checkWinCondition(gameData);
+            gameOutcomeService.checkWinCondition(gameData);
         }
 
         if (effect.returnToHandIfLand() && topCard.getType() == CardType.LAND) {
@@ -719,7 +723,7 @@ public class DamageResolutionService {
             dealDamageToPlayer(gameData, entry, entry.getControllerId(), rawDamage);
         }
 
-        gameHelper.checkWinCondition(gameData);
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /**
@@ -750,7 +754,7 @@ public class DamageResolutionService {
             dealDamageToPlayer(gameData, entry, controllerId, rawDamage);
         }
 
-        gameHelper.checkWinCondition(gameData);
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /**
@@ -786,7 +790,7 @@ public class DamageResolutionService {
             }
         }
 
-        gameHelper.checkWinCondition(gameData);
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /**
@@ -849,7 +853,7 @@ public class DamageResolutionService {
         }
 
         destroyAllLethal(gameData, destroyed);
-        gameHelper.checkWinCondition(gameData);
+        gameOutcomeService.checkWinCondition(gameData);
     }
 }
 

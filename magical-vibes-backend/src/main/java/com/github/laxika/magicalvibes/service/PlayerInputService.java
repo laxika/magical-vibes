@@ -99,7 +99,7 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose up to {} permanents", gameData.id, playerName, maxCount);
     }
 
-    void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<UUID> validCardIds, List<CardView> cardViews, int maxCount, String prompt) {
+    public void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<UUID> validCardIds, List<CardView> cardViews, int maxCount, String prompt) {
         gameData.interaction.beginMultiGraveyardChoice(playerId, new HashSet<>(validCardIds), maxCount);
         sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseMultipleCardsFromGraveyardsMessage(validCardIds, cardViews, maxCount, prompt));
 
@@ -107,7 +107,7 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose up to {} cards from graveyards", gameData.id, playerName, maxCount);
     }
 
-    void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetPermanentId) {
+    public void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetPermanentId) {
         gameData.interaction.beginColorChoice(playerId, permanentId, etbTargetPermanentId, gameData.interaction.colorChoiceContext());
         List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
         sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseColorMessage(colors, "Choose a color."));

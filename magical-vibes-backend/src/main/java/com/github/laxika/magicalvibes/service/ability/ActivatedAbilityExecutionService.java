@@ -30,7 +30,9 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
+import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.DeathTriggerService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -52,6 +54,8 @@ import java.util.UUID;
 public class ActivatedAbilityExecutionService {
 
     private final GameHelper gameHelper;
+    private final DeathTriggerService deathTriggerService;
+    private final DamagePreventionService damagePreventionService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
     private final StateBasedActionService stateBasedActionService;
@@ -159,9 +163,9 @@ public class ActivatedAbilityExecutionService {
             battlefield.remove(permanent);
             boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, permanent.getCard(), Zone.BATTLEFIELD);
             if (wentToGraveyard) {
-                gameHelper.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature, permanent);
+                deathTriggerService.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature, permanent);
                 if (wasCreature) {
-                    gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                    deathTriggerService.checkAllyCreatureDeathTriggers(gameData, playerId);
                 }
             }
         }
@@ -244,10 +248,10 @@ public class ActivatedAbilityExecutionService {
                 String cardName = permanent.getCard().getName();
                 int damage = dmg.damage();
                 if (!gameQueryService.isDamageFromSourcePrevented(gameData, permanent.getEffectiveColor())
-                        && !gameHelper.isSourceDamagePreventedForPlayer(gameData, playerId, permanent.getId())
+                        && !damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, permanent.getId())
                         && !gameData.permanentsPreventedFromDealingDamage.contains(permanent.getId())
-                        && !gameHelper.applyColorDamagePreventionForPlayer(gameData, playerId, permanent.getEffectiveColor())) {
-                    int effectiveDamage = gameHelper.applyPlayerPreventionShield(gameData, playerId, damage);
+                        && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, permanent.getEffectiveColor())) {
+                    int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
                     effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
                     if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                         gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + "'s life total can't change.");

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.PlayerInteractionResolutionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
@@ -33,6 +34,7 @@ public class CardChoiceHandlerService {
 
     private final GameQueryService gameQueryService;
     private final GameHelper gameHelper;
+    private final BattlefieldEntryService battlefieldEntryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
@@ -295,7 +297,7 @@ public class CardChoiceHandlerService {
         if (target != null) {
             Permanent auraPerm = new Permanent(card);
             auraPerm.setAttachedTo(target.getId());
-            gameHelper.putPermanentOntoBattlefield(gameData, playerId, auraPerm);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, auraPerm);
 
             String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield attached to " + target.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -309,13 +311,13 @@ public class CardChoiceHandlerService {
     }
 
     private void resolveUntargetedCardChoice(GameData gameData, Player player, UUID playerId, List<Card> hand, Card card) {
-        gameHelper.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
 
         String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} puts {} onto the battlefield", gameData.id, player.getUsername(), card.getName());
 
-        gameHelper.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
+        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
     }
 
     private void checkPendingReturnToHandOnDiscard(GameData gameData, Card discardedCard) {

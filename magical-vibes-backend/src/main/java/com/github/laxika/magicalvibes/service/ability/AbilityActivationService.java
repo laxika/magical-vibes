@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.ability;
 
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.DeathTriggerService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -89,6 +90,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AbilityActivationService {
 
     private final GameHelper gameHelper;
+    private final DeathTriggerService deathTriggerService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final TargetLegalityService targetLegalityService;
@@ -208,9 +210,9 @@ public class AbilityActivationService {
         battlefield.remove(permanentIndex);
         boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, permanent.getOriginalCard(), Zone.BATTLEFIELD);
         if (wentToGraveyard) {
-            gameHelper.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature, permanent);
+            deathTriggerService.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature, permanent);
             if (wasCreature) {
-                gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                deathTriggerService.checkAllyCreatureDeathTriggers(gameData, playerId);
             }
         }
         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId);
@@ -724,8 +726,8 @@ public class AbilityActivationService {
         playerBf.remove(sacTarget);
         boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, sacTarget.getCard(), Zone.BATTLEFIELD);
         if (wentToGraveyard && gameQueryService.isCreature(gameData, sacTarget)) {
-            gameHelper.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true, sacTarget);
-            gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+            deathTriggerService.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true, sacTarget);
+            deathTriggerService.checkAllyCreatureDeathTriggers(gameData, playerId);
         }
         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId);
         String sacLog = player.getUsername() + " sacrifices " + sacTarget.getCard().getName() + ".";

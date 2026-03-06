@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.library;
 
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
@@ -75,6 +76,7 @@ import java.util.function.Predicate;
 @RequiredArgsConstructor
 public class LibraryResolutionService {
 
+    private final DrawService drawService;
     private final GameHelper gameHelper;
     private final GameBroadcastService gameBroadcastService;
     private final SessionManager sessionManager;
@@ -475,7 +477,7 @@ public class LibraryResolutionService {
             String logMsg = playerName + " searches their library but it is empty. " + playerName + " draws three cards.";
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
             for (int i = 0; i < 3; i++) {
-                gameHelper.resolveDrawCard(gameData, controllerId);
+                drawService.resolveDrawCard(gameData, controllerId);
             }
             return;
         }

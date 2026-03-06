@@ -60,7 +60,10 @@ import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamag
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.DeathTriggerService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -99,6 +102,9 @@ public class CombatService {
     );
 
     private final GameHelper gameHelper;
+    private final DeathTriggerService deathTriggerService;
+    private final DamagePreventionService damagePreventionService;
+    private final GameOutcomeService gameOutcomeService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
@@ -1110,7 +1116,7 @@ public class CombatService {
                 gameData.id, state.damageToDefendingPlayer, state.deadAttackerIndices.size() + state.deadDefenderIndices.size());
 
         // Check win condition
-        if (gameHelper.checkWinCondition(gameData)) {
+        if (gameOutcomeService.checkWinCondition(gameData)) {
             return CombatResult.DONE;
         }
 
@@ -1564,7 +1570,7 @@ public class CombatService {
                                           Permanent redirectTarget) {
         // Apply infect redirected damage to guard creature as -1/-1 counters
         if (redirectTarget != null && state.infectDamageRedirectedToGuard > 0) {
-            state.infectDamageRedirectedToGuard = gameHelper.applyCreaturePreventionShield(gameData, redirectTarget, state.infectDamageRedirectedToGuard);
+            state.infectDamageRedirectedToGuard = damagePreventionService.applyCreaturePreventionShield(gameData, redirectTarget, state.infectDamageRedirectedToGuard);
             if (state.infectDamageRedirectedToGuard > 0 && !gameQueryService.cantHaveCounters(gameData, redirectTarget)) {
                 redirectTarget.setMinusOneMinusOneCounters(redirectTarget.getMinusOneMinusOneCounters() + state.infectDamageRedirectedToGuard);
                 String redirectLog = redirectTarget.getCard().getName() + " gets " + state.infectDamageRedirectedToGuard + " -1/-1 counters from redirected infect damage.";
@@ -1574,7 +1580,7 @@ public class CombatService {
 
         // Apply redirected damage to guard creature (e.g. Kjeldoran Royal Guard)
         if (redirectTarget != null && (state.damageRedirectedToGuard > 0 || (state.infectDamageRedirectedToGuard > 0 && gameQueryService.getEffectiveToughness(gameData, redirectTarget) <= 0))) {
-            state.damageRedirectedToGuard = gameHelper.applyCreaturePreventionShield(gameData, redirectTarget, state.damageRedirectedToGuard);
+            state.damageRedirectedToGuard = damagePreventionService.applyCreaturePreventionShield(gameData, redirectTarget, state.damageRedirectedToGuard);
             if (state.damageRedirectedToGuard > 0) {
                 String redirectLog = redirectTarget.getCard().getName() + " absorbs " + state.damageRedirectedToGuard + " redirected combat damage.";
                 gameBroadcastService.logAndBroadcast(gameData, redirectLog);
@@ -1618,15 +1624,15 @@ public class CombatService {
         gameData.stolenCreatures.remove(dead.getId());
         boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, graveyardOwner, dead.getOriginalCard(), Zone.BATTLEFIELD);
         if (wentToGraveyard) {
-            gameHelper.collectDeathTrigger(gameData, dead.getCard(), controllerId, true, dead);
-            gameHelper.checkAllyCreatureDeathTriggers(gameData, controllerId);
+            deathTriggerService.collectDeathTrigger(gameData, dead.getCard(), controllerId, true, dead);
+            deathTriggerService.checkAllyCreatureDeathTriggers(gameData, controllerId);
         }
         battlefield.remove(idx);
     }
 
     private void applyPlayerDamage(GameData gameData, CombatDamageState state, UUID defenderId) {
         // Apply life loss (with prevention shield and Pariah redirect)
-        state.damageToDefendingPlayer = gameHelper.applyPlayerPreventionShield(gameData, defenderId, state.damageToDefendingPlayer);
+        state.damageToDefendingPlayer = damagePreventionService.applyPlayerPreventionShield(gameData, defenderId, state.damageToDefendingPlayer);
         state.damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, state.damageToDefendingPlayer, "combat");
         if (state.damageToDefendingPlayer > 0) {
             if (gameQueryService.canPlayerLifeChange(gameData, defenderId)) {
@@ -1642,7 +1648,7 @@ public class CombatService {
         }
 
         // Apply poison counters from infect combat damage
-        state.poisonDamageToDefendingPlayer = gameHelper.applyPlayerPreventionShield(gameData, defenderId, state.poisonDamageToDefendingPlayer);
+        state.poisonDamageToDefendingPlayer = damagePreventionService.applyPlayerPreventionShield(gameData, defenderId, state.poisonDamageToDefendingPlayer);
         if (state.poisonDamageToDefendingPlayer > 0) {
             int currentPoison = gameData.playerPoisonCounters.getOrDefault(defenderId, 0);
             gameData.playerPoisonCounters.put(defenderId, currentPoison + state.poisonDamageToDefendingPlayer);
@@ -1671,7 +1677,7 @@ public class CombatService {
         for (int idx : indices) {
             if (skipAlreadyDead && deadSet.contains(idx)) continue;
             int dmg = damageTaken.getOrDefault(idx, 0);
-            dmg = gameHelper.applyCreaturePreventionShield(gameData, battlefield.get(idx), dmg);
+            dmg = damagePreventionService.applyCreaturePreventionShield(gameData, battlefield.get(idx), dmg);
             damageTaken.put(idx, dmg);
             int effToughness = gameQueryService.getEffectiveToughness(gameData, battlefield.get(idx));
             if (effToughness <= 0) {
@@ -1714,9 +1720,9 @@ public class CombatService {
             } else {
                 state.damageRedirectedToGuard += damage;
             }
-        } else if (gameHelper.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
+        } else if (damagePreventionService.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
             // Source-specific damage prevention — skip this damage
-        } else if (!gameHelper.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getEffectiveColor())) {
+        } else if (!damagePreventionService.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getEffectiveColor())) {
             if (atkHasInfect) {
                 state.poisonDamageToDefendingPlayer += damage;
             } else {
@@ -1767,7 +1773,7 @@ public class CombatService {
                                            int targetIdx, int damage, Map<Integer, Integer> damageTakenMap,
                                            Set<Integer> deathtouchDamagedSet) {
         if (gameQueryService.hasKeyword(gameData, source, Keyword.INFECT)) {
-            int afterShield = gameHelper.applyCreaturePreventionShield(gameData, target, damage);
+            int afterShield = damagePreventionService.applyCreaturePreventionShield(gameData, target, damage);
             if (afterShield > 0 && !gameQueryService.cantHaveCounters(gameData, target)) {
                 target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() + afterShield);
             }
@@ -2173,9 +2179,9 @@ public class CombatService {
                 battlefield.remove(perm);
                 boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, perm.getOriginalCard(), Zone.BATTLEFIELD);
                 if (wentToGraveyard) {
-                    gameHelper.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature, perm);
+                    deathTriggerService.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature, perm);
                     if (wasCreature) {
-                        gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
+                        deathTriggerService.checkAllyCreatureDeathTriggers(gameData, playerId);
                     }
                 }
                 String logEntry = perm.getCard().getName() + " is sacrificed.";

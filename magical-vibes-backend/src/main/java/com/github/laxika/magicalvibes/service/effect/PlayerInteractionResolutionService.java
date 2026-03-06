@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -63,6 +64,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @RequiredArgsConstructor
 public class PlayerInteractionResolutionService {
 
+    private final DrawService drawService;
     private final GameHelper gameHelper;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
@@ -95,7 +97,7 @@ public class PlayerInteractionResolutionService {
         String cardName = entry.getCard().getName();
 
         for (int i = 0; i < amount; i++) {
-            gameHelper.resolveDrawCard(gameData, targetPlayerId);
+            drawService.resolveDrawCard(gameData, targetPlayerId);
         }
 
         String logEntry = playerName + " draws " + amount + " card" + (amount != 1 ? "s" : "")
@@ -135,7 +137,7 @@ public class PlayerInteractionResolutionService {
 
             // Draw that many cards
             for (int i = 0; i < handSize; i++) {
-                gameHelper.resolveDrawCard(gameData, playerId);
+                drawService.resolveDrawCard(gameData, playerId);
             }
 
             gameBroadcastService.logAndBroadcast(gameData,
@@ -158,7 +160,7 @@ public class PlayerInteractionResolutionService {
         }
 
         for (int i = 0; i < count; i++) {
-            gameHelper.resolveDrawCard(gameData, controllerId);
+            drawService.resolveDrawCard(gameData, controllerId);
         }
 
         String logEntry = playerName + " draws " + count + " card" + (count != 1 ? "s" : "") + " from " + entry.getCard().getName() + ".";
@@ -381,7 +383,7 @@ public class PlayerInteractionResolutionService {
 
     private void applyDrawCards(GameData gameData, UUID playerId, int amount) {
         for (int i = 0; i < amount; i++) {
-            gameHelper.resolveDrawCard(gameData, playerId);
+            drawService.resolveDrawCard(gameData, playerId);
         }
     }
 
@@ -585,7 +587,7 @@ public class PlayerInteractionResolutionService {
         }
 
         for (int i = 0; i < count; i++) {
-            gameHelper.resolveDrawCard(gameData, controllerId);
+            drawService.resolveDrawCard(gameData, controllerId);
         }
 
         if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
@@ -642,7 +644,7 @@ public class PlayerInteractionResolutionService {
 
         UUID targetPlayerId = entry.getTargetPermanentId();
         for (int i = 0; i < effect.amount(); i++) {
-            gameHelper.resolveDrawCard(gameData, targetPlayerId);
+            drawService.resolveDrawCard(gameData, targetPlayerId);
         }
     }
 

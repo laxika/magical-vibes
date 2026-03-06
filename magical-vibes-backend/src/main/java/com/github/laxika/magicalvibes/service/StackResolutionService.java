@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
@@ -31,6 +33,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class StackResolutionService {
 
+    private final BattlefieldEntryService battlefieldEntryService;
+    private final CloneService cloneService;
     private final GameHelper gameHelper;
     private final LegendRuleService legendRuleService;
     private final StateBasedActionService stateBasedActionService;
@@ -92,14 +96,14 @@ public class StackResolutionService {
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
 
-        if (gameHelper.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetPermanentId())) {
+        if (cloneService.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetPermanentId())) {
             return;
         }
 
-        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(card));
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(card));
         logEnterBattlefield(gameData, card, controllerId);
 
-        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId(), true, entry.getXValue());
+        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId(), true, entry.getXValue());
         checkLegendRuleIfIdle(gameData, controllerId);
     }
 
@@ -119,7 +123,7 @@ public class StackResolutionService {
             } else {
                 Permanent perm = new Permanent(card);
                 perm.setAttachedTo(entry.getTargetPermanentId());
-                gameHelper.putPermanentOntoBattlefield(gameData, controllerId, perm);
+                battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
                 String playerName = gameData.playerIdToName.get(controllerId);
                 String logEntry = card.getName() + " enters the battlefield attached to " + target.getCard().getName() + " under " + playerName + "'s control.";
@@ -135,11 +139,11 @@ public class StackResolutionService {
 
                 // Process aura ETB effects (e.g., Volition Reins)
                 if (!gameData.interaction.isAwaitingInput()) {
-                    gameHelper.processCreatureETBEffects(gameData, controllerId, card, entry.getTargetPermanentId(), true);
+                    battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, entry.getTargetPermanentId(), true);
                 }
             }
         } else {
-            gameHelper.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(card));
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(card));
             logEnterBattlefield(gameData, card, controllerId);
 
             // Check if enchantment has "as enters" color choice
@@ -153,7 +157,7 @@ public class StackResolutionService {
 
             // Process general ETB effects (e.g., token creation for Kindred Enchantments)
             if (!gameData.interaction.isAwaitingInput()) {
-                gameHelper.processCreatureETBEffects(gameData, controllerId, card, null, true);
+                battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, null, true);
             }
 
             checkLegendRuleIfIdle(gameData, controllerId);
@@ -164,7 +168,7 @@ public class StackResolutionService {
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
 
-        if (gameHelper.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetPermanentId())) {
+        if (cloneService.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetPermanentId())) {
             return;
         }
 
@@ -200,7 +204,7 @@ public class StackResolutionService {
             perm.setChargeCounters(fixedChargeCounters);
         }
 
-        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, perm);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         if (hasXChargeCounterEffect && entry.getXValue() > 0) {
@@ -217,7 +221,7 @@ public class StackResolutionService {
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
 
         // Process ETB effects for all artifacts (creature and non-creature)
-        gameHelper.handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId(), true, entry.getXValue());
+        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId(), true, entry.getXValue());
 
         checkLegendRuleIfIdle(gameData, controllerId);
     }
@@ -229,7 +233,7 @@ public class StackResolutionService {
         Permanent perm = new Permanent(card);
         perm.setLoyaltyCounters(card.getLoyalty() != null ? card.getLoyalty() : 0);
         perm.setSummoningSick(false);
-        gameHelper.putPermanentOntoBattlefield(gameData, controllerId, perm);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = card.getName() + " enters the battlefield with " + perm.getLoyaltyCounters() + " loyalty under " + playerName + "'s control.";

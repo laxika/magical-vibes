@@ -21,6 +21,8 @@ import java.util.UUID;
 public class StateBasedActionService {
 
     private final GameHelper gameHelper;
+    private final DeathTriggerService deathTriggerService;
+    private final GameOutcomeService gameOutcomeService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
@@ -39,13 +41,13 @@ public class StateBasedActionService {
                     gameData.stolenCreatures.remove(p.getId());
                     boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, graveyardOwnerId, p.getOriginalCard(), Zone.BATTLEFIELD);
                     if (wentToGraveyard) {
-                        gameHelper.collectDeathTrigger(gameData, p.getCard(), playerId, true, p);
+                        deathTriggerService.collectDeathTrigger(gameData, p.getCard(), playerId, true, p);
                         gameData.creatureDeathCountThisTurn.merge(playerId, 1, Integer::sum);
-                        gameHelper.checkAllyCreatureDeathTriggers(gameData, playerId);
-                        gameHelper.checkAnyNontokenCreatureDeathTriggers(gameData, p.getCard());
-                        gameHelper.checkOpponentCreatureDeathTriggers(gameData, playerId);
-                        gameHelper.checkEquippedCreatureDeathTriggers(gameData, p.getId(), playerId);
-                        gameHelper.triggerDelayedPoisonOnDeath(gameData, p.getCard().getId(), playerId);
+                        deathTriggerService.checkAllyCreatureDeathTriggers(gameData, playerId);
+                        deathTriggerService.checkAnyNontokenCreatureDeathTriggers(gameData, p.getCard());
+                        deathTriggerService.checkOpponentCreatureDeathTriggers(gameData, playerId);
+                        deathTriggerService.checkEquippedCreatureDeathTriggers(gameData, p.getId(), playerId);
+                        deathTriggerService.triggerDelayedPoisonOnDeath(gameData, p.getCard().getId(), playerId);
                     }
                     String logEntry = p.getCard().getName() + " is put into the graveyard (0 toughness).";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -69,7 +71,7 @@ public class StateBasedActionService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             int poison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
             if (poison >= 10) {
-                gameHelper.checkWinCondition(gameData);
+                gameOutcomeService.checkWinCondition(gameData);
                 if (gameData.status == GameStatus.FINISHED) {
                     return;
                 }
@@ -95,7 +97,7 @@ public class StateBasedActionService {
                     String logEntry = gameData.playerIdToName.get(playerId) + " attempted to draw from an empty library and loses the game.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} loses (drew from empty library)", gameData.id, gameData.playerIdToName.get(playerId));
-                    gameHelper.declareWinner(gameData, winnerId);
+                    gameOutcomeService.declareWinner(gameData, winnerId);
                 }
             }
             gameData.playersAttemptedDrawFromEmptyLibrary.clear();
