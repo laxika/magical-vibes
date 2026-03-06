@@ -148,7 +148,7 @@ class BurdenedStonebackTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bearsId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("No counters");
+                .hasMessageContaining("Not enough counters");
     }
 
     // ===== Sorcery speed restriction =====

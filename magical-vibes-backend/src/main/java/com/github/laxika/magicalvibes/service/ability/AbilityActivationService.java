@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -466,11 +467,20 @@ public class AbilityActivationService {
         }
 
         // Validate and pay remove-counter cost
-        boolean hasRemoveCounterCost = abilityEffects.stream().anyMatch(e -> e instanceof RemoveCounterFromSourceCost);
-        if (hasRemoveCounterCost) {
-            int totalCounters = permanent.getPlusOnePlusOneCounters() + permanent.getMinusOneMinusOneCounters();
-            if (totalCounters <= 0) {
-                throw new IllegalStateException("No counters to remove");
+        Optional<RemoveCounterFromSourceCost> removeCounterCost = abilityEffects.stream()
+                .filter(e -> e instanceof RemoveCounterFromSourceCost)
+                .map(e -> (RemoveCounterFromSourceCost) e)
+                .findFirst();
+        if (removeCounterCost.isPresent()) {
+            int required = removeCounterCost.get().count();
+            CounterType ct = removeCounterCost.get().counterType();
+            int available = switch (ct) {
+                case MINUS_ONE_MINUS_ONE -> permanent.getMinusOneMinusOneCounters();
+                case PLUS_ONE_PLUS_ONE -> permanent.getPlusOnePlusOneCounters();
+                case ANY -> permanent.getPlusOnePlusOneCounters() + permanent.getMinusOneMinusOneCounters();
+            };
+            if (available < required) {
+                throw new IllegalStateException("Not enough counters to remove (need " + required + ", have " + available + ")");
             }
         }
 
@@ -519,17 +529,35 @@ public class AbilityActivationService {
             payGraveyardExileCost(gameData, player, exileGraveyardCost.requiredType(), exileGraveyardCardIndex);
         }
 
-        // Pay remove-counter cost: remove one counter (prefer -1/-1, then +1/+1)
-        if (hasRemoveCounterCost) {
-            if (permanent.getMinusOneMinusOneCounters() > 0) {
-                permanent.setMinusOneMinusOneCounters(permanent.getMinusOneMinusOneCounters() - 1);
-                String counterLog = player.getUsername() + " removes a -1/-1 counter from " + permanent.getCard().getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, counterLog);
-            } else if (permanent.getPlusOnePlusOneCounters() > 0) {
-                permanent.setPlusOnePlusOneCounters(permanent.getPlusOnePlusOneCounters() - 1);
-                String counterLog = player.getUsername() + " removes a +1/+1 counter from " + permanent.getCard().getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, counterLog);
+        // Pay remove-counter cost: remove counters respecting counter type
+        if (removeCounterCost.isPresent()) {
+            int count = removeCounterCost.get().count();
+            CounterType ct = removeCounterCost.get().counterType();
+            int removedMinus = 0;
+            int removedPlus = 0;
+            switch (ct) {
+                case MINUS_ONE_MINUS_ONE -> {
+                    removedMinus = count;
+                    permanent.setMinusOneMinusOneCounters(permanent.getMinusOneMinusOneCounters() - count);
+                }
+                case PLUS_ONE_PLUS_ONE -> {
+                    removedPlus = count;
+                    permanent.setPlusOnePlusOneCounters(permanent.getPlusOnePlusOneCounters() - count);
+                }
+                case ANY -> {
+                    removedMinus = Math.min(count, permanent.getMinusOneMinusOneCounters());
+                    permanent.setMinusOneMinusOneCounters(permanent.getMinusOneMinusOneCounters() - removedMinus);
+                    int remaining = count - removedMinus;
+                    if (remaining > 0) {
+                        removedPlus = remaining;
+                        permanent.setPlusOnePlusOneCounters(permanent.getPlusOnePlusOneCounters() - remaining);
+                    }
+                }
             }
+            String counterTypeLabel = removedMinus > 0 && removedPlus == 0 ? "-1/-1" : (removedPlus > 0 && removedMinus == 0 ? "+1/+1" : "");
+            String counterWord = count == 1 ? "a " + counterTypeLabel + " counter" : count + " " + counterTypeLabel + " counters";
+            String counterLog = player.getUsername() + " removes " + counterWord + " from " + permanent.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, counterLog);
         }
 
         // Pay remove-charge-counter cost

@@ -8,9 +8,18 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param requireSourceUntapped  if true, the source permanent (via sourcePermanentId)
  *                               must still be untapped at resolution time (intervening-if)
  */
-public record DrawCardForTargetPlayerEffect(int amount, boolean requireSourceUntapped) implements CardEffect {
+public record DrawCardForTargetPlayerEffect(int amount, boolean requireSourceUntapped, boolean targetsPlayer) implements CardEffect {
 
     public DrawCardForTargetPlayerEffect(int amount) {
-        this(amount, false);
+        this(amount, false, false);
+    }
+
+    public DrawCardForTargetPlayerEffect(int amount, boolean requireSourceUntapped) {
+        this(amount, requireSourceUntapped, false);
+    }
+
+    @Override
+    public boolean canTargetPlayer() {
+        return targetsPlayer;
     }
 }

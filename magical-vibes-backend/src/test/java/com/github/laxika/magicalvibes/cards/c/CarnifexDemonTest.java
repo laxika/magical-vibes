@@ -176,7 +176,7 @@ class CarnifexDemonTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("No counters");
+                .hasMessageContaining("Not enough counters");
     }
 
     // ===== No timing restriction (instant speed) =====

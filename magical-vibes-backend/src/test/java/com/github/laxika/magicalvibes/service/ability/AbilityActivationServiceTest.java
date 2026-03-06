@@ -764,7 +764,7 @@ class AbilityActivationServiceTest extends BaseCardTest {
             int idx = gd.playerBattlefields.get(player1.getId()).indexOf(perm);
             assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("No counters to remove");
+                    .hasMessageContaining("Not enough counters to remove");
         }
 
         @Test

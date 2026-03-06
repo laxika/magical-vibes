@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachOtherCreatureEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
 import java.util.List;
@@ -20,7 +21,7 @@ public class CarnifexDemon extends Card {
                 false,
                 "{B}",
                 List.of(
-                        new RemoveCounterFromSourceCost(),
+                        new RemoveCounterFromSourceCost(1, CounterType.MINUS_ONE_MINUS_ONE),
                         new PutMinusOneMinusOneCounterOnEachOtherCreatureEffect()
                 ),
                 "{B}, Remove a -1/-1 counter from Carnifex Demon: Put a -1/-1 counter on each other creature."

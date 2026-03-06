@@ -144,7 +144,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `SacrificeMultiplePermanentsCost` | `(int count, PermanentPredicate filter)` | sacrifice N permanents matching filter as cost (e.g. "Sacrifice three artifacts: ..." with `PermanentIsArtifactPredicate`). Multi-step UI: if exactly N match, auto-sacrifices all; otherwise prompts one-at-a-time. Validated and paid in `AbilityActivationService` |
 | `SacrificeAllCreaturesYouControlCost` | `()` | sacrifice all creatures you control as cost |
 | `DiscardCardTypeCost` | `(CardType requiredType)` | discard a card of specific type as cost |
-| `RemoveCounterFromSourceCost` | `()` | remove a counter from this permanent as cost (prefers -1/-1, then +1/+1) |
+| `RemoveCounterFromSourceCost` | `(int count, CounterType counterType)` | remove N counters of the specified type from this permanent as cost. `CounterType.MINUS_ONE_MINUS_ONE` for "-1/-1 counters", `PLUS_ONE_PLUS_ONE` for "+1/+1 counters", `ANY` to prefer -1/-1 then +1/+1. Compact: `()` defaults to `(1, ANY)`, `(int count)` defaults to `(count, ANY)` |
 | `RemoveChargeCountersFromSourceCost` | `(int count)` | remove N charge counters from source as cost (e.g. "Remove three charge counters: ..."). Validated and paid in `AbilityActivationService` |
 | `TapCreatureCost` | `(PermanentPredicate predicate)` | tap an untapped creature matching predicate you control as cost. Auto-selects if only one valid target; presents permanent choice if multiple. The creature can be summoning sick (no tap symbol in cost). E.g. `new TapCreatureCost(new PermanentColorInPredicate(Set.of(CardColor.BLUE)))` for "tap an untapped blue creature" |
 | `TapMultiplePermanentsCost` | `(int count, PermanentPredicate filter)` | tap N untapped permanents matching filter as cost. Auto-selects if exactly N valid; presents permanent choice one at a time if more. E.g. `new TapMultiplePermanentsCost(5, new PermanentHasSubtypePredicate(CardSubtype.MYR))` for "tap five untapped Myr you control" |
@@ -284,7 +284,7 @@ Pass `null` as filter to allow any card.
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `DrawCardEffect` | `(int amount)` | draw N cards |
-| `DrawCardForTargetPlayerEffect` | `(int amount, boolean requireSourceUntapped)` | target player draws N cards; optionally requires source untapped |
+| `DrawCardForTargetPlayerEffect` | `(int amount, boolean requireSourceUntapped, boolean targetsPlayer)` | target player draws N cards; optionally requires source untapped; when `targetsPlayer=true`, auto-derives player targeting for activated abilities. Compact: `(int amount)` defaults to `(amount, false, false)` |
 | `DrawXCardsForTargetPlayerEffect` | `()` | target player draws X cards (reads X from stack entry xValue; targets player) |
 | `DrawCardsEqualToChargeCountersOnSourceEffect` | `()` | draw cards equal to charge counters on source (reads snapshotted count from xValue) |
 | `DrawAndLoseLifePerSubtypeEffect` | `(CardSubtype subtype)` | draw cards and lose life for each permanent of subtype you control |
