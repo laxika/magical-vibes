@@ -238,6 +238,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Enchanted land mana | `o/Overgrowth.java` | ON_ANY_PLAYER_TAPS_LAND AddManaOnEnchantedLandTapEffect |
 | Enchanted land becomes basic type | `e/EvilPresence.java` | STATIC EnchantedPermanentBecomesTypeEffect(SWAMP) — land loses all land types/abilities, becomes the new basic land type |
 | Aura + self-bounce ability | `s/ShimmeringWings.java` | STATIC keyword + activated ReturnSelfToHandEffect |
+| Grant keyword + upkeep counter + death return | `g/GlisteningOil.java` | STATIC GrantKeywordEffect(INFECT, ENCHANTED_CREATURE) + UPKEEP_TRIGGERED PutMinusOneMinusOneCounterOnEnchantedCreatureEffect + ON_DEATH ReturnCardFromGraveyardEffect(HAND, CardIsSelfPredicate) |
 
 ## Artifacts
 

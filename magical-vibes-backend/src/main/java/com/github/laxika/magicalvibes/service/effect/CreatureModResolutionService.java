@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachAttackingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachOtherCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutXMinusOneMinusOneCountersOnEachCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
@@ -1134,6 +1135,28 @@ public class CreatureModResolutionService {
                 log.info("Game {} - {} has toughness {}, no regeneration shield", gameData.id, target.getCard().getName(), effectiveToughness);
             }
         }
+    }
+
+    @HandlesEffect(PutMinusOneMinusOneCounterOnEnchantedCreatureEffect.class)
+    private void resolvePutMinusOneMinusOneCounterOnEnchantedCreature(GameData gameData, StackEntry entry,
+                                                                      PutMinusOneMinusOneCounterOnEnchantedCreatureEffect effect) {
+        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (aura == null || aura.getAttachedTo() == null) return;
+
+        Permanent creature = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        if (creature == null) return;
+
+        if (gameQueryService.cantHaveCounters(gameData, creature)) {
+            return;
+        }
+
+        int count = effect.count();
+        creature.setMinusOneMinusOneCounters(creature.getMinusOneMinusOneCounters() + count);
+
+        String counterText = count == 1 ? "a -1/-1 counter" : count + " -1/-1 counters";
+        String logEntry = creature.getCard().getName() + " gets " + counterText + " from " + entry.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} gets {} -1/-1 counter(s) from {}", gameData.id, creature.getCard().getName(), count, entry.getCard().getName());
     }
 
     @HandlesEffect(GrantColorUntilEndOfTurnEffect.class)
