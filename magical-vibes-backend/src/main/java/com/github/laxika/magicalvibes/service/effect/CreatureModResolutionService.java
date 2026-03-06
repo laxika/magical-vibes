@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersFromTargetAndBoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachAttackingCreatureEffect;
@@ -1032,6 +1033,72 @@ public class CreatureModResolutionService {
             String logEntry = toRemove + " charge counter(s) removed from " + target.getCard().getName() + " (" + target.getChargeCounters() + " remaining).";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} charge counter(s) removed from {} ({} remaining)", gameData.id, toRemove, target.getCard().getName(), target.getChargeCounters());
+        }
+    }
+
+    @HandlesEffect(RemoveCountersFromTargetAndBoostSelfEffect.class)
+    private void resolveRemoveCountersFromTargetAndBoostSelf(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        int maxToRemove = entry.getXValue();
+        int totalRemoved = 0;
+
+        // Remove counters from all counter types, up to X total
+        // Order: +1/+1, charge, loyalty, -1/-1, awakening
+        int remaining = maxToRemove;
+
+        if (remaining > 0 && target.getPlusOnePlusOneCounters() > 0) {
+            int remove = Math.min(remaining, target.getPlusOnePlusOneCounters());
+            target.setPlusOnePlusOneCounters(target.getPlusOnePlusOneCounters() - remove);
+            totalRemoved += remove;
+            remaining -= remove;
+        }
+
+        if (remaining > 0 && target.getChargeCounters() > 0) {
+            int remove = Math.min(remaining, target.getChargeCounters());
+            target.setChargeCounters(target.getChargeCounters() - remove);
+            totalRemoved += remove;
+            remaining -= remove;
+        }
+
+        if (remaining > 0 && target.getLoyaltyCounters() > 0) {
+            int remove = Math.min(remaining, target.getLoyaltyCounters());
+            target.setLoyaltyCounters(target.getLoyaltyCounters() - remove);
+            totalRemoved += remove;
+            remaining -= remove;
+        }
+
+        if (remaining > 0 && target.getMinusOneMinusOneCounters() > 0) {
+            int remove = Math.min(remaining, target.getMinusOneMinusOneCounters());
+            target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() - remove);
+            totalRemoved += remove;
+            remaining -= remove;
+        }
+
+        if (remaining > 0 && target.getAwakeningCounters() > 0) {
+            int remove = Math.min(remaining, target.getAwakeningCounters());
+            target.setAwakeningCounters(target.getAwakeningCounters() - remove);
+            totalRemoved += remove;
+        }
+
+        if (totalRemoved > 0) {
+            String logEntry = totalRemoved + " counter(s) removed from " + target.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} counter(s) removed from {}", gameData.id, totalRemoved, target.getCard().getName());
+        }
+
+        // Boost source creature +1/+0 per counter removed
+        if (totalRemoved > 0) {
+            Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source != null) {
+                source.setPowerModifier(source.getPowerModifier() + totalRemoved);
+                String boostLog = source.getCard().getName() + " gets +" + totalRemoved + "/+0 until end of turn.";
+                gameBroadcastService.logAndBroadcast(gameData, boostLog);
+                log.info("Game {} - {} gets +{}/+0", gameData.id, source.getCard().getName(), totalRemoved);
+            }
         }
     }
 
