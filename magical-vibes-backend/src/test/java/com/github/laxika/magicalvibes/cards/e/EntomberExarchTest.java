@@ -51,7 +51,7 @@ class EntomberExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             // Player should be prompted to choose a graveyard card
-            harness.handleCardChosen(player1, 0);
+            harness.handleGraveyardCardChosen(player1, 0);
 
             assertThat(gd.playerHands.get(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -72,7 +72,7 @@ class EntomberExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             // Only creature (index 1) should be valid, instant (index 0) should not
-            assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactly(1);
+            assertThat(gd.interaction.graveyardChoiceContext().validIndices()).containsExactly(1);
         }
 
         @Test

@@ -91,7 +91,7 @@ class CondemnTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a creature");
+                .hasMessageContaining("Invalid target permanent");
     }
 
     // ===== Resolving =====

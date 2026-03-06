@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.m.MahamotiDjinn;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -40,11 +40,11 @@ class DismemberTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Dismember puts it on stack with target creature")
     void castingPutsItOnStack() {
-        harness.addToBattlefield(player1, new AirElemental());
+        harness.addToBattlefield(player1, new MahamotiDjinn());
         harness.setHand(player1, List.of(new Dismember()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        UUID targetId = harness.getPermanentId(player1, "Air Elemental");
+        UUID targetId = harness.getPermanentId(player1, "Mahamoti Djinn");
         harness.castInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
@@ -58,19 +58,19 @@ class DismemberTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Dismember gives -5/-5 to target creature")
     void resolvesAndDebuffsTarget() {
-        harness.addToBattlefield(player1, new AirElemental());
+        harness.addToBattlefield(player1, new MahamotiDjinn());
         harness.setHand(player1, List.of(new Dismember()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        UUID targetId = harness.getPermanentId(player1, "Air Elemental");
+        UUID targetId = harness.getPermanentId(player1, "Mahamoti Djinn");
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        Permanent elemental = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(elemental.getPowerModifier()).isEqualTo(-5);
-        assertThat(elemental.getToughnessModifier()).isEqualTo(-5);
-        assertThat(elemental.getEffectivePower()).isEqualTo(-1);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(-1);
+        Permanent djinn = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(djinn.getPowerModifier()).isEqualTo(-5);
+        assertThat(djinn.getToughnessModifier()).isEqualTo(-5);
+        assertThat(djinn.getEffectivePower()).isEqualTo(0);
+        assertThat(djinn.getEffectiveToughness()).isEqualTo(1);
     }
 
     @Test
@@ -92,11 +92,11 @@ class DismemberTest extends BaseCardTest {
     @Test
     @DisplayName("Debuff from Dismember wears off at cleanup step")
     void debuffWearsOffAtCleanup() {
-        harness.addToBattlefield(player1, new AirElemental());
+        harness.addToBattlefield(player1, new MahamotiDjinn());
         harness.setHand(player1, List.of(new Dismember()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        UUID targetId = harness.getPermanentId(player1, "Air Elemental");
+        UUID targetId = harness.getPermanentId(player1, "Mahamoti Djinn");
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
@@ -104,11 +104,11 @@ class DismemberTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent elemental = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(elemental.getPowerModifier()).isEqualTo(0);
-        assertThat(elemental.getToughnessModifier()).isEqualTo(0);
-        assertThat(elemental.getEffectivePower()).isEqualTo(4);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(4);
+        Permanent djinn = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(djinn.getPowerModifier()).isEqualTo(0);
+        assertThat(djinn.getToughnessModifier()).isEqualTo(0);
+        assertThat(djinn.getEffectivePower()).isEqualTo(5);
+        assertThat(djinn.getEffectiveToughness()).isEqualTo(6);
     }
 
     @Test

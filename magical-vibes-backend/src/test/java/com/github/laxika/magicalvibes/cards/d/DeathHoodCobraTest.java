@@ -234,7 +234,7 @@ class DeathHoodCobraTest extends BaseCardTest {
 
         cobra.setAttacking(true);
         blocker.setBlocking(true);
-        blocker.addBlockingTargetPermanentId(cobra.getId());
+        blocker.addBlockingTarget(0);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
