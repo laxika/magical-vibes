@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrainLifePerControlledPermanentEffect;
@@ -563,6 +565,23 @@ public class LifeResolutionService {
 
         log.info("Game {} - Delayed trigger registered: if {} dies this turn, its controller gets {} poison counter(s)",
                 gameData.id, target.getCard().getName(), effect.amount());
+    }
+
+    @HandlesEffect(AwardRestrictedManaEffect.class)
+    private void resolveAwardRestrictedMana(GameData gameData, StackEntry entry, AwardRestrictedManaEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        ManaPool pool = gameData.playerManaPools.get(controllerId);
+        if (effect.color() == ManaColor.RED) {
+            pool.addRestrictedRed(effect.amount());
+        } else {
+            pool.add(effect.color(), effect.amount());
+        }
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String logEntry = playerName + " adds " + effect.amount() + " " + effect.color().getCode()
+                + " (" + effect.allowedSpellTypes() + " spells only).";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} adds {} {} (restricted to {})", gameData.id, playerName, effect.amount(), effect.color(), effect.allowedSpellTypes());
     }
 
     @HandlesEffect(AwardManaEffect.class)

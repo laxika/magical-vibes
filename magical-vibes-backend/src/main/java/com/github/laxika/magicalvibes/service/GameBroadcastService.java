@@ -267,7 +267,9 @@ public class GameBroadcastService {
                     boolean isArtifact = card.getType() == CardType.ARTIFACT
                             || card.getAdditionalTypes().contains(CardType.ARTIFACT);
                     boolean isMyr = card.getSubtypes().contains(CardSubtype.MYR);
-                    if ((isArtifact || isMyr) ? cost.canPay(pool, additionalCost, isArtifact, isMyr) : cost.canPay(pool, additionalCost)) {
+                    boolean hasRestrictedRedContext = isArtifact
+                            || card.getType() == CardType.CREATURE;
+                    if ((isArtifact || isMyr || hasRestrictedRedContext) ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext) : cost.canPay(pool, additionalCost)) {
                         playable.add(i);
                     } else if (card.getKeywords().contains(Keyword.CONVOKE)) {
                         // Check if castable with convoke: mana pool + untapped creatures >= total cost

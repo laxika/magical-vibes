@@ -143,8 +143,18 @@ public class ManaCost {
     }
 
     public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext) {
+        return canPay(pool, xValue, artifactContext, myrContext, false);
+    }
+
+    public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext) {
+        int extraRed = restrictedRedContext ? pool.getRestrictedRed() : 0;
+
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
-            if (pool.get(entry.getKey()) < entry.getValue()) {
+            int available = pool.get(entry.getKey());
+            if (entry.getKey() == ManaColor.RED) {
+                available += extraRed;
+            }
+            if (available < entry.getValue()) {
                 return false;
             }
         }
@@ -159,6 +169,12 @@ public class ManaCost {
         }
         if (myrContext) {
             remaining += pool.getMyrOnlyColorless();
+        }
+        if (restrictedRedContext) {
+            int redNeeded = coloredCosts.getOrDefault(ManaColor.RED, 0);
+            int regularRed = pool.get(ManaColor.RED);
+            int restrictedRedUsedForColored = Math.max(0, redNeeded - regularRed);
+            remaining += extraRed - restrictedRedUsedForColored;
         }
 
         return remaining >= genericCost + xValue;
@@ -252,9 +268,21 @@ public class ManaCost {
     }
 
     public void pay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext) {
+        pay(pool, xValue, artifactContext, myrContext, false);
+    }
+
+    public void pay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext) {
+        int extraRed = restrictedRedContext ? pool.getRestrictedRed() : 0;
+
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
-                pool.remove(entry.getKey());
+                if (restrictedRedContext && entry.getKey() == ManaColor.RED && extraRed > 0) {
+                    // Prefer spending restricted mana first (more restricted = use first)
+                    pool.removeRestrictedRed(1);
+                    extraRed--;
+                } else {
+                    pool.remove(entry.getKey());
+                }
             }
         }
 
@@ -271,6 +299,13 @@ public class ManaCost {
         if (artifactContext && remainingGeneric > 0) {
             int fromRestricted = Math.min(remainingGeneric, pool.getArtifactOnlyColorless());
             pool.removeArtifactOnlyColorless(fromRestricted);
+            remainingGeneric -= fromRestricted;
+        }
+
+        // Spend creature-or-artifact-only red for generic costs
+        if (restrictedRedContext && remainingGeneric > 0) {
+            int fromRestricted = Math.min(remainingGeneric, extraRed);
+            pool.removeRestrictedRed(fromRestricted);
             remainingGeneric -= fromRestricted;
         }
 
