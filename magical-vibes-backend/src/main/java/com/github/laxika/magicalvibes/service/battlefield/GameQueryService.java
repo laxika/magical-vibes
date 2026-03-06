@@ -195,6 +195,13 @@ public class GameQueryService {
         return findInBattlefields(gameData, permanentId, (playerId, p) -> playerId);
     }
 
+    public void setImprintedCardOnPermanent(GameData gameData, UUID sourcePermanentId, Card card) {
+        Permanent perm = findPermanentById(gameData, sourcePermanentId);
+        if (perm != null) {
+            perm.getCard().setImprintedCard(card);
+        }
+    }
+
     /**
      * Finds a card in any player's graveyard by its unique ID.
      *

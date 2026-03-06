@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMess
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -46,7 +46,7 @@ public class LibraryChoiceHandlerService {
 
     private final SessionManager sessionManager;
     private final GameQueryService gameQueryService;
-    private final GameHelper gameHelper;
+    private final GraveyardService graveyardService;
     private final WarpWorldService warpWorldService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
@@ -233,7 +233,7 @@ public class LibraryChoiceHandlerService {
                     gameData.playerExiledCards.get(playerId).add(chosenCard);
                     UUID sourcePermanentId = gameData.imprintSourcePermanentId;
                     if (sourcePermanentId != null) {
-                        gameHelper.setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
+                        gameQueryService.setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
                         gameData.imprintSourcePermanentId = null;
                     }
                 } else if (toBattlefield) {
@@ -404,7 +404,7 @@ public class LibraryChoiceHandlerService {
             gameData.playerExiledCards.get(playerId).add(chosenCard);
             UUID sourcePermanentId = gameData.imprintSourcePermanentId;
             if (sourcePermanentId != null) {
-                gameHelper.setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
+                gameQueryService.setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
                 gameData.imprintSourcePermanentId = null;
             }
         } else {
@@ -563,7 +563,7 @@ public class LibraryChoiceHandlerService {
         // Handle remaining cards based on destination
         if (libraryRevealChoice.remainingToGraveyard()) {
             for (Card card : remainingCards) {
-                gameHelper.addCardToGraveyard(gameData, controllerId, card);
+                graveyardService.addCardToGraveyard(gameData, controllerId, card);
             }
 
             if (selectedCards.isEmpty()) {

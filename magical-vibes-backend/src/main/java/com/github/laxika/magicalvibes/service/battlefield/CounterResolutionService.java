@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -29,7 +29,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CounterResolutionService {
 
-    private final GameHelper gameHelper;
+    private final GraveyardService graveyardService;
     private final GameBroadcastService gameBroadcastService;
     private final GameQueryService gameQueryService;
 
@@ -131,7 +131,7 @@ public class CounterResolutionService {
 
         // Copies cease to exist per rule 707.10a — skip graveyard
         if (!target.isCopy()) {
-            gameHelper.addCardToGraveyard(gameData, target.getControllerId(), target.getCard());
+            graveyardService.addCardToGraveyard(gameData, target.getControllerId(), target.getCard());
         }
 
         String logMsg = target.getCard().getName() + " is countered.";

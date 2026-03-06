@@ -36,7 +36,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSou
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -57,7 +56,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PermanentControlResolutionService {
 
-    private final GameHelper gameHelper;
     private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
     private final GameQueryService gameQueryService;

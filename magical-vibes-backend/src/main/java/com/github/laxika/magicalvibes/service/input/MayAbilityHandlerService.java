@@ -63,7 +63,7 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -89,7 +89,7 @@ public class MayAbilityHandlerService {
 
     private final DrawService drawService;
     private final GameQueryService gameQueryService;
-    private final GameHelper gameHelper;
+    private final GraveyardService graveyardService;
     private final CloneService cloneService;
     private final StateBasedActionService stateBasedActionService;
     private final GameBroadcastService gameBroadcastService;
@@ -627,14 +627,14 @@ public class MayAbilityHandlerService {
                 log.info("Game {} - {} pays {} to avoid counter", gameData.id, player.getUsername(), amount);
             } else {
                 gameData.stack.remove(targetEntry);
-                gameHelper.addCardToGraveyard(gameData, targetEntry.getControllerId(), targetEntry.getCard());
+                graveyardService.addCardToGraveyard(gameData, targetEntry.getControllerId(), targetEntry.getCard());
                 String logEntry = player.getUsername() + " can't pay {" + amount + "}. " + targetEntry.getCard().getName() + " is countered.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} can't pay {} — spell countered", gameData.id, player.getUsername(), amount);
             }
         } else {
             gameData.stack.remove(targetEntry);
-            gameHelper.addCardToGraveyard(gameData, targetEntry.getControllerId(), targetEntry.getCard());
+            graveyardService.addCardToGraveyard(gameData, targetEntry.getControllerId(), targetEntry.getCard());
             String logEntry = player.getUsername() + " declines to pay {" + amount + "}. " + targetEntry.getCard().getName() + " is countered.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} declines to pay {} — spell countered", gameData.id, player.getUsername(), amount);
@@ -1268,7 +1268,7 @@ public class MayAbilityHandlerService {
 
                         if (validTargets.isEmpty()) {
                             // No valid targets — card goes to owner's graveyard
-                            gameHelper.addCardToGraveyard(gameData, graveyardOwnerId, cardToCast);
+                            graveyardService.addCardToGraveyard(gameData, graveyardOwnerId, cardToCast);
                             String logEntry = cardToCast.getName() + " has no valid targets.";
                             gameBroadcastService.logAndBroadcast(gameData, logEntry);
                             log.info("Game {} - {} cast-from-graveyard has no valid targets", gameData.id, cardToCast.getName());

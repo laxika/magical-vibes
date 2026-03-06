@@ -43,7 +43,7 @@ import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
@@ -65,7 +65,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class PlayerInteractionResolutionService {
 
     private final DrawService drawService;
-    private final GameHelper gameHelper;
+    private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
@@ -414,7 +414,7 @@ public class PlayerInteractionResolutionService {
             if (currentHand.isEmpty()) break;
             int randomIndex = ThreadLocalRandom.current().nextInt(currentHand.size());
             Card discarded = currentHand.remove(randomIndex);
-            gameHelper.addCardToGraveyard(gameData, playerId, discarded);
+            graveyardService.addCardToGraveyard(gameData, playerId, discarded);
             String logEntry = playerName + " discards " + discarded.getName() + " at random.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);

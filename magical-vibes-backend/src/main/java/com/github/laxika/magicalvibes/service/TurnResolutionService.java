@@ -32,7 +32,6 @@ public class TurnResolutionService {
             StackEntryType.ARTIFACT_SPELL, StackEntryType.PLANESWALKER_SPELL
     );
 
-    private final GameHelper gameHelper;
     private final CombatService combatService;
     private final GameBroadcastService gameBroadcastService;
     private final AuraAttachmentService auraAttachmentService;
@@ -83,7 +82,7 @@ public class TurnResolutionService {
 
         // Rule 723.1d: Skip to cleanup step
         gameData.currentStep = TurnStep.CLEANUP;
-        gameHelper.resetEndOfTurnModifiers(gameData);
+        TurnProgressionService.resetEndOfTurnModifiers(gameData);
         auraAttachmentService.returnStolenCreatures(gameData, true);
         gameData.priorityPassedBy.clear();
 

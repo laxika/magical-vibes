@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -20,7 +21,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class StateBasedActionService {
 
-    private final GameHelper gameHelper;
+    private final GraveyardService graveyardService;
     private final DeathTriggerService deathTriggerService;
     private final GameOutcomeService gameOutcomeService;
     private final GameQueryService gameQueryService;
@@ -39,7 +40,7 @@ public class StateBasedActionService {
                     it.remove();
                     UUID graveyardOwnerId = gameData.stolenCreatures.getOrDefault(p.getId(), playerId);
                     gameData.stolenCreatures.remove(p.getId());
-                    boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, graveyardOwnerId, p.getOriginalCard(), Zone.BATTLEFIELD);
+                    boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, graveyardOwnerId, p.getOriginalCard(), Zone.BATTLEFIELD);
                     if (wentToGraveyard) {
                         deathTriggerService.collectDeathTrigger(gameData, p.getCard(), playerId, true, p);
                         gameData.creatureDeathCountThisTurn.merge(playerId, 1, Integer::sum);
@@ -55,7 +56,7 @@ public class StateBasedActionService {
                     anyDied = true;
                 } else if (p.getCard().getType() == CardType.PLANESWALKER && p.getLoyaltyCounters() <= 0) {
                     it.remove();
-                    gameHelper.addCardToGraveyard(gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD);
+                    graveyardService.addCardToGraveyard(gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD);
                     String logEntry = p.getCard().getName() + " has no loyalty counters and is put into the graveyard.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} dies to state-based actions (0 loyalty)", gameData.id, p.getCard().getName());

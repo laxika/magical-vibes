@@ -33,7 +33,7 @@ import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.DeathTriggerService;
-import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
@@ -53,7 +53,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ActivatedAbilityExecutionService {
 
-    private final GameHelper gameHelper;
+    private final GraveyardService graveyardService;
     private final DeathTriggerService deathTriggerService;
     private final DamagePreventionService damagePreventionService;
     private final PermanentRemovalService permanentRemovalService;
@@ -161,7 +161,7 @@ public class ActivatedAbilityExecutionService {
         if (shouldSacrifice) {
             boolean wasCreature = gameQueryService.isCreature(gameData, permanent);
             battlefield.remove(permanent);
-            boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, permanent.getCard(), Zone.BATTLEFIELD);
+            boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, permanent.getCard(), Zone.BATTLEFIELD);
             if (wentToGraveyard) {
                 deathTriggerService.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature, permanent);
                 if (wasCreature) {

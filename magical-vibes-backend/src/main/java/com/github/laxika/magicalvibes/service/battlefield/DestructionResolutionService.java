@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
@@ -59,7 +59,7 @@ import java.util.function.Predicate;
 public class DestructionResolutionService {
 
     private final BattlefieldEntryService battlefieldEntryService;
-    private final GameHelper gameHelper;
+    private final GraveyardService graveyardService;
     private final DamagePreventionService damagePreventionService;
     private final GameOutcomeService gameOutcomeService;
     private final PermanentRemovalService permanentRemovalService;
@@ -131,7 +131,7 @@ public class DestructionResolutionService {
                 gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + " is indestructible.");
                 continue;
             }
-            if (gameHelper.tryRegenerate(gameData, perm)) {
+            if (graveyardService.tryRegenerate(gameData, perm)) {
                 continue;
             }
             permanentRemovalService.removePermanentToGraveyard(gameData, perm);
@@ -270,7 +270,7 @@ public class DestructionResolutionService {
                 gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + " is indestructible.");
                 continue;
             }
-            if (!cannotBeRegenerated && gameHelper.tryRegenerate(gameData, perm)) {
+            if (!cannotBeRegenerated && graveyardService.tryRegenerate(gameData, perm)) {
                 continue;
             }
             permanentRemovalService.removePermanentToGraveyard(gameData, perm);

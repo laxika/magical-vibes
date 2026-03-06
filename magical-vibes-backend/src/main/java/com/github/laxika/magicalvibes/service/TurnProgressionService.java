@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingExileReturn;
@@ -32,6 +34,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
@@ -54,7 +58,6 @@ public class TurnProgressionService {
     private final BattlefieldEntryService battlefieldEntryService;
     private final CombatService combatService;
     private final DrawService drawService;
-    private final GameHelper gameHelper;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
@@ -88,7 +91,7 @@ public class TurnProgressionService {
             gameData.additionalCombatMainPhasePairs--;
         }
 
-        gameHelper.drainManaPools(gameData);
+        drainManaPools(gameData);
 
         if (next != null) {
             gameData.currentStep = next;
@@ -119,7 +122,7 @@ public class TurnProgressionService {
                 // CR 514.1: Active player discards down to maximum hand size (normally 7)
                 UUID activePlayerId = gameData.activePlayerId;
                 List<Card> hand = gameData.playerHands.get(activePlayerId);
-                if (hand != null && hand.size() > 7 && !gameHelper.hasNoMaximumHandSize(gameData, activePlayerId)) {
+                if (hand != null && hand.size() > 7 && !hasNoMaximumHandSize(gameData, activePlayerId)) {
                     int discardCount = hand.size() - 7;
                     gameData.cleanupDiscardPending = true;
                     gameData.discardCausedByOpponent = false;
@@ -128,7 +131,7 @@ public class TurnProgressionService {
                     return;
                 }
                 // CR 514.2: Remove damage and end "until end of turn" effects
-                gameHelper.resetEndOfTurnModifiers(gameData);
+                resetEndOfTurnModifiers(gameData);
                 auraAttachmentService.returnStolenCreatures(gameData, true);
             }
         } else {
@@ -654,7 +657,7 @@ public class TurnProgressionService {
         gameData.cleanupDiscardPending = false;
         gameData.paidSearchTaxPermanentIds.clear();
 
-        gameHelper.drainManaPools(gameData);
+        drainManaPools(gameData);
 
         gameData.forEachPermanent((playerId, p) -> p.setAttackedThisTurn(false));
 
@@ -803,7 +806,7 @@ public class TurnProgressionService {
     }
 
     public void applyCleanupResets(GameData gameData) {
-        gameHelper.resetEndOfTurnModifiers(gameData);
+        resetEndOfTurnModifiers(gameData);
         auraAttachmentService.returnStolenCreatures(gameData, true);
     }
 
@@ -905,6 +908,65 @@ public class TurnProgressionService {
                 // Skip if ability requires tap and permanent is tapped
                 if (ability.isRequiresTap() && perm.isTapped()) continue;
 
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static void resetEndOfTurnModifiers(GameData gameData) {
+        gameData.forEachPermanent((playerId, p) -> {
+            if (p.getPowerModifier() != 0 || p.getToughnessModifier() != 0 || !p.getGrantedKeywords().isEmpty()
+                    || p.getDamagePreventionShield() != 0 || p.getRegenerationShield() != 0 || p.isCantBeBlocked()
+                    || p.isAnimatedUntilEndOfTurn() || p.isCantRegenerateThisTurn()
+                    || p.isExileInsteadOfDieThisTurn() || !p.getGrantedCardTypes().isEmpty()) {
+                p.resetModifiers();
+                p.setDamagePreventionShield(0);
+                p.setRegenerationShield(0);
+            }
+        });
+
+        gameData.playerDamagePreventionShields.clear();
+        gameData.globalDamagePreventionShield = 0;
+        gameData.preventAllCombatDamage = false;
+        gameData.preventDamageFromColors.clear();
+        gameData.combatDamageRedirectTarget = null;
+        gameData.playerColorDamagePreventionCount.clear();
+        gameData.playerSourceDamagePreventionIds.clear();
+        gameData.permanentsPreventedFromDealingDamage.clear();
+        gameData.drawReplacementTargetToController.clear();
+    }
+
+    private void drainManaPools(GameData gameData) {
+        // Check if any permanent on the battlefield prevents mana drain (e.g. Upwelling)
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                if (perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(PreventManaDrainEffect.class::isInstance)) {
+                    return;
+                }
+            }
+        }
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            ManaPool manaPool = gameData.playerManaPools.get(playerId);
+            if (manaPool != null) {
+                manaPool.clear();
+            }
+        }
+    }
+
+    private boolean hasNoMaximumHandSize(GameData gameData, UUID playerId) {
+        if (gameData.playersWithNoMaximumHandSize.contains(playerId)) {
+            return true;
+        }
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return false;
+        for (Permanent perm : bf) {
+            if (perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(NoMaximumHandSizeEffect.class::isInstance)) {
                 return true;
             }
         }

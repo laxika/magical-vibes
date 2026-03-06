@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -64,7 +65,7 @@ import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.DeathTriggerService;
-import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
@@ -101,7 +102,7 @@ public class CombatService {
             Keyword.SWAMPWALK, CardSubtype.SWAMP
     );
 
-    private final GameHelper gameHelper;
+    private final GraveyardService graveyardService;
     private final DeathTriggerService deathTriggerService;
     private final DamagePreventionService damagePreventionService;
     private final GameOutcomeService gameOutcomeService;
@@ -435,7 +436,7 @@ public class CombatService {
             if (pool.getTotal() < totalTax) {
                 throw new IllegalStateException("Not enough mana to pay attack tax (" + totalTax + " required)");
             }
-            gameHelper.payGenericMana(pool, totalTax);
+            payGenericMana(pool, totalTax);
 
         }
 
@@ -1419,7 +1420,7 @@ public class CombatService {
         }
         state.combatDamageDealerControllers.putIfAbsent(source, controllerId);
         state.combatDamageDealtToCreatures.computeIfAbsent(source, ignored -> new ArrayList<>()).add(target.getId());
-        gameHelper.recordCreatureDamagedByPermanent(gameData, source.getId(), target, damage);
+        graveyardService.recordCreatureDamagedByPermanent(gameData, source.getId(), target, damage);
     }
 
     // ===== Combat damage phase submethods =====
@@ -1594,7 +1595,7 @@ public class CombatService {
                 gameBroadcastService.logAndBroadcast(gameData, deathLog);
             } else if (gameQueryService.isLethalDamage(state.damageRedirectedToGuard, guardToughness, false)
                     && !gameQueryService.hasKeyword(gameData, redirectTarget, Keyword.INDESTRUCTIBLE)
-                    && !gameHelper.tryRegenerate(gameData, redirectTarget)) {
+                    && !graveyardService.tryRegenerate(gameData, redirectTarget)) {
                 permanentRemovalService.removePermanentToGraveyard(gameData, redirectTarget);
                 String deathLog = redirectTarget.getCard().getName() + " is destroyed by redirected combat damage.";
                 gameBroadcastService.logAndBroadcast(gameData, deathLog);
@@ -1622,7 +1623,7 @@ public class CombatService {
         deadNames.add(gameData.playerIdToName.get(controllerId) + "'s " + dead.getCard().getName());
         UUID graveyardOwner = gameData.stolenCreatures.getOrDefault(dead.getId(), controllerId);
         gameData.stolenCreatures.remove(dead.getId());
-        boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, graveyardOwner, dead.getOriginalCard(), Zone.BATTLEFIELD);
+        boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, graveyardOwner, dead.getOriginalCard(), Zone.BATTLEFIELD);
         if (wentToGraveyard) {
             deathTriggerService.collectDeathTrigger(gameData, dead.getCard(), controllerId, true, dead);
             deathTriggerService.checkAllyCreatureDeathTriggers(gameData, controllerId);
@@ -1684,7 +1685,7 @@ public class CombatService {
                 deadSet.add(idx);
             } else if (gameQueryService.isLethalDamage(dmg, effToughness, deathtouchSet.contains(idx))
                     && !gameQueryService.hasKeyword(gameData, battlefield.get(idx), Keyword.INDESTRUCTIBLE)
-                    && !gameHelper.tryRegenerate(gameData, battlefield.get(idx))) {
+                    && !graveyardService.tryRegenerate(gameData, battlefield.get(idx))) {
                 deadSet.add(idx);
             }
         }
@@ -2177,7 +2178,7 @@ public class CombatService {
             for (Permanent perm : toSacrifice) {
                 boolean wasCreature = gameQueryService.isCreature(gameData, perm);
                 battlefield.remove(perm);
-                boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, perm.getOriginalCard(), Zone.BATTLEFIELD);
+                boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, perm.getOriginalCard(), Zone.BATTLEFIELD);
                 if (wentToGraveyard) {
                     deathTriggerService.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature, perm);
                     if (wasCreature) {
@@ -2195,6 +2196,24 @@ public class CombatService {
 
     }
 
+    private void payGenericMana(ManaPool pool, int amount) {
+        int remaining = amount;
+        while (remaining > 0) {
+            ManaColor highestColor = null;
+            int highestCount = 0;
+            for (ManaColor color : ManaColor.values()) {
+                int count = pool.get(color);
+                if (count > highestCount) {
+                    highestCount = count;
+                    highestColor = color;
+                }
+            }
+            if (highestColor != null) {
+                pool.remove(highestColor);
+                remaining--;
+            } else {
+                break;
+            }
+        }
+    }
 }
-
-

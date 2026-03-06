@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
@@ -45,7 +45,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ExileResolutionService {
 
-    private final GameHelper gameHelper;
+    private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
@@ -226,7 +226,7 @@ public class ExileResolutionService {
             }
             // Return to owner's graveyard (the player whose exile zone it was in)
             UUID returnToId = previousOwnerId != null ? previousOwnerId : entry.getControllerId();
-            gameHelper.addCardToGraveyard(gameData, returnToId, previouslyImprinted);
+            graveyardService.addCardToGraveyard(gameData, returnToId, previouslyImprinted);
             String returnLog = previouslyImprinted.getName() + " returns to its owner's graveyard from exile.";
             gameBroadcastService.logAndBroadcast(gameData, returnLog);
             log.info("Game {} - Previously imprinted {} returned to graveyard", gameData.id, previouslyImprinted.getName());
@@ -486,7 +486,7 @@ public class ExileResolutionService {
 
             if (validTargets.isEmpty()) {
                 // No valid targets — card goes to graveyard
-                gameHelper.addCardToGraveyard(gameData, playerId, chosenCard);
+                graveyardService.addCardToGraveyard(gameData, playerId, chosenCard);
                 String logEntry = chosenCard.getName() + " has no valid targets (Knowledge Pool). It is put into the graveyard.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} Knowledge Pool cast has no valid targets", gameData.id, chosenCard.getName());

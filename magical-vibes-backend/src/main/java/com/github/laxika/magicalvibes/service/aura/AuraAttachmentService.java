@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.service.aura;
 
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -30,7 +30,7 @@ public class AuraAttachmentService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
-    private final GameHelper gameHelper;
+    private final GraveyardService graveyardService;
 
     /**
      * Removes auras whose enchanted permanent no longer exists and detaches equipment whose
@@ -56,7 +56,7 @@ public class AuraAttachmentService {
                         log.info("Game {} - {} unattached (equipped creature left)", gameData.id, p.getCard().getName());
                     } else {
                         it.remove();
-                        gameHelper.addCardToGraveyard(gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD);
+                        graveyardService.addCardToGraveyard(gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD);
                         String logEntry = p.getCard().getName() + " is put into the graveyard (enchanted creature left the battlefield).";
                         gameBroadcastService.logAndBroadcast(gameData, logEntry);
                         log.info("Game {} - {} removed (orphaned aura)", gameData.id, p.getCard().getName());

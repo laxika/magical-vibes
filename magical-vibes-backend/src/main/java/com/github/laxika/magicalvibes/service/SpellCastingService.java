@@ -46,7 +46,6 @@ public class SpellCastingService {
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
-    private final GameHelper gameHelper;
     private final GameBroadcastService gameBroadcastService;
     private final TurnProgressionService turnProgressionService;
     private final TargetLegalityService targetLegalityService;

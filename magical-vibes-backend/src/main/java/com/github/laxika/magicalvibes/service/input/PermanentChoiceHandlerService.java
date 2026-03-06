@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.service.combat.DamageResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.DeathTriggerService;
-import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
@@ -46,7 +46,7 @@ import java.util.UUID;
 public class PermanentChoiceHandlerService {
 
     private final GameQueryService gameQueryService;
-    private final GameHelper gameHelper;
+    private final GraveyardService graveyardService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final DeathTriggerService deathTriggerService;
     private final CloneService cloneService;
@@ -140,7 +140,7 @@ public class PermanentChoiceHandlerService {
             for (Permanent perm : toRemove) {
                 boolean wasCreature = gameQueryService.isCreature(gameData, perm);
                 battlefield.remove(perm);
-                boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, perm.getOriginalCard(), Zone.BATTLEFIELD);
+                boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, perm.getOriginalCard(), Zone.BATTLEFIELD);
                 if (wentToGraveyard) {
                     deathTriggerService.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature, perm);
                     if (wasCreature) {
@@ -465,7 +465,7 @@ public class PermanentChoiceHandlerService {
                 triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
             } else {
                 // Target no longer valid — put card into graveyard
-                gameHelper.addCardToGraveyard(gameData, lct.controllerId(), lct.cardToCast());
+                graveyardService.addCardToGraveyard(gameData, lct.controllerId(), lct.cardToCast());
                 String logEntry = lct.cardToCast().getName() + "'s target is no longer valid. It is put into the graveyard.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} cast-from-library target no longer exists", gameData.id, lct.cardToCast().getName());
@@ -510,7 +510,7 @@ public class PermanentChoiceHandlerService {
                 triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
             } else {
                 // Target no longer valid — put card into graveyard
-                gameHelper.addCardToGraveyard(gameData, ect.controllerId(), ect.cardToCast());
+                graveyardService.addCardToGraveyard(gameData, ect.controllerId(), ect.cardToCast());
                 String logEntry = ect.cardToCast().getName() + "'s target is no longer valid. It is put into the graveyard.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} cast-from-exile target no longer exists", gameData.id, ect.cardToCast().getName());
@@ -550,7 +550,7 @@ public class PermanentChoiceHandlerService {
                 triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
             } else {
                 // Target no longer valid — put card into graveyard
-                gameHelper.addCardToGraveyard(gameData, gct.controllerId(), gct.cardToCast());
+                graveyardService.addCardToGraveyard(gameData, gct.controllerId(), gct.cardToCast());
                 String logEntry = gct.cardToCast().getName() + "'s target is no longer valid. It is put into the graveyard.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} cast-from-graveyard target no longer exists", gameData.id, gct.cardToCast().getName());

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.PlayerInteractionResolutionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
@@ -33,7 +33,7 @@ import java.util.UUID;
 public class CardChoiceHandlerService {
 
     private final GameQueryService gameQueryService;
-    private final GameHelper gameHelper;
+    private final GraveyardService graveyardService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
@@ -117,7 +117,7 @@ public class CardChoiceHandlerService {
         List<Card> hand = gameData.playerHands.get(playerId);
         Card card = hand.remove(cardIndex);
 
-        gameHelper.addCardToGraveyard(gameData, playerId, card);
+        graveyardService.addCardToGraveyard(gameData, playerId, card);
 
         String logEntry = player.getUsername() + " discards " + card.getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -214,7 +214,7 @@ public class CardChoiceHandlerService {
             if (discardMode) {
                 // Discard chosen cards to graveyard
                 for (Card discarded : chosenCards) {
-                    gameHelper.addCardToGraveyard(gameData, targetPlayerId, discarded);
+                    graveyardService.addCardToGraveyard(gameData, targetPlayerId, discarded);
                 }
 
                 String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
@@ -341,7 +341,7 @@ public class CardChoiceHandlerService {
             return;
         }
         // No matching card type was discarded — spell goes to graveyard as normal
-        gameHelper.addCardToGraveyard(gameData, pending.controllerId(), pending.card());
+        graveyardService.addCardToGraveyard(gameData, pending.controllerId(), pending.card());
         gameData.pendingReturnToHandOnDiscardType = null;
     }
 }

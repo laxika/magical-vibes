@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.service.ability;
 
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.DeathTriggerService;
-import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
@@ -89,7 +89,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class AbilityActivationService {
 
-    private final GameHelper gameHelper;
+    private final GraveyardService graveyardService;
     private final DeathTriggerService deathTriggerService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
@@ -208,7 +208,7 @@ public class AbilityActivationService {
         // Sacrifice: remove from battlefield, add to graveyard
         boolean wasCreature = gameQueryService.isCreature(gameData, permanent);
         battlefield.remove(permanentIndex);
-        boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, permanent.getOriginalCard(), Zone.BATTLEFIELD);
+        boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, permanent.getOriginalCard(), Zone.BATTLEFIELD);
         if (wentToGraveyard) {
             deathTriggerService.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature, permanent);
             if (wasCreature) {
@@ -724,7 +724,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("Must sacrifice a permanent you control");
         }
         playerBf.remove(sacTarget);
-        boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, playerId, sacTarget.getCard(), Zone.BATTLEFIELD);
+        boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, sacTarget.getCard(), Zone.BATTLEFIELD);
         if (wentToGraveyard && gameQueryService.isCreature(gameData, sacTarget)) {
             deathTriggerService.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true, sacTarget);
             deathTriggerService.checkAllyCreatureDeathTriggers(gameData, playerId);
@@ -892,7 +892,7 @@ public class AbilityActivationService {
         }
 
         Card discarded = hand.remove((int) discardCardIndex);
-        gameHelper.addCardToGraveyard(gameData, player.getId(), discarded);
+        graveyardService.addCardToGraveyard(gameData, player.getId(), discarded);
         gameData.discardCausedByOpponent = false;
         triggerCollectionService.checkDiscardTriggers(gameData, player.getId(), discarded);
 

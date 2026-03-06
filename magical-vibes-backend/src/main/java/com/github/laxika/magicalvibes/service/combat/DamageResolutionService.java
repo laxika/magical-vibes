@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.combat;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
@@ -59,7 +59,7 @@ import java.util.function.Predicate;
 @RequiredArgsConstructor
 public class DamageResolutionService {
 
-    private final GameHelper gameHelper;
+    private final GraveyardService graveyardService;
     private final DamagePreventionService damagePreventionService;
     private final GameOutcomeService gameOutcomeService;
     private final GameQueryService gameQueryService;
@@ -430,9 +430,9 @@ public class DamageResolutionService {
         int damage = damagePreventionService.applyCreaturePreventionShield(gameData, target, rawDamage);
 
         if (damageSource != null) {
-            gameHelper.recordCreatureDamagedByPermanent(gameData, damageSource.getId(), target, damage);
+            graveyardService.recordCreatureDamagedByPermanent(gameData, damageSource.getId(), target, damage);
         } else if (entry.getSourcePermanentId() != null) {
-            gameHelper.recordCreatureDamagedByPermanent(gameData, entry.getSourcePermanentId(), target, damage);
+            graveyardService.recordCreatureDamagedByPermanent(gameData, entry.getSourcePermanentId(), target, damage);
         }
 
         // Fire ON_DEALT_DAMAGE triggers (e.g. Nested Ghoul)
@@ -467,7 +467,7 @@ public class DamageResolutionService {
                         target.getCard().getName() + " is indestructible and survives.");
                 return false;
             }
-            return !gameHelper.tryRegenerate(gameData, target);
+            return !graveyardService.tryRegenerate(gameData, target);
         }
         return false;
     }

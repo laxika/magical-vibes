@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.graveyard;
 
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.GameHelper;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -58,7 +57,6 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 public class GraveyardReturnResolutionService {
 
-    private final GameHelper gameHelper;
     private final BattlefieldEntryService battlefieldEntryService;
     private final PermanentRemovalService permanentRemovalService;
     private final LegendRuleService legendRuleService;

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.DeathTriggerService;
-import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -36,7 +36,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PermanentRemovalService {
 
-    private final GameHelper gameHelper;
+    private final GraveyardService graveyardService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final DeathTriggerService deathTriggerService;
     private final DamagePreventionService damagePreventionService;
@@ -72,7 +72,7 @@ public class PermanentRemovalService {
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
 
-        boolean wentToGraveyard = gameHelper.addCardToGraveyard(gameData, ownerId, target.getOriginalCard(), Zone.BATTLEFIELD);
+        boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, ownerId, target.getOriginalCard(), Zone.BATTLEFIELD);
         // Skip "dies" and graveyard triggers if a replacement effect redirected the card (CR 614.6)
         if (wentToGraveyard) {
             deathTriggerService.collectDeathTrigger(gameData, target.getCard(), controllerId, wasCreature, target);
@@ -181,7 +181,7 @@ public class PermanentRemovalService {
             log.info("Game {} - {} is indestructible, destroy prevented", gameData.id, target.getCard().getName());
             return false;
         }
-        if (!cannotBeRegenerated && gameHelper.tryRegenerate(gameData, target)) {
+        if (!cannotBeRegenerated && graveyardService.tryRegenerate(gameData, target)) {
             return false;
         }
         removePermanentToGraveyard(gameData, target);

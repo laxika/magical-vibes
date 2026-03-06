@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.service.library;
 
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -77,7 +78,8 @@ import java.util.function.Predicate;
 public class LibraryResolutionService {
 
     private final DrawService drawService;
-    private final GameHelper gameHelper;
+    private final GraveyardService graveyardService;
+    private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
@@ -113,7 +115,7 @@ public class LibraryResolutionService {
             return;
         }
 
-        gameHelper.resolveMillPlayer(gameData, targetPlayerId, handSize);
+        graveyardService.resolveMillPlayer(gameData, targetPlayerId, handSize);
     }
 
     /**
@@ -121,7 +123,7 @@ public class LibraryResolutionService {
      */
     @HandlesEffect(MillTargetPlayerEffect.class)
     void resolveMillTargetPlayer(GameData gameData, StackEntry entry, MillTargetPlayerEffect mill) {
-        gameHelper.resolveMillPlayer(gameData, entry.getTargetPermanentId(), mill.count());
+        graveyardService.resolveMillPlayer(gameData, entry.getTargetPermanentId(), mill.count());
     }
 
     /**
@@ -132,7 +134,7 @@ public class LibraryResolutionService {
         UUID controllerId = entry.getControllerId();
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId)) continue;
-            gameHelper.resolveMillPlayer(gameData, playerId, effect.count());
+            graveyardService.resolveMillPlayer(gameData, playerId, effect.count());
         }
     }
 
@@ -143,7 +145,7 @@ public class LibraryResolutionService {
     @HandlesEffect(ExileTopCardsRepeatOnDuplicateEffect.class)
     void resolveExileTopCardsRepeatOnDuplicate(GameData gameData, StackEntry entry, ExileTopCardsRepeatOnDuplicateEffect effect) {
         UUID targetPlayerId = entry.getTargetPermanentId();
-        gameHelper.resolveExileTopCardsRepeatOnDuplicate(gameData, entry.getCard(), targetPlayerId, effect);
+        resolveExileTopCardsRepeatOnDuplicateImpl(gameData, entry.getCard(), targetPlayerId, effect);
     }
 
     /**
@@ -163,7 +165,7 @@ public class LibraryResolutionService {
             return;
         }
 
-        gameHelper.resolveMillPlayer(gameData, targetPlayerId, chargeCounters);
+        graveyardService.resolveMillPlayer(gameData, targetPlayerId, chargeCounters);
     }
 
     /**
@@ -183,7 +185,7 @@ public class LibraryResolutionService {
             return;
         }
 
-        gameHelper.resolveMillPlayer(gameData, targetPlayerId, cardsToMill);
+        graveyardService.resolveMillPlayer(gameData, targetPlayerId, cardsToMill);
     }
 
     /**
@@ -914,7 +916,7 @@ public class LibraryResolutionService {
             gameData.playerExiledCards.get(controllerId).add(topCards.getFirst());
             UUID sourcePermanentId = entry.getSourcePermanentId();
             if (sourcePermanentId != null) {
-                gameHelper.setImprintedCardOnPermanent(gameData, sourcePermanentId, topCards.getFirst());
+                gameQueryService.setImprintedCardOnPermanent(gameData, sourcePermanentId, topCards.getFirst());
             }
             String exileLog = playerName + " exiles a card face down with " + entry.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, exileLog);
@@ -1107,6 +1109,56 @@ public class LibraryResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
     }
 
+    private void resolveExileTopCardsRepeatOnDuplicateImpl(GameData gameData, Card sourceCard, UUID targetPlayerId, ExileTopCardsRepeatOnDuplicateEffect effect) {
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        List<Card> exiled = gameData.playerExiledCards.get(targetPlayerId);
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+        String creatureName = sourceCard.getName();
+
+        String triggerLog = creatureName + "'s ability triggers — " + playerName + " exiles cards from the top of their library.";
+        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+
+        boolean repeat = true;
+        while (repeat) {
+            repeat = false;
+
+            if (deck.isEmpty()) {
+                String logEntry = playerName + "'s library is empty. No cards to exile.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                break;
+            }
+
+            int cardsToExile = Math.min(effect.count(), deck.size());
+            List<Card> exiledThisRound = new ArrayList<>();
+            for (int i = 0; i < cardsToExile; i++) {
+                Card card = deck.removeFirst();
+                exiled.add(card);
+                exiledThisRound.add(card);
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(playerName).append(" exiles ");
+            for (int i = 0; i < exiledThisRound.size(); i++) {
+                if (i > 0) sb.append(", ");
+                sb.append(exiledThisRound.get(i).getName());
+            }
+            sb.append(".");
+            gameBroadcastService.logAndBroadcast(gameData, sb.toString());
+
+            Set<String> seen = new HashSet<>();
+            for (Card card : exiledThisRound) {
+                if (!seen.add(card.getName())) {
+                    repeat = true;
+                    break;
+                }
+            }
+
+            if (repeat) {
+                String repeatLog = "Two or more exiled cards share the same name — repeating the process.";
+                gameBroadcastService.logAndBroadcast(gameData, repeatLog);
+            }
+        }
+
+        log.info("Game {} - {} exile trigger resolved for {}", gameData.id, creatureName, playerName);
+    }
 }
-
-

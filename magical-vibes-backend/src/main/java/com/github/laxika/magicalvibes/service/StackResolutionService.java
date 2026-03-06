@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
@@ -35,7 +36,7 @@ public class StackResolutionService {
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final CloneService cloneService;
-    private final GameHelper gameHelper;
+    private final GraveyardService graveyardService;
     private final LegendRuleService legendRuleService;
     private final StateBasedActionService stateBasedActionService;
     private final GameQueryService gameQueryService;
@@ -117,7 +118,7 @@ public class StackResolutionService {
             if (target == null) {
                 String fizzleLog = card.getName() + " fizzles (enchanted creature no longer exists).";
                 gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
-                gameHelper.addCardToGraveyard(gameData, controllerId, card);
+                graveyardService.addCardToGraveyard(gameData, controllerId, card);
 
                 log.info("Game {} - {} fizzles, target {} no longer exists", gameData.id, card.getName(), entry.getTargetPermanentId());
             } else {
@@ -255,7 +256,7 @@ public class StackResolutionService {
 
             // Fizzled spells still go to graveyard (copies cease to exist per rule 707.10a)
             if (isNonCopySpell(entry)) {
-                gameHelper.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
+                graveyardService.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
             }
         } else {
             String logEntry = entry.getDescription() + " resolves.";
@@ -314,7 +315,7 @@ public class StackResolutionService {
                 gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
             }
         } else {
-            gameHelper.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
+            graveyardService.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
         }
     }
 

@@ -27,7 +27,7 @@ import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFrom
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.GameHelper;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -54,7 +54,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CardSpecificResolutionService {
 
-    private final GameHelper gameHelper;
+    private final GraveyardService graveyardService;
     private final WarpWorldService warpWorldService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
@@ -266,7 +266,7 @@ public class CardSpecificResolutionService {
 
         if (eligibleCards.isEmpty()) {
             for (Card card : revealedCards) {
-                gameHelper.addCardToGraveyard(gameData, controllerId, card);
+                graveyardService.addCardToGraveyard(gameData, controllerId, card);
             }
             String graveyardLog = playerName + " finds no eligible permanent cards. All revealed cards are put into their graveyard.";
             gameBroadcastService.logAndBroadcast(gameData, graveyardLog);
