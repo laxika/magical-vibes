@@ -156,9 +156,9 @@ public class StackResolutionService {
                 playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), null);
             }
 
-            // Process general ETB effects (e.g., token creation for Kindred Enchantments)
+            // Process general ETB effects (e.g., token creation, exile-until-leaves)
             if (!gameData.interaction.isAwaitingInput()) {
-                battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, null, true);
+                battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, entry.getTargetPermanentId(), true);
             }
 
             checkLegendRuleIfIdle(gameData, controllerId);

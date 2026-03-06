@@ -15,7 +15,9 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
+import com.github.laxika.magicalvibes.model.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
@@ -230,6 +232,7 @@ public class GameBroadcastService {
 
         boolean stackEmpty = gameData.stack.isEmpty();
         Set<CardType> restrictedSpellTypes = getRestrictedSpellTypes(gameData, playerId);
+        Set<String> forbiddenCardNames = getForbiddenCardNames(gameData);
 
         // Count untapped creatures for convoke playability
         int untappedCreatureCount = 0;
@@ -250,6 +253,7 @@ public class GameBroadcastService {
             if (card.getManaCost() != null && !spellLimitReached) {
                 if (restrictedSpellTypes.contains(card.getType())
                         || card.getAdditionalTypes().stream().anyMatch(restrictedSpellTypes::contains)) continue;
+                if (forbiddenCardNames.contains(card.getName())) continue;
 
                 boolean isInstantSpeed = card.getType() == CardType.INSTANT
                         || card.getKeywords().contains(Keyword.FLASH)
@@ -375,6 +379,25 @@ public class GameBroadcastService {
             }
         }
         return restricted;
+    }
+
+    Set<String> getForbiddenCardNames(GameData gameData) {
+        Set<String> forbidden = new HashSet<>();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof CantCastSpellsWithSameNameAsExiledCardEffect) {
+                        PendingExileReturn exiled = gameData.exileReturnOnPermanentLeave.get(perm.getId());
+                        if (exiled != null) {
+                            forbidden.add(exiled.card().getName());
+                        }
+                    }
+                }
+            }
+        }
+        return forbidden;
     }
 
     int getOpponentCostIncrease(GameData gameData, UUID playerId, CardType cardType) {
