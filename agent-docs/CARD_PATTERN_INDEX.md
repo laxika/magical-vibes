@@ -38,6 +38,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Metalcraft sacrifice instant | `d/DispenseJustice.java` | SacrificeAttackingCreaturesEffect(1, 2) + PlayerPredicateTargetFilter(ANY) — metalcraft checked at resolution |
 | Destroy + cantrip | `s/Smash.java` | DestroyTargetPermanentEffect + DrawCardEffect |
 | Destroy + life gain by mana value | `d/DivineOffering.java` | DestroyTargetPermanentAndGainLifeEqualToManaValueEffect + artifact filter |
+| Destroy + controller life loss | `g/GlissasScorn.java` | DestroyTargetPermanentAndControllerLosesLifeEffect(1) + artifact filter |
 | Board wipe | `w/WrathOfGod.java` | DestroyAllPermanentsEffect |
 | Counter (any) | `c/Cancel.java` | CounterSpellEffect (spell targeting auto-derived) |
 | Counter (filtered) | `r/RemoveSoul.java` | StackEntryPredicateTargetFilter + StackEntryTypeInPredicate |

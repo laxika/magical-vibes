@@ -112,6 +112,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `DestroyAllPermanentsEffect` | `(Set<CardType> targetTypes)` or `(Set<CardType> targetTypes, boolean cannotBeRegenerated)` or `(Set<CardType> targetTypes, boolean onlyOpponents, boolean cannotBeRegenerated)` or `(Set<CardType> targetTypes, boolean onlyOpponents, boolean cannotBeRegenerated, PermanentPredicate filter)` | destroy all permanents of given types. Optional predicate filter for additional conditions |
 | `DestroyAllCreaturesAndCreateTokenFromDestroyedCountEffect` | `(String tokenName, List<CardSubtype> tokenSubtypes, Set<CardType> tokenAdditionalTypes)` | destroy all creatures, then create a colorless X/X creature token where X = number actually destroyed (skips indestructible/regenerated) |
 | `DestroyTargetLandAndDamageControllerEffect` | `(int damage)` | destroy target land and deal N to its controller |
+| `DestroyTargetPermanentAndControllerLosesLifeEffect` | `(int lifeLoss)` | destroy target permanent and its controller loses N life. Life loss occurs regardless of whether destruction succeeds (e.g. indestructible) |
 | `DestroyTargetPermanentAndGiveControllerPoisonCountersEffect` | `(int poisonCounters)` or `()` (default 1) | destroy target permanent and give its controller N poison counters |
 | `DestroyBlockedCreatureAndSelfEffect` | `()` | destroy creature this blocks and itself (Deathtrap-style) |
 | `DestroyCreatureBlockingThisEffect` | `()` | destroy creature that blocks this (combat trigger) |

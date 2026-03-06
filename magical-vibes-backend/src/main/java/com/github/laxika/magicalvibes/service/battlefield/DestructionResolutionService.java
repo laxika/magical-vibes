@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelf
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndGiveControllerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainLifeEqualToToughnessEffect;
@@ -524,6 +525,45 @@ public class DestructionResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, poisonLog);
         log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName,
                 effect.poisonCounters(), entry.getCard().getName());
+
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves a {@link DestroyTargetPermanentAndControllerLosesLifeEffect}, destroying
+     * the targeted permanent and causing its controller to lose life. The life loss occurs
+     * regardless of whether the destruction succeeds (e.g. indestructible).
+     */
+    @HandlesEffect(DestroyTargetPermanentAndControllerLosesLifeEffect.class)
+    void resolveDestroyTargetPermanentAndControllerLosesLife(GameData gameData, StackEntry entry,
+                                                             DestroyTargetPermanentAndControllerLosesLifeEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        // Find the controller of the targeted permanent before destruction
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (controllerId == null) {
+            return;
+        }
+
+        // Attempt to destroy the target
+        tryDestroyAndLog(gameData, target, entry.getCard().getName());
+
+        // Target's controller loses life regardless of whether destruction succeeded
+        if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    gameData.playerIdToName.get(controllerId) + "'s life total can't change.");
+        } else {
+            int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+            gameData.playerLifeTotals.put(controllerId, currentLife - effect.lifeLoss());
+
+            String playerName = gameData.playerIdToName.get(controllerId);
+            String lifeLog = playerName + " loses " + effect.lifeLoss() + " life (" + entry.getCard().getName() + ").";
+            gameBroadcastService.logAndBroadcast(gameData, lifeLog);
+            log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, effect.lifeLoss(), entry.getCard().getName());
+        }
 
         gameOutcomeService.checkWinCondition(gameData);
     }
