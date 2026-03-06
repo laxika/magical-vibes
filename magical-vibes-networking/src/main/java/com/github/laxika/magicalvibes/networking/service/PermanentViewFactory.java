@@ -35,16 +35,20 @@ public class PermanentViewFactory {
     }
 
     public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, boolean colorOverriding, boolean subtypeOverriding) {
-        return create(p, bonusPower, bonusToughness, bonusKeywords, animatedCreature, grantedActivatedAbilities, staticGrantedColors, staticGrantedSubtypes, Set.of(), colorOverriding, subtypeOverriding);
+        return create(p, bonusPower, bonusToughness, bonusKeywords, animatedCreature, grantedActivatedAbilities, staticGrantedColors, staticGrantedSubtypes, Set.of(), colorOverriding, subtypeOverriding, false);
     }
 
     public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding) {
+        return create(p, bonusPower, bonusToughness, bonusKeywords, animatedCreature, grantedActivatedAbilities, staticGrantedColors, staticGrantedSubtypes, staticGrantedCardTypes, colorOverriding, subtypeOverriding, false);
+    }
+
+    public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding) {
         Set<Keyword> allKeywords = new HashSet<>(p.getGrantedKeywords());
         allKeywords.addAll(bonusKeywords);
         CardView cardView = cardViewFactory.create(p.getCard());
         cardView = applyTextReplacements(cardView, p);
         cardView = applyGrantedSubtypes(cardView, p);
-        cardView = applyStaticGrantedSubtypes(cardView, staticGrantedSubtypes, subtypeOverriding);
+        cardView = applyStaticGrantedSubtypes(cardView, staticGrantedSubtypes, subtypeOverriding, landSubtypeOverriding);
         cardView = applyAwakeningCounterSubtype(cardView, p);
         cardView = applyGrantedCardTypes(cardView, p);
         cardView = applyPermanentAnimation(cardView, p);
@@ -206,13 +210,29 @@ public class PermanentViewFactory {
             CardSubtype.AJANI
     );
 
-    private CardView applyStaticGrantedSubtypes(CardView cardView, List<CardSubtype> staticGrantedSubtypes, boolean subtypeOverriding) {
+    private static final Set<CardSubtype> BASIC_LAND_SUBTYPES = EnumSet.of(
+            CardSubtype.FOREST,
+            CardSubtype.MOUNTAIN,
+            CardSubtype.ISLAND,
+            CardSubtype.PLAINS,
+            CardSubtype.SWAMP
+    );
+
+    private CardView applyStaticGrantedSubtypes(CardView cardView, List<CardSubtype> staticGrantedSubtypes, boolean subtypeOverriding, boolean landSubtypeOverriding) {
         if (staticGrantedSubtypes.isEmpty()) {
             return cardView;
         }
         List<CardSubtype> mergedSubtypes;
-        if (subtypeOverriding) {
-            // Keep only non-creature subtypes from the original, then add the granted ones
+        if (landSubtypeOverriding) {
+            // Land type override (e.g. Evil Presence): remove all basic land subtypes, then add the granted ones
+            mergedSubtypes = new ArrayList<>();
+            for (CardSubtype subtype : cardView.subtypes()) {
+                if (!BASIC_LAND_SUBTYPES.contains(subtype)) {
+                    mergedSubtypes.add(subtype);
+                }
+            }
+        } else if (subtypeOverriding) {
+            // Creature subtype override: keep only non-creature subtypes from the original, then add the granted ones
             mergedSubtypes = new ArrayList<>();
             for (CardSubtype subtype : cardView.subtypes()) {
                 if (NON_CREATURE_SUBTYPES.contains(subtype)) {

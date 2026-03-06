@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingAbilityActivation;
@@ -38,6 +39,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
@@ -121,7 +123,9 @@ public class AbilityActivationService {
         if (permanent.isTapped()) {
             throw new IllegalStateException("Permanent is already tapped");
         }
-        if (permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty()) {
+        // Check for land type override (e.g. Evil Presence making a land into a Swamp)
+        ManaColor overriddenManaColor = getOverriddenLandManaColor(gameData, permanent);
+        if (permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty() && overriddenManaColor == null) {
             throw new IllegalStateException("Permanent has no tap effects");
         }
         if (permanent.isSummoningSick() && gameQueryService.isCreature(gameData, permanent) && !gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE)) {
@@ -134,9 +138,14 @@ public class AbilityActivationService {
         permanent.tap();
 
         ManaPool manaPool = gameData.playerManaPools.get(playerId);
-        for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
-            if (effect instanceof AwardManaEffect awardMana) {
-                manaPool.add(awardMana.color(), awardMana.amount());
+        if (overriddenManaColor != null) {
+            // Land type is overridden — produce the new basic land type's mana instead of original
+            manaPool.add(overriddenManaColor, 1);
+        } else {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
+                if (effect instanceof AwardManaEffect awardMana) {
+                    manaPool.add(awardMana.color(), awardMana.amount());
+                }
             }
         }
 
@@ -1028,6 +1037,26 @@ public class AbilityActivationService {
                         + " can't be activated (" + p.getCard().getName() + ")");
             }
         }
+    }
+
+    /**
+     * Returns the mana color that a land should produce if its type has been overridden
+     * by an aura (e.g. Evil Presence making it a Swamp), or {@code null} if no override applies.
+     */
+    private ManaColor getOverriddenLandManaColor(GameData gameData, Permanent permanent) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
+                if (p.getAttachedTo() != null && p.getAttachedTo().equals(permanent.getId())) {
+                    for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                        if (effect instanceof EnchantedPermanentBecomesTypeEffect landTypeEffect) {
+                            return EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(
+                                    landTypeEffect.subtype());
+                        }
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     private boolean isManaAbility(ActivatedAbility ability) {

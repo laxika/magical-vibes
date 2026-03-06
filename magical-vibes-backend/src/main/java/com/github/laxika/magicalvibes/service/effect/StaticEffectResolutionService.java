@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSame
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEquipmentAttachedEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEnchantmentOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
@@ -239,6 +240,19 @@ public class StaticEffectResolutionService {
             accumulator.addGrantedSubtype(grant.subtype());
             if (grant.overriding()) {
                 accumulator.setSubtypeOverriding(true);
+            }
+        }
+    }
+
+    @HandlesStaticEffect(EnchantedPermanentBecomesTypeEffect.class)
+    private void resolveEnchantedPermanentBecomesType(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var becomesType = (EnchantedPermanentBecomesTypeEffect) effect;
+        if (context.source().getAttachedTo() != null
+                && context.source().getAttachedTo().equals(context.target().getId())) {
+            accumulator.addGrantedSubtype(becomesType.subtype());
+            accumulator.setSubtypeOverriding(true);
+            if (becomesType.isBasicLandSubtype()) {
+                accumulator.setLandSubtypeOverriding(true);
             }
         }
     }

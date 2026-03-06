@@ -30,6 +30,7 @@ public class StaticBonusAccumulator {
     private final Set<CardType> grantedCardTypes = EnumSet.noneOf(CardType.class);
     private boolean colorOverriding;
     private boolean subtypeOverriding;
+    private boolean landSubtypeOverriding;
 
     public void addPower(int amount) {
         power += amount;
@@ -141,6 +142,14 @@ public class StaticBonusAccumulator {
         this.subtypeOverriding = subtypeOverriding;
     }
 
+    public boolean isLandSubtypeOverriding() {
+        return landSubtypeOverriding;
+    }
+
+    public void setLandSubtypeOverriding(boolean landSubtypeOverriding) {
+        this.landSubtypeOverriding = landSubtypeOverriding;
+    }
+
     /**
      * Builds a {@link StaticBonus} from this accumulator's state.
      *
@@ -152,7 +161,7 @@ public class StaticBonusAccumulator {
         return new StaticBonus(
                 finalPower, finalToughness, keywords, protectionColors,
                 animated, grantedActivatedAbilities, grantedEffects,
-                grantedColors, grantedSubtypes, grantedCardTypes, colorOverriding, subtypeOverriding);
+                grantedColors, grantedSubtypes, grantedCardTypes, colorOverriding, subtypeOverriding, landSubtypeOverriding);
     }
 }
 
