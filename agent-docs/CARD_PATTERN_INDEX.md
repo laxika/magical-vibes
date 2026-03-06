@@ -118,6 +118,8 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB metalcraft conditional boost + haste | `b/BladeTribeBerserkers.java` | Two MetalcraftConditionalEffect wrappers: BoostSelfEffect(3,3) + GrantKeywordEffect(HASTE, SELF) — multiple wrapped effects on same slot |
 | ETB each player poison | `i/IchorRats.java` | ON_ENTER_BATTLEFIELD GiveEachPlayerPoisonCountersEffect(1) — infect creature, each player gets a poison counter |
 | ETB may-sacrifice-artifact-divided-damage | `k/KuldothaFlamefiend.java` | MayEffect(SacrificeArtifactThenDealDividedDamageEffect(4)) — may sacrifice artifact, deal N divided damage. Damage assignments via `pendingETBDamageAssignments`, artifact choice via PermanentChoiceContext.SacrificeArtifactForDividedDamage |
+| ETB modal (choose one, no target) | `b/BrutalizerExarch.java` | ChooseOneEffect on ON_ENTER_BATTLEFIELD with one non-targeting mode (library search) and one targeting mode. Card-level setTargetFilter for the targeting mode. Mode chosen at cast time via xValue |
+| ETB modal (choose one, per-mode targeting) | `d/DeceiverExarch.java` | ChooseOneEffect on ON_ENTER_BATTLEFIELD with per-mode TargetFilter on each ChooseOneOption. Mode 0: UntapTargetPermanentEffect + PermanentControlledBySourceControllerPredicate. Mode 1: TapTargetPermanentEffect + PermanentNotPredicate(PermanentControlledBySourceControllerPredicate). Flash creature |
 
 ## Triggered creatures
 

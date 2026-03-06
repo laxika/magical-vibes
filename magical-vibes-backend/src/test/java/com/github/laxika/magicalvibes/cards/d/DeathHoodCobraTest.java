@@ -228,12 +228,13 @@ class DeathHoodCobraTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, cobra, Keyword.DEATHTOUCH)).isTrue();
 
         // Set up combat with a large blocker
-        Permanent blocker = harness.addToBattlefield(player2, new DeathHoodCobra());
+        harness.addToBattlefield(player2, new DeathHoodCobra());
+        Permanent blocker = gd.playerBattlefields.get(player2.getId()).getLast();
         blocker.setSummoningSick(false);
 
         cobra.setAttacking(true);
         blocker.setBlocking(true);
-        blocker.setBlockingTarget(cobra.getId());
+        blocker.addBlockingTargetPermanentId(cobra.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);

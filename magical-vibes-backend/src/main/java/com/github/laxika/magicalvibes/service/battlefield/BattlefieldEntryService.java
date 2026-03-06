@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -171,6 +172,16 @@ public class BattlefieldEntryService {
                 .filter(e -> !(e instanceof EnterWithFixedChargeCountersEffect))
                 .toList();
         if (!triggeredEffects.isEmpty()) {
+            // Extract per-mode targetFilter from ChooseOneEffect (if present)
+            TargetFilter modeTargetFilter = null;
+            for (CardEffect e : triggeredEffects) {
+                if (e instanceof ChooseOneEffect coe) {
+                    int idx = (etbMode >= 0 && etbMode < coe.options().size()) ? etbMode : 0;
+                    modeTargetFilter = coe.options().get(idx).targetFilter();
+                    break;
+                }
+            }
+
             List<CardEffect> mayEffects = triggeredEffects.stream().filter(e -> e instanceof MayEffect).toList();
             List<CardEffect> mandatoryEffects = triggeredEffects.stream()
                     .filter(e -> !(e instanceof MayEffect))
@@ -219,7 +230,7 @@ public class BattlefieldEntryService {
                         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                         UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
 
-                        gameData.stack.add(new StackEntry(
+                        StackEntry etbEntry = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 card,
                                 controllerId,
@@ -232,7 +243,11 @@ public class BattlefieldEntryService {
                                 null,
                                 List.of(),
                                 List.of()
-                        ));
+                        );
+                        if (modeTargetFilter != null) {
+                            etbEntry.setTargetFilter(modeTargetFilter);
+                        }
+                        gameData.stack.add(etbEntry);
                         String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
                         gameBroadcastService.logAndBroadcast(gameData, etbLog);
                         log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());

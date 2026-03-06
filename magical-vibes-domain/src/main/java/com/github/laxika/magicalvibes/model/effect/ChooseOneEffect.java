@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.TargetFilter;
+
 import java.util.List;
 
 /**
@@ -11,5 +13,9 @@ import java.util.List;
  */
 public record ChooseOneEffect(List<ChooseOneOption> options) implements CardEffect {
 
-    public record ChooseOneOption(String label, CardEffect effect) {}
+    public record ChooseOneOption(String label, CardEffect effect, TargetFilter targetFilter) {
+        public ChooseOneOption(String label, CardEffect effect) {
+            this(label, effect, null);
+        }
+    }
 }
