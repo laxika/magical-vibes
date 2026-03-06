@@ -16,7 +16,11 @@ import com.github.laxika.magicalvibes.networking.service.StackEntryViewFactory;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.BounceResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
+import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
+import com.github.laxika.magicalvibes.service.combat.CombatBlockService;
+import com.github.laxika.magicalvibes.service.combat.CombatDamageService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
+import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
 import com.github.laxika.magicalvibes.service.battlefield.CopyResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.CounterResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -164,8 +168,12 @@ public class GameTestHarness {
         graveyardService.setTriggerCollectionService(triggerCollectionService);
         StateBasedActionService stateBasedActionService = new StateBasedActionService(
                 graveyardService, deathTriggerService, gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService);
+        CombatTriggerService combatTriggerService = new CombatTriggerService(gameBroadcastService);
+        CombatAttackService combatAttackService = new CombatAttackService(gameQueryService, gameBroadcastService, sessionManager, triggerCollectionService, combatTriggerService);
+        CombatBlockService combatBlockService = new CombatBlockService(gameQueryService, gameBroadcastService, sessionManager, combatAttackService, combatTriggerService);
+        CombatDamageService combatDamageService = new CombatDamageService(gameQueryService, gameBroadcastService, gameOutcomeService, damagePreventionService, graveyardService, deathTriggerService, permanentRemovalService, playerInputService, sessionManager, triggerCollectionService, combatAttackService, combatTriggerService);
         CombatService combatService = new CombatService(
-                graveyardService, deathTriggerService, damagePreventionService, gameOutcomeService, gameQueryService, gameBroadcastService, playerInputService, sessionManager, permanentRemovalService, triggerCollectionService);
+                combatAttackService, combatBlockService, combatDamageService, gameQueryService, graveyardService, deathTriggerService, permanentRemovalService);
         TargetValidatorRegistry targetValidatorRegistry = new TargetValidatorRegistry();
         TargetValidationService targetValidationService = new TargetValidationService(gameQueryService, targetValidatorRegistry);
         List<Object> validatorBeans = List.of(
