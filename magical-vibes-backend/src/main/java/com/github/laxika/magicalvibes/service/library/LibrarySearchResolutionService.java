@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureToTop
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithColorAndMVXOrLessToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithExactMVToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithMVXOrLessToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryForCardToExileWithPlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryForCardsToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithSubtypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -227,6 +228,39 @@ public class LibrarySearchResolutionService {
                 .destination(LibrarySearchDestination.GRAVEYARD)
                 .filterCardTypes(effect.cardTypes())
                 .build(), prompt, true, controllerName + " searches " + targetName + "'s library.");
+    }
+
+    /**
+     * Searches target opponent's library for any card, exiles it face down, shuffles,
+     * and grants the caster permission to play the exiled card.
+     */
+    @HandlesEffect(SearchTargetLibraryForCardToExileWithPlayPermissionEffect.class)
+    void resolveSearchTargetLibraryForCardToExileWithPlayPermission(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        UUID targetPlayerId = entry.getTargetPermanentId();
+
+        if (isSearchPrevented(gameData, controllerId)) return;
+
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        if (deck == null || deck.isEmpty()) {
+            String logMsg = controllerName + " searches " + targetName + "'s library but it is empty. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> allCards = new ArrayList<>(deck);
+
+        String prompt = "Search " + targetName + "'s library for a card to exile face down.";
+        sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, allCards)
+                .targetPlayerId(targetPlayerId)
+                .destination(LibrarySearchDestination.EXILE_PLAYABLE)
+                .build(), prompt, false, controllerName + " searches " + targetName + "'s library.");
+
+        log.info("Game {} - {} searching {}'s library for Praetor's Grasp ({} cards in library)",
+                gameData.id, controllerName, targetName, allCards.size());
     }
 
     /**

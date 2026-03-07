@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 public record CardView(
+        UUID id,
         String name,
         CardType type,
         Set<CardType> additionalTypes,

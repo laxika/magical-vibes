@@ -86,7 +86,7 @@ public class PermanentViewFactory {
             }
         }
         return new CardView(
-                cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), mergedSubtypes,
+                cardView.id(), cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), mergedSubtypes,
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
                 cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
@@ -104,7 +104,7 @@ public class PermanentViewFactory {
             mergedSubtypes.add(CardSubtype.ELEMENTAL);
         }
         return new CardView(
-                cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), mergedSubtypes,
+                cardView.id(), cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), mergedSubtypes,
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
                 cardView.collectorNumber(), CardColor.GREEN, List.of(CardColor.GREEN), cardView.needsTarget(),
@@ -120,7 +120,7 @@ public class PermanentViewFactory {
         Set<CardType> mergedTypes = new HashSet<>(cardView.additionalTypes());
         mergedTypes.add(CardType.CREATURE);
         return new CardView(
-                cardView.name(), cardView.type(), mergedTypes, cardView.supertypes(), cardView.subtypes(),
+                cardView.id(), cardView.name(), cardView.type(), mergedTypes, cardView.supertypes(), cardView.subtypes(),
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
                 cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
@@ -136,7 +136,7 @@ public class PermanentViewFactory {
         Set<CardType> mergedTypes = new HashSet<>(cardView.additionalTypes());
         mergedTypes.addAll(p.getGrantedCardTypes());
         return new CardView(
-                cardView.name(), cardView.type(), mergedTypes, cardView.supertypes(), cardView.subtypes(),
+                cardView.id(), cardView.name(), cardView.type(), mergedTypes, cardView.supertypes(), cardView.subtypes(),
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
                 cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
@@ -152,7 +152,7 @@ public class PermanentViewFactory {
         Set<CardType> mergedTypes = new HashSet<>(cardView.additionalTypes());
         mergedTypes.addAll(staticGrantedCardTypes);
         return new CardView(
-                cardView.name(), cardView.type(), mergedTypes, cardView.supertypes(), cardView.subtypes(),
+                cardView.id(), cardView.name(), cardView.type(), mergedTypes, cardView.supertypes(), cardView.subtypes(),
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
                 cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
@@ -172,7 +172,7 @@ public class PermanentViewFactory {
         boolean hasTapAbility = cardView.hasTapAbility()
                 || grantedAbilities.stream().anyMatch(ActivatedAbility::isRequiresTap);
         return new CardView(
-                cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), cardView.subtypes(),
+                cardView.id(), cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), cardView.subtypes(),
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), hasTapAbility, cardView.setCode(),
                 cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
@@ -190,7 +190,7 @@ public class PermanentViewFactory {
             modifiedText = modifiedText.replace(rep.fromWord(), rep.toWord());
         }
         return new CardView(
-                cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), cardView.subtypes(),
+                cardView.id(), cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), cardView.subtypes(),
                 modifiedText, cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
                 cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
@@ -248,7 +248,7 @@ public class PermanentViewFactory {
             }
         }
         return new CardView(
-                cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), mergedSubtypes,
+                cardView.id(), cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), mergedSubtypes,
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
                 cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
@@ -279,7 +279,7 @@ public class PermanentViewFactory {
             return cardView;
         }
         return new CardView(
-                cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), cardView.subtypes(),
+                cardView.id(), cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), cardView.subtypes(),
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
                 cardView.collectorNumber(), effectiveColor, List.copyOf(effectiveColors), cardView.needsTarget(),

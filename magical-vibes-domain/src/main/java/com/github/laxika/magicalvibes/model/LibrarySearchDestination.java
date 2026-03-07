@@ -6,6 +6,7 @@ public enum LibrarySearchDestination {
     BATTLEFIELD_TAPPED,
     EXILE_IMPRINT,
     EXILE,
+    EXILE_PLAYABLE,
     TOP_OF_LIBRARY,
     GRAVEYARD
 }

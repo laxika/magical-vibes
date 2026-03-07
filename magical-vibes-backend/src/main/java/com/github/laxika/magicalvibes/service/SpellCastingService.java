@@ -602,6 +602,113 @@ public class SpellCastingService {
         }
     }
 
+    void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue, UUID targetPermanentId) {
+        int effectiveXValue = xValue != null ? xValue : 0;
+        if (gameData.status != GameStatus.RUNNING) {
+            throw new IllegalStateException("Game is not running");
+        }
+
+        UUID playerId = player.getId();
+
+        // Find the card in exile
+        List<Card> exiledCards = gameData.playerExiledCards.get(playerId);
+        if (exiledCards == null) {
+            throw new IllegalStateException("No exiled cards");
+        }
+
+        UUID permittedPlayer = gameData.exilePlayPermissions.get(exileCardId);
+        if (permittedPlayer == null || !permittedPlayer.equals(playerId)) {
+            throw new IllegalStateException("No permission to play this exiled card");
+        }
+
+        Card card = null;
+        int cardIndex = -1;
+        for (int i = 0; i < exiledCards.size(); i++) {
+            if (exiledCards.get(i).getId().equals(exileCardId)) {
+                card = exiledCards.get(i);
+                cardIndex = i;
+                break;
+            }
+        }
+        if (card == null) {
+            throw new IllegalStateException("Card not found in exile");
+        }
+
+        // Remove from exile and clean up permission
+        exiledCards.remove(cardIndex);
+        gameData.exilePlayPermissions.remove(exileCardId);
+
+        if (card.getType() == CardType.LAND) {
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
+            gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
+
+            String logEntry = player.getUsername() + " plays " + card.getName() + " from exile.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} plays {} from exile", gameData.id, player.getUsername(), card.getName());
+
+            battlefieldEntryService.processCreatureETBEffects(gameData, playerId, card, null, false);
+            turnProgressionService.resolveAutoPass(gameData);
+            return;
+        }
+
+        // Pay mana cost
+        paySpellManaCost(gameData, playerId, card, effectiveXValue, List.of(), null);
+
+        StackEntryType entryType = switch (card.getType()) {
+            case CREATURE -> StackEntryType.CREATURE_SPELL;
+            case ENCHANTMENT -> StackEntryType.ENCHANTMENT_SPELL;
+            case ARTIFACT -> StackEntryType.ARTIFACT_SPELL;
+            case PLANESWALKER -> StackEntryType.PLANESWALKER_SPELL;
+            case SORCERY -> StackEntryType.SORCERY_SPELL;
+            case INSTANT -> StackEntryType.INSTANT_SPELL;
+            default -> throw new IllegalStateException("Cannot cast " + card.getType() + " from exile");
+        };
+
+        // Sorceries and instants need their spell effects for resolution;
+        // permanent spells (creature, enchantment, artifact, planeswalker) use List.of()
+        // because they resolve by entering the battlefield, not via effects.
+        List<com.github.laxika.magicalvibes.model.effect.CardEffect> effectsToResolve;
+        if (card.getType() == CardType.SORCERY || card.getType() == CardType.INSTANT) {
+            effectsToResolve = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+            // Remove sacrifice cost effects (they are costs, not resolution effects)
+            effectsToResolve.removeIf(e -> e instanceof SacrificeCreatureCost
+                    || e instanceof SacrificeArtifactCost
+                    || e instanceof SacrificePermanentCost
+                    || e instanceof SacrificeAllCreaturesYouControlCost);
+            // Unwrap modal spells
+            for (int i = 0; i < effectsToResolve.size(); i++) {
+                if (effectsToResolve.get(i) instanceof ChooseOneEffect coe) {
+                    if (effectiveXValue < 0 || effectiveXValue >= coe.options().size()) {
+                        throw new IllegalStateException("Invalid mode index: " + effectiveXValue);
+                    }
+                    effectsToResolve.set(i, coe.options().get(effectiveXValue).effect());
+                    effectiveXValue = 0;
+                    break;
+                }
+            }
+        } else {
+            effectsToResolve = List.of();
+        }
+
+        gameData.stack.add(new StackEntry(
+                entryType, card, playerId, card.getName(),
+                effectsToResolve, effectiveXValue, targetPermanentId, null
+        ));
+
+        // Use null hand list — card was already removed from exile
+        gameData.spellsCastThisTurn.merge(playerId, 1, Integer::sum);
+        gameData.priorityPassedBy.clear();
+
+        String logEntry = player.getUsername() + " casts " + card.getName() + " from exile.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} casts {} from exile", gameData.id, player.getUsername(), card.getName());
+
+        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId);
+        triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     void paySpellManaCost(GameData gameData, UUID playerId, Card card, int effectiveXValue, List<ManaColor> convokeContributions) {
         paySpellManaCost(gameData, playerId, card, effectiveXValue, convokeContributions, null);
     }

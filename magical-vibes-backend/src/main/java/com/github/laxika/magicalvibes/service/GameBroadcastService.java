@@ -82,6 +82,7 @@ public class GameBroadcastService {
                     : List.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN);
             List<Integer> playableCardIndices = getPlayableCardIndices(gameData, playerId);
             List<Integer> playableGraveyardLandIndices = getPlayableGraveyardLandIndices(gameData, playerId);
+            List<CardView> playableExileCards = getPlayableExileCards(gameData, playerId);
             int searchTaxCost = getSearchTaxCost(gameData, playerId);
 
             // Mindslaver: controller sees the controlled player's hand and playable indices
@@ -92,6 +93,7 @@ public class GameBroadcastService {
                             .stream().map(cardViewFactory::create).toList();
                     playableCardIndices = getPlayableCardIndices(gameData, controlledId);
                     playableGraveyardLandIndices = getPlayableGraveyardLandIndices(gameData, controlledId);
+                    playableExileCards = getPlayableExileCards(gameData, controlledId);
                 }
             }
 
@@ -100,7 +102,8 @@ public class GameBroadcastService {
                     gameData.currentStep, priorityPlayerId,
                     battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters,
                     hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
-                    playableGraveyardLandIndices, newLogEntries, searchTaxCost, gameData.mindControlledPlayerId
+                    playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
+                    gameData.mindControlledPlayerId
             ));
         }
     }
@@ -327,6 +330,78 @@ public class GameBroadcastService {
         for (int i = 0; i < graveyard.size(); i++) {
             if (graveyard.get(i).getType() == CardType.LAND) {
                 playable.add(i);
+            }
+        }
+
+        return playable;
+    }
+
+    List<CardView> getPlayableExileCards(GameData gameData, UUID playerId) {
+        List<CardView> playable = new ArrayList<>();
+        if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()) {
+            return playable;
+        }
+
+        UUID priorityHolder = gameQueryService.getPriorityPlayerId(gameData);
+        if (!playerId.equals(priorityHolder)) {
+            return playable;
+        }
+
+        boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
+        boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
+        boolean stackEmpty = gameData.stack.isEmpty();
+        int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
+        int spellsCast = gameData.spellsCastThisTurn.getOrDefault(playerId, 0);
+        int maxSpells = getMaxSpellsPerTurn(gameData);
+        boolean spellLimitReached = spellsCast >= maxSpells;
+        Set<CardType> restrictedSpellTypes = getRestrictedSpellTypes(gameData, playerId);
+        Set<String> forbiddenCardNames = getForbiddenCardNames(gameData);
+
+        List<Card> exiledCards = gameData.playerExiledCards.get(playerId);
+        if (exiledCards == null) {
+            return playable;
+        }
+
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+
+        for (Card card : exiledCards) {
+            UUID permittedPlayer = gameData.exilePlayPermissions.get(card.getId());
+            if (permittedPlayer == null || !permittedPlayer.equals(playerId)) {
+                continue;
+            }
+
+            if (card.getType() == CardType.LAND) {
+                if (isActivePlayer && isMainPhase && landsPlayed < 1 && stackEmpty) {
+                    playable.add(cardViewFactory.create(card));
+                }
+                continue;
+            }
+
+            if (card.getManaCost() == null || spellLimitReached) continue;
+            if (restrictedSpellTypes.contains(card.getType())
+                    || card.getAdditionalTypes().stream().anyMatch(restrictedSpellTypes::contains)) continue;
+            if (forbiddenCardNames.contains(card.getName())) continue;
+
+            boolean isInstantSpeed = card.getType() == CardType.INSTANT
+                    || card.getKeywords().contains(Keyword.FLASH)
+                    || hasFlashGrantForCard(gameData, playerId, card);
+            boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
+
+            if (canCastTiming) {
+                ManaCost cost = new ManaCost(card.getManaCost());
+                int additionalCost = getCastCostModifier(gameData, playerId, card);
+                boolean isArtifact = card.getType() == CardType.ARTIFACT
+                        || card.getAdditionalTypes().contains(CardType.ARTIFACT);
+                boolean isMyr = card.getSubtypes().contains(CardSubtype.MYR);
+                boolean hasRestrictedRedContext = isArtifact
+                        || card.getType() == CardType.CREATURE;
+                boolean canAfford = (isArtifact || isMyr || hasRestrictedRedContext)
+                        ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext)
+                        : cost.canPay(pool, additionalCost);
+                if (canAfford) {
+                    playable.add(cardViewFactory.create(card));
+                }
             }
         }
 

@@ -275,6 +275,13 @@ public class GameService {
         }
     }
 
+    public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue, UUID targetPermanentId) {
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            spellCastingService.playCardFromExile(gameData, player, exileCardId, xValue, targetPermanentId);
+        }
+    }
+
     public void tapPermanent(GameData gameData, Player player, int permanentIndex) {
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");

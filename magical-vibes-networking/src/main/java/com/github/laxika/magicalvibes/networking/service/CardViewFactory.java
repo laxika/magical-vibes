@@ -31,6 +31,7 @@ public class CardViewFactory {
         }
 
         return new CardView(
+                card.getId(),
                 card.getName(),
                 card.getType(),
                 card.getAdditionalTypes(),

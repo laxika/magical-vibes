@@ -32,6 +32,7 @@ public record GameStateMessage(
         List<TurnStep> autoStopSteps,
         List<Integer> playableCardIndices,
         List<Integer> playableGraveyardLandIndices,
+        List<CardView> playableExileCards,
         List<String> newLogEntries,
         int searchTaxCost,
         UUID mindControlledPlayerId
@@ -56,6 +57,7 @@ public record GameStateMessage(
             List<TurnStep> autoStopSteps,
             List<Integer> playableCardIndices,
             List<Integer> playableGraveyardLandIndices,
+            List<CardView> playableExileCards,
             List<String> newLogEntries,
             int searchTaxCost,
             UUID mindControlledPlayerId
@@ -63,6 +65,7 @@ public record GameStateMessage(
         this(MessageType.GAME_STATE, status, activePlayerId, turnNumber, currentStep, priorityPlayerId,
                 battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters,
                 hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
-                playableGraveyardLandIndices, newLogEntries, searchTaxCost, mindControlledPlayerId);
+                playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
+                mindControlledPlayerId);
     }
 }

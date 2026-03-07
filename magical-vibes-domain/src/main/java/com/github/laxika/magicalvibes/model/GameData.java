@@ -139,6 +139,8 @@ public class GameData {
 
     /** Maps permanent ID → cards exiled with that permanent (e.g. Knowledge Pool). */
     public final Map<UUID, List<Card>> permanentExiledCards = new ConcurrentHashMap<>();
+    /** Maps exiled card UUID → player UUID who has permission to play it (e.g. Praetor's Grasp). */
+    public final Map<UUID, UUID> exilePlayPermissions = new ConcurrentHashMap<>();
     /** Transient field: tracks which Knowledge Pool permanent is currently resolving a cast choice. */
     public UUID knowledgePoolSourcePermanentId;
 
@@ -472,6 +474,7 @@ public class GameData {
         // --- Per-permanent exile tracking (Knowledge Pool, etc.) ---
         this.permanentExiledCards.forEach((k, v) ->
                 copy.permanentExiledCards.put(k, Collections.synchronizedList(new ArrayList<>(v))));
+        copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
         copy.knowledgePoolSourcePermanentId = this.knowledgePoolSourcePermanentId;
 
         // --- Search tax payments (Leonin Arbiter) ---

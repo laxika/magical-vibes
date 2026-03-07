@@ -390,6 +390,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
     this.playableCardIndices.set(new Set(state.playableCardIndices));
     this.playableGraveyardLandIndices.set(new Set(state.playableGraveyardLandIndices ?? []));
+    this.playableExileCards.set(state.playableExileCards ?? []);
     this.autoStopSteps.set(new Set(state.autoStopSteps));
 
     if (this.choice.awaitingXValueChoice) {
@@ -434,6 +435,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   playableCardIndices = signal(new Set<number>());
   playableGraveyardLandIndices = signal(new Set<number>());
+  playableExileCards = signal<Card[]>([]);
   autoStopSteps = signal(new Set<string>());
   searchTaxCost = signal(0);
 
@@ -452,6 +454,12 @@ export class GameComponent implements OnInit, OnDestroy {
   playGraveyardLand(index: number): void {
     if (this.isGraveyardLandPlayable(index)) {
       this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetPermanentId: null, fromGraveyard: true });
+    }
+  }
+
+  playExileCard(card: Card): void {
+    if (card.id) {
+      this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: 0, targetPermanentId: null, fromExileCardId: card.id });
     }
   }
 

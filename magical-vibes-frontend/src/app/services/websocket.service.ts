@@ -142,6 +142,7 @@ export interface ActivatedAbilityView {
 }
 
 export interface Card {
+  id: string | null;
   name: string;
   type: string;
   additionalTypes: string[];
@@ -287,6 +288,7 @@ export interface GameStateNotification {
   autoStopSteps: string[];
   playableCardIndices: number[];
   playableGraveyardLandIndices: number[];
+  playableExileCards: Card[];
   newLogEntries: string[];
   searchTaxCost: number;
   mindControlledPlayerId?: string | null;

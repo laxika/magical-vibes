@@ -343,10 +343,14 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
-            gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetPermanentId(), request.damageAssignments(),
-                    request.targetPermanentIds() != null ? request.targetPermanentIds() : java.util.List.of(),
-                    request.convokeCreatureIds() != null ? request.convokeCreatureIds() : java.util.List.of(),
-                    Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount());
+            if (request.fromExileCardId() != null) {
+                gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(), request.targetPermanentId());
+            } else {
+                gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetPermanentId(), request.damageAssignments(),
+                        request.targetPermanentIds() != null ? request.targetPermanentIds() : java.util.List.of(),
+                        request.convokeCreatureIds() != null ? request.convokeCreatureIds() : java.util.List.of(),
+                        Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount());
+            }
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

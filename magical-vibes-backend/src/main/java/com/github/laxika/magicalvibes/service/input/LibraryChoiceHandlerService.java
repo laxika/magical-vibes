@@ -387,6 +387,23 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        if (destination == LibrarySearchDestination.EXILE_PLAYABLE) {
+            gameData.playerExiledCards.get(playerId).add(chosenCard);
+            gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
+            if (shuffleAfterSelection) {
+                Collections.shuffle(deck);
+            }
+
+            String logMsg = shuffleAfterSelection
+                    ? player.getUsername() + " exiles a card face down. Library is shuffled."
+                    : player.getUsername() + " exiles a card face down.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - {} exiles {} from library search (with play permission)", gameData.id, player.getUsername(), chosenCard.getName());
+
+            turnProgressionService.resolveAutoPass(gameData);
+            return;
+        }
+
         if (destination == LibrarySearchDestination.TOP_OF_LIBRARY) {
             // Shuffle library first, then put the card on top (MTG rule: "shuffle and put on top")
             if (shuffleAfterSelection) {
@@ -484,7 +501,7 @@ public class LibraryChoiceHandlerService {
             case BATTLEFIELD_TAPPED -> "onto the battlefield tapped";
             case HAND -> "into their hand";
             case EXILE_IMPRINT -> "into exile (imprint)";
-            case EXILE -> "into exile";
+            case EXILE, EXILE_PLAYABLE -> "into exile";
             case TOP_OF_LIBRARY -> "on top of their library";
             case GRAVEYARD -> "into their graveyard";
         };
