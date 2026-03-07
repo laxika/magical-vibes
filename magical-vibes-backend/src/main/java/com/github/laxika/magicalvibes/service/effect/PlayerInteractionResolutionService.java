@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectDrawsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndDrawCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleHandIntoLibraryAndDrawEffect;
@@ -86,6 +87,28 @@ public class PlayerInteractionResolutionService {
 
     @HandlesEffect(DrawCardEffect.class)
     private void resolveDrawCards(GameData gameData, StackEntry entry, DrawCardEffect effect) {
+        applyDrawCards(gameData, entry.getControllerId(), effect.amount());
+    }
+
+    @HandlesEffect(SacrificeSelfAndDrawCardsEffect.class)
+    private void resolveSacrificeSelfAndDrawCards(GameData gameData, StackEntry entry,
+                                                  SacrificeSelfAndDrawCardsEffect effect) {
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId == null) {
+            return;
+        }
+
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (source == null) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    entry.getCard().getName() + "'s ability fizzles — source no longer on the battlefield.");
+            return;
+        }
+
+        permanentRemovalService.removePermanentToGraveyard(gameData, source);
+        gameBroadcastService.logAndBroadcast(gameData,
+                entry.getCard().getName() + " is sacrificed.");
+
         applyDrawCards(gameData, entry.getControllerId(), effect.amount());
     }
 
