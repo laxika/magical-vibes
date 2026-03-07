@@ -176,6 +176,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `ReturnArtifactsTargetPlayerOwnsToHandEffect` | `()` | return all artifacts target player owns to hand |
 | `BounceCreatureOnUpkeepEffect` | `(Scope scope, Set<TargetFilter> filters, String prompt)` | at upkeep, return a creature matching filters. Scope: `SOURCE_CONTROLLER`, `TRIGGER_TARGET_PLAYER` |
 | `ReturnSelfToHandAndCreateTokensEffect` | `(CreateCreatureTokenEffect tokenEffect)` | return source to hand then create tokens (compound upkeep effect, e.g. Thopter Assembly) |
+| `SacrificeEnchantedCreatureAndCreateTokenEffect` | `(CreateCreatureTokenEffect tokenEffect)` | sacrifice the enchanted creature, then create a token for the aura's controller (compound upkeep effect, e.g. Parasitic Implant) |
 | `ReturnDamageSourcePermanentToHandEffect` | `()` | whenever a permanent deals damage to controller, return it to owner's hand (Dissipation Field-style). Use with `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` slot |
 | `DamageSourceControllerGainsControlOfThisPermanentEffect` | `(boolean combatOnly, boolean creatureOnly)` | whenever a permanent deals damage to controller, the damage source's controller gains control of this permanent (Contested War Zone-style). Use with `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` slot. `combatOnly=true` restricts to combat damage only; `creatureOnly=true` restricts to creature damage sources only |
 | `PutTargetOnBottomOfLibraryEffect` | `()` | put target permanent on bottom of owner's library |
