@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -16,7 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -30,11 +33,13 @@ public class CloneService {
     private final LegendRuleService legendRuleService;
     private final BattlefieldEntryService battlefieldEntryService;
 
-    public void applyCloneCopy(Permanent clonePerm, Permanent targetPerm, Integer powerOverride, Integer toughnessOverride) {
+    public void applyCloneCopy(Permanent clonePerm, Permanent targetPerm, Integer powerOverride,
+                               Integer toughnessOverride, Set<CardType> additionalTypesOverride) {
         Card target = targetPerm.getCard();
         Card copy = new Card();
         copy.setName(target.getName());
         copy.setType(target.getType());
+        copy.setAdditionalTypes(target.getAdditionalTypes());
         copy.setManaCost(target.getManaCost());
         copy.setColor(target.getColor());
         copy.setSupertypes(target.getSupertypes());
@@ -59,7 +64,24 @@ public class CloneService {
         for (ActivatedAbility ability : target.getActivatedAbilities()) {
             copy.addActivatedAbility(ability);
         }
+
+        // Apply additional types override (e.g., Phyrexian Metamorph is always an artifact)
+        if (additionalTypesOverride != null && !additionalTypesOverride.isEmpty()) {
+            Set<CardType> merged = EnumSet.noneOf(CardType.class);
+            merged.addAll(copy.getAdditionalTypes());
+            for (CardType overrideType : additionalTypesOverride) {
+                if (overrideType != copy.getType() && !merged.contains(overrideType)) {
+                    merged.add(overrideType);
+                }
+            }
+            copy.setAdditionalTypes(merged);
+        }
+
         clonePerm.setCard(copy);
+    }
+
+    public void applyCloneCopy(Permanent clonePerm, Permanent targetPerm, Integer powerOverride, Integer toughnessOverride) {
+        applyCloneCopy(clonePerm, targetPerm, powerOverride, toughnessOverride, Set.of());
     }
 
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId) {
@@ -83,6 +105,7 @@ public class CloneService {
         gameData.cloneOperation.etbTargetId = targetPermanentId;
         gameData.cloneOperation.powerOverride = copyEffect.powerOverride();
         gameData.cloneOperation.toughnessOverride = copyEffect.toughnessOverride();
+        gameData.cloneOperation.additionalTypesOverride = copyEffect.additionalTypesOverride();
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.CloneCopy());
 
         gameData.pendingMayAbilities.add(new PendingMayAbility(
@@ -101,19 +124,21 @@ public class CloneService {
         UUID etbTargetId = gameData.cloneOperation.etbTargetId;
         Integer powerOverride = gameData.cloneOperation.powerOverride;
         Integer toughnessOverride = gameData.cloneOperation.toughnessOverride;
+        Set<CardType> additionalTypesOverride = gameData.cloneOperation.additionalTypesOverride;
 
         gameData.cloneOperation.card = null;
         gameData.cloneOperation.controllerId = null;
         gameData.cloneOperation.etbTargetId = null;
         gameData.cloneOperation.powerOverride = null;
         gameData.cloneOperation.toughnessOverride = null;
+        gameData.cloneOperation.additionalTypesOverride = Set.of();
 
         Permanent perm = new Permanent(card);
 
         if (targetPermanentId != null) {
             Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetPermanentId);
             if (targetPerm != null) {
-                applyCloneCopy(perm, targetPerm, powerOverride, toughnessOverride);
+                applyCloneCopy(perm, targetPerm, powerOverride, toughnessOverride, additionalTypesOverride);
             }
         }
 

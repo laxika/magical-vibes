@@ -111,6 +111,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB tokens + ability | `s/SiegeGangCommander.java` | CreateCreatureTokenEffect + activated sac ability |
 | ETB copy | `c/Clone.java` | CopyPermanentOnEnterEffect |
 | ETB copy with P/T override | `q/QuicksilverGargantuan.java` | CopyPermanentOnEnterEffect(filter, typeLabel, 7, 7) — "copy except it's 7/7" |
+| ETB copy with type override | `p/PhyrexianMetamorph.java` | CopyPermanentOnEnterEffect(AnyOfPredicate, typeLabel, null, null, Set.of(ARTIFACT)) — "copy except it's also an artifact" |
 | ETB choose color | `v/VoiceOfAll.java` | ProtectionFromChosenColorEffect |
 | ETB choose name | `p/PithingNeedle.java` | ChooseCardNameOnEnterEffect + static lock |
 | ETB choose nonland name | `p/PhyrexianRevoker.java` | ChooseCardNameOnEnterEffect(List.of(LAND)) + static lock — artifact creature variant |
