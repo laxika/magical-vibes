@@ -20,7 +20,7 @@ class OgreMenialTest extends BaseCardTest {
         OgreMenial card = new OgreMenial();
 
         assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().effects().getFirst())
+        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
                 .isInstanceOf(BoostSelfEffect.class);
     }
 
@@ -37,8 +37,8 @@ class OgreMenialTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(perm.getBoostPower()).isEqualTo(1);
-        assertThat(perm.getBoostToughness()).isEqualTo(0);
+        assertThat(perm.getPowerModifier()).isEqualTo(1);
+        assertThat(perm.getToughnessModifier()).isEqualTo(0);
     }
 
     @Test
@@ -56,7 +56,7 @@ class OgreMenialTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(perm.getBoostPower()).isEqualTo(3);
+        assertThat(perm.getPowerModifier()).isEqualTo(3);
     }
 
     // ===== Infect: pumped combat damage deals poison =====
