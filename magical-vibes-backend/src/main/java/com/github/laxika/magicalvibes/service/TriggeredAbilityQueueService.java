@@ -29,20 +29,23 @@ public class TriggeredAbilityQueueService {
         while (!gameData.pendingDeathTriggerTargets.isEmpty()) {
             PermanentChoiceContext.DeathTriggerTarget pending = gameData.pendingDeathTriggerTargets.peekFirst();
 
-            // Check if any effect can target players (any-target effects)
+            // Check which target types the effects support
             boolean canTargetPlayers = pending.effects().stream().anyMatch(e -> e.canTargetPlayer());
+            boolean canTargetPermanents = pending.effects().stream().anyMatch(e -> e.canTargetPermanent());
 
-            // Collect valid creature targets from all battlefields
+            // Collect valid targets based on what the effects can target
             List<UUID> validTargets = new ArrayList<>();
             if (canTargetPlayers) {
                 validTargets.addAll(gameData.orderedPlayerIds);
             }
-            for (UUID pid : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                if (battlefield == null) continue;
-                for (Permanent p : battlefield) {
-                    if (gameQueryService.isCreature(gameData, p)) {
-                        validTargets.add(p.getId());
+            if (canTargetPermanents) {
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                    if (battlefield == null) continue;
+                    for (Permanent p : battlefield) {
+                        if (gameQueryService.isCreature(gameData, p)) {
+                            validTargets.add(p.getId());
+                        }
                     }
                 }
             }
@@ -60,7 +63,8 @@ public class TriggeredAbilityQueueService {
             // Remove from queue and begin permanent choice
             gameData.pendingDeathTriggerTargets.removeFirst();
             gameData.interaction.setPermanentChoiceContext(pending);
-            String targetDescription = canTargetPlayers ? "any target" : "target creature";
+            String targetDescription = (canTargetPlayers && canTargetPermanents) ? "any target"
+                    : canTargetPlayers ? "target player" : "target creature";
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
                     pending.dyingCard().getName() + "'s ability - Choose " + targetDescription + ".");
 

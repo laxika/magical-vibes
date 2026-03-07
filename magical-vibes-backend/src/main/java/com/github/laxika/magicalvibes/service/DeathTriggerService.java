@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,6 +67,14 @@ public class DeathTriggerService {
                 gameData.queueMayAbility(dyingCard, controllerId, mayPay, null);
             } else if (effect instanceof MayEffect may) {
                 gameData.queueMayAbility(dyingCard, controllerId, may);
+            } else if (effect instanceof TargetPlayerLosesLifeEqualToPowerEffect) {
+                // Bake the dying creature's last-known power into a concrete TargetPlayerLosesLifeEffect
+                int power = dyingPermanent != null ? dyingPermanent.getEffectivePower()
+                        : (dyingCard.getPower() != null ? dyingCard.getPower() : 0);
+                CardEffect resolved = new TargetPlayerLosesLifeEffect(Math.max(0, power));
+                gameData.pendingDeathTriggerTargets.add(new PermanentChoiceContext.DeathTriggerTarget(
+                        dyingCard, controllerId, new ArrayList<>(List.of(resolved))
+                ));
             } else if (effect.canTargetPermanent() || effect.canTargetPlayer()) {
                 // Targeted death trigger — queue for target selection after current action completes
                 gameData.pendingDeathTriggerTargets.add(new PermanentChoiceContext.DeathTriggerTarget(
