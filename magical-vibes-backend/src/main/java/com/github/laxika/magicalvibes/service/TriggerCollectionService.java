@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -701,6 +702,10 @@ public class TriggerCollectionService {
     }
 
     public void checkDealtDamageToCreatureTriggers(GameData gameData, Permanent damagedCreature) {
+        checkDealtDamageToCreatureTriggers(gameData, damagedCreature, 0, null);
+    }
+
+    public void checkDealtDamageToCreatureTriggers(GameData gameData, Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId) {
         List<CardEffect> effects = damagedCreature.getCard().getEffects(EffectSlot.ON_DEALT_DAMAGE);
         if (effects.isEmpty()) return;
 
@@ -708,12 +713,16 @@ public class TriggerCollectionService {
         if (controllerId == null) return;
 
         for (CardEffect effect : effects) {
+            CardEffect effectToAdd = effect;
+            if (effect instanceof DamageSourceControllerSacrificesPermanentsEffect && damageDealt > 0 && damageSourceControllerId != null) {
+                effectToAdd = new DamageSourceControllerSacrificesPermanentsEffect(damageDealt, damageSourceControllerId);
+            }
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     damagedCreature.getCard(),
                     controllerId,
                     damagedCreature.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
+                    new ArrayList<>(List.of(effectToAdd)),
                     null,
                     damagedCreature.getId()
             ));

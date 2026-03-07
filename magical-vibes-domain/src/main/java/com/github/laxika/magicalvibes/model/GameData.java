@@ -118,6 +118,8 @@ public class GameData {
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionIds = new ConcurrentHashMap<>();
     public final Set<UUID> permanentsPreventedFromDealingDamage = ConcurrentHashMap.newKeySet();
     public boolean pendingSacrificeAttackingCreature;
+    public int pendingForcedSacrificeCount;
+    public UUID pendingForcedSacrificePlayerId;
     public boolean pendingAwakeningCounterPlacement;
     public UUID pendingTapSubtypeBoostSourcePermanentId;
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
@@ -303,6 +305,8 @@ public class GameData {
         copy.cleanupDiscardPending = this.cleanupDiscardPending;
         copy.combatDamagePhase1Complete = this.combatDamagePhase1Complete;
         copy.pendingSacrificeAttackingCreature = this.pendingSacrificeAttackingCreature;
+        copy.pendingForcedSacrificeCount = this.pendingForcedSacrificeCount;
+        copy.pendingForcedSacrificePlayerId = this.pendingForcedSacrificePlayerId;
         copy.pendingAwakeningCounterPlacement = this.pendingAwakeningCounterPlacement;
         copy.pendingTapSubtypeBoostSourcePermanentId = this.pendingTapSubtypeBoostSourcePermanentId;
 

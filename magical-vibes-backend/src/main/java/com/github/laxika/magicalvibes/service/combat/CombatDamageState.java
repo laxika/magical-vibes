@@ -33,4 +33,8 @@ class CombatDamageState {
     final Map<Permanent, Integer> combatDamageDealtToPlayer = new HashMap<>();
     final Map<Permanent, List<UUID>> combatDamageDealtToCreatures = new HashMap<>();
     final Map<Permanent, UUID> combatDamageDealerControllers = new HashMap<>();
+
+    // Per-source damage amounts to each target creature (for ON_DEALT_DAMAGE triggers needing damage amount)
+    // Key: source permanent, Value: map of target creature ID -> damage amount
+    final Map<Permanent, Map<UUID, Integer>> combatDamageAmountsToCreatures = new HashMap<>();
 }

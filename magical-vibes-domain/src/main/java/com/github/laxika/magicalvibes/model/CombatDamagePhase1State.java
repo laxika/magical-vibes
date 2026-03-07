@@ -15,6 +15,7 @@ public class CombatDamagePhase1State {
     public final Map<UUID, Integer> combatDamageDealtToPlayer;
     public final Map<UUID, List<UUID>> combatDamageDealtToCreatures;
     public final Map<UUID, UUID> combatDamageDealerControllers;
+    public final Map<UUID, Map<UUID, Integer>> combatDamageAmountsToCreatures;
     public final int damageToDefendingPlayer;
     public final int damageRedirectedToGuard;
     public final Map<Integer, List<Integer>> blockerMap;
@@ -31,6 +32,7 @@ public class CombatDamagePhase1State {
             Map<UUID, Integer> combatDamageDealtToPlayer,
             Map<UUID, List<UUID>> combatDamageDealtToCreatures,
             Map<UUID, UUID> combatDamageDealerControllers,
+            Map<UUID, Map<UUID, Integer>> combatDamageAmountsToCreatures,
             int damageToDefendingPlayer,
             int damageRedirectedToGuard,
             Map<Integer, List<Integer>> blockerMap,
@@ -45,6 +47,7 @@ public class CombatDamagePhase1State {
         this.combatDamageDealtToPlayer = combatDamageDealtToPlayer;
         this.combatDamageDealtToCreatures = combatDamageDealtToCreatures;
         this.combatDamageDealerControllers = combatDamageDealerControllers;
+        this.combatDamageAmountsToCreatures = combatDamageAmountsToCreatures;
         this.damageToDefendingPlayer = damageToDefendingPlayer;
         this.damageRedirectedToGuard = damageRedirectedToGuard;
         this.blockerMap = blockerMap;

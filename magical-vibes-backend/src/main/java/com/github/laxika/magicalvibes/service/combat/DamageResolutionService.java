@@ -437,9 +437,12 @@ public class DamageResolutionService {
             graveyardService.recordCreatureDamagedByPermanent(gameData, entry.getSourcePermanentId(), target, damage);
         }
 
-        // Fire ON_DEALT_DAMAGE triggers (e.g. Nested Ghoul)
+        // Fire ON_DEALT_DAMAGE triggers (e.g. Nested Ghoul, Phyrexian Obliterator)
         if (damage > 0) {
-            triggerCollectionService.checkDealtDamageToCreatureTriggers(gameData, target);
+            UUID sourceControllerId = damageSource != null
+                    ? gameQueryService.findPermanentController(gameData, damageSource.getId())
+                    : entry.getControllerId();
+            triggerCollectionService.checkDealtDamageToCreatureTriggers(gameData, target, damage, sourceControllerId);
         }
 
         String sourceName = damageSource != null ? damageSource.getCard().getName() : entry.getCard().getName();

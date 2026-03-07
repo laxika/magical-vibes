@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
@@ -630,19 +631,28 @@ public class CombatDamageService {
         }
     }
 
-    private record DealtDamageTriggerData(Card card, UUID permanentId, UUID controllerId) {}
+    private record DealtDamageTriggerData(Card card, UUID permanentId, UUID controllerId, int damageDealt, UUID sourceControllerId) {}
 
     private List<DealtDamageTriggerData> collectDealtDamageTriggerData(GameData gameData, CombatDamageState state) {
         List<DealtDamageTriggerData> triggers = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
         for (var entry : state.combatDamageDealtToCreatures.entrySet()) {
+            Permanent source = entry.getKey();
+            UUID sourceControllerId = state.combatDamageDealerControllers.get(source);
+            Map<UUID, Integer> damageAmounts = state.combatDamageAmountsToCreatures.getOrDefault(source, Map.of());
             for (UUID targetId : entry.getValue()) {
+                // Deduplicate: same source + target pair may appear twice (double strike phases)
+                String key = source.getId() + ":" + targetId;
+                if (!seen.add(key)) continue;
+
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) continue;
                 List<CardEffect> effects = target.getCard().getEffects(EffectSlot.ON_DEALT_DAMAGE);
                 if (effects.isEmpty()) continue;
                 UUID controllerId = CombatHelper.findControllerOf(gameData, target);
                 if (controllerId == null) continue;
-                triggers.add(new DealtDamageTriggerData(target.getCard(), target.getId(), controllerId));
+                int damageAmount = damageAmounts.getOrDefault(targetId, 0);
+                triggers.add(new DealtDamageTriggerData(target.getCard(), target.getId(), controllerId, damageAmount, sourceControllerId));
             }
         }
         return triggers;
@@ -651,12 +661,16 @@ public class CombatDamageService {
     private void processDealtDamageTriggers(GameData gameData, List<DealtDamageTriggerData> triggerData) {
         for (DealtDamageTriggerData data : triggerData) {
             for (CardEffect effect : data.card().getEffects(EffectSlot.ON_DEALT_DAMAGE)) {
+                CardEffect effectToAdd = effect;
+                if (effect instanceof DamageSourceControllerSacrificesPermanentsEffect && data.damageDealt() > 0 && data.sourceControllerId() != null) {
+                    effectToAdd = new DamageSourceControllerSacrificesPermanentsEffect(data.damageDealt(), data.sourceControllerId());
+                }
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         data.card(),
                         data.controllerId(),
                         data.card().getName() + "'s ability",
-                        new ArrayList<>(List.of(effect)),
+                        new ArrayList<>(List.of(effectToAdd)),
                         null,
                         data.permanentId()
                 ));
@@ -831,6 +845,9 @@ public class CombatDamageService {
         if (damage <= 0) return;
         state.combatDamageDealerControllers.putIfAbsent(source, controllerId);
         state.combatDamageDealtToCreatures.computeIfAbsent(source, ignored -> new ArrayList<>()).add(target.getId());
+        state.combatDamageAmountsToCreatures
+                .computeIfAbsent(source, ignored -> new HashMap<>())
+                .merge(target.getId(), damage, Integer::sum);
         graveyardService.recordCreatureDamagedByPermanent(gameData, source.getId(), target, damage);
     }
 
@@ -884,6 +901,10 @@ public class CombatDamageService {
             Permanent perm = gameQueryService.findPermanentById(gameData, e.getKey());
             if (perm != null) state.combatDamageDealerControllers.put(perm, e.getValue());
         }
+        for (var e : p1.combatDamageAmountsToCreatures.entrySet()) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, e.getKey());
+            if (perm != null) state.combatDamageAmountsToCreatures.put(perm, new HashMap<>(e.getValue()));
+        }
         state.deathtouchDamagedAttackerIndices.addAll(p1.deathtouchDamagedAttackerIndices);
         state.deathtouchDamagedDefenderIndices.addAll(p1.deathtouchDamagedDefenderIndices);
     }
@@ -907,10 +928,15 @@ public class CombatDamageService {
         for (var e : state.combatDamageDealerControllers.entrySet()) {
             dealerControllersByUUID.put(e.getKey().getId(), e.getValue());
         }
+        Map<UUID, Map<UUID, Integer>> damageAmountsByUUID = new HashMap<>();
+        for (var e : state.combatDamageAmountsToCreatures.entrySet()) {
+            damageAmountsByUUID.put(e.getKey().getId(), new HashMap<>(e.getValue()));
+        }
         return new CombatDamagePhase1State(
                 new TreeSet<>(state.deadAttackerIndices), new TreeSet<>(state.deadDefenderIndices),
                 new HashMap<>(state.atkDamageTaken), new HashMap<>(state.defDamageTaken),
                 dealtByUUID, dealtToPlayerByUUID, dealtToCreaturesByUUID, dealerControllersByUUID,
+                damageAmountsByUUID,
                 state.damageToDefendingPlayer, state.damageRedirectedToGuard,
                 new LinkedHashMap<>(blockerMap), anyFirstStrike,
                 new HashSet<>(state.deathtouchDamagedAttackerIndices), new HashSet<>(state.deathtouchDamagedDefenderIndices));

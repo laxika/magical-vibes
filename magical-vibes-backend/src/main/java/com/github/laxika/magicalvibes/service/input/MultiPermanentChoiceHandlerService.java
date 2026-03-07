@@ -89,6 +89,8 @@ public class MultiPermanentChoiceHandlerService {
             handleSacrificeSelfToDestroy(gameData, playerId, permanentIds);
         } else if (gameData.pendingSacrificeAttackingCreature) {
             handleSacrificeAttackingCreature(gameData, permanentIds);
+        } else if (gameData.pendingForcedSacrificeCount > 0) {
+            handleForcedSacrifice(gameData, permanentIds);
         } else if (gameData.pendingCombatDamageBounceTargetPlayerId != null) {
             handleCombatDamageBounce(gameData, playerId, permanentIds);
         } else if (gameData.pendingAwakeningCounterPlacement) {
@@ -169,6 +171,34 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
 
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleForcedSacrifice(GameData gameData, List<UUID> permanentIds) {
+        UUID sacrificingPlayerId = gameData.pendingForcedSacrificePlayerId;
+        gameData.pendingForcedSacrificeCount = 0;
+        gameData.pendingForcedSacrificePlayerId = null;
+
+        for (UUID permId : permanentIds) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+            if (perm != null) {
+                permanentRemovalService.removePermanentToGraveyard(gameData, perm);
+                String ownerName = sacrificingPlayerId != null ? gameData.playerIdToName.get(sacrificingPlayerId) : "Unknown";
+                String logEntry = ownerName + " sacrifices " + perm.getCard().getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} sacrifices {}", gameData.id, ownerName, perm.getCard().getName());
+            }
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
         stateBasedActionService.performStateBasedActions(gameData);
 
         if (!gameData.pendingMayAbilities.isEmpty()) {
