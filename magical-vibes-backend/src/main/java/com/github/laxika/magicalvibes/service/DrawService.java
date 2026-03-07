@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCannotDrawCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,13 @@ public class DrawService {
     private final GameOutcomeService gameOutcomeService;
 
     public void resolveDrawCard(GameData gameData, UUID playerId) {
+        if (isDrawPrevented(gameData)) {
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameBroadcastService.logAndBroadcast(gameData, playerName + " can't draw a card.");
+            log.info("Game {} - {} can't draw (draw prevention in effect)", gameData.id, playerName);
+            return;
+        }
+
         Card abundanceSource = findAbundanceSourceCard(gameData, playerId);
         if (abundanceSource != null) {
             gameData.pendingMayAbilities.add(new PendingMayAbility(
@@ -58,6 +66,13 @@ public class DrawService {
     }
 
     public void resolveDrawCardWithoutStaticReplacementCheck(GameData gameData, UUID playerId) {
+        if (isDrawPrevented(gameData)) {
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameBroadcastService.logAndBroadcast(gameData, playerName + " can't draw a card.");
+            log.info("Game {} - {} can't draw (draw prevention in effect)", gameData.id, playerName);
+            return;
+        }
+
         UUID replacementController = gameData.drawReplacementTargetToController.get(playerId);
         if (replacementController != null) {
             String playerName = gameData.playerIdToName.get(playerId);
@@ -76,6 +91,19 @@ public class DrawService {
         }
 
         performDrawCard(gameData, playerId);
+    }
+
+    private boolean isDrawPrevented(GameData gameData) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent perm : battlefield) {
+                boolean prevents = perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof PlayersCannotDrawCardsEffect);
+                if (prevents) return true;
+            }
+        }
+        return false;
     }
 
     private Card findAbundanceSourceCard(GameData gameData, UUID playerId) {

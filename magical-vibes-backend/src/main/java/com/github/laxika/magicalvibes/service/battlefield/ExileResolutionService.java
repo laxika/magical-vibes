@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
+import com.github.laxika.magicalvibes.model.effect.OmenMachineDrawStepEffect;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -54,6 +55,7 @@ public class ExileResolutionService {
     private final PlayerInputService playerInputService;
     private final CardViewFactory cardViewFactory;
     private final TriggerCollectionService triggerCollectionService;
+    private final BattlefieldEntryService battlefieldEntryService;
 
     /**
      * Exiles one or more target permanents. Supports both single-target and multi-target modes.
@@ -600,6 +602,102 @@ public class ExileResolutionService {
 
         triggerCollectionService.checkSpellCastTriggers(gameData, chosenCard, playerId, false);
         gameBroadcastService.broadcastGameState(gameData);
+    }
+
+    @HandlesEffect(OmenMachineDrawStepEffect.class)
+    void resolveOmenMachineDrawStep(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+        String sourceName = entry.getCard().getName();
+
+        if (deck == null || deck.isEmpty()) {
+            String logEntry = playerName + "'s library is empty (" + sourceName + ").";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} library empty for Omen Machine trigger", gameData.id, playerName);
+            return;
+        }
+
+        // Exile the top card
+        Card topCard = deck.removeFirst();
+        gameData.playerExiledCards.get(targetPlayerId).add(topCard);
+
+        String exileLog = playerName + " exiles " + topCard.getName() + " (" + sourceName + ").";
+        gameBroadcastService.logAndBroadcast(gameData, exileLog);
+        log.info("Game {} - {} exiles {} (Omen Machine)", gameData.id, playerName, topCard.getName());
+
+        if (topCard.getType() == CardType.LAND) {
+            // Land — put onto the battlefield
+            gameData.playerExiledCards.get(targetPlayerId).remove(topCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, new Permanent(topCard));
+
+            String landLog = playerName + " puts " + topCard.getName() + " onto the battlefield.";
+            gameBroadcastService.logAndBroadcast(gameData, landLog);
+            log.info("Game {} - {} puts {} onto battlefield (Omen Machine)", gameData.id, playerName, topCard.getName());
+
+            battlefieldEntryService.processCreatureETBEffects(gameData, targetPlayerId, topCard, null, false);
+        } else {
+            // Non-land — cast without paying mana cost if able
+            gameData.playerExiledCards.get(targetPlayerId).remove(topCard);
+
+            StackEntryType spellType = mapCardTypeToSpellType(topCard);
+            List<CardEffect> spellEffects = new ArrayList<>(topCard.getEffects(EffectSlot.SPELL));
+
+            if (topCard.isNeedsTarget()) {
+                // Targeted spell — need to choose a target
+                List<UUID> validTargets = new ArrayList<>();
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                    if (battlefield == null) continue;
+                    for (Permanent p : battlefield) {
+                        if (topCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
+                            if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+                                validTargets.add(p.getId());
+                            }
+                        } else if (gameQueryService.isCreature(gameData, p)) {
+                            validTargets.add(p.getId());
+                        }
+                    }
+                }
+                boolean canTargetPlayer = spellEffects.stream().anyMatch(CardEffect::canTargetPlayer);
+                if (canTargetPlayer) {
+                    validTargets.addAll(gameData.orderedPlayerIds);
+                }
+
+                if (validTargets.isEmpty()) {
+                    // Can't cast — card stays in exile
+                    gameData.playerExiledCards.get(targetPlayerId).add(topCard);
+                    String noTargetLog = topCard.getName() + " has no valid targets and remains in exile.";
+                    gameBroadcastService.logAndBroadcast(gameData, noTargetLog);
+                    log.info("Game {} - {} can't be cast (no targets), stays in exile", gameData.id, topCard.getName());
+                    return;
+                }
+
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.ExileCastSpellTarget(topCard, targetPlayerId, spellEffects, spellType));
+                playerInputService.beginPermanentChoice(gameData, targetPlayerId, validTargets,
+                        "Choose a target for " + topCard.getName() + ".");
+
+                String castLog = playerName + " casts " + topCard.getName() + " without paying its mana cost — choosing target.";
+                gameBroadcastService.logAndBroadcast(gameData, castLog);
+                log.info("Game {} - {} casts {} (Omen Machine), choosing target", gameData.id, playerName, topCard.getName());
+            } else {
+                // Non-targeted spell — put directly on stack
+                gameData.stack.add(new StackEntry(
+                        spellType, topCard, targetPlayerId, topCard.getName(),
+                        spellEffects, 0, (UUID) null, null
+                ));
+
+                gameData.spellsCastThisTurn.merge(targetPlayerId, 1, Integer::sum);
+                gameData.priorityPassedBy.clear();
+
+                String castLog = playerName + " casts " + topCard.getName() + " without paying its mana cost.";
+                gameBroadcastService.logAndBroadcast(gameData, castLog);
+                log.info("Game {} - {} casts {} (Omen Machine) without paying mana", gameData.id, playerName, topCard.getName());
+
+                triggerCollectionService.checkSpellCastTriggers(gameData, topCard, targetPlayerId, false);
+            }
+        }
     }
 
     private StackEntryType mapCardTypeToSpellType(Card card) {
