@@ -348,6 +348,14 @@ public class GameTestHarness {
         }
     }
 
+    public void addCreatureMana(Player player, ManaColor color, int amount) {
+        ManaPool pool = gameData.playerManaPools.get(player.getId());
+        for (int i = 0; i < amount; i++) {
+            pool.add(color);
+        }
+        pool.addCreatureMana(color, amount);
+    }
+
     public void addToBattlefield(Player player, Card card) {
         gameData.playerBattlefields.get(player.getId()).add(new Permanent(card));
     }
@@ -477,6 +485,10 @@ public class GameTestHarness {
     public void castAndResolveSorcery(Player player, int cardIndex, List<UUID> targetPermanentIds) {
         castSorcery(player, cardIndex, targetPermanentIds);
         passBothPriorities();
+    }
+
+    public void tapPermanent(Player player, int permanentIndex) {
+        gameService.tapPermanent(gameData, player, permanentIndex);
     }
 
     public void sacrificePermanent(Player player, int permanentIndex, UUID targetPermanentId) {

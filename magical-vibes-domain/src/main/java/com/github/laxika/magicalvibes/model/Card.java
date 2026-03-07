@@ -54,6 +54,7 @@ public class Card {
     @Setter private boolean token;
     @Setter private boolean entersTapped;
     @Setter private List<TargetFilter> multiTargetFilters = List.of();
+    @Setter private boolean requiresCreatureMana;
     @Setter private Card imprintedCard;
 
     @Getter(AccessLevel.NONE)

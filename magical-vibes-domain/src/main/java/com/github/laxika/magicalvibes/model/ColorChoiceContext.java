@@ -9,7 +9,7 @@ public sealed interface ColorChoiceContext {
 
     record TextChangeToWord(UUID targetPermanentId, String fromWord, boolean isColor) implements ColorChoiceContext {}
 
-    record ManaColorChoice(UUID playerId) implements ColorChoiceContext {}
+    record ManaColorChoice(UUID playerId, boolean fromCreature) implements ColorChoiceContext {}
 
     record DrawReplacementChoice(UUID playerId, DrawReplacementKind kind) implements ColorChoiceContext {}
 

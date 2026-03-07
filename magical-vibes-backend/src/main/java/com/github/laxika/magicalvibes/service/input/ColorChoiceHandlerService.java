@@ -128,6 +128,9 @@ public class ColorChoiceHandlerService {
 
         ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
         manaPool.add(manaColor);
+        if (ctx.fromCreature()) {
+            manaPool.addCreatureMana(manaColor, 1);
+        }
 
         String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase() + " mana.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);

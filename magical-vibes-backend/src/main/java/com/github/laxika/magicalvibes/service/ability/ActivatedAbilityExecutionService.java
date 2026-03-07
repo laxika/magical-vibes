@@ -223,9 +223,13 @@ public class ActivatedAbilityExecutionService {
     }
 
     private void resolveManaAbility(GameData gameData, UUID playerId, Player player, Permanent permanent, List<CardEffect> snapshotEffects) {
+        boolean isCreatureSource = gameQueryService.isCreature(gameData, permanent);
         for (CardEffect effect : snapshotEffects) {
             if (effect instanceof AwardManaEffect award) {
                 gameData.playerManaPools.get(playerId).add(award.color(), award.amount());
+                if (isCreatureSource) {
+                    gameData.playerManaPools.get(playerId).addCreatureMana(award.color(), award.amount());
+                }
             } else if (effect instanceof DoubleManaPoolEffect) {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 for (ManaColor color : ManaColor.values()) {
@@ -235,7 +239,7 @@ public class ActivatedAbilityExecutionService {
                     }
                 }
             } else if (effect instanceof AwardAnyColorManaEffect) {
-                ColorChoiceContext.ManaColorChoice choiceContext = new ColorChoiceContext.ManaColorChoice(playerId);
+                ColorChoiceContext.ManaColorChoice choiceContext = new ColorChoiceContext.ManaColorChoice(playerId, isCreatureSource);
                 gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 sessionManager.sendToPlayer(playerId, new ChooseColorMessage(colors, "Choose a color of mana to add."));

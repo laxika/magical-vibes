@@ -138,6 +138,7 @@ public class AbilityActivationService {
         permanent.tap();
 
         ManaPool manaPool = gameData.playerManaPools.get(playerId);
+        boolean isCreatureSource = gameQueryService.isCreature(gameData, permanent);
         if (overriddenManaColor != null) {
             // Land type is overridden — produce the new basic land type's mana instead of original
             manaPool.add(overriddenManaColor, 1);
@@ -145,6 +146,9 @@ public class AbilityActivationService {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
                 if (effect instanceof AwardManaEffect awardMana) {
                     manaPool.add(awardMana.color(), awardMana.amount());
+                    if (isCreatureSource) {
+                        manaPool.addCreatureMana(awardMana.color(), awardMana.amount());
+                    }
                 }
             }
         }

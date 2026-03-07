@@ -177,6 +177,16 @@ public class SpellCastingService {
             }
         }
 
+        // Validate creature-only mana restriction (e.g. Myr Superion)
+        if (card.isRequiresCreatureMana()) {
+            ManaCost creatureCost = new ManaCost(card.getManaCost());
+            ManaPool creaturePool = gameData.playerManaPools.get(playerId);
+            int additionalCostForCreature = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
+            if (!creatureCost.canPayCreatureOnly(creaturePool, additionalCostForCreature)) {
+                throw new IllegalStateException("Can only spend mana produced by creatures to cast this spell");
+            }
+        }
+
         // Validate spell target (targeting a spell on the stack)
         if (card.isNeedsSpellTarget()) {
             targetLegalityService.validateSpellTargetOnStack(gameData, targetPermanentId, card.getTargetFilter(), playerId);

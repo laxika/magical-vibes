@@ -119,6 +119,25 @@ public class ManaCost {
         return phyrexianCosts.values().stream().mapToInt(Integer::intValue).sum();
     }
 
+    public boolean canPayCreatureOnly(ManaPool pool) {
+        return canPayCreatureOnly(pool, 0);
+    }
+
+    public boolean canPayCreatureOnly(ManaPool pool, int additionalGenericCost) {
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            if (pool.getCreatureMana(entry.getKey()) < entry.getValue()) {
+                return false;
+            }
+        }
+
+        int remaining = pool.getCreatureManaTotal();
+        for (int count : coloredCosts.values()) {
+            remaining -= count;
+        }
+
+        return remaining >= genericCost + additionalGenericCost;
+    }
+
     public boolean canPay(ManaPool pool) {
         return canPay(pool, 0);
     }
