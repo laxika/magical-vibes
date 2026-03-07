@@ -190,7 +190,7 @@ All graveyard-to-hand and graveyard-to-battlefield return effects are handled by
 **Canonical constructor:**
 ```
 ReturnCardFromGraveyardEffect(
-    GraveyardChoiceDestination destination,  // HAND or BATTLEFIELD
+    GraveyardChoiceDestination destination,  // HAND, BATTLEFIELD, or TOP_OF_OWNERS_LIBRARY
     CardPredicate filter,                    // which cards qualify (null = any)
     GraveyardSearchScope source,             // CONTROLLERS_GRAVEYARD, ALL_GRAVEYARDS, OPPONENT_GRAVEYARD
     boolean targetGraveyard,                 // true = player chooses whose graveyard to search at cast time
@@ -240,6 +240,7 @@ Pass `null` as filter to allow any card.
 |-------|---------|
 | `HAND` | return chosen card(s) to hand |
 | `BATTLEFIELD` | put chosen card(s) onto battlefield |
+| `TOP_OF_OWNERS_LIBRARY` | put card on top of its owner's library (e.g. Noxious Revival) |
 
 **Migration from old effects:**
 
@@ -270,6 +271,7 @@ Pass `null` as filter to allow any card.
 | Squee, Goblin Nabob | `ReturnCardFromGraveyardEffect(HAND, new CardIsSelfPredicate(), CONTROLLERS_GRAVEYARD, false, true, false, null)` — self-return |
 | No Rest for the Wicked | `ReturnCardFromGraveyardEffect(HAND, new CardTypePredicate(CREATURE), CONTROLLERS_GRAVEYARD, false, true, true, null, false)` — all creatures that died this turn |
 | Razor Hippogriff | `ReturnCardFromGraveyardEffect(HAND, new CardTypePredicate(ARTIFACT), CONTROLLERS_GRAVEYARD, false, false, false, null, true)` — artifact to hand + gain life equal to mana value |
+| Noxious Revival | `ReturnCardFromGraveyardEffect(TOP_OF_OWNERS_LIBRARY, null, ALL_GRAVEYARDS, true, false, false, null, false, false)` — any card from any graveyard on top of owner's library |
 
 ### Other graveyard effects
 

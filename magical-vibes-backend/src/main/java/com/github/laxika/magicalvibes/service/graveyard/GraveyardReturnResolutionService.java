@@ -141,8 +141,17 @@ public class GraveyardReturnResolutionService {
             return;
         }
 
+        // For TOP_OF_OWNERS_LIBRARY, find the graveyard owner before removal
+        UUID destinationPlayerId = controllerId;
+        if (effect.destination() == GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY) {
+            UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
+            if (ownerId != null) {
+                destinationPlayerId = ownerId;
+            }
+        }
+
         permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
-        moveCardToDestination(gameData, controllerId, targetCard, effect.destination());
+        moveCardToDestination(gameData, destinationPlayerId, targetCard, effect.destination());
 
         if (effect.gainLifeEqualToManaValue()) {
             applyLifeGainEqualToManaValue(gameData, controllerId, targetCard);
@@ -373,15 +382,19 @@ public class GraveyardReturnResolutionService {
         }
     }
 
-    private void moveCardToDestination(GameData gameData, UUID controllerId, Card card,
+    private void moveCardToDestination(GameData gameData, UUID playerId, Card card,
                                        GraveyardChoiceDestination destination) {
-        String playerName = gameData.playerIdToName.get(controllerId);
+        String playerName = gameData.playerIdToName.get(playerId);
         if (destination == GraveyardChoiceDestination.HAND) {
-            gameData.playerHands.get(controllerId).add(card);
+            gameData.playerHands.get(playerId).add(card);
             String logEntry = playerName + " returns " + card.getName() + " from graveyard to hand.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else if (destination == GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY) {
+            gameData.playerDecks.get(playerId).addFirst(card);
+            String logEntry = playerName + " puts " + card.getName() + " on top of their library from a graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else {
-            putCardOntoBattlefield(gameData, controllerId, card);
+            putCardOntoBattlefield(gameData, playerId, card);
         }
     }
 

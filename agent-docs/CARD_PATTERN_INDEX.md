@@ -61,6 +61,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Graveyard return (to hand) | `r/Recollect.java` | ReturnCardFromGraveyardEffect(HAND, null, true) — any card, targets graveyard |
 | Graveyard return (multi-target to hand) | `m/MorbidPlunder.java` | ReturnTargetCardsFromGraveyardToHandEffect(CardTypePredicate(CREATURE), 2) — up to N target cards to hand |
 | Graveyard return (to battlefield) | `b/BeaconOfUnrest.java` | ReturnCardFromGraveyardEffect(BATTLEFIELD, CardAnyOfPredicate, ALL_GRAVEYARDS) |
+| Graveyard to top of owner's library | `n/NoxiousRevival.java` | ReturnCardFromGraveyardEffect(TOP_OF_OWNERS_LIBRARY, null, ALL_GRAVEYARDS, true, ...) — any card from any graveyard on top of owner's library. Phyrexian mana |
 | Graveyard to top of library + draw | `f/FranticSalvage.java` | PutTargetCardsFromGraveyardOnTopOfLibraryEffect(CardTypePredicate(ARTIFACT)) + DrawCardEffect — any number of target artifact cards, multi-graveyard targeting at cast time |
 | Prevent combat damage | `h/HolyDay.java` | PreventAllCombatDamageEffect |
 | Steal creature (temp) | `t/Threaten.java` | GainControlOfTargetCreatureUntilEndOfTurn + haste + untap |
