@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -396,6 +397,9 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryIsSingleTargetPredicate) {
             return isSingleTargetSpell(stackEntry);
+        }
+        if (predicate instanceof StackEntryManaValuePredicate manaValuePredicate) {
+            return stackEntry.getCard().getManaValue() == manaValuePredicate.manaValue();
         }
         if (predicate instanceof StackEntryTargetsYourPermanentPredicate) {
             return targetsAPermanentControlledBy(gameData, stackEntry, controllerId);

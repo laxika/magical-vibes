@@ -304,6 +304,7 @@ Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon
 |-----------|-------------|---------|
 | `StackEntryTypeInPredicate` | `(Set<StackEntryType>)` | spells of specific types |
 | `StackEntryColorInPredicate` | `(Set<CardColor>)` | spells of specific colors |
+| `StackEntryManaValuePredicate` | `(int manaValue)` | spells with exact mana value |
 | `StackEntryIsSingleTargetPredicate` | `()` | spells with exactly one target |
 | `StackEntryAllOfPredicate` | `(List<StackEntryPredicate>)` | AND composition |
 | `StackEntryAnyOfPredicate` | `(List<StackEntryPredicate>)` | OR composition |
