@@ -499,6 +499,12 @@ public class SpellCastingService {
                         StackEntryType.INSTANT_SPELL, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, targetPermanentIds
                 ));
+            } else if (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.INSTANT_SPELL, card, playerId, card.getName(),
+                        filteredSpellEffects, resolvedXValue, targetPermanentId, null,
+                        Map.of(), Zone.GRAVEYARD, List.of(), List.of()
+                ));
             } else {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.INSTANT_SPELL, card, playerId, card.getName(),

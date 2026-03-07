@@ -48,9 +48,9 @@ class PraetorsGraspTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
         // All cards should be shown, not filtered by type
-        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(3);
+        assertThat(gd.interaction.librarySearch().cards()).hasSize(3);
     }
 
     // ===== Exile with play permission =====

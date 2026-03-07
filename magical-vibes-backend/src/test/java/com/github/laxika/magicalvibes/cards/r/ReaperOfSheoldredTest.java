@@ -130,10 +130,7 @@ class ReaperOfSheoldredTest extends BaseCardTest {
                 blocker2.getId(), 1
         ));
 
-        // Resolve combat damage and all triggers
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        // Combat damage and triggers are auto-resolved by handleCombatDamageAssigned
 
         // Player2 should have 2 poison counters (one per blocker source)
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
