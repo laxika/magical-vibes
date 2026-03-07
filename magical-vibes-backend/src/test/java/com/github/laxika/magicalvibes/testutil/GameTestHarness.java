@@ -72,7 +72,12 @@ import com.github.laxika.magicalvibes.service.input.MayMiscHandlerService;
 import com.github.laxika.magicalvibes.service.input.MayPenaltyChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.XValueChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.effect.CreatureModResolutionService;
+import com.github.laxika.magicalvibes.service.effect.AnimationResolutionService;
+import com.github.laxika.magicalvibes.service.effect.BoostResolutionService;
+import com.github.laxika.magicalvibes.service.effect.CombatRestrictionResolutionService;
+import com.github.laxika.magicalvibes.service.effect.KeywordGrantResolutionService;
+import com.github.laxika.magicalvibes.service.effect.PermanentCounterResolutionService;
+import com.github.laxika.magicalvibes.service.effect.TapUntapResolutionService;
 import com.github.laxika.magicalvibes.service.effect.CardSpecificResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.EquipResolutionService;
@@ -212,7 +217,12 @@ public class GameTestHarness {
                 new GraveyardReturnResolutionService(battlefieldEntryService, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService),
                 new BounceResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService),
                 lifeResolutionService,
-                new CreatureModResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService),
+                new AnimationResolutionService(gameQueryService, gameBroadcastService),
+                new BoostResolutionService(gameQueryService, gameBroadcastService, playerInputService),
+                new KeywordGrantResolutionService(gameQueryService, gameBroadcastService, playerInputService),
+                new CombatRestrictionResolutionService(gameQueryService, gameBroadcastService),
+                new TapUntapResolutionService(gameQueryService, gameBroadcastService, triggerCollectionService),
+                new PermanentCounterResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService),
                 playerInteractionResolutionService,
                 new PermanentControlResolutionService(battlefieldEntryService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService, creatureControlService),
                 new TurnResolutionService(combatService, gameBroadcastService, auraAttachmentService),
