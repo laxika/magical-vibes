@@ -139,7 +139,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `SacrificeSelfCost` | `()` | sacrifice this permanent as cost |
-| `SacrificeCreatureCost` | `()` or `(boolean trackSacrificedManaValue)` | sacrifice a creature as cost. When `trackSacrificedManaValue=true`, the sacrificed creature's mana value is stored in the StackEntry's xValue for use by effects like `SearchLibraryForCreatureWithExactMVToBattlefieldEffect` (e.g. Birthing Pod) |
+| `SacrificeCreatureCost` | `()` or `(boolean trackSacrificedManaValue)` or `(boolean trackSacrificedManaValue, boolean trackSacrificedPower)` | sacrifice a creature as cost. When `trackSacrificedManaValue=true`, the sacrificed creature's mana value is stored in the StackEntry's xValue (e.g. Birthing Pod). When `trackSacrificedPower=true`, the sacrificed creature's effective power (including static bonuses) is stored in xValue (e.g. Ichor Explosion) |
 | `SacrificeSubtypeCreatureCost` | `(CardSubtype subtype)` | sacrifice a creature of specific subtype as cost |
 | `SacrificeArtifactCost` | `()` | sacrifice an artifact as cost (works for both activated abilities and spell costs) |
 | `SacrificePermanentCost` | `(PermanentPredicate filter, String description)` | sacrifice a permanent matching filter as cost. Uses `GameQueryService.matchesPermanentPredicate()` for validation. E.g. `new SacrificePermanentCost(new PermanentAnyOfPredicate(List.of(new PermanentIsArtifactPredicate(), new PermanentIsCreaturePredicate())), "Sacrifice an artifact or creature")` |

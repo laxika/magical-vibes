@@ -609,6 +609,9 @@ public class AbilityActivationService {
             if (sacCost.trackSacrificedManaValue()) {
                 effectiveXValue = sacTarget.getCard().getManaValue();
             }
+            if (sacCost.trackSacrificedPower()) {
+                effectiveXValue = gameQueryService.getEffectivePower(gameData, sacTarget);
+            }
 
             sacrificePermanentAsCost(gameData, player, sacTarget);
 

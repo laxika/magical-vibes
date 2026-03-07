@@ -331,7 +331,13 @@ public class SpellCastingService {
             int resolvedXValue = effectiveXValue;
             paySpellManaCost(gameData, playerId, card, resolvedXValue, convokeContributions, phyrexianLifeCount);
             if (usesSacrificeCreatureCost) {
-                paySacrificeCreatureCost(gameData, player, card, sacrificePermanentId);
+                int sacrificedPower = paySacrificeCreatureCost(gameData, player, card, sacrificePermanentId);
+                SacrificeCreatureCost sacCreatureCost = (SacrificeCreatureCost) card.getEffects(EffectSlot.SPELL).stream()
+                        .filter(SacrificeCreatureCost.class::isInstance)
+                        .findFirst().orElseThrow();
+                if (sacCreatureCost.trackSacrificedPower()) {
+                    resolvedXValue = sacrificedPower;
+                }
             }
             if (usesSacrificeArtifactCost) {
                 paySacrificeArtifactCost(gameData, player, card, sacrificePermanentId);
@@ -405,7 +411,13 @@ public class SpellCastingService {
             int resolvedXValue = effectiveXValue;
             paySpellManaCost(gameData, playerId, card, resolvedXValue, convokeContributions, phyrexianLifeCount);
             if (usesSacrificeCreatureCost) {
-                paySacrificeCreatureCost(gameData, player, card, sacrificePermanentId);
+                int sacrificedPower = paySacrificeCreatureCost(gameData, player, card, sacrificePermanentId);
+                SacrificeCreatureCost sacCreatureCost = (SacrificeCreatureCost) card.getEffects(EffectSlot.SPELL).stream()
+                        .filter(SacrificeCreatureCost.class::isInstance)
+                        .findFirst().orElseThrow();
+                if (sacCreatureCost.trackSacrificedPower()) {
+                    resolvedXValue = sacrificedPower;
+                }
             }
             if (usesSacrificeArtifactCost) {
                 paySacrificeArtifactCost(gameData, player, card, sacrificePermanentId);
@@ -512,7 +524,7 @@ public class SpellCastingService {
         return Math.max(0, totalPower);
     }
 
-    private void paySacrificeCreatureCost(GameData gameData, Player player, Card sourceCard, UUID sacrificePermanentId) {
+    private int paySacrificeCreatureCost(GameData gameData, Player player, Card sourceCard, UUID sacrificePermanentId) {
         if (sacrificePermanentId == null) {
             throw new IllegalStateException("Must sacrifice a creature to cast " + sourceCard.getName());
         }
@@ -527,11 +539,13 @@ public class SpellCastingService {
         if (!gameQueryService.isCreature(gameData, toSacrifice)) {
             throw new IllegalStateException("Sacrifice target must be a creature");
         }
+        int sacrificedPower = gameQueryService.getEffectivePower(gameData, toSacrifice);
         if (permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice)) {
             String logEntry = player.getUsername() + " sacrifices " + toSacrifice.getCard().getName()
                     + " for " + sourceCard.getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         }
+        return sacrificedPower;
     }
 
     private void paySacrificeArtifactCost(GameData gameData, Player player, Card sourceCard, UUID sacrificePermanentId) {
