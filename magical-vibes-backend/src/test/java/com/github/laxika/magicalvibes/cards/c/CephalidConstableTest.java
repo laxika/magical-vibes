@@ -62,7 +62,7 @@ class CephalidConstableTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
         assertThat(gd.interaction.multiPermanentChoiceContext()).isNotNull();
         assertThat(gd.interaction.multiPermanentChoiceContext().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.awaitingMultiPermanentChoiceMaxCount()).isEqualTo(1);
+        assertThat(gd.interaction.multiSelection().multiPermanentMaxCount()).isEqualTo(1);
     }
 
     @Test
@@ -144,7 +144,7 @@ class CephalidConstableTest extends BaseCardTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingMultiPermanentChoiceMaxCount()).isEqualTo(1);
+        assertThat(gd.interaction.multiSelection().multiPermanentMaxCount()).isEqualTo(1);
 
         List<UUID> allIds = List.of(bears1.getId(), bears2.getId());
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, allIds))

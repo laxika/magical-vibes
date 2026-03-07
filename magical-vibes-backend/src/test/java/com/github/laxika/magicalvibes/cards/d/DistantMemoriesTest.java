@@ -59,8 +59,8 @@ class DistantMemoriesTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(4);
+        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.librarySearch().cards()).hasSize(4);
     }
 
     // ===== Opponent accepts — card goes to hand =====
@@ -74,7 +74,7 @@ class DistantMemoriesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve sorcery → library search
 
         GameData gd = harness.getGameData();
-        String chosenName = gd.interaction.awaitingLibrarySearchCards().getFirst().getName();
+        String chosenName = gd.interaction.librarySearch().cards().getFirst().getName();
 
         // Player 1 chooses a card from library
         gs.handleLibraryCardChosen(gd, player1, 0);
@@ -108,7 +108,7 @@ class DistantMemoriesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve sorcery → library search
 
         GameData gd = harness.getGameData();
-        String chosenName = gd.interaction.awaitingLibrarySearchCards().getFirst().getName();
+        String chosenName = gd.interaction.librarySearch().cards().getFirst().getName();
 
         // Player 1 chooses a card from library
         gs.handleLibraryCardChosen(gd, player1, 0);
@@ -144,7 +144,7 @@ class DistantMemoriesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        String chosenName = gd.interaction.awaitingLibrarySearchCards().getFirst().getName();
+        String chosenName = gd.interaction.librarySearch().cards().getFirst().getName();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
         gs.handleLibraryCardChosen(gd, player1, 0);
@@ -215,7 +215,7 @@ class DistantMemoriesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingLibrarySearchCanFailToFind()).isFalse();
+        assertThat(gd.interaction.librarySearch().canFailToFind()).isFalse();
     }
 
     // ===== Helpers =====

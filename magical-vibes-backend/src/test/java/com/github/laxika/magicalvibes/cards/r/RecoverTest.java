@@ -140,8 +140,8 @@ class RecoverTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.awaitingPermanentChoiceValidIds()).contains(legalNewTarget.getId());
-        assertThat(gd.interaction.awaitingPermanentChoiceValidIds()).doesNotContain(currentTarget.getId());
-        assertThat(gd.interaction.awaitingPermanentChoiceValidIds()).doesNotContain(illegalOpponentTarget.getId());
+        assertThat(gd.interaction.permanentChoice().validIds()).contains(legalNewTarget.getId());
+        assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(currentTarget.getId());
+        assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(illegalOpponentTarget.getId());
     }
 }

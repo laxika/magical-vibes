@@ -29,7 +29,7 @@ class AlloyMyrTest extends BaseCardTest {
         assertThat(myr.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.awaitingColorChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player1.getId());
     }
 
     @Test

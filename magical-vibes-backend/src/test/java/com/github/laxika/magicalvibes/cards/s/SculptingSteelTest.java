@@ -52,7 +52,7 @@ class SculptingSteelTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Should be prompted to choose an artifact
-        assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
         UUID tomeId = harness.getPermanentId(player2, "Jayemdae Tome");
         harness.handlePermanentChosen(player1, tomeId);
 

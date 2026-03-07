@@ -175,7 +175,7 @@ class ChancellorOfTheSpiresTest {
         harness.passBothPriorities();
 
         // Only Shock should be selectable (instant), not Grizzly Bears (creature)
-        Set<UUID> validIds = gd.interaction.awaitingMultiGraveyardChoiceValidCardIds();
+        Set<UUID> validIds = gd.interaction.multiSelection().multiGraveyardValidCardIds();
         assertThat(validIds).hasSize(1);
         assertThat(validIds).contains(shock.getId());
     }

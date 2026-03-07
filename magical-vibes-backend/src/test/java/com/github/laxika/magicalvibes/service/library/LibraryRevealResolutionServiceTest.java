@@ -118,7 +118,7 @@ class LibraryRevealResolutionServiceTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-            assertThat(gd.interaction.awaitingLibraryReorderPlayerId()).isEqualTo(player1.getId());
+            assertThat(gd.interaction.libraryView().reorderPlayerId()).isEqualTo(player1.getId());
         }
     }
 
@@ -173,8 +173,8 @@ class LibraryRevealResolutionServiceTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
-            assertThat(gd.interaction.awaitingHandTopBottomPlayerId()).isEqualTo(player1.getId());
-            assertThat(gd.interaction.awaitingHandTopBottomCards()).hasSize(3);
+            assertThat(gd.interaction.libraryView().handTopBottomPlayerId()).isEqualTo(player1.getId());
+            assertThat(gd.interaction.libraryView().handTopBottomCards()).hasSize(3);
         }
     }
 
@@ -232,7 +232,7 @@ class LibraryRevealResolutionServiceTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-            assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isEqualTo(player1.getId());
+            assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
         }
     }
 }

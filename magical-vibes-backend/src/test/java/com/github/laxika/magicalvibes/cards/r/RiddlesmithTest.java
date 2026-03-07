@@ -78,7 +78,7 @@ class RiddlesmithTest extends BaseCardTest {
 
         // Draw happened, now awaiting discard choice
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
     }
 
     @Test

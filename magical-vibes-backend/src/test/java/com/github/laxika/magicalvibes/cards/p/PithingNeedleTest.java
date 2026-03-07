@@ -71,7 +71,7 @@ class PithingNeedleTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Pithing Needle"));
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.awaitingColorChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -101,7 +101,7 @@ class PithingNeedleTest extends BaseCardTest {
         harness.handleColorChosen(player1, "Prodigal Pyromancer");
 
         assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.awaitingColorChoicePlayerId()).isNull();
+        assertThat(gd.interaction.colorChoice()).isNull();
     }
 
     @Test

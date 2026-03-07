@@ -217,7 +217,7 @@ class MyrTurbineTest extends BaseCardTest {
         // Should prompt for library search
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         // Only Myr creature cards should be available
-        assertThat(gd.interaction.awaitingLibrarySearchCards())
+        assertThat(gd.interaction.librarySearch().cards())
                 .allMatch(c -> c.getSubtypes().contains(CardSubtype.MYR));
 
         // Choose Myr Sire

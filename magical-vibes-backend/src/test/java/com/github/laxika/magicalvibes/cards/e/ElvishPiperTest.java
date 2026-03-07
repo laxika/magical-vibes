@@ -85,8 +85,8 @@ class ElvishPiperTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.CARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactly(1);
+        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(1);
     }
 
     @Test

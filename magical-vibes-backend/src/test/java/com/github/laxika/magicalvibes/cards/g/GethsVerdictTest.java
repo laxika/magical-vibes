@@ -68,7 +68,7 @@ class GethsVerdictTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player2.getId());
         assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
     }
 

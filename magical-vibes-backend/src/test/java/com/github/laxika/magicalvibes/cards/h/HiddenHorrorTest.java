@@ -98,7 +98,7 @@ class HiddenHorrorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -214,7 +214,7 @@ class HiddenHorrorTest extends BaseCardTest {
 
         // Only creature indices should be valid (index 1 = GrizzlyBears, index 3 = LlanowarElves)
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactlyInAnyOrder(1, 3);
+        assertThat(gd.interaction.cardChoice().validIndices()).containsExactlyInAnyOrder(1, 3);
     }
 
     // ===== Hidden Horror leaves battlefield before ETB resolves =====

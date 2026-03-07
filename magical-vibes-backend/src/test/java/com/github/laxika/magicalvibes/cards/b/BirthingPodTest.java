@@ -77,7 +77,7 @@ class BirthingPodTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
 
         // Only MV 4 creature should be available (not MV 2)
-        assertThat(gd.interaction.awaitingLibrarySearchCards())
+        assertThat(gd.interaction.librarySearch().cards())
                 .hasSize(1)
                 .allMatch(c -> c.getName().equals("Hill Giant"));
 
@@ -237,7 +237,7 @@ class BirthingPodTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
 
         // Only MV 5 should be offered
-        assertThat(gd.interaction.awaitingLibrarySearchCards())
+        assertThat(gd.interaction.librarySearch().cards())
                 .hasSize(1)
                 .allMatch(c -> c.getName().equals("Air Elemental"));
 

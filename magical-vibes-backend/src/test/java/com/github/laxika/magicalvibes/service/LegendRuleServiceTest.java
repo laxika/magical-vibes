@@ -44,7 +44,7 @@ class LegendRuleServiceTest extends BaseCardTest {
             boolean result = svc.checkLegendRule(gd, player1.getId());
 
             assertThat(result).isFalse();
-            assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isNull();
+            assertThat(gd.interaction.permanentChoice()).isNull();
         }
 
         @Test
@@ -56,7 +56,7 @@ class LegendRuleServiceTest extends BaseCardTest {
             boolean result = svc.checkLegendRule(gd, player1.getId());
 
             assertThat(result).isFalse();
-            assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isNull();
+            assertThat(gd.interaction.permanentChoice()).isNull();
         }
 
         @Test
@@ -138,7 +138,7 @@ class LegendRuleServiceTest extends BaseCardTest {
             LegendRuleService svc = harness.getLegendRuleService();
             svc.checkLegendRule(gd, player1.getId());
 
-            assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isEqualTo(player1.getId());
+            assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
         }
 
@@ -157,7 +157,7 @@ class LegendRuleServiceTest extends BaseCardTest {
             LegendRuleService svc = harness.getLegendRuleService();
             svc.checkLegendRule(gd, player1.getId());
 
-            assertThat(gd.interaction.awaitingPermanentChoiceValidIds())
+            assertThat(gd.interaction.permanentChoice().validIds())
                     .containsExactlyInAnyOrder(id1, id2);
         }
 

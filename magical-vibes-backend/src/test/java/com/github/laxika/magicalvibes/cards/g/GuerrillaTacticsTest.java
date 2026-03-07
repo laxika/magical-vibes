@@ -158,7 +158,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
 
         // Guerrilla Tactics' discard trigger should prompt player2 to choose any target
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -263,7 +263,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
 
         // Guerrilla Tactics' discard trigger should prompt player2 to choose any target
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player2.getId());
 
         // Player2 chooses player1 as target
         harness.handlePermanentChosen(player2, player1.getId());

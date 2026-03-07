@@ -72,7 +72,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
         assertThat(gd.interaction.multiPermanentChoiceContext()).isNotNull();
         assertThat(gd.interaction.multiPermanentChoiceContext().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.awaitingMultiPermanentChoiceMaxCount()).isEqualTo(2);
+        assertThat(gd.interaction.multiSelection().multiPermanentMaxCount()).isEqualTo(2);
         assertThat(gd.pendingAwakeningCounterPlacement).isTrue();
     }
 

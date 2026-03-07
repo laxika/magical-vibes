@@ -61,8 +61,8 @@ class CivicWayfinderTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(3);
-        assertThat(gd.interaction.awaitingLibrarySearchCards())
+        assertThat(gd.interaction.librarySearch().cards()).hasSize(3);
+        assertThat(gd.interaction.librarySearch().cards())
                 .allMatch(c -> c.getType() == CardType.LAND && c.getSupertypes().contains(CardSupertype.BASIC));
     }
 
@@ -77,7 +77,7 @@ class CivicWayfinderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        List<Card> offered = gd.interaction.awaitingLibrarySearchCards();
+        List<Card> offered = gd.interaction.librarySearch().cards();
         String chosenName = offered.getFirst().getName();
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);

@@ -67,8 +67,8 @@ class StampedingWildebeestsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.awaitingPermanentChoiceValidIds())
+        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.permanentChoice().validIds())
                 .contains(greenCreature.getId())
                 .doesNotContain(nonGreenCreature.getId())
                 .doesNotContain(opponentsGreenCreature.getId());
@@ -84,7 +84,7 @@ class StampedingWildebeestsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.awaitingPermanentChoiceValidIds()).containsExactly(wildebeests.getId());
+        assertThat(gd.interaction.permanentChoice().validIds()).containsExactly(wildebeests.getId());
     }
 
     @Test

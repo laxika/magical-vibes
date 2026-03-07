@@ -63,7 +63,7 @@ class CloneTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Should be prompted to choose a creature
-        assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.handlePermanentChosen(player1, bearsId);
 
@@ -225,7 +225,7 @@ class CloneTest extends BaseCardTest {
         // Legend rule should be triggered — player should be asked to choose which to keep
         assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.LegendRule.class);
         assertThat(((PermanentChoiceContext.LegendRule) gd.interaction.permanentChoiceContext()).cardName()).isEqualTo("Cho-Manno, Revolutionary");
-        assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
     }
 
     // ===== Declining / no creatures =====

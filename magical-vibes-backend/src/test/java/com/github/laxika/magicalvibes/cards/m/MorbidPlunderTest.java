@@ -51,9 +51,9 @@ class MorbidPlunderTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.interaction.awaitingMultiGraveyardChoicePlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.awaitingMultiGraveyardChoiceMaxCount()).isEqualTo(2);
-        assertThat(gd.interaction.awaitingMultiGraveyardChoiceValidCardIds()).hasSize(2);
+        assertThat(gd.interaction.multiSelection().multiGraveyardPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.multiSelection().multiGraveyardMaxCount()).isEqualTo(2);
+        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(2);
 
         // Spell is NOT yet on the stack (waiting for target selection)
         assertThat(gd.stack).isEmpty();
@@ -71,7 +71,7 @@ class MorbidPlunderTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
 
         // Select both creatures
-        List<UUID> validIds = new ArrayList<>(gd.interaction.awaitingMultiGraveyardChoiceValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
         harness.handleMultipleGraveyardCardsChosen(player1, validIds);
 
         // Spell should be on the stack
@@ -110,7 +110,7 @@ class MorbidPlunderTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
 
         // Select only one creature
-        List<UUID> validIds = new ArrayList<>(gd.interaction.awaitingMultiGraveyardChoiceValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
         harness.handleMultipleGraveyardCardsChosen(player1, List.of(validIds.getFirst()));
 
         harness.passBothPriorities();
@@ -207,8 +207,8 @@ class MorbidPlunderTest extends BaseCardTest {
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
         // Only the creature should be valid
-        assertThat(gd.interaction.awaitingMultiGraveyardChoiceValidCardIds()).hasSize(1);
-        assertThat(gd.interaction.awaitingMultiGraveyardChoiceValidCardIds()).contains(creature.getId());
+        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(1);
+        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).contains(creature.getId());
     }
 
     // ===== Max targets capped at 2 =====
@@ -227,8 +227,8 @@ class MorbidPlunderTest extends BaseCardTest {
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
         // All 3 creatures should be valid choices
-        assertThat(gd.interaction.awaitingMultiGraveyardChoiceValidCardIds()).hasSize(3);
+        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(3);
         // But max selectable is 2
-        assertThat(gd.interaction.awaitingMultiGraveyardChoiceMaxCount()).isEqualTo(2);
+        assertThat(gd.interaction.multiSelection().multiGraveyardMaxCount()).isEqualTo(2);
     }
 }

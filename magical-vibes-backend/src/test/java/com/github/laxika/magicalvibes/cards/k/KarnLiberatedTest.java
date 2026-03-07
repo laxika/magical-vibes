@@ -102,7 +102,7 @@ class KarnLiberatedTest extends BaseCardTest {
 
             assertThat(karn.getLoyaltyCounters()).isEqualTo(10); // 6 + 4
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.EXILE_FROM_HAND_CHOICE);
-            assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player2.getId());
+            assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
         }
 
         @Test
@@ -154,7 +154,7 @@ class KarnLiberatedTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.EXILE_FROM_HAND_CHOICE);
-            assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player1.getId());
+            assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
 
             harness.handleCardChosen(player1, 1); // exile Forest
 

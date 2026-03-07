@@ -245,7 +245,7 @@ public class CardChoiceHandlerService {
         log.info("Game {} - {} chooses {} from {}'s hand", gameData.id, player.getUsername(), chosenCard.getName(), targetName);
 
         int remainingChoices = gameData.interaction.decrementRevealedHandChoiceRemainingCount();
-        boolean discardMode = gameData.interaction.revealedHandChoiceDiscardMode();
+        boolean discardMode = gameData.interaction.revealedHandChoice().discardMode();
 
         if (remainingChoices > 0 && !targetHand.isEmpty()) {
             // More cards to choose — update valid indices and prompt again
@@ -263,7 +263,7 @@ public class CardChoiceHandlerService {
             gameData.interaction.clearAwaitingInput();
             gameData.interaction.clearCardChoice();
 
-            List<Card> chosenCards = gameData.interaction.revealedHandChosenCardsSnapshot();
+            List<Card> chosenCards = gameData.interaction.revealedHandChoice().chosenCardsSnapshot();
 
             if (discardMode) {
                 // Discard chosen cards to graveyard

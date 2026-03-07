@@ -75,10 +75,10 @@ class TerramorphicExpanseTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(3);
-        assertThat(gd.interaction.awaitingLibrarySearchCards())
+        assertThat(gd.interaction.librarySearch().cards()).hasSize(3);
+        assertThat(gd.interaction.librarySearch().cards())
                 .allMatch(c -> c.getType() == CardType.LAND && c.getSupertypes().contains(CardSupertype.BASIC));
-        assertThat(gd.interaction.awaitingLibrarySearchDestination())
+        assertThat(gd.interaction.librarySearch().destination())
                 .isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
     }
 

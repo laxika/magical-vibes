@@ -79,8 +79,8 @@ class AgonizingMemoriesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.revealedHandChoiceRemainingCount()).isEqualTo(2);
+        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.revealedHandChoice().remainingCount()).isEqualTo(2);
     }
 
     @Test
@@ -102,7 +102,7 @@ class AgonizingMemoriesTest extends BaseCardTest {
 
         // Should still be awaiting another choice
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-        assertThat(gd.interaction.revealedHandChoiceRemainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.revealedHandChoice().remainingCount()).isEqualTo(1);
 
         // After removing Grizzly Bears, hand is [Peek, Agonizing Memories]
         // Choose index 0 = Peek
@@ -150,7 +150,7 @@ class AgonizingMemoriesTest extends BaseCardTest {
 
         // Should prompt for 1 card (min of 2 and hand size 1)
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-        assertThat(gd.interaction.revealedHandChoiceRemainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.revealedHandChoice().remainingCount()).isEqualTo(1);
 
         // Choose the only card
         harness.handleCardChosen(player1, 0);

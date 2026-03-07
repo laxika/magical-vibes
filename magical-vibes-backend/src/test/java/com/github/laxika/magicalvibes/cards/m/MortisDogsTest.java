@@ -74,7 +74,7 @@ class MortisDogsTest extends BaseCardTest {
 
         // Player1 should be prompted to choose a target player
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
     }
 
     @Test

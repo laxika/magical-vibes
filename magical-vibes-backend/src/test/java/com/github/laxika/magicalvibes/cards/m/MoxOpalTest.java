@@ -56,7 +56,7 @@ class MoxOpalTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.awaitingColorChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player1.getId());
     }
 
     @Test

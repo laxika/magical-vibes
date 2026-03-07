@@ -124,7 +124,7 @@ class AuraGraftTest extends BaseCardTest {
 
         // Should prompt for permanent choice to reattach
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
         assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.AuraGraft.class);
         assertThat(((PermanentChoiceContext.AuraGraft) gd.interaction.permanentChoiceContext()).auraPermanentId()).isEqualTo(aura.getId());
     }
@@ -183,9 +183,9 @@ class AuraGraftTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The currently enchanted creature should NOT be a valid choice
-        assertThat(gd.interaction.awaitingPermanentChoiceValidIds()).doesNotContain(opponentCreature.getId());
+        assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(opponentCreature.getId());
         // My creature should be valid
-        assertThat(gd.interaction.awaitingPermanentChoiceValidIds()).contains(myCreature.getId());
+        assertThat(gd.interaction.permanentChoice().validIds()).contains(myCreature.getId());
     }
 
     @Test
@@ -361,7 +361,7 @@ class AuraGraftTest extends BaseCardTest {
         harness.castInstant(player1, 0, aura.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingPermanentChoiceValidIds())
+        assertThat(gd.interaction.permanentChoice().validIds())
                 .contains(opponentCreature2.getId(), myCreature1.getId(), myCreature2.getId())
                 .doesNotContain(opponentCreature1.getId());
     }

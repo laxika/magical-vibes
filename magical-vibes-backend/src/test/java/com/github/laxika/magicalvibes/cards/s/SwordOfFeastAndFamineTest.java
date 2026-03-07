@@ -189,7 +189,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
 
         // Game pauses for discard choice
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
 
         harness.handleCardChosen(player2, 0);
 

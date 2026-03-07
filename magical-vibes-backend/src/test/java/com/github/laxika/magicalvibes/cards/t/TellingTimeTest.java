@@ -67,8 +67,8 @@ class TellingTimeTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
-        assertThat(gd.interaction.awaitingHandTopBottomPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.awaitingHandTopBottomCards()).hasSize(3);
+        assertThat(gd.interaction.libraryView().handTopBottomPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.libraryView().handTopBottomCards()).hasSize(3);
     }
 
     @Test
@@ -156,8 +156,8 @@ class TellingTimeTest extends BaseCardTest {
         harness.getGameService().handleHandTopBottomChosen(gd, player1, 0, 1);
 
         assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.awaitingHandTopBottomPlayerId()).isNull();
-        assertThat(gd.interaction.awaitingHandTopBottomCards()).isNull();
+        assertThat(gd.interaction.libraryView().handTopBottomPlayerId()).isNull();
+        assertThat(gd.interaction.libraryView().handTopBottomCards()).isNull();
     }
 
     // ===== Library edge cases =====
@@ -180,7 +180,7 @@ class TellingTimeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
-        assertThat(gd.interaction.awaitingHandTopBottomCards()).hasSize(2);
+        assertThat(gd.interaction.libraryView().handTopBottomCards()).hasSize(2);
 
         // Choose cardA for hand, cardB for top
         harness.getGameService().handleHandTopBottomChosen(gd, player1, 0, 1);

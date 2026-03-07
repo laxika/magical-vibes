@@ -168,7 +168,7 @@ class MerfolkLooterTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         // Should be awaiting discard
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
         assertThat(gd.gameLog).anyMatch(log -> log.contains("draws a card"));
     }
 

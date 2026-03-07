@@ -56,7 +56,7 @@ class BrutalizerExarchTest extends BaseCardTest {
                     .anyMatch(p -> p.getCard().getName().equals("Brutalizer Exarch"));
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
             // Only creature cards should be shown
-            assertThat(gd.interaction.awaitingLibrarySearchCards())
+            assertThat(gd.interaction.librarySearch().cards())
                     .allMatch(c -> c.getType() == CardType.CREATURE);
         }
 
@@ -69,7 +69,7 @@ class BrutalizerExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             GameData gd = harness.getGameData();
-            List<Card> offered = gd.interaction.awaitingLibrarySearchCards();
+            List<Card> offered = gd.interaction.librarySearch().cards();
             String chosenName = offered.getFirst().getName();
 
             gs.handleLibraryCardChosen(gd, player1, 0);

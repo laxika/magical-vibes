@@ -50,7 +50,7 @@ class SeismicAssaultTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactly(1);
+        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(1);
     }
 
     @Test

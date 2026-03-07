@@ -93,7 +93,7 @@ class PerilousMyrTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Perilous Myr"));
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
     }
 
     @Test

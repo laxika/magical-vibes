@@ -54,8 +54,8 @@ class SpellbookTest extends BaseCardTest {
         // Player should be prompted to discard 2 cards (9 - 7 = 2)
         assertThat(gd.currentStep).isEqualTo(TurnStep.CLEANUP);
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.discardRemainingCount()).isEqualTo(2);
+        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(2);
     }
 
     @Test
@@ -179,8 +179,8 @@ class SpellbookTest extends BaseCardTest {
 
         // Player1 must still discard — opponent's Spellbook doesn't help
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.discardRemainingCount()).isEqualTo(2);
+        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(2);
     }
 
     // ===== Spellbook removal =====
@@ -205,7 +205,7 @@ class SpellbookTest extends BaseCardTest {
 
         // Without Spellbook, must discard
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.discardRemainingCount()).isEqualTo(2);
+        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(2);
     }
 
     // ===== Cleanup discard is logged =====

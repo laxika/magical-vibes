@@ -72,7 +72,7 @@ class PhyrexianRevokerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Phyrexian Revoker"));
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.awaitingColorChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player1.getId());
     }
 
     @Test

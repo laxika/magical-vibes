@@ -79,8 +79,8 @@ class MindRotTest extends BaseCardTest {
 
         // Target player (player2) should be prompted to discard, NOT the caster
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.discardRemainingCount()).isEqualTo(2);
+        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(2);
     }
 
     @Test
@@ -98,7 +98,7 @@ class MindRotTest extends BaseCardTest {
 
         // Still awaiting second discard
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
 
         // Target player chooses second discard
         harness.handleCardChosen(player2, 0); // discard Peek (now at index 0)
@@ -124,7 +124,7 @@ class MindRotTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // All indices should be valid — Mind Rot doesn't restrict card types
-        assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactlyInAnyOrder(0, 1, 2);
+        assertThat(gd.interaction.cardChoice().validIndices()).containsExactlyInAnyOrder(0, 1, 2);
 
         harness.handleCardChosen(player2, 0); // discard Forest
         harness.handleCardChosen(player2, 0); // discard GrizzlyBears (now index 0)
@@ -204,7 +204,7 @@ class MindRotTest extends BaseCardTest {
 
         // Player1 is prompted to discard from their own hand
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
 
         harness.handleCardChosen(player1, 0); // discard GrizzlyBears
         harness.handleCardChosen(player1, 0); // discard Peek

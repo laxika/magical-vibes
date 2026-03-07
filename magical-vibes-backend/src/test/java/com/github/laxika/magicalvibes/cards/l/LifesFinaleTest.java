@@ -75,7 +75,7 @@ class LifesFinaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -93,9 +93,9 @@ class LifesFinaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Only creature cards should appear in the search
-        assertThat(gd.interaction.awaitingLibrarySearchCards())
+        assertThat(gd.interaction.librarySearch().cards())
                 .allMatch(c -> c.getType() == CardType.CREATURE);
-        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(2);
+        assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
     }
 
     @Test

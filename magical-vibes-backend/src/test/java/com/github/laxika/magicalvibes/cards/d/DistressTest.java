@@ -79,9 +79,9 @@ class DistressTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.revealedHandChoiceRemainingCount()).isEqualTo(1);
-        assertThat(gd.interaction.revealedHandChoiceDiscardMode()).isTrue();
+        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.revealedHandChoice().remainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.revealedHandChoice().discardMode()).isTrue();
     }
 
     @Test
@@ -102,7 +102,7 @@ class DistressTest extends BaseCardTest {
 
         // Choice is complete
         assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.revealedHandChoiceDiscardMode()).isFalse();
+        assertThat(gd.interaction.revealedHandChoice().discardMode()).isFalse();
 
         // Grizzly Bears should be in player2's graveyard
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -129,7 +129,7 @@ class DistressTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
 
         // Only index 0 (Grizzly Bears) should be valid, index 1 (Forest) is a land
-        assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactly(0);
+        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(0);
     }
 
     @Test
@@ -204,7 +204,7 @@ class DistressTest extends BaseCardTest {
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
         // Only index 1 (Grizzly Bears) should be valid
-        assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactly(1);
+        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(1);
 
         // Choose the only nonland card
         harness.handleCardChosen(player1, 1);

@@ -121,9 +121,9 @@ class EntomberExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-            assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player1.getId());
+            assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
             // Only instant (index 0) should be valid, creature (index 1) should not
-            assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactly(0);
+            assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(0);
 
             harness.handleCardChosen(player1, 0);
 
@@ -145,7 +145,7 @@ class EntomberExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             // Only instant (index 1) should be valid
-            assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactly(1);
+            assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(1);
         }
 
         @Test
@@ -160,7 +160,7 @@ class EntomberExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             // Only land (index 0) should be valid
-            assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactly(0);
+            assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(0);
         }
 
         @Test

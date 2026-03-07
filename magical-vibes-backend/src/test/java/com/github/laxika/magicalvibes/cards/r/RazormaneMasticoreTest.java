@@ -118,7 +118,7 @@ class RazormaneMasticoreTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // All indices should be valid since any card can be discarded
-        assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactlyInAnyOrder(0, 1);
+        assertThat(gd.interaction.cardChoice().validIndices()).containsExactlyInAnyOrder(0, 1);
     }
 
     @Test
@@ -201,7 +201,7 @@ class RazormaneMasticoreTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
     }
 
     @Test

@@ -865,7 +865,7 @@ class AbilityActivationServiceTest extends BaseCardTest {
             harness.activateAbility(player1, 0, null, player2.getId());
 
             // Indices 1 and 2 should be valid (both lands), index 0 is a creature
-            assertThat(gd.interaction.awaitingCardChoiceValidIndices()).containsExactlyInAnyOrder(1, 2);
+            assertThat(gd.interaction.cardChoice().validIndices()).containsExactlyInAnyOrder(1, 2);
         }
     }
 

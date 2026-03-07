@@ -155,7 +155,7 @@ class PraetorsCounselTest extends BaseCardTest {
         gs.advanceStep(gd);
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
     }
 
     // ===== Does not return opponent's graveyard =====

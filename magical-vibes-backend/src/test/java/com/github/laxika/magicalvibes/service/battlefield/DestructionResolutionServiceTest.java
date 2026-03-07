@@ -392,7 +392,7 @@ class DestructionResolutionServiceTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-            assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isEqualTo(player2.getId());
+            assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player2.getId());
             assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
         }
 
@@ -469,7 +469,7 @@ class DestructionResolutionServiceTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve trigger
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-            assertThat(gd.interaction.awaitingPermanentChoicePlayerId()).isEqualTo(player1.getId());
+            assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
             assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
         }
 

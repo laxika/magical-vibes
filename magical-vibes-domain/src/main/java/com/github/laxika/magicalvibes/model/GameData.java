@@ -584,8 +584,8 @@ public class GameData {
         }
 
         // Copy discard remaining count (not part of context reconstruction)
-        if (source.discardRemainingCount() > 0) {
-            targetInteraction.setDiscardRemainingCount(source.discardRemainingCount());
+        if (source.revealedHandChoice() != null && source.revealedHandChoice().discardRemainingCount() > 0) {
+            targetInteraction.setDiscardRemainingCount(source.revealedHandChoice().discardRemainingCount());
         }
     }
 }

@@ -148,7 +148,7 @@ class GraveyardReturnResolutionServiceTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.BLACK, 3);
 
             harness.castSorcery(player1, 0, 0);
-            List<UUID> validIds = new ArrayList<>(gd.interaction.awaitingMultiGraveyardChoiceValidCardIds());
+            List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
             harness.handleMultipleGraveyardCardsChosen(player1, validIds);
             harness.passBothPriorities();
 
@@ -197,7 +197,7 @@ class GraveyardReturnResolutionServiceTest extends BaseCardTest {
 
             // Should prompt for multi-graveyard choice (artifact cards)
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-            List<UUID> validIds = new ArrayList<>(gd.interaction.awaitingMultiGraveyardChoiceValidCardIds());
+            List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
             harness.handleMultipleGraveyardCardsChosen(player1, validIds);
             harness.passBothPriorities();
 

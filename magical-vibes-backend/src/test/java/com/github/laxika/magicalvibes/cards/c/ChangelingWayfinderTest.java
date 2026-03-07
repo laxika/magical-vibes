@@ -108,9 +108,9 @@ class ChangelingWayfinderTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(3);
-        assertThat(gd.interaction.awaitingLibrarySearchCards().stream().map(Card::getName))
+        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.librarySearch().cards()).hasSize(3);
+        assertThat(gd.interaction.librarySearch().cards().stream().map(Card::getName))
                 .containsExactlyInAnyOrder("Plains", "Forest", "Island");
     }
 
@@ -139,8 +139,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
 
         // Awaiting state is cleared
         assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isNull();
-        assertThat(gd.interaction.awaitingLibrarySearchCards()).isNull();
+        assertThat(gd.interaction.librarySearch()).isNull();
 
         // Log mentions the reveal
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("reveals") && entry.contains("puts it into their hand"));
@@ -157,7 +156,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        List<Card> searchCards = gd.interaction.awaitingLibrarySearchCards();
+        List<Card> searchCards = gd.interaction.librarySearch().cards();
         String chosenName = searchCards.get(2).getName(); // pick the third card
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 2);
@@ -267,8 +266,8 @@ class ChangelingWayfinderTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(2);
-        assertThat(gd.interaction.awaitingLibrarySearchCards()).allMatch(c -> c.getType() == CardType.LAND && c.getSupertypes().contains(CardSupertype.BASIC));
+        assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
+        assertThat(gd.interaction.librarySearch().cards()).allMatch(c -> c.getType() == CardType.LAND && c.getSupertypes().contains(CardSupertype.BASIC));
     }
 
     // ===== Changeling keyword: counts as every creature type =====

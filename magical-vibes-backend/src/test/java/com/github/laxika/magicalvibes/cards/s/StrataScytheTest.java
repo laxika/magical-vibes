@@ -88,10 +88,10 @@ class StrataScytheTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
         // Only land cards should be presented (Plains and Forest, not Grizzly Bears)
-        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(2);
-        assertThat(gd.interaction.awaitingLibrarySearchCards())
+        assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
+        assertThat(gd.interaction.librarySearch().cards())
                 .allMatch(c -> c.getType() == CardType.LAND);
     }
 

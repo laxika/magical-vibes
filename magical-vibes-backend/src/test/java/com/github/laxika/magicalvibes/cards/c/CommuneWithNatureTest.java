@@ -72,10 +72,10 @@ class CommuneWithNatureTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.awaitingLibrarySearchCanFailToFind()).isTrue();
-        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(2);
-        assertThat(gd.interaction.awaitingLibrarySearchCards().stream().map(Card::getName))
+        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.librarySearch().canFailToFind()).isTrue();
+        assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
+        assertThat(gd.interaction.librarySearch().cards().stream().map(Card::getName))
                 .containsExactlyInAnyOrder("Llanowar Elves", "Grizzly Bears");
     }
 
@@ -100,9 +100,9 @@ class CommuneWithNatureTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Llanowar Elves"));
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.awaitingLibraryReorderCards()).hasSize(4);
+        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(4);
 
-        List<Card> remaining = gd.interaction.awaitingLibraryReorderCards();
+        List<Card> remaining = gd.interaction.libraryView().reorderCards();
         // Put Plains first (closest to top), then Shock, then Swamp, then Grizzly Bears
         int iPlains = indexOf(remaining, "Plains");
         int iShock = indexOf(remaining, "Shock");
@@ -136,7 +136,7 @@ class CommuneWithNatureTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.awaitingLibraryReorderCards()).hasSize(5);
+        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(5);
     }
 
     @Test
@@ -157,7 +157,7 @@ class CommuneWithNatureTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.awaitingLibraryReorderCards()).hasSize(5);
+        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(5);
     }
 
     @Test

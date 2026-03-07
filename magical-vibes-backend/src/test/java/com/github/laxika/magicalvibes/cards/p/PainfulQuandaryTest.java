@@ -94,7 +94,7 @@ class PainfulQuandaryTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
     }
 
     @Test

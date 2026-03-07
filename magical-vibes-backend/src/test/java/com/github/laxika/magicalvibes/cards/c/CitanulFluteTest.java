@@ -180,11 +180,11 @@ class CitanulFluteTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
         // Library has: LlanowarElves (MV 1), GrizzlyBears (MV 2), AirElemental (MV 5), Plains, Swamp
         // X=2 → only creatures with MV <= 2: LlanowarElves (1) and GrizzlyBears (2)
-        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(2);
-        assertThat(gd.interaction.awaitingLibrarySearchCards().stream().map(Card::getName))
+        assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
+        assertThat(gd.interaction.librarySearch().cards().stream().map(Card::getName))
                 .containsExactlyInAnyOrder("Llanowar Elves", "Grizzly Bears");
     }
 
@@ -199,8 +199,8 @@ class CitanulFluteTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         // Only LlanowarElves (MV 1) qualifies
-        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(1);
-        assertThat(gd.interaction.awaitingLibrarySearchCards().getFirst().getName()).isEqualTo("Llanowar Elves");
+        assertThat(gd.interaction.librarySearch().cards()).hasSize(1);
+        assertThat(gd.interaction.librarySearch().cards().getFirst().getName()).isEqualTo("Llanowar Elves");
     }
 
     @Test
@@ -214,8 +214,8 @@ class CitanulFluteTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         // LlanowarElves (MV 1), GrizzlyBears (MV 2), AirElemental (MV 5) — all qualify
-        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(3);
-        assertThat(gd.interaction.awaitingLibrarySearchCards().stream().map(Card::getName))
+        assertThat(gd.interaction.librarySearch().cards()).hasSize(3);
+        assertThat(gd.interaction.librarySearch().cards().stream().map(Card::getName))
                 .containsExactlyInAnyOrder("Llanowar Elves", "Grizzly Bears", "Air Elemental");
     }
 
@@ -229,7 +229,7 @@ class CitanulFluteTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Plains (basic land) and Swamp (basic land) should NOT appear despite high X
-        assertThat(gd.interaction.awaitingLibrarySearchCards())
+        assertThat(gd.interaction.librarySearch().cards())
                 .allMatch(c -> c.getType() == CardType.CREATURE);
     }
 
@@ -245,7 +245,7 @@ class CitanulFluteTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
-        String chosenName = gd.interaction.awaitingLibrarySearchCards().getFirst().getName();
+        String chosenName = gd.interaction.librarySearch().cards().getFirst().getName();
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
@@ -258,8 +258,7 @@ class CitanulFluteTest extends BaseCardTest {
 
         // Awaiting state is cleared
         assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isNull();
-        assertThat(gd.interaction.awaitingLibrarySearchCards()).isNull();
+        assertThat(gd.interaction.librarySearch()).isNull();
     }
 
     @Test
@@ -271,7 +270,7 @@ class CitanulFluteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingLibrarySearchReveals()).isTrue();
+        assertThat(gd.interaction.librarySearch().reveals()).isTrue();
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
@@ -290,7 +289,7 @@ class CitanulFluteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingLibrarySearchCanFailToFind()).isTrue();
+        assertThat(gd.interaction.librarySearch().canFailToFind()).isTrue();
     }
 
     @Test

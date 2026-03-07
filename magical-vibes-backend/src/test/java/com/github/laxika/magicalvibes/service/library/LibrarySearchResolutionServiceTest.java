@@ -57,10 +57,10 @@ class LibrarySearchResolutionServiceTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-            assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isEqualTo(player1.getId());
+            assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
             // Should only show lands (Plains, Forest, Swamp) — not GrizzlyBears
-            assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(3);
-            assertThat(gd.interaction.awaitingLibrarySearchCards())
+            assertThat(gd.interaction.librarySearch().cards()).hasSize(3);
+            assertThat(gd.interaction.librarySearch().cards())
                     .noneMatch(c -> c.getName().equals("Grizzly Bears"));
         }
 
@@ -113,7 +113,7 @@ class LibrarySearchResolutionServiceTest extends BaseCardTest {
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
             // RampantGrowth requires basic supertype — only basic lands
-            assertThat(gd.interaction.awaitingLibrarySearchCards())
+            assertThat(gd.interaction.librarySearch().cards())
                     .allMatch(c -> c.getName().equals("Plains")
                             || c.getName().equals("Forest")
                             || c.getName().equals("Swamp"));
@@ -154,9 +154,9 @@ class LibrarySearchResolutionServiceTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-            assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isEqualTo(player1.getId());
+            assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
             // All 4 cards should be available (no filtering)
-            assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(4);
+            assertThat(gd.interaction.librarySearch().cards()).hasSize(4);
         }
 
         @Test
@@ -193,8 +193,8 @@ class LibrarySearchResolutionServiceTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-            assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isEqualTo(player1.getId());
-            assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(4);
+            assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
+            assertThat(gd.interaction.librarySearch().cards()).hasSize(4);
         }
 
         @Test
@@ -254,7 +254,7 @@ class LibrarySearchResolutionServiceTest extends BaseCardTest {
             assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore + 2);
             // Player1 should be searching player2's library
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-            assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isEqualTo(player1.getId());
+            assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
             assertThat(gd.gameLog).anyMatch(log -> log.contains("puts") && log.contains("from their hand"));
         }
 

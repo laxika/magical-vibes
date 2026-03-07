@@ -58,11 +58,11 @@ class MitoticManipulationTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.awaitingLibrarySearchCanFailToFind()).isTrue();
+        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.librarySearch().canFailToFind()).isTrue();
         // Only the Grizzly Bears should be offered
-        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(1);
-        assertThat(gd.interaction.awaitingLibrarySearchCards().getFirst().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.interaction.librarySearch().cards()).hasSize(1);
+        assertThat(gd.interaction.librarySearch().cards().getFirst().getName()).isEqualTo("Grizzly Bears");
     }
 
     @Test
@@ -96,7 +96,7 @@ class MitoticManipulationTest extends BaseCardTest {
 
         // Should be reordering the remaining 6 cards
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.awaitingLibraryReorderCards()).hasSize(6);
+        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(6);
     }
 
     @Test
@@ -127,7 +127,7 @@ class MitoticManipulationTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
         // All 7 cards should be reordered to bottom
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.awaitingLibraryReorderCards()).hasSize(7);
+        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(7);
     }
 
     @Test
@@ -154,7 +154,7 @@ class MitoticManipulationTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         // No matching cards — go directly to reorder
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.awaitingLibraryReorderCards()).hasSize(7);
+        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(7);
     }
 
     @Test
@@ -181,8 +181,8 @@ class MitoticManipulationTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         // Llanowar Elves matches the opponent's permanent
-        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(1);
-        assertThat(gd.interaction.awaitingLibrarySearchCards().getFirst().getName()).isEqualTo("Llanowar Elves");
+        assertThat(gd.interaction.librarySearch().cards()).hasSize(1);
+        assertThat(gd.interaction.librarySearch().cards().getFirst().getName()).isEqualTo("Llanowar Elves");
     }
 
     @Test
@@ -209,8 +209,8 @@ class MitoticManipulationTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         // All 4 matching cards should be offered
-        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(4);
-        assertThat(gd.interaction.awaitingLibrarySearchCards().stream().map(Card::getName))
+        assertThat(gd.interaction.librarySearch().cards()).hasSize(4);
+        assertThat(gd.interaction.librarySearch().cards().stream().map(Card::getName))
                 .containsExactlyInAnyOrder("Grizzly Bears", "Grizzly Bears", "Llanowar Elves", "Llanowar Elves");
     }
 
@@ -277,7 +277,7 @@ class MitoticManipulationTest extends BaseCardTest {
 
         // Now reorder the remaining 6 cards
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        List<Card> remaining = gd.interaction.awaitingLibraryReorderCards();
+        List<Card> remaining = gd.interaction.libraryView().reorderCards();
         assertThat(remaining).hasSize(6);
 
         // Reorder in original order (0,1,2,3,4,5)

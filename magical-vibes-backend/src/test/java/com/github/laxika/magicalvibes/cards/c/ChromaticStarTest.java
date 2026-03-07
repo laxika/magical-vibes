@@ -67,7 +67,7 @@ class ChromaticStarTest extends BaseCardTest {
 
         // Should be immediately awaiting color choice (mana ability, no priority pass needed)
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.awaitingColorChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player1.getId());
     }
 
     @Test

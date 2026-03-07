@@ -83,7 +83,7 @@ class MycosynthWellspringTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve search trigger
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.awaitingLibrarySearchCards())
+        assertThat(gd.interaction.librarySearch().cards())
                 .allMatch(c -> c.getSupertypes().contains(com.github.laxika.magicalvibes.model.CardSupertype.BASIC));
     }
 
@@ -99,7 +99,7 @@ class MycosynthWellspringTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        List<Card> offered = gd.interaction.awaitingLibrarySearchCards();
+        List<Card> offered = gd.interaction.librarySearch().cards();
         String chosenName = offered.getFirst().getName();
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
@@ -150,7 +150,7 @@ class MycosynthWellspringTest extends BaseCardTest {
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
 
-        List<Card> offered = gd.interaction.awaitingLibrarySearchCards();
+        List<Card> offered = gd.interaction.librarySearch().cards();
         String chosenName = offered.getFirst().getName();
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);

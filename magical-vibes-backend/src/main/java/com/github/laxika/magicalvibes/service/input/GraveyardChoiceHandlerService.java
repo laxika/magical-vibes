@@ -60,8 +60,8 @@ public class GraveyardChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
         GraveyardChoiceDestination destination = graveyardChoice.destination();
-        boolean gainLifeEqualToManaValue = gameData.interaction.graveyardChoiceGainLifeEqualToManaValue();
-        UUID attachToSourcePermanentId = gameData.interaction.graveyardChoiceAttachToSourcePermanentId();
+        boolean gainLifeEqualToManaValue = gameData.interaction.graveyardChoice().gainLifeEqualToManaValue();
+        UUID attachToSourcePermanentId = gameData.interaction.graveyardChoice().attachToSourcePermanentId();
         gameData.interaction.clearGraveyardChoice();
 
         if (cardIndex == -1) {

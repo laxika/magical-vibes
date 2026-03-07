@@ -58,8 +58,8 @@ class CloneShellTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.awaitingLibrarySearchPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.awaitingLibrarySearchCards()).hasSize(4);
+        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.librarySearch().cards()).hasSize(4);
     }
 
     @Test
@@ -95,7 +95,7 @@ class CloneShellTest extends BaseCardTest {
 
         // Remaining 3 cards should be awaiting reorder
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.awaitingLibraryReorderCards()).hasSize(3);
+        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(3);
     }
 
     @Test
@@ -118,7 +118,7 @@ class CloneShellTest extends BaseCardTest {
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0); // exile Grizzly Bears
 
         // Reorder remaining: Shock(0), Plains(1), Llanowar Elves(2)
-        List<Card> remaining = gd.interaction.awaitingLibraryReorderCards();
+        List<Card> remaining = gd.interaction.libraryView().reorderCards();
         int iShock = indexOf(remaining, "Shock");
         int iPlains = indexOf(remaining, "Plains");
         int iElves = indexOf(remaining, "Llanowar Elves");

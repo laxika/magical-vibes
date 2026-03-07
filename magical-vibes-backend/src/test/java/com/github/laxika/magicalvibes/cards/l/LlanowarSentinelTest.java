@@ -83,7 +83,7 @@ class LlanowarSentinelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.awaitingLibrarySearchCards())
+        assertThat(gd.interaction.librarySearch().cards())
                 .allMatch(c -> c.getName().equals("Llanowar Sentinel"));
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }

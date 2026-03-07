@@ -167,7 +167,7 @@ class KuldothaForgemasterTest extends BaseCardTest {
         // Should prompt for library search
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         // Only artifact cards should be available to search
-        assertThat(gd.interaction.awaitingLibrarySearchCards())
+        assertThat(gd.interaction.librarySearch().cards())
                 .allMatch(c -> c.getName().equals("Gold Myr"));
 
         // Choose Gold Myr

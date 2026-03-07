@@ -81,7 +81,7 @@ class StoryCircleTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Story Circle"));
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.awaitingColorChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -111,8 +111,7 @@ class StoryCircleTest extends BaseCardTest {
         harness.handleColorChosen(player1, "BLUE");
 
         assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.awaitingColorChoicePlayerId()).isNull();
-        assertThat(gd.interaction.awaitingColorChoicePermanentId()).isNull();
+        assertThat(gd.interaction.colorChoice()).isNull();
     }
 
     @Test

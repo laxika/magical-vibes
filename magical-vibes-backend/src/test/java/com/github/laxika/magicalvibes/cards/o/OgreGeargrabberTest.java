@@ -72,7 +72,7 @@ class OgreGeargrabberTest extends BaseCardTest {
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
         // The valid permanent IDs should only include the opponent's Equipment
-        assertThat(gd.interaction.awaitingPermanentChoiceValidIds())
+        assertThat(gd.interaction.permanentChoice().validIds())
                 .contains(opponentEquipment.getId())
                 .doesNotContain(ownEquipment.getId())
                 .doesNotContain(opponentCreature.getId())

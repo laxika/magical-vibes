@@ -45,8 +45,8 @@ class DementiaBatTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.discardRemainingCount()).isEqualTo(2);
+        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(2);
 
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
@@ -77,7 +77,7 @@ class DementiaBatTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.awaitingCardChoicePlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
 
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
