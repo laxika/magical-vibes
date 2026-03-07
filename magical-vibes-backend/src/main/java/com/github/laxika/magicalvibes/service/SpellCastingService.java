@@ -361,8 +361,9 @@ public class SpellCastingService {
                 );
             }
             // Check for "up to N target cards from graveyard" spells (e.g. Morbid Plunder)
+            // Use filteredSpellEffects (post-modal-unwrap) so effects inside ChooseOneEffect are found
             ReturnTargetCardsFromGraveyardToHandEffect graveyardToHandEffect =
-                    (ReturnTargetCardsFromGraveyardToHandEffect) card.getEffects(EffectSlot.SPELL).stream()
+                    (ReturnTargetCardsFromGraveyardToHandEffect) filteredSpellEffects.stream()
                             .filter(e -> e instanceof ReturnTargetCardsFromGraveyardToHandEffect)
                             .findFirst().orElse(null);
             boolean needsUpToNGraveyardTargeting = graveyardToHandEffect != null;
@@ -374,7 +375,7 @@ public class SpellCastingService {
                 if (matchingCount > 0) {
                     battlefieldEntryService.handleUpToNGraveyardSpellTargeting(gameData, playerId, card,
                             StackEntryType.SORCERY_SPELL, graveyardToHandEffect.filter(),
-                            graveyardToHandEffect.maxTargets());
+                            graveyardToHandEffect.maxTargets(), filteredSpellEffects);
                     return; // finishSpellCast handled in handleMultipleGraveyardCardsChosen
                 } else {
                     // No matching cards — put spell on stack with 0 targets (fizzles on resolution)

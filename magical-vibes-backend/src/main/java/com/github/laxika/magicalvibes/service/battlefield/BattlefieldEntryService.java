@@ -419,7 +419,8 @@ public class BattlefieldEntryService {
     }
 
     public void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
-                                            StackEntryType entryType, CardPredicate filter, int maxTargetsCap) {
+                                            StackEntryType entryType, CardPredicate filter, int maxTargetsCap,
+                                            List<CardEffect> spellEffects) {
         List<UUID> matchingCardIds = new ArrayList<>();
         List<CardView> cardViews = new ArrayList<>();
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
@@ -435,7 +436,7 @@ public class BattlefieldEntryService {
         int maxTargets = Math.min(maxTargetsCap, matchingCardIds.size());
         gameData.graveyardTargetOperation.card = card;
         gameData.graveyardTargetOperation.controllerId = controllerId;
-        gameData.graveyardTargetOperation.effects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(spellEffects);
         gameData.graveyardTargetOperation.entryType = entryType;
         gameData.graveyardTargetOperation.xValue = 0;
         gameData.graveyardTargetOperation.anyNumber = true;
