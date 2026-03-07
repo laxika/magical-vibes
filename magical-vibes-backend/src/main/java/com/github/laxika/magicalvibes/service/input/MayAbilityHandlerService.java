@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
@@ -143,6 +144,13 @@ public class MayAbilityHandlerService {
         boolean isLoseLifeUnlessDiscard = ability.effects().stream().anyMatch(e -> e instanceof LoseLifeUnlessDiscardEffect);
         if (isLoseLifeUnlessDiscard) {
             mayPenaltyChoiceHandlerService.handleLoseLifeUnlessDiscardChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Lose-life-unless-pays — handled via the may ability system
+        boolean isLoseLifeUnlessPays = ability.effects().stream().anyMatch(e -> e instanceof LoseLifeUnlessPaysEffect);
+        if (isLoseLifeUnlessPays) {
+            mayPenaltyChoiceHandlerService.handleLoseLifeUnlessPaysChoice(gameData, player, accepted, ability);
             return;
         }
 

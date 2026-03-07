@@ -406,6 +406,7 @@ Pass `null` as filter to allow any card.
 | `EachPlayerLosesLifeEffect` | `(int amount)` | each player (including controller) loses N life |
 | `EachPlayerLosesLifePerCreatureControlledEffect` | `(int lifePerCreature)` | each player loses N life per creature they control |
 | `LoseLifeUnlessDiscardEffect` | `(int lifeLoss)` | target player loses N life unless they discard a card. Punisher choice made by the affected player. Place in `ON_OPPONENT_CASTS_SPELL` slot. Resolved via `PlayerInteractionResolutionService` → may ability prompt → discard choice or life loss |
+| `LoseLifeUnlessPaysEffect` | `(int lifeLoss, int payAmount, CardPredicate spellFilter)` | target player loses N life unless they pay {M}. Optional `spellFilter` restricts which spells trigger it (null = any). Place in `ON_OPPONENT_CASTS_SPELL` slot. If player can't pay, auto-applies life loss. Otherwise prompts via may ability. Convenience ctor: `(int lifeLoss, int payAmount)` sets filter to null |
 
 ## Poison counters
 

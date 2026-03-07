@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
@@ -226,6 +227,56 @@ public class MayPenaltyChoiceHandlerService {
             String logEntry = player.getUsername() + " loses " + effect.lifeLoss() + " life. (" + ability.sourceCard().getName() + ")";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} loses {} life (declined discard, {})", gameData.id, player.getUsername(), effect.lifeLoss(), ability.sourceCard().getName());
+        }
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        playerInputService.processNextMayAbility(gameData);
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            gameData.priorityPassedBy.clear();
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+        }
+    }
+
+    public void handleLoseLifeUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        LoseLifeUnlessPaysEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof LoseLifeUnlessPaysEffect)
+                .map(e -> (LoseLifeUnlessPaysEffect) e)
+                .findFirst().orElseThrow();
+
+        UUID targetPlayerId = ability.controllerId();
+
+        if (accepted) {
+            ManaCost cost = new ManaCost("{" + effect.payAmount() + "}");
+            ManaPool pool = gameData.playerManaPools.get(targetPlayerId);
+            if (cost.canPay(pool)) {
+                cost.pay(pool);
+                String logEntry = player.getUsername() + " pays {" + effect.payAmount() + "}. (" + ability.sourceCard().getName() + ")";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} pays {} to avoid life loss ({})", gameData.id, player.getUsername(), effect.payAmount(), ability.sourceCard().getName());
+            } else {
+                // Can't pay — apply life loss
+                if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
+                    gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + "'s life total can't change.");
+                } else {
+                    int currentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
+                    gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
+                    String logEntry = player.getUsername() + " can't pay {" + effect.payAmount() + "}. " + player.getUsername() + " loses " + effect.lifeLoss() + " life. (" + ability.sourceCard().getName() + ")";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} can't pay {} — loses {} life ({})", gameData.id, player.getUsername(), effect.payAmount(), effect.lifeLoss(), ability.sourceCard().getName());
+                }
+            }
+        } else {
+            // Declined — lose life
+            if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
+                gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + "'s life total can't change.");
+            } else {
+                int currentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
+                gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
+                String logEntry = player.getUsername() + " loses " + effect.lifeLoss() + " life. (" + ability.sourceCard().getName() + ")";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} loses {} life (declined to pay, {})", gameData.id, player.getUsername(), effect.lifeLoss(), ability.sourceCard().getName());
+            }
         }
 
         stateBasedActionService.performStateBasedActions(gameData);

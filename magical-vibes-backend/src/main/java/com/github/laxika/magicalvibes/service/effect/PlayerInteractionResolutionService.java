@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardEffe
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
@@ -775,6 +776,37 @@ public class PlayerInteractionResolutionService {
 
         // Has cards — ask the target player via the may ability system
         String prompt = "Discard a card? If you don't, you lose " + effect.lifeLoss() + " life. (" + entry.getCard().getName() + ")";
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                entry.getCard(), targetPlayerId, List.of(effect), prompt
+        ));
+    }
+
+    @HandlesEffect(LoseLifeUnlessPaysEffect.class)
+    private void resolveLoseLifeUnlessPays(GameData gameData, StackEntry entry, LoseLifeUnlessPaysEffect effect) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+
+        com.github.laxika.magicalvibes.model.ManaCost cost = new com.github.laxika.magicalvibes.model.ManaCost("{" + effect.payAmount() + "}");
+        com.github.laxika.magicalvibes.model.ManaPool pool = gameData.playerManaPools.get(targetPlayerId);
+        boolean canPay = cost.canPay(pool);
+
+        if (!canPay) {
+            // Can't pay — auto-apply life loss
+            if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
+                gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
+            } else {
+                int currentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
+                gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
+                String logEntry = playerName + " can't pay {" + effect.payAmount() + "}. " + playerName + " loses " + effect.lifeLoss() + " life.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} loses {} life (can't pay {}, {})",
+                        gameData.id, playerName, effect.lifeLoss(), effect.payAmount(), entry.getCard().getName());
+            }
+            return;
+        }
+
+        // Can pay — ask the target player via the may ability system
+        String prompt = "Pay {" + effect.payAmount() + "}? If you don't, you lose " + effect.lifeLoss() + " life. (" + entry.getCard().getName() + ")";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), targetPlayerId, List.of(effect), prompt
         ));

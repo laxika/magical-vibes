@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.KnowledgePoolCastTriggerEffec
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -268,6 +269,21 @@ public class TriggerCollectionService {
                             spellCard.getId(),
                             Zone.STACK
                     );
+                    gameData.stack.add(entry);
+                } else if (effect instanceof LoseLifeUnlessPaysEffect trigger) {
+                    if (trigger.spellFilter() != null
+                            && !gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) {
+                        continue;
+                    }
+                    List<CardEffect> resolvedEffects = List.of(trigger);
+                    StackEntry entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            playerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(resolvedEffects)
+                    );
+                    entry.setTargetPermanentId(castingPlayerId);
                     gameData.stack.add(entry);
                 }
             }
