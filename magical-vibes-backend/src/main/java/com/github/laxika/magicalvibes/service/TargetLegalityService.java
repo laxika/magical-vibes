@@ -201,6 +201,11 @@ public class TargetLegalityService {
                 new TargetValidationContext(gameData, targetId, targetZone, card));
     }
 
+    public void validateEffectTargetInZone(GameData gameData, Card card, UUID targetId, Zone targetZone, int xValue) {
+        targetValidationService.validateEffectTargets(card.getEffects(EffectSlot.SPELL),
+                new TargetValidationContext(gameData, targetId, targetZone, card, xValue));
+    }
+
     public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetPermanentIds, UUID controllerId) {
         if (targetPermanentIds.size() < card.getMinTargets() || targetPermanentIds.size() > card.getMaxTargets()) {
             throw new IllegalStateException("Must target between " + card.getMinTargets() + " and " + card.getMaxTargets() + " targets");

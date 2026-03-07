@@ -44,6 +44,9 @@ public class GraveyardTargetValidators {
             String label = CardPredicateUtils.describeFilter(effect.filter());
             throw new IllegalStateException("Target card must be a " + label);
         }
+        if (effect.requiresManaValueEqualsX() && graveyardCard.getManaValue() != ctx.xValue()) {
+            throw new IllegalStateException("Target card's mana value must equal X (" + ctx.xValue() + ")");
+        }
     }
 
     @ValidatesTarget(PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect.class)

@@ -214,7 +214,7 @@ public class SpellCastingService {
                         throw new IllegalStateException("Target must be a " + filterLabel + " in your graveyard");
                     }
                 }
-                targetLegalityService.validateEffectTargetInZone(gameData, card, targetPermanentId, Zone.GRAVEYARD);
+                targetLegalityService.validateEffectTargetInZone(gameData, card, targetPermanentId, Zone.GRAVEYARD, effectiveXValue);
             } else if (needsGraveyardEffectTargeting) {
                 boolean inControllersGraveyard = gameData.playerGraveyards
                         .getOrDefault(playerId, List.of())

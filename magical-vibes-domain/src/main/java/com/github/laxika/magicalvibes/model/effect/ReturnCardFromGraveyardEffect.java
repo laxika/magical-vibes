@@ -47,6 +47,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                             the returned equipment to the source permanent that triggered this effect
  *                             (e.g. Auriok Survivors); the equipment enters the battlefield first, then
  *                             the controller may optionally attach it
+ * @param grantHaste           {@code true} to grant haste to the permanent when it enters the battlefield
+ *                             (e.g. Postmortem Lunge)
+ * @param exileAtEndStep       {@code true} to schedule the permanent for exile at the beginning of the
+ *                             next end step (e.g. Postmortem Lunge)
+ * @param requiresManaValueEqualsX {@code true} to restrict targeting to cards whose mana value equals
+ *                             the spell's X value (e.g. Postmortem Lunge)
  */
 public record ReturnCardFromGraveyardEffect(
         GraveyardChoiceDestination destination,
@@ -57,7 +63,10 @@ public record ReturnCardFromGraveyardEffect(
         boolean thisTurnOnly,
         PermanentPredicate attachmentTarget,
         boolean gainLifeEqualToManaValue,
-        boolean attachToSource
+        boolean attachToSource,
+        boolean grantHaste,
+        boolean exileAtEndStep,
+        boolean requiresManaValueEqualsX
 ) implements CardEffect {
 
     /**
@@ -67,7 +76,7 @@ public record ReturnCardFromGraveyardEffect(
      * @param filter      predicate restricting which cards qualify
      */
     public ReturnCardFromGraveyardEffect(GraveyardChoiceDestination destination, CardPredicate filter) {
-        this(destination, filter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, false, false, null, false, false);
+        this(destination, filter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, false, false, null, false, false, false, false, false);
     }
 
     /**
@@ -79,7 +88,7 @@ public record ReturnCardFromGraveyardEffect(
      */
     public ReturnCardFromGraveyardEffect(GraveyardChoiceDestination destination, CardPredicate filter,
                                          GraveyardSearchScope source) {
-        this(destination, filter, source, false, false, false, null, false, false);
+        this(destination, filter, source, false, false, false, null, false, false, false, false, false);
     }
 
     /**
@@ -91,7 +100,7 @@ public record ReturnCardFromGraveyardEffect(
      */
     public ReturnCardFromGraveyardEffect(GraveyardChoiceDestination destination, CardPredicate filter,
                                          boolean targetGraveyard) {
-        this(destination, filter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, targetGraveyard, false, false, null, false, false);
+        this(destination, filter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, targetGraveyard, false, false, null, false, false, false, false, false);
     }
 
     /**
@@ -102,7 +111,17 @@ public record ReturnCardFromGraveyardEffect(
                                          GraveyardSearchScope source, boolean targetGraveyard, boolean returnAll,
                                          boolean thisTurnOnly, PermanentPredicate attachmentTarget,
                                          boolean gainLifeEqualToManaValue) {
-        this(destination, filter, source, targetGraveyard, returnAll, thisTurnOnly, attachmentTarget, gainLifeEqualToManaValue, false);
+        this(destination, filter, source, targetGraveyard, returnAll, thisTurnOnly, attachmentTarget, gainLifeEqualToManaValue, false, false, false, false);
+    }
+
+    /**
+     * Backward-compatible 9-parameter constructor (pre-{@code grantHaste/exileAtEndStep/requiresManaValueEqualsX}).
+     */
+    public ReturnCardFromGraveyardEffect(GraveyardChoiceDestination destination, CardPredicate filter,
+                                         GraveyardSearchScope source, boolean targetGraveyard, boolean returnAll,
+                                         boolean thisTurnOnly, PermanentPredicate attachmentTarget,
+                                         boolean gainLifeEqualToManaValue, boolean attachToSource) {
+        this(destination, filter, source, targetGraveyard, returnAll, thisTurnOnly, attachmentTarget, gainLifeEqualToManaValue, attachToSource, false, false, false);
     }
 
     @Override

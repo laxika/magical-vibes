@@ -276,6 +276,7 @@ Pass `null` as filter to allow any card.
 | No Rest for the Wicked | `ReturnCardFromGraveyardEffect(HAND, new CardTypePredicate(CREATURE), CONTROLLERS_GRAVEYARD, false, true, true, null, false)` — all creatures that died this turn |
 | Razor Hippogriff | `ReturnCardFromGraveyardEffect(HAND, new CardTypePredicate(ARTIFACT), CONTROLLERS_GRAVEYARD, false, false, false, null, true)` — artifact to hand + gain life equal to mana value |
 | Noxious Revival | `ReturnCardFromGraveyardEffect(TOP_OF_OWNERS_LIBRARY, null, ALL_GRAVEYARDS, true, false, false, null, false, false)` — any card from any graveyard on top of owner's library |
+| Postmortem Lunge | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardTypePredicate(CREATURE), CONTROLLERS_GRAVEYARD, true, false, false, null, false, false, true, true, true)` — X-cost creature with MV=X from your graveyard to battlefield with haste; exile at next end step |
 
 ### Other graveyard effects
 

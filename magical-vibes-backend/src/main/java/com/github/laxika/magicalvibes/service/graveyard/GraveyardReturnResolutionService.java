@@ -151,7 +151,14 @@ public class GraveyardReturnResolutionService {
         }
 
         permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
-        moveCardToDestination(gameData, destinationPlayerId, targetCard, effect.destination());
+
+        if ((effect.grantHaste() || effect.exileAtEndStep())
+                && effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
+            putCardOntoBattlefieldWithHasteAndExile(gameData, controllerId, targetCard,
+                    effect.grantHaste(), effect.exileAtEndStep());
+        } else {
+            moveCardToDestination(gameData, destinationPlayerId, targetCard, effect.destination());
+        }
 
         if (effect.gainLifeEqualToManaValue()) {
             applyLifeGainEqualToManaValue(gameData, controllerId, targetCard);
@@ -405,6 +412,26 @@ public class GraveyardReturnResolutionService {
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = playerName + " puts " + card.getName() + " onto the battlefield from a graveyard.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
+    }
+
+    private void putCardOntoBattlefieldWithHasteAndExile(GameData gameData, UUID controllerId, Card card,
+                                                         boolean grantHaste, boolean exileAtEndStep) {
+        Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+        Permanent permanent = new Permanent(card);
+        if (grantHaste) {
+            permanent.getGrantedKeywords().add(Keyword.HASTE);
+        }
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
+        if (exileAtEndStep) {
+            gameData.pendingTokenExilesAtEndStep.add(permanent.getId());
+        }
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String hasteText = grantHaste ? " with haste" : "";
+        String logEntry = playerName + " returns " + card.getName() + " to the battlefield" + hasteText + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
