@@ -74,7 +74,11 @@ import com.github.laxika.magicalvibes.service.input.MayCopyHandlerService;
 import com.github.laxika.magicalvibes.service.input.MayMiscHandlerService;
 import com.github.laxika.magicalvibes.service.input.MayPenaltyChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.XValueChoiceHandlerService;
+import com.github.laxika.magicalvibes.service.input.MultiPermanentChoiceHandlerService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceBattlefieldHandlerService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceSpellHandlerService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceTriggerHandlerService;
 import com.github.laxika.magicalvibes.service.effect.AnimationResolutionService;
 import com.github.laxika.magicalvibes.service.effect.BoostResolutionService;
 import com.github.laxika.magicalvibes.service.effect.CombatRestrictionResolutionService;
@@ -258,9 +262,17 @@ public class GameTestHarness {
         CardChoiceHandlerService cardChoiceHandlerService = new CardChoiceHandlerService(
                 gameQueryService, graveyardService, battlefieldEntryService, gameBroadcastService,
                 playerInputService, triggerCollectionService, turnProgressionService, abilityActivationService, effectResolutionService, playerInteractionResolutionService);
-        PermanentChoiceHandlerService permanentChoiceHandlerService = new PermanentChoiceHandlerService(
+        PermanentChoiceTriggerHandlerService permanentChoiceTriggerHandler = new PermanentChoiceTriggerHandlerService(
+                gameQueryService, gameBroadcastService, triggerCollectionService, playerInputService, turnProgressionService);
+        PermanentChoiceSpellHandlerService permanentChoiceSpellHandler = new PermanentChoiceSpellHandlerService(
+                gameQueryService, graveyardService, gameBroadcastService, triggerCollectionService, playerInputService, turnProgressionService);
+        PermanentChoiceBattlefieldHandlerService permanentChoiceBattlefieldHandler = new PermanentChoiceBattlefieldHandlerService(
                 gameQueryService, graveyardService, battlefieldEntryService, deathTriggerService, cloneService, warpWorldService, gameBroadcastService, abilityActivationService,
                 permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, creatureControlService, turnProgressionService, effectResolutionService, damageResolutionService);
+        MultiPermanentChoiceHandlerService multiPermanentChoiceHandler = new MultiPermanentChoiceHandlerService(
+                gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, turnProgressionService, effectResolutionService);
+        PermanentChoiceHandlerService permanentChoiceHandlerService = new PermanentChoiceHandlerService(
+                permanentChoiceTriggerHandler, permanentChoiceSpellHandler, permanentChoiceBattlefieldHandler, multiPermanentChoiceHandler);
         GraveyardChoiceHandlerService graveyardChoiceHandlerService = new GraveyardChoiceHandlerService(
                 gameQueryService, battlefieldEntryService, legendRuleService, gameBroadcastService, turnProgressionService, permanentRemovalService, triggerCollectionService, playerInputService);
         MayCastHandlerService mayCastHandlerService = new MayCastHandlerService(
