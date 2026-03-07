@@ -342,6 +342,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `UPKEEP_TRIGGERED` | Controller's upkeep |
 | `EACH_UPKEEP_TRIGGERED` | Each player's upkeep |
 | `OPPONENT_UPKEEP_TRIGGERED` | Each opponent's upkeep |
+| `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED` | Upkeep of the enchanted permanent's controller (fires regardless of which player controls the aura). `affectedPlayerId` is baked in at trigger time for effects like `EnchantedCreatureControllerLosesLifeEffect` |
 | `GRAVEYARD_UPKEEP_TRIGGERED` | Upkeep trigger from graveyard |
 | `DRAW_TRIGGERED` | At the beginning of controller's draw step (draw step only, not spell draws) |
 | `EACH_DRAW_TRIGGERED` | At the beginning of any player's draw step (draw step only) |

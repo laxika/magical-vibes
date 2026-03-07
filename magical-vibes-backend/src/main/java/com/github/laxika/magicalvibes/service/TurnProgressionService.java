@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringUntapStepEff
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedCreatureDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -337,6 +338,40 @@ public class TurnProgressionService {
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} opponent-upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
                 }
+            }
+        });
+
+        // Check all battlefields for auras with ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED effects
+        // These fire during the enchanted permanent's controller's upkeep (e.g. Numbing Dose)
+        gameData.forEachPermanent((auraOwnerId, perm) -> {
+            List<CardEffect> enchantedControllerUpkeepEffects = perm.getCard().getEffects(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED);
+            if (enchantedControllerUpkeepEffects == null || enchantedControllerUpkeepEffects.isEmpty()) return;
+            if (perm.getAttachedTo() == null) return;
+
+            UUID enchantedPermanentControllerId = gameQueryService.findPermanentController(gameData, perm.getAttachedTo());
+            if (enchantedPermanentControllerId == null) return;
+            if (!enchantedPermanentControllerId.equals(activePlayerId)) return;
+
+            for (CardEffect effect : enchantedControllerUpkeepEffects) {
+                // Bake the enchanted permanent's controller into effects that need it
+                CardEffect effectForStack = effect;
+                if (effect instanceof EnchantedCreatureControllerLosesLifeEffect e) {
+                    effectForStack = new EnchantedCreatureControllerLosesLifeEffect(e.amount(), enchantedPermanentControllerId);
+                }
+
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        auraOwnerId,
+                        perm.getCard().getName() + "'s upkeep ability",
+                        new ArrayList<>(List.of(effectForStack)),
+                        (UUID) null,
+                        perm.getId()
+                ));
+
+                String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} enchanted-permanent-controller upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
             }
         });
 
