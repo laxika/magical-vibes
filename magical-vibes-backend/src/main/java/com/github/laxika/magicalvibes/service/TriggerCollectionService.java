@@ -38,11 +38,13 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import lombok.RequiredArgsConstructor;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -51,7 +53,6 @@ import java.util.UUID;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class TriggerCollectionService {
 
     private final DamagePreventionService damagePreventionService;
@@ -62,6 +63,27 @@ public class TriggerCollectionService {
     private final PlayerInputService playerInputService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final CreatureControlService creatureControlService;
+    private final GraveyardService graveyardService;
+
+    public TriggerCollectionService(DamagePreventionService damagePreventionService,
+                                     GameOutcomeService gameOutcomeService,
+                                     PermanentRemovalService permanentRemovalService,
+                                     GameQueryService gameQueryService,
+                                     GameBroadcastService gameBroadcastService,
+                                     PlayerInputService playerInputService,
+                                     TriggeredAbilityQueueService triggeredAbilityQueueService,
+                                     CreatureControlService creatureControlService,
+                                     @Lazy GraveyardService graveyardService) {
+        this.damagePreventionService = damagePreventionService;
+        this.gameOutcomeService = gameOutcomeService;
+        this.permanentRemovalService = permanentRemovalService;
+        this.gameQueryService = gameQueryService;
+        this.gameBroadcastService = gameBroadcastService;
+        this.playerInputService = playerInputService;
+        this.triggeredAbilityQueueService = triggeredAbilityQueueService;
+        this.creatureControlService = creatureControlService;
+        this.graveyardService = graveyardService;
+    }
 
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId) {
         checkSpellCastTriggers(gameData, spellCard, castingPlayerId, true);
@@ -724,5 +746,35 @@ public class TriggerCollectionService {
                 }
             }
         });
+    }
+
+    public void checkLifeLossTriggers(GameData gameData, UUID losingPlayerId, int lifeLostAmount) {
+        if (lifeLostAmount <= 0) return;
+
+        boolean[] anyTriggered = {false};
+
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            if (playerId.equals(losingPlayerId)) return;
+
+            for (Permanent perm : battlefield) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_OPPONENT_LOSES_LIFE)) {
+                    if (effect instanceof MillOpponentOnLifeLossEffect) {
+                        String cardName = perm.getCard().getName();
+                        String playerName = gameData.playerIdToName.get(losingPlayerId);
+                        String logEntry = cardName + " triggers — " + playerName + " mills " + lifeLostAmount + " card" + (lifeLostAmount != 1 ? "s" : "") + ".";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} triggers on life loss, milling {} for {} cards",
+                                gameData.id, cardName, playerName, lifeLostAmount);
+
+                        graveyardService.resolveMillPlayer(gameData, losingPlayerId, lifeLostAmount);
+                        anyTriggered[0] = true;
+                    }
+                }
+            }
+        });
+
+        if (anyTriggered[0]) {
+            gameOutcomeService.checkWinCondition(gameData);
+        }
     }
 }

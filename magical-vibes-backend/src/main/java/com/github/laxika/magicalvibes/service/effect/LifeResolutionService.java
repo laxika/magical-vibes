@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -56,6 +57,7 @@ public class LifeResolutionService {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @HandlesEffect(GainLifeEffect.class)
     private void resolveGainLife(GameData gameData, StackEntry entry, GainLifeEffect effect) {
@@ -402,6 +404,8 @@ public class LifeResolutionService {
         String logEntry = playerName + " loses " + amount + " life (" + sourceName + ").";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, amount, sourceName);
+
+        triggerCollectionService.checkLifeLossTriggers(gameData, playerId, amount);
     }
 
     @HandlesEffect(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class)

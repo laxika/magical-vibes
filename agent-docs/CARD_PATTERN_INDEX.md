@@ -157,6 +157,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Any artifact goes to graveyard — damage controller | `m/MagneticMine.java` | ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD DealDamageToTriggeringPermanentControllerEffect(2) — target pre-set to artifact's controller at trigger time |
 | Artifact put into opponent's graveyard from battlefield | `v/ViridianRevel.java` | ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD MayEffect(DrawCardEffect) |
 | Opponent draws | `u/UnderworldDreams.java` | ON_OPPONENT_DRAWS DealDamageToTargetPlayerEffect |
+| Opponent loses life — mill | `m/Mindcrank.java` | ON_OPPONENT_LOSES_LIFE MillOpponentOnLifeLossEffect — whenever opponent loses life, mills that many cards. Trigger fires from damage (spell + combat) and life loss effects |
 | Opponent discards | `m/Megrim.java` | ON_OPPONENT_DISCARDS DealDamageToDiscardingPlayerEffect |
 | Spell cast trigger | `q/QuirionDryad.java` | ON_ANY_PLAYER_CASTS_SPELL +1/+1 counter |
 | Knowledge Pool-style cast intercept | `k/KnowledgePool.java` | ON_ENTER_BATTLEFIELD EachPlayerExilesTopCardsToSourceEffect(3) + ON_ANY_PLAYER_CASTS_SPELL KnowledgePoolCastTriggerEffect — exiles cast-from-hand spells, lets caster pick a nonland card from pool to cast free. Uses per-permanent exile tracking (permanentExiledCards) and KNOWLEDGE_POOL_CAST_CHOICE awaiting input |

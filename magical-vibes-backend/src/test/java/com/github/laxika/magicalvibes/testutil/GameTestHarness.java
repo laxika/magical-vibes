@@ -180,7 +180,7 @@ public class GameTestHarness {
         permanentRemovalService = new PermanentRemovalService(
                 graveyardService, battlefieldEntryService, deathTriggerService, damagePreventionService, auraAttachmentService, gameQueryService, gameBroadcastService);
         TriggerCollectionService triggerCollectionService = new TriggerCollectionService(
-                damagePreventionService, gameOutcomeService, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService, triggeredAbilityQueueService, creatureControlService);
+                damagePreventionService, gameOutcomeService, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService, triggeredAbilityQueueService, creatureControlService, graveyardService);
         graveyardService.setTriggerCollectionService(triggerCollectionService);
         StateBasedActionService stateBasedActionService = new StateBasedActionService(
                 graveyardService, deathTriggerService, gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService);
@@ -208,7 +208,7 @@ public class GameTestHarness {
         TargetLegalityService targetLegalityService = new TargetLegalityService(gameQueryService, targetValidationService);
         ValidTargetService validTargetService = new ValidTargetService(gameQueryService);
         EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
-        LifeResolutionService lifeResolutionService = new LifeResolutionService(gameQueryService, gameBroadcastService, playerInputService);
+        LifeResolutionService lifeResolutionService = new LifeResolutionService(gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService);
         DamageResolutionService damageResolutionService = new DamageResolutionService(graveyardService, damagePreventionService, gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService, lifeResolutionService);
         ExileResolutionService exileResolutionService = new ExileResolutionService(graveyardService, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, cardViewFactory, triggerCollectionService);
         PlayerInteractionResolutionService playerInteractionResolutionService = new PlayerInteractionResolutionService(drawService, graveyardService, gameQueryService, gameBroadcastService, playerInputService, sessionManager, cardViewFactory, permanentRemovalService, triggerCollectionService);

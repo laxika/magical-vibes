@@ -608,6 +608,7 @@ public class DamageResolutionService {
                     String playerName = gameData.playerIdToName.get(playerId);
                     gameBroadcastService.logAndBroadcast(gameData,
                             playerName + " takes " + effectiveDamage + " damage from " + cardName + ".");
+                    triggerCollectionService.checkLifeLossTriggers(gameData, playerId, effectiveDamage);
                 }
             }
 

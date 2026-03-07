@@ -343,6 +343,7 @@ Pass `null` as filter to allow any card.
 | `MillByHandSizeEffect` | `()` | target player mills cards equal to hand size |
 | `MillTargetPlayerByChargeCountersEffect` | `()` | target player mills X cards where X is charge counters on source (reads snapshotted count from xValue) |
 | `EachOpponentMillsEffect` | `(int count)` | each opponent mills N cards |
+| `MillOpponentOnLifeLossEffect` | `()` | triggered effect: whenever an opponent loses life, that player mills that many cards. Amount determined at trigger time. Used by Mindcrank |
 
 ## Exile
 

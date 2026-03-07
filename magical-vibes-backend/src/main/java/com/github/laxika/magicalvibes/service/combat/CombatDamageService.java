@@ -706,6 +706,7 @@ public class CombatDamageService {
                 gameData.playerLifeTotals.put(defenderId, currentLife - state.damageToDefendingPlayer);
                 String logEntry = gameData.playerIdToName.get(defenderId) + " takes " + state.damageToDefendingPlayer + " combat damage.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                triggerCollectionService.checkLifeLossTriggers(gameData, defenderId, state.damageToDefendingPlayer);
             } else {
                 gameBroadcastService.logAndBroadcast(gameData,
                         gameData.playerIdToName.get(defenderId) + "'s life total can't change.");
