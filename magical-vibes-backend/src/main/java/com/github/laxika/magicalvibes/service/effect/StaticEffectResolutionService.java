@@ -460,6 +460,18 @@ public class StaticEffectResolutionService {
                     accumulator.addKeywords(boost.grantedKeywords());
                 }
             }
+        } else if (wrapped instanceof GrantActivatedAbilityEffect grant) {
+            int artifactCount = countControlledPermanents(context, gameQueryService::isArtifact);
+            if (artifactCount >= 3) {
+                boolean scopeMatch = switch (grant.scope()) {
+                    case OWN_PERMANENTS -> context.targetOnSameBattlefield()
+                            && matchesStaticFilter(context.target(), grant.filter());
+                    default -> matchesCreatureScope(context, grant.scope(), grant.filter());
+                };
+                if (scopeMatch) {
+                    accumulator.addActivatedAbility(grant.ability());
+                }
+            }
         }
     }
 

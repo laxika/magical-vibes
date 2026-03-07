@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TargetFilter;
@@ -278,6 +279,7 @@ public class BattlefieldEntryService {
 
         checkAllyCreatureEntersTriggers(gameData, controllerId, card);
         checkAllyArtifactEntersTriggers(gameData, controllerId, card);
+        checkAllyEquipmentEntersTriggers(gameData, controllerId, card);
         checkAllyNontokenArtifactEntersTriggers(gameData, controllerId, card);
         checkAnyCreatureEntersTriggers(gameData, controllerId, card);
         if (card.getType() == CardType.LAND) {
@@ -500,6 +502,34 @@ public class BattlefieldEntryService {
                 String triggerLog = perm.getCard().getName() + "'s ability triggers.";
                 gameBroadcastService.logAndBroadcast(gameData, triggerLog);
                 log.info("Game {} - {} triggers for {} entering (ally artifact entered)",
+                        gameData.id, perm.getCard().getName(), enteringCard.getName());
+            }
+        }
+    }
+
+    void checkAllyEquipmentEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
+        if (!enteringCard.getSubtypes().contains(CardSubtype.EQUIPMENT)) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        for (Permanent perm : battlefield) {
+            if (perm.getCard() == enteringCard) continue;
+
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD);
+            if (effects == null || effects.isEmpty()) continue;
+
+            for (CardEffect effect : effects) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        controllerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        perm.getId()
+                ));
+                String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                log.info("Game {} - {} triggers for {} entering (ally equipment entered)",
                         gameData.id, perm.getCard().getName(), enteringCard.getName());
             }
         }
