@@ -41,7 +41,10 @@ import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardReturnResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
-import com.github.laxika.magicalvibes.service.library.LibraryResolutionService;
+import com.github.laxika.magicalvibes.service.library.LibraryRevealResolutionService;
+import com.github.laxika.magicalvibes.service.library.LibrarySearchResolutionService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleResolutionService;
+import com.github.laxika.magicalvibes.service.library.MillResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.LobbyService;
@@ -208,7 +211,10 @@ public class GameTestHarness {
         List<Object> effectServices = List.of(
                 damageResolutionService,
                 new DestructionResolutionService(battlefieldEntryService, graveyardService, damagePreventionService, gameOutcomeService, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService),
-                new LibraryResolutionService(drawService, graveyardService, gameQueryService, gameBroadcastService, sessionManager, cardViewFactory),
+                new MillResolutionService(graveyardService, gameBroadcastService),
+                new LibraryShuffleResolutionService(gameBroadcastService),
+                new LibrarySearchResolutionService(drawService, gameBroadcastService, sessionManager, cardViewFactory),
+                new LibraryRevealResolutionService(gameQueryService, gameBroadcastService, sessionManager, cardViewFactory),
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new CounterResolutionService(graveyardService, gameBroadcastService, gameQueryService),
                 exileResolutionService,
