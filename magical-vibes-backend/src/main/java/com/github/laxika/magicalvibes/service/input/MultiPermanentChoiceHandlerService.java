@@ -276,7 +276,8 @@ public class MultiPermanentChoiceHandlerService {
                         if (perm.getPlusOnePlusOneCounters() > 0) {
                             perm.setPlusOnePlusOneCounters(perm.getPlusOnePlusOneCounters() + 1);
                         }
-                        if (perm.getMinusOneMinusOneCounters() > 0) {
+                        if (perm.getMinusOneMinusOneCounters() > 0
+                                && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, perm)) {
                             perm.setMinusOneMinusOneCounters(perm.getMinusOneMinusOneCounters() + 1);
                         }
                         if (perm.getLoyaltyCounters() > 0) {
@@ -423,7 +424,7 @@ public class MultiPermanentChoiceHandlerService {
                 if (damage > 0) {
                     boolean hasInfect = sourcePermanent != null
                             && gameQueryService.hasKeyword(gameData, sourcePermanent, Keyword.INFECT);
-                    if (hasInfect) {
+                    if (hasInfect && gameQueryService.canPlayerGetPoisonCounters(gameData, defendingPlayerId)) {
                         int currentPoison = gameData.playerPoisonCounters.getOrDefault(defendingPlayerId, 0);
                         gameData.playerPoisonCounters.put(defendingPlayerId, currentPoison + damage);
                         gameBroadcastService.logAndBroadcast(gameData, defenderName + " gets "

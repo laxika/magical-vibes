@@ -51,6 +51,7 @@ public class PermanentCounterResolutionService {
         gameData.forEachPermanent((playerId, p) -> {
             if (!gameQueryService.isCreature(gameData, p)) return;
             if (gameQueryService.cantHaveCounters(gameData, p)) return;
+            if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, p)) return;
 
             p.setMinusOneMinusOneCounters(p.getMinusOneMinusOneCounters() + xValue);
             count[0]++;
@@ -70,6 +71,7 @@ public class PermanentCounterResolutionService {
             if (p.getId().equals(sourceId)) return;
             if (!gameQueryService.isCreature(gameData, p)) return;
             if (gameQueryService.cantHaveCounters(gameData, p)) return;
+            if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, p)) return;
 
             p.setMinusOneMinusOneCounters(p.getMinusOneMinusOneCounters() + 1);
             count[0]++;
@@ -90,6 +92,7 @@ public class PermanentCounterResolutionService {
         for (Permanent p : battlefield) {
             if (!gameQueryService.isCreature(gameData, p)) continue;
             if (gameQueryService.cantHaveCounters(gameData, p)) continue;
+            if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, p)) continue;
 
             p.setMinusOneMinusOneCounters(p.getMinusOneMinusOneCounters() + 1);
             count++;
@@ -108,6 +111,7 @@ public class PermanentCounterResolutionService {
             if (!p.isAttacking()) return;
             if (!gameQueryService.isCreature(gameData, p)) return;
             if (gameQueryService.cantHaveCounters(gameData, p)) return;
+            if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, p)) return;
 
             p.setMinusOneMinusOneCounters(p.getMinusOneMinusOneCounters() + 1);
             count[0]++;
@@ -137,6 +141,7 @@ public class PermanentCounterResolutionService {
         if (effect.powerModifier() > 0) {
             source.setPlusOnePlusOneCounters(source.getPlusOnePlusOneCounters() + effect.amount());
         } else {
+            if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, source)) return;
             source.setMinusOneMinusOneCounters(source.getMinusOneMinusOneCounters() + effect.amount());
         }
         String logEntry = source.getCard().getName() + " gets " + effect.amount() + " " + counterLabel + " counter(s).";
@@ -192,6 +197,10 @@ public class PermanentCounterResolutionService {
         }
 
         if (gameQueryService.cantHaveCounters(gameData, target)) {
+            return;
+        }
+
+        if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) {
             return;
         }
 
@@ -309,6 +318,10 @@ public class PermanentCounterResolutionService {
         if (creature == null) return;
 
         if (gameQueryService.cantHaveCounters(gameData, creature)) {
+            return;
+        }
+
+        if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, creature)) {
             return;
         }
 

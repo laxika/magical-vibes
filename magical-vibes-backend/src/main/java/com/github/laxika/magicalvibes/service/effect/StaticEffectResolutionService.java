@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledCreatureCountEffect;
@@ -246,6 +247,14 @@ public class StaticEffectResolutionService {
         var grant = (GrantKeywordEffect) effect;
         if (matchesCreatureScope(context, grant.scope(), grant.filter())) {
             accumulator.addKeyword(grant.keyword());
+        }
+    }
+
+    @HandlesStaticEffect(RemoveKeywordEffect.class)
+    private void resolveRemoveKeyword(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var remove = (RemoveKeywordEffect) effect;
+        if (matchesCreatureScope(context, remove.scope(), remove.filter())) {
+            accumulator.removeKeyword(remove.keyword());
         }
     }
 

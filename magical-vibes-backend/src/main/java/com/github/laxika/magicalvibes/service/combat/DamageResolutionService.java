@@ -447,7 +447,8 @@ public class DamageResolutionService {
         boolean sourceHasInfect = gameQueryService.sourceHasKeyword(gameData, entry, damageSource, Keyword.INFECT);
 
         if (sourceHasInfect) {
-            if (damage > 0 && !gameQueryService.cantHaveCounters(gameData, target)) {
+            if (damage > 0 && !gameQueryService.cantHaveCounters(gameData, target)
+                    && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) {
                 target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() + damage);
                 gameBroadcastService.logAndBroadcast(gameData,
                         sourceName + " puts " + damage + " -1/-1 counters on " + target.getCard().getName() + ".");
@@ -589,7 +590,7 @@ public class DamageResolutionService {
             boolean sourceHasInfect = gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.INFECT);
 
             if (sourceHasInfect) {
-                if (effectiveDamage > 0) {
+                if (effectiveDamage > 0 && gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {
                     int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
                     gameData.playerPoisonCounters.put(playerId, currentPoison + effectiveDamage);
                     String playerName = gameData.playerIdToName.get(playerId);

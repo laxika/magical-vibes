@@ -431,6 +431,9 @@ Pass `null` as filter to allow any card.
 | `LoseGameIfNotCastFromHandEffect` | `()` | lose the game if not cast from hand (ETB check) |
 | `WinGameIfCreaturesInGraveyardEffect` | `(int threshold)` | win if N+ creature cards in graveyard |
 | `CantHaveCountersEffect` | `()` | this permanent can't have counters put on it (static) |
+| `CantHaveMinusOneMinusOneCountersEffect` | `()` | this creature can't have -1/-1 counters put on it (granted via GrantEffectEffect). Checked by `GameQueryService.cantHaveMinusOneMinusOneCounters()` |
+| `PlayerCantGetPoisonCountersEffect` | `()` | controller can't get poison counters (static on source permanent). Checked at all poison counter application points |
+| `RemoveKeywordEffect` | `(Keyword keyword, GrantScope scope)` or `(Keyword keyword, GrantScope scope, PermanentPredicate filter)` | static: creatures in scope lose the specified keyword. Added to `removedKeywords` in static bonus computation |
 | `CantLoseGameEffect` | `()` | you can't lose and opponents can't win (static) |
 | `LifeTotalCantChangeEffect` | `()` | controller's life total can't change (static) |
 

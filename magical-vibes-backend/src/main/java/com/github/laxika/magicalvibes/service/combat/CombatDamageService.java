@@ -714,7 +714,7 @@ public class CombatDamageService {
         }
 
         state.poisonDamageToDefendingPlayer = damagePreventionService.applyPlayerPreventionShield(gameData, defenderId, state.poisonDamageToDefendingPlayer);
-        if (state.poisonDamageToDefendingPlayer > 0) {
+        if (state.poisonDamageToDefendingPlayer > 0 && gameQueryService.canPlayerGetPoisonCounters(gameData, defenderId)) {
             int currentPoison = gameData.playerPoisonCounters.getOrDefault(defenderId, 0);
             gameData.playerPoisonCounters.put(defenderId, currentPoison + state.poisonDamageToDefendingPlayer);
             String logEntry = gameData.playerIdToName.get(defenderId) + " gets " + state.poisonDamageToDefendingPlayer + " poison counters.";
@@ -808,7 +808,8 @@ public class CombatDamageService {
                                            Set<Integer> deathtouchDamagedSet) {
         if (gameQueryService.hasKeyword(gameData, source, Keyword.INFECT)) {
             int afterShield = damagePreventionService.applyCreaturePreventionShield(gameData, target, damage);
-            if (afterShield > 0 && !gameQueryService.cantHaveCounters(gameData, target)) {
+            if (afterShield > 0 && !gameQueryService.cantHaveCounters(gameData, target)
+                    && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) {
                 target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() + afterShield);
             }
         } else {

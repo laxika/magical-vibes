@@ -28,6 +28,7 @@ public class StaticBonusAccumulator {
     private final Set<CardColor> grantedColors = EnumSet.noneOf(CardColor.class);
     private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
     private final Set<CardType> grantedCardTypes = EnumSet.noneOf(CardType.class);
+    private final Set<Keyword> removedKeywords = new HashSet<>();
     private boolean colorOverriding;
     private boolean subtypeOverriding;
     private boolean landSubtypeOverriding;
@@ -126,6 +127,14 @@ public class StaticBonusAccumulator {
         return grantedCardTypes;
     }
 
+    public void removeKeyword(Keyword keyword) {
+        removedKeywords.add(keyword);
+    }
+
+    public Set<Keyword> getRemovedKeywords() {
+        return removedKeywords;
+    }
+
     public boolean isColorOverriding() {
         return colorOverriding;
     }
@@ -161,7 +170,7 @@ public class StaticBonusAccumulator {
         return new StaticBonus(
                 finalPower, finalToughness, keywords, protectionColors,
                 animated, grantedActivatedAbilities, grantedEffects,
-                grantedColors, grantedSubtypes, grantedCardTypes, colorOverriding, subtypeOverriding, landSubtypeOverriding);
+                grantedColors, grantedSubtypes, grantedCardTypes, colorOverriding, subtypeOverriding, landSubtypeOverriding, removedKeywords);
     }
 }
 

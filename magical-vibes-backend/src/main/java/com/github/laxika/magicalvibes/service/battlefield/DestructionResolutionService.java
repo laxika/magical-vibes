@@ -516,15 +516,17 @@ public class DestructionResolutionService {
         tryDestroyAndLog(gameData, target, entry.getCard().getName());
 
         // Give poison counters to the target's controller regardless of whether destruction succeeded
-        int currentPoison = gameData.playerPoisonCounters.getOrDefault(controllerId, 0);
-        gameData.playerPoisonCounters.put(controllerId, currentPoison + effect.poisonCounters());
+        if (gameQueryService.canPlayerGetPoisonCounters(gameData, controllerId)) {
+            int currentPoison = gameData.playerPoisonCounters.getOrDefault(controllerId, 0);
+            gameData.playerPoisonCounters.put(controllerId, currentPoison + effect.poisonCounters());
 
-        String playerName = gameData.playerIdToName.get(controllerId);
-        String poisonLog = playerName + " gets " + effect.poisonCounters() + " poison counter"
-                + (effect.poisonCounters() > 1 ? "s" : "") + " (" + entry.getCard().getName() + ").";
-        gameBroadcastService.logAndBroadcast(gameData, poisonLog);
-        log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName,
-                effect.poisonCounters(), entry.getCard().getName());
+            String playerName = gameData.playerIdToName.get(controllerId);
+            String poisonLog = playerName + " gets " + effect.poisonCounters() + " poison counter"
+                    + (effect.poisonCounters() > 1 ? "s" : "") + " (" + entry.getCard().getName() + ").";
+            gameBroadcastService.logAndBroadcast(gameData, poisonLog);
+            log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName,
+                    effect.poisonCounters(), entry.getCard().getName());
+        }
 
         gameOutcomeService.checkWinCondition(gameData);
     }

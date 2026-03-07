@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughne
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedBySpellColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -121,8 +123,8 @@ public class GameQueryService {
      * @param colorOverriding           whether granted colors replace the permanent's natural color
      * @param subtypeOverriding         whether granted subtypes replace the permanent's natural subtypes
      */
-    public record StaticBonus(int power, int toughness, Set<Keyword> keywords, Set<CardColor> protectionColors, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects, Set<CardColor> grantedColors, List<CardSubtype> grantedSubtypes, Set<CardType> grantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding) {
-        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), false, false, false);
+    public record StaticBonus(int power, int toughness, Set<Keyword> keywords, Set<CardColor> protectionColors, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects, Set<CardColor> grantedColors, List<CardSubtype> grantedSubtypes, Set<CardType> grantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, Set<Keyword> removedKeywords) {
+        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), false, false, false, Set.of());
     }
 
     // --- Lookup helpers ---
@@ -403,7 +405,9 @@ public class GameQueryService {
      * or granted by static effects from other permanents.
      */
     public boolean hasKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
-        return permanent.hasKeyword(keyword) || computeStaticBonus(gameData, permanent).keywords().contains(keyword);
+        StaticBonus bonus = computeStaticBonus(gameData, permanent);
+        if (bonus.removedKeywords().contains(keyword)) return false;
+        return permanent.hasKeyword(keyword) || bonus.keywords().contains(keyword);
     }
 
     /**
@@ -425,6 +429,30 @@ public class GameQueryService {
             return true;
         }
         return hasGrantedEffect(gameData, permanent, CantHaveCountersEffect.class);
+    }
+
+    /**
+     * Returns {@code true} if the permanent cannot have -1/-1 counters placed on it,
+     * from effects granted by other permanents (e.g. Melira, Sylvok Outcast).
+     */
+    public boolean cantHaveMinusOneMinusOneCounters(GameData gameData, Permanent permanent) {
+        return hasGrantedEffect(gameData, permanent, CantHaveMinusOneMinusOneCountersEffect.class);
+    }
+
+    /**
+     * Returns {@code true} if the player cannot get poison counters,
+     * because they control a permanent with {@link PlayerCantGetPoisonCountersEffect}.
+     */
+    public boolean canPlayerGetPoisonCounters(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return true;
+        for (Permanent p : battlefield) {
+            if (p.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(PlayerCantGetPoisonCountersEffect.class::isInstance)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

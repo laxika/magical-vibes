@@ -498,6 +498,8 @@ public class LifeResolutionService {
         UUID playerId = effect.affectedPlayerId();
         if (playerId == null) return;
 
+        if (!gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) return;
+
         int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
         gameData.playerPoisonCounters.put(playerId, currentPoison + effect.amount());
 
@@ -512,6 +514,8 @@ public class LifeResolutionService {
     @HandlesEffect(GiveControllerPoisonCountersEffect.class)
     private void resolveGiveControllerPoisonCounters(GameData gameData, StackEntry entry, GiveControllerPoisonCountersEffect effect) {
         UUID controllerId = entry.getControllerId();
+        if (!gameQueryService.canPlayerGetPoisonCounters(gameData, controllerId)) return;
+
         int currentPoison = gameData.playerPoisonCounters.getOrDefault(controllerId, 0);
         gameData.playerPoisonCounters.put(controllerId, currentPoison + effect.amount());
 
@@ -526,6 +530,8 @@ public class LifeResolutionService {
     @HandlesEffect(GiveEachPlayerPoisonCountersEffect.class)
     private void resolveGiveEachPlayerPoisonCounters(GameData gameData, StackEntry entry, GiveEachPlayerPoisonCountersEffect effect) {
         for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) continue;
+
             int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
             gameData.playerPoisonCounters.put(playerId, currentPoison + effect.amount());
 
@@ -544,6 +550,8 @@ public class LifeResolutionService {
         if (targetPlayerId == null) {
             return;
         }
+
+        if (!gameQueryService.canPlayerGetPoisonCounters(gameData, targetPlayerId)) return;
 
         int currentPoison = gameData.playerPoisonCounters.getOrDefault(targetPlayerId, 0);
         gameData.playerPoisonCounters.put(targetPlayerId, currentPoison + effect.amount());

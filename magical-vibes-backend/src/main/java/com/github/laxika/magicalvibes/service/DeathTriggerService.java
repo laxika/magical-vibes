@@ -88,6 +88,8 @@ public class DeathTriggerService {
             return;
         }
 
+        if (!gameQueryService.canPlayerGetPoisonCounters(gameData, controllerId)) return;
+
         int currentPoison = gameData.playerPoisonCounters.getOrDefault(controllerId, 0);
         gameData.playerPoisonCounters.put(controllerId, currentPoison + poisonAmount);
 
