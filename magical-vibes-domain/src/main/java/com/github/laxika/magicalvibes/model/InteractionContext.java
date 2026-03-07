@@ -47,7 +47,17 @@ public sealed interface InteractionContext permits
     record LibrarySearch(UUID playerId, List<Card> cards, boolean reveals, boolean canFailToFind,
                          UUID targetPlayerId, int remainingCount, List<Card> sourceCards,
                          boolean reorderRemainingToBottom, boolean shuffleAfterSelection,
-                         String prompt, LibrarySearchDestination destination) implements InteractionContext {}
+                         String prompt, LibrarySearchDestination destination,
+                         Set<CardType> filterCardTypes) implements InteractionContext {
+
+        public LibrarySearch(UUID playerId, List<Card> cards, boolean reveals, boolean canFailToFind,
+                             UUID targetPlayerId, int remainingCount, List<Card> sourceCards,
+                             boolean reorderRemainingToBottom, boolean shuffleAfterSelection,
+                             String prompt, LibrarySearchDestination destination) {
+            this(playerId, cards, reveals, canFailToFind, targetPlayerId, remainingCount, sourceCards,
+                    reorderRemainingToBottom, shuffleAfterSelection, prompt, destination, null);
+        }
+    }
 
     record LibraryRevealChoice(UUID playerId, List<Card> allCards, Set<UUID> validCardIds,
                                boolean remainingToGraveyard, boolean selectedToHand,

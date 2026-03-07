@@ -50,6 +50,7 @@ public class InteractionState {
     private boolean awaitingLibrarySearchShuffleAfterSelection;
     private String awaitingLibrarySearchPrompt;
     private LibrarySearchDestination awaitingLibrarySearchDestination = LibrarySearchDestination.HAND;
+    private Set<CardType> awaitingLibrarySearchFilterCardTypes;
     private int awaitingDiscardRemainingCount;
     private UUID awaitingRevealedHandChoiceTargetPlayerId;
     private int awaitingRevealedHandChoiceRemainingCount;
@@ -113,6 +114,7 @@ public class InteractionState {
         copy.awaitingLibrarySearchShuffleAfterSelection = this.awaitingLibrarySearchShuffleAfterSelection;
         copy.awaitingLibrarySearchPrompt = this.awaitingLibrarySearchPrompt;
         copy.awaitingLibrarySearchDestination = this.awaitingLibrarySearchDestination;
+        copy.awaitingLibrarySearchFilterCardTypes = this.awaitingLibrarySearchFilterCardTypes != null ? new HashSet<>(this.awaitingLibrarySearchFilterCardTypes) : null;
         copy.awaitingDiscardRemainingCount = this.awaitingDiscardRemainingCount;
         copy.awaitingRevealedHandChoiceTargetPlayerId = this.awaitingRevealedHandChoiceTargetPlayerId;
         copy.awaitingRevealedHandChoiceRemainingCount = this.awaitingRevealedHandChoiceRemainingCount;
@@ -422,9 +424,11 @@ public class InteractionState {
         this.awaitingLibrarySearchShuffleAfterSelection = params.shuffleAfterSelection();
         this.awaitingLibrarySearchPrompt = params.prompt();
         this.awaitingLibrarySearchDestination = params.destination();
+        this.awaitingLibrarySearchFilterCardTypes = params.filterCardTypes();
         this.context = new InteractionContext.LibrarySearch(params.playerId(), params.cards(), params.reveals(),
                 params.canFailToFind(), params.targetPlayerId(), params.remainingCount(), params.sourceCards(),
-                params.reorderRemainingToBottom(), params.shuffleAfterSelection(), params.prompt(), params.destination());
+                params.reorderRemainingToBottom(), params.shuffleAfterSelection(), params.prompt(), params.destination(),
+                params.filterCardTypes());
     }
 
     public void clearLibrarySearch() {
@@ -439,6 +443,7 @@ public class InteractionState {
         this.awaitingLibrarySearchShuffleAfterSelection = true;
         this.awaitingLibrarySearchPrompt = null;
         this.awaitingLibrarySearchDestination = LibrarySearchDestination.HAND;
+        this.awaitingLibrarySearchFilterCardTypes = null;
     }
 
     public UUID awaitingLibrarySearchPlayerId() {
@@ -672,7 +677,8 @@ public class InteractionState {
                 awaitingLibrarySearchReveals, awaitingLibrarySearchCanFailToFind,
                 awaitingLibrarySearchTargetPlayerId, awaitingLibrarySearchRemainingCount,
                 awaitingLibrarySearchSourceCards, awaitingLibrarySearchReorderRemainingToBottom,
-                awaitingLibrarySearchShuffleAfterSelection, awaitingLibrarySearchPrompt, awaitingLibrarySearchDestination);
+                awaitingLibrarySearchShuffleAfterSelection, awaitingLibrarySearchPrompt, awaitingLibrarySearchDestination,
+                awaitingLibrarySearchFilterCardTypes);
     }
 
     public InteractionContext.LibraryRevealChoice libraryRevealChoiceContext() {

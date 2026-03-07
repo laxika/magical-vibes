@@ -321,6 +321,7 @@ Pass `null` as filter to allow any card.
 | `CastTargetInstantOrSorceryFromGraveyardEffect` | `(GraveyardSearchScope scope, boolean withoutPayingManaCost)` | ETB: target instant or sorcery from a graveyard matching scope, you may cast it (without paying mana cost if flag is true). Has `canTargetGraveyard()=true`. Graveyard targeting handled by GameHelper ETB flow |
 | `DistantMemoriesEffect` | `()` | search library for any card, exile it, shuffle; opponent may let you have it, otherwise draw 3 |
 | `SearchLibraryForCreatureToTopOfLibraryEffect` | `()` | search library for a creature card, reveal it, then shuffle and put that card on top of library |
+| `SearchTargetLibraryForCardsToGraveyardEffect` | `(int maxCount, Set<CardType> cardTypes)` | search target opponent's library for up to N cards of specified types and put them into that player's graveyard, then shuffle. Targets player. Multi-pick via remainingCount |
 | `PayManaAndSearchLibraryForCardNamedToBattlefieldEffect` | `(String manaCost, String cardName)` | pay mana, search for named card to battlefield |
 | `LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect` | `(int count, Set<CardType> cardTypes)` or `(int count, Set<CardType> cardTypes, boolean anyNumber)` | look at top N, may reveal matching type to hand, rest on bottom; anyNumber=true allows multi-select |
 | `LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect` | `(int count)` | look at top N cards, may put one onto battlefield if it shares a name with any permanent, rest on bottom in any order |

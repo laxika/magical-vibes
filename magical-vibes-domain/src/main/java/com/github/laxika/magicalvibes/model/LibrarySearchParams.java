@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -18,7 +19,8 @@ public record LibrarySearchParams(
         boolean reorderRemainingToBottom,
         boolean shuffleAfterSelection,
         String prompt,
-        LibrarySearchDestination destination
+        LibrarySearchDestination destination,
+        Set<CardType> filterCardTypes
 ) {
     public static Builder builder(UUID playerId, List<Card> cards) {
         return new Builder(playerId, cards);
@@ -36,6 +38,7 @@ public record LibrarySearchParams(
         private boolean shuffleAfterSelection = true;
         private String prompt;
         private LibrarySearchDestination destination = LibrarySearchDestination.HAND;
+        private Set<CardType> filterCardTypes;
 
         private Builder(UUID playerId, List<Card> cards) {
             this.playerId = playerId;
@@ -87,10 +90,15 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder filterCardTypes(Set<CardType> filterCardTypes) {
+            this.filterCardTypes = filterCardTypes;
+            return this;
+        }
+
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, shuffleAfterSelection,
-                    prompt, destination);
+                    prompt, destination, filterCardTypes);
         }
     }
 }

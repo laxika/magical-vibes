@@ -205,6 +205,8 @@ public class LibraryChoiceHandlerService {
         boolean toBattlefield = destination == LibrarySearchDestination.BATTLEFIELD
                 || destination == LibrarySearchDestination.BATTLEFIELD_TAPPED;
         boolean toBattlefieldTapped = destination == LibrarySearchDestination.BATTLEFIELD_TAPPED;
+        boolean toGraveyard = destination == LibrarySearchDestination.GRAVEYARD;
+        Set<CardType> filterCardTypes = librarySearch.filterCardTypes();
 
         UUID deckOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
         UUID handOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
@@ -398,6 +400,8 @@ public class LibraryChoiceHandlerService {
                     gameData.id, player.getUsername(), chosenCard.getName());
             turnProgressionService.resolveAutoPass(gameData);
             return;
+        } else if (toGraveyard) {
+            graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard);
         } else if (destination == LibrarySearchDestination.HAND) {
             gameData.playerHands.get(handOwnerId).add(chosenCard);
         } else if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
@@ -434,22 +438,40 @@ public class LibraryChoiceHandlerService {
 
         if (targetPlayerId != null && remainingCount > 1) {
             int newRemaining = remainingCount - 1;
-            List<Card> newSearchCards = new ArrayList<>(deck);
+            List<Card> newSearchCards = filterCardTypes != null
+                    ? deck.stream().filter(c -> filterCardTypes.contains(c.getType()) || c.getAdditionalTypes().stream().anyMatch(filterCardTypes::contains)).toList()
+                    : new ArrayList<>(deck);
 
-            gameData.interaction.beginLibrarySearch(LibrarySearchParams.builder(playerId, newSearchCards)
-                    .targetPlayerId(targetPlayerId)
-                    .remainingCount(newRemaining)
-                    .build());
+            if (newSearchCards.isEmpty()) {
+                // No more matching cards — shuffle and finish
+                Collections.shuffle(deck);
+                String targetName = gameData.playerIdToName.get(targetPlayerId);
+                String logMsg = player.getUsername() + " finds no more matching cards in " + targetName + "'s library. Library is shuffled.";
+                gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                turnProgressionService.resolveAutoPass(gameData);
+                return;
+            }
 
             String targetName = gameData.playerIdToName.get(targetPlayerId);
+            String destinationDesc = toGraveyard ? "their graveyard" : "their hand";
+            String prompt = "Search " + targetName + "'s library for a card to put into " + destinationDesc + " (" + newRemaining + " remaining).";
+
+            gameData.interaction.beginLibrarySearch(LibrarySearchParams.builder(playerId, new ArrayList<>(newSearchCards))
+                    .targetPlayerId(targetPlayerId)
+                    .remainingCount(newRemaining)
+                    .canFailToFind(toGraveyard || canFailToFind)
+                    .destination(destination)
+                    .filterCardTypes(filterCardTypes)
+                    .build());
+
             List<CardView> cardViews = newSearchCards.stream().map(cardViewFactory::create).toList();
             sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(
                     cardViews,
-                    "Search " + targetName + "'s library for a card to put into their hand (" + newRemaining + " remaining).",
-                    false
+                    prompt,
+                    toGraveyard || canFailToFind
             ));
 
-            log.info("Game {} - {} picks for Head Games, {} remaining", gameData.id, player.getUsername(), newRemaining);
+            log.info("Game {} - {} picks from target library, {} remaining", gameData.id, player.getUsername(), newRemaining);
             return;
         }
 
@@ -464,6 +486,7 @@ public class LibraryChoiceHandlerService {
             case EXILE_IMPRINT -> "into exile (imprint)";
             case EXILE -> "into exile";
             case TOP_OF_LIBRARY -> "on top of their library";
+            case GRAVEYARD -> "into their graveyard";
         };
         String logEntry;
         if (targetPlayerId != null) {

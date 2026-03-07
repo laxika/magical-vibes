@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureToTop
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithColorAndMVXOrLessToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithExactMVToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithMVXOrLessToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryForCardsToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithSubtypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
@@ -183,6 +184,49 @@ public class LibrarySearchResolutionService {
                 false,
                 LibrarySearchDestination.HAND
         );
+    }
+
+    /**
+     * Searches target opponent's library for up to N cards of the given types and puts them
+     * into that player's graveyard. Used by cards like Life's Finale.
+     */
+    @HandlesEffect(SearchTargetLibraryForCardsToGraveyardEffect.class)
+    void resolveSearchTargetLibraryForCardsToGraveyard(GameData gameData, StackEntry entry,
+                                                       SearchTargetLibraryForCardsToGraveyardEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        UUID targetPlayerId = entry.getTargetPermanentId();
+
+        if (isSearchPrevented(gameData, controllerId)) return;
+
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        if (deck == null || deck.isEmpty()) {
+            String logMsg = controllerName + " searches " + targetName + "'s library but it is empty. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> matchingCards = deck.stream()
+                .filter(card -> matchesCardTypes(card, effect.cardTypes()))
+                .toList();
+
+        if (matchingCards.isEmpty()) {
+            Collections.shuffle(deck);
+            String logMsg = controllerName + " searches " + targetName + "'s library but finds no matching cards. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        String prompt = "Search " + targetName + "'s library for a creature card to put into their graveyard (" + effect.maxCount() + " remaining).";
+        sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
+                .targetPlayerId(targetPlayerId)
+                .remainingCount(effect.maxCount())
+                .canFailToFind(true)
+                .destination(LibrarySearchDestination.GRAVEYARD)
+                .filterCardTypes(effect.cardTypes())
+                .build(), prompt, true, controllerName + " searches " + targetName + "'s library.");
     }
 
     /**

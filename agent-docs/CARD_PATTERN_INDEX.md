@@ -40,6 +40,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Destroy + life gain by mana value | `d/DivineOffering.java` | DestroyTargetPermanentAndGainLifeEqualToManaValueEffect + artifact filter |
 | Destroy + controller life loss | `g/GlissasScorn.java` | DestroyTargetPermanentAndControllerLosesLifeEffect(1) + artifact filter |
 | Board wipe | `w/WrathOfGod.java` | DestroyAllPermanentsEffect |
+| Board wipe + opponent library search to graveyard | `l/LifesFinale.java` | DestroyAllPermanentsEffect + SearchTargetLibraryForCardsToGraveyardEffect(3, CREATURE) + PlayerPredicateTargetFilter(OPPONENT) |
 | Counter (any) | `c/Cancel.java` | CounterSpellEffect (spell targeting auto-derived) |
 | Counter (filtered) | `r/RemoveSoul.java` | StackEntryPredicateTargetFilter + StackEntryTypeInPredicate |
 | Counter + bonus | `d/Discombobulate.java` | Counter + ReorderTopCardsOfLibraryEffect |

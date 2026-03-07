@@ -551,6 +551,7 @@ public class GameData {
                             .shuffleAfterSelection(ls.shuffleAfterSelection())
                             .prompt(ls.prompt())
                             .destination(ls.destination())
+                            .filterCardTypes(ls.filterCardTypes())
                             .build());
             case InteractionContext.LibraryRevealChoice lrc ->
                     targetInteraction.beginLibraryRevealChoice(lrc.playerId(),
