@@ -21,11 +21,11 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersE
 import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -310,7 +310,7 @@ public class StackResolutionService {
             List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
             if (!deck.contains(entry.getCard())) {
                 deck.add(entry.getCard());
-                Collections.shuffle(deck);
+                LibraryShuffleHelper.shuffleLibrary(gameData, entry.getControllerId());
                 String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
                 gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
             }

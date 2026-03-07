@@ -15,12 +15,14 @@ import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryMayExileOneEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFromGraveyardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
@@ -135,6 +137,7 @@ public class LibraryRevealResolutionService {
         }
 
         List<Card> topCards = new ArrayList<>(deck.subList(0, count));
+        deck.subList(0, count).clear();
 
         gameData.interaction.beginLibraryReorder(controllerId, topCards, false);
 
@@ -165,7 +168,7 @@ public class LibraryRevealResolutionService {
         if (count <= 0) {
             String logMsg = playerName + " looks at no cards (library is empty or life total is 0). Library is shuffled.";
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            Collections.shuffle(deck);
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             return;
         }
 
@@ -190,7 +193,7 @@ public class LibraryRevealResolutionService {
         if (eligibleCards.isEmpty()) {
             // No eligible cards — put all back and shuffle
             deck.addAll(revealedCards);
-            Collections.shuffle(deck);
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             String shuffleLog = playerName + " finds no eligible cards. Library is shuffled.";
             gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
             return;
@@ -407,6 +410,57 @@ public class LibraryRevealResolutionService {
                 "Exile one card face down (imprint). The rest go to the bottom of your library.",
                 false
         ));
+    }
+
+    /**
+     * Looks at the top N cards of the target player's library. The controller may exile one
+     * of those cards. The rest are put on top of that library in any order.
+     * Used by Psychic Surgery.
+     */
+    @HandlesEffect(LookAtTopCardsOfTargetLibraryMayExileOneEffect.class)
+    void resolveLookAtTopCardsOfTargetLibraryMayExileOne(
+            GameData gameData,
+            StackEntry entry,
+            LookAtTopCardsOfTargetLibraryMayExileOneEffect effect
+    ) {
+        UUID controllerId = entry.getControllerId();
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        int actual = Math.min(effect.count(), deck.size());
+        if (actual == 0) {
+            String logMsg = entry.getCard().getName() + ": " + targetName + "'s library is empty.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> topCards = takeTopCards(deck, actual);
+
+        String logMsg = controllerName + " looks at the top " + pluralCards(actual) + " of " + targetName + "'s library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+
+        List<Card> sourceCards = new ArrayList<>(topCards);
+
+        gameData.interaction.beginLibrarySearch(LibrarySearchParams.builder(controllerId, topCards)
+                .canFailToFind(true)
+                .targetPlayerId(targetPlayerId)
+                .sourceCards(sourceCards)
+                .reorderRemainingToTop(true)
+                .shuffleAfterSelection(false)
+                .prompt("You may exile one of these cards. The rest will be put on top of the library.")
+                .destination(LibrarySearchDestination.EXILE)
+                .build());
+
+        List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
+                cardViews,
+                "You may exile one of these cards. The rest will be put on top of the library.",
+                true
+        ));
+
+        log.info("Game {} - {} looks at top {} of {}'s library ({})", gameData.id, controllerName, actual, targetName, entry.getCard().getName());
     }
 
     // =========================================================================

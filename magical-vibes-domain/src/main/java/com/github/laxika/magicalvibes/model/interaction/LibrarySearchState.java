@@ -20,6 +20,7 @@ public class LibrarySearchState {
     private final int remainingCount;
     private final List<Card> sourceCards;
     private final boolean reorderRemainingToBottom;
+    private final boolean reorderRemainingToTop;
     private final boolean shuffleAfterSelection;
     private final String prompt;
     private final LibrarySearchDestination destination;
@@ -27,7 +28,8 @@ public class LibrarySearchState {
 
     public LibrarySearchState(UUID playerId, List<Card> cards, boolean reveals, boolean canFailToFind,
                               UUID targetPlayerId, int remainingCount, List<Card> sourceCards,
-                              boolean reorderRemainingToBottom, boolean shuffleAfterSelection,
+                              boolean reorderRemainingToBottom, boolean reorderRemainingToTop,
+                              boolean shuffleAfterSelection,
                               String prompt, LibrarySearchDestination destination,
                               Set<CardType> filterCardTypes) {
         this.playerId = playerId;
@@ -38,6 +40,7 @@ public class LibrarySearchState {
         this.remainingCount = remainingCount;
         this.sourceCards = sourceCards;
         this.reorderRemainingToBottom = reorderRemainingToBottom;
+        this.reorderRemainingToTop = reorderRemainingToTop;
         this.shuffleAfterSelection = shuffleAfterSelection;
         this.prompt = prompt;
         this.destination = destination;
@@ -76,6 +79,10 @@ public class LibrarySearchState {
         return reorderRemainingToBottom;
     }
 
+    public boolean reorderRemainingToTop() {
+        return reorderRemainingToTop;
+    }
+
     public boolean shuffleAfterSelection() {
         return shuffleAfterSelection;
     }
@@ -98,7 +105,7 @@ public class LibrarySearchState {
                 cards != null ? new ArrayList<>(cards) : null,
                 reveals, canFailToFind, targetPlayerId, remainingCount,
                 sourceCards != null ? new ArrayList<>(sourceCards) : null,
-                reorderRemainingToBottom, shuffleAfterSelection, prompt, destination,
+                reorderRemainingToBottom, reorderRemainingToTop, shuffleAfterSelection, prompt, destination,
                 filterCardTypes != null ? new HashSet<>(filterCardTypes) : null
         );
     }

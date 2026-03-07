@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -111,7 +112,7 @@ public class CardSpecificResolutionService {
 
             List<Card> deck = gameData.playerDecks.get(playerId);
             deck.addAll(ownedPermanents);
-            Collections.shuffle(deck);
+            LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
         }
 
         Map<UUID, List<Card>> revealedByPlayer = new HashMap<>();
@@ -383,7 +384,7 @@ public class CardSpecificResolutionService {
         if (foundCard == null) {
             // No matching card found — shuffle all revealed cards back into the library
             deck.addAll(revealedCards);
-            Collections.shuffle(deck);
+            LibraryShuffleHelper.shuffleLibrary(gameData, targetControllerId);
             String noMatchLog = targetControllerName + " reveals their entire library — no matching card found. Library is shuffled.";
             gameBroadcastService.logAndBroadcast(gameData, noMatchLog);
             return;
@@ -414,7 +415,7 @@ public class CardSpecificResolutionService {
         if (!revealedCards.isEmpty()) {
             deck.addAll(revealedCards);
         }
-        Collections.shuffle(deck);
+        LibraryShuffleHelper.shuffleLibrary(gameData, targetControllerId);
 
         String shuffleLog = targetControllerName + " shuffles their library.";
         gameBroadcastService.logAndBroadcast(gameData, shuffleLog);

@@ -42,11 +42,17 @@ public sealed interface InteractionContext permits
 
     record MultiGraveyardChoice(UUID playerId, Set<UUID> validCardIds, int maxCount) implements InteractionContext {}
 
-    record LibraryReorder(UUID playerId, List<Card> cards, boolean toBottom) implements InteractionContext {}
+    record LibraryReorder(UUID playerId, List<Card> cards, boolean toBottom, UUID deckOwnerId) implements InteractionContext {
+
+        public LibraryReorder(UUID playerId, List<Card> cards, boolean toBottom) {
+            this(playerId, cards, toBottom, playerId);
+        }
+    }
 
     record LibrarySearch(UUID playerId, List<Card> cards, boolean reveals, boolean canFailToFind,
                          UUID targetPlayerId, int remainingCount, List<Card> sourceCards,
-                         boolean reorderRemainingToBottom, boolean shuffleAfterSelection,
+                         boolean reorderRemainingToBottom, boolean reorderRemainingToTop,
+                         boolean shuffleAfterSelection,
                          String prompt, LibrarySearchDestination destination,
                          Set<CardType> filterCardTypes) implements InteractionContext {
 
@@ -55,7 +61,7 @@ public sealed interface InteractionContext permits
                              boolean reorderRemainingToBottom, boolean shuffleAfterSelection,
                              String prompt, LibrarySearchDestination destination) {
             this(playerId, cards, reveals, canFailToFind, targetPlayerId, remainingCount, sourceCards,
-                    reorderRemainingToBottom, shuffleAfterSelection, prompt, destination, null);
+                    reorderRemainingToBottom, false, shuffleAfterSelection, prompt, destination, null);
         }
     }
 

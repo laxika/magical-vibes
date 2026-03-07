@@ -51,12 +51,12 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -152,7 +152,7 @@ public class PlayerInteractionResolutionService {
             List<Card> deck = gameData.playerDecks.get(playerId);
             deck.addAll(hand);
             hand.clear();
-            Collections.shuffle(deck);
+            LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
 
             gameBroadcastService.logAndBroadcast(gameData,
                     playerName + " shuffles " + handSize + " card" + (handSize != 1 ? "s" : "")

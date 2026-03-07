@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -32,7 +33,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -84,7 +84,8 @@ public class LibraryChoiceHandlerService {
         }
 
         // Apply the reorder: replace top N cards of deck with the reordered ones
-        List<Card> deck = gameData.playerDecks.get(player.getId());
+        UUID reorderDeckOwnerId = libraryReorder.deckOwnerId() != null ? libraryReorder.deckOwnerId() : player.getId();
+        List<Card> deck = gameData.playerDecks.get(reorderDeckOwnerId);
 
         if (libraryReorder.toBottom()) {
             for (int i = 0; i < count; i++) {
@@ -92,7 +93,7 @@ public class LibraryChoiceHandlerService {
             }
         } else {
             for (int i = 0; i < count; i++) {
-                deck.set(i, reorderCards.get(cardOrder.get(i)));
+                deck.add(i, reorderCards.get(cardOrder.get(i)));
             }
         }
 
@@ -198,6 +199,7 @@ public class LibraryChoiceHandlerService {
         int remainingCount = librarySearch.remainingCount();
         List<Card> sourceCards = librarySearch.sourceCards();
         boolean reorderRemainingToBottom = librarySearch.reorderRemainingToBottom();
+        boolean reorderRemainingToTop = librarySearch.reorderRemainingToTop();
         boolean shuffleAfterSelection = librarySearch.shuffleAfterSelection();
         LibrarySearchDestination destination = librarySearch.destination() != null
                 ? librarySearch.destination()
@@ -216,7 +218,7 @@ public class LibraryChoiceHandlerService {
 
         List<Card> deck = gameData.playerDecks.get(deckOwnerId);
 
-        if (reorderRemainingToBottom) {
+        if (reorderRemainingToBottom || reorderRemainingToTop) {
             if (sourceCards == null) {
                 throw new IllegalStateException("Missing source cards for revealed-card choice");
             }
@@ -238,6 +240,8 @@ public class LibraryChoiceHandlerService {
                         gameQueryService.setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
                         gameData.imprintSourcePermanentId = null;
                     }
+                } else if (destination == LibrarySearchDestination.EXILE) {
+                    gameData.playerExiledCards.get(deckOwnerId).add(chosenCard);
                 } else if (toBattlefield) {
                     Permanent perm = new Permanent(chosenCard);
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
@@ -271,6 +275,10 @@ public class LibraryChoiceHandlerService {
                 logEntry = chosenCard == null
                         ? player.getUsername() + "'s imprint ability does nothing."
                         : player.getUsername() + " exiles a card face down.";
+            } else if (destination == LibrarySearchDestination.EXILE) {
+                logEntry = chosenCard == null
+                        ? player.getUsername() + " does not exile a card."
+                        : player.getUsername() + " exiles " + chosenCard.getName() + ".";
             } else if (toBattlefield) {
                 logEntry = chosenCard == null
                         ? player.getUsername() + " puts no card onto the battlefield."
@@ -292,15 +300,24 @@ public class LibraryChoiceHandlerService {
             }
 
             if (sourceCards.size() > 1) {
-                gameData.interaction.beginLibraryReorder(deckOwnerId, sourceCards, true);
+                boolean toBottom = !reorderRemainingToTop;
+                UUID reorderPlayerId = reorderRemainingToTop ? playerId : deckOwnerId;
+                gameData.interaction.beginLibraryReorder(reorderPlayerId, sourceCards, toBottom, deckOwnerId);
                 List<CardView> cardViews = sourceCards.stream().map(cardViewFactory::create).toList();
-                sessionManager.sendToPlayer(deckOwnerId, new ReorderLibraryCardsMessage(
+                String reorderPrompt = toBottom
+                        ? "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."
+                        : "Put these cards back on top of your library in any order (top to bottom).";
+                sessionManager.sendToPlayer(reorderPlayerId, new ReorderLibraryCardsMessage(
                         cardViews,
-                        "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."
+                        reorderPrompt
                 ));
                 return;
             } else if (sourceCards.size() == 1) {
-                deck.add(sourceCards.getFirst());
+                if (reorderRemainingToTop) {
+                    deck.addFirst(sourceCards.getFirst());
+                } else {
+                    deck.add(sourceCards.getFirst());
+                }
             }
 
             if (toBattlefield) {
@@ -316,7 +333,7 @@ public class LibraryChoiceHandlerService {
                 throw new IllegalStateException("Cannot fail to find with an unrestricted search");
             }
             if (shuffleAfterSelection) {
-                Collections.shuffle(deck);
+                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
             }
             String logEntry = shuffleAfterSelection
                     ? player.getUsername() + " chooses not to take a card. Library is shuffled."
@@ -349,7 +366,7 @@ public class LibraryChoiceHandlerService {
         if (destination == LibrarySearchDestination.EXILE) {
             gameData.playerExiledCards.get(playerId).add(chosenCard);
             if (shuffleAfterSelection) {
-                Collections.shuffle(deck);
+                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
             }
 
             String logMsg = shuffleAfterSelection
@@ -391,7 +408,7 @@ public class LibraryChoiceHandlerService {
             gameData.playerExiledCards.get(playerId).add(chosenCard);
             gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
             if (shuffleAfterSelection) {
-                Collections.shuffle(deck);
+                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
             }
 
             String logMsg = shuffleAfterSelection
@@ -407,7 +424,7 @@ public class LibraryChoiceHandlerService {
         if (destination == LibrarySearchDestination.TOP_OF_LIBRARY) {
             // Shuffle library first, then put the card on top (MTG rule: "shuffle and put on top")
             if (shuffleAfterSelection) {
-                Collections.shuffle(deck);
+                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
             }
             deck.addFirst(chosenCard);
             String topLog = player.getUsername() + " reveals " + chosenCard.getName()
@@ -461,7 +478,7 @@ public class LibraryChoiceHandlerService {
 
             if (newSearchCards.isEmpty()) {
                 // No more matching cards — shuffle and finish
-                Collections.shuffle(deck);
+                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
                 String targetName = gameData.playerIdToName.get(targetPlayerId);
                 String logMsg = player.getUsername() + " finds no more matching cards in " + targetName + "'s library. Library is shuffled.";
                 gameBroadcastService.logAndBroadcast(gameData, logMsg);
@@ -493,7 +510,7 @@ public class LibraryChoiceHandlerService {
         }
 
         if (shuffleAfterSelection) {
-            Collections.shuffle(deck);
+            LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
         }
 
         String destinationText = switch (destination) {
@@ -617,7 +634,7 @@ public class LibraryChoiceHandlerService {
         } else {
             List<Card> deck = gameData.playerDecks.get(controllerId);
             deck.addAll(remainingCards);
-            Collections.shuffle(deck);
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
 
             if (selectedCards.isEmpty()) {
                 String logEntry = playerName + " puts no cards onto the battlefield. Library is shuffled.";

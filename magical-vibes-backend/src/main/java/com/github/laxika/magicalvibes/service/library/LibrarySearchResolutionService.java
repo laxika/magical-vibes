@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryForCardsTo
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithSubtypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import lombok.RequiredArgsConstructor;
@@ -214,7 +215,7 @@ public class LibrarySearchResolutionService {
                 .toList();
 
         if (matchingCards.isEmpty()) {
-            Collections.shuffle(deck);
+            LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             String logMsg = controllerName + " searches " + targetName + "'s library but finds no matching cards. Library is shuffled.";
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
             return;
@@ -516,7 +517,7 @@ public class LibrarySearchResolutionService {
         List<Card> matchingCards = deck.stream().filter(filter).toList();
 
         if (matchingCards.isEmpty()) {
-            Collections.shuffle(deck);
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             String logMsg = playerName + " searches their library but finds no " + noMatchDescription + ". Library is shuffled.";
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
             log.info("Game {} - {} searches library, no {} found", gameData.id, playerName, noMatchDescription);
@@ -608,7 +609,7 @@ public class LibrarySearchResolutionService {
     private boolean isSearchPrevented(GameData gameData, UUID searchingPlayerId) {
         if (checkSearchRestriction(gameData, searchingPlayerId)) return false;
         List<Card> deck = gameData.playerDecks.get(searchingPlayerId);
-        if (deck != null) Collections.shuffle(deck);
+        if (deck != null) LibraryShuffleHelper.shuffleLibrary(gameData, searchingPlayerId);
         return true;
     }
 

@@ -11,13 +11,13 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -79,7 +79,7 @@ public class GraveyardService {
         if (card.isShufflesIntoLibraryFromGraveyard()) {
             List<Card> deck = gameData.playerDecks.get(ownerId);
             deck.add(card);
-            Collections.shuffle(deck);
+            LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
             String shuffleLog = card.getName() + " is revealed and shuffled into its owner's library instead.";
             gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
             log.info("Game {} - {} replacement effect: shuffled into library instead of graveyard", gameData.id, card.getName());

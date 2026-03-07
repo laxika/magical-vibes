@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,7 +37,7 @@ public class LibraryShuffleResolutionService {
     void resolveShuffleIntoLibrary(GameData gameData, StackEntry entry) {
         List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
         deck.add(entry.getCard());
-        Collections.shuffle(deck);
+        LibraryShuffleHelper.shuffleLibrary(gameData, entry.getControllerId());
 
         String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
         gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
@@ -57,14 +57,14 @@ public class LibraryShuffleResolutionService {
         if (graveyard.isEmpty()) {
             String logEntry = playerName + "'s graveyard is empty. Library is shuffled.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            Collections.shuffle(deck);
+            LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             return;
         }
 
         int count = graveyard.size();
         deck.addAll(graveyard);
         graveyard.clear();
-        Collections.shuffle(deck);
+        LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
 
         String logEntry = playerName + " shuffles their graveyard (" + pluralCards(count) + ") into their library.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);

@@ -545,7 +545,7 @@ public class GameData {
             case InteractionContext.MultiGraveyardChoice mgc ->
                     targetInteraction.beginMultiGraveyardChoice(mgc.playerId(), mgc.validCardIds(), mgc.maxCount());
             case InteractionContext.LibraryReorder lr ->
-                    targetInteraction.beginLibraryReorder(lr.playerId(), lr.cards() != null ? new ArrayList<>(lr.cards()) : null, lr.toBottom());
+                    targetInteraction.beginLibraryReorder(lr.playerId(), lr.cards() != null ? new ArrayList<>(lr.cards()) : null, lr.toBottom(), lr.deckOwnerId());
             case InteractionContext.LibrarySearch ls ->
                     targetInteraction.beginLibrarySearch(LibrarySearchParams.builder(ls.playerId(),
                                     ls.cards() != null ? new ArrayList<>(ls.cards()) : null)
@@ -555,6 +555,7 @@ public class GameData {
                             .remainingCount(ls.remainingCount())
                             .sourceCards(ls.sourceCards() != null ? new ArrayList<>(ls.sourceCards()) : null)
                             .reorderRemainingToBottom(ls.reorderRemainingToBottom())
+                            .reorderRemainingToTop(ls.reorderRemainingToTop())
                             .shuffleAfterSelection(ls.shuffleAfterSelection())
                             .prompt(ls.prompt())
                             .destination(ls.destination())

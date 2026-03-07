@@ -336,6 +336,7 @@ Pass `null` as filter to allow any card.
 | `LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect` | `(int count, Set<CardType> cardTypes)` or `(int count, Set<CardType> cardTypes, boolean anyNumber)` | look at top N, may reveal matching type to hand, rest on bottom; anyNumber=true allows multi-select |
 | `LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect` | `(int count)` | look at top N cards, may put one onto battlefield if it shares a name with any permanent, rest on bottom in any order |
 | `ImprintFromTopCardsEffect` | `(int count)` | look at top N cards, exile one face down (imprint on source), rest on bottom in any order |
+| `LookAtTopCardsOfTargetLibraryMayExileOneEffect` | `(int count)` | look at top N cards of target player's library, may exile one, rest on top in any order (used by Psychic Surgery) |
 | `LookAtTopCardsHandTopBottomEffect` | `(int count)` | look at top N cards, choose hand/top/bottom for each |
 | `ReorderTopCardsOfLibraryEffect` | `(int count)` | reorder top N cards of library |
 | `RevealTopCardDealManaValueDamageEffect` | `(boolean damageTargetPlayer, boolean damageTargetCreatures, boolean returnToHandIfLand)` | reveal top card of target's library, deal mana value damage to player/creatures, optionally return to hand if land |

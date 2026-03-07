@@ -407,9 +407,13 @@ public class InteractionState {
     // ========================================================================
 
     public void beginLibraryReorder(UUID playerId, List<Card> cards, boolean toBottom) {
+        beginLibraryReorder(playerId, cards, toBottom, playerId);
+    }
+
+    public void beginLibraryReorder(UUID playerId, List<Card> cards, boolean toBottom, UUID deckOwnerId) {
         this.awaitingInput = AwaitingInput.LIBRARY_REORDER;
         this.libraryView.setReorder(playerId, cards, toBottom);
-        this.context = new InteractionContext.LibraryReorder(playerId, cards, toBottom);
+        this.context = new InteractionContext.LibraryReorder(playerId, cards, toBottom, deckOwnerId);
     }
 
     public void clearLibraryReorder() {
@@ -432,12 +436,14 @@ public class InteractionState {
         this.librarySearch = new LibrarySearchState(
                 params.playerId(), params.cards(), params.reveals(), params.canFailToFind(),
                 params.targetPlayerId(), params.remainingCount(), params.sourceCards(),
-                params.reorderRemainingToBottom(), params.shuffleAfterSelection(),
+                params.reorderRemainingToBottom(), params.reorderRemainingToTop(),
+                params.shuffleAfterSelection(),
                 params.prompt(), params.destination(), params.filterCardTypes()
         );
         this.context = new InteractionContext.LibrarySearch(params.playerId(), params.cards(), params.reveals(),
                 params.canFailToFind(), params.targetPlayerId(), params.remainingCount(), params.sourceCards(),
-                params.reorderRemainingToBottom(), params.shuffleAfterSelection(), params.prompt(), params.destination(),
+                params.reorderRemainingToBottom(), params.reorderRemainingToTop(),
+                params.shuffleAfterSelection(), params.prompt(), params.destination(),
                 params.filterCardTypes());
     }
 
@@ -452,6 +458,7 @@ public class InteractionState {
                 librarySearch.reveals(), librarySearch.canFailToFind(),
                 librarySearch.targetPlayerId(), librarySearch.remainingCount(),
                 librarySearch.sourceCards(), librarySearch.reorderRemainingToBottom(),
+                librarySearch.reorderRemainingToTop(),
                 librarySearch.shuffleAfterSelection(), librarySearch.prompt(), librarySearch.destination(),
                 librarySearch.filterCardTypes());
     }

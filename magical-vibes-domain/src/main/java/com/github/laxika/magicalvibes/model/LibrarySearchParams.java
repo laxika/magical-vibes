@@ -17,6 +17,7 @@ public record LibrarySearchParams(
         int remainingCount,
         List<Card> sourceCards,
         boolean reorderRemainingToBottom,
+        boolean reorderRemainingToTop,
         boolean shuffleAfterSelection,
         String prompt,
         LibrarySearchDestination destination,
@@ -35,6 +36,7 @@ public record LibrarySearchParams(
         private int remainingCount;
         private List<Card> sourceCards;
         private boolean reorderRemainingToBottom;
+        private boolean reorderRemainingToTop;
         private boolean shuffleAfterSelection = true;
         private String prompt;
         private LibrarySearchDestination destination = LibrarySearchDestination.HAND;
@@ -75,6 +77,11 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder reorderRemainingToTop(boolean reorderRemainingToTop) {
+            this.reorderRemainingToTop = reorderRemainingToTop;
+            return this;
+        }
+
         public Builder shuffleAfterSelection(boolean shuffleAfterSelection) {
             this.shuffleAfterSelection = shuffleAfterSelection;
             return this;
@@ -97,8 +104,8 @@ public record LibrarySearchParams(
 
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
-                    remainingCount, sourceCards, reorderRemainingToBottom, shuffleAfterSelection,
-                    prompt, destination, filterCardTypes);
+                    remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
+                    shuffleAfterSelection, prompt, destination, filterCardTypes);
         }
     }
 }
