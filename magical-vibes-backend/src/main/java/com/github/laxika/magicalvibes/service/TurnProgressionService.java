@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEff
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
@@ -122,8 +123,9 @@ public class TurnProgressionService {
                 // CR 514.1: Active player discards down to maximum hand size (normally 7)
                 UUID activePlayerId = gameData.activePlayerId;
                 List<Card> hand = gameData.playerHands.get(activePlayerId);
-                if (hand != null && hand.size() > 7 && !hasNoMaximumHandSize(gameData, activePlayerId)) {
-                    int discardCount = hand.size() - 7;
+                int maxHandSize = Math.max(getMaxHandSize(gameData, activePlayerId), 0);
+                if (hand != null && hand.size() > maxHandSize && !hasNoMaximumHandSize(gameData, activePlayerId)) {
+                    int discardCount = hand.size() - maxHandSize;
                     gameData.cleanupDiscardPending = true;
                     gameData.discardCausedByOpponent = false;
                     gameData.interaction.setDiscardRemainingCount(discardCount);
@@ -609,6 +611,35 @@ public class TurnProgressionService {
             }
         }
 
+        // CONTROLLER_END_STEP_TRIGGERED: only fires for the active player's permanents
+        List<Permanent> activeBattlefield = gameData.playerBattlefields.get(activePlayerId);
+        if (activeBattlefield != null) {
+            for (Permanent perm : activeBattlefield) {
+                List<CardEffect> controllerEndStepEffects = perm.getCard().getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED);
+                if (controllerEndStepEffects == null || controllerEndStepEffects.isEmpty()) continue;
+
+                for (CardEffect effect : controllerEndStepEffects) {
+                    if (effect instanceof MayEffect may) {
+                        gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                activePlayerId,
+                                perm.getCard().getName() + "'s end step ability",
+                                new ArrayList<>(List.of(effect)),
+                                null,
+                                perm.getId()
+                        ));
+
+                        String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                    }
+                }
+            }
+        }
+
         playerInputService.processNextMayAbility(gameData);
     }
 
@@ -957,6 +988,24 @@ public class TurnProgressionService {
                 manaPool.clear();
             }
         }
+    }
+
+    private int getMaxHandSize(GameData gameData, UUID playerId) {
+        int maxHandSize = 7;
+        // Check all opponents' battlefields for ReduceOpponentMaxHandSizeEffect
+        for (UUID otherPlayerId : gameData.orderedPlayerIds) {
+            if (otherPlayerId.equals(playerId)) continue;
+            List<Permanent> bf = gameData.playerBattlefields.get(otherPlayerId);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof ReduceOpponentMaxHandSizeEffect reduce) {
+                        maxHandSize -= reduce.reduction();
+                    }
+                }
+            }
+        }
+        return maxHandSize;
     }
 
     private boolean hasNoMaximumHandSize(GameData gameData, UUID playerId) {

@@ -669,6 +669,7 @@ Pass `null` as filter to allow any card.
 | `ReduceOwnCastCostIfMetalcraftEffect` | `(int amount)` | reduce this spell's cast cost by N if controller has metalcraft (3+ artifacts) (static, Stoic Rebuttal) |
 | `NoMaximumHandSizeEffect` | `()` | you have no maximum hand size (static, requires permanent on battlefield) |
 | `GrantPermanentNoMaxHandSizeEffect` | `()` | you have no maximum hand size for the rest of the game (one-shot spell effect, persists via GameData.playersWithNoMaximumHandSize) |
+| `ReduceOpponentMaxHandSizeEffect` | `(int reduction)` | each opponent's maximum hand size is reduced by N (static, checked during cleanup discard) |
 | `EnterPermanentsOfTypesTappedEffect` | `(Set<CardType> cardTypes)` | permanents of specified types enter tapped (static) |
 | `EntersTappedUnlessFewLandsEffect` | `(int maxOtherLands)` | enters tapped unless you control N or fewer other lands (fast lands, static) |
 

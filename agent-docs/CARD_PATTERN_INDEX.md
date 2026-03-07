@@ -166,6 +166,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Opponent land enters (punisher) | `t/TunnelIgnus.java` | ON_OPPONENT_LAND_ENTERS_BATTLEFIELD PermanentEnteredThisTurnConditionalEffect(DealDamageToTargetPlayerEffect(3), CardTypePredicate(LAND), 2) — conditional wrapper checks 2+ lands entered this turn |
 | Land tap trigger | `m/Manabarbs.java` | ON_ANY_PLAYER_TAPS_LAND DealDamageOnLandTapEffect |
 | End step self-destruct | `s/SparkElemental.java` | END_STEP_TRIGGERED SacrificeSelfEffect |
+| Controller end step draw | `j/JinGitaxiasCoreAugur.java` | CONTROLLER_END_STEP_TRIGGERED DrawCardEffect(7) — "your end step" trigger (only fires on controller's turn) + STATIC ReduceOpponentMaxHandSizeEffect(7) |
 | Discarded by opponent | `g/GuerrillaTactics.java` | ON_SELF_DISCARDED_BY_OPPONENT DealDamageToAnyTargetEffect |
 | Imprint ETB + dies | `c/CloneShell.java` | Artifact Creature — ON_ENTER_BATTLEFIELD ImprintFromTopCardsEffect + ON_DEATH PutImprintedCreatureOntoBattlefieldEffect |
 | Battle cry (attack boost others) | `a/AccorderPaladin.java` | Engine-handled via `BATTLE_CRY` keyword — CombatService auto-generates BoostAllOwnCreaturesEffect(1, 0, attacking + not-self filter) trigger for any creature with the keyword. Card class is empty-body. |

@@ -348,7 +348,8 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_OPPONENT_DRAWS` | Whenever an opponent draws a card (all draws: draw step, spells, abilities) |
 | `ON_OPPONENT_DISCARDS` | An opponent discards a card |
 | `ON_SELF_DISCARDED_BY_OPPONENT` | This card is discarded by an opponent |
-| `END_STEP_TRIGGERED` | End step |
+| `END_STEP_TRIGGERED` | End step (any player's turn — "at the beginning of the end step") |
+| `CONTROLLER_END_STEP_TRIGGERED` | Controller's end step only ("at the beginning of your end step") |
 | `ON_ATTACK` | This creature attacks |
 | `ON_BLOCK` | This creature blocks |
 | `ON_BECOMES_BLOCKED` | This creature becomes blocked. Register effects with `TriggerMode.PER_BLOCKER` to fire once per blocker |
