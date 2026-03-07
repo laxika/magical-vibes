@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessFewLandsEff
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ImprintedCardNameMatchesEnteringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
@@ -280,7 +281,7 @@ public class BattlefieldEntryService {
         checkAllyNontokenArtifactEntersTriggers(gameData, controllerId, card);
         checkAnyCreatureEntersTriggers(gameData, controllerId, card);
         if (card.getType() == CardType.LAND) {
-            checkOpponentLandEntersTriggers(gameData, controllerId);
+            checkOpponentLandEntersTriggers(gameData, controllerId, card);
         }
     }
 
@@ -567,7 +568,7 @@ public class BattlefieldEntryService {
         }
     }
 
-    void checkOpponentLandEntersTriggers(GameData gameData, UUID landControllerId) {
+    void checkOpponentLandEntersTriggers(GameData gameData, UUID landControllerId, Card enteringLand) {
         gameData.forEachBattlefield((playerId, battlefield) -> {
             if (playerId.equals(landControllerId)) return;
 
@@ -585,6 +586,12 @@ public class BattlefieldEntryService {
                                 .filter(c -> gameQueryService.matchesCardPredicate(c, conditional.predicate(), null))
                                 .count();
                         if (matchCount < conditional.minCount()) continue;
+                        effectToResolve = conditional.wrapped();
+                    }
+
+                    if (effect instanceof ImprintedCardNameMatchesEnteringPermanentConditionalEffect conditional) {
+                        Card imprintedCard = perm.getCard().getImprintedCard();
+                        if (imprintedCard == null || !imprintedCard.getName().equals(enteringLand.getName())) continue;
                         effectToResolve = conditional.wrapped();
                     }
 
