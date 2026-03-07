@@ -1,4 +1,4 @@
-commpackage com.github.laxika.magicalvibes.cards.o;
+package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
