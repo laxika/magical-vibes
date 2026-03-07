@@ -46,7 +46,8 @@
       "Bash(./gradlew compileTestJava:*)",
       "Bash(./gradlew :magical-vibes-backend:compileJava:*)",
       "Bash(./gradlew :magical-vibes-card:compileJava:*)",
-      "Bash(do echo:*)"
+      "Bash(do echo:*)",
+      "Bash(./gradlew:*)"
     ]
   },
   "hooks": {
