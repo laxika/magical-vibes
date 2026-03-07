@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreaturePerCont
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEquipmentAttachedEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEnchantmentOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -579,6 +580,20 @@ public class StaticEffectResolutionService {
         });
         accumulator.addPower(count[0] * boost.powerPerEquipment());
         accumulator.addToughness(count[0] * boost.toughnessPerEquipment());
+    }
+
+    @HandlesStaticEffect(value = BoostSelfPerOpponentPoisonCounterEffect.class, selfOnly = true)
+    private void resolveBoostSelfPerOpponentPoisonCounter(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostSelfPerOpponentPoisonCounterEffect) effect;
+        UUID controllerId = context.source().getControllerId();
+        int totalPoison = 0;
+        for (UUID playerId : context.gameData().orderedPlayerIds) {
+            if (!playerId.equals(controllerId)) {
+                totalPoison += context.gameData().playerPoisonCounters.getOrDefault(playerId, 0);
+            }
+        }
+        accumulator.addPower(totalPoison * boost.powerPerCounter());
+        accumulator.addToughness(totalPoison * boost.toughnessPerCounter());
     }
 
     @HandlesStaticEffect(value = EquippedConditionalEffect.class, selfOnly = true)

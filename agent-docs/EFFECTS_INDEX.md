@@ -460,6 +460,7 @@ Pass `null` as filter to allow any card.
 | `BoostFirstTargetCreatureEffect` | `(int powerBoost, int toughnessBoost)` | first target creature in multi-target spell gets +X/+Y until end of turn |
 | `BoostSecondTargetCreatureEffect` | `(int powerBoost, int toughnessBoost)` | second target creature in multi-target spell gets +X/+Y until end of turn |
 | `BoostSelfPerEnchantmentOnBattlefieldEffect` | `(int powerPerEnchantment, int toughnessPerEnchantment)` | +X/+Y per enchantment on battlefield (static) |
+| `BoostSelfPerOpponentPoisonCounterEffect` | `(int powerPerCounter, int toughnessPerCounter)` | +X/+Y per poison counter on opponents (static). Counts total poison counters across all opponents, excludes controller's own counters |
 | `BoostSelfPerBlockingCreatureEffect` | `(int powerPerBlockingCreature, int toughnessPerBlockingCreature)` | +X/+Y for each creature blocking this (combat trigger) |
 | `BoostSelfPerControlledPermanentEffect` | `(int powerPerPermanent, int toughnessPerPermanent, PermanentPredicate filter)` | +X/+Y for each permanent you control matching the filter (activated ability) |
 | `BoostSelfWhenBlockingKeywordEffect` | `(Keyword requiredKeyword, int powerBoost, int toughnessBoost)` | +X/+Y when blocking a creature with the required keyword (e.g. flying). Place in `ON_BLOCK` slot. CombatService converts to BoostSelfEffect at trigger time |
