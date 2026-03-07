@@ -404,6 +404,21 @@ public class StaticEffectResolutionService {
                     accumulator.addKeyword(grant.keyword());
                 }
             }
+        } else if (wrapped instanceof StaticBoostEffect boost && boost.scope() != GrantScope.SELF) {
+            int artifactCount = countControlledPermanents(context, gameQueryService::isArtifact);
+            if (artifactCount >= 3) {
+                boolean scopeMatch = switch (boost.scope()) {
+                    case OWN_CREATURES -> context.targetOnSameBattlefield();
+                    case OPPONENT_CREATURES -> !context.targetOnSameBattlefield();
+                    case ALL_CREATURES -> true;
+                    default -> false;
+                };
+                if (scopeMatch && matchesStaticFilter(context.target(), boost.filter())) {
+                    accumulator.addPower(boost.powerBoost());
+                    accumulator.addToughness(boost.toughnessBoost());
+                    accumulator.addKeywords(boost.grantedKeywords());
+                }
+            }
         }
     }
 
