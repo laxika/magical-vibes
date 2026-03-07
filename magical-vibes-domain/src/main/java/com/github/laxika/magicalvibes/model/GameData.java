@@ -72,6 +72,8 @@ public class GameData {
     public final GraveyardTargetOperationState graveyardTargetOperation = new GraveyardTargetOperationState();
     public final CloneOperationState cloneOperation = new CloneOperationState();
     public UUID imprintSourcePermanentId;
+    public List<Card> pendingKarnRestartCards;
+    public UUID karnRestartControllerId;
     public PendingOpponentExileChoice pendingOpponentExileChoice;
     public UUID pendingCombatDamageBounceTargetPlayerId;
     public UUID pendingSacrificeSelfToDestroySourceId;
@@ -411,6 +413,10 @@ public class GameData {
 
         // --- Imprint ---
         copy.imprintSourcePermanentId = this.imprintSourcePermanentId;
+
+        // --- Karn restart ---
+        copy.pendingKarnRestartCards = this.pendingKarnRestartCards != null ? new ArrayList<>(this.pendingKarnRestartCards) : null;
+        copy.karnRestartControllerId = this.karnRestartControllerId;
 
         // --- Post-exile search ---
         copy.pendingOpponentExileChoice = this.pendingOpponentExileChoice; // record — immutable

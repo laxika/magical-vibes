@@ -252,6 +252,20 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose an artifact from hand to imprint", gameData.id, playerName);
     }
 
+    public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId) {
+        List<Card> hand = gameData.playerHands.get(playerId);
+        List<Integer> validIndices = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            validIndices.add(i);
+        }
+
+        gameData.interaction.beginCardChoice(AwaitingInput.EXILE_FROM_HAND_CHOICE, playerId, new HashSet<>(validIndices), sourcePermanentId);
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromHandMessage(validIndices, "Choose a card to exile."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a card to exile from hand", gameData.id, playerName);
+    }
+
     public void beginDiscardChoice(GameData gameData, UUID playerId) {
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = new ArrayList<>();

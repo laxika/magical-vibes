@@ -353,6 +353,8 @@ Pass `null` as filter to allow any card.
 | `ExileTopCardsRepeatOnDuplicateEffect` | `(int count)` | exile top N cards, repeat if duplicate names found |
 | `ExileSelfAndReturnAtEndStepEffect` | `()` | exile this permanent, return it at beginning of next end step (Argent Sphinx-style) |
 | `ExileTargetPermanentAndImprintEffect` | `()` | exile target permanent permanently and imprint the exiled card onto the source permanent; the card does NOT return when the source leaves (Exclusion Ritual-style) |
+| `ExileTargetPermanentAndTrackWithSourceEffect` | `()` | exile target permanent and track the exiled card in `permanentExiledCards` with the source permanent's ID. Unlike imprint, used for effects that reference "cards exiled with [source]" (Karn Liberated -3). Resolved by `ExileResolutionService` |
+| `TargetPlayerExilesFromHandEffect` | `(int amount)` | target player exiles N cards from their hand (their choice), tracked in `permanentExiledCards` with source permanent. `canTargetPlayer()=true`. Uses `EXILE_FROM_HAND_CHOICE` awaiting input. Resolved by `PlayerInteractionResolutionService`. Used by Karn Liberated +4 |
 | `ExileTargetPermanentAndReturnAtEndStepEffect` | `()` | exile target permanent, return it at beginning of next end step under owner's control (Glimmerpoint Stag-style) |
 | `ExileTargetPermanentUntilSourceLeavesEffect` | `()` | exile target permanent until source leaves the battlefield, then return it under owner's control (O-ring style). Tracked via `GameData.exileReturnOnPermanentLeave` map. Often wrapped in `MayEffect` for "you may" triggers |
 | `ImprintDyingCreatureEffect` | `(UUID dyingCardId)` or `()` | exile a dying nontoken creature and imprint it on the source permanent; previously imprinted card is returned to its owner's graveyard. No-arg constructor (dyingCardId is null) used in card definition; dyingCardId populated at trigger time |
@@ -710,6 +712,7 @@ Pass `null` as filter to allow any card.
 | `KothEmblemEffect` | `()` | Koth's emblem: Mountains you control have '{T}: This land deals 1 damage to any target.' |
 | `VenserEmblemEffect` | `()` | Venser's emblem: "Whenever you cast a spell, exile target permanent." Creates emblem with ExileTargetOnControllerSpellCastEffect |
 | `ExileTargetOnControllerSpellCastEffect` | `()` | Marker effect stored in Emblem.staticEffects. Triggers when controller casts a spell, prompting target permanent choice then exiling it |
+| `KarnRestartGameEffect` | `()` | Karn's ultimate: restart the game per CR 727, leaving non-Aura permanent cards exiled with Karn in exile, then put them onto battlefield under controller's control. Resets life totals, hands, libraries, graveyards, exile zones, battlefields, and all game state. Controller goes first, no mulligans |
 | `GenesisWaveEffect` | `()` | reveal top X cards, put any number of permanent cards with MV ≤ X onto battlefield, rest to graveyard. X read from `StackEntry.getXValue()` |
 
 ---

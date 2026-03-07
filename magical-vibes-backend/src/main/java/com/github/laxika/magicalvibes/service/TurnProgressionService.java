@@ -842,6 +842,8 @@ public class TurnProgressionService {
     }
 
     public void resolveAutoPass(GameData gameData) {
+        if (gameData.status != GameStatus.RUNNING) return;
+
         // Process any pending spell-target triggers (e.g. Livewire Lash)
         if (!gameData.pendingSpellTargetTriggers.isEmpty()) {
             triggerCollectionService.processNextSpellTargetTrigger(gameData);

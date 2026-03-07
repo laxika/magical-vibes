@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndImprintEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
@@ -76,6 +77,49 @@ public class ExileResolutionService {
             log.info("Game {} - {} is exiled by {}",
                     gameData.id, target.getCard().getName(), entry.getCard().getName());
         }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Exiles a target permanent and tracks the exiled card with the source permanent
+     * via {@code permanentExiledCards}. Used by Karn Liberated whose abilities refer
+     * to cards "exiled with" it.
+     */
+    @HandlesEffect(ExileTargetPermanentAndTrackWithSourceEffect.class)
+    void resolveExileTargetPermanentAndTrackWithSource(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        Card exiledCard = target.getOriginalCard();
+        permanentRemovalService.removePermanentToExile(gameData, target);
+
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId == null) {
+            UUID controllerId = entry.getControllerId();
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield != null) {
+                for (Permanent p : battlefield) {
+                    if (p.getCard() == entry.getCard()) {
+                        sourcePermanentId = p.getId();
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (sourcePermanentId != null) {
+            List<Card> pool = gameData.permanentExiledCards.computeIfAbsent(sourcePermanentId,
+                    k -> Collections.synchronizedList(new ArrayList<>()));
+            pool.add(exiledCard);
+        }
+
+        String logEntry = exiledCard.getName() + " is exiled by " + entry.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} exiles {} (tracked with source)",
+                gameData.id, entry.getCard().getName(), exiledCard.getName());
 
         permanentRemovalService.removeOrphanedAuras(gameData);
     }

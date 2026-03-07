@@ -49,6 +49,10 @@ public class CardChoiceHandlerService {
             handleDiscardCardChosen(gameData, player, cardIndex);
             return;
         }
+        if (awaitingInput == AwaitingInput.EXILE_FROM_HAND_CHOICE) {
+            handleExileFromHandChosen(gameData, player, cardIndex);
+            return;
+        }
         if (awaitingInput == AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE) {
             abilityActivationService.handleActivatedAbilityDiscardCostChosen(gameData, player, cardIndex);
             return;
@@ -158,6 +162,56 @@ public class CardChoiceHandlerService {
 
             // Resume resolving remaining effects on the same spell/ability
             // (e.g. "Target player discards a card, then mills a card.")
+            if (gameData.pendingEffectResolutionEntry != null) {
+                effectResolutionService.resolveEffectsFrom(gameData,
+                        gameData.pendingEffectResolutionEntry,
+                        gameData.pendingEffectResolutionIndex);
+            }
+
+            turnProgressionService.resolveAutoPass(gameData);
+        }
+    }
+
+    private void handleExileFromHandChosen(GameData gameData, Player player, int cardIndex) {
+        InteractionContext.CardChoice cardChoice = gameData.interaction.cardChoiceContext();
+        if (cardChoice == null || !player.getId().equals(cardChoice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+
+        Set<Integer> validIndices = cardChoice.validIndices();
+        if (!validIndices.contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        UUID playerId = player.getId();
+        UUID sourcePermanentId = cardChoice.targetPermanentId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        Card card = hand.remove(cardIndex);
+
+        // Add to player's exile zone
+        gameData.playerExiledCards.computeIfAbsent(playerId, k -> new ArrayList<>()).add(card);
+
+        // Track with source permanent (e.g. Karn Liberated)
+        if (sourcePermanentId != null) {
+            List<Card> pool = gameData.permanentExiledCards.computeIfAbsent(sourcePermanentId,
+                    k -> java.util.Collections.synchronizedList(new ArrayList<>()));
+            pool.add(card);
+        }
+
+        String logEntry = player.getUsername() + " exiles " + card.getName() + " from hand.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} exiles {} from hand", gameData.id, player.getUsername(), card.getName());
+
+        int remainingExiles = gameData.interaction.decrementDiscardRemainingCount();
+
+        if (remainingExiles > 0 && !hand.isEmpty()) {
+            playerInputService.beginExileFromHandChoice(gameData, playerId, sourcePermanentId);
+        } else {
+            gameData.interaction.clearAwaitingInput();
+            gameData.interaction.clearCardChoice();
+            gameData.interaction.setDiscardRemainingCount(0);
+
+            // Resume resolving remaining effects
             if (gameData.pendingEffectResolutionEntry != null) {
                 effectResolutionService.resolveEffectsFrom(gameData,
                         gameData.pendingEffectResolutionEntry,

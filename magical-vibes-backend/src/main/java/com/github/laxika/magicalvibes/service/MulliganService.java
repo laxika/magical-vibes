@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.MulliganResolvedMessage;
 import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMessage;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,6 +33,7 @@ public class MulliganService {
     private final SessionManager sessionManager;
     private final GameBroadcastService gameBroadcastService;
     private final TurnProgressionService turnProgressionService;
+    private final BattlefieldEntryService battlefieldEntryService;
 
     public void keepHand(GameData gameData, Player player) {
         if (gameData.playerKeptHand.contains(player.getId())) {
@@ -145,6 +149,37 @@ public class MulliganService {
     }
 
     private void startGame(GameData gameData) {
+        // Karn Liberated restart: put exiled cards onto battlefield before starting
+        // Per ruling: "After the pregame procedure is complete but before the new game's
+        // first turn, Karn's ability finishes resolving and the cards left in exile are
+        // put onto the battlefield."
+        if (gameData.pendingKarnRestartCards != null && !gameData.pendingKarnRestartCards.isEmpty()) {
+            UUID controllerId = gameData.karnRestartControllerId;
+            String controllerName = gameData.playerIdToName.get(controllerId);
+            for (Card card : gameData.pendingKarnRestartCards) {
+                Permanent perm = new Permanent(card);
+                perm.setSummoningSick(false);
+                battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+
+                if (card.getType() == CardType.PLANESWALKER && card.getLoyalty() != null) {
+                    perm.setLoyaltyCounters(card.getLoyalty());
+                }
+
+                boolean isCreature = card.getType() == CardType.CREATURE
+                        || card.getAdditionalTypes().contains(CardType.CREATURE);
+                if (isCreature) {
+                    battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
+                }
+
+                String entryLog = controllerName + " puts " + card.getName() + " onto the battlefield (Karn Liberated).";
+                gameBroadcastService.logAndBroadcast(gameData, entryLog);
+                log.info("Game {} - {} puts {} onto the battlefield from Karn's exile",
+                        gameData.id, controllerName, card.getName());
+            }
+        }
+        gameData.pendingKarnRestartCards = null;
+        gameData.karnRestartControllerId = null;
+
         gameData.status = GameStatus.RUNNING;
         gameData.activePlayerId = gameData.startingPlayerId;
         gameData.turnNumber = 1;

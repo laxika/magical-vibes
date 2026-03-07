@@ -301,7 +301,7 @@ public class GameSimulator {
         XValueChoiceHandlerService xValueChoiceHandlerService = new XValueChoiceHandlerService(
                 gameBroadcastService, stateBasedActionService, playerInputService, turnProgressionService, effectResolutionService);
         MulliganService mulliganService = new MulliganService(
-                noOpSession, gameBroadcastService, turnProgressionService);
+                noOpSession, gameBroadcastService, turnProgressionService, battlefieldEntryService);
         ReconnectionService reconnectionService = new ReconnectionService(
                 noOpSession, cardViewFactory, combatService, gameQueryService);
 

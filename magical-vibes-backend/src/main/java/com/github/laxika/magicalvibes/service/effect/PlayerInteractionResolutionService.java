@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTyp
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleHandIntoLibraryAndDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsReturnSelfIfCardTypeEffect;
 import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -234,6 +235,35 @@ public class PlayerInteractionResolutionService {
         }
         // All players done — clear controller tracking
         gameData.pendingEachPlayerDiscardControllerId = null;
+    }
+
+    @HandlesEffect(TargetPlayerExilesFromHandEffect.class)
+    private void resolveTargetPlayerExilesFromHand(GameData gameData, StackEntry entry, TargetPlayerExilesFromHandEffect effect) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        if (hand == null || hand.isEmpty()) {
+            String playerName = gameData.playerIdToName.get(targetPlayerId);
+            String logEntry = playerName + " has no cards to exile from hand.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId == null) {
+            UUID controllerId = entry.getControllerId();
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield != null) {
+                for (Permanent p : battlefield) {
+                    if (p.getCard() == entry.getCard()) {
+                        sourcePermanentId = p.getId();
+                        break;
+                    }
+                }
+            }
+        }
+
+        gameData.interaction.setDiscardRemainingCount(effect.amount());
+        playerInputService.beginExileFromHandChoice(gameData, targetPlayerId, sourcePermanentId);
     }
 
     @HandlesEffect(TargetPlayerDiscardsEffect.class)

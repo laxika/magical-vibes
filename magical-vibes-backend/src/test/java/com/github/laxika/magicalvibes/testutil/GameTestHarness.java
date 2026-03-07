@@ -293,7 +293,7 @@ public class GameTestHarness {
                 sessionManager, gameQueryService, graveyardService, warpWorldService, battlefieldEntryService, legendRuleService, stateBasedActionService, gameBroadcastService,
                 cardViewFactory, turnProgressionService, playerInputService);
         MulliganService mulliganService = new MulliganService(
-                sessionManager, gameBroadcastService, turnProgressionService);
+                sessionManager, gameBroadcastService, turnProgressionService, battlefieldEntryService);
         ReconnectionService reconnectionService = new ReconnectionService(
                 sessionManager, cardViewFactory, combatService, gameQueryService);
         gameService = new GameService(
