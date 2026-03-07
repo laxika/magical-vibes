@@ -441,6 +441,8 @@ Pass `null` as filter to allow any card.
 | `PlayerCantGetPoisonCountersEffect` | `()` | controller can't get poison counters (static on source permanent). Checked at all poison counter application points |
 | `RemoveKeywordEffect` | `(Keyword keyword, GrantScope scope)` or `(Keyword keyword, GrantScope scope, PermanentPredicate filter)` | static: creatures in scope lose the specified keyword. Added to `removedKeywords` in static bonus computation |
 | `CantLoseGameEffect` | `()` | you can't lose and opponents can't win (static) |
+| `CantLoseGameFromLifeEffect` | `()` | you don't lose the game for having 0 or less life, but can still lose from poison or other effects (static) |
+| `DamageDealtAsInfectBelowZeroLifeEffect` | `()` | as long as you have 0 or less life, all damage dealt to you is dealt as though its source had infect (static) |
 | `LifeTotalCantChangeEffect` | `()` | controller's life total can't change (static) |
 
 ## Creature pump / boost

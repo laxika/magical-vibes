@@ -588,8 +588,9 @@ public class DamageResolutionService {
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
 
             boolean sourceHasInfect = gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.INFECT);
+            boolean treatAsInfect = sourceHasInfect || gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId);
 
-            if (sourceHasInfect) {
+            if (treatAsInfect) {
                 if (effectiveDamage > 0 && gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {
                     int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
                     gameData.playerPoisonCounters.put(playerId, currentPoison + effectiveDamage);

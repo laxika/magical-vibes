@@ -700,6 +700,11 @@ public class CombatDamageService {
     private void applyPlayerDamage(GameData gameData, CombatDamageState state, UUID defenderId) {
         state.damageToDefendingPlayer = damagePreventionService.applyPlayerPreventionShield(gameData, defenderId, state.damageToDefendingPlayer);
         state.damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, state.damageToDefendingPlayer, "combat");
+        // Phyrexian Unlife: convert normal combat damage to poison when at 0 or less life
+        if (state.damageToDefendingPlayer > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, defenderId)) {
+            state.poisonDamageToDefendingPlayer += state.damageToDefendingPlayer;
+            state.damageToDefendingPlayer = 0;
+        }
         if (state.damageToDefendingPlayer > 0) {
             if (gameQueryService.canPlayerLifeChange(gameData, defenderId)) {
                 int currentLife = gameData.playerLifeTotals.getOrDefault(defenderId, 20);

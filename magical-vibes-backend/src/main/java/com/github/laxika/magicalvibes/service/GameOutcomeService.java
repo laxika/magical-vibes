@@ -46,6 +46,13 @@ public class GameOutcomeService {
                     continue;
                 }
 
+                // Check if ALL active loss conditions are individually prevented (e.g. Phyrexian Unlife)
+                boolean loseFromLife = life <= 0 && gameQueryService.canPlayerLoseFromLife(gameData, playerId);
+                boolean loseFromPoison = poison >= 10;
+                if (!loseFromLife && !loseFromPoison) {
+                    continue;
+                }
+
                 UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
                 String winnerName = gameData.playerIdToName.get(winnerId);
 

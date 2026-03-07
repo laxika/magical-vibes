@@ -424,7 +424,8 @@ public class MultiPermanentChoiceHandlerService {
                 if (damage > 0) {
                     boolean hasInfect = sourcePermanent != null
                             && gameQueryService.hasKeyword(gameData, sourcePermanent, Keyword.INFECT);
-                    if (hasInfect && gameQueryService.canPlayerGetPoisonCounters(gameData, defendingPlayerId)) {
+                    boolean treatAsInfect = hasInfect || gameQueryService.shouldDamageBeDealtAsInfect(gameData, defendingPlayerId);
+                    if (treatAsInfect && gameQueryService.canPlayerGetPoisonCounters(gameData, defendingPlayerId)) {
                         int currentPoison = gameData.playerPoisonCounters.getOrDefault(defendingPlayerId, 0);
                         gameData.playerPoisonCounters.put(defendingPlayerId, currentPoison + damage);
                         gameBroadcastService.logAndBroadcast(gameData, defenderName + " gets "

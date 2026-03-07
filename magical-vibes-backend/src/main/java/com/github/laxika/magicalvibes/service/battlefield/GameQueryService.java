@@ -23,6 +23,8 @@ import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
+import com.github.laxika.magicalvibes.model.effect.CantLoseGameFromLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
@@ -311,6 +313,27 @@ public class GameQueryService {
      */
     public boolean canPlayerLoseGame(GameData gameData, UUID playerId) {
         return !playerBattlefieldHasStaticEffect(gameData, playerId, CantLoseGameEffect.class);
+    }
+
+    /**
+     * Returns {@code true} if the player can lose the game from having 0 or less life
+     * (i.e. no {@link CantLoseGameFromLifeEffect} is present on their battlefield).
+     */
+    public boolean canPlayerLoseFromLife(GameData gameData, UUID playerId) {
+        return !playerBattlefieldHasStaticEffect(gameData, playerId, CantLoseGameFromLifeEffect.class);
+    }
+
+    /**
+     * Returns {@code true} if damage dealt to this player should be dealt as though
+     * its source had infect. This is true when the player controls a permanent with
+     * {@link DamageDealtAsInfectBelowZeroLifeEffect} and has 0 or less life.
+     */
+    public boolean shouldDamageBeDealtAsInfect(GameData gameData, UUID playerId) {
+        if (!playerBattlefieldHasStaticEffect(gameData, playerId, DamageDealtAsInfectBelowZeroLifeEffect.class)) {
+            return false;
+        }
+        int life = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+        return life <= 0;
     }
 
     // --- Creature / type classification ---

@@ -334,6 +334,17 @@ public class DestructionResolutionService {
         int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
         effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
 
+        if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {
+            if (gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {
+                int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
+                gameData.playerPoisonCounters.put(playerId, currentPoison + effectiveDamage);
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " gets " + effectiveDamage + " poison counters from " + cardName + ".");
+            }
+            return;
+        }
+
         if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
             gameBroadcastService.logAndBroadcast(gameData,
                     gameData.playerIdToName.get(playerId) + "'s life total can't change.");

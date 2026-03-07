@@ -257,7 +257,14 @@ public class ActivatedAbilityExecutionService {
                         && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, permanent.getEffectiveColor())) {
                     int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
                     effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
-                    if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                    if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {
+                        if (gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {
+                            int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
+                            gameData.playerPoisonCounters.put(playerId, currentPoison + effectiveDamage);
+                            String logEntry = player.getUsername() + " gets " + effectiveDamage + " poison counters from " + cardName + ".";
+                            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        }
+                    } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                         gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + "'s life total can't change.");
                     } else {
                         int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
