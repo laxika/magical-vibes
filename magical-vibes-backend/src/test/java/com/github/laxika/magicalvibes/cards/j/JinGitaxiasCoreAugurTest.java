@@ -47,7 +47,7 @@ class JinGitaxiasCoreAugurTest extends BaseCardTest {
     void drawsSevenAtControllerEndStep() {
         harness.addToBattlefield(player1, new JinGitaxiasCoreAugur());
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.SECOND_MAIN);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -69,7 +69,7 @@ class JinGitaxiasCoreAugurTest extends BaseCardTest {
     void doesNotDrawOnOpponentEndStep() {
         harness.addToBattlefield(player1, new JinGitaxiasCoreAugur());
         harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.SECOND_MAIN);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 

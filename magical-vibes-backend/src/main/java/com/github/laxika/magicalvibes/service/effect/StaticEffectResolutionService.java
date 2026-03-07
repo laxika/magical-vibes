@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreaturePerCardsInAllGraveyardsEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreaturePerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreaturePerMatchingLandNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreaturePerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
@@ -171,6 +172,35 @@ public class StaticEffectResolutionService {
 
         accumulator.addPower(count[0] * boost.powerPerMatch());
         accumulator.addToughness(count[0] * boost.toughnessPerMatch());
+    }
+
+    @HandlesStaticEffect(BoostAttachedCreaturePerControlledSubtypeEffect.class)
+    private void resolveBoostAttachedCreaturePerControlledSubtype(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostAttachedCreaturePerControlledSubtypeEffect) effect;
+        if (context.source().getAttachedTo() == null
+                || !context.source().getAttachedTo().equals(context.target().getId())) {
+            return;
+        }
+
+        UUID controllerId = findControllerId(context.gameData(), context.source());
+        if (controllerId == null) {
+            return;
+        }
+
+        List<Permanent> battlefield = context.gameData().playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (permanent.getCard().getSubtypes().contains(boost.subtype())) {
+                count++;
+            }
+        }
+
+        accumulator.addPower(count * boost.powerPerSubtype());
+        accumulator.addToughness(count * boost.toughnessPerSubtype());
     }
 
     @HandlesStaticEffect(ProtectionFromColorsEffect.class)

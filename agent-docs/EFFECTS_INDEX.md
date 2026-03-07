@@ -444,6 +444,7 @@ Pass `null` as filter to allow any card.
 | `BoostAllCreaturesXEffect` | `(int powerMultiplier, int toughnessMultiplier)` or `(int powerMultiplier, int toughnessMultiplier, PermanentPredicate filter)` | all creatures get +X/+X where X is mana paid. Optional `PermanentPredicate filter` to restrict which creatures are affected |
 | `BoostAttachedCreatureEffect` | `(int powerBoost, int toughnessBoost)` | enchanted/equipped creature gets +X/+Y (static, works for both auras and equipment) |
 | `BoostAttachedCreaturePerCardsInAllGraveyardsEffect` | `(CardPredicate filter)` | equipped creature gets +X/+X where X = cards in all graveyards matching filter |
+| `BoostAttachedCreaturePerControlledSubtypeEffect` | `(CardSubtype subtype, int powerPerSubtype, int toughnessPerSubtype)` | equipped creature gets +X/+Y per controlled permanent with subtype (static) |
 | `BoostAttachedCreaturePerMatchingLandNameEffect` | `(int powerPerMatch, int toughnessPerMatch)` | equipped creature gets +X/+Y per land on the battlefield with the same name as the imprinted card |
 | `BoostEnchantedCreaturePerControlledSubtypeEffect` | `(CardSubtype subtype, int powerPerSubtype, int toughnessPerSubtype)` | enchanted creature gets +X/+Y per controlled subtype |
 | `BoostByOtherCreaturesWithSameNameEffect` | `(int powerPerCreature, int toughnessPerCreature)` | +X/+Y per other creature with same name (static) |
@@ -651,6 +652,7 @@ Pass `null` as filter to allow any card.
 | `EquipEffect` | `()` | equip to target creature. Prefer using `EquipActivatedAbility(manaCost)` which wraps this effect with sorcery-speed timing and "creature you control" filter |
 | `BoostAttachedCreatureEffect` | `(int powerBoost, int toughnessBoost)` | equipped creature gets +X/+Y (static) |
 | `BoostAttachedCreaturePerCardsInAllGraveyardsEffect` | `(CardPredicate filter)` | equipped creature gets +X/+X where X = cards in all graveyards matching filter (static) |
+| `BoostAttachedCreaturePerControlledSubtypeEffect` | `(CardSubtype subtype, int powerPerSubtype, int toughnessPerSubtype)` | equipped creature gets +X/+Y per controlled permanent with subtype (static) |
 | `BoostAttachedCreaturePerMatchingLandNameEffect` | `(int powerPerMatch, int toughnessPerMatch)` | equipped creature gets +X/+Y per land matching imprinted card name (static) |
 | `SacrificeOnUnattachEffect` | `()` | whenever this equipment becomes unattached, sacrifice the previously-equipped creature (static marker) |
 | `AttachSourceEquipmentToTargetCreatureEffect` | `()` | attach source equipment to target creature on ETB. Reads sourcePermanentId as equipment, targetPermanentId as creature. Used by equipment with "When this Equipment enters, attach it to target creature you control." |
