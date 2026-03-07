@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureAnd
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenPerEquipmentOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenPerOpponentPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanentEffect;
@@ -265,6 +266,30 @@ public class PermanentControlResolutionService {
                 effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
         );
         applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect);
+    }
+
+    @HandlesEffect(CreateTokenPerOpponentPoisonCounterEffect.class)
+    private void resolveCreateTokenPerOpponentPoisonCounter(GameData gameData, StackEntry entry, CreateTokenPerOpponentPoisonCounterEffect effect) {
+        UUID controllerId = entry.getControllerId();
+
+        // Count total poison counters on all opponents
+        int totalPoison = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(controllerId)) {
+                totalPoison += gameData.playerPoisonCounters.getOrDefault(playerId, 0);
+            }
+        }
+
+        if (totalPoison == 0) {
+            log.info("Game {} - No poison counters on opponents, no tokens created", gameData.id);
+            return;
+        }
+
+        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+                totalPoison, effect.tokenName(), effect.power(), effect.toughness(),
+                effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
+        );
+        applyCreateCreatureToken(gameData, controllerId, tokenEffect);
     }
 
     @HandlesEffect(LivingWeaponEffect.class)
