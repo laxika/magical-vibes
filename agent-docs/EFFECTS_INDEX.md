@@ -104,6 +104,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `SacrificeArtifactThenDealDividedDamageEffect` | `(int totalDamage)` | Sacrifice an artifact, then deal N total damage divided among any number of targets (creatures/players). Wrap in `MayEffect` for optional sacrifice. Damage assignments provided before cast via `pendingETBDamageAssignments`. Does NOT use standard targeting |
 | `SacrificeOtherCreatureOrDamageEffect` | `(int damage)` | sacrifice another creature or take N damage (upkeep trigger) |
 | `SpellCastTriggerEffect` | `(CardPredicate spellFilter, List<CardEffect> resolvedEffects)` or `(CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost)` | generic trigger descriptor: when a spell matching the predicate is cast, put the resolved effects on the stack. Works in both `ON_ANY_PLAYER_CASTS_SPELL` and `ON_CONTROLLER_CASTS_SPELL` slots. Wrap in `MayEffect` for optional triggers. Set `manaCost` (e.g. `"{1}"`) for "may pay" triggers. Use `spellFilter = null` for "whenever you cast a spell" (any spell). Replaces the old per-card descriptors (GainLifeOnSpellCastEffect, DealDamageToAnyTargetOnArtifactCastEffect, etc.) |
+| `DealDamageEqualToSpellManaValueToAnyTargetEffect` | `(CardPredicate spellFilter)` | spell-cast trigger: when controller casts a spell matching the filter, deal damage equal to that spell's mana value to any target. Uses `ON_CONTROLLER_CASTS_SPELL` slot. Target selection via `pendingSpellTargetTriggers` queue. See Rage Extractor |
 
 ## Destruction / sacrifice
 

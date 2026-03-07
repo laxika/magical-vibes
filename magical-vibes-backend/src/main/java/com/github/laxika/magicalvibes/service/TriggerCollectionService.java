@@ -21,7 +21,9 @@ import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffe
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveEnchantedPermanentControllerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -243,6 +245,17 @@ public class TriggerCollectionService {
                     }
                 } else if (inner instanceof SpellCastTriggerEffect trigger) {
                     handleGenericSpellCastTrigger(gameData, spellCard, perm, playerId, effect, trigger);
+                } else if (inner instanceof DealDamageEqualToSpellManaValueToAnyTargetEffect trigger
+                        && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) {
+                    int manaValue = spellCard.getManaValue();
+                    List<CardEffect> resolvedEffects = List.of(new DealDamageToAnyTargetEffect(manaValue));
+                    gameData.pendingSpellTargetTriggers.add(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            perm.getCard(), playerId, new ArrayList<>(resolvedEffects)
+                    ));
+                    String logEntry = perm.getCard().getName() + "'s triggered ability triggers — choose a target for " + manaValue + " damage.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} spell-cast mana-value trigger queued ({} damage)",
+                            gameData.id, perm.getCard().getName(), manaValue);
                 } else if (inner instanceof GiveTargetPlayerPoisonCountersEffect trigger
                         && trigger.spellFilter() != null
                         && gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) {

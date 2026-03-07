@@ -38,7 +38,9 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
+import com.github.laxika.magicalvibes.model.filter.PhyrexianManaPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -253,6 +255,9 @@ public class GameQueryService {
         }
         if (predicate instanceof CardColorPredicate p) {
             return card.getColor() != null && card.getColor() == p.color();
+        }
+        if (predicate instanceof PhyrexianManaPredicate) {
+            return card.getManaCost() != null && new ManaCost(card.getManaCost()).hasPhyrexianMana();
         }
         if (predicate instanceof CardIsAuraPredicate) {
             return card.isAura();
