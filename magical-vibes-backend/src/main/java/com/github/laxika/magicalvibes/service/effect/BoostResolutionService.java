@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesXEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostFirstTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSecondTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledPermanentEffect;
@@ -217,6 +218,27 @@ public class BoostResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gets +{}/+{}", gameData.id, target.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
+    }
+
+    @HandlesEffect(BoostSecondTargetCreatureEffect.class)
+    private void resolveBoostSecondTargetCreature(GameData gameData, StackEntry entry, BoostSecondTargetCreatureEffect boost) {
+        if (entry.getTargetPermanentIds() == null || entry.getTargetPermanentIds().size() < 2) {
+            return;
+        }
+
+        UUID secondTargetId = entry.getTargetPermanentIds().get(1);
+        Permanent target = gameQueryService.findPermanentById(gameData, secondTargetId);
+        if (target == null) {
+            return;
+        }
+
+        target.setPowerModifier(target.getPowerModifier() + boost.powerBoost());
+        target.setToughnessModifier(target.getToughnessModifier() + boost.toughnessBoost());
+
+        String logEntry = target.getCard().getName() + " gets " + boost.powerBoost() + "/" + boost.toughnessBoost() + " until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} gets {}/{}", gameData.id, target.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
     }
 
     @HandlesEffect(BoostAllOwnCreaturesEffect.class)
