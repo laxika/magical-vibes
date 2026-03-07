@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifePerCreatur
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaGainXLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveControllerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveControllerPoisonCountersOnTargetDeathThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveEachPlayerPoisonCountersEffect;
@@ -525,6 +526,23 @@ public class LifeResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName, effect.amount(), entry.getCard().getName());
+    }
+
+    @HandlesEffect(DamageSourceControllerGetsPoisonCounterEffect.class)
+    private void resolveDamageSourceControllerGetsPoisonCounter(GameData gameData, StackEntry entry,
+                                                                DamageSourceControllerGetsPoisonCounterEffect effect) {
+        UUID playerId = effect.damageSourceControllerId();
+        if (playerId == null || !gameData.playerIds.contains(playerId)) return;
+        if (!gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) return;
+
+        int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
+        gameData.playerPoisonCounters.put(playerId, currentPoison + 1);
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        String logEntry = playerName + " gets a poison counter (" + entry.getCard().getName() + ").";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} gets a poison counter from {}", gameData.id, playerName, entry.getCard().getName());
     }
 
     @HandlesEffect(GiveControllerPoisonCountersEffect.class)

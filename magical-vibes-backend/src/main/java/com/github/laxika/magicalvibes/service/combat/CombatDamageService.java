@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
@@ -664,6 +665,8 @@ public class CombatDamageService {
                 CardEffect effectToAdd = effect;
                 if (effect instanceof DamageSourceControllerSacrificesPermanentsEffect && data.damageDealt() > 0 && data.sourceControllerId() != null) {
                     effectToAdd = new DamageSourceControllerSacrificesPermanentsEffect(data.damageDealt(), data.sourceControllerId());
+                } else if (effect instanceof DamageSourceControllerGetsPoisonCounterEffect && data.sourceControllerId() != null) {
+                    effectToAdd = new DamageSourceControllerGetsPoisonCounterEffect(data.sourceControllerId());
                 }
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,

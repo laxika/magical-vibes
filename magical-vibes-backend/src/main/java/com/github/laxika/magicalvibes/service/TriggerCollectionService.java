@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
@@ -716,6 +717,8 @@ public class TriggerCollectionService {
             CardEffect effectToAdd = effect;
             if (effect instanceof DamageSourceControllerSacrificesPermanentsEffect && damageDealt > 0 && damageSourceControllerId != null) {
                 effectToAdd = new DamageSourceControllerSacrificesPermanentsEffect(damageDealt, damageSourceControllerId);
+            } else if (effect instanceof DamageSourceControllerGetsPoisonCounterEffect && damageSourceControllerId != null) {
+                effectToAdd = new DamageSourceControllerGetsPoisonCounterEffect(damageSourceControllerId);
             }
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,

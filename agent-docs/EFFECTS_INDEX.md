@@ -125,6 +125,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `SacrificeCreatureEffect` | `()` | controller sacrifices a creature |
 | `SacrificeAttackingCreaturesEffect` | `(int baseCount, int metalcraftCount)` | target player sacrifices attacking creatures; metalcraft upgrades count |
 | `EachOpponentSacrificesCreatureEffect` | `()` | each opponent sacrifices a creature |
+| `DamageSourceControllerGetsPoisonCounterEffect` | `(UUID damageSourceControllerId)` | damage source's controller gets a poison counter (e.g. Reaper of Sheoldred). Register as marker (null) on ON_DEALT_DAMAGE; actual UUID filled at trigger time |
 | `DamageSourceControllerSacrificesPermanentsEffect` | `(int count, UUID sacrificingPlayerId)` | damage source's controller sacrifices that many permanents of their choice (e.g. Phyrexian Obliterator). Register as marker (0, null) on ON_DEALT_DAMAGE; actual values filled at trigger time |
 | `SacrificeSelfEffect` | `()` | sacrifice this permanent |
 | `SacrificeUnlessDiscardCardTypeEffect` | `(CardType requiredType)` | sacrifice unless you discard a card of type (null = any) |

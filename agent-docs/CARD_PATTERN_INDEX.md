@@ -153,6 +153,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | On block conditional boost | `e/EzurisArchers.java` | ON_BLOCK BoostSelfWhenBlockingKeywordEffect(FLYING, 3, 0) — conditional trigger checked at block time |
 | On damaged creature dies | `s/SengirVampire.java` | ON_DAMAGED_CREATURE_DIES PutPlusOnePlusOneCounterOnSourceEffect |
 | On dealt damage to self | `n/NestedGhoul.java` | ON_DEALT_DAMAGE CreateCreatureTokenEffect — fires per source, both combat and non-combat |
+| On dealt damage: source controller poison | `r/ReaperOfSheoldred.java` | ON_DEALT_DAMAGE DamageSourceControllerGetsPoisonCounterEffect(null) marker — UUID filled at trigger time, gives source's controller 1 poison counter |
 | On dealt damage: source controller sacrifices | `p/PhyrexianObliterator.java` | ON_DEALT_DAMAGE DamageSourceControllerSacrificesPermanentsEffect(0,null) marker — count+playerId filled at trigger time, multi-permanent choice for sacrifice |
 | Other creature enters | `s/SoulWarden.java` | ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD GainLifeEffect |
 | Ally creature dies | `g/GravePact.java` | ON_ALLY_CREATURE_DIES EachOpponentSacrificesCreatureEffect |
