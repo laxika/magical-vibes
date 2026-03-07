@@ -965,9 +965,9 @@ public class TurnProgressionService {
                     continue;
                 }
 
-                // Skip mana abilities (all non-cost effects are ManaProducingEffect)
+                // Skip mana abilities (any effect that produces mana makes the whole ability a mana ability per CR 605.1a)
                 boolean isManaAbility = ability.getEffects().stream()
-                        .allMatch(e -> e instanceof ManaProducingEffect);
+                        .anyMatch(e -> e instanceof ManaProducingEffect);
                 if (isManaAbility) continue;
 
                 // Skip loyalty abilities

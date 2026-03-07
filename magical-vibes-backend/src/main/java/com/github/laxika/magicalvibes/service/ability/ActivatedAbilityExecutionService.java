@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
@@ -181,8 +182,7 @@ public class ActivatedAbilityExecutionService {
         boolean isManaAbility = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget()
                 && ability.getLoyaltyCost() == null
                 && !snapshotEffects.isEmpty()
-                && snapshotEffects.stream().anyMatch(e -> e instanceof ManaProducingEffect)
-                && snapshotEffects.stream().allMatch(e -> e instanceof ManaProducingEffect || e instanceof DealDamageToControllerEffect);
+                && snapshotEffects.stream().anyMatch(e -> e instanceof ManaProducingEffect);
 
         if (isManaAbility) {
             resolveManaAbility(gameData, playerId, player, permanent, snapshotEffects);
@@ -248,6 +248,13 @@ public class ActivatedAbilityExecutionService {
                 gameData.playerManaPools.get(playerId).addArtifactOnlyColorless(aom.amount());
             } else if (effect instanceof AwardMyrOnlyColorlessManaEffect mom) {
                 gameData.playerManaPools.get(playerId).addMyrOnlyColorless(mom.amount());
+            } else if (effect instanceof GainLifeEffect gain) {
+                if (gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                    int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+                    gameData.playerLifeTotals.put(playerId, currentLife + gain.amount());
+                    String logEntry = player.getUsername() + " gains " + gain.amount() + " life.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                }
             } else if (effect instanceof DealDamageToControllerEffect dmg) {
                 String cardName = permanent.getCard().getName();
                 int damage = dmg.damage();

@@ -1073,7 +1073,7 @@ public class AbilityActivationService {
         List<CardEffect> effects = ability.getEffects().stream()
                 .filter(e -> !(e instanceof CostEffect))
                 .toList();
-        return !effects.isEmpty() && effects.stream().allMatch(e -> e instanceof ManaProducingEffect);
+        return !effects.isEmpty() && effects.stream().anyMatch(e -> e instanceof ManaProducingEffect);
     }
 }
 
