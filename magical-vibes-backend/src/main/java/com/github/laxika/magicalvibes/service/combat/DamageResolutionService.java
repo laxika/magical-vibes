@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetControllerI
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEqualToCardTypeCountInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardDealManaValueDamageEffect;
@@ -277,6 +278,34 @@ public class DamageResolutionService {
         if (!isDamageSourcePreventedWithLog(gameData, entry)) {
             List<Card> hand = gameData.playerHands.get(targetId);
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, hand != null ? hand.size() : 0);
+            dealDamageToPlayer(gameData, entry, targetId, rawDamage);
+        }
+
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link DealDamageToTargetPlayerEqualToCardTypeCountInGraveyardEffect} — deals damage to target player
+     * equal to the number of cards of the specified type in the controller's graveyard.
+     */
+    @HandlesEffect(DealDamageToTargetPlayerEqualToCardTypeCountInGraveyardEffect.class)
+    void resolveDealDamageToTargetPlayerEqualToCardTypeCountInGraveyard(
+            GameData gameData, StackEntry entry, DealDamageToTargetPlayerEqualToCardTypeCountInGraveyardEffect effect) {
+        UUID targetId = entry.getTargetPermanentId();
+        if (!gameData.playerIds.contains(targetId)) return;
+
+        if (!isDamageSourcePreventedWithLog(gameData, entry)) {
+            List<Card> graveyard = gameData.playerGraveyards.get(entry.getControllerId());
+            int count = 0;
+            if (graveyard != null) {
+                for (Card card : graveyard) {
+                    if (card.getType() == effect.cardType() || card.getAdditionalTypes().contains(effect.cardType())) {
+                        count++;
+                    }
+                }
+            }
+
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, count);
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         }
 

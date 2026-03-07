@@ -80,6 +80,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Sacrifice artifact spell cost + tokens | `k/KuldothaRebirth.java` | SacrificeArtifactCost + CreateCreatureTokenEffect — sacrifice artifact as additional spell cost |
 | Sacrifice permanent spell cost + burn | `a/Artillerize.java` | SacrificePermanentCost(PermanentAnyOfPredicate) + DealDamageToAnyTargetEffect — sacrifice artifact or creature as additional spell cost |
 | Sacrifice creature spell cost + power-based mass debuff | `i/IchorExplosion.java` | SacrificeCreatureCost(false, true) + BoostAllCreaturesXEffect(-1, -1) — sacrifice creature, all creatures get -X/-X where X = sacrificed creature's power |
+| Graveyard-count damage | `s/ScrapyardSalvo.java` | DealDamageToTargetPlayerEqualToCardTypeCountInGraveyardEffect(ARTIFACT) — damage to target player equal to artifact cards in graveyard |
 
 ## Vanilla creatures (empty body, all from Scryfall)
 
