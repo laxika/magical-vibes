@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifePerControlledCreature
 import com.github.laxika.magicalvibes.model.effect.GainLifePerCreatureOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
@@ -315,6 +316,21 @@ public class LifeResolutionService {
     @HandlesEffect(LoseLifeEffect.class)
     private void resolveLoseLife(GameData gameData, StackEntry entry, LoseLifeEffect effect) {
         applyLifeLoss(gameData, entry.getControllerId(), effect.amount(), entry.getCard().getName());
+    }
+
+    @HandlesEffect(TargetSpellControllerLosesLifeEffect.class)
+    private void resolveTargetSpellControllerLosesLife(GameData gameData, StackEntry entry, TargetSpellControllerLosesLifeEffect effect) {
+        UUID targetCardId = entry.getTargetPermanentId();
+        if (targetCardId == null) return;
+
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(targetCardId)) {
+                applyLifeLoss(gameData, se.getControllerId(), effect.amount(), entry.getCard().getName());
+                return;
+            }
+        }
+        // Target spell already left the stack (e.g. was countered by earlier effect on the same spell)
+        log.info("Game {} - Target spell no longer on stack for life loss", gameData.id);
     }
 
     @HandlesEffect(EachOpponentLosesLifeEffect.class)

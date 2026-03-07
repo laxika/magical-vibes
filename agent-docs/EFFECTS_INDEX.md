@@ -160,6 +160,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 |--------|-------------|--------|
 | `CounterSpellEffect` | `()` | counter target spell |
 | `CounterSpellIfControllerPoisonedEffect` | `()` | counter target spell if its controller is poisoned (has at least one poison counter) |
+| `TargetSpellControllerLosesLifeEffect` | `(int amount)` | target spell's controller loses N life. Companion effect for counter spells (e.g. Psychic Barrier). Place before CounterSpellEffect so target is still on stack |
 | `CounterUnlessPaysEffect` | `(int amount)` | counter unless controller pays N generic mana |
 | `RegisterDelayedCounterTriggerEffect` | `(int genericManaAmount)` | registers a delayed trigger (opening hand reveal) that counters each opponent's first spell unless they pay N generic mana. Handled by MayAbilityHandlerService, not GameService |
 | `RegisterDelayedManaTriggerEffect` | `(ManaColor color, int amount)` | registers a delayed trigger (opening hand reveal) that adds N mana of the given color at the beginning of the revealing player's first precombat main phase. Handled by MayAbilityHandlerService, not GameService |
