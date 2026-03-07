@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreaturePerCont
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEquipmentAttachedEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEnchantmentOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfByImprintedCreaturePTEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
@@ -580,6 +581,16 @@ public class StaticEffectResolutionService {
         });
         accumulator.addPower(count[0] * boost.powerPerEquipment());
         accumulator.addToughness(count[0] * boost.toughnessPerEquipment());
+    }
+
+    @HandlesStaticEffect(value = BoostSelfByImprintedCreaturePTEffect.class, selfOnly = true)
+    private void resolveBoostSelfByImprintedCreaturePT(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        Card imprintedCard = context.source().getCard().getImprintedCard();
+        if (imprintedCard == null) {
+            return;
+        }
+        accumulator.addPower(imprintedCard.getPower());
+        accumulator.addToughness(imprintedCard.getToughness());
     }
 
     @HandlesStaticEffect(value = BoostSelfPerOpponentPoisonCounterEffect.class, selfOnly = true)
