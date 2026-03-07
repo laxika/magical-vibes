@@ -25,6 +25,8 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSharedCar
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfMetalcraftEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.RequirePhyrexianPaymentToAttackEffect;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
@@ -515,6 +517,22 @@ public class GameBroadcastService {
             }
         }
         return totalTax;
+    }
+
+    public List<ManaColor> getPhyrexianAttackPaymentsPerCreature(GameData gameData, UUID attackingPlayerId) {
+        UUID defenderId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        if (defenderBattlefield == null) return List.of();
+
+        List<ManaColor> payments = new java.util.ArrayList<>();
+        for (Permanent perm : defenderBattlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof RequirePhyrexianPaymentToAttackEffect tax) {
+                    payments.add(tax.color());
+                }
+            }
+        }
+        return payments;
     }
 
     public JoinGame getJoinGame(GameData data, UUID playerId) {

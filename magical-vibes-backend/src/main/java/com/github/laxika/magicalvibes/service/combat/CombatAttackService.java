@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.List;
 
 /**
  * Handles declare-attackers step: computing legal attackers, enforcing attack requirements
@@ -73,6 +74,9 @@ public class CombatAttackService {
     public List<Integer> getMustAttackIndices(GameData gameData, UUID playerId, List<Integer> attackableIndices) {
         int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
         if (taxPerCreature > 0) {
+            return List.of();
+        }
+        if (!gameBroadcastService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
             return List.of();
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -152,6 +156,26 @@ public class CombatAttackService {
                 throw new IllegalStateException("Not enough mana to pay attack tax (" + totalTax + " required)");
             }
             payGenericMana(pool, totalTax);
+        }
+
+        // Check Phyrexian attack tax (e.g. Norn's Annex — {W/P} per attacker)
+        List<ManaColor> phyrexianPayments = gameBroadcastService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId);
+        if (!phyrexianPayments.isEmpty()) {
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            int lifeCost = 0;
+            for (int i = 0; i < attackerIndices.size(); i++) {
+                for (ManaColor color : phyrexianPayments) {
+                    if (pool.get(color) > 0) {
+                        pool.remove(color);
+                    } else {
+                        lifeCost += 2;
+                    }
+                }
+            }
+            if (lifeCost > 0) {
+                int currentLife = gameData.playerLifeTotals.get(playerId);
+                gameData.playerLifeTotals.put(playerId, currentLife - lifeCost);
+            }
         }
 
         // Mark creatures as attacking and tap them (vigilance skips tapping)
@@ -310,6 +334,9 @@ public class CombatAttackService {
                                                     Set<Integer> declaredAttackerIndices) {
         int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
         if (taxPerCreature > 0) {
+            return;
+        }
+        if (!gameBroadcastService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
             return;
         }
 

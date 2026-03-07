@@ -585,7 +585,7 @@ public class StaticEffectResolutionService {
     @HandlesStaticEffect(value = BoostSelfPerOpponentPoisonCounterEffect.class, selfOnly = true)
     private void resolveBoostSelfPerOpponentPoisonCounter(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostSelfPerOpponentPoisonCounterEffect) effect;
-        UUID controllerId = context.source().getControllerId();
+        UUID controllerId = findControllerId(context.gameData(), context.source());
         int totalPoison = 0;
         for (UUID playerId : context.gameData().orderedPlayerIds) {
             if (!playerId.equals(controllerId)) {
