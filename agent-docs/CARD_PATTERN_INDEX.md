@@ -299,6 +299,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Per-blocker trigger equip | `i/InfiltrationLens.java` | ON_BECOMES_BLOCKED MayEffect(DrawCardEffect(2)) + `TriggerMode.PER_BLOCKER` + equip. Use `addEffect(slot, effect, TriggerMode.PER_BLOCKER)` for "becomes blocked by a creature" triggers that fire once per blocker |
 | Becomes-target trigger equip | `l/LivewireLash.java` | ON_BECOMES_TARGET_OF_SPELL DealDamageToAnyTargetEffect(2) + STATIC BoostAttachedCreatureEffect(2, 0) + equip. Grants triggered ability to equipped creature: when it becomes the target of a spell, deal 2 damage to any target |
 | Boost + grant card type equip | `s/SilverskinArmor.java` | STATIC BoostAttachedCreatureEffect(1, 1) + GrantCardTypeEffect(ARTIFACT, EQUIPPED_CREATURE) + equip. Makes equipped creature an artifact in addition to its other types (counts for metalcraft, artifact targeting, etc.) |
+| Sword cycle (boost + protection + combat trigger) | `s/SwordOfWarAndPeace.java` | STATIC BoostAttachedCreatureEffect(2,2) + ProtectionFromColorsEffect(RED, WHITE) + ON_COMBAT_DAMAGE_TO_PLAYER DealDamageToTargetPlayerByHandSizeEffect + GainLifePerCardsInHandEffect + equip. Also: `SwordOfFeastAndFamine` (discard + untap lands), `SwordOfBodyAndMind` (token + mill) |
 
 ## Activated abilities
 
