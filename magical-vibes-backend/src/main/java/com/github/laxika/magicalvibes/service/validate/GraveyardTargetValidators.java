@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.service.validate;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -101,6 +103,24 @@ public class GraveyardTargetValidators {
         if (effect.requiredType() != null && graveyardCard.getType() != effect.requiredType()
                 && !graveyardCard.getAdditionalTypes().contains(effect.requiredType())) {
             throw new IllegalStateException("Target must be a " + effect.requiredType().name().toLowerCase() + " card");
+        }
+    }
+
+    @ValidatesTarget(ExileTargetGraveyardCardAndSameNameFromZonesEffect.class)
+    public void validateExileTargetGraveyardCardAndSameName(TargetValidationContext ctx) {
+        if (ctx.targetZone() != Zone.GRAVEYARD) {
+            throw new IllegalStateException("Spell requires a graveyard target");
+        }
+        if (ctx.targetPermanentId() == null) {
+            throw new IllegalStateException("Spell requires a target card");
+        }
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetPermanentId());
+        if (graveyardCard == null) {
+            throw new IllegalStateException("Target card not found in any graveyard");
+        }
+        if (graveyardCard.getType() == CardType.LAND
+                && graveyardCard.getSupertypes().contains(CardSupertype.BASIC)) {
+            throw new IllegalStateException("Target must not be a basic land card");
         }
     }
 

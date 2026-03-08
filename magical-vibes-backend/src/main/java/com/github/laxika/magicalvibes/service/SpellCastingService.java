@@ -200,6 +200,7 @@ public class SpellCastingService {
         // Detect any effect that targets a graveyard card (e.g. PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect)
         boolean needsGraveyardEffectTargeting = !needsSingleGraveyardTargeting
                 && card.getEffects(EffectSlot.SPELL).stream().anyMatch(e -> e.canTargetGraveyard());
+        boolean canTargetAnyGraveyard = card.getEffects(EffectSlot.SPELL).stream().anyMatch(e -> e.canTargetAnyGraveyard());
 
         // Validate target if specified (can be a permanent or a player)
         if (targetPermanentId != null && !card.isNeedsSpellTarget()) {
@@ -216,12 +217,14 @@ public class SpellCastingService {
                 }
                 targetLegalityService.validateEffectTargetInZone(gameData, card, targetPermanentId, Zone.GRAVEYARD, effectiveXValue);
             } else if (needsGraveyardEffectTargeting) {
-                boolean inControllersGraveyard = gameData.playerGraveyards
-                        .getOrDefault(playerId, List.of())
-                        .stream()
-                        .anyMatch(c -> c.getId().equals(targetPermanentId));
-                if (inControllersGraveyard) {
-                    throw new IllegalStateException("Target must be in an opponent's graveyard");
+                if (!canTargetAnyGraveyard) {
+                    boolean inControllersGraveyard = gameData.playerGraveyards
+                            .getOrDefault(playerId, List.of())
+                            .stream()
+                            .anyMatch(c -> c.getId().equals(targetPermanentId));
+                    if (inControllersGraveyard) {
+                        throw new IllegalStateException("Target must be in an opponent's graveyard");
+                    }
                 }
                 targetLegalityService.validateEffectTargetInZone(gameData, card, targetPermanentId, Zone.GRAVEYARD);
             } else {
@@ -231,7 +234,7 @@ public class SpellCastingService {
             String filterLabel = CardPredicateUtils.describeFilter(graveyardReturnEffect.filter());
             throw new IllegalStateException("Must target a " + filterLabel + " in your graveyard");
         } else if (card.isNeedsTarget() && needsGraveyardEffectTargeting) {
-            throw new IllegalStateException("Must target a creature card in an opponent's graveyard");
+            throw new IllegalStateException("Must target a card in a graveyard");
         }
 
         // Validate multi-target permanent targeting

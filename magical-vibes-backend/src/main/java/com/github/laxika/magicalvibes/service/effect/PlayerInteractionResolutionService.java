@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAndExileFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsEffect;
@@ -312,6 +313,57 @@ public class PlayerInteractionResolutionService {
         UUID targetPlayerId = entry.getTargetPermanentId();
         UUID controllerId = entry.getControllerId();
         playerInputService.beginSpellCardNameChoice(gameData, controllerId, targetPlayerId, effect.excludedTypes());
+    }
+
+    @HandlesEffect(ExileTargetGraveyardCardAndSameNameFromZonesEffect.class)
+    private void resolveExileTargetGraveyardCardAndSameNameFromZones(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        UUID targetCardId = entry.getTargetPermanentId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+
+        Card targetedCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
+        if (targetedCard == null) {
+            return; // Target removed — fizzle already handled by StackResolutionService
+        }
+
+        String cardName = targetedCard.getName();
+        UUID targetPlayerId = gameQueryService.findGraveyardOwnerById(gameData, targetCardId);
+
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        // Collect all matching cards across hand, graveyard, and library of the card's owner
+        List<Card> matchingCards = new ArrayList<>();
+
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        if (hand != null) {
+            matchingCards.addAll(hand.stream().filter(c -> c.getName().equals(cardName)).toList());
+        }
+
+        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+        if (graveyard != null) {
+            matchingCards.addAll(graveyard.stream().filter(c -> c.getName().equals(cardName)).toList());
+        }
+
+        List<Card> library = gameData.playerDecks.get(targetPlayerId);
+        if (library != null) {
+            matchingCards.addAll(library.stream().filter(c -> c.getName().equals(cardName)).toList());
+        }
+
+        if (matchingCards.isEmpty()) {
+            // No matching cards — just shuffle library and resolve
+            if (library != null) {
+                java.util.Collections.shuffle(library);
+            }
+
+            String exileLog = controllerName + " exiles 0 cards named \"" + cardName + "\" from " + targetName
+                    + "'s hand, graveyard, and library. " + targetName + " shuffles their library.";
+            gameBroadcastService.logAndBroadcast(gameData, exileLog);
+            log.info("Game {} - {} found 0 cards named \"{}\" in {}'s zones", gameData.id, controllerName, cardName, targetName);
+            return;
+        }
+
+        // Present matching cards for "any number" selection
+        playerInputService.beginMultiZoneExileChoice(gameData, controllerId, matchingCards, targetPlayerId, cardName);
     }
 
     @HandlesEffect(TargetPlayerRandomDiscardEffect.class)

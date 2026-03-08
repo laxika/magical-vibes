@@ -5,6 +5,7 @@ public interface CardEffect {
     default boolean canTargetPermanent() { return false; }
     default boolean canTargetSpell() { return false; }
     default boolean canTargetGraveyard() { return false; }
+    default boolean canTargetAnyGraveyard() { return false; }
 
     /**
      * Returns {@code true} if this effect implicitly targets its source permanent
