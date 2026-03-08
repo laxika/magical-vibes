@@ -711,7 +711,7 @@ Pass `null` as filter to allow any card.
 | `NoMaximumHandSizeEffect` | `()` | you have no maximum hand size (static, requires permanent on battlefield) |
 | `GrantPermanentNoMaxHandSizeEffect` | `()` | you have no maximum hand size for the rest of the game (one-shot spell effect, persists via GameData.playersWithNoMaximumHandSize) |
 | `ReduceOpponentMaxHandSizeEffect` | `(int reduction)` | each opponent's maximum hand size is reduced by N (static, checked during cleanup discard) |
-| `EnterPermanentsOfTypesTappedEffect` | `(Set<CardType> cardTypes)` | permanents of specified types enter tapped (static) |
+| `EnterPermanentsOfTypesTappedEffect` | `(Set<CardType> cardTypes)` or `(Set<CardType> cardTypes, boolean opponentsOnly)` | permanents of specified types enter tapped (static). When `opponentsOnly` is true, only opponents' permanents are affected (e.g. Urabrask the Hidden) |
 | `EntersTappedUnlessFewLandsEffect` | `(int maxOtherLands)` | enters tapped unless you control N or fewer other lands (fast lands, static) |
 
 ## Choose / name

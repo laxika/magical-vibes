@@ -66,6 +66,7 @@ public class BattlefieldEntryService {
         applySelfEnterTapped(permanent);
         applyConditionalEnterTapped(gameData, controllerId, permanent);
         applyAllPermanentsEnterTapped(gameData, permanent);
+        applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
         gameData.playerBattlefields.get(controllerId).add(permanent);
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())
@@ -77,6 +78,7 @@ public class BattlefieldEntryService {
         applySelfEnterTapped(permanent);
         applyConditionalEnterTapped(gameData, controllerId, permanent);
         applyAllPermanentsEnterTapped(gameData, permanent);
+        applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
         gameData.playerBattlefields.get(controllerId).add(permanent);
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())
@@ -89,6 +91,9 @@ public class BattlefieldEntryService {
         gameData.forEachPermanent((playerId, source) -> {
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                 if (!(effect instanceof EnterPermanentsOfTypesTappedEffect enterTapped)) {
+                    continue;
+                }
+                if (enterTapped.opponentsOnly()) {
                     continue;
                 }
                 enterTappedTypes.addAll(enterTapped.cardTypes());
@@ -110,6 +115,26 @@ public class BattlefieldEntryService {
         if (gameData.allPermanentsEnterTappedThisTurn) {
             enteringPermanent.tap();
         }
+    }
+
+    private void applyOpponentOnlyEnterTappedEffects(GameData gameData, UUID enteringControllerId, Permanent enteringPermanent) {
+        gameData.forEachBattlefield((sourcePlayerId, battlefield) -> {
+            if (sourcePlayerId.equals(enteringControllerId)) return;
+
+            for (Permanent source : battlefield) {
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (!(effect instanceof EnterPermanentsOfTypesTappedEffect enterTapped)) {
+                        continue;
+                    }
+                    if (!enterTapped.opponentsOnly()) {
+                        continue;
+                    }
+                    if (matchesAnyType(enteringPermanent.getCard(), enterTapped.cardTypes())) {
+                        enteringPermanent.tap();
+                    }
+                }
+            }
+        });
     }
 
     private void applySelfEnterTapped(Permanent enteringPermanent) {

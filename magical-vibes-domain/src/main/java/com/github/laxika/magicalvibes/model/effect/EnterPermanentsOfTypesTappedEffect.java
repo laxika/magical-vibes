@@ -4,5 +4,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 
 import java.util.Set;
 
-public record EnterPermanentsOfTypesTappedEffect(Set<CardType> cardTypes) implements CardEffect {
+public record EnterPermanentsOfTypesTappedEffect(Set<CardType> cardTypes, boolean opponentsOnly) implements CardEffect {
+
+    public EnterPermanentsOfTypesTappedEffect(Set<CardType> cardTypes) {
+        this(cardTypes, false);
+    }
 }

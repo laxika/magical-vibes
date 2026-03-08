@@ -219,6 +219,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Tax attackers | `w/WindbornMuse.java` | STATIC RequirePaymentToAttackEffect |
 | Tax opponent spells | `a/AuraOfSilence.java` | STATIC IncreaseOpponentCastCostEffect |
 | Enters tapped | `r/RootMaze.java` | STATIC EnterPermanentsOfTypesTappedEffect |
+| Opponent creatures enter tapped + haste lord | `u/UrabraskTheHidden.java` | STATIC GrantKeywordEffect(HASTE, OWN_CREATURES) + EnterPermanentsOfTypesTappedEffect(CREATURE, opponentsOnly=true) |
 | P/T = lands | `m/MolimoMaroSorcerer.java` | STATIC PowerToughnessEqualToControlledLandCountEffect |
 | P/T = creatures | `s/ScionOfTheWild.java` | STATIC PowerToughnessEqualToControlledCreatureCountEffect |
 | P/T = subtype | `n/Nightmare.java` | STATIC PowerToughnessEqualToControlledSubtypeCountEffect |
