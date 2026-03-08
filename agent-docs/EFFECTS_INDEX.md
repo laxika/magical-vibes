@@ -626,6 +626,7 @@ Pass `null` as filter to allow any card.
 | `DoubleManaPoolEffect` | `()` | double your mana pool |
 | `AddManaPerControlledSubtypeEffect` | `(ManaColor color, CardSubtype subtype)` | add one mana of color for each permanent with subtype you control |
 | `AwardRestrictedManaEffect` | `(ManaColor color, int amount, Set<CardType> allowedSpellTypes)` | add N mana of specified color that can only be spent to cast spells of the given types. Currently supports RED via `ManaPool.restrictedRed`; `ManaCost.canPay/pay` accept `restrictedRedContext=true` to include this mana for both colored and generic costs |
+| `AddColorlessManaPerChargeCounterOnSourceEffect` | `()` | add {C} for each charge counter on the source permanent. Implements `ManaProducingEffect` so the ability is treated as a mana ability. Used by Shrine of Boundless Growth |
 | `AwardArtifactOnlyColorlessManaEffect` | `(int amount)` | add N colorless mana that can only be spent to cast artifact spells or activate abilities of artifacts. Stored in `ManaPool.artifactOnlyColorless`; `ManaCost.canPay/pay` accept `artifactContext=true` to include this mana |
 | `AwardMyrOnlyColorlessManaEffect` | `(int amount)` | add N colorless mana that can only be spent to cast Myr spells or activate abilities of Myr. Stored in `ManaPool.myrOnlyColorless`; `ManaCost.canPay/pay` accept `myrContext=true` to include this mana |
 | `PreventManaDrainEffect` | `()` | players don't lose unspent mana as steps/phases end (static) |

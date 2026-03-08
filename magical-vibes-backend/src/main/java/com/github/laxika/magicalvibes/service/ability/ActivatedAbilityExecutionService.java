@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.AddColorlessManaPerChargeCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardArtifactOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -248,6 +249,13 @@ public class ActivatedAbilityExecutionService {
                 gameData.playerManaPools.get(playerId).addArtifactOnlyColorless(aom.amount());
             } else if (effect instanceof AwardMyrOnlyColorlessManaEffect mom) {
                 gameData.playerManaPools.get(playerId).addMyrOnlyColorless(mom.amount());
+            } else if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
+                int count = permanent.getChargeCounters();
+                if (count > 0) {
+                    gameData.playerManaPools.get(playerId).add(ManaColor.COLORLESS, count);
+                    String logEntry = player.getUsername() + " adds " + count + " {C} from " + permanent.getCard().getName() + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                }
             } else if (effect instanceof GainLifeEffect gain) {
                 if (gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                     int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
