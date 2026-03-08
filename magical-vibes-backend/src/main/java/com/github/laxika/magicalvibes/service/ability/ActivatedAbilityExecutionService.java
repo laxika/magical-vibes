@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokensEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
@@ -159,7 +160,8 @@ public class ActivatedAbilityExecutionService {
                 || e instanceof MillTargetPlayerByChargeCountersEffect
                 || e instanceof TargetPlayerDiscardsByChargeCountersEffect
                 || e instanceof DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect
-                || e instanceof DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect)) {
+                || e instanceof DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect
+                || e instanceof CreateTokensEqualToChargeCountersOnSourceEffect)) {
             effectiveXValue = permanent.getChargeCounters();
         }
 

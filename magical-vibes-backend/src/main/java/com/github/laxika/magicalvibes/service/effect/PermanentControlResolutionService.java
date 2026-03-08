@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokensEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensEqualToControlledCreatureCountEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensPerOwnCreatureDeathsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXCreatureTokenEffect;
@@ -91,6 +92,18 @@ public class PermanentControlResolutionService {
         if (amount <= 0) return;
         CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
                 amount, effect.tokenName(), effect.power(), effect.toughness(),
+                effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
+        );
+        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect);
+    }
+
+    @HandlesEffect(CreateTokensEqualToChargeCountersOnSourceEffect.class)
+    private void resolveCreateTokensEqualToChargeCounters(GameData gameData, StackEntry entry,
+                                                          CreateTokensEqualToChargeCountersOnSourceEffect effect) {
+        int count = entry.getXValue();
+        if (count <= 0) return;
+        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+                count, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
         );
         applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect);
