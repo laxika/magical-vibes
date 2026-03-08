@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
-import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
+import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -17,6 +17,6 @@ public class NeurokInvisimancer extends Card {
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
         ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MakeTargetUnblockableEffect());
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MakeCreatureUnblockableEffect());
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeAllCreaturesUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.MakeTargetUnblockableEffect;
+import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCreaturesCantBlockThisTurnEffect;
@@ -135,7 +135,7 @@ public class CombatRestrictionResolutionService {
         }
     }
 
-    @HandlesEffect(MakeTargetUnblockableEffect.class)
+    @HandlesEffect(MakeCreatureUnblockableEffect.class)
     private void resolveMakeTargetUnblockable(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {

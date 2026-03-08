@@ -67,7 +67,7 @@ new ActivatedAbility(requiresTap, manaCost, effects, description, targetFilter)
 
 ```java
 // Target creature with power 2 or less
-new ActivatedAbility(true, null, List.of(new MakeTargetUnblockableEffect()),
+new ActivatedAbility(true, null, List.of(new MakeCreatureUnblockableEffect()),
     "{T}: Target creature with power 2 or less can't be blocked this turn.",
     new PermanentPredicateTargetFilter(
         new PermanentAllOfPredicate(List.of(
