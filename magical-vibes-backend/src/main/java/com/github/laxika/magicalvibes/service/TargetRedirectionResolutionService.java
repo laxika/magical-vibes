@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
@@ -57,6 +58,53 @@ public class TargetRedirectionResolutionService {
                 validNewTargets,
                 "Choose a new target for " + targetSpell.getCard().getName() + "."
         );
+    }
+
+    @HandlesEffect(ChangeTargetOfTargetSpellToSourceEffect.class)
+    private void resolveChangeTargetOfTargetSpellToSource(GameData gameData, StackEntry entry) {
+        StackEntry targetSpell = findStackEntryByCardId(gameData, entry.getTargetPermanentId());
+        if (targetSpell == null) {
+            return;
+        }
+
+        if (!hasAnyTarget(targetSpell)) {
+            String logEntry = entry.getCard().getName() + " has no effect (" + targetSpell.getCard().getName() + " has no targets).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (sourcePermanent == null) {
+            String logEntry = entry.getCard().getName() + " has no effect (source permanent no longer on the battlefield).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        if (isSingleTargetSpell(targetSpell)) {
+            if (sourcePermanentId.equals(targetSpell.getTargetPermanentId())) {
+                String logEntry = targetSpell.getCard().getName() + " already targets " + entry.getCard().getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                return;
+            }
+            if (isValidNewTargetForSpell(gameData, targetSpell, sourcePermanentId)) {
+                targetSpell.setTargetPermanentId(sourcePermanentId);
+                String logEntry = targetSpell.getCard().getName() + "'s target is changed to " + entry.getCard().getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            } else {
+                String logEntry = entry.getCard().getName() + " is not a legal target for " + targetSpell.getCard().getName() + ". Target not changed.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            }
+        } else {
+            String logEntry = entry.getCard().getName() + " has no effect (" + targetSpell.getCard().getName() + " does not have a single target).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        }
+    }
+
+    private boolean hasAnyTarget(StackEntry stackEntry) {
+        return stackEntry.getTargetPermanentId() != null
+                || !stackEntry.getTargetPermanentIds().isEmpty()
+                || !stackEntry.getTargetCardIds().isEmpty();
     }
 
     private List<UUID> collectValidNewTargets(GameData gameData, StackEntry targetSpell) {

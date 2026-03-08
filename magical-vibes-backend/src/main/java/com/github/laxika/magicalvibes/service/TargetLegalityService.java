@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
@@ -49,9 +50,14 @@ public class TargetLegalityService {
             throw new IllegalStateException("Must target a spell on the stack");
         }
 
-        StackEntry targetSpell = findSpellOnStack(gameData, targetId);
+        boolean includeAbilities = containsHasTargetPredicate(targetFilter);
+        StackEntry targetSpell = includeAbilities
+                ? findAnyEntryOnStack(gameData, targetId)
+                : findSpellOnStack(gameData, targetId);
         if (targetSpell == null) {
-            throw new IllegalStateException("Target must be a spell on the stack");
+            throw new IllegalStateException(includeAbilities
+                    ? "Target must be a spell or ability on the stack"
+                    : "Target must be a spell on the stack");
         }
 
         if (targetFilter instanceof StackEntryPredicateTargetFilter filter
@@ -387,10 +393,46 @@ public class TargetLegalityService {
                 .orElse(null);
     }
 
+    StackEntry findAnyEntryOnStack(GameData gameData, UUID targetId) {
+        return gameData.stack.stream()
+                .filter(se -> se.getCard().getId().equals(targetId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private boolean containsHasTargetPredicate(TargetFilter targetFilter) {
+        if (!(targetFilter instanceof StackEntryPredicateTargetFilter filter)) {
+            return false;
+        }
+        return predicateContainsHasTarget(filter.predicate());
+    }
+
+    private boolean predicateContainsHasTarget(StackEntryPredicate predicate) {
+        if (predicate instanceof StackEntryHasTargetPredicate) {
+            return true;
+        }
+        if (predicate instanceof StackEntryAllOfPredicate allOf) {
+            return allOf.predicates().stream().anyMatch(this::predicateContainsHasTarget);
+        }
+        if (predicate instanceof StackEntryAnyOfPredicate anyOf) {
+            return anyOf.predicates().stream().anyMatch(this::predicateContainsHasTarget);
+        }
+        if (predicate instanceof StackEntryNotPredicate not) {
+            return predicateContainsHasTarget(not.predicate());
+        }
+        return false;
+    }
+
     private boolean isSingleTargetSpell(StackEntry stackEntry) {
         return stackEntry.getTargetPermanentId() != null
                 && stackEntry.getTargetPermanentIds().isEmpty()
                 && stackEntry.getTargetCardIds().isEmpty();
+    }
+
+    private boolean hasAnyTarget(StackEntry stackEntry) {
+        return stackEntry.getTargetPermanentId() != null
+                || !stackEntry.getTargetPermanentIds().isEmpty()
+                || !stackEntry.getTargetCardIds().isEmpty();
     }
 
     public boolean matchesStackEntryPredicate(GameData gameData, StackEntry stackEntry, StackEntryPredicate predicate, UUID controllerId) {
@@ -402,6 +444,11 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryIsSingleTargetPredicate) {
             return isSingleTargetSpell(stackEntry);
+        }
+        if (predicate instanceof StackEntryHasTargetPredicate) {
+            // Matches any spell or ability — per rules (e.g. Spellskite), activation is legal
+            // even if the targeted spell/ability has no targets; resolution handles that case.
+            return true;
         }
         if (predicate instanceof StackEntryManaValuePredicate manaValuePredicate) {
             return stackEntry.getCard().getManaValue() == manaValuePredicate.manaValue();
