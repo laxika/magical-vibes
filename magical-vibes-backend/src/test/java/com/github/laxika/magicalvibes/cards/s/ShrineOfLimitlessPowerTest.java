@@ -103,7 +103,7 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
     void castingBlackSpellAddsChargeCounter() {
         Permanent shrine = addReadyShrine(player1);
         harness.setHand(player1, List.of(new DementiaBat()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castCreature(player1, 0);
 
@@ -138,7 +138,7 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
     void opponentCastingBlackSpellDoesNotTrigger() {
         Permanent shrine = addReadyShrine(player1);
         harness.setHand(player2, List.of(new DementiaBat()));
-        harness.addMana(player2, ManaColor.BLACK, 4);
+        harness.addMana(player2, ManaColor.BLACK, 5);
         harness.forceActivePlayer(player2);
 
         harness.castCreature(player2, 0);
@@ -254,7 +254,7 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new DementiaBat()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.addMana(player1, ManaColor.BLACK, 5);
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve charge counter trigger
         harness.passBothPriorities(); // resolve creature spell
