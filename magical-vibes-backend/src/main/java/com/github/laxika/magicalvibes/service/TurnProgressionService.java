@@ -776,14 +776,30 @@ public class TurnProgressionService {
 
         gameData.forEachBattlefield((playerId, playerBattlefield) -> {
             if (playerId.equals(nextActive)) return;
-            if (!controlsUntapOnEachOtherPlayersStep(gameData, playerId, TurnStep.UNTAP)) return;
 
-            playerBattlefield.forEach(Permanent::untap);
+            List<UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect> untapEffects =
+                    collectUntapOnEachOtherPlayersStepEffects(gameData, playerId, TurnStep.UNTAP);
+            if (untapEffects.isEmpty()) return;
+
+            boolean hasUnfilteredEffect = untapEffects.stream().anyMatch(e -> e.filter() == null);
+
+            for (Permanent p : playerBattlefield) {
+                if (hasUnfilteredEffect || untapEffects.stream().anyMatch(e -> e.filter() != null
+                        && gameQueryService.matchesPermanentPredicate(gameData, p, e.filter()))) {
+                    p.untap();
+                }
+            }
 
             String playerName = gameData.playerIdToName.get(playerId);
-            String seedbornLog = playerName + " untaps their permanents due to Seedborn Muse.";
-            gameBroadcastService.logAndBroadcast(gameData, seedbornLog);
-            log.info("Game {} - {} untaps permanents due to Seedborn Muse", gameData.id, playerName);
+            if (hasUnfilteredEffect) {
+                String seedbornLog = playerName + " untaps their permanents due to Seedborn Muse.";
+                gameBroadcastService.logAndBroadcast(gameData, seedbornLog);
+                log.info("Game {} - {} untaps permanents due to Seedborn Muse", gameData.id, playerName);
+            } else {
+                String filteredLog = playerName + " untaps some permanents during opponent's untap step.";
+                gameBroadcastService.logAndBroadcast(gameData, filteredLog);
+                log.info("Game {} - {} untaps filtered permanents during opponent's untap step", gameData.id, playerName);
+            }
         });
 
         // Process pending may-not-untap choices before continuing turn
@@ -810,20 +826,22 @@ public class TurnProgressionService {
         gameBroadcastService.broadcastGameState(gameData);
     }
 
-    private boolean controlsUntapOnEachOtherPlayersStep(GameData gameData, UUID playerId, TurnStep step) {
+    private List<UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect> collectUntapOnEachOtherPlayersStepEffects(
+            GameData gameData, UUID playerId, TurnStep step) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
-            return false;
+            return List.of();
         }
+        List<UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect> result = new ArrayList<>();
         for (Permanent permanent : battlefield) {
-            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(effect -> effect instanceof UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect configuredEffect
-                            && configuredEffect.step() == step);
-            if (hasEffect) {
-                return true;
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect configuredEffect
+                        && configuredEffect.step() == step) {
+                    result.add(configuredEffect);
+                }
             }
         }
-        return false;
+        return result;
     }
 
     void handleCombatResult(CombatResult result, GameData gameData) {
