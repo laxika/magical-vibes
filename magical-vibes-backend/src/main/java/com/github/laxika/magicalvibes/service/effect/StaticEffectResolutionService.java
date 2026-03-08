@@ -63,6 +63,7 @@ import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControll
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledSubtypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -516,6 +517,14 @@ public class StaticEffectResolutionService {
     @HandlesStaticEffect(value = PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect.class, selfOnly = true)
     private void resolvePowerToughnessEqualToCreatureCardsInAllGraveyards(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         int count = countCardsInAllGraveyards(context.gameData(), new CardTypePredicate(CardType.CREATURE));
+        accumulator.addPower(count);
+        accumulator.addToughness(count);
+    }
+
+    @HandlesStaticEffect(value = PowerToughnessEqualToCardsInAllGraveyardsEffect.class, selfOnly = true)
+    private void resolvePowerToughnessEqualToCardsInAllGraveyards(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var ptEffect = (PowerToughnessEqualToCardsInAllGraveyardsEffect) effect;
+        int count = countCardsInAllGraveyards(context.gameData(), ptEffect.filter());
         accumulator.addPower(count);
         accumulator.addToughness(count);
     }

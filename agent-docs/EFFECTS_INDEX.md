@@ -30,7 +30,7 @@ Conditional: `RegenerateEffect` → `!targetsPermanent()`, `GrantKeywordEffect` 
 
 Effects that are characteristic-defining abilities (CDAs) for power/toughness (`*/*` effects) override `isPowerToughnessDefining()` to return `true`. Per CR 707.9d, when a copy effect provides specific P/T values (e.g. "except it's 7/7"), CDAs that define P/T are not copied. Used by `CopyPermanentOnEnterEffect` with `powerOverride`/`toughnessOverride`.
 
-Effects returning `true`: `PowerToughnessEqualToControlledLandCountEffect`, `PowerToughnessEqualToControlledCreatureCountEffect`, `PowerToughnessEqualToControlledPermanentCountEffect`, `PowerToughnessEqualToControlledSubtypeCountEffect`, `PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect`, `PowerToughnessEqualToCardsInHandEffect`.
+Effects returning `true`: `PowerToughnessEqualToControlledLandCountEffect`, `PowerToughnessEqualToControlledCreatureCountEffect`, `PowerToughnessEqualToControlledPermanentCountEffect`, `PowerToughnessEqualToControlledSubtypeCountEffect`, `PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect`, `PowerToughnessEqualToCardsInAllGraveyardsEffect`, `PowerToughnessEqualToCardsInHandEffect`.
 
 ---
 
@@ -495,6 +495,7 @@ Pass `null` as filter to allow any card.
 | `PowerToughnessEqualToControlledPermanentCountEffect` | `(PermanentPredicate filter)` | P/T = number of permanents you control matching predicate (static). E.g. `new PermanentIsArtifactPredicate()` for artifacts |
 | `PowerToughnessEqualToControlledSubtypeCountEffect` | `(CardSubtype subtype)` | P/T = number of permanents of subtype you control (static) |
 | `PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect` | `()` | P/T = number of creature cards in all graveyards (static) |
+| `PowerToughnessEqualToCardsInAllGraveyardsEffect` | `(CardPredicate filter)` | P/T = number of cards matching filter in all graveyards (static). E.g. `new CardTypePredicate(CardType.ARTIFACT)` for artifact cards |
 | `PowerToughnessEqualToCardsInHandEffect` | `()` | P/T = number of cards in controller's hand (static) |
 | `PutCountersOnSourceEffect` | `(int powerModifier, int toughnessModifier, int amount)` | put N counters on this creature (e.g. `(1,1,1)` for +1/+1, `(-1,-1,2)` for two -1/-1) |
 | `PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect` | `(Set<CardColor> triggerColors, int amount, boolean onlyOwnSpells)` | put +1/+1 counters when spell of matching color is cast. Use `ON_CONTROLLER_CASTS_SPELL` with `onlyOwnSpells=true` for "whenever you cast" cards; use `ON_ANY_PLAYER_CASTS_SPELL` with `onlyOwnSpells=false` for "whenever a player casts" cards |
