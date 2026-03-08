@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -155,6 +156,7 @@ public class ActivatedAbilityExecutionService {
         if (abilityEffects.stream().anyMatch(e -> e instanceof DrawCardsEqualToChargeCountersOnSourceEffect
                 || e instanceof GainLifeEqualToChargeCountersOnSourceEffect
                 || e instanceof MillTargetPlayerByChargeCountersEffect
+                || e instanceof TargetPlayerDiscardsByChargeCountersEffect
                 || e instanceof DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect)) {
             effectiveXValue = permanent.getChargeCounters();
         }

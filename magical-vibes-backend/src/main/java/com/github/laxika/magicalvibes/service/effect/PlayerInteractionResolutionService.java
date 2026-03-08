@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndDrawCardsEffe
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleHandIntoLibraryAndDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsReturnSelfIfCardTypeEffect;
@@ -270,6 +271,22 @@ public class PlayerInteractionResolutionService {
     private void resolveTargetPlayerDiscards(GameData gameData, StackEntry entry, TargetPlayerDiscardsEffect effect) {
         gameData.discardCausedByOpponent = true;
         resolveDiscardCards(gameData, entry.getTargetPermanentId(), effect.amount());
+    }
+
+    @HandlesEffect(TargetPlayerDiscardsByChargeCountersEffect.class)
+    private void resolveTargetPlayerDiscardsByChargeCounters(GameData gameData, StackEntry entry) {
+        int chargeCounters = entry.getXValue();
+        UUID targetPlayerId = entry.getTargetPermanentId();
+
+        if (chargeCounters <= 0) {
+            String playerName = gameData.playerIdToName.get(targetPlayerId);
+            String logEntry = playerName + " discards 0 cards (no charge counters).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        gameData.discardCausedByOpponent = true;
+        resolveDiscardCards(gameData, targetPlayerId, chargeCounters);
     }
 
     @HandlesEffect(TargetPlayerDiscardsReturnSelfIfCardTypeEffect.class)
