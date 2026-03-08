@@ -50,6 +50,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Counter + metalcraft cost reduction | `s/StoicRebuttal.java` | CounterSpellEffect + ReduceOwnCastCostIfMetalcraftEffect(1) — costs {1} less with 3+ artifacts |
 | Counter (conditional, poisoned) | `c/CorruptedResolve.java` | CounterSpellIfControllerPoisonedEffect — counters only if target spell's controller is poisoned |
 | Bounce target | `u/Unsummon.java` | ReturnTargetPermanentToHandEffect |
+| Bounce target + life loss | `v/VaporSnag.java` | ReturnTargetPermanentToHandEffect(1) — bounce creature, its controller loses life |
 | Bounce mass | `e/Evacuation.java` | ReturnCreaturesToOwnersHandEffect |
 | Pure draw | `c/CounselOfTheSoratami.java` | DrawCardEffect |
 | Draw + discard | `s/Sift.java` | DrawCardEffect + DiscardCardEffect |

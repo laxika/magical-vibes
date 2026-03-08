@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandOnCoinFlipLos
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class BounceResolutionService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+    private final GameOutcomeService gameOutcomeService;
     private final PlayerInputService playerInputService;
     private final PermanentRemovalService permanentRemovalService;
 
@@ -68,13 +70,15 @@ public class BounceResolutionService {
     /**
      * Returns one or more targeted permanents to their owners' hands. Supports both single-target
      * and multi-target modes. If a target is no longer on the battlefield (e.g. destroyed or
-     * already bounced), it is skipped silently.
+     * already bounced), it is skipped silently. When {@code lifeLoss > 0}, each bounced
+     * permanent's controller loses that much life (e.g. Vapor Snag).
      *
      * @param gameData the current game state
      * @param entry    the stack entry containing the target permanent ID(s)
+     * @param effect   the effect record, optionally containing life loss amount
      */
     @HandlesEffect(ReturnTargetPermanentToHandEffect.class)
-    void resolveReturnTargetPermanentToHand(GameData gameData, StackEntry entry) {
+    void resolveReturnTargetPermanentToHand(GameData gameData, StackEntry entry, ReturnTargetPermanentToHandEffect effect) {
         List<UUID> targetIds = entry.getTargetPermanentIds().isEmpty()
                 ? List.of(entry.getTargetPermanentId())
                 : entry.getTargetPermanentIds();
@@ -85,14 +89,39 @@ public class BounceResolutionService {
                 continue;
             }
 
+            // Find the controller before bouncing (needed for life loss)
+            UUID controllerId = effect.lifeLoss() > 0
+                    ? gameQueryService.findPermanentController(gameData, target.getId())
+                    : null;
+
             if (permanentRemovalService.removePermanentToHand(gameData, target)) {
                 String logEntry = target.getCard().getName() + " is returned to its owner's hand.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} returned to owner's hand by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
             }
+
+            // Controller of the bounced permanent loses life
+            if (controllerId != null) {
+                if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            gameData.playerIdToName.get(controllerId) + "'s life total can't change.");
+                } else {
+                    int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+                    gameData.playerLifeTotals.put(controllerId, currentLife - effect.lifeLoss());
+
+                    String playerName = gameData.playerIdToName.get(controllerId);
+                    String lifeLog = playerName + " loses " + effect.lifeLoss() + " life (" + entry.getCard().getName() + ").";
+                    gameBroadcastService.logAndBroadcast(gameData, lifeLog);
+                    log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, effect.lifeLoss(), entry.getCard().getName());
+                }
+            }
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
+
+        if (effect.lifeLoss() > 0) {
+            gameOutcomeService.checkWinCondition(gameData);
+        }
     }
 
     /**

@@ -225,7 +225,7 @@ public class GameTestHarness {
                 new CopyResolutionService(gameBroadcastService, validTargetService, gameQueryService),
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
                 new GraveyardReturnResolutionService(battlefieldEntryService, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService),
-                new BounceResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService),
+                new BounceResolutionService(gameQueryService, gameBroadcastService, gameOutcomeService, playerInputService, permanentRemovalService),
                 lifeResolutionService,
                 new AnimationResolutionService(gameQueryService, gameBroadcastService),
                 new BoostResolutionService(gameQueryService, gameBroadcastService, playerInputService),
