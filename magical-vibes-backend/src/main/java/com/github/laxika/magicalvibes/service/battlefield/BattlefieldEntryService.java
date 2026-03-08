@@ -175,6 +175,12 @@ public class BattlefieldEntryService {
     }
 
     public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId, boolean wasCastFromHand, int etbMode) {
+        // Torpor Orb: "Creatures entering don't cause abilities to trigger."
+        if (gameQueryService.areCreatureETBTriggersSuppressed(gameData, card)) {
+            log.info("Game {} - {} ETB triggers suppressed (creature entering triggers disabled)", gameData.id, card.getName());
+            return;
+        }
+
         List<CardEffect> triggeredEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> !(e instanceof ChooseColorEffect))
                 .filter(e -> !(e instanceof CopyPermanentOnEnterEffect))

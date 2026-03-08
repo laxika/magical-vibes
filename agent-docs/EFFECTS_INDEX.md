@@ -169,6 +169,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `RegisterDelayedCounterTriggerEffect` | `(int genericManaAmount)` | registers a delayed trigger (opening hand reveal) that counters each opponent's first spell unless they pay N generic mana. Handled by MayAbilityHandlerService, not GameService |
 | `RegisterDelayedManaTriggerEffect` | `(ManaColor color, int amount)` | registers a delayed trigger (opening hand reveal) that adds N mana of the given color at the beginning of the revealing player's first precombat main phase. Handled by MayAbilityHandlerService, not GameService |
 | `CreatureSpellsCantBeCounteredEffect` | `()` | creature spells can't be countered (static) |
+| `CreatureEnteringDontCauseTriggersEffect` | `()` | creatures entering don't cause abilities to trigger (static, e.g. Torpor Orb) |
 
 ## Bounce / return to hand
 

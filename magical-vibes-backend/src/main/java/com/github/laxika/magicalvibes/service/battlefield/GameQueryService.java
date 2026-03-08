@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.CantLoseGameFromLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -881,6 +882,18 @@ public class GameQueryService {
             return false;
         }
         return anyBattlefieldHasStaticEffect(gameData, CreatureSpellsCantBeCounteredEffect.class);
+    }
+
+    /**
+     * Returns {@code true} if any permanent on the battlefield has a
+     * {@link CreatureEnteringDontCauseTriggersEffect} static effect (e.g. Torpor Orb),
+     * AND the entering card is a creature.
+     */
+    public boolean areCreatureETBTriggersSuppressed(GameData gameData, Card enteringCard) {
+        if (!hasCardType(enteringCard, CardType.CREATURE)) {
+            return false;
+        }
+        return anyBattlefieldHasStaticEffect(gameData, CreatureEnteringDontCauseTriggersEffect.class);
     }
 
     // --- Aura & enchantment ---
