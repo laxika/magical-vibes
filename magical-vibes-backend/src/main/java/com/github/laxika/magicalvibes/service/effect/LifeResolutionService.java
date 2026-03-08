@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledSubtypeEf
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ExchangeTargetPlayersLifeTotalsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrainLifePerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeAndControllerGainsLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEffect;
@@ -291,6 +292,60 @@ public class LifeResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {}'s life doubled from {} to {}", gameData.id, playerName, currentLife, newLife);
+    }
+
+    @HandlesEffect(ExchangeTargetPlayersLifeTotalsEffect.class)
+    private void resolveExchangeTargetPlayersLifeTotals(GameData gameData, StackEntry entry) {
+        List<UUID> targets = entry.getTargetPermanentIds();
+        if (targets.size() != 2) return;
+
+        UUID playerA = targets.get(0);
+        UUID playerB = targets.get(1);
+
+        // CR 118.7: If either player's life total can't change, the exchange doesn't occur
+        if (!gameQueryService.canPlayerLifeChange(gameData, playerA)) {
+            String playerName = gameData.playerIdToName.get(playerA);
+            gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change. Exchange doesn't occur.");
+            return;
+        }
+        if (!gameQueryService.canPlayerLifeChange(gameData, playerB)) {
+            String playerName = gameData.playerIdToName.get(playerB);
+            gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change. Exchange doesn't occur.");
+            return;
+        }
+
+        int lifeA = gameData.playerLifeTotals.getOrDefault(playerA, 20);
+        int lifeB = gameData.playerLifeTotals.getOrDefault(playerB, 20);
+
+        if (lifeA == lifeB) {
+            String nameA = gameData.playerIdToName.get(playerA);
+            String nameB = gameData.playerIdToName.get(playerB);
+            String logEntry = nameA + " and " + nameB + " exchange life totals (both at " + lifeA + ").";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        String nameA = gameData.playerIdToName.get(playerA);
+        String nameB = gameData.playerIdToName.get(playerB);
+        String logEntry = nameA + " and " + nameB + " exchange life totals (" + nameA + ": " + lifeA + " -> " + lifeB + ", " + nameB + ": " + lifeB + " -> " + lifeA + ").";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        // Per Scryfall ruling: "each player gains or loses the amount of life necessary
+        // to equal the other player's previous life total." Apply as gain/loss so triggers fire.
+        String cardName = entry.getCard().getName();
+        gameData.playerLifeTotals.put(playerA, lifeB);
+        gameData.playerLifeTotals.put(playerB, lifeA);
+
+        // Fire life loss triggers for the player(s) who lost life
+        if (lifeB < lifeA) {
+            triggerCollectionService.checkLifeLossTriggers(gameData, playerA, lifeA - lifeB);
+        }
+        if (lifeA < lifeB) {
+            triggerCollectionService.checkLifeLossTriggers(gameData, playerB, lifeB - lifeA);
+        }
+
+        log.info("Game {} - {} and {} exchange life totals ({} -> {}, {} -> {})",
+                gameData.id, nameA, nameB, lifeA, lifeB, lifeB, lifeA);
     }
 
     @HandlesEffect(EnchantedCreatureControllerLosesLifeEffect.class)

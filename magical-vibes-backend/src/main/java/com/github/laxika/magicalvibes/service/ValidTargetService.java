@@ -97,12 +97,22 @@ public class ValidTargetService {
                     ? ability.getMultiTargetFilters().get(positionIndex)
                     : null;
 
-            gameData.forEachPermanent((playerId, perm) -> {
-                if (excludeIds.contains(perm.getId())) return;
-                if (isValidAbilityPermanentTarget(gameData, sourceCard, ability, perm, controllerId, false, permanentIndex, positionFilter)) {
-                    validPermanentIds.add(perm.getId());
+            if (positionFilter instanceof PlayerPredicateTargetFilter) {
+                // Player-targeting position: add valid players
+                for (UUID playerId : gameData.playerIds) {
+                    if (excludeIds.contains(playerId)) continue;
+                    if (isValidAbilityPlayerTarget(gameData, ability, playerId, controllerId)) {
+                        validPlayerIds.add(playerId);
+                    }
                 }
-            });
+            } else {
+                gameData.forEachPermanent((playerId, perm) -> {
+                    if (excludeIds.contains(perm.getId())) return;
+                    if (isValidAbilityPermanentTarget(gameData, sourceCard, ability, perm, controllerId, false, permanentIndex, positionFilter)) {
+                        validPermanentIds.add(perm.getId());
+                    }
+                });
+            }
 
             String prompt = "Select targets for " + sourceCard.getName() + " ability";
             return new ValidTargetsResponse(validPermanentIds, validPlayerIds, ability.getMinTargets(), ability.getMaxTargets(), prompt);

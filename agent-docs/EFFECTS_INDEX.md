@@ -417,6 +417,7 @@ Pass `null` as filter to allow any card.
 | `GainLifeEqualToChargeCountersOnSourceEffect` | `()` | gain life equal to number of charge counters on source (activated ability sacrifice effect) |
 | `TargetPlayerGainsLifeEffect` | `(int amount)` | target player gains N life |
 | `DoubleTargetPlayerLifeEffect` | `()` | double target player's life total |
+| `ExchangeTargetPlayersLifeTotalsEffect` | `()` | two target players exchange life totals (multi-target player ability, reads targets from `targetPermanentIds`). CR 118.7: if either player's life can't change, the exchange doesn't occur |
 | `LoseLifeEffect` | `(int amount)` | lose N life |
 | `EachOpponentLosesLifeEffect` | `(int amount)` | each opponent loses N life |
 | `EachOpponentLosesLifeAndControllerGainsLifeLostEffect` | `(int amount)` | each opponent loses N life, controller gains total life lost |

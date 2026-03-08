@@ -77,6 +77,28 @@ public class TargetLegalityService {
         List<TargetFilter> perPositionFilters = ability.getMultiTargetFilters();
         for (int i = 0; i < targetPermanentIds.size(); i++) {
             UUID targetId = targetPermanentIds.get(i);
+            TargetFilter positionFilter = i < perPositionFilters.size() ? perPositionFilters.get(i) : null;
+
+            // Player-targeting position
+            if (positionFilter instanceof PlayerPredicateTargetFilter playerFilter) {
+                if (!gameData.playerIds.contains(targetId)) {
+                    throw new IllegalStateException("Invalid player target");
+                }
+                if (gameQueryService.playerHasShroud(gameData, targetId)) {
+                    throw new IllegalStateException(gameData.playerIdToName.get(targetId) + " has shroud and can't be targeted");
+                }
+                if (playerFilter.predicate() instanceof PlayerRelationPredicate rel) {
+                    if (rel.relation() == PlayerRelation.OPPONENT && playerId.equals(targetId)) {
+                        throw new IllegalStateException("Must target an opponent");
+                    }
+                    if (rel.relation() == PlayerRelation.SELF && !playerId.equals(targetId)) {
+                        throw new IllegalStateException("Must target yourself");
+                    }
+                }
+                continue;
+            }
+
+            // Permanent-targeting position
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) {
                 throw new IllegalStateException("Invalid target");
@@ -101,8 +123,8 @@ public class TargetLegalityService {
                 }
             }
             // Per-position filter
-            if (i < perPositionFilters.size() && perPositionFilters.get(i) != null) {
-                gameQueryService.validateTargetFilter(perPositionFilters.get(i), target,
+            if (positionFilter != null) {
+                gameQueryService.validateTargetFilter(positionFilter, target,
                         FilterContext.of(gameData)
                                 .withSourceCardId(sourceCard.getId())
                                 .withSourceControllerId(playerId));
