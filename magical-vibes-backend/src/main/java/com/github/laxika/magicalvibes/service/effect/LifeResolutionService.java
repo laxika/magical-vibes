@@ -602,34 +602,13 @@ public class LifeResolutionService {
 
     @HandlesEffect(GiveControllerPoisonCountersEffect.class)
     private void resolveGiveControllerPoisonCounters(GameData gameData, StackEntry entry, GiveControllerPoisonCountersEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        if (!gameQueryService.canPlayerGetPoisonCounters(gameData, controllerId)) return;
-
-        int currentPoison = gameData.playerPoisonCounters.getOrDefault(controllerId, 0);
-        gameData.playerPoisonCounters.put(controllerId, currentPoison + effect.amount());
-
-        String playerName = gameData.playerIdToName.get(controllerId);
-        String logEntry = playerName + " gets " + effect.amount() + " poison counter" + (effect.amount() > 1 ? "s" : "")
-                + " (" + entry.getCard().getName() + ").";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-
-        log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName, effect.amount(), entry.getCard().getName());
+        applyPoisonCounters(gameData, entry.getControllerId(), effect.amount(), entry.getCard().getName());
     }
 
     @HandlesEffect(GiveEachPlayerPoisonCountersEffect.class)
     private void resolveGiveEachPlayerPoisonCounters(GameData gameData, StackEntry entry, GiveEachPlayerPoisonCountersEffect effect) {
         for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) continue;
-
-            int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
-            gameData.playerPoisonCounters.put(playerId, currentPoison + effect.amount());
-
-            String playerName = gameData.playerIdToName.get(playerId);
-            String logEntry = playerName + " gets " + effect.amount() + " poison counter" + (effect.amount() > 1 ? "s" : "")
-                    + " (" + entry.getCard().getName() + ").";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-
-            log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName, effect.amount(), entry.getCard().getName());
+            applyPoisonCounters(gameData, playerId, effect.amount(), entry.getCard().getName());
         }
     }
 
@@ -639,18 +618,21 @@ public class LifeResolutionService {
         if (targetPlayerId == null) {
             return;
         }
+        applyPoisonCounters(gameData, targetPlayerId, effect.amount(), entry.getCard().getName());
+    }
 
-        if (!gameQueryService.canPlayerGetPoisonCounters(gameData, targetPlayerId)) return;
+    private void applyPoisonCounters(GameData gameData, UUID playerId, int amount, String sourceName) {
+        if (!gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) return;
 
-        int currentPoison = gameData.playerPoisonCounters.getOrDefault(targetPlayerId, 0);
-        gameData.playerPoisonCounters.put(targetPlayerId, currentPoison + effect.amount());
+        int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
+        gameData.playerPoisonCounters.put(playerId, currentPoison + amount);
 
-        String playerName = gameData.playerIdToName.get(targetPlayerId);
-        String logEntry = playerName + " gets " + effect.amount() + " poison counter" + (effect.amount() > 1 ? "s" : "")
-                + " (" + entry.getCard().getName() + ").";
+        String playerName = gameData.playerIdToName.get(playerId);
+        String logEntry = playerName + " gets " + amount + " poison counter" + (amount > 1 ? "s" : "")
+                + " (" + sourceName + ").";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
-        log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName, effect.amount(), entry.getCard().getName());
+        log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName, amount, sourceName);
     }
 
     @HandlesEffect(GiveControllerPoisonCountersOnTargetDeathThisTurnEffect.class)
