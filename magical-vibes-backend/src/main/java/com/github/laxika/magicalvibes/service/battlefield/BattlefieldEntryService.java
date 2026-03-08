@@ -281,6 +281,7 @@ public class BattlefieldEntryService {
         checkAllyArtifactEntersTriggers(gameData, controllerId, card);
         checkAllyEquipmentEntersTriggers(gameData, controllerId, card);
         checkAllyNontokenArtifactEntersTriggers(gameData, controllerId, card);
+        checkOpponentCreatureEntersTriggers(gameData, controllerId, card);
         checkAnyCreatureEntersTriggers(gameData, controllerId, card);
         if (card.getType() == CardType.LAND) {
             checkOpponentLandEntersTriggers(gameData, controllerId, card);
@@ -454,6 +455,8 @@ public class BattlefieldEntryService {
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         for (Permanent perm : battlefield) {
+            if (perm.getCard() == enteringCreature) continue;
+
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD);
             if (effects == null || effects.isEmpty()) continue;
 
@@ -472,6 +475,12 @@ public class BattlefieldEntryService {
                     gameBroadcastService.logAndBroadcast(gameData, triggerLog);
                     log.info("Game {} - {} triggers for {} entering (toughness={})",
                             gameData.id, perm.getCard().getName(), enteringCreature.getName(), toughness);
+                } else if (effect instanceof MayEffect may) {
+                    gameData.queueMayAbility(perm.getCard(), controllerId, may);
+                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                    log.info("Game {} - {} triggers for {} entering (may effect)",
+                            gameData.id, perm.getCard().getName(), enteringCreature.getName());
                 }
             }
         }
@@ -639,6 +648,43 @@ public class BattlefieldEntryService {
                     String logEntry = perm.getCard().getName() + "'s ability triggers.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} triggers on opponent land entering", gameData.id, perm.getCard().getName());
+                }
+            }
+        });
+    }
+
+    void checkOpponentCreatureEntersTriggers(GameData gameData, UUID enteringCreatureControllerId, Card enteringCreature) {
+        if (enteringCreature.getToughness() == null) return;
+
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            if (playerId.equals(enteringCreatureControllerId)) return;
+
+            for (Permanent perm : battlefield) {
+                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD);
+                if (effects == null || effects.isEmpty()) continue;
+
+                for (CardEffect effect : effects) {
+                    if (effect instanceof MayEffect may) {
+                        gameData.queueMayAbility(perm.getCard(), playerId, may, enteringCreatureControllerId, perm.getId());
+                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                        log.info("Game {} - {} triggers for opponent creature {} entering",
+                                gameData.id, perm.getCard().getName(), enteringCreature.getName());
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s ability",
+                                new ArrayList<>(List.of(effect)),
+                                enteringCreatureControllerId,
+                                perm.getId()
+                        ));
+                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                        log.info("Game {} - {} triggers for opponent creature {} entering",
+                                gameData.id, perm.getCard().getName(), enteringCreature.getName());
+                    }
                 }
             }
         });
