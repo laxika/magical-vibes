@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentPoisonedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -659,6 +660,33 @@ public class StaticEffectResolutionService {
             }
         }
         return false;
+    }
+
+    @HandlesStaticEffect(value = OpponentPoisonedConditionalEffect.class, selfOnly = true)
+    private void resolveOpponentPoisonedConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var conditional = (OpponentPoisonedConditionalEffect) effect;
+        UUID controllerId = findControllerId(context.gameData(), context.source());
+        if (controllerId == null) return;
+        boolean opponentPoisoned = false;
+        for (UUID playerId : context.gameData().orderedPlayerIds) {
+            if (!playerId.equals(controllerId)
+                    && context.gameData().playerPoisonCounters.getOrDefault(playerId, 0) > 0) {
+                opponentPoisoned = true;
+                break;
+            }
+        }
+        if (opponentPoisoned) {
+            CardEffect wrapped = conditional.wrapped();
+            if (wrapped instanceof GrantKeywordEffect grant) {
+                accumulator.addKeyword(grant.keyword());
+            } else if (wrapped instanceof StaticBoostEffect boost) {
+                accumulator.addPower(boost.powerBoost());
+                accumulator.addToughness(boost.toughnessBoost());
+                accumulator.addKeywords(boost.grantedKeywords());
+            } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
+                accumulator.addProtectionColors(protection.colors());
+            }
+        }
     }
 
     @HandlesStaticEffect(value = PowerToughnessEqualToControlledSubtypeCountEffect.class, selfOnly = true)
