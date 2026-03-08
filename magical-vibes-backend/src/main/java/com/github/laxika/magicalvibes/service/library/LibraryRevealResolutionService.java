@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryMayExileOneEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect;
@@ -250,6 +251,53 @@ public class LibraryRevealResolutionService {
         gameBroadcastService.logAndBroadcast(gameData,
                 playerName + " looks at the top " + pluralCards(count) + " of their library.");
         log.info("Game {} - {} resolving {} with {} cards", gameData.id, playerName, entry.getCard().getName(), count);
+    }
+
+    /**
+     * Looks at the top X cards of the controller's library, where X is the number of charge
+     * counters on the source (stored in xValue). The player chooses one to put into their hand
+     * and the rest go on the bottom of the library in any order.
+     */
+    @HandlesEffect(LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect.class)
+    void resolveLookAtTopCardsPerChargeCounter(GameData gameData, StackEntry entry) {
+        int count = entry.getXValue();
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        if (count <= 0) {
+            String logMsg = entry.getCard().getName() + ": no charge counters, nothing to look at.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        int actual = Math.min(count, deck.size());
+        if (actual == 0) {
+            String logMsg = entry.getCard().getName() + ": " + playerName + "'s library is empty.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> topCards = takeTopCards(deck, actual);
+
+        if (actual == 1) {
+            gameData.playerHands.get(controllerId).add(topCards.getFirst());
+            String logMsg = playerName + " looks at the top card of their library and puts it into their hand.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        gameData.interaction.beginHandTopBottomChoice(controllerId, topCards);
+
+        List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseHandTopBottomMessage(
+                cardViews,
+                "Look at the top " + actual + " cards of your library. Choose one to put into your hand."
+        ));
+
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " looks at the top " + pluralCards(actual) + " of their library.");
+        log.info("Game {} - {} resolving {} with {} cards", gameData.id, playerName, entry.getCard().getName(), actual);
     }
 
     /**

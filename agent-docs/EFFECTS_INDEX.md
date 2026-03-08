@@ -340,6 +340,7 @@ Pass `null` as filter to allow any card.
 | `ImprintFromTopCardsEffect` | `(int count)` | look at top N cards, exile one face down (imprint on source), rest on bottom in any order |
 | `LookAtTopCardsOfTargetLibraryMayExileOneEffect` | `(int count)` | look at top N cards of target player's library, may exile one, rest on top in any order (used by Psychic Surgery) |
 | `LookAtTopCardsHandTopBottomEffect` | `(int count)` | look at top N cards, choose hand/top/bottom for each |
+| `LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect` | `()` | look at top X cards (X = charge counters on source, snapshotted before sacrifice), choose one to hand, rest on bottom in any order |
 | `ReorderTopCardsOfLibraryEffect` | `(int count)` | reorder top N cards of library |
 | `RevealTopCardDealManaValueDamageEffect` | `(boolean damageTargetPlayer, boolean damageTargetCreatures, boolean returnToHandIfLand)` | reveal top card of target's library, deal mana value damage to player/creatures, optionally return to hand if land |
 | `RevealTopCardOfLibraryEffect` | `()` | reveal top card of library (static/continuous) |
