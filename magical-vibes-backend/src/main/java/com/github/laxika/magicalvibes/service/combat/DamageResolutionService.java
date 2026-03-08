@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEff
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSourcePowerToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToItsOwnerEffect;
@@ -352,6 +353,29 @@ public class DamageResolutionService {
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, effect.cantRegenerate());
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect} — deals damage equal to
+     * the number of charge counters on the source to any target. The charge counter count is snapshotted
+     * into xValue before sacrifice so it survives even if the source is no longer on the battlefield.
+     */
+    @HandlesEffect(DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect.class)
+    void resolveDealDamageToAnyTargetEqualToChargeCounters(GameData gameData, StackEntry entry) {
+        UUID targetId = entry.getTargetPermanentId();
+        if (targetId == null) return;
+
+        int chargeCounters = entry.getXValue();
+        if (chargeCounters <= 0) {
+            String cardName = entry.getCard().getName();
+            gameBroadcastService.logAndBroadcast(gameData,
+                    cardName + " deals 0 damage (no charge counters).");
+            return;
+        }
+
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, chargeCounters);
+        resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
         gameOutcomeService.checkWinCondition(gameData);
     }
 

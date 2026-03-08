@@ -278,6 +278,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Sacrifice creature + search by MV | `b/BirthingPod.java` | Tap+mana(Phyrexian)+SacrificeCreatureCost(true)+SearchLibraryForCreatureWithExactMVToBattlefieldEffect(1) — sorcery speed, sacrifice creature to tutor creature with MV+1 to battlefield. `trackSacrificedManaValue=true` stores sacrificed MV in xValue |
 | Choose color + static boost + mana bonus | `c/CagedSun.java` | ON_ENTER_BATTLEFIELD ChooseColorOnEnterEffect + STATIC BoostCreaturesOfChosenColorEffect(1,1) + ON_ANY_PLAYER_TAPS_LAND AddExtraManaOfChosenColorOnLandTapEffect — choose color on enter, creatures of chosen color get +1/+1, lands tapped for chosen color add extra mana |
 | Shrine (upkeep + spell trigger charge + sac-for-mana) | `s/ShrineOfBoundlessGrowth.java` | UPKEEP_TRIGGERED PutChargeCounterOnSelfEffect + ON_CONTROLLER_CASTS_SPELL SpellCastTriggerEffect(CardColorPredicate) + tap+SacrificeSelfCost+AddColorlessManaPerChargeCounterOnSourceEffect — charge counters on upkeep and colored spell cast, sacrifice for mana |
+| Upkeep + spell-cast charge counters + sac damage | `s/ShrineOfBurningRage.java` | UPKEEP_TRIGGERED PutChargeCounterOnSelfEffect + ON_CONTROLLER_CASTS_SPELL SpellCastTriggerEffect(CardColorPredicate(RED)) + activated {3}+tap+SacrificeSelfCost+DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect |
 
 ## Equipment
 
