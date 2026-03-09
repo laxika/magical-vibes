@@ -69,7 +69,7 @@ import com.github.laxika.magicalvibes.service.ReconnectionService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.StateBasedActionService;
-import com.github.laxika.magicalvibes.service.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.TargetRedirectionResolutionService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
