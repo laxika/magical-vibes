@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -35,6 +34,7 @@ import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -67,12 +67,7 @@ public class TargetLegalityService {
     }
 
     public void validateMultiTargetAbility(GameData gameData, UUID playerId, ActivatedAbility ability, List<UUID> targetPermanentIds, Card sourceCard) {
-        if (targetPermanentIds == null || targetPermanentIds.size() < ability.getMinTargets() || targetPermanentIds.size() > ability.getMaxTargets()) {
-            throw new IllegalStateException("Must target between " + ability.getMinTargets() + " and " + ability.getMaxTargets() + " targets");
-        }
-        if (new java.util.HashSet<>(targetPermanentIds).size() != targetPermanentIds.size()) {
-            throw new IllegalStateException("All targets must be different");
-        }
+        validateMultiTargetCount(targetPermanentIds, ability.getMinTargets(), ability.getMaxTargets());
 
         List<TargetFilter> perPositionFilters = ability.getMultiTargetFilters();
         for (int i = 0; i < targetPermanentIds.size(); i++) {
@@ -84,17 +79,8 @@ public class TargetLegalityService {
                 if (!gameData.playerIds.contains(targetId)) {
                     throw new IllegalStateException("Invalid player target");
                 }
-                if (gameQueryService.playerHasShroud(gameData, targetId)) {
-                    throw new IllegalStateException(gameData.playerIdToName.get(targetId) + " has shroud and can't be targeted");
-                }
-                if (playerFilter.predicate() instanceof PlayerRelationPredicate rel) {
-                    if (rel.relation() == PlayerRelation.OPPONENT && playerId.equals(targetId)) {
-                        throw new IllegalStateException("Must target an opponent");
-                    }
-                    if (rel.relation() == PlayerRelation.SELF && !playerId.equals(targetId)) {
-                        throw new IllegalStateException("Must target yourself");
-                    }
-                }
+                validatePlayerTargetable(gameData, targetId);
+                validatePlayerPredicate(playerId, targetId, playerFilter.predicate(), playerFilter.errorMessage());
                 continue;
             }
 
@@ -104,24 +90,8 @@ public class TargetLegalityService {
                 throw new IllegalStateException("Invalid target");
             }
 
-            // Shroud
-            if (gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)) {
-                throw new IllegalStateException(target.getCard().getName() + " has shroud and can't be targeted");
-            }
-            // Hexproof (only blocks if target is opponent's)
-            if (gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF)) {
-                UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
-                if (targetController != null && !targetController.equals(playerId)) {
-                    throw new IllegalStateException(target.getCard().getName() + " has hexproof and can't be targeted");
-                }
-            }
-            // CantBeTargetOfSpellsOrAbilitiesEffect
-            if (gameQueryService.hasGrantedEffect(gameData, target, CantBeTargetOfSpellsOrAbilitiesEffect.class)) {
-                UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
-                if (targetController != null && !targetController.equals(playerId)) {
-                    throw new IllegalStateException(target.getCard().getName() + " has hexproof and can't be targeted");
-                }
-            }
+            validatePermanentTargetable(gameData, target, playerId);
+
             // Per-position filter
             if (positionFilter != null) {
                 gameQueryService.validateTargetFilter(positionFilter, target,
@@ -153,19 +123,11 @@ public class TargetLegalityService {
                                 .withSourceControllerId(playerId));
             } else if (gameData.playerIds.contains(targetPermanentId)
                     && ability.getTargetFilter() instanceof PlayerPredicateTargetFilter playerFilter) {
-                // Player target — validate PlayerPredicateTargetFilter (e.g. "target opponent")
-                if (playerFilter.predicate() instanceof PlayerRelationPredicate rel) {
-                    if (rel.relation() == PlayerRelation.OPPONENT && playerId.equals(targetPermanentId)) {
-                        throw new IllegalStateException(playerFilter.errorMessage());
-                    }
-                    if (rel.relation() == PlayerRelation.SELF && !playerId.equals(targetPermanentId)) {
-                        throw new IllegalStateException(playerFilter.errorMessage());
-                    }
-                }
+                validatePlayerPredicate(playerId, targetPermanentId, playerFilter.predicate(), playerFilter.errorMessage());
             }
         }
 
-        validateShroudAndHexproofTargeting(gameData, targetPermanentId, playerId);
+        validateTargetable(gameData, targetPermanentId, playerId);
     }
 
     public void validateSpellTargeting(GameData gameData, Card card, UUID targetPermanentId, Zone targetZone, UUID controllerId) {
@@ -174,36 +136,13 @@ public class TargetLegalityService {
             throw new IllegalStateException("Invalid target");
         }
 
-        if (target != null && card.isNeedsTarget() && gameQueryService.hasProtectionFrom(gameData, target, card.getColor())) {
-            throw new IllegalStateException(target.getCard().getName() + " has protection from " + card.getColor().name().toLowerCase());
+        if (target != null && card.isNeedsTarget()) {
+            validateSpellProtections(gameData, target, card);
+            validatePermanentTargetable(gameData, target, controllerId);
         }
 
-        if (target != null && card.isNeedsTarget() && gameQueryService.hasProtectionFromSourceCardTypes(target, card)) {
-            throw new IllegalStateException(target.getCard().getName() + " has protection from " + card.getType().getDisplayName().toLowerCase() + "s");
-        }
-
-        if (target != null && card.isNeedsTarget() && gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)) {
-            throw new IllegalStateException(target.getCard().getName() + " has shroud and can't be targeted");
-        }
-        if (target != null && card.isNeedsTarget() && gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF)) {
-            UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
-            if (targetController != null && !targetController.equals(controllerId)) {
-                throw new IllegalStateException(target.getCard().getName() + " has hexproof and can't be targeted");
-            }
-        }
-        if (target != null && card.isNeedsTarget() && gameQueryService.hasGrantedEffect(gameData, target, CantBeTargetOfSpellsOrAbilitiesEffect.class)) {
-            UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
-            if (targetController != null && !targetController.equals(controllerId)) {
-                throw new IllegalStateException(target.getCard().getName() + " has hexproof and can't be targeted");
-            }
-        }
-        if (target != null && card.isNeedsTarget() && gameQueryService.cantBeTargetedBySpellColor(gameData, target, card.getColor())) {
-            throw new IllegalStateException(target.getCard().getName() + " can't be the target of " + card.getColor().name().toLowerCase() + " spells");
-        }
-
-        if (target == null && card.isNeedsTarget() && gameData.playerIds.contains(targetPermanentId)
-                && gameQueryService.playerHasShroud(gameData, targetPermanentId)) {
-            throw new IllegalStateException(gameData.playerIdToName.get(targetPermanentId) + " has shroud and can't be targeted");
+        if (target == null && card.isNeedsTarget() && gameData.playerIds.contains(targetPermanentId)) {
+            validatePlayerTargetable(gameData, targetPermanentId);
         }
 
         if (target == null
@@ -235,12 +174,7 @@ public class TargetLegalityService {
     }
 
     public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetPermanentIds, UUID controllerId) {
-        if (targetPermanentIds.size() < card.getMinTargets() || targetPermanentIds.size() > card.getMaxTargets()) {
-            throw new IllegalStateException("Must target between " + card.getMinTargets() + " and " + card.getMaxTargets() + " targets");
-        }
-        if (new java.util.HashSet<>(targetPermanentIds).size() != targetPermanentIds.size()) {
-            throw new IllegalStateException("All targets must be different");
-        }
+        validateMultiTargetCount(targetPermanentIds, card.getMinTargets(), card.getMaxTargets());
 
         boolean multiTargetAllowsPlayers = card.getEffects(EffectSlot.SPELL).stream()
                 .anyMatch(e -> e.canTargetPlayer() && e.canTargetPermanent());
@@ -266,29 +200,9 @@ public class TargetLegalityService {
                 } else if (!gameQueryService.isCreature(gameData, target)) {
                     throw new IllegalStateException(target.getCard().getName() + " is not a creature");
                 }
-                if (card.isNeedsTarget() && gameQueryService.hasProtectionFrom(gameData, target, card.getColor())) {
-                    throw new IllegalStateException(target.getCard().getName() + " has protection from " + card.getColor().name().toLowerCase());
-                }
-                if (card.isNeedsTarget() && gameQueryService.hasProtectionFromSourceCardTypes(target, card)) {
-                    throw new IllegalStateException(target.getCard().getName() + " has protection from " + card.getType().getDisplayName().toLowerCase() + "s");
-                }
-                if (card.isNeedsTarget() && gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)) {
-                    throw new IllegalStateException(target.getCard().getName() + " has shroud and can't be targeted");
-                }
-                if (card.isNeedsTarget() && gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF)) {
-                    UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
-                    if (targetController != null && !targetController.equals(controllerId)) {
-                        throw new IllegalStateException(target.getCard().getName() + " has hexproof and can't be targeted");
-                    }
-                }
-                if (card.isNeedsTarget() && gameQueryService.hasGrantedEffect(gameData, target, CantBeTargetOfSpellsOrAbilitiesEffect.class)) {
-                    UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
-                    if (targetController != null && !targetController.equals(controllerId)) {
-                        throw new IllegalStateException(target.getCard().getName() + " has hexproof and can't be targeted");
-                    }
-                }
-                if (card.isNeedsTarget() && gameQueryService.cantBeTargetedBySpellColor(gameData, target, card.getColor())) {
-                    throw new IllegalStateException(target.getCard().getName() + " can't be the target of " + card.getColor().name().toLowerCase() + " spells");
+                if (card.isNeedsTarget()) {
+                    validateSpellProtections(gameData, target, card);
+                    validatePermanentTargetable(gameData, target, controllerId);
                 }
                 // Apply per-position target filter if available
                 if (i < perPositionFilters.size() && perPositionFilters.get(i) != null) {
@@ -297,8 +211,8 @@ public class TargetLegalityService {
                                     .withSourceCardId(card.getId())
                                     .withSourceControllerId(controllerId));
                 }
-            } else if (card.isNeedsTarget() && gameQueryService.playerHasShroud(gameData, targetId)) {
-                throw new IllegalStateException(gameData.playerIdToName.get(targetId) + " has shroud and can't be targeted");
+            } else if (card.isNeedsTarget()) {
+                validatePlayerTargetable(gameData, targetId);
             }
         }
     }
@@ -319,19 +233,7 @@ public class TargetLegalityService {
                 if (targetPerm == null && !gameData.playerIds.contains(entry.getTargetPermanentId())) {
                     targetFizzled = true;
                 } else if (targetPerm != null) {
-                    if (gameQueryService.hasKeyword(gameData, targetPerm, Keyword.SHROUD)) {
-                        targetFizzled = true;
-                    } else if (gameQueryService.hasKeyword(gameData, targetPerm, Keyword.HEXPROOF)) {
-                        UUID targetController = gameQueryService.findPermanentController(gameData, targetPerm.getId());
-                        if (targetController != null && !targetController.equals(entry.getControllerId())) {
-                            targetFizzled = true;
-                        }
-                    } else if (gameQueryService.hasGrantedEffect(gameData, targetPerm, CantBeTargetOfSpellsOrAbilitiesEffect.class)) {
-                        UUID targetController = gameQueryService.findPermanentController(gameData, targetPerm.getId());
-                        if (targetController != null && !targetController.equals(entry.getControllerId())) {
-                            targetFizzled = true;
-                        }
-                    }
+                    targetFizzled = isPermanentUntargetableBy(gameData, targetPerm, entry.getControllerId());
                     if (!targetFizzled) {
                         TargetFilter effectiveTargetFilter =
                                 entry.getTargetFilter() != null
@@ -381,28 +283,77 @@ public class TargetLegalityService {
         return targetFizzled;
     }
 
-    private void validateShroudAndHexproofTargeting(GameData gameData, UUID targetPermanentId, UUID sourcePlayerId) {
-        if (targetPermanentId != null) {
-            Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
-            if (target != null && gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)) {
-                throw new IllegalStateException(target.getCard().getName() + " has shroud and can't be targeted");
+    private boolean isPermanentUntargetableBy(GameData gameData, Permanent target, UUID sourcePlayerId) {
+        if (gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)) {
+            return true;
+        }
+        UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
+        if (targetController != null && !targetController.equals(sourcePlayerId)) {
+            if (gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF)) {
+                return true;
             }
-            if (target != null && gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF)) {
-                UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
-                if (targetController != null && !targetController.equals(sourcePlayerId)) {
-                    throw new IllegalStateException(target.getCard().getName() + " has hexproof and can't be targeted");
-                }
-            }
-            if (target != null && gameQueryService.hasGrantedEffect(gameData, target, CantBeTargetOfSpellsOrAbilitiesEffect.class)) {
-                UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
-                if (targetController != null && !targetController.equals(sourcePlayerId)) {
-                    throw new IllegalStateException(target.getCard().getName() + " has hexproof and can't be targeted");
-                }
+            if (gameQueryService.hasGrantedEffect(gameData, target, CantBeTargetOfSpellsOrAbilitiesEffect.class)) {
+                return true;
             }
         }
-        if (targetPermanentId != null && gameData.playerIds.contains(targetPermanentId)
-                && gameQueryService.playerHasShroud(gameData, targetPermanentId)) {
-            throw new IllegalStateException(gameData.playerIdToName.get(targetPermanentId) + " has shroud and can't be targeted");
+        return false;
+    }
+
+    private void validatePermanentTargetable(GameData gameData, Permanent target, UUID sourcePlayerId) {
+        if (gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)) {
+            throw new IllegalStateException(target.getCard().getName() + " has shroud and can't be targeted");
+        }
+        UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
+        if (targetController != null && !targetController.equals(sourcePlayerId)) {
+            if (gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF)
+                    || gameQueryService.hasGrantedEffect(gameData, target, CantBeTargetOfSpellsOrAbilitiesEffect.class)) {
+                throw new IllegalStateException(target.getCard().getName() + " has hexproof and can't be targeted");
+            }
+        }
+    }
+
+    private void validatePlayerTargetable(GameData gameData, UUID targetPlayerId) {
+        if (gameQueryService.playerHasShroud(gameData, targetPlayerId)) {
+            throw new IllegalStateException(gameData.playerIdToName.get(targetPlayerId) + " has shroud and can't be targeted");
+        }
+    }
+
+    private void validateTargetable(GameData gameData, UUID targetId, UUID sourcePlayerId) {
+        if (targetId == null) {
+            return;
+        }
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target != null) {
+            validatePermanentTargetable(gameData, target, sourcePlayerId);
+        } else if (gameData.playerIds.contains(targetId)) {
+            validatePlayerTargetable(gameData, targetId);
+        }
+    }
+
+    private void validateSpellProtections(GameData gameData, Permanent target, Card card) {
+        if (gameQueryService.hasProtectionFrom(gameData, target, card.getColor())) {
+            throw new IllegalStateException(target.getCard().getName() + " has protection from " + card.getColor().name().toLowerCase());
+        }
+        if (gameQueryService.hasProtectionFromSourceCardTypes(target, card)) {
+            throw new IllegalStateException(target.getCard().getName() + " has protection from " + card.getType().getDisplayName().toLowerCase() + "s");
+        }
+        if (gameQueryService.cantBeTargetedBySpellColor(gameData, target, card.getColor())) {
+            throw new IllegalStateException(target.getCard().getName() + " can't be the target of " + card.getColor().name().toLowerCase() + " spells");
+        }
+    }
+
+    private void validateMultiTargetCount(List<UUID> targetIds, int min, int max) {
+        if (targetIds == null || targetIds.size() < min || targetIds.size() > max) {
+            throw new IllegalStateException("Must target between " + min + " and " + max + " targets");
+        }
+        if (new HashSet<>(targetIds).size() != targetIds.size()) {
+            throw new IllegalStateException("All targets must be different");
+        }
+    }
+
+    private void validatePlayerPredicate(UUID controllerId, UUID targetPlayerId, PlayerPredicate predicate, String errorMessage) {
+        if (!matchesPlayerPredicate(controllerId, targetPlayerId, predicate)) {
+            throw new IllegalStateException(errorMessage);
         }
     }
 
@@ -535,4 +486,3 @@ public class TargetLegalityService {
         return false;
     }
 }
-
