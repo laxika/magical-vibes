@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -35,13 +36,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReconnectionService {
+
+    private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = EnumSet.of(
+            CardSubtype.FOREST, CardSubtype.MOUNTAIN, CardSubtype.ISLAND,
+            CardSubtype.PLAINS, CardSubtype.SWAMP, CardSubtype.AURA,
+            CardSubtype.EQUIPMENT, CardSubtype.LOCUS
+    );
 
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
@@ -273,6 +282,12 @@ public class ReconnectionService {
                 } else if (cc.context() instanceof ColorChoiceContext.KeywordGrantChoice kgc) {
                     options = kgc.options().stream().map(Keyword::name).toList();
                     prompt = "Choose a keyword to grant.";
+                } else if (cc.context() instanceof ColorChoiceContext.SubtypeChoice) {
+                    options = java.util.Arrays.stream(CardSubtype.values())
+                            .filter(s -> !NON_CREATURE_SUBTYPES.contains(s))
+                            .map(CardSubtype::name)
+                            .toList();
+                    prompt = "Choose a creature type.";
                 } else {
                     options = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                     prompt = "Choose a color.";

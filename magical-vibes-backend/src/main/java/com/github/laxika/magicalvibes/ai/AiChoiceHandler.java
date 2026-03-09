@@ -217,6 +217,14 @@ class AiChoiceHandler {
             return;
         }
 
+        if (colorChoice.context() instanceof ColorChoiceContext.SubtypeChoice) {
+            String chosenSubtype = "HUMAN";
+            log.info("AI: Choosing creature type {} in game {}", chosenSubtype, gameId);
+            final String subtype = chosenSubtype;
+            send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, subtype)));
+            return;
+        }
+
         if (colorChoice.context() instanceof ColorChoiceContext.ExileByNameChoice ctx) {
             UUID targetId = ctx.targetPlayerId();
             List<Card> targetHand = gameData.playerHands.getOrDefault(targetId, List.of());

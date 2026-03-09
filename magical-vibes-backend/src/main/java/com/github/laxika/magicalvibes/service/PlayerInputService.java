@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -24,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -141,6 +143,26 @@ public class PlayerInputService {
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a keyword", gameData.id, playerName);
     }
+
+    public void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId) {
+        ColorChoiceContext.SubtypeChoice choiceContext = new ColorChoiceContext.SubtypeChoice(permanentId);
+        gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
+
+        List<String> creatureTypes = Arrays.stream(CardSubtype.values())
+                .filter(s -> !NON_CREATURE_SUBTYPES.contains(s))
+                .map(CardSubtype::name)
+                .toList();
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseColorMessage(creatureTypes, "Choose a creature type."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a creature type", gameData.id, playerName);
+    }
+
+    private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = EnumSet.of(
+            CardSubtype.FOREST, CardSubtype.MOUNTAIN, CardSubtype.ISLAND,
+            CardSubtype.PLAINS, CardSubtype.SWAMP, CardSubtype.AURA,
+            CardSubtype.EQUIPMENT, CardSubtype.LOCUS
+    );
 
     public void beginCardNameChoice(GameData gameData, UUID playerId, Card card, List<CardType> excludedTypes) {
         ColorChoiceContext.CardNameChoice choiceContext = new ColorChoiceContext.CardNameChoice(card, playerId, excludedTypes);

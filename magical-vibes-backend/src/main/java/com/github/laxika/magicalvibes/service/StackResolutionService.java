@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
@@ -154,6 +155,15 @@ public class StackResolutionService {
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 Permanent justEntered = bf.get(bf.size() - 1);
                 playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), null);
+            }
+
+            // Check if enchantment has "as enters" creature type choice (e.g. Xenograft)
+            boolean needsSubtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .anyMatch(e -> e instanceof ChooseSubtypeOnEnterEffect);
+            if (needsSubtypeChoice) {
+                List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+                Permanent justEntered = bf.get(bf.size() - 1);
+                playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId());
             }
 
             // Process general ETB effects (e.g., token creation, exile-until-leaves)

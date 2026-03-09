@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -284,6 +285,15 @@ public class StaticEffectResolutionService {
             if (grant.overriding()) {
                 accumulator.setSubtypeOverriding(true);
             }
+        }
+    }
+
+    @HandlesStaticEffect(GrantChosenSubtypeToOwnCreaturesEffect.class)
+    private void resolveGrantChosenSubtypeToOwnCreatures(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        CardSubtype chosenSubtype = context.source().getChosenSubtype();
+        if (chosenSubtype == null) return;
+        if (matchesCreatureScope(context, GrantScope.OWN_CREATURES, null)) {
+            accumulator.addGrantedSubtype(chosenSubtype);
         }
     }
 

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -93,6 +94,10 @@ public class ColorChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ColorChoiceContext.ProtectionColorChoice ctx) {
             handleProtectionColorChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ColorChoiceContext.SubtypeChoice ctx) {
+            handleSubtypeChoice(gameData, player, colorName, ctx);
             return;
         }
         CardColor color = CardColor.valueOf(colorName);
@@ -380,6 +385,26 @@ public class ColorChoiceHandlerService {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} gains protection from {} until end of turn", gameData.id, target.getCard().getName(), colorName.toLowerCase());
             }
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleSubtypeChoice(GameData gameData, Player player, String subtypeName, ColorChoiceContext.SubtypeChoice ctx) {
+        CardSubtype subtype = CardSubtype.valueOf(subtypeName);
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.interaction.clearColorChoice();
+
+        Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
+        if (perm != null) {
+            perm.setChosenSubtype(subtype);
+
+            String logEntry = player.getUsername() + " chooses " + subtype.getDisplayName() + " for " + perm.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} chooses creature type {} for {}", gameData.id, player.getUsername(), subtype, perm.getCard().getName());
         }
 
         gameData.priorityPassedBy.clear();

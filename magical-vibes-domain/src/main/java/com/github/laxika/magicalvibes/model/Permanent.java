@@ -30,6 +30,7 @@ public class Permanent {
     @Setter private UUID attachedTo;
     @Setter private CardColor chosenColor;
     @Setter private String chosenName;
+    @Setter private CardSubtype chosenSubtype;
     @Setter private boolean cantBeBlocked;
     @Setter private boolean cantBlockThisTurn;
     @Setter private boolean cantRegenerateThisTurn;
@@ -104,6 +105,7 @@ public class Permanent {
         this.attachedTo = source.attachedTo;
         this.chosenColor = source.chosenColor;
         this.chosenName = source.chosenName;
+        this.chosenSubtype = source.chosenSubtype;
         this.cantBeBlocked = source.cantBeBlocked;
         this.cantBlockThisTurn = source.cantBlockThisTurn;
         this.cantRegenerateThisTurn = source.cantRegenerateThisTurn;

@@ -726,6 +726,8 @@ Pass `null` as filter to allow any card.
 | `ChooseCardNameOnEnterEffect` | `()` or `(List<CardType> excludedTypes)` | choose a card name as ETB (implements `ChooseCardNameEffect` marker). No-arg allows any name (Pithing Needle); with excludedTypes filters the name list (e.g. `List.of(LAND)` for Phyrexian Revoker) |
 | `ActivatedAbilitiesOfChosenNameCantBeActivatedEffect` | `()` or `(boolean blocksManaAbilities)` | activated abilities of chosen name can't be activated (static). No-arg (false) excludes mana abilities (Pithing Needle); `true` also blocks mana abilities (Phyrexian Revoker) |
 | `ChooseColorOnEnterEffect` | `()` | choose a color as ETB (implements `ChooseColorEffect` marker) |
+| `ChooseSubtypeOnEnterEffect` | `()` | choose a creature type as ETB. Detected by `StackResolutionService.resolveEnchantmentSpell()` to prompt `beginSubtypeChoice`. Stores result in `Permanent.chosenSubtype` |
+| `GrantChosenSubtypeToOwnCreaturesEffect` | `()` | static effect: each creature you control is the chosen type in addition to its other types. Reads `chosenSubtype` from source permanent. Used by Xenograft |
 
 ## Draw replacement / library interaction
 

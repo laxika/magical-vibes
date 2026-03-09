@@ -115,7 +115,7 @@ class WhipflareTest extends BaseCardTest {
         card.setType(CardType.CREATURE);
         card.setAdditionalTypes(Set.of(CardType.ARTIFACT));
         card.setManaCost("{1}");
-        card.setColor(CardColor.COLORLESS);
+        card.setColor(null);
         card.setPower(power);
         card.setToughness(toughness);
         return card;

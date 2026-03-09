@@ -20,4 +20,6 @@ public sealed interface ColorChoiceContext {
     record ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes) implements ColorChoiceContext {}
 
     record ProtectionColorChoice(UUID targetPermanentId, boolean includeArtifacts) implements ColorChoiceContext {}
+
+    record SubtypeChoice(UUID permanentId) implements ColorChoiceContext {}
 }
