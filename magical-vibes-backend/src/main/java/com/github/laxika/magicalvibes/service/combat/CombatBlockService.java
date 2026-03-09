@@ -338,6 +338,21 @@ public class CombatBlockService {
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeBlockerTriggers, activeId);
 
         log.info("Game {} - {} declares {} blockers", gameData.id, player.getUsername(), blockerAssignments.size());
+        for (BlockerAssignment assignment : blockerAssignments) {
+            Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
+            Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
+            int bp = gameQueryService.getEffectivePower(gameData, blocker);
+            int bt = gameQueryService.getEffectiveToughness(gameData, blocker);
+            List<String> kws = new ArrayList<>();
+            for (Keyword kw : List.of(Keyword.FIRST_STRIKE, Keyword.DOUBLE_STRIKE, Keyword.DEATHTOUCH,
+                    Keyword.FLYING, Keyword.REACH, Keyword.INDESTRUCTIBLE)) {
+                if (gameQueryService.hasKeyword(gameData, blocker, kw)) kws.add(kw.name().toLowerCase());
+            }
+            log.info("Game {} -   Blocker [{}]: {} {}/{}{} blocks [{}]: {}", gameData.id,
+                    assignment.blockerIndex(), blocker.getCard().getName(), bp, bt,
+                    kws.isEmpty() ? "" : " (" + String.join(", ", kws) + ")",
+                    assignment.attackerIndex(), attacker.getCard().getName());
+        }
 
         return CombatResult.AUTO_PASS_ONLY;
     }

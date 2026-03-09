@@ -293,6 +293,19 @@ public class CombatDamageService {
         gameData.combatDamagePlayerAssignments.put(attackerIndex, assignments);
         gameData.combatDamagePendingIndices.remove(Integer.valueOf(attackerIndex));
         gameData.interaction.clearAwaitingInput();
+
+        // Log accepted assignment
+        List<String> parts = new ArrayList<>();
+        for (var entry : assignments.entrySet()) {
+            if (entry.getKey().equals(defenderId)) {
+                parts.add(entry.getValue() + " to player");
+            } else {
+                Permanent target = defBf.stream().filter(p -> p.getId().equals(entry.getKey())).findFirst().orElse(null);
+                parts.add(entry.getValue() + " to " + (target != null ? target.getCard().getName() : entry.getKey()));
+            }
+        }
+        log.info("Game {} - Combat damage assigned for [{}]: {} -> {}", gameData.id, attackerIndex,
+                atk.getCard().getName(), String.join(", ", parts));
     }
 
     // ===== Damage phase resolution =====
@@ -983,6 +996,11 @@ public class CombatDamageService {
         }
 
         int totalDamage = gameQueryService.getEffectiveCombatDamage(gameData, atk);
+
+        log.info("Game {} - Requesting combat damage assignment for [{}]: {} (damage={}, trample={}, deathtouch={}, blockers={})",
+                gameData.id, atkIdx, atk.getCard().getName(), totalDamage, isTrample, isDeathtouch,
+                livingBlockers.stream().map(i -> defBf.get(i).getCard().getName()
+                        + " " + gameQueryService.getEffectiveToughness(gameData, defBf.get(i)) + " toughness").toList());
 
         gameData.interaction.beginCombatDamageAssignment(activeId, atkIdx, atk.getId(),
                 atk.getCard().getName(), totalDamage, domainTargets, isTrample, isDeathtouch);

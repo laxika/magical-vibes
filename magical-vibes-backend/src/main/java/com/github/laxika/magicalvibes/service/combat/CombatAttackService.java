@@ -255,6 +255,19 @@ public class CombatAttackService {
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeAttackTriggers, playerId);
 
         log.info("Game {} - {} declares {} attackers", gameData.id, player.getUsername(), attackerIndices.size());
+        for (int idx : attackerIndices) {
+            Permanent attacker = battlefield.get(idx);
+            int p = gameQueryService.getEffectivePower(gameData, attacker);
+            int t = gameQueryService.getEffectiveToughness(gameData, attacker);
+            List<String> kws = new ArrayList<>();
+            for (Keyword kw : List.of(Keyword.TRAMPLE, Keyword.FIRST_STRIKE, Keyword.DOUBLE_STRIKE,
+                    Keyword.DEATHTOUCH, Keyword.LIFELINK, Keyword.FLYING, Keyword.VIGILANCE, Keyword.MENACE,
+                    Keyword.INDESTRUCTIBLE, Keyword.INFECT)) {
+                if (gameQueryService.hasKeyword(gameData, attacker, kw)) kws.add(kw.name().toLowerCase());
+            }
+            log.info("Game {} -   Attacker [{}]: {} {}/{}{}", gameData.id, idx,
+                    attacker.getCard().getName(), p, t, kws.isEmpty() ? "" : " (" + String.join(", ", kws) + ")");
+        }
 
         return CombatResult.AUTO_PASS_ONLY;
     }
