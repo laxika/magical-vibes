@@ -87,6 +87,7 @@ public class PermanentRemovalService {
             if (wasArtifact) {
                 deathTriggerService.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, controllerId);
             }
+            deathTriggerService.checkEnchantedPermanentDeathTriggers(gameData, target.getId());
         }
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);

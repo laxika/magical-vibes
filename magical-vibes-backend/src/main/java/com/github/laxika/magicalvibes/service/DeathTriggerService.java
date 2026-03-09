@@ -166,6 +166,29 @@ public class DeathTriggerService {
         }
     }
 
+    public void checkEnchantedPermanentDeathTriggers(GameData gameData, UUID dyingPermanentId) {
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (!dyingPermanentId.equals(perm.getAttachedTo())) return;
+            if (perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) return;
+
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD);
+            if (effects == null || effects.isEmpty()) return;
+
+            for (CardEffect effect : effects) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        playerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect))
+                ));
+                String triggerLog = perm.getCard().getName() + "'s ability triggers (enchanted permanent put into graveyard).";
+                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                log.info("Game {} - {} triggers (enchanted permanent put into graveyard)", gameData.id, perm.getCard().getName());
+            }
+        });
+    }
+
     public void checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID graveyardOwnerId, UUID artifactControllerId) {
         gameData.forEachPermanent((playerId, perm) -> {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD);
