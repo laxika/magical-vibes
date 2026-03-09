@@ -160,6 +160,7 @@ public class GameTestHarness {
     private final GameBroadcastService gameBroadcastService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final TriggerCollectionService triggerCollectionService;
+    private final SpellCastingService spellCastingService;
 
     public GameTestHarness() {
         if (!oracleLoaded) {
@@ -281,7 +282,7 @@ public class GameTestHarness {
         TurnProgressionService turnProgressionService = new TurnProgressionService(
                 combatService, gameBroadcastService, playerInputService, turnCleanupService, untapStepService, stepTriggerService, autoPassService);
         autoPassService.setTurnProgressionService(turnProgressionService);
-        SpellCastingService spellCastingService = new SpellCastingService(
+        spellCastingService = new SpellCastingService(
                 battlefieldEntryService, gameQueryService, gameBroadcastService, turnProgressionService, targetLegalityService, permanentRemovalService, triggerCollectionService);
         ActivatedAbilityExecutionService activatedAbilityExecutionService = new ActivatedAbilityExecutionService(
                 graveyardService, deathTriggerService, damagePreventionService, permanentRemovalService, triggerCollectionService, stateBasedActionService, gameQueryService, gameBroadcastService, playerInputService, sessionManager);
@@ -750,6 +751,10 @@ public class GameTestHarness {
 
     public TriggerCollectionService getTriggerCollectionService() {
         return triggerCollectionService;
+    }
+
+    public SpellCastingService getSpellCastingService() {
+        return spellCastingService;
     }
 
     public void clearMessages() {
