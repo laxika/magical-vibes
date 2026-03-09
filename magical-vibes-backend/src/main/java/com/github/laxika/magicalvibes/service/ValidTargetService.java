@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -220,12 +221,20 @@ public class ValidTargetService {
             }
         }
 
-        // For multi-target spells that don't allow players, target must be a creature
-        // (unless the card has a targetFilter that handles type validation).
-        if (isMultiTarget && card.getTargetFilter() == null) {
-            boolean multiTargetAllowsPlayers = card.getEffects(EffectSlot.SPELL).stream()
-                    .anyMatch(e -> e instanceof DealOrderedDamageToAnyTargetsEffect);
-            if (!multiTargetAllowsPlayers && !gameQueryService.isCreature(gameData, perm)) {
+        // "Any target" in MTG means creature, planeswalker, or player — not all permanents.
+        // When all permanent-targeting spell effects also target players (i.e. "any target"),
+        // restrict valid permanent targets to creatures and planeswalkers.
+        if (card.getTargetFilter() == null) {
+            List<CardEffect> permanentEffects = card.getEffects(EffectSlot.SPELL).stream()
+                    .filter(CardEffect::canTargetPermanent)
+                    .toList();
+            boolean allAnyTarget = !permanentEffects.isEmpty()
+                    && permanentEffects.stream().allMatch(CardEffect::canTargetPlayer);
+            if (allAnyTarget) {
+                if (!gameQueryService.isCreature(gameData, perm) && !isPlaneswalker(perm)) {
+                    return false;
+                }
+            } else if (isMultiTarget && !gameQueryService.isCreature(gameData, perm)) {
                 return false;
             }
         }
@@ -353,5 +362,10 @@ public class ValidTargetService {
         }
 
         return true;
+    }
+
+    private boolean isPlaneswalker(Permanent perm) {
+        return perm.getCard().getType() == CardType.PLANESWALKER
+                || perm.getCard().getAdditionalTypes().contains(CardType.PLANESWALKER);
     }
 }
