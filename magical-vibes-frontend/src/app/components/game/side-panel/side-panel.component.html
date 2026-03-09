@@ -182,7 +182,7 @@
     }
     @if (choice.awaitingMayAbility) {
       <div class="may-ability-banner">
-        <span class="may-ability-prompt">{{ choice.mayAbilityPrompt }}</span>
+        <span class="may-ability-prompt" [innerHTML]="formatAbilityDescription(choice.mayAbilityPrompt)"></span>
         <div class="may-ability-buttons">
           <button class="btn-may-ability" (click)="choice.acceptMayAbility()">Yes</button>
           <button class="btn-may-ability" (click)="choice.declineMayAbility()">No</button>
