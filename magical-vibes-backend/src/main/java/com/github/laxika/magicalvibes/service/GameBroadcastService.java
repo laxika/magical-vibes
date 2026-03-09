@@ -207,7 +207,7 @@ public class GameBroadcastService {
         return counters;
     }
 
-    List<Integer> getPlayableCardIndices(GameData gameData, UUID playerId) {
+    public List<Integer> getPlayableCardIndices(GameData gameData, UUID playerId) {
         return getPlayableCardIndices(gameData, playerId, 0);
     }
 

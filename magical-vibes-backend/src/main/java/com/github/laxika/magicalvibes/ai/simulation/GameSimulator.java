@@ -75,6 +75,10 @@ import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.TurnResolutionService;
+import com.github.laxika.magicalvibes.service.turn.AutoPassService;
+import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
+import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
+import com.github.laxika.magicalvibes.service.turn.UntapStepService;
 import com.github.laxika.magicalvibes.service.ValidTargetService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.effect.CardSpecificResolutionService;
@@ -221,6 +225,7 @@ public class GameSimulator {
         DamageResolutionService damageResolutionService = new DamageResolutionService(graveyardService, damagePreventionService, gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService, lifeResolutionService);
         ExileResolutionService exileResolutionService = new ExileResolutionService(graveyardService, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, cardViewFactory, triggerCollectionService, battlefieldEntryService);
         PlayerInteractionResolutionService playerInteractionResolutionService = new PlayerInteractionResolutionService(drawService, graveyardService, gameQueryService, gameBroadcastService, playerInputService, noOpSession, cardViewFactory, permanentRemovalService, triggerCollectionService);
+        TurnCleanupService turnCleanupService = new TurnCleanupService(auraAttachmentService);
         List<Object> effectServices = List.of(
                 damageResolutionService,
                 new DestructionResolutionService(battlefieldEntryService, graveyardService, damagePreventionService, gameOutcomeService, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService),
@@ -244,7 +249,7 @@ public class GameSimulator {
                 new PermanentCounterResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService),
                 playerInteractionResolutionService,
                 new PermanentControlResolutionService(battlefieldEntryService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService, creatureControlService),
-                new TurnResolutionService(combatService, gameBroadcastService, auraAttachmentService),
+                new TurnResolutionService(combatService, gameBroadcastService, auraAttachmentService, turnCleanupService),
                 new EquipResolutionService(gameQueryService, gameBroadcastService, permanentRemovalService),
                 new CardSpecificResolutionService(graveyardService, warpWorldService, battlefieldEntryService, gameQueryService, gameBroadcastService, noOpSession, cardViewFactory, permanentRemovalService, legendRuleService),
                 new WinConditionResolutionService(gameOutcomeService, gameBroadcastService, gameQueryService)
@@ -257,8 +262,12 @@ public class GameSimulator {
         StackResolutionService stackResolutionService = new StackResolutionService(
                 battlefieldEntryService, cloneService, graveyardService, legendRuleService, stateBasedActionService, gameQueryService, targetLegalityService,
                 gameBroadcastService, effectResolutionService, playerInputService, triggerCollectionService, creatureControlService);
+        UntapStepService untapStepService = new UntapStepService(gameQueryService, gameBroadcastService);
+        StepTriggerService stepTriggerService = new StepTriggerService(drawService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, battlefieldEntryService);
+        AutoPassService autoPassService = new AutoPassService(gameQueryService, gameBroadcastService, triggerCollectionService, stackResolutionService);
         TurnProgressionService turnProgressionService = new TurnProgressionService(
-                battlefieldEntryService, combatService, drawService, gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService, permanentRemovalService, auraAttachmentService, stackResolutionService);
+                combatService, gameBroadcastService, playerInputService, turnCleanupService, untapStepService, stepTriggerService, autoPassService);
+        autoPassService.setTurnProgressionService(turnProgressionService);
         SpellCastingService spellCastingService = new SpellCastingService(
                 battlefieldEntryService, gameQueryService, gameBroadcastService, turnProgressionService, targetLegalityService, permanentRemovalService, triggerCollectionService);
         ActivatedAbilityExecutionService activatedAbilityExecutionService = new ActivatedAbilityExecutionService(

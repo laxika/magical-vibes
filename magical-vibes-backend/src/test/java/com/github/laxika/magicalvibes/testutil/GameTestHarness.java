@@ -63,6 +63,10 @@ import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.TurnResolutionService;
+import com.github.laxika.magicalvibes.service.turn.AutoPassService;
+import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
+import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
+import com.github.laxika.magicalvibes.service.turn.UntapStepService;
 import com.github.laxika.magicalvibes.service.TargetRedirectionResolutionService;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.ColorChoiceHandlerService;
@@ -145,6 +149,11 @@ public class GameTestHarness {
     private final LegendRuleService legendRuleService;
     private final PermanentRemovalService permanentRemovalService;
     private final StackResolutionService stackResolutionService;
+    private final DrawService drawService;
+    private final PlayerInputService playerInputService;
+    private final GameBroadcastService gameBroadcastService;
+    private final BattlefieldEntryService battlefieldEntryService;
+    private final TriggerCollectionService triggerCollectionService;
 
     public GameTestHarness() {
         if (!oracleLoaded) {
@@ -161,8 +170,8 @@ public class GameTestHarness {
         gameQueryService = new GameQueryService(staticEffectHandlerRegistry);
         StaticEffectResolutionService staticEffectResolutionService = new StaticEffectResolutionService(gameQueryService);
         scanStaticEffectHandlers(staticEffectResolutionService, staticEffectHandlerRegistry);
-        PlayerInputService playerInputService = new PlayerInputService(sessionManager, cardViewFactory);
-        GameBroadcastService gameBroadcastService = new GameBroadcastService(
+        playerInputService = new PlayerInputService(sessionManager, cardViewFactory);
+        gameBroadcastService = new GameBroadcastService(
                 sessionManager, cardViewFactory, permanentViewFactory, stackEntryViewFactory, gameQueryService);
         DraftRegistry draftRegistry = new DraftRegistry();
         legendRuleService = new LegendRuleService(playerInputService);
@@ -172,15 +181,15 @@ public class GameTestHarness {
         DamagePreventionService damagePreventionService = new DamagePreventionService(gameQueryService);
         GameOutcomeService gameOutcomeService = new GameOutcomeService(gameQueryService, gameBroadcastService, sessionManager, gameRegistry, draftRegistry, null);
         DeathTriggerService deathTriggerService = new DeathTriggerService(gameQueryService, gameBroadcastService);
-        DrawService drawService = new DrawService(gameQueryService, gameBroadcastService, gameOutcomeService);
-        BattlefieldEntryService battlefieldEntryService = new BattlefieldEntryService(gameQueryService, gameBroadcastService, playerInputService, cardViewFactory);
+        drawService = new DrawService(gameQueryService, gameBroadcastService, gameOutcomeService);
+        battlefieldEntryService = new BattlefieldEntryService(gameQueryService, gameBroadcastService, playerInputService, cardViewFactory);
         CloneService cloneService = new CloneService(gameQueryService, gameBroadcastService, playerInputService, legendRuleService, battlefieldEntryService);
         WarpWorldService warpWorldService = new WarpWorldService(gameQueryService, gameBroadcastService, playerInputService, battlefieldEntryService, legendRuleService, creatureControlService, cardViewFactory, sessionManager);
         GraveyardService graveyardService = new GraveyardService(gameQueryService, gameBroadcastService, null);
         AuraAttachmentService auraAttachmentService = new AuraAttachmentService(gameQueryService, gameBroadcastService, graveyardService);
         permanentRemovalService = new PermanentRemovalService(
                 graveyardService, battlefieldEntryService, deathTriggerService, damagePreventionService, auraAttachmentService, gameQueryService, gameBroadcastService);
-        TriggerCollectionService triggerCollectionService = new TriggerCollectionService(
+        triggerCollectionService = new TriggerCollectionService(
                 damagePreventionService, gameOutcomeService, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService, triggeredAbilityQueueService, creatureControlService, graveyardService);
         graveyardService.setTriggerCollectionService(triggerCollectionService);
         StateBasedActionService stateBasedActionService = new StateBasedActionService(
@@ -213,6 +222,7 @@ public class GameTestHarness {
         DamageResolutionService damageResolutionService = new DamageResolutionService(graveyardService, damagePreventionService, gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService, lifeResolutionService);
         ExileResolutionService exileResolutionService = new ExileResolutionService(graveyardService, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, cardViewFactory, triggerCollectionService, battlefieldEntryService);
         PlayerInteractionResolutionService playerInteractionResolutionService = new PlayerInteractionResolutionService(drawService, graveyardService, gameQueryService, gameBroadcastService, playerInputService, sessionManager, cardViewFactory, permanentRemovalService, triggerCollectionService);
+        TurnCleanupService turnCleanupService = new TurnCleanupService(auraAttachmentService);
         List<Object> effectServices = List.of(
                 damageResolutionService,
                 new DestructionResolutionService(battlefieldEntryService, graveyardService, damagePreventionService, gameOutcomeService, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService),
@@ -236,7 +246,7 @@ public class GameTestHarness {
                 new PermanentCounterResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService),
                 playerInteractionResolutionService,
                 new PermanentControlResolutionService(battlefieldEntryService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService, creatureControlService),
-                new TurnResolutionService(combatService, gameBroadcastService, auraAttachmentService),
+                new TurnResolutionService(combatService, gameBroadcastService, auraAttachmentService, turnCleanupService),
                 new EquipResolutionService(gameQueryService, gameBroadcastService, permanentRemovalService),
                 new CardSpecificResolutionService(graveyardService, warpWorldService, battlefieldEntryService, gameQueryService, gameBroadcastService, sessionManager, cardViewFactory, permanentRemovalService, legendRuleService),
                 new WinConditionResolutionService(gameOutcomeService, gameBroadcastService, gameQueryService)
@@ -248,8 +258,12 @@ public class GameTestHarness {
         stackResolutionService = new StackResolutionService(
                 battlefieldEntryService, cloneService, graveyardService, legendRuleService, stateBasedActionService, gameQueryService, targetLegalityService,
                 gameBroadcastService, effectResolutionService, playerInputService, triggerCollectionService, creatureControlService);
+        UntapStepService untapStepService = new UntapStepService(gameQueryService, gameBroadcastService);
+        StepTriggerService stepTriggerService = new StepTriggerService(drawService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, battlefieldEntryService);
+        AutoPassService autoPassService = new AutoPassService(gameQueryService, gameBroadcastService, triggerCollectionService, stackResolutionService);
         TurnProgressionService turnProgressionService = new TurnProgressionService(
-                battlefieldEntryService, combatService, drawService, gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService, permanentRemovalService, auraAttachmentService, stackResolutionService);
+                combatService, gameBroadcastService, playerInputService, turnCleanupService, untapStepService, stepTriggerService, autoPassService);
+        autoPassService.setTurnProgressionService(turnProgressionService);
         SpellCastingService spellCastingService = new SpellCastingService(
                 battlefieldEntryService, gameQueryService, gameBroadcastService, turnProgressionService, targetLegalityService, permanentRemovalService, triggerCollectionService);
         ActivatedAbilityExecutionService activatedAbilityExecutionService = new ActivatedAbilityExecutionService(
@@ -695,6 +709,26 @@ public class GameTestHarness {
 
     public StackResolutionService getStackResolutionService() {
         return stackResolutionService;
+    }
+
+    public DrawService getDrawService() {
+        return drawService;
+    }
+
+    public PlayerInputService getPlayerInputService() {
+        return playerInputService;
+    }
+
+    public GameBroadcastService getGameBroadcastService() {
+        return gameBroadcastService;
+    }
+
+    public BattlefieldEntryService getBattlefieldEntryService() {
+        return battlefieldEntryService;
+    }
+
+    public TriggerCollectionService getTriggerCollectionService() {
+        return triggerCollectionService;
     }
 
     public void clearMessages() {

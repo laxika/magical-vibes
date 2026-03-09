@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
+import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ public class TurnResolutionService {
     private final CombatService combatService;
     private final GameBroadcastService gameBroadcastService;
     private final AuraAttachmentService auraAttachmentService;
+    private final TurnCleanupService turnCleanupService;
 
     @HandlesEffect(ExtraTurnEffect.class)
     private void resolveExtraTurn(GameData gameData, StackEntry entry, ExtraTurnEffect effect) {
@@ -82,7 +84,7 @@ public class TurnResolutionService {
 
         // Rule 723.1d: Skip to cleanup step
         gameData.currentStep = TurnStep.CLEANUP;
-        TurnProgressionService.resetEndOfTurnModifiers(gameData);
+        turnCleanupService.resetEndOfTurnModifiers(gameData);
         auraAttachmentService.returnStolenCreatures(gameData, true);
         gameData.priorityPassedBy.clear();
 
