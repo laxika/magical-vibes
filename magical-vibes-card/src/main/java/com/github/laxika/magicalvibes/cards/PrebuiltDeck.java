@@ -145,7 +145,7 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "189", 3),   // Origin Spellbomb
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "2", 3),     // Arrest
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "5", 1),     // Dispense Justice
-            // new DeckEntry(CardSet.MAGIC_2011, "19", 2),         // Inspired Charge (not yet implemented)
+            new DeckEntry(CardSet.MAGIC_2011, "19", 2),             // Inspired Charge
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "20", 2),    // Seize the Initiative
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "18", 3)     // Revoke Existence
     )),
