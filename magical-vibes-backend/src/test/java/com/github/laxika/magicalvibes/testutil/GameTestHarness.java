@@ -115,6 +115,12 @@ import com.github.laxika.magicalvibes.service.validate.GraveyardTargetValidators
 import com.github.laxika.magicalvibes.service.validate.LibraryTargetValidators;
 import com.github.laxika.magicalvibes.service.validate.LifeTargetValidators;
 import com.github.laxika.magicalvibes.service.validate.PermanentControlTargetValidators;
+import com.github.laxika.magicalvibes.service.trigger.DamageTriggerCollectorService;
+import com.github.laxika.magicalvibes.service.trigger.DiscardTriggerCollectorService;
+import com.github.laxika.magicalvibes.service.trigger.LandTapTriggerCollectorService;
+import com.github.laxika.magicalvibes.service.trigger.MiscTriggerCollectorService;
+import com.github.laxika.magicalvibes.service.trigger.SpellCastTriggerCollectorService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import com.github.laxika.magicalvibes.config.JacksonConfig;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -189,8 +195,19 @@ public class GameTestHarness {
         AuraAttachmentService auraAttachmentService = new AuraAttachmentService(gameQueryService, gameBroadcastService, graveyardService);
         permanentRemovalService = new PermanentRemovalService(
                 graveyardService, battlefieldEntryService, deathTriggerService, damagePreventionService, auraAttachmentService, gameQueryService, gameBroadcastService);
+        TriggerCollectorRegistry triggerCollectorRegistry = new TriggerCollectorRegistry();
+        List<Object> triggerCollectorBeans = List.of(
+                new SpellCastTriggerCollectorService(gameQueryService, gameBroadcastService),
+                new DiscardTriggerCollectorService(gameBroadcastService, gameQueryService, damagePreventionService, permanentRemovalService),
+                new LandTapTriggerCollectorService(gameQueryService, gameBroadcastService, damagePreventionService, permanentRemovalService),
+                new DamageTriggerCollectorService(gameQueryService, gameBroadcastService, permanentRemovalService, creatureControlService),
+                new MiscTriggerCollectorService(gameBroadcastService, graveyardService)
+        );
+        for (Object bean : triggerCollectorBeans) {
+            TriggerCollectorRegistry.scanBean(bean, triggerCollectorRegistry);
+        }
         triggerCollectionService = new TriggerCollectionService(
-                damagePreventionService, gameOutcomeService, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService, triggeredAbilityQueueService, creatureControlService, graveyardService);
+                triggerCollectorRegistry, gameOutcomeService, playerInputService, triggeredAbilityQueueService, gameQueryService, gameBroadcastService);
         graveyardService.setTriggerCollectionService(triggerCollectionService);
         StateBasedActionService stateBasedActionService = new StateBasedActionService(
                 graveyardService, deathTriggerService, gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService);
