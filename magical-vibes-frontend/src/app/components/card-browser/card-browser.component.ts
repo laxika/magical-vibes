@@ -149,6 +149,7 @@ export class CardBrowserComponent implements OnInit, OnDestroy {
     const toughnessNum = info.toughness != null ? (parseInt(info.toughness, 10) || 0) : null;
 
     return {
+      id: null,
       name: info.name,
       type: info.type,
       additionalTypes: info.additionalTypes ?? [],
