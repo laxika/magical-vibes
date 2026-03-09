@@ -31,7 +31,7 @@ class AutoPassServiceTest extends BaseCardTest {
                     gqs, harness.getGameBroadcastService(),
                     harness.getTriggerCollectionService(),
                     harness.getStackResolutionService());
-            svc.resolveAutoPass(gd);
+            svc.resolveAutoPass(gd, ignored -> {});
 
             // Step should not have changed
             assertThat(gd.currentStep).isEqualTo(stepBefore);
@@ -58,7 +58,7 @@ class AutoPassServiceTest extends BaseCardTest {
                     gqs, harness.getGameBroadcastService(),
                     harness.getTriggerCollectionService(),
                     harness.getStackResolutionService());
-            svc.resolveAutoPass(gd);
+            svc.resolveAutoPass(gd, ignored -> {});
 
             // Should not advance — stack is non-empty, players must explicitly pass
             assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);

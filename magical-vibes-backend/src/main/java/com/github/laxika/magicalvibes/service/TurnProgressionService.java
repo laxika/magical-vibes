@@ -190,7 +190,7 @@ public class TurnProgressionService {
     }
 
     public void resolveAutoPass(GameData gameData) {
-        autoPassService.resolveAutoPass(gameData);
+        autoPassService.resolveAutoPass(gameData, this::advanceStep);
     }
 
     public void applyCleanupResets(GameData gameData) {

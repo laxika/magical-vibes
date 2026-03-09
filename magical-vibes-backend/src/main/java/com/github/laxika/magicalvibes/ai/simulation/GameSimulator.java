@@ -284,7 +284,6 @@ public class GameSimulator {
         AutoPassService autoPassService = new AutoPassService(gameQueryService, gameBroadcastService, triggerCollectionService, stackResolutionService);
         TurnProgressionService turnProgressionService = new TurnProgressionService(
                 combatService, gameBroadcastService, playerInputService, turnCleanupService, untapStepService, stepTriggerService, autoPassService);
-        autoPassService.setTurnProgressionService(turnProgressionService);
         SpellCastingService spellCastingService = new SpellCastingService(
                 battlefieldEntryService, gameQueryService, gameBroadcastService, turnProgressionService, targetLegalityService, permanentRemovalService, triggerCollectionService);
         ActivatedAbilityExecutionService activatedAbilityExecutionService = new ActivatedAbilityExecutionService(

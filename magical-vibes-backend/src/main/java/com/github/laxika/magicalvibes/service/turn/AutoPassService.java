@@ -10,15 +10,13 @@ import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * Automatically passes priority for players who have no playable cards or
@@ -28,10 +26,6 @@ import java.util.UUID;
  * <p>Extracted from {@code TurnProgressionService} to isolate the priority-
  * resolution loop.  Also handles auto-resolution of combat triggers when
  * neither player can respond.
- *
- * <p>Uses {@link TurnProgressionService#advanceStep} (injected lazily to
- * break the circular dependency) to move to the next step when both players
- * have passed priority.
  */
 @Slf4j
 @Service
@@ -42,26 +36,6 @@ public class AutoPassService {
     private final TriggerCollectionService triggerCollectionService;
     private final StackResolutionService stackResolutionService;
 
-    @Setter
-    private TurnProgressionService turnProgressionService;
-
-    public AutoPassService(
-            GameQueryService gameQueryService,
-            GameBroadcastService gameBroadcastService,
-            TriggerCollectionService triggerCollectionService,
-            StackResolutionService stackResolutionService,
-            @Lazy TurnProgressionService turnProgressionService) {
-        this.gameQueryService = gameQueryService;
-        this.gameBroadcastService = gameBroadcastService;
-        this.triggerCollectionService = triggerCollectionService;
-        this.stackResolutionService = stackResolutionService;
-        this.turnProgressionService = turnProgressionService;
-    }
-
-    /**
-     * Constructor for manual (non-Spring) construction in tests and simulations.
-     * Call {@link #setTurnProgressionService} after construction to complete initialization.
-     */
     public AutoPassService(
             GameQueryService gameQueryService,
             GameBroadcastService gameBroadcastService,
@@ -82,9 +56,10 @@ public class AutoPassService {
      *
      * <p>Contains a safety limit of 100 iterations to prevent infinite loops.
      *
-     * @param gameData the current game state to modify
+     * @param gameData    the current game state to modify
+     * @param advanceStep callback to advance to the next turn step
      */
-    public void resolveAutoPass(GameData gameData) {
+    public void resolveAutoPass(GameData gameData, Consumer<GameData> advanceStep) {
         if (gameData.status != GameStatus.RUNNING) return;
 
         // Process any pending spell-target triggers (e.g. Livewire Lash)
@@ -124,7 +99,7 @@ public class AutoPassService {
 
             // If no one holds priority (both already passed), advance the step
             if (priorityHolder == null) {
-                turnProgressionService.advanceStep(gameData);
+                advanceStep.accept(gameData);
                 continue;
             }
 
@@ -150,7 +125,7 @@ public class AutoPassService {
             gameData.priorityPassedBy.add(priorityHolder);
 
             if (gameData.priorityPassedBy.size() >= 2) {
-                turnProgressionService.advanceStep(gameData);
+                advanceStep.accept(gameData);
             } else {
                 gameBroadcastService.broadcastGameState(gameData);
             }
