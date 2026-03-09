@@ -11,131 +11,130 @@ import java.util.List;
 @RequiredArgsConstructor
 public enum PrebuiltDeck {
 
-    CHO_MANNOS_RESOLVE("cho-mannos-resolve", "Cho-Manno's Resolve (Tenth Edition Theme Deck)", CardSet.TENTH_EDITION, List.of(
-            new DeckEntry("364", 17),  // Plains
-            new DeckEntry("16", 1),    // Ghost Warden
-            new DeckEntry("62", 2),    // Youthful Knight
-            new DeckEntry("11", 2),    // Benalish Knight
-            new DeckEntry("55", 1),    // Venerable Monk
-            new DeckEntry("59", 2),    // Wild Griffin
-            new DeckEntry("12", 1),    // Cho-Manno, Revolutionary
-            new DeckEntry("41", 2),    // Skyhunter Patrol
-            new DeckEntry("2", 2),     // Angel of Mercy
-            new DeckEntry("26", 2),    // Loxodon Mystic
-            new DeckEntry("1", 1),     // Ancestor's Chosen
-            new DeckEntry("13", 1),    // Condemn
-            new DeckEntry("31", 2),    // Pacifism
-            new DeckEntry("33", 1),    // Pariah
-            new DeckEntry("40", 1),    // Serra's Embrace
-            new DeckEntry("311", 1),   // Angel's Feather
-            new DeckEntry("326", 1)    // Icy Manipulator
+    CHO_MANNOS_RESOLVE("cho-mannos-resolve", "Cho-Manno's Resolve (Tenth Edition Theme Deck)", List.of(
+            new DeckEntry(CardSet.TENTH_EDITION, "364", 17),  // Plains
+            new DeckEntry(CardSet.TENTH_EDITION, "16", 1),    // Ghost Warden
+            new DeckEntry(CardSet.TENTH_EDITION, "62", 2),    // Youthful Knight
+            new DeckEntry(CardSet.TENTH_EDITION, "11", 2),    // Benalish Knight
+            new DeckEntry(CardSet.TENTH_EDITION, "55", 1),    // Venerable Monk
+            new DeckEntry(CardSet.TENTH_EDITION, "59", 2),    // Wild Griffin
+            new DeckEntry(CardSet.TENTH_EDITION, "12", 1),    // Cho-Manno, Revolutionary
+            new DeckEntry(CardSet.TENTH_EDITION, "41", 2),    // Skyhunter Patrol
+            new DeckEntry(CardSet.TENTH_EDITION, "2", 2),     // Angel of Mercy
+            new DeckEntry(CardSet.TENTH_EDITION, "26", 2),    // Loxodon Mystic
+            new DeckEntry(CardSet.TENTH_EDITION, "1", 1),     // Ancestor's Chosen
+            new DeckEntry(CardSet.TENTH_EDITION, "13", 1),    // Condemn
+            new DeckEntry(CardSet.TENTH_EDITION, "31", 2),    // Pacifism
+            new DeckEntry(CardSet.TENTH_EDITION, "33", 1),    // Pariah
+            new DeckEntry(CardSet.TENTH_EDITION, "40", 1),    // Serra's Embrace
+            new DeckEntry(CardSet.TENTH_EDITION, "311", 1),   // Angel's Feather
+            new DeckEntry(CardSet.TENTH_EDITION, "326", 1)    // Icy Manipulator
     )),
 
-    ARCANISS_GUILE("arcaniss-guile", "Arcanis's Guile (Tenth Edition Theme Deck)", CardSet.TENTH_EDITION, List.of(
-            new DeckEntry("368", 17),  // Island
-            new DeckEntry("104", 2),   // Sage Owl
-            new DeckEntry("74", 2),    // Cloud Elemental
-            new DeckEntry("96", 1),    // Phantom Warrior
-            new DeckEntry("68", 1),    // Aven Fisher
-            new DeckEntry("115", 1),   // Thieving Magpie
-            new DeckEntry("64", 1),    // Air Elemental
-            new DeckEntry("66", 1),    // Arcanis the Omnipotent
-            new DeckEntry("80", 1),    // Denizen of the Deep
-            new DeckEntry("122", 2),   // Unsummon
-            new DeckEntry("100", 2),   // Remove Soul
-            new DeckEntry("114", 1),   // Telling Time
-            new DeckEntry("70", 1),    // Boomerang
-            new DeckEntry("76", 2),    // Counsel of the Soratami
-            new DeckEntry("71", 2),    // Cancel
-            new DeckEntry("116", 1),   // Tidings
-            new DeckEntry("329", 1),   // Kraken's Eye
-            new DeckEntry("341", 1)    // Rod of Ruin
+    ARCANISS_GUILE("arcaniss-guile", "Arcanis's Guile (Tenth Edition Theme Deck)", List.of(
+            new DeckEntry(CardSet.TENTH_EDITION, "368", 17),  // Island
+            new DeckEntry(CardSet.TENTH_EDITION, "104", 2),   // Sage Owl
+            new DeckEntry(CardSet.TENTH_EDITION, "74", 2),    // Cloud Elemental
+            new DeckEntry(CardSet.TENTH_EDITION, "96", 1),    // Phantom Warrior
+            new DeckEntry(CardSet.TENTH_EDITION, "68", 1),    // Aven Fisher
+            new DeckEntry(CardSet.TENTH_EDITION, "115", 1),   // Thieving Magpie
+            new DeckEntry(CardSet.TENTH_EDITION, "64", 1),    // Air Elemental
+            new DeckEntry(CardSet.TENTH_EDITION, "66", 1),    // Arcanis the Omnipotent
+            new DeckEntry(CardSet.TENTH_EDITION, "80", 1),    // Denizen of the Deep
+            new DeckEntry(CardSet.TENTH_EDITION, "122", 2),   // Unsummon
+            new DeckEntry(CardSet.TENTH_EDITION, "100", 2),   // Remove Soul
+            new DeckEntry(CardSet.TENTH_EDITION, "114", 1),   // Telling Time
+            new DeckEntry(CardSet.TENTH_EDITION, "70", 1),    // Boomerang
+            new DeckEntry(CardSet.TENTH_EDITION, "76", 2),    // Counsel of the Soratami
+            new DeckEntry(CardSet.TENTH_EDITION, "71", 2),    // Cancel
+            new DeckEntry(CardSet.TENTH_EDITION, "116", 1),   // Tidings
+            new DeckEntry(CardSet.TENTH_EDITION, "329", 1),   // Kraken's Eye
+            new DeckEntry(CardSet.TENTH_EDITION, "341", 1)    // Rod of Ruin
     )),
 
-    KAMAHLS_TEMPER("kamahls-temper", "Kamahl's Temper (Tenth Edition Theme Deck)", CardSet.TENTH_EDITION, List.of(
-            new DeckEntry("376", 17),  // Mountain
-            new DeckEntry("224", 1),   // Raging Goblin
-            new DeckEntry("246", 1),   // Viashino Sandscout
-            new DeckEntry("192", 2),   // Bloodrock Cyclops
-            new DeckEntry("193", 2),   // Bogardan Firefiend
-            new DeckEntry("221", 1),   // Prodigal Pyromancer
-            new DeckEntry("217", 2),   // Lightning Elemental
-            new DeckEntry("205", 1),   // Furnace Whelp
-            new DeckEntry("243", 2),   // Thundering Giant
-            new DeckEntry("214", 1),   // Kamahl, Pit Fighter
-            new DeckEntry("232", 1),   // Shock
-            new DeckEntry("213", 2),   // Incinerate
-            new DeckEntry("189", 1),   // Beacon of Destruction
-            new DeckEntry("190", 1),   // Blaze
-            new DeckEntry("238", 2),   // Spitting Earth
-            new DeckEntry("242", 1),   // Threaten
-            new DeckEntry("322", 1),   // Dragon's Claw
-            new DeckEntry("337", 1)    // Phyrexian Vault
+    KAMAHLS_TEMPER("kamahls-temper", "Kamahl's Temper (Tenth Edition Theme Deck)", List.of(
+            new DeckEntry(CardSet.TENTH_EDITION, "376", 17),  // Mountain
+            new DeckEntry(CardSet.TENTH_EDITION, "224", 1),   // Raging Goblin
+            new DeckEntry(CardSet.TENTH_EDITION, "246", 1),   // Viashino Sandscout
+            new DeckEntry(CardSet.TENTH_EDITION, "192", 2),   // Bloodrock Cyclops
+            new DeckEntry(CardSet.TENTH_EDITION, "193", 2),   // Bogardan Firefiend
+            new DeckEntry(CardSet.TENTH_EDITION, "221", 1),   // Prodigal Pyromancer
+            new DeckEntry(CardSet.TENTH_EDITION, "217", 2),   // Lightning Elemental
+            new DeckEntry(CardSet.TENTH_EDITION, "205", 1),   // Furnace Whelp
+            new DeckEntry(CardSet.TENTH_EDITION, "243", 2),   // Thundering Giant
+            new DeckEntry(CardSet.TENTH_EDITION, "214", 1),   // Kamahl, Pit Fighter
+            new DeckEntry(CardSet.TENTH_EDITION, "232", 1),   // Shock
+            new DeckEntry(CardSet.TENTH_EDITION, "213", 2),   // Incinerate
+            new DeckEntry(CardSet.TENTH_EDITION, "189", 1),   // Beacon of Destruction
+            new DeckEntry(CardSet.TENTH_EDITION, "190", 1),   // Blaze
+            new DeckEntry(CardSet.TENTH_EDITION, "238", 2),   // Spitting Earth
+            new DeckEntry(CardSet.TENTH_EDITION, "242", 1),   // Threaten
+            new DeckEntry(CardSet.TENTH_EDITION, "322", 1),   // Dragon's Claw
+            new DeckEntry(CardSet.TENTH_EDITION, "337", 1)    // Phyrexian Vault
     )),
 
-    DEADSPREAD("deadspread", "Deadspread (Scars of Mirrodin Intro Pack)", CardSet.SCARS_OF_MIRRODIN, List.of(
-            new DeckEntry("234", 13),  // Island
-            new DeckEntry("238", 13),  // Swamp
-            new DeckEntry("57", 1),    // Carnifex Demon
-            new DeckEntry("30", 1),    // Darkslick Drake
-            new DeckEntry("63", 2),    // Fume Spitter
-            // new DeckEntry("???", 1),    // Harbor Serpent (not in SOM)
-            new DeckEntry("170", 2),   // Leaden Myr
-            // new DeckEntry("???", 2),    // Maritime Guard (not in SOM)
-            new DeckEntry("70", 2),    // Moriok Reaver
-            new DeckEntry("202", 2),   // Silver Myr
-            new DeckEntry("78", 1),    // Skinrender
-            new DeckEntry("44", 2),    // Sky-Eel School
-            new DeckEntry("47", 2),    // Thrummingbird
-            new DeckEntry("144", 2),   // Contagion Clasp
-            new DeckEntry("145", 1),   // Contagion Engine
-            new DeckEntry("148", 1),   // Culling Dais
-            new DeckEntry("184", 2),   // Necrogen Censer
-            // new DeckEntry("???", 1),    // Sorcerer's Strongbox (not in SOM)
-            new DeckEntry("211", 1),   // Throne of Geth
-            new DeckEntry("213", 1),   // Trigon of Corruption
-            new DeckEntry("217", 1),   // Trigon of Thought
-            // new DeckEntry("???", 1),    // Doom Blade (not in SOM)
-            new DeckEntry("68", 2),    // Instill Infection
-            new DeckEntry("45", 2),    // Steady Progress
-            new DeckEntry("50", 1)     // Twisted Image
+    DEADSPREAD("deadspread", "Deadspread (Scars of Mirrodin Intro Pack)", List.of(
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "234", 13),  // Island
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "238", 13),  // Swamp
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "57", 1),    // Carnifex Demon
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "30", 1),    // Darkslick Drake
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "63", 2),    // Fume Spitter
+            new DeckEntry(CardSet.MAGIC_2011, "56", 1),            // Harbor Serpent
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "170", 2),   // Leaden Myr
+            new DeckEntry(CardSet.MAGIC_2011, "63", 2),            // Maritime Guard
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "70", 2),    // Moriok Reaver
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "202", 2),   // Silver Myr
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "78", 1),    // Skinrender
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "44", 2),    // Sky-Eel School
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "47", 2),    // Thrummingbird
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "144", 2),   // Contagion Clasp
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "145", 1),   // Contagion Engine
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "148", 1),   // Culling Dais
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "184", 2),   // Necrogen Censer
+            new DeckEntry(CardSet.MAGIC_2011, "213", 1),           // Sorcerer's Strongbox
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "211", 1),   // Throne of Geth
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "213", 1),   // Trigon of Corruption
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "217", 1),   // Trigon of Thought
+            new DeckEntry(CardSet.MAGIC_2011, "95", 1),            // Doom Blade
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "68", 2),    // Instill Infection
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "45", 2),    // Steady Progress
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "50", 1)     // Twisted Image
     )),
 
-    EVINCARS_TYRANNY("evincars-tyranny", "Evincar's Tyranny (Tenth Edition Theme Deck)", CardSet.TENTH_EDITION, List.of(
-            new DeckEntry("372", 17),  // Swamp
-            new DeckEntry("186", 2),   // Vampire Bats
-            new DeckEntry("139", 1),   // Drudge Skeletons
-            new DeckEntry("183", 1),   // Thrull Surgeon
-            new DeckEntry("153", 1),   // Looming Shade
-            new DeckEntry("177", 2),   // Severed Legion
-            new DeckEntry("138", 1),   // Dross Crocodile
-            new DeckEntry("146", 1),   // Gravedigger
-            new DeckEntry("161", 1),   // Mortivore
-            new DeckEntry("156", 1),   // Mass of Ghouls
-            new DeckEntry("127", 1),   // Ascendant Evincar
-            new DeckEntry("185", 1),   // Unholy Strength
-            new DeckEntry("182", 1),   // Terror
-            new DeckEntry("133", 1),   // Cruel Edict
-            new DeckEntry("135", 1),   // Diabolic Tutor
-            new DeckEntry("141", 1),   // Essence Drain
-            new DeckEntry("131", 1),   // Consume Spirit
-            new DeckEntry("128", 1),   // Assassinate
-            new DeckEntry("159", 2),   // Mind Rot
-            new DeckEntry("312", 1),   // Bottle Gnomes
-            new DeckEntry("320", 1)    // Demon's Horn
+    EVINCARS_TYRANNY("evincars-tyranny", "Evincar's Tyranny (Tenth Edition Theme Deck)", List.of(
+            new DeckEntry(CardSet.TENTH_EDITION, "372", 17),  // Swamp
+            new DeckEntry(CardSet.TENTH_EDITION, "186", 2),   // Vampire Bats
+            new DeckEntry(CardSet.TENTH_EDITION, "139", 1),   // Drudge Skeletons
+            new DeckEntry(CardSet.TENTH_EDITION, "183", 1),   // Thrull Surgeon
+            new DeckEntry(CardSet.TENTH_EDITION, "153", 1),   // Looming Shade
+            new DeckEntry(CardSet.TENTH_EDITION, "177", 2),   // Severed Legion
+            new DeckEntry(CardSet.TENTH_EDITION, "138", 1),   // Dross Crocodile
+            new DeckEntry(CardSet.TENTH_EDITION, "146", 1),   // Gravedigger
+            new DeckEntry(CardSet.TENTH_EDITION, "161", 1),   // Mortivore
+            new DeckEntry(CardSet.TENTH_EDITION, "156", 1),   // Mass of Ghouls
+            new DeckEntry(CardSet.TENTH_EDITION, "127", 1),   // Ascendant Evincar
+            new DeckEntry(CardSet.TENTH_EDITION, "185", 1),   // Unholy Strength
+            new DeckEntry(CardSet.TENTH_EDITION, "182", 1),   // Terror
+            new DeckEntry(CardSet.TENTH_EDITION, "133", 1),   // Cruel Edict
+            new DeckEntry(CardSet.TENTH_EDITION, "135", 1),   // Diabolic Tutor
+            new DeckEntry(CardSet.TENTH_EDITION, "141", 1),   // Essence Drain
+            new DeckEntry(CardSet.TENTH_EDITION, "131", 1),   // Consume Spirit
+            new DeckEntry(CardSet.TENTH_EDITION, "128", 1),   // Assassinate
+            new DeckEntry(CardSet.TENTH_EDITION, "159", 2),   // Mind Rot
+            new DeckEntry(CardSet.TENTH_EDITION, "312", 1),   // Bottle Gnomes
+            new DeckEntry(CardSet.TENTH_EDITION, "320", 1)    // Demon's Horn
     ));
 
-    public record DeckEntry(String collectorNumber, int count) {}
+    public record DeckEntry(CardSet cardSet, String collectorNumber, int count) {}
 
     private final String id;
     private final String name;
-    private final CardSet cardSet;
     private final List<DeckEntry> entries;
 
     public List<Card> buildDeck() {
         List<Card> deck = new ArrayList<>();
         for (DeckEntry entry : entries) {
-            CardPrinting printing = cardSet.findByCollectorNumber(entry.collectorNumber());
+            CardPrinting printing = entry.cardSet().findByCollectorNumber(entry.collectorNumber());
             for (int i = 0; i < entry.count(); i++) {
                 deck.add(printing.createCard());
             }
