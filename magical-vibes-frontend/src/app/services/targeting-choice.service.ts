@@ -98,10 +98,8 @@ export class TargetingChoiceService {
       this.multiTargeting = true;
       this.multiTargetMinCount = msg.minTargets;
       this.multiTargetMaxCount = msg.maxTargets;
-      if (this.targetingForAbility) {
-        this.multiTargetCardIndex = this.targetingCardIndex;
-        this.multiTargetCardName = this.targetingCardName;
-      }
+      this.multiTargetCardIndex = this.targetingCardIndex;
+      this.multiTargetCardName = this.targetingCardName;
       this.multiTargetSelectedIds.set([]);
     } else {
       // Single target mode
@@ -424,7 +422,16 @@ export class TargetingChoiceService {
     const current = this.multiTargetSelectedIds();
     if (current.includes(playerId)) return;
     if (current.length >= this.multiTargetMaxCount) return;
-    this.multiTargetSelectedIds.set([...current, playerId]);
+    const newSelected = [...current, playerId];
+    this.multiTargetSelectedIds.set(newSelected);
+    // Refresh valid targets for next position
+    if (newSelected.length < this.multiTargetMaxCount) {
+      if (this.targetingForAbility) {
+        this.sendValidTargetsRequest(null, this.multiTargetCardIndex, this.targetingAbilityIndex, newSelected);
+      } else {
+        this.sendValidTargetsRequest(this.multiTargetCardIndex, null, null, newSelected);
+      }
+    }
   }
 
   removeMultiTarget(permanentId: string): void {

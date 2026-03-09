@@ -105,6 +105,23 @@ class ArcTrailTest extends BaseCardTest {
                 .hasMessageContaining("All targets must be different");
     }
 
+    @Test
+    @DisplayName("Casting with invalid card index -1 throws IllegalArgumentException")
+    void castingWithNegativeCardIndexThrowsCleanError() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new ArcTrail()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        List<Permanent> bf = harness.getGameData().playerBattlefields.get(player2.getId());
+        UUID id1 = bf.get(0).getId();
+        UUID id2 = bf.get(1).getId();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, -1, List.of(id1, id2)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid card index");
+    }
+
     // ===== Damage to creatures =====
 
     @Test

@@ -135,6 +135,11 @@ public class SpellCastingService {
 
         UUID playerId = player.getId();
 
+        List<Card> handEarly = gameData.playerHands.get(playerId);
+        if (!fromGraveyard && (cardIndex < 0 || cardIndex >= handEarly.size())) {
+            throw new IllegalArgumentException("Invalid card index");
+        }
+
         // Handle playing a land from graveyard (e.g. via Crucible of Worlds)
         if (fromGraveyard) {
             List<Integer> playableGraveyard = gameBroadcastService.getPlayableGraveyardLandIndices(gameData, playerId);
