@@ -37,6 +37,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 @Service
 @RequiredArgsConstructor
@@ -72,7 +73,7 @@ public class TargetLegalityService {
         List<TargetFilter> perPositionFilters = ability.getMultiTargetFilters();
         for (int i = 0; i < targetPermanentIds.size(); i++) {
             UUID targetId = targetPermanentIds.get(i);
-            TargetFilter positionFilter = i < perPositionFilters.size() ? perPositionFilters.get(i) : null;
+            TargetFilter positionFilter = getPositionFilter(perPositionFilters, i);
 
             // Player-targeting position
             if (positionFilter instanceof PlayerPredicateTargetFilter playerFilter) {
@@ -95,9 +96,7 @@ public class TargetLegalityService {
             // Per-position filter
             if (positionFilter != null) {
                 gameQueryService.validateTargetFilter(positionFilter, target,
-                        FilterContext.of(gameData)
-                                .withSourceCardId(sourceCard.getId())
-                                .withSourceControllerId(playerId));
+                        filterContext(gameData, sourceCard.getId(), playerId));
             }
         }
     }
@@ -118,9 +117,7 @@ public class TargetLegalityService {
             if (target != null) {
                 gameQueryService.validateTargetFilter(ability.getTargetFilter(),
                         target,
-                        FilterContext.of(gameData)
-                                .withSourceCardId(sourceCard.getId())
-                                .withSourceControllerId(playerId));
+                        filterContext(gameData, sourceCard.getId(), playerId));
             } else if (gameData.playerIds.contains(targetPermanentId)
                     && ability.getTargetFilter() instanceof PlayerPredicateTargetFilter playerFilter) {
                 validatePlayerPredicate(playerId, targetPermanentId, playerFilter.predicate(), playerFilter.errorMessage());
@@ -154,9 +151,7 @@ public class TargetLegalityService {
         if (card.getTargetFilter() != null && target != null) {
             gameQueryService.validateTargetFilter(card.getTargetFilter(),
                     target,
-                    FilterContext.of(gameData)
-                            .withSourceCardId(card.getId())
-                            .withSourceControllerId(controllerId));
+                    filterContext(gameData, card.getId(), controllerId));
         }
 
         targetValidationService.validateEffectTargets(card.getEffects(EffectSlot.SPELL),
@@ -176,43 +171,48 @@ public class TargetLegalityService {
     public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetPermanentIds, UUID controllerId) {
         validateMultiTargetCount(targetPermanentIds, card.getMinTargets(), card.getMaxTargets());
 
-        boolean multiTargetAllowsPlayers = card.getEffects(EffectSlot.SPELL).stream()
+        boolean allowsPlayers = card.getEffects(EffectSlot.SPELL).stream()
                 .anyMatch(e -> e.canTargetPlayer() && e.canTargetPermanent());
         List<TargetFilter> perPositionFilters = card.getMultiTargetFilters();
         for (int i = 0; i < targetPermanentIds.size(); i++) {
             UUID targetId = targetPermanentIds.get(i);
-            boolean isPlayerTarget = gameData.playerIds.contains(targetId);
-            Permanent target = isPlayerTarget ? null : gameQueryService.findPermanentById(gameData, targetId);
-            if (!isPlayerTarget && target == null) {
-                throw new IllegalStateException("Invalid target");
-            }
-            if (isPlayerTarget && !multiTargetAllowsPlayers) {
-                throw new IllegalStateException("This spell cannot target players");
-            }
-            if (!isPlayerTarget) {
-                // When the card has a targetFilter, let it handle type validation;
-                // otherwise fall back to requiring a creature target.
-                if (card.getTargetFilter() != null) {
-                    gameQueryService.validateTargetFilter(card.getTargetFilter(), target,
-                            FilterContext.of(gameData)
-                                    .withSourceCardId(card.getId())
-                                    .withSourceControllerId(controllerId));
-                } else if (!gameQueryService.isCreature(gameData, target)) {
-                    throw new IllegalStateException(target.getCard().getName() + " is not a creature");
+
+            // Player-targeting position
+            if (gameData.playerIds.contains(targetId)) {
+                if (!allowsPlayers) {
+                    throw new IllegalStateException("This spell cannot target players");
                 }
                 if (card.isNeedsTarget()) {
-                    validateSpellProtections(gameData, target, card);
-                    validatePermanentTargetable(gameData, target, controllerId);
+                    validatePlayerTargetable(gameData, targetId);
                 }
-                // Apply per-position target filter if available
-                if (i < perPositionFilters.size() && perPositionFilters.get(i) != null) {
-                    gameQueryService.validateTargetFilter(perPositionFilters.get(i), target,
-                            FilterContext.of(gameData)
-                                    .withSourceCardId(card.getId())
-                                    .withSourceControllerId(controllerId));
-                }
-            } else if (card.isNeedsTarget()) {
-                validatePlayerTargetable(gameData, targetId);
+                continue;
+            }
+
+            // Permanent-targeting position
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                throw new IllegalStateException("Invalid target");
+            }
+
+            // When the card has a targetFilter, let it handle type validation;
+            // otherwise fall back to requiring a creature target.
+            if (card.getTargetFilter() != null) {
+                gameQueryService.validateTargetFilter(card.getTargetFilter(), target,
+                        filterContext(gameData, card.getId(), controllerId));
+            } else if (!gameQueryService.isCreature(gameData, target)) {
+                throw new IllegalStateException(target.getCard().getName() + " is not a creature");
+            }
+
+            if (card.isNeedsTarget()) {
+                validateSpellProtections(gameData, target, card);
+                validatePermanentTargetable(gameData, target, controllerId);
+            }
+
+            // Apply per-position target filter if available
+            TargetFilter positionFilter = getPositionFilter(perPositionFilters, i);
+            if (positionFilter != null) {
+                gameQueryService.validateTargetFilter(positionFilter, target,
+                        filterContext(gameData, card.getId(), controllerId));
             }
         }
     }
@@ -233,7 +233,7 @@ public class TargetLegalityService {
                 if (targetPerm == null && !gameData.playerIds.contains(entry.getTargetPermanentId())) {
                     targetFizzled = true;
                 } else if (targetPerm != null) {
-                    targetFizzled = isPermanentUntargetableBy(gameData, targetPerm, entry.getControllerId());
+                    targetFizzled = untargetableReason(gameData, targetPerm, entry.getControllerId()) != null;
                     if (!targetFizzled) {
                         TargetFilter effectiveTargetFilter =
                                 entry.getTargetFilter() != null
@@ -241,10 +241,10 @@ public class TargetLegalityService {
                                         : entry.getCard() != null ? entry.getCard().getTargetFilter() : null;
                         if (effectiveTargetFilter != null) {
                             try {
-                                FilterContext filterContext = FilterContext.of(gameData)
-                                        .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
-                                        .withSourceControllerId(entry.getControllerId());
-                                gameQueryService.validateTargetFilter(effectiveTargetFilter, targetPerm, filterContext);
+                                gameQueryService.validateTargetFilter(effectiveTargetFilter, targetPerm,
+                                        filterContext(gameData,
+                                                entry.getCard() != null ? entry.getCard().getId() : null,
+                                                entry.getControllerId()));
                             } catch (IllegalStateException e) {
                                 targetFizzled = true;
                             }
@@ -254,61 +254,37 @@ public class TargetLegalityService {
             }
         }
 
-        if (!targetFizzled && entry.getTargetPermanentIds() != null && !entry.getTargetPermanentIds().isEmpty()) {
-            boolean allGone = true;
-            for (UUID permId : entry.getTargetPermanentIds()) {
-                if (gameQueryService.findPermanentById(gameData, permId) != null || gameData.playerIds.contains(permId)) {
-                    allGone = false;
-                    break;
-                }
-            }
-            if (allGone) {
-                targetFizzled = true;
-            }
+        if (!targetFizzled) {
+            targetFizzled = allTargetsGone(entry.getTargetPermanentIds(),
+                    id -> gameQueryService.findPermanentById(gameData, id) != null || gameData.playerIds.contains(id));
         }
 
-        if (!targetFizzled && entry.getTargetCardIds() != null && !entry.getTargetCardIds().isEmpty()) {
-            boolean allGone = true;
-            for (UUID cardId : entry.getTargetCardIds()) {
-                if (gameQueryService.findCardInGraveyardById(gameData, cardId) != null) {
-                    allGone = false;
-                    break;
-                }
-            }
-            if (allGone) {
-                targetFizzled = true;
-            }
+        if (!targetFizzled) {
+            targetFizzled = allTargetsGone(entry.getTargetCardIds(),
+                    id -> gameQueryService.findCardInGraveyardById(gameData, id) != null);
         }
 
         return targetFizzled;
     }
 
-    private boolean isPermanentUntargetableBy(GameData gameData, Permanent target, UUID sourcePlayerId) {
+    private String untargetableReason(GameData gameData, Permanent target, UUID sourcePlayerId) {
         if (gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)) {
-            return true;
-        }
-        UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
-        if (targetController != null && !targetController.equals(sourcePlayerId)) {
-            if (gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF)) {
-                return true;
-            }
-            if (gameQueryService.hasGrantedEffect(gameData, target, CantBeTargetOfSpellsOrAbilitiesEffect.class)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void validatePermanentTargetable(GameData gameData, Permanent target, UUID sourcePlayerId) {
-        if (gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)) {
-            throw new IllegalStateException(target.getCard().getName() + " has shroud and can't be targeted");
+            return target.getCard().getName() + " has shroud and can't be targeted";
         }
         UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
         if (targetController != null && !targetController.equals(sourcePlayerId)) {
             if (gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF)
                     || gameQueryService.hasGrantedEffect(gameData, target, CantBeTargetOfSpellsOrAbilitiesEffect.class)) {
-                throw new IllegalStateException(target.getCard().getName() + " has hexproof and can't be targeted");
+                return target.getCard().getName() + " has hexproof and can't be targeted";
             }
+        }
+        return null;
+    }
+
+    private void validatePermanentTargetable(GameData gameData, Permanent target, UUID sourcePlayerId) {
+        String reason = untargetableReason(gameData, target, sourcePlayerId);
+        if (reason != null) {
+            throw new IllegalStateException(reason);
         }
     }
 
@@ -355,6 +331,20 @@ public class TargetLegalityService {
         if (!matchesPlayerPredicate(controllerId, targetPlayerId, predicate)) {
             throw new IllegalStateException(errorMessage);
         }
+    }
+
+    private FilterContext filterContext(GameData gameData, UUID sourceCardId, UUID controllerId) {
+        return FilterContext.of(gameData)
+                .withSourceCardId(sourceCardId)
+                .withSourceControllerId(controllerId);
+    }
+
+    private TargetFilter getPositionFilter(List<TargetFilter> filters, int index) {
+        return index < filters.size() ? filters.get(index) : null;
+    }
+
+    private boolean allTargetsGone(List<UUID> ids, Predicate<UUID> existsCheck) {
+        return ids != null && !ids.isEmpty() && ids.stream().noneMatch(existsCheck);
     }
 
     private StackEntry findSpellOnStack(GameData gameData, UUID targetId) {
@@ -473,15 +463,11 @@ public class TargetLegalityService {
 
     private boolean matchesPlayerPredicate(UUID controllerId, UUID targetPlayerId, PlayerPredicate predicate) {
         if (predicate instanceof PlayerRelationPredicate relationPredicate) {
-            if (relationPredicate.relation() == PlayerRelation.ANY) {
-                return true;
-            }
-            if (relationPredicate.relation() == PlayerRelation.SELF) {
-                return controllerId != null && controllerId.equals(targetPlayerId);
-            }
-            if (relationPredicate.relation() == PlayerRelation.OPPONENT) {
-                return controllerId != null && !controllerId.equals(targetPlayerId);
-            }
+            return switch (relationPredicate.relation()) {
+                case ANY -> true;
+                case SELF -> controllerId != null && controllerId.equals(targetPlayerId);
+                case OPPONENT -> controllerId != null && !controllerId.equals(targetPlayerId);
+            };
         }
         return false;
     }
