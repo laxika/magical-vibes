@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndDrawCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleHandIntoLibraryAndDrawEffect;
@@ -114,6 +115,43 @@ public class PlayerInteractionResolutionService {
                 entry.getCard().getName() + " is sacrificed.");
 
         applyDrawCards(gameData, entry.getControllerId(), effect.amount());
+    }
+
+    @HandlesEffect(SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect.class)
+    private void resolveSacrificeSelfAndTargetDiscardsPerPoisonCounter(GameData gameData, StackEntry entry,
+                                                                       SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect effect) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+
+        if (targetPlayerId == null || sourcePermanentId == null) {
+            return;
+        }
+
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (source == null) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    entry.getCard().getName() + "'s ability fizzles — source no longer on the battlefield.");
+            return;
+        }
+
+        permanentRemovalService.removePermanentToGraveyard(gameData, source);
+        gameBroadcastService.logAndBroadcast(gameData,
+                entry.getCard().getName() + " is sacrificed.");
+
+        int poisonCounters = gameData.playerPoisonCounters.getOrDefault(targetPlayerId, 0);
+        if (poisonCounters <= 0) {
+            String playerName = gameData.playerIdToName.get(targetPlayerId);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " has no poison counters — no cards to discard.");
+            return;
+        }
+
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " must discard " + poisonCounters + " card" + (poisonCounters > 1 ? "s" : "")
+                        + " (" + entry.getCard().getName() + ").");
+
+        resolveDiscardCards(gameData, targetPlayerId, poisonCounters);
     }
 
     @HandlesEffect(DrawXCardsForTargetPlayerEffect.class)

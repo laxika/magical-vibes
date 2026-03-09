@@ -151,6 +151,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Combat damage awakening | `l/LiegeOfTheTangle.java` | ON_COMBAT_DAMAGE_TO_PLAYER PutAwakeningCountersOnTargetLandsEffect — multi-permanent choice on controller's lands, permanent 8/8 animation via awakening counters |
 | Combat damage may-sacrifice-draw | `i/ImpalerShrike.java` | ON_COMBAT_DAMAGE_TO_PLAYER `MayEffect(SacrificeSelfAndDrawCardsEffect(3))` — may sacrifice self, if you do draw N cards |
 | Combat damage may-sacrifice-destroy | `b/BlindZealot.java` | ON_COMBAT_DAMAGE_TO_PLAYER `MayEffect(SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect)` — MayEffect wraps inner sacrifice+destroy. CombatService queues as PendingMayAbility with context; after acceptance, inner effect presents multi-permanent choice for target creature |
+| Combat damage may-sacrifice-discard-per-poison | `w/WhisperingSpecter.java` | ON_COMBAT_DAMAGE_TO_PLAYER `MayEffect(SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect)` — may sacrifice self, if you do damaged player discards cards equal to their poison counter count |
 | On becomes blocked | `s/SylvanBasilisk.java` | ON_BECOMES_BLOCKED DestroyCreatureBlockingThisEffect |
 | On block (mutual destroy) | `l/LoyalSentry.java` | ON_BLOCK DestroyBlockedCreatureAndSelfEffect |
 | On block conditional boost | `e/EzurisArchers.java` | ON_BLOCK BoostSelfWhenBlockingKeywordEffect(FLYING, 3, 0) — conditional trigger checked at block time |
