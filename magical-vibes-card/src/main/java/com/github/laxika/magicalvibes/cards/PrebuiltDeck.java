@@ -150,6 +150,31 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "18", 3)     // Revoke Existence
     )),
 
+    PHYREXIAN_POISON("phyrexian-poison", "Phyrexian Poison (Scars of Mirrodin Intro Pack)", List.of(
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "246", 13),  // Forest
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "238", 13),  // Swamp
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "54", 1),    // Blackcleave Goblin
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "58", 1),    // Contagious Nim
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "147", 2),   // Corpse Cur
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "117", 2),   // Cystbearer
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "66", 1),    // Hand of the Praetors
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "67", 2),    // Ichor Rats
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "166", 3),   // Ichorclaw Myr
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "185", 2),   // Necropede
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "75", 3),    // Plague Stinger
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "126", 1),   // Putrefax
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "128", 2),   // Tangle Angler
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "140", 2),   // Bladed Pinions
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "164", 1),   // Heavy Arbalest
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "207", 1),   // Strider Harness
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "77", 1),    // Relic Putrescence
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "115", 2),   // Carrion Call
+            new DeckEntry(CardSet.MAGIC_2011, "178", 2),           // Giant Growth
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "127", 2),   // Slice in Twain
+            new DeckEntry(CardSet.MAGIC_2011, "81", 2)             // Assassinate
+            // new DeckEntry(CardSet.MAGIC_2011, "114", 1),        // Rise from the Grave (not yet implemented)
+    )),
+
     EVINCARS_TYRANNY("evincars-tyranny", "Evincar's Tyranny (Tenth Edition Theme Deck)", List.of(
             new DeckEntry(CardSet.TENTH_EDITION, "372", 17),  // Swamp
             new DeckEntry(CardSet.TENTH_EDITION, "186", 2),   // Vampire Bats
