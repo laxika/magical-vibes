@@ -211,7 +211,7 @@ public class GameBroadcastService {
         return getPlayableCardIndices(gameData, playerId, 0);
     }
 
-    List<Integer> getPlayableCardIndices(GameData gameData, UUID playerId, int extraConvokeMana) {
+    public List<Integer> getPlayableCardIndices(GameData gameData, UUID playerId, int extraConvokeMana) {
         List<Integer> playable = new ArrayList<>();
         if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()) {
             return playable;
@@ -297,7 +297,7 @@ public class GameBroadcastService {
         return playable;
     }
 
-    List<Integer> getPlayableGraveyardLandIndices(GameData gameData, UUID playerId) {
+    public List<Integer> getPlayableGraveyardLandIndices(GameData gameData, UUID playerId) {
         List<Integer> playable = new ArrayList<>();
         if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()) {
             return playable;
@@ -503,7 +503,7 @@ public class GameBroadcastService {
         return totalIncrease;
     }
 
-    int getCastCostModifier(GameData gameData, UUID playerId, Card card) {
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card) {
         int increase = getOpponentCostIncrease(gameData, playerId, card.getType());
         int reduction = getOwnCostReduction(gameData, playerId, card);
         return increase - reduction;

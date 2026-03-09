@@ -66,7 +66,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.PreventionResolutionService;
 import com.github.laxika.magicalvibes.service.ReconnectionService;
-import com.github.laxika.magicalvibes.service.SpellCastingService;
+import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.TargetLegalityService;
