@@ -103,5 +103,5 @@ export function isLandStack(item: IndexedPermanent | LandStack): item is LandSta
 }
 
 export function isPermanentCreature(perm: Permanent): boolean {
-  return perm.card.type === 'CREATURE' || perm.animatedCreature;
+  return perm.card.type === 'CREATURE' || perm.card.additionalTypes?.includes('CREATURE') || perm.animatedCreature;
 }
