@@ -12,6 +12,7 @@ import { SidePanelComponent } from './side-panel/side-panel.component';
 import { IndexedPermanent, CombatGroup, CombatBlocker, AttachedAura, LandStack, splitBattlefield, stackBasicLands, getAttachedAuras, isLandStack, isPermanentCreature } from './battlefield.utils';
 import { Subscription } from 'rxjs';
 import { ManaSymbolService } from '../../services/mana-symbol.service';
+import { PermanentClickResolverService } from '../../services/permanent-click-resolver.service';
 
 @Component({
   selector: 'app-game',
@@ -31,6 +32,7 @@ export class GameComponent implements OnInit, OnDestroy {
   @ViewChild(SidePanelComponent) sidePanel?: SidePanelComponent;
 
   readonly choice = inject(GameChoiceService);
+  private clickResolver = inject(PermanentClickResolverService);
   private manaSymbolService = inject(ManaSymbolService);
   private sanitizer = inject(DomSanitizer);
 
@@ -762,55 +764,18 @@ export class GameComponent implements OnInit, OnDestroy {
 
   // ========== Click dispatch ==========
 
+  private readonly attackingCreatureFilter = (p: Permanent) => isPermanentCreature(p) && p.attacking;
+
   onMyBattlefieldCardClick(index: number): void {
-    if (this.choice.choosingPermanent) {
-      const perm = this.myBattlefield[index];
-      if (perm && this.choice.choosablePermanentIds().has(perm.id)) {
-        this.choice.choosePermanent(perm.id);
-      }
-      return;
-    }
-    if (this.choice.choosingMultiplePermanents) {
-      const perm = this.myBattlefield[index];
-      if (perm && this.choice.multiPermanentChoiceIds().has(perm.id)) {
-        this.choice.toggleMultiPermanentSelection(perm.id);
-      }
-      return;
-    }
-    if (this.choice.targeting.multiTargeting) {
-      const perm = this.myBattlefield[index];
-      if (perm && this.choice.targeting.validTargetPermanentIds().has(perm.id)) {
-        if (this.choice.targeting.isMultiTargetSelected(perm.id)) {
-          this.choice.targeting.removeMultiTarget(perm.id);
-        } else {
-          this.choice.targeting.addMultiTarget(perm.id);
-        }
-      }
-      return;
-    }
+    const perm = this.myBattlefield[index];
+    if (this.clickResolver.tryResolveClick(perm, this.attackingCreatureFilter)) return;
     if (this.choice.targeting.convoking) {
-      const perm = this.myBattlefield[index];
       if (perm && isPermanentCreature(perm) && !perm.tapped) {
         this.choice.targeting.toggleConvokeCreature(perm.id);
       }
       return;
     }
-    if (this.choice.damage.distributingDamage) {
-      const perm = this.myBattlefield[index];
-      if (perm && isPermanentCreature(perm) && perm.attacking) {
-        this.choice.damage.assignDamage(perm.id);
-      }
-      return;
-    }
-    if (this.choice.targeting.selectingTarget) {
-      const perm = this.myBattlefield[index];
-      if (perm && this.choice.targeting.isValidTarget(perm)) {
-        this.choice.targeting.selectTarget(perm.id);
-      }
-      return;
-    }
     if (this.choice.awaitingXValueChoice) {
-      const perm = this.myBattlefield[index];
       if (perm && this.choice.canTapForMana(perm)) {
         this.websocketService.send({ type: MessageType.TAP_PERMANENT, permanentIndex: index });
       }
@@ -826,83 +791,15 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   onOpponentBattlefieldCardClick(index: number): void {
-    if (this.choice.choosingPermanent) {
-      const perm = this.opponentBattlefield[index];
-      if (perm && this.choice.choosablePermanentIds().has(perm.id)) {
-        this.choice.choosePermanent(perm.id);
-      }
-      return;
-    }
-    if (this.choice.choosingMultiplePermanents) {
-      const perm = this.opponentBattlefield[index];
-      if (perm && this.choice.multiPermanentChoiceIds().has(perm.id)) {
-        this.choice.toggleMultiPermanentSelection(perm.id);
-      }
-      return;
-    }
-    if (this.choice.targeting.multiTargeting) {
-      const perm = this.opponentBattlefield[index];
-      if (perm && this.choice.targeting.validTargetPermanentIds().has(perm.id)) {
-        if (this.choice.targeting.isMultiTargetSelected(perm.id)) {
-          this.choice.targeting.removeMultiTarget(perm.id);
-        } else {
-          this.choice.targeting.addMultiTarget(perm.id);
-        }
-      }
-      return;
-    }
-    if (this.choice.damage.distributingDamage) {
-      const perm = this.opponentBattlefield[index];
-      if (perm && isPermanentCreature(perm) && perm.attacking) {
-        this.choice.damage.assignDamage(perm.id);
-      }
-      return;
-    }
-    if (this.choice.targeting.selectingTarget) {
-      const perm = this.opponentBattlefield[index];
-      if (perm && this.choice.targeting.isValidTarget(perm)) {
-        this.choice.targeting.selectTarget(perm.id);
-      }
-      return;
-    }
+    const perm = this.opponentBattlefield[index];
+    if (this.clickResolver.tryResolveClick(perm, this.attackingCreatureFilter)) return;
     if (this.declaringBlockers()) {
       this.assignBlock(index);
     }
   }
 
   onCombatAttackerClick(group: CombatGroup): void {
-    if (this.choice.choosingPermanent) {
-      if (this.choice.choosablePermanentIds().has(group.attacker.id)) {
-        this.choice.choosePermanent(group.attacker.id);
-      }
-      return;
-    }
-    if (this.choice.choosingMultiplePermanents) {
-      if (this.choice.multiPermanentChoiceIds().has(group.attacker.id)) {
-        this.choice.toggleMultiPermanentSelection(group.attacker.id);
-      }
-      return;
-    }
-    if (this.choice.targeting.multiTargeting) {
-      if (this.choice.targeting.validTargetPermanentIds().has(group.attacker.id)) {
-        if (this.choice.targeting.isMultiTargetSelected(group.attacker.id)) {
-          this.choice.targeting.removeMultiTarget(group.attacker.id);
-        } else {
-          this.choice.targeting.addMultiTarget(group.attacker.id);
-        }
-      }
-      return;
-    }
-    if (this.choice.targeting.selectingTarget) {
-      if (this.choice.targeting.isValidTarget(group.attacker)) {
-        this.choice.targeting.selectTarget(group.attacker.id);
-      }
-      return;
-    }
-    if (this.choice.damage.distributingDamage) {
-      this.choice.damage.assignDamage(group.attacker.id);
-      return;
-    }
+    if (this.clickResolver.tryResolveClick(group.attacker, () => true)) return;
     if (this.declaringAttackers() && group.attackerIsMine) {
       this.toggleAttacker(group.attackerIndex);
     } else if (this.declaringBlockers() && !group.attackerIsMine) {
@@ -913,34 +810,7 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   onCombatBlockerClick(blocker: CombatBlocker): void {
-    if (this.choice.choosingPermanent) {
-      if (this.choice.choosablePermanentIds().has(blocker.perm.id)) {
-        this.choice.choosePermanent(blocker.perm.id);
-      }
-      return;
-    }
-    if (this.choice.choosingMultiplePermanents) {
-      if (this.choice.multiPermanentChoiceIds().has(blocker.perm.id)) {
-        this.choice.toggleMultiPermanentSelection(blocker.perm.id);
-      }
-      return;
-    }
-    if (this.choice.targeting.multiTargeting) {
-      if (this.choice.targeting.validTargetPermanentIds().has(blocker.perm.id)) {
-        if (this.choice.targeting.isMultiTargetSelected(blocker.perm.id)) {
-          this.choice.targeting.removeMultiTarget(blocker.perm.id);
-        } else {
-          this.choice.targeting.addMultiTarget(blocker.perm.id);
-        }
-      }
-      return;
-    }
-    if (this.choice.targeting.selectingTarget) {
-      if (this.choice.targeting.isValidTarget(blocker.perm)) {
-        this.choice.targeting.selectTarget(blocker.perm.id);
-      }
-      return;
-    }
+    if (this.clickResolver.tryResolveClick(blocker.perm)) return;
     if (this.declaringBlockers() && blocker.isMine) {
       this.selectBlocker(blocker.index);
     } else if (blocker.isMine) {
