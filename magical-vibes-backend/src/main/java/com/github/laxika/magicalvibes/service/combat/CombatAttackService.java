@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderPoisonedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -286,6 +287,7 @@ public class CombatAttackService {
         if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackEffect.class)) return false;
         if (CombatHelper.isCantAttackOrBlockUnlessEquipped(gameQueryService, gameData, creature)) return false;
         if (isCantAttackDueToLandRestriction(gameData, creature, defenderBattlefield)) return false;
+        if (isCantAttackUnlessBattlefieldCount(gameData, creature)) return false;
         if (isCantAttackUnlessDefenderPoisoned(gameData, creature, defenderId)) return false;
         return true;
     }
@@ -305,6 +307,23 @@ public class CombatAttackService {
                 boolean defenderMatches = defenderBattlefield != null && defenderBattlefield.stream()
                         .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, restriction.defenderPermanentPredicate()));
                 if (!defenderMatches) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isCantAttackUnlessBattlefieldCount(GameData gameData, Permanent attacker) {
+        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect restriction) {
+                int[] count = {0};
+                gameData.forEachBattlefield((playerId, battlefield) ->
+                        count[0] += (int) battlefield.stream()
+                                .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, restriction.permanentPredicate()))
+                                .count()
+                );
+                if (count[0] < restriction.minimumCount()) {
                     return true;
                 }
             }

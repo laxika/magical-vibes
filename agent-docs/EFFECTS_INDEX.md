@@ -555,6 +555,7 @@ Pass `null` as filter to allow any card.
 | `CanBeBlockedByAtMostNCreaturesEffect` | `(int maxBlockers)` | can be blocked by at most N creatures (static) |
 | `CanBlockOnlyIfAttackerMatchesPredicateEffect` | `(PermanentPredicate attackerPredicate, String allowedAttackersDescription)` | this creature can only block attackers matching predicate (static) |
 | `CantAttackOrBlockUnlessEquippedEffect` | `()` | this creature can't attack or block unless it's equipped (static) |
+| `CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect` | `(PermanentPredicate permanentPredicate, int minimumCount, String requirementDescription)` | can't attack unless there are N or more matching permanents across all battlefields (static) |
 | `CantAttackUnlessDefenderControlsMatchingPermanentEffect` | `(PermanentPredicate defenderPermanentPredicate, String requirementDescription)` | can't attack unless defender controls matching permanent (static) |
 | `CantBeBlockedIfDefenderControlsMatchingPermanentEffect` | `(PermanentPredicate defenderPermanentPredicate)` | can't be blocked as long as defender controls matching permanent (static) |
 | `CanAttackAsThoughNoDefenderEffect` | `()` | this creature can attack as though it didn't have defender (static, typically wrapped in MetalcraftConditionalEffect) |

@@ -211,7 +211,8 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Block limit | `s/StalkingTiger.java` | STATIC CanBeBlockedByAtMostNCreaturesEffect |
 | Unblockable | `p/PhantomWarrior.java` | STATIC CantBeBlockedEffect |
 | Conditional unblockable | `s/ScrapdiverSerpent.java` | STATIC CantBeBlockedIfDefenderControlsMatchingPermanentEffect |
-| Attack restriction | `s/SeaMonster.java` | STATIC CantAttackUnlessDefenderControlsMatchingPermanentEffect |
+| Attack restriction (defender) | `s/SeaMonster.java` | STATIC CantAttackUnlessDefenderControlsMatchingPermanentEffect |
+| Attack restriction (battlefield count) | `h/HarborSerpent.java` | STATIC CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect(predicate, 5, desc) — can't attack unless N+ matching permanents across all battlefields |
 | Block restriction | `c/CloudElemental.java` | STATIC CanBlockOnlyIfAttackerMatchesPredicateEffect |
 | Protection from colors | `p/PaladinEnVec.java` | STATIC ProtectionFromColorsEffect |
 | Prevent all damage to self | `c/ChoMannoRevolutionary.java` | STATIC PreventAllDamageEffect |
