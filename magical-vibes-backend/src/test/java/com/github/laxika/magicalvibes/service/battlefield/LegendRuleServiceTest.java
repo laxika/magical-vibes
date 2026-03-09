@@ -1,26 +1,41 @@
-package com.github.laxika.magicalvibes.service;
+package com.github.laxika.magicalvibes.service.battlefield;
 
-import com.github.laxika.magicalvibes.cards.c.ChoMannoRevolutionary;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
+import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
+@ExtendWith(MockitoExtension.class)
 class LegendRuleServiceTest extends BaseCardTest {
+
+    @Mock
+    private PlayerInputService playerInputService;
+
+    @InjectMocks
+    private LegendRuleService svc;
 
     private Card createLegendaryCreature(String name) {
         Card card = new Card();
@@ -40,11 +55,11 @@ class LegendRuleServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Returns false when battlefield is empty")
         void returnsFalseWhenBattlefieldEmpty() {
-            LegendRuleService svc = harness.getLegendRuleService();
             boolean result = svc.checkLegendRule(gd, player1.getId());
 
             assertThat(result).isFalse();
             assertThat(gd.interaction.permanentChoice()).isNull();
+            verify(playerInputService, never()).beginPermanentChoice(any(), any(), anyList(), anyString());
         }
 
         @Test
@@ -52,11 +67,11 @@ class LegendRuleServiceTest extends BaseCardTest {
         void returnsFalseWithSingleLegendary() {
             harness.addToBattlefield(player1, createLegendaryCreature("Test Legend"));
 
-            LegendRuleService svc = harness.getLegendRuleService();
             boolean result = svc.checkLegendRule(gd, player1.getId());
 
             assertThat(result).isFalse();
             assertThat(gd.interaction.permanentChoice()).isNull();
+            verify(playerInputService, never()).beginPermanentChoice(any(), any(), anyList(), anyString());
         }
 
         @Test
@@ -65,10 +80,10 @@ class LegendRuleServiceTest extends BaseCardTest {
             harness.addToBattlefield(player1, new GrizzlyBears());
             harness.addToBattlefield(player1, new GrizzlyBears());
 
-            LegendRuleService svc = harness.getLegendRuleService();
             boolean result = svc.checkLegendRule(gd, player1.getId());
 
             assertThat(result).isFalse();
+            verify(playerInputService, never()).beginPermanentChoice(any(), any(), anyList(), anyString());
         }
 
         @Test
@@ -77,10 +92,10 @@ class LegendRuleServiceTest extends BaseCardTest {
             harness.addToBattlefield(player1, createLegendaryCreature("Legend A"));
             harness.addToBattlefield(player1, createLegendaryCreature("Legend B"));
 
-            LegendRuleService svc = harness.getLegendRuleService();
             boolean result = svc.checkLegendRule(gd, player1.getId());
 
             assertThat(result).isFalse();
+            verify(playerInputService, never()).beginPermanentChoice(any(), any(), anyList(), anyString());
         }
 
         @Test
@@ -89,12 +104,12 @@ class LegendRuleServiceTest extends BaseCardTest {
             harness.addToBattlefield(player1, createLegendaryCreature("Shared Legend"));
             harness.addToBattlefield(player2, createLegendaryCreature("Shared Legend"));
 
-            LegendRuleService svc = harness.getLegendRuleService();
             boolean result1 = svc.checkLegendRule(gd, player1.getId());
             boolean result2 = svc.checkLegendRule(gd, player2.getId());
 
             assertThat(result1).isFalse();
             assertThat(result2).isFalse();
+            verify(playerInputService, never()).beginPermanentChoice(any(), any(), anyList(), anyString());
         }
     }
 
@@ -108,10 +123,29 @@ class LegendRuleServiceTest extends BaseCardTest {
             harness.addToBattlefield(player1, createLegendaryCreature("Test Legend"));
             harness.addToBattlefield(player1, createLegendaryCreature("Test Legend"));
 
-            LegendRuleService svc = harness.getLegendRuleService();
             boolean result = svc.checkLegendRule(gd, player1.getId());
 
             assertThat(result).isTrue();
+        }
+
+        @Test
+        @DisplayName("Calls PlayerInputService.beginPermanentChoice on violation")
+        void callsPlayerInputServiceOnViolation() {
+            harness.addToBattlefield(player1, createLegendaryCreature("Test Legend"));
+            harness.addToBattlefield(player1, createLegendaryCreature("Test Legend"));
+
+            List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
+            UUID id1 = battlefield.get(0).getId();
+            UUID id2 = battlefield.get(1).getId();
+
+            svc.checkLegendRule(gd, player1.getId());
+
+            verify(playerInputService).beginPermanentChoice(
+                    eq(gd),
+                    eq(player1.getId()),
+                    eq(List.of(id1, id2)),
+                    eq("You control multiple legendary permanents named Test Legend. Choose one to keep.")
+            );
         }
 
         @Test
@@ -120,26 +154,12 @@ class LegendRuleServiceTest extends BaseCardTest {
             harness.addToBattlefield(player1, createLegendaryCreature("Test Legend"));
             harness.addToBattlefield(player1, createLegendaryCreature("Test Legend"));
 
-            LegendRuleService svc = harness.getLegendRuleService();
             svc.checkLegendRule(gd, player1.getId());
 
             assertThat(gd.interaction.permanentChoiceContext())
                     .isInstanceOf(PermanentChoiceContext.LegendRule.class);
             assertThat(((PermanentChoiceContext.LegendRule) gd.interaction.permanentChoiceContext()).cardName())
                     .isEqualTo("Test Legend");
-        }
-
-        @Test
-        @DisplayName("Prompts the correct player for the choice")
-        void promptsCorrectPlayer() {
-            harness.addToBattlefield(player1, createLegendaryCreature("Test Legend"));
-            harness.addToBattlefield(player1, createLegendaryCreature("Test Legend"));
-
-            LegendRuleService svc = harness.getLegendRuleService();
-            svc.checkLegendRule(gd, player1.getId());
-
-            assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
         }
 
         @Test
@@ -154,11 +174,14 @@ class LegendRuleServiceTest extends BaseCardTest {
             UUID id1 = battlefield.get(0).getId();
             UUID id2 = battlefield.get(1).getId();
 
-            LegendRuleService svc = harness.getLegendRuleService();
             svc.checkLegendRule(gd, player1.getId());
 
-            assertThat(gd.interaction.permanentChoice().validIds())
-                    .containsExactlyInAnyOrder(id1, id2);
+            verify(playerInputService).beginPermanentChoice(
+                    eq(gd),
+                    eq(player1.getId()),
+                    eq(List.of(id1, id2)),
+                    anyString()
+            );
         }
 
         @Test
@@ -169,7 +192,6 @@ class LegendRuleServiceTest extends BaseCardTest {
             harness.addToBattlefield(player1, createLegendaryCreature("Legend B"));
             harness.addToBattlefield(player1, createLegendaryCreature("Legend B"));
 
-            LegendRuleService svc = harness.getLegendRuleService();
             svc.checkLegendRule(gd, player1.getId());
 
             assertThat(gd.interaction.permanentChoiceContext())
@@ -177,6 +199,9 @@ class LegendRuleServiceTest extends BaseCardTest {
             // Only one violation is processed at a time
             String choiceName = ((PermanentChoiceContext.LegendRule) gd.interaction.permanentChoiceContext()).cardName();
             assertThat(choiceName).isIn("Legend A", "Legend B");
+
+            // PlayerInputService should be called exactly once (only first violation)
+            verify(playerInputService).beginPermanentChoice(any(), any(), anyList(), anyString());
         }
     }
 
@@ -194,8 +219,8 @@ class LegendRuleServiceTest extends BaseCardTest {
 
             UUID keepId = gd.playerBattlefields.get(player1.getId()).get(0).getId();
 
-            LegendRuleService svc = harness.getLegendRuleService();
-            svc.checkLegendRule(gd, player1.getId());
+            LegendRuleService harnessLrs = harness.getLegendRuleService();
+            harnessLrs.checkLegendRule(gd, player1.getId());
             harness.handlePermanentChosen(player1, keepId);
 
             long legendCount = gd.playerBattlefields.get(player1.getId()).stream()
@@ -219,8 +244,8 @@ class LegendRuleServiceTest extends BaseCardTest {
 
             UUID keepId = gd.playerBattlefields.get(player1.getId()).get(0).getId();
 
-            LegendRuleService svc = harness.getLegendRuleService();
-            svc.checkLegendRule(gd, player1.getId());
+            LegendRuleService harnessLrs = harness.getLegendRuleService();
+            harnessLrs.checkLegendRule(gd, player1.getId());
             harness.handlePermanentChosen(player1, keepId);
 
             assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -237,8 +262,8 @@ class LegendRuleServiceTest extends BaseCardTest {
 
             UUID keepId = gd.playerBattlefields.get(player1.getId()).get(0).getId();
 
-            LegendRuleService svc = harness.getLegendRuleService();
-            svc.checkLegendRule(gd, player1.getId());
+            LegendRuleService harnessLrs = harness.getLegendRuleService();
+            harnessLrs.checkLegendRule(gd, player1.getId());
             harness.handlePermanentChosen(player1, keepId);
 
             // Grizzly Bears should still be on player1's battlefield
@@ -256,8 +281,8 @@ class LegendRuleServiceTest extends BaseCardTest {
 
             UUID keepId = gd.playerBattlefields.get(player1.getId()).get(1).getId();
 
-            LegendRuleService svc = harness.getLegendRuleService();
-            svc.checkLegendRule(gd, player1.getId());
+            LegendRuleService harnessLrs = harness.getLegendRuleService();
+            harnessLrs.checkLegendRule(gd, player1.getId());
             harness.handlePermanentChosen(player1, keepId);
 
             long legendCount = gd.playerBattlefields.get(player1.getId()).stream()

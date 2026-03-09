@@ -13,6 +13,8 @@ dependencies {
 
     implementation(project(":magical-vibes-card"))
     implementation(project(":magical-vibes-websocket"))
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
 group = "com.magicalvibes"
