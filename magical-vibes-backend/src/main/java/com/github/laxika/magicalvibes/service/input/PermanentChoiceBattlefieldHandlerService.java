@@ -46,6 +46,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PermanentChoiceBattlefieldHandlerService {
 
+    private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
     private final GraveyardService graveyardService;
     private final BattlefieldEntryService battlefieldEntryService;
@@ -199,14 +200,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             log.info("Game {} - {} returned to owner's hand by bounce-or-sacrifice effect", gameData.id, target.getCard().getName());
         }
 
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        playerInputService.processNextMayAbility(gameData);
-        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-            gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
-        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handlePreventDamageSourceChoice(GameData gameData, UUID permanentId, PermanentChoiceContext.PreventDamageSourceChoice preventSource) {

@@ -32,6 +32,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MayCopyHandlerService {
 
+    private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
     private final CloneService cloneService;
     private final StateBasedActionService stateBasedActionService;
@@ -92,12 +93,7 @@ public class MayCopyHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} declines to retarget copy", gameData.id, player.getUsername());
 
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                gameData.priorityPassedBy.clear();
-                gameBroadcastService.broadcastGameState(gameData);
-                turnProgressionService.resolveAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -113,12 +109,7 @@ public class MayCopyHandlerService {
 
         if (copyEntry == null) {
             log.info("Game {} - Copy no longer on stack for retarget", gameData.id);
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                gameData.priorityPassedBy.clear();
-                gameBroadcastService.broadcastGameState(gameData);
-                turnProgressionService.resolveAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -171,12 +162,7 @@ public class MayCopyHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - No valid targets for copy retarget", gameData.id);
 
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                gameData.priorityPassedBy.clear();
-                gameBroadcastService.broadcastGameState(gameData);
-                turnProgressionService.resolveAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -193,12 +179,7 @@ public class MayCopyHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} declines become-copy ability from {}", gameData.id, player.getUsername(), sourceCard.getName());
 
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                gameData.priorityPassedBy.clear();
-                gameBroadcastService.broadcastGameState(gameData);
-                turnProgressionService.resolveAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -221,12 +202,7 @@ public class MayCopyHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} become-copy source no longer on battlefield", gameData.id, sourceCard.getName());
 
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                gameData.priorityPassedBy.clear();
-                gameBroadcastService.broadcastGameState(gameData);
-                turnProgressionService.resolveAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -238,12 +214,7 @@ public class MayCopyHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} become-copy target no longer on battlefield", gameData.id, sourceCard.getName());
 
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                gameData.priorityPassedBy.clear();
-                gameBroadcastService.broadcastGameState(gameData);
-                turnProgressionService.resolveAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 

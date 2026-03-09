@@ -36,6 +36,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MayPenaltyChoiceHandlerService {
 
+    private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
     private final GraveyardService graveyardService;
     private final DrawService drawService;
@@ -62,23 +63,13 @@ public class MayPenaltyChoiceHandlerService {
 
         if (targetEntry == null) {
             log.info("Game {} - Counter-unless-pays target no longer on stack", gameData.id);
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                gameData.priorityPassedBy.clear();
-                gameBroadcastService.broadcastGameState(gameData);
-                turnProgressionService.resolveAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
         if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())) {
             log.info("Game {} - {} cannot be countered", gameData.id, targetEntry.getCard().getName());
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                gameData.priorityPassedBy.clear();
-                gameBroadcastService.broadcastGameState(gameData);
-                turnProgressionService.resolveAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -105,13 +96,7 @@ public class MayPenaltyChoiceHandlerService {
             log.info("Game {} - {} declines to pay {} — spell countered", gameData.id, player.getUsername(), amount);
         }
 
-        stateBasedActionService.performStateBasedActions(gameData);
-        playerInputService.processNextMayAbility(gameData);
-        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-            gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
-        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleSacrificeUnlessDiscardChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
@@ -176,13 +161,7 @@ public class MayPenaltyChoiceHandlerService {
             log.info("Game {} - {} is no longer on the battlefield, decline is a no-op", gameData.id, sourceCard.getName());
         }
 
-        stateBasedActionService.performStateBasedActions(gameData);
-        playerInputService.processNextMayAbility(gameData);
-        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-            gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
-        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleLoseLifeUnlessDiscardChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
@@ -229,13 +208,7 @@ public class MayPenaltyChoiceHandlerService {
             log.info("Game {} - {} loses {} life (declined discard, {})", gameData.id, player.getUsername(), effect.lifeLoss(), ability.sourceCard().getName());
         }
 
-        stateBasedActionService.performStateBasedActions(gameData);
-        playerInputService.processNextMayAbility(gameData);
-        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-            gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
-        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleLoseLifeUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
@@ -279,13 +252,7 @@ public class MayPenaltyChoiceHandlerService {
             }
         }
 
-        stateBasedActionService.performStateBasedActions(gameData);
-        playerInputService.processNextMayAbility(gameData);
-        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-            gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
-        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleOpponentExileChoice(GameData gameData, Player player, boolean accepted,
@@ -340,13 +307,7 @@ public class MayPenaltyChoiceHandlerService {
             log.info("Game {} - {} declines exile return, {} draws {}", gameData.id, opponentName, controllerName, drawCount);
         }
 
-        stateBasedActionService.performStateBasedActions(gameData);
-        playerInputService.processNextMayAbility(gameData);
-        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-            gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
-        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleSacrificeUnlessReturnOwnPermanentChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
@@ -410,12 +371,6 @@ public class MayPenaltyChoiceHandlerService {
             log.info("Game {} - {} is no longer on the battlefield, decline is a no-op", gameData.id, sourceCard.getName());
         }
 
-        stateBasedActionService.performStateBasedActions(gameData);
-        playerInputService.processNextMayAbility(gameData);
-        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-            gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
-        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 }

@@ -111,6 +111,7 @@ import com.github.laxika.magicalvibes.service.input.ColorChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.MayCastHandlerService;
 import com.github.laxika.magicalvibes.service.input.MayCopyHandlerService;
 import com.github.laxika.magicalvibes.service.input.MayMiscHandlerService;
@@ -275,25 +276,27 @@ public class GameSimulator {
                 gameQueryService, gameBroadcastService, triggerCollectionService, playerInputService, turnProgressionService);
         PermanentChoiceSpellHandlerService permanentChoiceSpellHandler = new PermanentChoiceSpellHandlerService(
                 gameQueryService, graveyardService, gameBroadcastService, triggerCollectionService, playerInputService, turnProgressionService);
+        InputCompletionService inputCompletionService = new InputCompletionService(
+                playerInputService, gameBroadcastService, turnProgressionService, stateBasedActionService);
         PermanentChoiceBattlefieldHandlerService permanentChoiceBattlefieldHandler = new PermanentChoiceBattlefieldHandlerService(
-                gameQueryService, graveyardService, battlefieldEntryService, deathTriggerService, cloneService, warpWorldService, gameBroadcastService, abilityActivationService,
+                inputCompletionService, gameQueryService, graveyardService, battlefieldEntryService, deathTriggerService, cloneService, warpWorldService, gameBroadcastService, abilityActivationService,
                 permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, creatureControlService, turnProgressionService, effectResolutionService, damageResolutionService);
         MultiPermanentChoiceHandlerService multiPermanentChoiceHandler = new MultiPermanentChoiceHandlerService(
-                gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, turnProgressionService, effectResolutionService);
+                inputCompletionService, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, turnProgressionService, effectResolutionService);
         PermanentChoiceHandlerService permanentChoiceHandlerService = new PermanentChoiceHandlerService(
                 permanentChoiceTriggerHandler, permanentChoiceSpellHandler, permanentChoiceBattlefieldHandler, multiPermanentChoiceHandler);
         GraveyardChoiceHandlerService graveyardChoiceHandlerService = new GraveyardChoiceHandlerService(
                 gameQueryService, battlefieldEntryService, legendRuleService, gameBroadcastService, turnProgressionService, permanentRemovalService, triggerCollectionService, playerInputService);
         MayCastHandlerService mayCastHandlerService = new MayCastHandlerService(
-                gameQueryService, graveyardService, gameBroadcastService, playerInputService, turnProgressionService, permanentRemovalService, triggerCollectionService);
+                inputCompletionService, gameQueryService, graveyardService, gameBroadcastService, playerInputService, turnProgressionService, permanentRemovalService, triggerCollectionService);
         MayCopyHandlerService mayCopyHandlerService = new MayCopyHandlerService(
-                gameQueryService, cloneService, stateBasedActionService, gameBroadcastService, playerInputService, turnProgressionService, targetLegalityService, triggerCollectionService);
+                inputCompletionService, gameQueryService, cloneService, stateBasedActionService, gameBroadcastService, playerInputService, turnProgressionService, targetLegalityService, triggerCollectionService);
         MayPenaltyChoiceHandlerService mayPenaltyChoiceHandlerService = new MayPenaltyChoiceHandlerService(
-                gameQueryService, graveyardService, drawService, gameBroadcastService, playerInputService, turnProgressionService, stateBasedActionService, permanentRemovalService);
+                inputCompletionService, gameQueryService, graveyardService, drawService, gameBroadcastService, playerInputService, turnProgressionService, stateBasedActionService, permanentRemovalService);
         MayMiscHandlerService mayMiscHandlerService = new MayMiscHandlerService(
-                gameQueryService, drawService, gameBroadcastService, playerInputService, turnProgressionService, noOpSession);
+                inputCompletionService, gameQueryService, drawService, gameBroadcastService, playerInputService, turnProgressionService, noOpSession);
         MayAbilityHandlerService mayAbilityHandlerService = new MayAbilityHandlerService(
-                mayCastHandlerService, mayCopyHandlerService, mayPenaltyChoiceHandlerService, mayMiscHandlerService,
+                inputCompletionService, mayCastHandlerService, mayCopyHandlerService, mayPenaltyChoiceHandlerService, mayMiscHandlerService,
                 gameQueryService, gameBroadcastService, playerInputService, turnProgressionService);
         LibraryChoiceHandlerService libraryChoiceHandlerService = new LibraryChoiceHandlerService(
                 noOpSession, gameQueryService, graveyardService, warpWorldService, battlefieldEntryService, legendRuleService, stateBasedActionService, gameBroadcastService,

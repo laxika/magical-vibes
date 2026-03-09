@@ -34,6 +34,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MayCastHandlerService {
 
+    private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
     private final GraveyardService graveyardService;
     private final GameBroadcastService gameBroadcastService;
@@ -122,12 +123,7 @@ public class MayCastHandlerService {
             log.info("Game {} - {} declines to cast {} from library", gameData.id, playerName, cardToCast.getName());
         }
 
-        playerInputService.processNextMayAbility(gameData);
-        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-            gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
-        }
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleCastFromGraveyardChoice(GameData gameData, Player player, boolean accepted,
@@ -225,11 +221,6 @@ public class MayCastHandlerService {
             log.info("Game {} - {} declines to cast {} from graveyard", gameData.id, playerName, cardToCast.getName());
         }
 
-        playerInputService.processNextMayAbility(gameData);
-        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-            gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
-        }
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

@@ -56,6 +56,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MayAbilityHandlerService {
 
+    private final InputCompletionService inputCompletionService;
     private final MayCastHandlerService mayCastHandlerService;
     private final MayCopyHandlerService mayCopyHandlerService;
     private final MayPenaltyChoiceHandlerService mayPenaltyChoiceHandlerService;
@@ -235,12 +236,7 @@ public class MayAbilityHandlerService {
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} has no mana for X may ability", gameData.id, player.getUsername());
 
-                    playerInputService.processNextMayAbility(gameData);
-                    if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                        gameData.priorityPassedBy.clear();
-                        gameBroadcastService.broadcastGameState(gameData);
-                        turnProgressionService.resolveAutoPass(gameData);
-                    }
+                    inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                     return;
                 }
                 xValuePaid = maxX;
@@ -251,12 +247,7 @@ public class MayAbilityHandlerService {
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} can't pay {} for may ability", gameData.id, player.getUsername(), ability.manaCost());
 
-                    playerInputService.processNextMayAbility(gameData);
-                    if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                        gameData.priorityPassedBy.clear();
-                        gameBroadcastService.broadcastGameState(gameData);
-                        turnProgressionService.resolveAutoPass(gameData);
-                    }
+                    inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                     return;
                 }
                 cost.pay(pool);
@@ -293,12 +284,7 @@ public class MayAbilityHandlerService {
                 log.info("Game {} - {} pre-targeted may ability target gone", gameData.id, ability.sourceCard().getName());
             }
 
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                gameData.priorityPassedBy.clear();
-                gameBroadcastService.broadcastGameState(gameData);
-                turnProgressionService.resolveAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -369,13 +355,7 @@ public class MayAbilityHandlerService {
             log.info("Game {} - {} declines may ability from {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
         }
 
-        playerInputService.processNextMayAbility(gameData);
-
-        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-            gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
-        }
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleTargetedMayAbilityAccepted(GameData gameData, Player player, PendingMayAbility ability) {
@@ -407,12 +387,7 @@ public class MayAbilityHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} may ability has no valid targets", gameData.id, ability.sourceCard().getName());
 
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                gameData.priorityPassedBy.clear();
-                gameBroadcastService.broadcastGameState(gameData);
-                turnProgressionService.resolveAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 

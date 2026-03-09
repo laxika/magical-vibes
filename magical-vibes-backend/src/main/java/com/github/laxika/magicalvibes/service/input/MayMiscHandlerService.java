@@ -35,6 +35,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MayMiscHandlerService {
 
+    private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
     private final DrawService drawService;
     private final GameBroadcastService gameBroadcastService;
@@ -60,12 +61,7 @@ public class MayMiscHandlerService {
             log.info("Game {} - {} declines equipment attachment", gameData.id, player.getUsername());
         }
 
-        playerInputService.processNextMayAbility(gameData);
-        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-            gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
-        }
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleMayNotUntapChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
@@ -122,12 +118,7 @@ public class MayMiscHandlerService {
             log.info("Game {} - {} declines to reveal {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
         }
 
-        playerInputService.processNextMayAbility(gameData);
-        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-            gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
-        }
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleOpeningHandDelayedManaTrigger(GameData gameData, Player player, boolean accepted,
@@ -148,12 +139,7 @@ public class MayMiscHandlerService {
             log.info("Game {} - {} declines to reveal {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
         }
 
-        playerInputService.processNextMayAbility(gameData);
-        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-            gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
-        }
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleSingleDrawReplacementChoice(GameData gameData, Player player, boolean accepted,

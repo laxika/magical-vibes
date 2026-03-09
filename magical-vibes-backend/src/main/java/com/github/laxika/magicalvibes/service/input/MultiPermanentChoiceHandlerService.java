@@ -41,6 +41,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MultiPermanentChoiceHandlerService {
 
+    private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
@@ -138,15 +139,7 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
 
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
     }
 
     private void handleSacrificeAttackingCreature(GameData gameData, List<UUID> permanentIds) {
@@ -171,15 +164,7 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
 
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
     }
 
     private void handleForcedSacrifice(GameData gameData, List<UUID> permanentIds) {
@@ -199,15 +184,7 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
     }
 
     private void handleCombatDamageBounce(GameData gameData, UUID playerId, List<UUID> permanentIds) {
@@ -473,14 +450,6 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
 
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
     }
 }
