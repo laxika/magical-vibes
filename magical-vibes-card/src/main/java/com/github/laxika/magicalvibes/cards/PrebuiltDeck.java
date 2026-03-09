@@ -181,7 +181,7 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "108", 1),   // Acid Web Spider
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "83", 2),    // Barrage Ogre
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "146", 2),   // Copper Myr
-            // new DeckEntry(CardSet.MAGIC_2011, "167", 1),        // Cudgel Troll (not yet implemented)
+            new DeckEntry(CardSet.MAGIC_2011, "167", 1),            // Cudgel Troll
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "89", 2),    // Flameborn Hellion
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "93", 1),    // Hoard-Smelter Dragon
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "168", 2),   // Iron Myr
@@ -199,7 +199,7 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "103", 2),   // Shatter
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "131", 2),   // Untamed Might
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "81", 2),    // Arc Trail
-            // new DeckEntry(CardSet.MAGIC_2011, "138", 1),         // Fireball (not yet implemented)
+            new DeckEntry(CardSet.MAGIC_2011, "138", 1),             // Fireball
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "106", 1)    // Turn to Slag
     )),
 
