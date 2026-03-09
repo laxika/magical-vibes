@@ -211,31 +211,30 @@
     }
 
     @if (choice.damage.assigningCombatDamage) {
-      <div class="combat-damage-banner targeting-banner">
-        <span>Assign {{ choice.damage.combatDamageAttackerName }}'s combat damage
-          ({{ choice.damage.combatDamageRemaining }} of {{ choice.damage.combatDamageTotalDamage }} remaining)</span>
-        <button class="btn-confirm" (click)="choice.damage.confirmCombatDamageAssignment()"
-          [disabled]="choice.damage.combatDamageRemaining !== 0">Confirm</button>
-      </div>
-    }
-
-    @if (choice.damage.assigningCombatDamage) {
-      <div class="combat-damage-targets">
-        @for (target of choice.damage.combatDamageTargets; track target.id) {
-          <div class="combat-damage-target" [class.is-player]="target.isPlayer">
-            <span class="target-name">{{ target.name }}</span>
-            @if (!target.isPlayer) {
-              <span class="target-toughness">({{ target.toughness - target.currentDamage }} remaining toughness)</span>
-            }
-            <div class="damage-controls">
-              <button class="btn-damage" (click)="choice.damage.unassignCombatDamage(target.id)"
-                [disabled]="choice.damage.getCombatDamageAssigned(target.id) === 0">-</button>
-              <span class="damage-count">{{ choice.damage.getCombatDamageAssigned(target.id) }}</span>
-              <button class="btn-damage" (click)="choice.damage.assignCombatDamage(target.id)"
-                [disabled]="choice.damage.combatDamageRemaining <= 0">+</button>
+      <div class="combat-damage-popup">
+        <div class="combat-damage-header">
+          <span class="combat-damage-title">{{ choice.damage.combatDamageAttackerName }}</span>
+          <span class="combat-damage-info">{{ choice.damage.combatDamageRemaining }} of {{ choice.damage.combatDamageTotalDamage }} damage remaining</span>
+        </div>
+        <div class="combat-damage-targets">
+          @for (target of choice.damage.combatDamageTargets; track target.id) {
+            <div class="combat-damage-target" [class.is-player]="target.isPlayer">
+              <span class="target-name">{{ target.name }}</span>
+              @if (!target.isPlayer) {
+                <span class="target-toughness">({{ target.toughness - target.currentDamage }} remaining toughness)</span>
+              }
+              <div class="damage-controls">
+                <button class="btn-damage" (click)="choice.damage.unassignCombatDamage(target.id)"
+                  [disabled]="choice.damage.getCombatDamageAssigned(target.id) === 0">-</button>
+                <span class="damage-count">{{ choice.damage.getCombatDamageAssigned(target.id) }}</span>
+                <button class="btn-damage" (click)="choice.damage.assignCombatDamage(target.id)"
+                  [disabled]="choice.damage.combatDamageRemaining <= 0">+</button>
+              </div>
             </div>
-          </div>
-        }
+          }
+        </div>
+        <button class="btn-confirm-combat combat-damage-confirm" (click)="choice.damage.confirmCombatDamageAssignment()"
+          [disabled]="choice.damage.combatDamageRemaining !== 0">Confirm</button>
       </div>
     }
 

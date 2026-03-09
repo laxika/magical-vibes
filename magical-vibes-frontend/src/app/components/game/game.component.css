@@ -1041,19 +1041,49 @@
 
 /* Combat damage assignment */
 
-.combat-damage-targets {
+.combat-damage-popup {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  background: rgba(0, 0, 0, 0.8);
+  gap: 10px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 100;
-  min-width: 300px;
+  min-width: 320px;
+}
+
+.combat-damage-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.combat-damage-title {
+  color: var(--color-parchment);
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  letter-spacing: 0.5px;
+}
+
+.combat-damage-info {
+  color: #fbbf24;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.combat-damage-targets {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .combat-damage-target {
@@ -1117,6 +1147,7 @@
   font-size: 1.1em;
 }
 
-.combat-damage-banner {
-  z-index: 101;
+.combat-damage-confirm {
+  align-self: center;
+  margin-top: 4px;
 }
