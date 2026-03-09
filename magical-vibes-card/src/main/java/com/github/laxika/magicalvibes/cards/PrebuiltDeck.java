@@ -127,6 +127,29 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "91", 3)     // Galvanic Blast
     )),
 
+    MYR_OF_MIRRODIN("myr-of-mirrodin", "Myr of Mirrodin (Scars of Mirrodin Intro Pack)", List.of(
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "230", 24),  // Plains
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "3", 1),     // Auriok Edgewright
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "151", 2),   // Darksteel Myr
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "152", 1),   // Darksteel Sentinel
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "8", 2),     // Ghalma's Warden
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "157", 3),   // Gold Myr
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "13", 2),    // Kemba's Skyguard
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "180", 1),   // Myr Battlesphere
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "181", 2),   // Myr Galvanizer
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "16", 2),    // Myrsmith
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "190", 2),   // Palladium Myr
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "192", 2),   // Perilous Myr
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "17", 1),    // Razor Hippogriff
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "22", 1),    // Sunblast Angel
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "189", 3),   // Origin Spellbomb
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "2", 3),     // Arrest
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "5", 1),     // Dispense Justice
+            // new DeckEntry(CardSet.MAGIC_2011, "19", 2),         // Inspired Charge (not yet implemented)
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "20", 2),    // Seize the Initiative
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "18", 3)     // Revoke Existence
+    )),
+
     EVINCARS_TYRANNY("evincars-tyranny", "Evincar's Tyranny (Tenth Edition Theme Deck)", List.of(
             new DeckEntry(CardSet.TENTH_EDITION, "372", 17),  // Swamp
             new DeckEntry(CardSet.TENTH_EDITION, "186", 2),   // Vampire Bats
