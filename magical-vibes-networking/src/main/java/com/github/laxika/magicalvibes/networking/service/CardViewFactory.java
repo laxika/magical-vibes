@@ -15,8 +15,7 @@ import java.util.List;
 public class CardViewFactory {
 
     public CardView create(Card card) {
-        boolean hasTapAbility = !card.getEffects(EffectSlot.ON_TAP).isEmpty()
-                || card.getActivatedAbilities().stream().anyMatch(ActivatedAbility::isRequiresTap);
+        boolean hasTapAbility = !card.getEffects(EffectSlot.ON_TAP).isEmpty();
 
         List<ActivatedAbilityView> abilityViews = card.getActivatedAbilities().stream()
                 .map(this::createAbilityView)

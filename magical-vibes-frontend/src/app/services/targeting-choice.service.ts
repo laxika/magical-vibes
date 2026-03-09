@@ -758,8 +758,9 @@ export class TargetingChoiceService {
     const perm = this.myBattlefieldFn()[index];
     if (perm == null || !this.hasPriority) return false;
     const abilities = perm.card.activatedAbilities;
-    // Has a non-tap activated ability (mana-cost only) — always usable
-    if (abilities.some(a => !a.requiresTap)) return true;
+    // Check if any activated ability can be used right now
+    if (abilities.some(a => this.canUseAbility(perm, a))) return true;
+    // Can tap for mana (ON_TAP mana effects)
     if (perm.tapped) return false;
     if (!perm.card.hasTapAbility) return false;
     if (perm.summoningSick && isPermanentCreature(perm)) return false;

@@ -174,12 +174,10 @@ public class PermanentViewFactory {
         for (ActivatedAbility ability : grantedAbilities) {
             mergedAbilities.add(cardViewFactory.createAbilityView(ability));
         }
-        boolean hasTapAbility = cardView.hasTapAbility()
-                || grantedAbilities.stream().anyMatch(ActivatedAbility::isRequiresTap);
         return new CardView(
                 cardView.id(), cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), cardView.subtypes(),
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
-                cardView.keywords(), hasTapAbility, cardView.setCode(),
+                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
                 cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), mergedAbilities, cardView.loyalty(),
                 cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount()
